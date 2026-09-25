@@ -10,7 +10,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 
 // เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
-var APP_VERSION = 'V9.4';
+var APP_VERSION = 'V9.5';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -386,6 +386,19 @@ function formatDateTimeThai(isoStr) {
   var hh = String(d.getHours()).padStart(2, '0');
   var mm = String(d.getMinutes()).padStart(2, '0');
   return formatDateThai(isoStr) + ' ' + hh + ':' + mm + ' น.';
+}
+
+// คำนวณ "ปีการศึกษา/ภาคเรียนปัจจุบัน" จากวันที่จริงตอนนี้ (ปฏิทินการศึกษาไทยทั่วไป) — ใช้เป็นค่าเริ่มต้นของตัวกรองต่างๆ (V9.5)
+// ปีการศึกษา X เริ่มพฤษภาคมปีปฏิทิน (X-543) ถึงเมษายนปีถัดไป: พ.ค.-ต.ค. = เทอม 1, พ.ย.-ธ.ค. = เทอม 2 (ปีการศึกษาเดียวกับเทอม 1),
+// ม.ค.-มี.ค. = เทอม 2 (แต่เป็นปีการศึกษาที่เริ่มพฤษภาคมปีก่อนหน้า), เม.ย. = ภาคฤดูร้อน (ปีการศึกษาเดียวกับเทอม 2 ก่อนหน้า)
+function currentAcademicTerm() {
+  var now = new Date();
+  var beYear = now.getFullYear() + 543;
+  var month = now.getMonth() + 1; // 1-12
+  if (month >= 5 && month <= 10) return { year: String(beYear), semester: '1' };
+  if (month === 11 || month === 12) return { year: String(beYear), semester: '2' };
+  if (month >= 1 && month <= 3) return { year: String(beYear - 1), semester: '2' };
+  return { year: String(beYear - 1), semester: 'summer' }; // เมษายน
 }
 function showToast(msg, isError) {
   var el = document.getElementById('toast');

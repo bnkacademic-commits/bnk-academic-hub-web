@@ -11,8 +11,6 @@
   .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
   .stat-tile .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--primary-dark); }
   .stat-tile .stat-label { color: var(--text-muted); font-size: 0.8rem; margin-top: 2px; }
-  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-  .filter-row > * { flex: 1; min-width: 140px; }
 </style>
 </head>
 <body>
@@ -61,9 +59,36 @@
     <!-- Per-assignment breakdown tab -->
     <div class="tab-panel" id="tab-byassignment">
       <div class="card">
-        <div class="section-title">🗂️ สรุปสถานะการส่งงานแยกแต่ละงาน</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">แสดงเฉพาะกำหนดการในปฏิทินที่ผูกกับ "ประเภทงาน" ไว้ — ไปเพิ่มได้ที่หน้าตั้งค่าเว็บ แท็บปฏิทิน</p>
+        <div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">
+          <span>🗂️ สรุปสถานะการส่งงานแยกแต่ละงาน</span>
+          <button class="btn btn-secondary btn-sm" id="btnExportReport" type="button">📄 รายงาน</button>
+        </div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">แสดงเฉพาะกำหนดการในปฏิทินที่ผูกกับ "ประเภทงาน" ไว้ — ไปเพิ่มได้ที่หน้าตั้งค่าเว็บ แท็บปฏิทิน — เลือกดร็อปดาวน์ด้านล่างเพื่อกรองดูทีละงาน</p>
+        <div class="filter-row">
+          <select id="asgFilterAssignment"><option value="">ทุกงาน</option></select>
+          <select id="asgFilterYear"><option value="">ทุกปีการศึกษา</option></select>
+          <select id="asgFilterSemester">
+            <option value="">ทุกภาคเรียน</option>
+            <option value="1">ภาคเรียนที่ 1</option>
+            <option value="2">ภาคเรียนที่ 2</option>
+            <option value="summer">ภาคฤดูร้อน</option>
+          </select>
+        </div>
         <div id="assignmentSummaryWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export report modal -->
+  <div class="modal-backdrop" id="exportReportModal" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close-x" id="exportReportModalCloseX" aria-label="ปิด">✕</button>
+      <h3>ออกรายงาน</h3>
+      <p class="hint" style="margin-bottom:14px;">เลือกรูปแบบไฟล์รายงานของรายการที่กำลังแสดงอยู่ในหน้านี้</p>
+      <div class="modal-actions" style="flex-direction:column; align-items:stretch;">
+        <button class="btn btn-primary" id="exportAsPdfBtn" type="button" style="margin-bottom:8px;">📄 PDF</button>
+        <button class="btn btn-secondary" id="exportAsImageBtn" type="button" style="margin-bottom:8px;">🖼️ รูปภาพ (PNG)</button>
+        <button class="btn btn-ghost" id="exportReportCancelBtn" type="button">ยกเลิก</button>
       </div>
     </div>
   </div>
@@ -71,6 +96,8 @@
   <div id="app-footer"></div>
 
   <script src="assets/api.js"></script>
+  <script src="assets/html2canvas.min.js"></script>
+  <script src="assets/jspdf.umd.min.js"></script>
   <script>
     var session = requireAdminAccess();
     if (session) mountChrome('summary');
@@ -198,44 +225,136 @@
       if (status === 'late') return '<span class="badge badge-late">ส่งเกินกำหนด</span>';
       return '<span class="badge badge-missing">ยังไม่ส่ง</span>';
     }
+
+    var allAssignments = [];
+
+    // เติม dropdown ตัวกรองทั้ง 3 ช่อง (งาน/ปีการศึกษา/ภาคเรียน) จากรายการกำหนดการที่โหลดมาจริง — คงค่าที่เลือกไว้เดิมถ้ายังใช้ได้อยู่หลังรีเฟรชข้อมูล
+    function fillAssignmentFilters() {
+      var asgSel = document.getElementById('asgFilterAssignment');
+      var yearSel = document.getElementById('asgFilterYear');
+      var curAsg = asgSel.value, curYear = yearSel.value;
+
+      asgSel.innerHTML = '<option value="">ทุกงาน</option>';
+      allAssignments.forEach(function (a) {
+        var opt = document.createElement('option');
+        opt.value = a.eventId; opt.textContent = a.title;
+        asgSel.appendChild(opt);
+      });
+      if (allAssignments.some(function (a) { return a.eventId === curAsg; })) asgSel.value = curAsg;
+
+      var years = Array.from(new Set(allAssignments.map(function (a) { return a.academicYear; }))).filter(Boolean).sort().reverse();
+      yearSel.innerHTML = '<option value="">ทุกปีการศึกษา</option>';
+      years.forEach(function (y) {
+        var opt = document.createElement('option');
+        opt.value = y; opt.textContent = 'ปีการศึกษา ' + y;
+        yearSel.appendChild(opt);
+      });
+      if (years.indexOf(curYear) !== -1) yearSel.value = curYear;
+    }
+
+    function renderAssignmentSummary() {
+      var wrap = document.getElementById('assignmentSummaryWrap');
+      if (allAssignments.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการในปฏิทินที่ผูกกับประเภทงานไว้</div>';
+        return;
+      }
+      var fAsg = document.getElementById('asgFilterAssignment').value;
+      var fYear = document.getElementById('asgFilterYear').value;
+      var fSem = document.getElementById('asgFilterSemester').value;
+      var filtered = allAssignments.filter(function (a) {
+        if (fAsg && a.eventId !== fAsg) return false;
+        if (fYear && a.academicYear !== fYear) return false;
+        if (fSem && a.semester !== fSem) return false;
+        return true;
+      });
+      if (filtered.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">ไม่พบงานที่ตรงกับตัวกรองที่เลือก</div>';
+        return;
+      }
+      var html = '';
+      filtered.forEach(function (a) {
+        var dateRange = a.endDate && a.endDate !== a.date ? formatDateThai(a.date) + ' – ' + formatDateThai(a.endDate) : formatDateThai(a.date);
+        var semLabel = a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester;
+        var onTimeCount = a.rows.filter(function (r) { return r.status === 'onTime'; }).length;
+        var lateCount = a.rows.filter(function (r) { return r.status === 'late'; }).length;
+        var missingCount = a.rows.filter(function (r) { return r.status === 'missing'; }).length;
+        html += '<div class="card" style="margin-bottom:16px; box-shadow:none; border:1px solid var(--border);">' +
+          '<div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">' +
+            '<span>📌 ' + escapeHtml(a.title) + '</span>' +
+            '<span class="hint" style="margin:0;">กำหนดส่ง: ' + dateRange + '</span>' +
+          '</div>' +
+          '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + escapeHtml(a.categoryName) + '</b> · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
+            ' · <span class="badge badge-ontime">ปกติ ' + onTimeCount + '</span> <span class="badge badge-late">เกินกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
+          '</div>' +
+          '<div class="table-wrap"><table><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th></tr></thead><tbody>';
+        a.rows.forEach(function (r) {
+          html += '<tr>' +
+            '<td>' + escapeHtml(r.userName) + '</td>' +
+            '<td>' + statusBadge(r.status) + '</td>' +
+            '<td>' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '-') + '</td>' +
+          '</tr>';
+        });
+        html += '</tbody></table></div></div>';
+      });
+      wrap.innerHTML = html;
+    }
+
     async function loadAssignmentSummary() {
       var wrap = document.getElementById('assignmentSummaryWrap');
       try {
-        var assignments = await apiCall('adminGetAssignmentSummary', {});
-        if (assignments.length === 0) {
-          wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการในปฏิทินที่ผูกกับประเภทงานไว้</div>';
-          return;
-        }
-        var html = '';
-        assignments.forEach(function (a) {
-          var dateRange = a.endDate && a.endDate !== a.date ? formatDateThai(a.date) + ' – ' + formatDateThai(a.endDate) : formatDateThai(a.date);
-          var semLabel = a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester;
-          var onTimeCount = a.rows.filter(function (r) { return r.status === 'onTime'; }).length;
-          var lateCount = a.rows.filter(function (r) { return r.status === 'late'; }).length;
-          var missingCount = a.rows.filter(function (r) { return r.status === 'missing'; }).length;
-          html += '<div class="card" style="margin-bottom:16px; box-shadow:none; border:1px solid var(--border);">' +
-            '<div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">' +
-              '<span>📌 ' + escapeHtml(a.title) + '</span>' +
-              '<span class="hint" style="margin:0;">กำหนดส่ง: ' + dateRange + '</span>' +
-            '</div>' +
-            '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + escapeHtml(a.categoryName) + '</b> · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
-              ' · <span class="badge badge-ontime">ปกติ ' + onTimeCount + '</span> <span class="badge badge-late">เกินกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
-            '</div>' +
-            '<div class="table-wrap"><table><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th></tr></thead><tbody>';
-          a.rows.forEach(function (r) {
-            html += '<tr>' +
-              '<td>' + escapeHtml(r.userName) + '</td>' +
-              '<td>' + statusBadge(r.status) + '</td>' +
-              '<td>' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '-') + '</td>' +
-            '</tr>';
-          });
-          html += '</tbody></table></div></div>';
-        });
-        wrap.innerHTML = html;
+        allAssignments = await apiCall('adminGetAssignmentSummary', {});
+        fillAssignmentFilters();
+        renderAssignmentSummary();
       } catch (err) {
         wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
     }
+
+    document.getElementById('asgFilterAssignment').addEventListener('change', renderAssignmentSummary);
+    document.getElementById('asgFilterYear').addEventListener('change', renderAssignmentSummary);
+    document.getElementById('asgFilterSemester').addEventListener('change', renderAssignmentSummary);
+
+    // ---------- ออกรายงาน (PDF / รูปภาพ) ของรายการที่กำลังแสดงอยู่ในแท็บ "สรุปแยกแต่ละงาน" ----------
+    var exportReportModal = document.getElementById('exportReportModal');
+    document.getElementById('btnExportReport').addEventListener('click', function () {
+      var wrap = document.getElementById('assignmentSummaryWrap');
+      if (!wrap.querySelector('.card')) { showToast('ไม่มีข้อมูลให้ออกรายงานในตอนนี้', true); return; }
+      showModalEl(exportReportModal);
+    });
+    document.getElementById('exportReportCancelBtn').addEventListener('click', function () { hideModalEl(exportReportModal); });
+    document.getElementById('exportReportModalCloseX').addEventListener('click', function () { hideModalEl(exportReportModal); });
+
+    async function exportReport(kind) {
+      hideModalEl(exportReportModal);
+      var target = document.getElementById('assignmentSummaryWrap');
+      var r = await withProgress('กำลังสร้างไฟล์รายงาน', async function () {
+        var canvas = await html2canvas(target, {
+          backgroundColor: getComputedStyle(document.body).backgroundColor || '#ffffff',
+          scale: 2,
+          useCORS: true
+        });
+        var stamp = new Date().toISOString().slice(0, 10);
+        if (kind === 'image') {
+          var link = document.createElement('a');
+          link.href = canvas.toDataURL('image/png');
+          link.download = 'bnk-assignment-report-' + stamp + '.png';
+          link.click();
+        } else {
+          var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+          if (!jsPDFCtor) throw new Error('โหลดไลบรารี PDF ไม่สำเร็จ');
+          var imgData = canvas.toDataURL('image/jpeg', 0.92); // ใช้ JPEG คุณภาพสูงแทน PNG เฉพาะตอนฝังใน PDF เพื่อลดขนาดไฟล์ (PNG คุณภาพเท่ากันแต่ไฟล์ใหญ่กว่ามาก)
+          var pxToMm = 0.264583;
+          var widthMm = canvas.width * pxToMm / 2; // scale:2 ตอน capture แล้วหารกลับ
+          var heightMm = canvas.height * pxToMm / 2;
+          var doc = new jsPDFCtor({ orientation: widthMm > heightMm ? 'l' : 'p', unit: 'mm', format: [widthMm, heightMm] });
+          doc.addImage(imgData, 'JPEG', 0, 0, widthMm, heightMm);
+          doc.save('bnk-assignment-report-' + stamp + '.pdf');
+        }
+        return { ok: true };
+      }, { successLabel: 'สร้างไฟล์รายงานเรียบร้อยแล้ว' });
+    }
+    document.getElementById('exportAsPdfBtn').addEventListener('click', function () { exportReport('pdf'); });
+    document.getElementById('exportAsImageBtn').addEventListener('click', function () { exportReport('image'); });
 
     loadTabIfNeeded('all');
 

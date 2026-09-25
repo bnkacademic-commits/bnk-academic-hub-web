@@ -279,6 +279,8 @@ input:focus, select:focus, textarea:focus {
 }
 .field { margin-bottom: 16px; }
 .field-row { display: flex; gap: 12px; }
+.filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.filter-row > * { flex: 1; min-width: 140px; }
 .field-row[hidden] { display: none; } /* author display:flex ชนะ UA [hidden] เสมอ ต้องบังคับซ่อนเอง (บั๊กเดียวกับ .btn[hidden] ที่แก้ไว้ก่อนหน้า) — ใช้กับ #evTermFields ในหน้าตั้งค่า ปฏิทิน */
 .field-row > .field { flex: 1; }
 textarea { resize: vertical; min-height: 70px; }
@@ -364,10 +366,10 @@ textarea { resize: vertical; min-height: 70px; }
 .badge-admin { background: var(--primary-light); color: var(--primary-dark); }
 .badge-teacher { background: var(--surface-2); color: var(--text-muted); }
 .badge-super { background: var(--danger-light); color: var(--danger); }
-/* สถานะการส่งงานในแท็บ "สรุปแยกแต่ละงาน" (V9.4) */
+/* สถานะการส่งงานในแท็บ "สรุปแยกแต่ละงาน" (V9.4) — ส่งช้า=ส้ม (warn), ยังไม่ส่ง=แดง (danger) ตั้งแต่ V9.5 */
 .badge-ontime { background: var(--accent-light); color: var(--accent); }
-.badge-late { background: var(--danger-light); color: var(--danger); }
-.badge-missing { background: var(--surface-2); color: var(--text-muted); }
+.badge-late { background: var(--warn-light); color: var(--warn); }
+.badge-missing { background: var(--danger-light); color: var(--danger); }
 
 /* ---------- Table ---------- */
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }

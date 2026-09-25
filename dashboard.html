@@ -12,19 +12,13 @@
 
   <div class="container">
     <div class="page-header">
-      <h1>Hub ผลงานของฉัน</h1>
+      <h1 id="welcomeHeading">ยินดีต้อนรับ</h1>
       <p>อัพโหลด จัดการ และแชร์ผลงานของคุณให้ฝ่ายวิชาการหรือบุคคลภายนอกดูได้</p>
     </div>
 
-    <div class="card" id="annCard">
+    <div class="card" id="annCard" hidden>
       <div class="section-title">📣 ประกาศจากฝ่ายวิชาการ</div>
       <div id="hubAnnList"><div class="loading">กำลังโหลด</div></div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">🔗 หน้าผลงานสาธารณะของฉัน</div>
-      <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ใครก็ตามที่มีลิงก์หรือสแกน QR นี้ จะเห็นผลงานของคุณแบบอ่านอย่างเดียว โดยไม่ต้องล็อกอิน</p>
-      <button class="btn btn-secondary" id="btnShowQr">แสดงลิงก์ / สร้าง QR Code</button>
     </div>
 
     <div class="card">
@@ -42,12 +36,25 @@
 
     <div class="card">
       <div class="section-title">📤 ส่งงาน</div>
-      <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เลือกภาคเรียน ปีการศึกษา ประเภทงาน แล้วแนบไฟล์ได้สูงสุด 10 ไฟล์ต่อครั้ง</p>
-      <button class="btn btn-primary" id="openUploadBtn" type="button">📤 ส่งงาน</button>
+      <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เลือกภาคเรียน ปีการศึกษา ประเภทงาน แล้วแนบไฟล์ได้สูงสุด 10 ไฟล์ต่อครั้ง · กดปุ่ม "หน้าผลงานของฉัน" เพื่อดูหรือแชร์ลิงก์/QR ผลงานสาธารณะแบบอ่านอย่างเดียว ไม่ต้องล็อกอิน</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="openUploadBtn" type="button">📤 ส่งงาน</button>
+        <button class="btn btn-secondary" id="btnShowQr" type="button">🔗 หน้าผลงานของฉัน</button>
+      </div>
     </div>
 
     <div class="card">
-      <div class="section-title">📁 ผลงานของฉัน</div>
+      <div class="section-title">📁 ผลงานของฉันทั้งหมด</div>
+      <div class="filter-row">
+        <input type="search" id="subSearch" placeholder="ค้นหาชื่อผลงาน/ประเภทงาน" />
+        <select id="subFilterYear"><option value="">ทุกปีการศึกษา</option></select>
+        <select id="subFilterSemester">
+          <option value="">ทุกภาคเรียน</option>
+          <option value="1">ภาคเรียนที่ 1</option>
+          <option value="2">ภาคเรียนที่ 2</option>
+          <option value="summer">ภาคฤดูร้อน</option>
+        </select>
+      </div>
       <div id="submissionList"><div class="loading">กำลังโหลด</div></div>
     </div>
   </div>
@@ -94,7 +101,7 @@
   <div class="modal-backdrop" id="qrModal" hidden>
     <div class="modal-box">
       <button type="button" class="modal-close-x" id="qrModalCloseX" aria-label="ปิด">✕</button>
-      <h3>ลิงก์ผลงานสาธารณะของฉัน</h3>
+      <h3>หน้าผลงานของฉัน</h3>
       <div id="qrcode-box"></div>
       <div class="qr-link" id="qrLinkText"></div>
       <div class="modal-actions">
@@ -111,6 +118,7 @@
   <script>
     var session = requireHubAccess();
     if (session) mountChrome('dashboard');
+    if (session) document.getElementById('welcomeHeading').textContent = 'ยินดีต้อนรับ, ' + session.name;
 
     // ---------- ปีการศึกษา options ----------
     (function fillYearOptions() {
@@ -126,16 +134,20 @@
 
     // ---------- ประกาศจากฝ่ายวิชาการ ----------
     async function loadHubAnnouncements() {
+      var card = document.getElementById('annCard');
       var wrap = document.getElementById('hubAnnList');
       try {
         var rows = await apiCall('hubListAnnouncements', {});
-        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศ</div>'; return; }
+        // ไม่มีประกาศ -> ซ่อนการ์ดนี้ไปเลย ไม่ต้องโชว์กล่องว่างเปล่าค้างไว้ (V9.5)
+        if (rows.length === 0) { card.hidden = true; return; }
+        card.hidden = false;
         wrap.innerHTML = rows.map(function (a) {
           return '<div class="event-list-item"><div style="flex:1;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
             (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
             '<div class="sub-item-meta">โดย ' + escapeHtml(a.createdByName) + ' · ' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
         }).join('');
       } catch (err) {
+        card.hidden = false;
         wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
     }
@@ -217,13 +229,20 @@
       }
     }
 
-    document.getElementById('openUploadBtn').addEventListener('click', function () {
+    // preset (ไม่บังคับ): { categoryId, academicYear, semester } — ใช้ตอนกดปุ่ม "ส่งงาน" จากรายการแจ้งเตือนกำหนดส่งในปฏิทิน (V9.5)
+    // เพื่อเลือกภาคเรียน/ปีการศึกษา/ประเภทงานของกำหนดการนั้นให้อัตโนมัติ ไม่ต้องเลือกเองซ้ำ
+    function openUploadModal(preset) {
       selectedFiles = [];
       renderFileChips();
       document.getElementById('uploadError').hidden = true;
-      loadUploadCategories();
+      if (preset && preset.academicYear) document.getElementById('upYear').value = preset.academicYear;
+      if (preset && preset.semester) document.getElementById('upSemester').value = preset.semester;
+      loadUploadCategories().then(function () {
+        if (preset && preset.categoryId) document.getElementById('upCategory').value = preset.categoryId;
+      });
       showModalEl(uploadModal);
-    });
+    }
+    document.getElementById('openUploadBtn').addEventListener('click', function () { openUploadModal(); });
     document.getElementById('uploadModalCloseX').addEventListener('click', function () { hideModalEl(uploadModal); });
 
     document.getElementById('uploadForm').addEventListener('submit', async function (e) {
@@ -281,53 +300,104 @@
       loadSubmissions();
     });
 
-    // ---------- Submissions list ----------
+    // ---------- Submissions list (ค้นหา + กรองปีการศึกษา/ภาคเรียน — ค่าเริ่มต้นคือเทอมปัจจุบันตามเวลาจริง) ----------
+    var allSubmissions = [];
+    var _subFiltersInitialized = false;
+
+    function fillSubFilters() {
+      var yearSel = document.getElementById('subFilterYear');
+      var curYear = yearSel.value;
+      var years = Array.from(new Set(allSubmissions.map(function (s) { return s.academicYear; }))).filter(Boolean);
+      var term = currentAcademicTerm();
+      if (years.indexOf(term.year) === -1) years.push(term.year); // โชว์ปีการศึกษาปัจจุบันเป็นตัวเลือกเสมอ แม้จะยังไม่เคยมีผลงานส่งในปีนี้เลยก็ตาม
+      years.sort().reverse();
+      yearSel.innerHTML = '<option value="">ทุกปีการศึกษา</option>';
+      years.forEach(function (y) {
+        var opt = document.createElement('option');
+        opt.value = y; opt.textContent = 'ปีการศึกษา ' + y;
+        yearSel.appendChild(opt);
+      });
+      if (!_subFiltersInitialized) {
+        // ตั้งค่าเริ่มต้นเป็นเทอมปัจจุบันตามเวลาจริงแค่ตอนโหลดหน้าครั้งแรกเท่านั้น (ครั้งต่อไปคงค่าที่ผู้ใช้เลือกไว้เอง)
+        yearSel.value = term.year;
+        document.getElementById('subFilterSemester').value = term.semester;
+        _subFiltersInitialized = true;
+      } else if (years.indexOf(curYear) !== -1) {
+        yearSel.value = curYear;
+      }
+    }
+
+    function renderSubmissions() {
+      var el = document.getElementById('submissionList');
+      if (allSubmissions.length === 0) {
+        el.innerHTML = '<div class="empty-state">ยังไม่มีผลงานที่อัพโหลด</div>';
+        return;
+      }
+      var search = document.getElementById('subSearch').value.trim().toLowerCase();
+      var fYear = document.getElementById('subFilterYear').value;
+      var fSem = document.getElementById('subFilterSemester').value;
+      var subs = allSubmissions.filter(function (s) {
+        if (fYear && s.academicYear !== fYear) return false;
+        if (fSem && s.semester !== fSem) return false;
+        if (search) {
+          var hay = (s.title + ' ' + (s.categoryName || '') + ' ' + (s.description || '')).toLowerCase();
+          if (hay.indexOf(search) === -1) return false;
+        }
+        return true;
+      });
+      if (subs.length === 0) {
+        el.innerHTML = '<div class="empty-state">ไม่พบผลงานที่ตรงกับเงื่อนไขที่เลือก</div>';
+        return;
+      }
+      var groups = {};
+      subs.forEach(function (s) {
+        var key = s.academicYear + '|' + s.semester;
+        if (!groups[key]) groups[key] = { academicYear: s.academicYear, semester: s.semester, items: [] };
+        groups[key].items.push(s);
+      });
+      var keys = Object.keys(groups).sort().reverse();
+      var html = '';
+      keys.forEach(function (k) {
+        var g = groups[k];
+        var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + g.semester;
+        html += '<div class="year-group"><div class="year-group-title">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
+        g.items.forEach(function (s) {
+          html += '<div class="sub-item">' +
+            '<div><div class="sub-item-title">' + escapeHtml(s.title) + (s.categoryName ? ' <span class="badge badge-admin">' + escapeHtml(s.categoryName) + '</span>' : '') + '</div>' +
+            (s.description ? '<div class="sub-item-desc">' + escapeHtml(s.description) + '</div>' : '') +
+            '<div class="sub-item-meta">อัพโหลดเมื่อ ' + formatDateThai(s.uploadedAt) + ' · <a href="' + s.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></div></div>' +
+            '<div class="sub-item-actions"><button class="btn btn-danger btn-sm" data-id="' + s.id + '" data-name="' + escapeHtml(s.title) + '">ลบ</button></div>' +
+            '</div>';
+        });
+        html += '</div>';
+      });
+      el.innerHTML = html;
+      el.querySelectorAll('button[data-id]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          var ok = await askConfirm('ต้องการลบผลงาน "' + btn.getAttribute('data-name') + '" ใช่หรือไม่? การลบไม่สามารถกู้คืนได้', 'ยืนยันการลบผลงาน');
+          if (!ok) return;
+          var subId = btn.getAttribute('data-id');
+          var r = await withProgress('กำลังลบผลงาน', function () {
+            return apiCall('teacherDelete', { submissionId: subId });
+          }, { successLabel: 'ลบผลงานแล้ว' });
+          if (r.ok) loadSubmissions();
+        });
+      });
+    }
+
     async function loadSubmissions() {
       var el = document.getElementById('submissionList');
       try {
-        var subs = await apiCall('teacherListMine', {});
-        if (subs.length === 0) {
-          el.innerHTML = '<div class="empty-state">ยังไม่มีผลงานที่อัพโหลด</div>';
-          return;
-        }
-        var groups = {};
-        subs.forEach(function (s) {
-          var key = s.academicYear + '|' + s.semester;
-          if (!groups[key]) groups[key] = { academicYear: s.academicYear, semester: s.semester, items: [] };
-          groups[key].items.push(s);
-        });
-        var keys = Object.keys(groups).sort().reverse();
-        var html = '';
-        keys.forEach(function (k) {
-          var g = groups[k];
-          var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + g.semester;
-          html += '<div class="year-group"><div class="year-group-title">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
-          g.items.forEach(function (s) {
-            html += '<div class="sub-item">' +
-              '<div><div class="sub-item-title">' + escapeHtml(s.title) + (s.categoryName ? ' <span class="badge badge-admin">' + escapeHtml(s.categoryName) + '</span>' : '') + '</div>' +
-              (s.description ? '<div class="sub-item-desc">' + escapeHtml(s.description) + '</div>' : '') +
-              '<div class="sub-item-meta">อัพโหลดเมื่อ ' + formatDateThai(s.uploadedAt) + ' · <a href="' + s.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></div></div>' +
-              '<div class="sub-item-actions"><button class="btn btn-danger btn-sm" data-id="' + s.id + '" data-name="' + escapeHtml(s.title) + '">ลบ</button></div>' +
-              '</div>';
-          });
-          html += '</div>';
-        });
-        el.innerHTML = html;
-        el.querySelectorAll('button[data-id]').forEach(function (btn) {
-          btn.addEventListener('click', async function () {
-            var ok = await askConfirm('ต้องการลบผลงาน "' + btn.getAttribute('data-name') + '" ใช่หรือไม่? การลบไม่สามารถกู้คืนได้', 'ยืนยันการลบผลงาน');
-            if (!ok) return;
-            var subId = btn.getAttribute('data-id');
-            var r = await withProgress('กำลังลบผลงาน', function () {
-              return apiCall('teacherDelete', { submissionId: subId });
-            }, { successLabel: 'ลบผลงานแล้ว' });
-            if (r.ok) loadSubmissions();
-          });
-        });
+        allSubmissions = await apiCall('teacherListMine', {});
+        fillSubFilters();
+        renderSubmissions();
       } catch (err) {
         el.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
     }
+    document.getElementById('subSearch').addEventListener('input', renderSubmissions);
+    document.getElementById('subFilterYear').addEventListener('change', renderSubmissions);
+    document.getElementById('subFilterSemester').addEventListener('change', renderSubmissions);
     loadSubmissions();
 
     // ---------- Calendar ----------
@@ -380,11 +450,22 @@
       } else {
         upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดการใกล้ถึง</div>' + upcoming.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
+          // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
+          var submitBtn = e.categoryId
+            ? '<button class="btn btn-primary btn-sm" data-submit-event="' + e.id + '" style="align-self:center; flex-shrink:0;">📤 ส่งงาน</button>'
+            : '';
           return '<div class="event-list-item"><div class="event-date-chip">' + dateChip + '</div>' +
-            '<div><div class="sub-item-title">' + escapeHtml(e.title) + '</div>' +
+            '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(e.title) + '</div>' +
             (e.categoryName ? '<div class="sub-item-meta">📎 กำหนดส่ง: ' + escapeHtml(e.categoryName) + '</div>' : '') +
-            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div></div>';
+            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + submitBtn + '</div>';
         }).join('');
+        upcomingBox.querySelectorAll('button[data-submit-event]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var evId = btn.getAttribute('data-submit-event');
+            var ev = calState.events.filter(function (e) { return e.id === evId; })[0];
+            openUploadModal(ev ? { categoryId: ev.categoryId, academicYear: ev.academicYear, semester: ev.semester } : null);
+          });
+        });
       }
     }
 
