@@ -6,7 +6,7 @@
  * หลัง deploy — ดูขั้นตอนเต็มใน README.md (ตั้งแต่ V9 backend ย้ายจาก Google Apps Script มาเป็น
  * Cloudflare Worker + D1/KV แล้ว — ไฟล์ apps-script/ เดิมเก็บไว้เป็นข้อมูลอ้างอิงเท่านั้น ไม่ได้ใช้งานแล้ว)
  */
-var API_URL = 'https://PASTE_YOUR_WORKER_URL_HERE.workers.dev';
+var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev/';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
