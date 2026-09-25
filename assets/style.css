@@ -91,8 +91,9 @@
   color-scheme: light;
 }
 /* Sarabun/TH Sarabun New แสดงตัวอักษรเล็กกว่าฟอนต์ระบบทั่วไปที่ font-size เท่ากัน (เป็นลักษณะฟอนต์เอกสารราชการไทย) — ขยับขนาดพื้นฐานขึ้นเล็กน้อยเพื่อให้อ่านง่ายเท่าเดิม (ตั้งแต่ V9.6)
-   ผู้ใช้แจ้งว่าตัวหนังสือยังเล็กเกินไป จึงขยับขนาดพื้นฐานขึ้นอีกครั้งเป็น 19px (ตั้งแต่ V9.8) — ทุกจุดในเว็บที่กำหนดขนาดด้วย rem จะขยายตามไปด้วยโดยอัตโนมัติ */
-html { font-size: 19px; }
+   ผู้ใช้แจ้งว่าตัวหนังสือยังเล็กเกินไปแม้ขยับเป็น 19px แล้ว (V9.8) จึงขยับขึ้นอีกครั้งชัดเจนขึ้นเป็น 22px (ตั้งแต่ V9.9) — ทุกจุดในเว็บที่กำหนดขนาดด้วย rem จะขยายตามไปด้วยโดยอัตโนมัติ
+   นอกจากนี้จุดที่เคยเล็กเป็นพิเศษ (badge, hint, ข้อความ meta, ตาราง, ปุ่ม, label) ปรับหน่วย rem ให้ใหญ่ขึ้นเพิ่มอีกชั้นด้วย ไม่ได้พึ่งแค่ค่าพื้นฐานนี้อย่างเดียว */
+html { font-size: 22px; }
 
 :root[data-theme="dark"] {
   --bg: #0e1220;
@@ -184,13 +185,13 @@ a:hover { text-decoration: underline; }
   flex-shrink: 0;
 }
 .topbar-right { display: flex; align-items: center; gap: 10px; }
-.topbar .user-info { color: var(--text-muted); font-size: 0.86rem; }
+.topbar .user-info { color: var(--text-muted); font-size: 0.92rem; }
 
 /* Nav tabs (Hub / สรุปรวม / ตั้งค่าเว็บ) */
 .topbar-nav { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .topbar-nav a {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 13px; border-radius: 999px; font-size: 0.86rem; font-weight: 600;
+  padding: 7px 13px; border-radius: 999px; font-size: 0.92rem; font-weight: 600;
   color: var(--text-muted); text-decoration: none; transition: background-color 0.15s ease, color 0.15s ease;
 }
 .topbar-nav a:hover { background: var(--surface-2); text-decoration: none; }
@@ -242,11 +243,11 @@ a:hover { text-decoration: underline; }
 .profile-dropdown.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 .profile-dropdown .dd-header { padding: 8px 10px 10px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
 .profile-dropdown .dd-header .dd-name { font-weight: 700; font-size: 0.92rem; }
-.profile-dropdown .dd-header .dd-role { font-size: 0.76rem; color: var(--text-muted); margin-top: 2px; }
+.profile-dropdown .dd-header .dd-role { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
 .profile-dropdown button.dd-item {
   width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
   background: none; border: none; padding: 9px 10px; border-radius: 8px; cursor: pointer;
-  font-family: inherit; font-size: 0.86rem; color: var(--text);
+  font-family: inherit; font-size: 0.92rem; color: var(--text);
 }
 .profile-dropdown button.dd-item:hover { background: var(--surface-2); }
 .profile-dropdown button.dd-item.danger { color: var(--danger); }
@@ -254,7 +255,7 @@ a:hover { text-decoration: underline; }
 .dd-item .dd-icon { width: 18px; text-align: center; flex-shrink: 0; }
 
 /* Theme toggle switch */
-.theme-switch-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 10px; font-size: 0.86rem; }
+.theme-switch-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 10px; font-size: 0.92rem; }
 .switch { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .switch .slider {
@@ -300,7 +301,7 @@ a:hover { text-decoration: underline; }
 .login-sub {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   margin-bottom: 28px;
 }
 
@@ -337,14 +338,14 @@ a:hover { text-decoration: underline; }
 }
 
 /* ---------- Forms ---------- */
-label { font-size: 0.88rem; font-weight: 600; color: var(--text); display: block; margin-bottom: 6px; }
+label { font-size: 0.94rem; font-weight: 600; color: var(--text); display: block; margin-bottom: 6px; }
 input, select, textarea {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   background: var(--surface-2);
   color: var(--text);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -388,7 +389,7 @@ input[type="color"] {
   text-align: center;
   cursor: pointer;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   background: var(--surface-2);
   transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
@@ -414,7 +415,7 @@ input[type="color"] {
   border-radius: 10px;
   border: none;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.96rem;
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.05s ease, opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
@@ -434,7 +435,7 @@ input[type="color"] {
 .btn-danger:hover { background: var(--danger); color: #fff; }
 .btn-ghost { background: transparent; color: var(--text-muted); }
 .btn-ghost:hover { background: var(--surface-2); box-shadow: none; }
-.btn-sm { padding: 6px 12px; font-size: 0.82rem; border-radius: 8px; }
+.btn-sm { padding: 6px 12px; font-size: 0.88rem; border-radius: 8px; }
 
 /* ---------- กล่องปุ่มหลัก 2 ช่องติดกัน เช่น "ส่งงาน" / "หน้าผลงานของฉัน" (ตั้งแต่ V9.7) ---------- */
 .action-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -444,7 +445,7 @@ input[type="color"] {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 6px; padding: 18px 10px; min-height: 84px;
   border-radius: var(--radius); border: 1px solid transparent;
-  font-family: inherit; font-weight: 600; font-size: 0.88rem; text-align: center;
+  font-family: inherit; font-weight: 600; font-size: 0.92rem; text-align: center;
   cursor: pointer; transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 .action-tile-icon { font-size: 1.6rem; line-height: 1; }
@@ -455,21 +456,39 @@ input[type="color"] {
 .action-tile-secondary:hover { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
 .action-tile:active { transform: scale(0.97); }
 
-/* ---------- ปฏิทิน + กล่อง "หน้าผลงานของฉัน" วางเป็น 2 คอลัมน์ติดกัน (ตั้งแต่ V9.8) ---------- */
-/* คอลัมน์ซ้าย = ปฏิทิน, คอลัมน์ขวา = กล่อง "หน้าผลงานของฉัน" (ย้ายขึ้นมาจากการ์ด "ส่งงาน" เดิม) — ซ้อนกันเป็นแนวตั้งอัตโนมัติเมื่อจอแคบกว่า 720px */
-.dash-cal-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(148px, 210px); gap: 18px; align-items: stretch; }
-.dash-cal-side { display: flex; }
-.dash-cal-side .action-tile { flex: 1; height: 100%; }
+/* ---------- ปฏิทิน + คอลัมน์ขวา (ปุ่ม "หน้าผลงานของฉัน" + เช็คลิสต์การส่งงาน) วางเป็น 2 คอลัมน์ติดกัน (ตั้งแต่ V9.8, ปรับคอลัมน์ขวาใน V9.9) ---------- */
+/* คอลัมน์ซ้าย = ปฏิทิน, คอลัมน์ขวา = ปุ่ม "หน้าผลงานของฉัน" ขนาดเล็กอยู่บนสุด + เช็คลิสต์สถานะการส่งงานอยู่ด้านล่าง — ซ้อนกันเป็นแนวตั้งอัตโนมัติเมื่อจอแคบกว่า 720px */
+.dash-cal-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(168px, 240px); gap: 18px; align-items: stretch; }
+.dash-cal-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+/* ปุ่ม "หน้าผลงานของฉัน" เล็กลงมาก (ประมาณ 1/6 ของความสูงเดิมที่เคยเต็มคอลัมน์) วางไว้บนสุดของคอลัมน์ขวา (ตั้งแต่ V9.9) */
+.dash-portfolio-btn { width: 100%; flex-shrink: 0; }
+.dash-checklist { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.dash-checklist-title { font-size: 0.86rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; flex-shrink: 0; }
+.dash-checklist-body { flex: 1; overflow-y: auto; min-height: 0; }
+.checklist-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 2px; border-bottom: 1px solid var(--border); }
+.checklist-item:last-child { border-bottom: none; }
+.checklist-mark {
+  flex-shrink: 0; width: 1.3rem; height: 1.3rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700; margin-top: 1px;
+}
+.checklist-mark.done { background: var(--accent-light); color: var(--accent); }
+.checklist-mark.pending { background: var(--danger-light); color: var(--danger); }
+.checklist-text { flex: 1; min-width: 0; }
+.checklist-title { font-size: 0.86rem; font-weight: 600; line-height: 1.3; }
+.checklist-status { font-size: 0.76rem; font-weight: 700; margin-top: 1px; }
+.checklist-status.done { color: var(--accent); }
+.checklist-status.pending { color: var(--danger); }
 @media (max-width: 720px) {
   .dash-cal-layout { grid-template-columns: 1fr; }
-  .dash-cal-side .action-tile { min-height: 64px; flex-direction: row; }
+  .dash-checklist-body { max-height: 260px; }
 }
 
 /* ---------- ป้ายบอกปีการศึกษา/ภาคเรียนปัจจุบัน (ตั้งแต่ V9.8) ---------- */
 .term-badge {
   display: inline-flex; align-items: center; gap: 6px;
   background: var(--accent-light); color: var(--accent);
-  padding: 6px 13px; border-radius: 999px; font-size: 0.86rem; font-weight: 700;
+  padding: 6px 13px; border-radius: 999px; font-size: 0.92rem; font-weight: 700;
   margin: 10px 0 14px;
 }
 
@@ -478,14 +497,14 @@ input[type="color"] {
   color: var(--danger);
   border-radius: 10px;
   padding: 10px 14px;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   margin-bottom: 14px;
   animation: cardIn 0.2s ease both;
 }
-.hint { color: var(--text-muted); font-size: 0.82rem; margin-top: 6px; }
+.hint { color: var(--text-muted); font-size: 0.9rem; margin-top: 6px; }
 
 /* ---------- Badges ---------- */
-.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.85rem; font-weight: 700; }
 .badge-active { background: var(--accent-light); color: var(--accent); }
 .badge-archived { background: var(--warn-light); color: var(--warn); }
 .badge-admin { background: var(--primary-light); color: var(--primary-dark); }
@@ -497,9 +516,9 @@ input[type="color"] {
 .badge-missing { background: var(--danger-light); color: var(--danger); }
 
 /* ---------- Table ---------- */
-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
 th, td { text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-th { color: var(--text-muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: .02em; }
+th { color: var(--text-muted); font-weight: 600; font-size: 0.88rem; text-transform: uppercase; letter-spacing: .02em; }
 tr:last-child td { border-bottom: none; }
 .table-wrap { overflow-x: auto; }
 
@@ -507,7 +526,7 @@ tr:last-child td { border-bottom: none; }
 .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--border); overflow-x: auto; }
 .tab-btn {
   background: none; border: none; padding: 10px 16px; font-family: inherit;
-  font-size: 0.92rem; font-weight: 600; color: var(--text-muted); cursor: pointer;
+  font-size: 0.96rem; font-weight: 600; color: var(--text-muted); cursor: pointer;
   border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
@@ -527,36 +546,45 @@ tr:last-child td { border-bottom: none; }
 }
 .sub-item:last-child { border-bottom: none; }
 .sub-item-title { font-weight: 600; }
-.sub-item-desc { color: var(--text-muted); font-size: 0.85rem; margin-top: 2px; }
-.sub-item-meta { color: var(--text-muted); font-size: 0.78rem; margin-top: 4px; }
+.sub-item-desc { color: var(--text-muted); font-size: 0.9rem; margin-top: 2px; }
+.sub-item-meta { color: var(--text-muted); font-size: 0.86rem; margin-top: 4px; }
 .sub-item-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
-.empty-state { text-align: center; color: var(--text-muted); padding: 32px 12px; font-size: 0.9rem; }
+.empty-state { text-align: center; color: var(--text-muted); padding: 32px 12px; font-size: 0.95rem; }
 
 /* ---------- Calendar ---------- */
 .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .calendar-header .month-label { font-weight: 700; }
-/* ปฏิทินย่อขนาดลงตั้งแต่ V9.7 และย่อลงอีกใน V9.8 (ตอนนี้อยู่ข้างกล่อง "หน้าผลงานของฉัน" จึงมีพื้นที่แคบลง) — ย่อเฉพาะขนาดช่อง/ระยะห่าง ไม่ลดขนาดตัวอักษร เพราะฐาน font-size ทั้งเว็บขยับใหญ่ขึ้นใน V9.8 แล้ว ยังคงรายละเอียดครบ: เลขวันที่, วงแหวนวันนี้, พื้นหลังวันที่มีกำหนดการ, จุดสีตามประเภทงาน */
+/* ปฏิทินย่อขนาดลงตั้งแต่ V9.7 และย่อลงอีกใน V9.8 (ตอนนี้อยู่ข้างกล่อง "หน้าผลงานของฉัน" จึงมีพื้นที่แคบลง) ยังคงรายละเอียดครบ: เลขวันที่, วงแหวนวันนี้, พื้นหลังวันที่มีกำหนดการ, จุดสีตามประเภทงาน
+   ตั้งแต่ V9.9: ตัวเลขวันที่ใหญ่ขึ้นชัดเจน และจุดสีของงาน (event-dot) ย้ายจากขอบล่างช่องมาเป็นวงกลมสีอยู่ตรงกลางช่องแทน (อยู่หลังตัวเลขวันที่ ตัวเลขจะเปลี่ยนเป็นสีขาวให้อ่านง่ายบนพื้นสี) ตามที่ผู้ใช้ขอ */
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.calendar-grid .dow { text-align: center; font-size: 0.68rem; color: var(--text-muted); font-weight: 700; padding-bottom: 2px; }
+.calendar-grid .dow { text-align: center; font-size: 0.74rem; color: var(--text-muted); font-weight: 700; padding-bottom: 3px; }
 .calendar-cell {
-  aspect-ratio: 1 / 1; min-height: 22px;
+  aspect-ratio: 1 / 1; min-height: 34px;
   border-radius: 5px; padding: 1px 2px; font-size: 0.7rem;
   background: var(--surface-2); position: relative; color: var(--text);
+  display: flex; align-items: center; justify-content: center;
 }
 .calendar-cell.empty { background: transparent; }
 .calendar-cell.today { box-shadow: inset 0 0 0 2px var(--primary); }
-.calendar-cell.has-event { background: var(--primary-light); cursor: pointer; }
-.calendar-cell .day-num { font-weight: 600; }
+.calendar-cell.has-event { cursor: pointer; }
+.calendar-cell .day-num {
+  font-weight: 700; font-size: 0.95rem; line-height: 1;
+  position: relative; z-index: 2;
+  width: 1.6rem; height: 1.6rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.calendar-cell.has-event .day-num { color: #fff; }
 .calendar-cell .event-dot {
-  width: 4px; height: 4px; border-radius: 50%; background: var(--primary);
-  position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
+  width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--primary);
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 1;
 }
 .event-list-item { display: flex; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); align-items: flex-start; }
 .event-list-item:last-child { border-bottom: none; }
 .event-date-chip {
   flex-shrink: 0; background: var(--primary-light); color: var(--primary-dark);
-  border-radius: 8px; padding: 6px 10px; font-size: 0.76rem; font-weight: 700; text-align: center; min-width: 58px;
+  border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; font-weight: 700; text-align: center; min-width: 58px;
 }
 .event-submit-btn { align-self: center; flex-shrink: 0; }
 
@@ -591,7 +619,7 @@ tr:last-child td { border-bottom: none; }
 .modal-close-x:hover { background: var(--surface-2); color: var(--text); }
 .modal-close-x[hidden] { display: none; }
 #qrcode-box { display: flex; justify-content: center; margin: 16px 0; background: #fff; border-radius: 12px; padding: 12px; }
-.qr-link { font-size: 0.8rem; word-break: break-all; color: var(--text-muted); background: var(--surface-2); padding: 8px 10px; border-radius: 8px; margin-top: 6px; }
+.qr-link { font-size: 0.88rem; word-break: break-all; color: var(--text-muted); background: var(--surface-2); padding: 8px 10px; border-radius: 8px; margin-top: 6px; }
 
 /* ---------- Progress modal (ป็อปอัพกำลังทำงาน) ---------- */
 #sharedProgressModal { z-index: 160; } /* ต้องลอยเหนือแม้แต่ป็อปอัพยืนยัน เพราะเปิดขึ้นทันทีหลังกดยืนยัน */
@@ -610,9 +638,9 @@ tr:last-child td { border-bottom: none; }
   0% { transform: translateX(-100%); }
   100% { transform: translateX(250%); }
 }
-.progress-label { color: var(--text-muted); font-size: 0.85rem; min-height: 1.2em; }
+.progress-label { color: var(--text-muted); font-size: 0.9rem; min-height: 1.2em; }
 .progress-result {
-  border-radius: 10px; padding: 12px 14px; font-size: 0.9rem; margin: 6px 0 4px; text-align: left;
+  border-radius: 10px; padding: 12px 14px; font-size: 0.95rem; margin: 6px 0 4px; text-align: left;
   animation: cardIn 0.2s ease both;
 }
 .progress-result.is-success { background: var(--accent-light); color: var(--accent); }
@@ -622,7 +650,7 @@ tr:last-child td { border-bottom: none; }
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
   background: #1f2733; color: #fff; padding: 12px 20px; border-radius: 10px;
-  font-size: 0.88rem; opacity: 0; pointer-events: none; transition: all 0.2s ease; z-index: 200;
+  font-size: 0.92rem; opacity: 0; pointer-events: none; transition: all 0.2s ease; z-index: 200;
   max-width: 90vw; box-shadow: var(--shadow-lg);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -638,7 +666,7 @@ tr:last-child td { border-bottom: none; }
 .public-header .avatar img { width: 100%; height: 100%; object-fit: cover; }
 .public-header .avatar svg { width: 55%; height: 55%; display: block; }
 .public-header h1 { margin: 0 0 4px; font-size: 1.3rem; }
-.public-header .status-note { color: var(--text-muted); font-size: 0.82rem; }
+.public-header .status-note { color: var(--text-muted); font-size: 0.88rem; }
 
 .loading { text-align: center; color: var(--text-muted); padding: 40px 0; }
 .loading::after {
@@ -650,7 +678,7 @@ tr:last-child td { border-bottom: none; }
 
 /* ---------- Footer signature ---------- */
 .site-footer {
-  text-align: center; padding: 28px 16px 20px; color: var(--text-muted); font-size: 0.76rem;
+  text-align: center; padding: 28px 16px 20px; color: var(--text-muted); font-size: 0.84rem;
   line-height: 1.7;
 }
 .site-footer .line1 { font-weight: 600; }

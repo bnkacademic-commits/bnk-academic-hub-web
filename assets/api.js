@@ -10,7 +10,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 
 // เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
-var APP_VERSION = 'V9.8';
+var APP_VERSION = 'V9.9';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -435,10 +435,11 @@ function currentAcademicTerm() {
   return { year: String(beYear - 1), semester: 'summer' }; // เมษายน
 }
 // ข้อความป้ายบอก "ตอนนี้คือปีการศึกษา/ภาคเรียนอะไร" จาก currentAcademicTerm() — ใช้แสดงในปฏิทินหน้าฮับครู (ตั้งแต่ V9.8)
+// ตัดคำนำหน้า "ตอนนี้: " ออกตามที่ผู้ใช้ขอ (ตั้งแต่ V9.9) เหลือแค่ตัวข้อความภาคเรียน/ปีการศึกษาล้วนๆ
 function currentTermLabel() {
   var t = currentAcademicTerm();
   var semText = t.semester === 'summer' ? 'ภาคฤดูร้อน' : ('ภาคเรียนที่ ' + t.semester);
-  return 'ตอนนี้: ' + semText + ' ปีการศึกษา ' + t.year;
+  return semText + ' ปีการศึกษา ' + t.year;
 }
 function showToast(msg, isError) {
   var el = document.getElementById('toast');
@@ -781,7 +782,7 @@ function mountChrome(activePage) {
             '</button>' +
             '<div class="profile-dropdown" id="profileDropdown">' +
               '<div class="dd-header"><div class="dd-name">' + escapeHtml(session.name) + '</div><div class="dd-role">' + escapeHtml(roleLabel(session)) + '</div></div>' +
-              '<div class="theme-switch-row"><span>โหมดมืด</span><label class="switch"><input type="checkbox" id="themeToggleInput"><span class="slider"></span></label></div>' +
+              '<div class="theme-switch-row"><span>Dark Mode</span><label class="switch"><input type="checkbox" id="themeToggleInput"><span class="slider"></span></label></div>' +
               '<div class="dd-divider"></div>' +
               '<button class="dd-item" id="ddChangeAvatar" type="button"><span class="dd-icon">🖼️</span> เปลี่ยนรูปโปรไฟล์</button>' +
               '<button class="dd-item" id="ddChangePw" type="button"><span class="dd-icon">🔑</span> เปลี่ยนรหัสผ่าน</button>' +
@@ -868,4 +869,9 @@ function _isLoginPage() {
   var p = location.pathname;
   return /\/index\.html$/.test(p) || /\/$/.test(p) || p === '';
 }
-applyTheme(_isLoginPage() ? 'light' : getTheme());
+// หน้าแสดงผลงานสาธารณะ (view.html) ก็บังคับใช้ธีมสว่างเท่านั้นเสมอเช่นกัน (ตั้งแต่ V9.9) — เป็นหน้าที่คนภายนอกเปิดดูได้โดยไม่ล็อกอิน
+// ไม่ควรพึ่งค่า localStorage ของเบราว์เซอร์คนดู (ซึ่งอาจไม่ใช่เจ้าของบัญชีเลยด้วยซ้ำ) มากำหนดหน้าตาของหน้านี้
+function _isForcedLightPage() {
+  return _isLoginPage() || /\/view\.html$/.test(location.pathname);
+}
+applyTheme(_isForcedLightPage() ? 'light' : getTheme());

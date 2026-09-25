@@ -339,30 +339,41 @@
     async function exportReport(kind) {
       hideModalEl(exportReportModal);
       var target = document.getElementById('assignmentSummaryWrap');
+      // บังคับออกรายงานเป็นโหมดสว่างเสมอ ไม่ว่าผู้ใช้จะเปิดใช้งาน Dark Mode อยู่หรือไม่ (ตั้งแต่ V9.9)
+      // สลับ data-theme ของทั้งหน้าเป็น "light" ชั่วคราวก่อน capture แล้วค่อยคืนค่าเดิมกลับหลัง capture เสร็จ (ไม่แตะ localStorage จึงไม่กระทบธีมที่ผู้ใช้ตั้งไว้)
+      var prevTheme = document.documentElement.getAttribute('data-theme');
       var r = await withProgress('กำลังสร้างไฟล์รายงาน', async function () {
-        var canvas = await html2canvas(target, {
-          backgroundColor: getComputedStyle(document.body).backgroundColor || '#ffffff',
-          scale: 2,
-          useCORS: true
-        });
-        var stamp = new Date().toISOString().slice(0, 10);
-        if (kind === 'image') {
-          var link = document.createElement('a');
-          link.href = canvas.toDataURL('image/png');
-          link.download = 'bnk-assignment-report-' + stamp + '.png';
-          link.click();
-        } else {
-          var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
-          if (!jsPDFCtor) throw new Error('โหลดไลบรารี PDF ไม่สำเร็จ');
-          var imgData = canvas.toDataURL('image/jpeg', 0.92); // ใช้ JPEG คุณภาพสูงแทน PNG เฉพาะตอนฝังใน PDF เพื่อลดขนาดไฟล์ (PNG คุณภาพเท่ากันแต่ไฟล์ใหญ่กว่ามาก)
-          var pxToMm = 0.264583;
-          var widthMm = canvas.width * pxToMm / 2; // scale:2 ตอน capture แล้วหารกลับ
-          var heightMm = canvas.height * pxToMm / 2;
-          var doc = new jsPDFCtor({ orientation: widthMm > heightMm ? 'l' : 'p', unit: 'mm', format: [widthMm, heightMm] });
-          doc.addImage(imgData, 'JPEG', 0, 0, widthMm, heightMm);
-          doc.save('bnk-assignment-report-' + stamp + '.pdf');
+        document.documentElement.setAttribute('data-theme', 'light');
+        // รอ 2 เฟรมให้เบราว์เซอร์ apply ตัวแปรสี CSS ของโหมดสว่างให้เสร็จก่อนเริ่ม capture
+        await new Promise(function (resolve) { requestAnimationFrame(function () { requestAnimationFrame(resolve); }); });
+        try {
+          var canvas = await html2canvas(target, {
+            backgroundColor: '#ffffff',
+            scale: 2,
+            useCORS: true
+          });
+          var stamp = new Date().toISOString().slice(0, 10);
+          if (kind === 'image') {
+            var link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'bnk-assignment-report-' + stamp + '.png';
+            link.click();
+          } else {
+            var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+            if (!jsPDFCtor) throw new Error('โหลดไลบรารี PDF ไม่สำเร็จ');
+            var imgData = canvas.toDataURL('image/jpeg', 0.92); // ใช้ JPEG คุณภาพสูงแทน PNG เฉพาะตอนฝังใน PDF เพื่อลดขนาดไฟล์ (PNG คุณภาพเท่ากันแต่ไฟล์ใหญ่กว่ามาก)
+            var pxToMm = 0.264583;
+            var widthMm = canvas.width * pxToMm / 2; // scale:2 ตอน capture แล้วหารกลับ
+            var heightMm = canvas.height * pxToMm / 2;
+            var doc = new jsPDFCtor({ orientation: widthMm > heightMm ? 'l' : 'p', unit: 'mm', format: [widthMm, heightMm] });
+            doc.addImage(imgData, 'JPEG', 0, 0, widthMm, heightMm);
+            doc.save('bnk-assignment-report-' + stamp + '.pdf');
+          }
+          return { ok: true };
+        } finally {
+          if (prevTheme) document.documentElement.setAttribute('data-theme', prevTheme);
+          else document.documentElement.removeAttribute('data-theme');
         }
-        return { ok: true };
       }, { successLabel: 'สร้างไฟล์รายงานเรียบร้อยแล้ว' });
     }
     document.getElementById('exportAsPdfBtn').addEventListener('click', function () { exportReport('pdf'); });

@@ -22,7 +22,7 @@
     </div>
 
     <div class="card">
-      <!-- ปฏิทิน (ซ้าย) + กล่อง "หน้าผลงานของฉัน" (ขวา) วางติดกัน (ตั้งแต่ V9.8) -->
+      <!-- ปฏิทิน (ซ้าย) + ปุ่ม "หน้าผลงานของฉัน" + เช็คลิสต์การส่งงาน (ขวา) วางติดกัน (ตั้งแต่ V9.8, ปรับคอลัมน์ขวาใน V9.9) -->
       <div class="dash-cal-layout">
         <div class="dash-cal-main">
           <div class="calendar-header">
@@ -38,11 +38,11 @@
           <div id="calEventsUpcoming" style="margin-top:16px;"></div>
         </div>
         <div class="dash-cal-side">
-          <button class="action-tile action-tile-secondary" id="btnShowQr" type="button">
-            <span class="action-tile-icon">🔗</span>
-            <span class="action-tile-label">หน้าผลงานของฉัน</span>
-            <span class="action-tile-desc">ดู/แชร์ลิงก์และ QR ผลงานสาธารณะ</span>
-          </button>
+          <button class="btn btn-secondary dash-portfolio-btn" id="btnShowQr" type="button">🔗 หน้าผลงานของฉัน</button>
+          <div class="dash-checklist">
+            <div class="dash-checklist-title">✅ เช็คลิสต์การส่งงาน</div>
+            <div class="dash-checklist-body" id="assignmentChecklistBody"><div class="loading">กำลังโหลด</div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -327,6 +327,7 @@
         categoryColorMap = buildCategoryColorMap(cats);
         renderSubmissions();
         renderCalendar();
+        renderAssignmentChecklist();
       } catch (err) { /* ไม่ต้องแจ้ง error — แค่ตกไปใช้สีเริ่มต้นแทน ไม่ใช่ปัญหาที่ควรขวางผู้ใช้ */ }
     }
 
@@ -417,6 +418,7 @@
         allSubmissions = await apiCall('teacherListMine', {});
         fillSubFilters();
         renderSubmissions();
+        renderAssignmentChecklist();
       } catch (err) {
         el.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
@@ -434,9 +436,45 @@
     async function loadCalendar() {
       try { calState.events = await apiCall('teacherListCalendar', {}); } catch (err) { calState.events = []; }
       renderCalendar();
+      renderAssignmentChecklist();
     }
     // ครอบคลุมทั้งช่วงวันที่ (date ถึง endDate) ไม่ใช่แค่วันเริ่มต้น — เผื่อกำหนดการนี้เป็นช่วงระยะเวลาส่งงานหลายวัน
     function eventsOnDate(dateStr) { return calState.events.filter(function (e) { return dateStr >= e.date && dateStr <= (e.endDate || e.date); }); }
+
+    // ---------- เช็คลิสต์สถานะการส่งงาน (ข้างปฏิทิน, ตั้งแต่ V9.9) ----------
+    // เทียบกำหนดการในปฏิทินที่ผูกประเภทงานไว้และตรงกับภาคเรียน/ปีการศึกษาปัจจุบัน กับผลงานที่เคยส่งแล้ว (categoryId+ปี+เทอมตรงกัน = นับว่าส่งแล้ว
+    // เป็นเกณฑ์แบบเดียวกับที่หน้าสรุปรวม "สรุปแยกแต่ละงาน" ใช้ — ไม่ได้ผูกกับ eventId เจาะจง เพราะระบบไม่มีฟิลด์นั้นในตาราง submissions)
+    function renderAssignmentChecklist() {
+      var wrap = document.getElementById('assignmentChecklistBody');
+      if (!wrap) return;
+      var term = currentAcademicTerm();
+      var assignments = calState.events.filter(function (e) {
+        return e.categoryId && e.academicYear === term.year && e.semester === term.semester;
+      }).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+
+      if (assignments.length === 0) {
+        wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่งในภาคเรียนนี้</div>';
+        return;
+      }
+      function isSubmitted(e) {
+        return allSubmissions.some(function (s) {
+          return s.categoryId === e.categoryId && s.academicYear === e.academicYear && s.semester === e.semester;
+        });
+      }
+      var rows = assignments.map(function (e) { return { ev: e, done: isSubmitted(e) }; });
+      rows.sort(function (a, b) { return (a.done === b.done) ? 0 : (a.done ? 1 : -1); }); // ยังไม่ส่งขึ้นก่อนเสมอ (ต้องรีบทำ)
+
+      wrap.innerHTML = rows.map(function (r) {
+        var dotColor = categoryColorMap[r.ev.categoryId] || '';
+        return '<div class="checklist-item">' +
+          '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '✓' : '!') + '</div>' +
+          '<div class="checklist-text">' +
+            '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + '</div>' +
+            '<div class="checklist-status ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
 
     function renderCalendar() {
       document.getElementById('calLabel').textContent = thaiMonths[calState.month] + ' ' + (calState.year + 543);
