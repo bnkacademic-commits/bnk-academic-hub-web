@@ -17,7 +17,7 @@
     </div>
 
     <div class="card" id="annCard" hidden>
-      <div class="section-title">📣 ประกาศจากฝ่ายวิชาการ</div>
+      <div class="section-title"><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l4.5 3.5V6.5L6 10H4a1 1 0 0 0-1 1z"/><path d="M17 8a4.5 4.5 0 0 1 0 8M20 5.5a8.5 8.5 0 0 1 0 13"/></svg> ประกาศจากฝ่ายวิชาการ</div>
       <div id="hubAnnList"><div class="loading">กำลังโหลด</div></div>
     </div>
 
@@ -26,7 +26,7 @@
       <div class="dash-cal-layout">
         <div class="dash-cal-main">
           <div class="calendar-header">
-            <div class="section-title" style="margin-bottom:0;">📅 ปฏิทิน / กำหนดส่งงาน</div>
+            <div class="section-title" style="margin-bottom:0;"><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg> ปฏิทิน</div>
             <div style="display:flex; gap:6px; align-items:center;">
               <button class="btn btn-ghost btn-sm" id="calPrev">‹</button>
               <span class="month-label" id="calLabel">-</span>
@@ -44,12 +44,12 @@
           </div>
         </div>
       </div>
-      <!-- "กำหนดการ" (เดิมชื่อ "กำหนดการใกล้ถึง") ย้ายออกมานอกกริด 2 คอลัมน์ด้านบน ให้ยาวเต็มความกว้างของการ์ด แต่ยังเรียงลงมาเป็นแถวเดียวตามเดิม (ตั้งแต่ V10.0 ตามที่ผู้ใช้ขอ) -->
+      <!-- "กำหนดส่งงาน" (เดิมชื่อ "กำหนดการใกล้ถึง" แล้วเปลี่ยนเป็น "กำหนดการ" ใน V10.0/V10.1 ก่อนเปลี่ยนมาเป็นชื่อนี้) ย้ายออกมานอกกริด 2 คอลัมน์ด้านบน ให้ยาวเต็มความกว้างของการ์ด แต่ยังเรียงลงมาเป็นแถวเดียวตามเดิม -->
       <div id="calEventsUpcoming" style="margin-top:18px;"></div>
     </div>
 
     <div class="card">
-      <div class="section-title">📁 ผลงานของฉันทั้งหมด</div>
+      <div class="section-title"><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> ผลงานของฉันทั้งหมด</div>
       <div class="filter-row">
         <input type="search" id="subSearch" placeholder="ค้นหาชื่อผลงาน/ประเภทงาน" />
         <select id="subFilterYear"><option value="">ทุกปีการศึกษา</option></select>
@@ -91,6 +91,7 @@
           <label for="upCategory">ประเภทงาน</label>
           <select id="upCategory"><option value="">กำลังโหลด...</option></select>
         </div>
+        <div id="upCustomFields"></div>
         <div class="field">
           <label>ไฟล์ผลงาน (สูงสุด 10 ไฟล์ ไม่เกิน 25MB ต่อไฟล์)</label>
           <div class="dropzone" id="dropzone" tabindex="0">
@@ -123,6 +124,21 @@
   <script src="assets/api.js"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
+    // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
+    var CUSTOM_FIELD_DEFS = [
+      { key: 'eventDate', label: 'วันที่', type: 'date', hint: 'เผื่อไว้สำหรับเกียรติบัตรการอบรม วันที่เข้าร่วม' },
+      { key: 'location', label: 'สถานที่อบรม', type: 'text', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่บอกสถานที่อบรม' },
+      { key: 'award', label: 'รางวัล', type: 'text', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นรางวัล' },
+      { key: 'studentName', label: 'ชื่อนักเรียน', type: 'text', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นผลงานนักเรียนแต่ครูเป็นผู้สอน' }
+    ];
+    // แสดงค่าข้อมูลเพิ่มเติมที่กรอกไว้ตอนส่งงาน (ถ้ามี) เป็นบรรทัด meta ต่อท้ายรายการผลงาน (ตั้งแต่ V-ถัดไปหลัง V10.1)
+    function formatCustomFieldValuesLine(values) {
+      if (!values) return '';
+      var parts = CUSTOM_FIELD_DEFS.filter(function (d) { return values[d.key]; })
+        .map(function (d) { return d.label + ': ' + escapeHtml(values[d.key]); });
+      return parts.length > 0 ? '<div class="sub-item-meta">' + parts.join(' · ') + '</div>' : '';
+    }
+
     var session = requireHubAccess();
     if (session) mountChrome('dashboard');
     if (session) document.getElementById('welcomeHeading').textContent = 'ยินดีต้อนรับ, ' + session.name;
@@ -223,10 +239,12 @@
       e.target.value = '';
     });
 
+    var uploadCategories = []; // เก็บไว้ให้ renderUploadCustomFields ใช้หา customFields ของประเภทงานที่เลือก (ตั้งแต่ V-ถัดไปหลัง V10.1)
     async function loadUploadCategories() {
       var sel = document.getElementById('upCategory');
       try {
         var cats = await apiCall('hubListWorkCategories', {});
+        uploadCategories = cats;
         categoryColorMap = buildCategoryColorMap(cats);
         if (cats.length === 0) {
           sel.innerHTML = '<option value="">(ยังไม่มีประเภทงาน — ติดต่อฝ่ายวิชาการ)</option>';
@@ -237,6 +255,22 @@
         sel.innerHTML = '<option value="">โหลดประเภทงานไม่สำเร็จ</option>';
       }
     }
+    // แสดงช่องกรอกข้อมูลเพิ่มเติมตามที่ประเภทงานที่เลือกกำหนดไว้ (ตั้งแต่ V-ถัดไปหลัง V10.1)
+    function renderUploadCustomFields() {
+      var box = document.getElementById('upCustomFields');
+      var catId = document.getElementById('upCategory').value;
+      var cat = uploadCategories.filter(function (c) { return c.id === catId; })[0];
+      var keys = (cat && cat.customFields) || [];
+      if (keys.length === 0) { box.innerHTML = ''; return; }
+      box.innerHTML = keys.map(function (k) {
+        var def = CUSTOM_FIELD_DEFS.filter(function (d) { return d.key === k; })[0];
+        if (!def) return '';
+        return '<div class="field"><label for="upcf_' + def.key + '">' + escapeHtml(def.label) + '</label>' +
+          '<input id="upcf_' + def.key + '" type="' + (def.type === 'date' ? 'date' : 'text') + '" data-custom-field="' + def.key + '" required placeholder="' + escapeHtml(def.hint) + '" />' +
+          '</div>';
+      }).join('');
+    }
+    document.getElementById('upCategory').addEventListener('change', renderUploadCustomFields);
 
     // preset (ไม่บังคับ): { categoryId, academicYear, semester } — ใช้ตอนกดปุ่ม "ส่งงาน" จากรายการแจ้งเตือนกำหนดส่งในปฏิทิน (V9.5)
     // เพื่อเลือกภาคเรียน/ปีการศึกษา/ประเภทงานของกำหนดการนั้นให้อัตโนมัติ ไม่ต้องเลือกเองซ้ำ
@@ -246,8 +280,10 @@
       document.getElementById('uploadError').hidden = true;
       if (preset && preset.academicYear) document.getElementById('upYear').value = preset.academicYear;
       if (preset && preset.semester) document.getElementById('upSemester').value = preset.semester;
+      document.getElementById('upCustomFields').innerHTML = '';
       loadUploadCategories().then(function () {
         if (preset && preset.categoryId) document.getElementById('upCategory').value = preset.categoryId;
+        renderUploadCustomFields();
       });
       showModalEl(uploadModal);
     }
@@ -265,6 +301,12 @@
 
       if (!categoryId) { errBox.textContent = 'กรุณาเลือกประเภทงาน'; errBox.hidden = false; return; }
       if (selectedFiles.length === 0) { errBox.textContent = 'กรุณาเลือกไฟล์อย่างน้อย 1 ไฟล์'; errBox.hidden = false; return; }
+
+      // เก็บค่าข้อมูลเพิ่มเติมตามที่ประเภทงานนี้กำหนด (ตั้งแต่ V-ถัดไปหลัง V10.1) — required ที่ input บังคับกรอกไว้แล้วในหน้าเว็บ (HTML5 validation), Worker เช็กซ้ำอีกชั้นด้วย
+      var customFieldValues = {};
+      document.querySelectorAll('#upCustomFields [data-custom-field]').forEach(function (inp) {
+        customFieldValues[inp.getAttribute('data-custom-field')] = inp.value.trim();
+      });
 
       var categoryLabel = document.getElementById('upCategory').selectedOptions[0].textContent;
       var semLabel = semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + semester;
@@ -284,7 +326,8 @@
             await submitWorkFile(f, {
               academicYear: academicYear,
               semester: semester,
-              categoryId: categoryId
+              categoryId: categoryId,
+              customFieldValues: customFieldValues
             });
           } catch (err) {
             failed.push(f.name + ': ' + err.message);
@@ -385,6 +428,7 @@
           html += '<div class="sub-item">' +
             '<div><div class="sub-item-title">' + escapeHtml(s.title) + (s.categoryName ? ' <span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' : '') + '</div>' +
             (s.description ? '<div class="sub-item-desc">' + escapeHtml(s.description) + '</div>' : '') +
+            formatCustomFieldValuesLine(s.customFieldValues) +
             '<div class="sub-item-meta">อัพโหลดเมื่อ ' + formatDateThai(s.uploadedAt) + ' · <a href="' + s.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></div></div>' +
             '<div class="sub-item-actions"><button class="btn btn-danger btn-sm" data-id="' + s.id + '" data-name="' + escapeHtml(s.title) + '">ลบ</button></div>' +
             '</div>';
@@ -456,18 +500,16 @@
     var MAX_CALENDAR_LANES = 2; // ช่องปฏิทินเล็ก แสดงแถบสีซ้อนกันได้สูงสุด 2 แถวต่อวัน
 
     // ---------- เช็คลิสต์สถานะการส่งงาน (ข้างปฏิทิน, ตั้งแต่ V9.9) ----------
-    // เทียบกำหนดการในปฏิทินที่ผูกประเภทงานไว้และตรงกับภาคเรียน/ปีการศึกษาปัจจุบัน กับผลงานที่เคยส่งแล้ว (categoryId+ปี+เทอมตรงกัน = นับว่าส่งแล้ว
+    // เทียบกำหนดการในปฏิทินที่ผูกประเภทงานไว้ กับผลงานที่เคยส่งแล้ว (categoryId+ปี+เทอมตรงกัน = นับว่าส่งแล้ว
     // เป็นเกณฑ์แบบเดียวกับที่หน้าสรุปรวม "สรุปแยกแต่ละงาน" ใช้ — ไม่ได้ผูกกับ eventId เจาะจง เพราะระบบไม่มีฟิลด์นั้นในตาราง submissions)
+    // ตั้งแต่ V-ถัดไปหลัง V10.1: แสดงทุกภาคเรียน/ปีการศึกษา จัดเป็นหมวดใหญ่ "เทอม ปีการศึกษา" ก่อน แล้วค่อยลิสงานในเทอมนั้นลงมา (เดิมกรองแสดงแค่เทอมปัจจุบันเทอมเดียว)
     function renderAssignmentChecklist() {
       var wrap = document.getElementById('assignmentChecklistBody');
       if (!wrap) return;
-      var term = currentAcademicTerm();
-      var assignments = calState.events.filter(function (e) {
-        return e.categoryId && e.academicYear === term.year && e.semester === term.semester;
-      }).slice().sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+      var assignments = calState.events.filter(function (e) { return !!e.categoryId; });
 
       if (assignments.length === 0) {
-        wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่งในภาคเรียนนี้</div>';
+        wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่ง</div>';
         return;
       }
       function isSubmitted(e) {
@@ -475,18 +517,35 @@
           return s.categoryId === e.categoryId && s.academicYear === e.academicYear && s.semester === e.semester;
         });
       }
-      var rows = assignments.map(function (e) { return { ev: e, done: isSubmitted(e) }; });
-      rows.sort(function (a, b) { return (a.done === b.done) ? 0 : (a.done ? 1 : -1); }); // ยังไม่ส่งขึ้นก่อนเสมอ (ต้องรีบทำ)
+      var groups = {}; // key: "ปีการศึกษา|ภาคเรียน"
+      assignments.forEach(function (e) {
+        var key = e.academicYear + '|' + e.semester;
+        if (!groups[key]) groups[key] = { academicYear: e.academicYear, semester: e.semester, rows: [] };
+        groups[key].rows.push({ ev: e, done: isSubmitted(e) });
+      });
+      var groupList = Object.keys(groups).map(function (k) { return groups[k]; });
+      groupList.sort(function (a, b) {
+        if (a.academicYear !== b.academicYear) return String(b.academicYear).localeCompare(String(a.academicYear));
+        return String(b.semester).localeCompare(String(a.semester));
+      });
 
-      wrap.innerHTML = rows.map(function (r) {
-        var dotColor = categoryColorMap[r.ev.categoryId] || '';
-        return '<div class="checklist-item">' +
-          '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '✓' : '!') + '</div>' +
-          '<div class="checklist-text">' +
-            '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + '</div>' +
-            '<div class="checklist-status ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') + '</div>' +
-          '</div>' +
-        '</div>';
+      wrap.innerHTML = groupList.map(function (g) {
+        g.rows.sort(function (a, b) {
+          if (a.done !== b.done) return a.done ? 1 : -1; // ยังไม่ส่งขึ้นก่อนเสมอ (ต้องรีบทำ)
+          return new Date(a.ev.date) - new Date(b.ev.date);
+        });
+        var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(g.semester);
+        var rowsHtml = g.rows.map(function (r) {
+          var dotColor = categoryColorMap[r.ev.categoryId] || '';
+          return '<div class="checklist-item">' +
+            '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '✓' : '!') + '</div>' +
+            '<div class="checklist-text">' +
+              '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + '</div>' +
+              '<div class="checklist-status ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') + '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+        return '<div class="checklist-group"><div class="checklist-group-title">' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '</div>' + rowsHtml + '</div>';
       }).join('');
     }
 
@@ -548,15 +607,18 @@
       } else {
         // ครอบรายการด้วย .cal-upcoming-grid ให้ยาวเต็มความกว้างการ์ด (ตั้งแต่ V10.0) — เรียงลงมาเป็นแถวเดียวตามลำดับวันที่เหมือนเดิม
         // (V10.0 ตอนแรกทำเป็นกริดหลายคอลัมน์ ทำให้ลำดับดูสลับสับสน ผู้ใช้แจ้งว่าเป็นบั๊ก จึงแก้กลับมาเรียงแนวตั้งตามเดิม เหลือแค่ความกว้างที่ยังเต็มการ์ดอยู่)
-        upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดการ</div><div class="cal-upcoming-grid">' + upcoming.map(function (e) {
+        // เปลี่ยนชื่อหัวข้อจาก "กำหนดการ" เป็น "กำหนดส่งงาน" และรูปแบบแต่ละแถวเป็น "ชื่อ(ประเภทงาน) เทอม ปีการศึกษา" (ตั้งแต่ V-ถัดไปหลัง V10.1)
+        upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดส่งงาน</div><div class="cal-upcoming-grid">' + upcoming.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
           var submitBtn = e.categoryId
             ? '<button class="btn btn-primary btn-sm event-submit-btn" data-submit-event="' + e.id + '">📤 ส่งงาน</button>'
             : '';
+          var termLabel = e.categoryId ? (e.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(e.semester)) + ' ปีการศึกษา ' + escapeHtml(e.academicYear) : '';
           return '<div class="event-list-item"><div class="event-date-chip">' + dateChip + '</div>' +
-            '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(e.title) + '</div>' +
-            (e.categoryName ? '<div class="sub-item-meta">📎 กำหนดส่ง: ' + categoryDotHtml(categoryColorMap[e.categoryId]) + escapeHtml(e.categoryName) + '</div>' : '') +
+            '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(e.title) +
+              (e.categoryName ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') + '</div>' +
+            (termLabel ? '<div class="sub-item-meta">' + categoryDotHtml(categoryColorMap[e.categoryId]) + escapeHtml(termLabel) + '</div>' : '') +
             (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + submitBtn + '</div>';
         }).join('') + '</div>';
         upcomingBox.querySelectorAll('button[data-submit-event]').forEach(function (btn) {

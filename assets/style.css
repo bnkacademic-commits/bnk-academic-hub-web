@@ -148,7 +148,6 @@ a:hover { text-decoration: underline; }
 /* ---------- Topbar ---------- */
 .topbar {
   background: var(--surface);
-  border-top: 3px solid var(--primary-dark); /* แถบเน้นด้านบนแบบหัวกระดาษหนังสือราชการ (V9.6) */
   border-bottom: 1px solid var(--border);
   padding: 12px 20px;
   display: flex;
@@ -208,6 +207,11 @@ a:hover { text-decoration: underline; }
 .refresh-btn:disabled { cursor: default; opacity: 0.6; }
 .refresh-btn .refresh-icon { display: block; }
 .refresh-btn.spinning .refresh-icon { animation: spin 0.7s linear infinite; }
+
+/* ระบบไอคอนเส้น (SVG currentColor) ใช้แทนอิโมจิทั่วทั้งเว็บ ให้ดู Modern และกลืนกับโทนสีของเว็บ (V-ถัดไปหลัง V10.1) */
+.ui-icon { display: inline-block; vertical-align: -3px; flex-shrink: 0; }
+.section-title .ui-icon { color: var(--primary-dark); }
+.btn .ui-icon { vertical-align: -3px; }
 
 /* Profile dropdown */
 .profile-menu { position: relative; }
@@ -280,7 +284,6 @@ a:hover { text-decoration: underline; }
 }
 .login-card {
   background: var(--surface);
-  border-top: 4px solid var(--primary-dark); /* แถบเน้นด้านบนแบบหัวกระดาษหนังสือราชการ ให้เข้าชุดกับแถบบน .topbar (V9.6) */
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 36px 32px;
@@ -482,6 +485,15 @@ input[type="color"] {
 .checklist-status { font-size: 0.76rem; font-weight: 700; margin-top: 1px; }
 .checklist-status.done { color: var(--accent); }
 .checklist-status.pending { color: var(--danger); }
+/* หมวดหมู่เทอม/ปีการศึกษา คั่นระหว่างกลุ่มงานในเช็คลิสต์ (ตั้งแต่ V-ถัดไปหลัง V10.1 — จัดกลุ่มตามเทอม/ปีการศึกษาแทนที่จะกรองแค่เทอมปัจจุบัน) */
+.checklist-group { margin-bottom: 10px; }
+.checklist-group:last-child { margin-bottom: 0; }
+.checklist-group-title {
+  font-size: 0.78rem; font-weight: 800; color: var(--primary-dark);
+  text-transform: uppercase; letter-spacing: 0.3px;
+  padding: 4px 2px; margin-top: 4px;
+  border-bottom: 1px solid var(--border-strong, var(--border));
+}
 @media (max-width: 720px) {
   .dash-cal-layout { grid-template-columns: 1fr; }
   .dash-checklist-body { max-height: 260px; }
@@ -554,6 +566,70 @@ tr:last-child td { border-bottom: none; }
 .sub-item-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 .empty-state { text-align: center; color: var(--text-muted); padding: 32px 12px; font-size: 0.95rem; }
+
+/* ---------- เทมเพลตพรีวิวผลงาน (จัดการ Layout — ตั้งแต่ V11.1) — ใช้ในหน้าโชว์ผลงานสาธารณะ view.html ---------- */
+.tpl-item { flex-direction: column; align-items: stretch; }
+.tpl-item .tpl-body { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; width: 100%; }
+
+.tpl-book-cover { perspective: 500px; display: flex; justify-content: center; padding: 16px 0 8px; }
+.tpl-book-cover .book { width: 108px; height: 132px; position: relative; transform: rotateY(-18deg) rotateX(4deg); transition: transform 0.2s ease; cursor: pointer; }
+.tpl-book-cover .book:hover { transform: rotateY(-30deg) rotateX(4deg); }
+.tpl-book-cover .book .page { position: absolute; inset: 0; background: #fff; border: 1px solid var(--border); border-radius: 2px 8px 8px 2px; box-shadow: 3px 4px 12px rgba(0,0,0,0.2); }
+.tpl-book-cover .book .page.p2 { transform: translateX(7px) rotateY(-8deg); opacity: 0.85; }
+.tpl-book-cover .book .page.p3 { transform: translateX(14px) rotateY(-16deg); opacity: 0.6; }
+.tpl-book-cover .book .spine { position: absolute; left: -5px; top: 0; bottom: 0; width: 7px; background: var(--primary-dark); border-radius: 4px 0 0 4px; }
+.tpl-book-cover .book .lines { position: absolute; top: 16px; left: 12px; right: 12px; }
+.tpl-book-cover .book .lines div { height: 4px; background: var(--surface-2); margin-bottom: 7px; border-radius: 2px; }
+.tpl-book-cover .book .lines div:nth-child(3) { width: 60%; }
+
+.tpl-frame-wrap { display: flex; justify-content: center; padding: 20px 0 8px; position: relative; }
+.tpl-frame-wrap .hang-rope { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 2px; height: 18px; background: #9aa4b8; }
+.tpl-frame-wrap .hang-pin { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+.tpl-frame { width: 140px; height: 140px; margin-top: 22px; background: #fff; border: 5px solid #fff; box-shadow: 0 6px 16px rgba(0,0,0,0.22), 0 0 0 1px var(--border); overflow: hidden; }
+.tpl-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tpl-frame .no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: #fff; }
+
+.tpl-research .rtag {
+  display: inline-block; background: var(--accent-light); color: var(--accent);
+  font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-bottom: 6px;
+}
+
+.tpl-pin-badge {
+  display: inline-flex; align-items: center; gap: 4px; background: var(--danger); color: #fff;
+  font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; margin-bottom: 6px;
+}
+.tpl-pin-item { border: 2px solid var(--primary); border-radius: 10px; padding: 14px 12px; margin-bottom: 4px; box-shadow: 0 4px 14px rgba(52,87,213,0.15); }
+
+/* ป็อปอัพ "เปิดอ่านแบบเล่มหนังสือ" — ใช้ตัวแสดงตัวอย่างของ Google Drive เอง (พลิกหน้าได้ในตัว) แทนการสร้างแอนิเมชันพลิกหน้าเอง */
+.tpl-book-lightbox { position: fixed; inset: 0; background: rgba(20,22,30,0.75); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 200; }
+.tpl-book-lightbox[hidden] { display: none; }
+.tpl-book-lightbox-box { background: var(--surface); border-radius: 12px; width: 100%; max-width: 760px; height: 86vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
+.tpl-book-lightbox-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.tpl-book-lightbox-head h3 { margin: 0; font-size: 0.98rem; }
+.tpl-book-lightbox-box iframe { flex: 1; width: 100%; border: 0; }
+
+/* ---------- หน้า "จัดการ Layout" (Super Admin เท่านั้น — ตั้งแต่ V11.1) ---------- */
+.layout-group-title {
+  font-weight: 700; font-size: 0.95rem; color: var(--primary-dark);
+  margin: 22px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--primary-light);
+}
+.layout-group-title:first-child { margin-top: 0; }
+.layout-row {
+  display: flex; align-items: center; gap: 10px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+}
+.layout-row .thumb {
+  width: 42px; height: 42px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary-light); color: var(--primary-dark);
+}
+.layout-row .info { flex: 1; min-width: 0; }
+.layout-row .info .t { font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layout-row .info .s { font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layout-row select { max-width: 180px; flex-shrink: 0; }
+.layout-row .arrows { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.layout-row .arrows button { width: 26px; height: 20px; line-height: 1; padding: 0; font-size: 0.7rem; }
+.layout-row .arrows button:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ---------- ประกาศจากฝ่ายวิชาการ (หน้าฮับ) — เด่นชัดขึ้น ตั้งแต่ V10.0 ---------- */
 #annCard { border-left: 5px solid var(--accent); background: var(--accent-light); }
@@ -726,6 +802,10 @@ tr:last-child td { border-bottom: none; }
   .sub-item { flex-direction: column; }
   .sub-item-actions { width: 100%; }
   .sub-item-actions .btn { width: 100%; }
+  .layout-row { flex-wrap: wrap; }
+  .layout-row .info { min-width: 130px; }
+  .layout-row select { max-width: 140px; }
+  .tpl-book-lightbox-box { height: 92vh; }
   .event-list-item { flex-direction: column; align-items: stretch; }
   .event-date-chip { align-self: flex-start; }
   .event-submit-btn { width: 100%; margin-top: 2px; }

@@ -25,6 +25,17 @@
 
   <div id="app-footer"></div>
 
+  <!-- ป็อปอัพ "เปิดอ่านแบบเล่มหนังสือ" (เทมเพลต 'book' — ตั้งแต่ V11.1) ใช้ตัวแสดงตัวอย่างของ Google Drive เอง (พลิกดูทีละหน้าได้ในตัว) -->
+  <div class="tpl-book-lightbox" id="bookLightbox" hidden>
+    <div class="tpl-book-lightbox-box">
+      <div class="tpl-book-lightbox-head">
+        <h3 id="bookLightboxTitle">📖 เปิดอ่าน</h3>
+        <button type="button" class="btn btn-ghost btn-sm" id="bookLightboxClose">ปิด ✕</button>
+      </div>
+      <iframe id="bookLightboxFrame" src="" title="พรีวิวเอกสาร"></iframe>
+    </div>
+  </div>
+
   <script src="assets/api.js"></script>
   <script>
     mountFooter();
@@ -32,6 +43,83 @@
     document.querySelector('.js-home-btn').addEventListener('click', function () { location.href = 'index.html'; });
 
     function getParam(name) { return new URLSearchParams(location.search).get(name); }
+
+    // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker โดยเจตนา ใช้แค่แปลง key เป็นชื่อภาษาไทยตอนแสดงผล
+    var CUSTOM_FIELD_DEFS = [
+      { key: 'eventDate', label: 'วันที่' },
+      { key: 'location', label: 'สถานที่อบรม' },
+      { key: 'award', label: 'รางวัล' },
+      { key: 'studentName', label: 'ชื่อนักเรียน' }
+    ];
+    function formatCustomFieldValuesLine(values) {
+      if (!values) return '';
+      var parts = CUSTOM_FIELD_DEFS.filter(function (d) { return values[d.key]; })
+        .map(function (d) { return d.label + ': ' + escapeHtml(values[d.key]); });
+      return parts.length > 0 ? '<div class="sub-item-meta">' + parts.join(' · ') + '</div>' : '';
+    }
+
+    // ---------- เทมเพลตพรีวิวผลงาน (จัดการ Layout — ตั้งแต่ V11.1) ----------
+    // '' = การ์ดมาตรฐานเดิม, 'book' = เปิดเป็นเล่มหนังสือ (ใช้ตัวแสดงตัวอย่าง /preview ของ Google Drive เอง แทนการสร้างแอนิเมชันพลิกหน้าเอง
+    // เพื่อลดความเสี่ยงเรื่อง CORS/ไลบรารีภายนอก — ตัวแสดงตัวอย่างของ Drive พลิกดูทีละหน้าได้ในตัวอยู่แล้ว), 'frame' = กรอบรูปห้อย (ใช้ directUrl),
+    // 'research' = การ์ดวิจัยในชั้นเรียน, 'pin' = พินผลงานเด่น
+    function renderItemHtml(it) {
+      var titleHtml = escapeHtml(it.title) +
+        (it.categoryName ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(it.categoryName) + ')</span>' : '');
+      var descHtml = it.description ? '<div class="sub-item-desc">' + escapeHtml(it.description) + '</div>' : '';
+      var customHtml = formatCustomFieldValuesLine(it.customFieldValues);
+      var metaHtml = '<div class="sub-item-meta">' + formatDateThai(it.uploadedAt) + '</div>';
+      var openFileBtn = it.fileUrl ? '<a class="btn btn-secondary btn-sm" href="' + it.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a>' : '';
+
+      if (it.displayTemplate === 'book') {
+        return '<div class="sub-item tpl-item">' +
+          '<div class="tpl-book-cover"><div class="book tpl-book-open" data-file-id="' + escapeHtml(it.fileId || '') + '" data-title="' + escapeHtml(it.title) + '">' +
+            '<div class="spine"></div><div class="page p3"></div><div class="page p2"></div>' +
+            '<div class="page p1"><div class="lines"><div></div><div></div><div></div></div></div>' +
+          '</div></div>' +
+          '<div class="tpl-body"><div><div class="sub-item-title">' + titleHtml + '</div>' + descHtml + customHtml + metaHtml + '</div>' +
+          '<div class="sub-item-actions"><button type="button" class="btn btn-primary btn-sm tpl-book-open" data-file-id="' + escapeHtml(it.fileId || '') + '" data-title="' + escapeHtml(it.title) + '">📖 เปิดอ่าน</button>' + openFileBtn + '</div></div>' +
+        '</div>';
+      }
+      if (it.displayTemplate === 'frame') {
+        var imgHtml = it.directUrl ? '<img src="' + escapeHtml(it.directUrl) + '" alt="' + escapeHtml(it.title) + '" />' : '<div class="no-img">🖼️</div>';
+        return '<div class="sub-item tpl-item">' +
+          '<div class="tpl-frame-wrap"><div class="hang-rope"></div><div class="hang-pin"></div><div class="tpl-frame">' + imgHtml + '</div></div>' +
+          '<div class="tpl-body"><div><div class="sub-item-title">' + titleHtml + '</div>' + descHtml + customHtml + metaHtml + '</div>' +
+          '<div class="sub-item-actions">' + openFileBtn + '</div></div>' +
+        '</div>';
+      }
+      if (it.displayTemplate === 'research') {
+        return '<div class="sub-item tpl-research">' +
+          '<div><span class="rtag">วิจัยในชั้นเรียน</span><div class="sub-item-title">' + titleHtml + '</div>' + descHtml + customHtml + metaHtml + '</div>' +
+          '<div class="sub-item-actions">' + openFileBtn + '</div>' +
+        '</div>';
+      }
+      if (it.displayTemplate === 'pin') {
+        return '<div class="sub-item tpl-pin-item">' +
+          '<div><span class="tpl-pin-badge">📌 ผลงานเด่น</span><div class="sub-item-title">' + titleHtml + '</div>' + descHtml + customHtml + metaHtml + '</div>' +
+          '<div class="sub-item-actions">' + openFileBtn + '</div>' +
+        '</div>';
+      }
+      return '<div class="sub-item">' +
+        '<div><div class="sub-item-title">' + titleHtml + '</div>' + descHtml + customHtml + metaHtml + '</div>' +
+        '<div class="sub-item-actions">' + openFileBtn + '</div>' +
+      '</div>';
+    }
+
+    function openBookLightbox(fileId, title) {
+      if (!fileId) return;
+      document.getElementById('bookLightboxTitle').textContent = '📖 ' + title;
+      document.getElementById('bookLightboxFrame').src = 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/preview';
+      document.getElementById('bookLightbox').hidden = false;
+    }
+    function closeBookLightbox() {
+      document.getElementById('bookLightbox').hidden = true;
+      document.getElementById('bookLightboxFrame').src = ''; // หยุดโหลด/เล่นเนื้อหาเมื่อปิดป็อปอัพ
+    }
+    document.getElementById('bookLightboxClose').addEventListener('click', closeBookLightbox);
+    document.getElementById('bookLightbox').addEventListener('click', function (e) {
+      if (e.target === document.getElementById('bookLightbox')) closeBookLightbox();
+    });
 
     async function load() {
       var username = getParam('u') || getParam('username') || getParam('slug');
@@ -57,17 +145,16 @@
         data.groups.forEach(function (g) {
           var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + g.semester;
           html += '<div class="card"><div class="year-group-title" style="margin-bottom:12px;">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
-          g.items.forEach(function (it) {
-            html += '<div class="sub-item">' +
-              '<div><div class="sub-item-title">' + escapeHtml(it.title) + '</div>' +
-              (it.description ? '<div class="sub-item-desc">' + escapeHtml(it.description) + '</div>' : '') +
-              '<div class="sub-item-meta">' + formatDateThai(it.uploadedAt) + '</div></div>' +
-              '<div class="sub-item-actions"><a class="btn btn-secondary btn-sm" href="' + it.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></div>' +
-              '</div>';
-          });
+          // ลำดับ g.items มาจาก Worker แล้ว (เรียงตาม display_order ที่ Super Admin จัดไว้ในหน้า "จัดการ Layout" — ตั้งแต่ V11.1)
+          g.items.forEach(function (it) { html += renderItemHtml(it); });
           html += '</div>';
         });
         content.innerHTML = html;
+        content.querySelectorAll('.tpl-book-open').forEach(function (el) {
+          el.addEventListener('click', function () {
+            openBookLightbox(el.getAttribute('data-file-id'), el.getAttribute('data-title'));
+          });
+        });
       } catch (err) {
         content.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }

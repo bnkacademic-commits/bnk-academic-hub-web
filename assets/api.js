@@ -10,7 +10,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 
 // เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
-var APP_VERSION = 'V10.1';
+var APP_VERSION = 'V11.1';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -248,7 +248,8 @@ async function submitWorkFile(file, meta) {
     semester: meta.semester,
     categoryId: meta.categoryId,
     title: meta.title,
-    description: meta.description
+    description: meta.description,
+    customFieldValues: meta.customFieldValues
   });
   var base64 = await fileToBase64(file);
   var relayText;
@@ -405,6 +406,38 @@ function buildCategoryColorMap(categories) {
   var map = {};
   (categories || []).forEach(function (c) { map[c.id] = c.color || '#3457d5'; });
   return map;
+}
+
+// ---------- ชุดไอคอนเส้น (SVG, currentColor) — ปรับ UX/UI ให้ดูทันสมัยขึ้น แทนอิโมจิในจุดหลักๆ ทั่วเว็บ (ตั้งแต่ V-ถัดไปหลัง V10.1) ----------
+// สไตล์เดียวกับ .refresh-icon เดิม (เส้น stroke-width 2, มุมมน) ใช้ currentColor เสมอเพื่อให้เปลี่ยนสีตามข้อความ/ปุ่มที่ห่ออยู่ได้อัตโนมัติทั้งโหมดสว่าง/มืด
+var ICON_PATHS = {
+  home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/>',
+  summary: '<path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+  announce: '<path d="M3 11v2a1 1 0 0 0 1 1h2l4.5 3.5V6.5L6 10H4a1 1 0 0 0-1 1z"/><path d="M17 8a4.5 4.5 0 0 1 0 8M20 5.5a8.5 8.5 0 0 1 0 13"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  tag: '<path d="M20.6 12.6 12 21.2 2.8 12 2.8 3.6 11.2 3.6z"/><circle cx="7" cy="8" r="1.4"/>',
+  users: '<circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16.5 5.2a3.2 3.2 0 0 1 0 6.2"/><path d="M15 14a6.5 6.5 0 0 1 6.5 6"/>',
+  trash: '<path d="M4 7h16"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/>',
+  edit: '<path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  link: '<path d="M9 15 15 9"/><path d="M11 6.5 12.6 4.9a3.5 3.5 0 0 1 5 5L16 11.4"/><path d="M13 17.5 11.4 19.1a3.5 3.5 0 0 1-5-5L8 12.6"/>',
+  checklist: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5"/><path d="m3 12 1.5 1.5L7 11"/><path d="m3 18 1.5 1.5L7 17"/>',
+  upload: '<path d="M12 16V4"/><path d="M6.5 9.5 12 4l5.5 5.5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 15-5-5-9 9"/>',
+  key: '<circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.7-8.7"/><path d="m16 6 2.5 2.5"/><path d="m13.5 8.5 2 2"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
+  history: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v5l3 2"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-4.4-4-7.4-9-7.4z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="11.5" cy="7.5" r="1"/><circle cx="15.5" cy="9" r="1"/>',
+  layout: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>',
+  pin: '<path d="M12 17v5"/><path d="M8 3h8l-1 7 3 3H6l3-3z"/>'
+};
+function icon(name, size) {
+  var s = size || 16;
+  var body = ICON_PATHS[name] || '';
+  return '<svg class="ui-icon" viewBox="0 0 24 24" width="' + s + '" height="' + s + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + '</svg>';
 }
 function formatDateThai(isoOrDateStr) {
   if (!isoOrDateStr) return '';
@@ -751,9 +784,11 @@ async function withProgress(title, workFn, opts) {
 function navLinksFor(session) {
   var links = [];
   if (session && session.role === 'admin') {
-    if (session.hasHub) links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard' });
-    links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary' });
-    links.push({ href: 'settings.html', label: 'ตั้งค่าเว็บ', key: 'settings' });
+    if (session.hasHub) links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard', icon: 'home' });
+    links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary', icon: 'summary' });
+    // จัดการ Layout: Super Admin เท่านั้น (role=admin, hasHub=false) — ตั้งแต่ V11.1
+    if (!session.hasHub) links.push({ href: 'layout.html', label: 'จัดการ Layout', key: 'layout', icon: 'layout' });
+    links.push({ href: 'settings.html', label: 'ตั้งค่าเว็บ', key: 'settings', icon: 'settings' });
   }
   return links;
 }
@@ -764,7 +799,7 @@ function mountChrome(activePage) {
   if (topbarRoot && session) {
     var links = navLinksFor(session);
     var navHtml = links.map(function (l) {
-      return '<a href="' + l.href + '" class="' + (l.key === activePage ? 'active' : '') + '">' + escapeHtml(l.label) + '</a>';
+      return '<a href="' + l.href + '" class="' + (l.key === activePage ? 'active' : '') + '">' + icon(l.icon, 15) + escapeHtml(l.label) + '</a>';
     }).join('');
     topbarRoot.innerHTML =
       '<div class="topbar">' +
@@ -784,9 +819,9 @@ function mountChrome(activePage) {
               '<div class="dd-header"><div class="dd-name">' + escapeHtml(session.name) + '</div><div class="dd-role">' + escapeHtml(roleLabel(session)) + '</div></div>' +
               '<div class="theme-switch-row"><span>Dark Mode</span><label class="switch"><input type="checkbox" id="themeToggleInput"><span class="slider"></span></label></div>' +
               '<div class="dd-divider"></div>' +
-              '<button class="dd-item" id="ddChangeAvatar" type="button"><span class="dd-icon">🖼️</span> เปลี่ยนรูปโปรไฟล์</button>' +
-              '<button class="dd-item" id="ddChangePw" type="button"><span class="dd-icon">🔑</span> เปลี่ยนรหัสผ่าน</button>' +
-              '<button class="dd-item danger" id="ddLogout" type="button"><span class="dd-icon">🚪</span> ออกจากระบบ</button>' +
+              '<button class="dd-item" id="ddChangeAvatar" type="button"><span class="dd-icon">' + icon('image', 16) + '</span> เปลี่ยนรูปโปรไฟล์</button>' +
+              '<button class="dd-item" id="ddChangePw" type="button"><span class="dd-icon">' + icon('key', 16) + '</span> เปลี่ยนรหัสผ่าน</button>' +
+              '<button class="dd-item danger" id="ddLogout" type="button"><span class="dd-icon">' + icon('logout', 16) + '</span> ออกจากระบบ</button>' +
             '</div>' +
           '</div>' +
         '</div>' +

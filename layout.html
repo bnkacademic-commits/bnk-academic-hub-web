@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>จัดการ Layout — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <div id="app-topbar"></div>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>จัดการ Layout หน้าโชว์ผลงานครู</h1>
+      <p>เฉพาะ Super Admin — จัดเรียงลำดับผลงานที่แสดงในหน้าโชว์ผลงานสาธารณะของครูแต่ละคน และเลือกรูปแบบพรีวิวให้เหมาะกับประเภทผลงาน (เช่น แผนการสอนเปิดเป็นเล่มหนังสือ, Infographic เป็นกรอบรูปห้อย)</p>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg> เลือกครูที่จะจัดการ Layout</div>
+      <div class="field-row" style="align-items:flex-end;">
+        <div class="field" style="flex:1;">
+          <label for="teacherSelect">เลือกครู</label>
+          <select id="teacherSelect"><option value="">— เลือกครู —</option></select>
+        </div>
+        <div class="field" style="flex-shrink:0;">
+          <a id="previewLinkBtn" class="btn btn-secondary" href="#" target="_blank" rel="noopener" hidden>ดูตัวอย่างหน้าโชว์ผลงาน</a>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:-6px;">
+        รูปแบบพรีวิว: 📄 การ์ดมาตรฐาน · 📖 เปิดเป็นเล่มหนังสือ (แผนการสอน/เอกสารหลายหน้า) · 🖼️ กรอบรูปห้อย (Infographic/ภาพ) · 🗂️ การ์ดวิจัย/ข้อมูล (วิจัยในชั้นเรียน) · 📌 พินผลงานเด่น
+      </div>
+    </div>
+
+    <div id="layoutWrap"></div>
+
+    <div id="saveBar" style="display:flex; justify-content:flex-end; gap:10px; margin: 6px 0 30px;" hidden>
+      <button class="btn btn-primary" id="saveLayoutBtn" type="button">บันทึก Layout</button>
+    </div>
+  </div>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/api.js"></script>
+  <script>
+    var session = requireAdminAccess();
+    if (session) mountChrome('layout');
+    // หน้านี้เป็นสิทธิ์ Super Admin เท่านั้นทั้งหมด (ต่างจากหน้าตั้งค่าเว็บที่บางแท็บเจ้าหน้าที่ฝ่ายวิชาการเข้าได้) — เด้งออกทันทีถ้าไม่ใช่ Super Admin
+    var isSuperAdminSession = !!session && session.role === 'admin' && !session.hasHub;
+    if (session && !isSuperAdminSession) {
+      location.href = homePageFor(session);
+    }
+
+    var TEMPLATE_OPTIONS = [
+      { key: '', label: '📄 การ์ดมาตรฐาน', emoji: '📄' },
+      { key: 'book', label: '📖 เปิดเป็นเล่มหนังสือ', emoji: '📖' },
+      { key: 'frame', label: '🖼️ กรอบรูปห้อย', emoji: '🖼️' },
+      { key: 'research', label: '🗂️ การ์ดวิจัย/ข้อมูล', emoji: '🗂️' },
+      { key: 'pin', label: '📌 พินผลงานเด่น', emoji: '📌' }
+    ];
+    function templateEmoji(key) {
+      var t = TEMPLATE_OPTIONS.filter(function (o) { return o.key === key; })[0];
+      return t ? t.emoji : '📄';
+    }
+
+    var allTeachers = [];
+    var allSubs = [];
+    var currentTeacherId = '';
+    var currentGroups = [];
+
+    async function loadInitial() {
+      var results = await Promise.all([apiCall('adminListUsers', {}), apiCall('adminListAllSubmissions', {})]);
+      // เฉพาะครู/เจ้าหน้าที่ที่มีหน้าฮับ (ผู้ใช้ที่มีสิทธิ์ส่งผลงาน) — รูปแบบเดียวกับ summary.html
+      allTeachers = results[0].filter(function (u) { return u.role === 'teacher' || u.hasHub; });
+      allSubs = results[1];
+      fillTeacherSelect();
+    }
+
+    function fillTeacherSelect() {
+      var sel = document.getElementById('teacherSelect');
+      var currentVal = sel.value;
+      sel.innerHTML = '<option value="">— เลือกครู —</option>' + allTeachers.map(function (u) {
+        return '<option value="' + u.id + '">' + escapeHtml(u.name) + ' (' + escapeHtml(u.username) + ')' + (u.status === 'archived' ? ' — พักการใช้งาน' : '') + '</option>';
+      }).join('');
+      if (allTeachers.some(function (u) { return u.id === currentVal; })) sel.value = currentVal;
+    }
+
+    // จัดกลุ่มผลงานของครูคนเดียวตามปีการศึกษา/ภาคเรียน แบบเดียวกับ groupSubmissions() ฝั่ง Worker (handlers/public.js)
+    // เพื่อให้ลำดับที่เห็นในหน้านี้ตรงกับหน้าโชว์ผลงานจริงเป๊ะ — order ที่บันทึกกลับไปคือลำดับ (0 เริ่ม) ภายในแต่ละกลุ่มเท่านั้น
+    function groupForTeacher(teacherId) {
+      var subs = allSubs.filter(function (s) { return s.teacherId === teacherId; });
+      var groups = {};
+      subs.forEach(function (s) {
+        var key = s.academicYear + '|' + s.semester;
+        if (!groups[key]) groups[key] = { academicYear: s.academicYear, semester: s.semester, items: [] };
+        groups[key].items.push({
+          submissionId: s.id, title: s.title, categoryName: s.categoryName,
+          displayOrder: s.displayOrder || 0, displayTemplate: s.displayTemplate || '', uploadedAt: s.uploadedAt
+        });
+      });
+      var list = Object.keys(groups).map(function (k) { return groups[k]; });
+      list.forEach(function (g) {
+        g.items.sort(function (a, b) {
+          var oa = a.displayOrder || 0, ob = b.displayOrder || 0;
+          if (oa !== ob) return oa - ob;
+          return String(b.uploadedAt).localeCompare(String(a.uploadedAt));
+        });
+      });
+      list.sort(function (a, b) {
+        if (a.academicYear !== b.academicYear) return String(b.academicYear).localeCompare(String(a.academicYear));
+        return String(b.semester).localeCompare(String(a.semester));
+      });
+      return list;
+    }
+
+    function renderGroups() {
+      var wrap = document.getElementById('layoutWrap');
+      var saveBar = document.getElementById('saveBar');
+      if (!currentTeacherId) { wrap.innerHTML = ''; saveBar.hidden = true; return; }
+      if (!currentGroups.length) {
+        wrap.innerHTML = '<div class="card"><div class="empty-state">ครูท่านนี้ยังไม่มีผลงานที่เผยแพร่</div></div>';
+        saveBar.hidden = true;
+        return;
+      }
+      saveBar.hidden = false;
+      var html = '<div class="card">';
+      currentGroups.forEach(function (g, gi) {
+        var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + g.semester;
+        html += '<div class="layout-group-title">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
+        g.items.forEach(function (it, ii) {
+          html += '<div class="layout-row">' +
+            '<div class="thumb">' + templateEmoji(it.displayTemplate) + '</div>' +
+            '<div class="info"><div class="t">' + escapeHtml(it.title) + '</div><div class="s">' +
+              (it.categoryName ? escapeHtml(it.categoryName) + ' · ' : '') + formatDateThai(it.uploadedAt) + '</div></div>' +
+            '<select class="tpl-select" data-gi="' + gi + '" data-ii="' + ii + '">' +
+              TEMPLATE_OPTIONS.map(function (o) { return '<option value="' + o.key + '"' + (o.key === it.displayTemplate ? ' selected' : '') + '>' + escapeHtml(o.label) + '</option>'; }).join('') +
+            '</select>' +
+            '<div class="arrows">' +
+              '<button type="button" class="btn btn-ghost btn-sm move-up" data-gi="' + gi + '" data-ii="' + ii + '"' + (ii === 0 ? ' disabled' : '') + ' title="เลื่อนขึ้น">▲</button>' +
+              '<button type="button" class="btn btn-ghost btn-sm move-down" data-gi="' + gi + '" data-ii="' + ii + '"' + (ii === g.items.length - 1 ? ' disabled' : '') + ' title="เลื่อนลง">▼</button>' +
+            '</div>' +
+          '</div>';
+        });
+      });
+      html += '</div>';
+      wrap.innerHTML = html;
+
+      wrap.querySelectorAll('.tpl-select').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          var gi = parseInt(sel.getAttribute('data-gi'), 10), ii = parseInt(sel.getAttribute('data-ii'), 10);
+          currentGroups[gi].items[ii].displayTemplate = sel.value;
+          var row = sel.closest('.layout-row');
+          if (row) row.querySelector('.thumb').textContent = templateEmoji(sel.value);
+        });
+      });
+      wrap.querySelectorAll('.move-up').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var gi = parseInt(btn.getAttribute('data-gi'), 10), ii = parseInt(btn.getAttribute('data-ii'), 10);
+          if (ii <= 0) return;
+          var arr = currentGroups[gi].items;
+          var tmp = arr[ii - 1]; arr[ii - 1] = arr[ii]; arr[ii] = tmp;
+          renderGroups();
+        });
+      });
+      wrap.querySelectorAll('.move-down').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var gi = parseInt(btn.getAttribute('data-gi'), 10), ii = parseInt(btn.getAttribute('data-ii'), 10);
+          var arr = currentGroups[gi].items;
+          if (ii >= arr.length - 1) return;
+          var tmp = arr[ii + 1]; arr[ii + 1] = arr[ii]; arr[ii] = tmp;
+          renderGroups();
+        });
+      });
+    }
+
+    document.getElementById('teacherSelect').addEventListener('change', function () {
+      currentTeacherId = this.value;
+      var previewBtn = document.getElementById('previewLinkBtn');
+      var t = allTeachers.filter(function (u) { return u.id === currentTeacherId; })[0];
+      if (t) {
+        previewBtn.hidden = false;
+        previewBtn.setAttribute('href', 'view.html?u=' + encodeURIComponent(t.username));
+      } else {
+        previewBtn.hidden = true;
+      }
+      currentGroups = currentTeacherId ? groupForTeacher(currentTeacherId) : [];
+      renderGroups();
+    });
+
+    document.getElementById('saveLayoutBtn').addEventListener('click', async function () {
+      var ok = await askConfirm('ต้องการบันทึกการจัดเรียง/รูปแบบผลงานของครูท่านนี้ใช่หรือไม่? การเปลี่ยนแปลงจะมีผลกับหน้าโชว์ผลงานสาธารณะทันที', 'ยืนยันการบันทึก Layout');
+      if (!ok) return;
+      var items = [];
+      currentGroups.forEach(function (g) {
+        g.items.forEach(function (it, idx) {
+          items.push({ submissionId: it.submissionId, order: idx, template: it.displayTemplate });
+        });
+      });
+      var result = await withProgress('กำลังบันทึก Layout', function () {
+        return apiCall('adminUpdateSubmissionLayout', { teacherId: currentTeacherId, items: items });
+      });
+      if (result.ok) {
+        currentGroups.forEach(function (g) {
+          g.items.forEach(function (it, idx) {
+            var s = allSubs.filter(function (x) { return x.id === it.submissionId; })[0];
+            if (s) { s.displayOrder = idx; s.displayTemplate = it.displayTemplate; }
+          });
+        });
+      }
+    });
+
+    window.__refreshPageData = async function () {
+      await loadInitial();
+      if (currentTeacherId) { currentGroups = groupForTeacher(currentTeacherId); }
+      renderGroups();
+    };
+
+    if (session && isSuperAdminSession) {
+      loadInitial().catch(function (err) {
+        document.getElementById('layoutWrap').innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      });
+    }
+  </script>
+</body>
+</html>

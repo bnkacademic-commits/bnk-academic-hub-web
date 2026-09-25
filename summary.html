@@ -36,7 +36,7 @@
       </div>
 
       <div class="card">
-        <div class="section-title">📊 รายการผลงานทั้งหมด</div>
+        <div class="section-title"><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M11 20V4"/><path d="M18 20v-7"/></svg> รายการผลงานทั้งหมด</div>
         <div class="filter-row">
           <input type="search" id="fSearch" placeholder="ค้นหาชื่อครู/ชื่อผลงาน" />
           <select id="fYear"><option value="">ทุกปีการศึกษา</option></select>
@@ -51,7 +51,7 @@
       </div>
 
       <div class="card">
-        <div class="section-title">🧑‍🏫 ใครยังไม่ส่งผลงานเลย</div>
+        <div class="section-title"><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16.5 5.2a3.2 3.2 0 0 1 0 6.2"/><path d="M15 14a6.5 6.5 0 0 1 6.5 6"/></svg> ใครยังไม่ส่งผลงานเลย</div>
         <div id="notSubmittedWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -60,7 +60,7 @@
     <div class="tab-panel" id="tab-byassignment">
       <div class="card">
         <div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">
-          <span>🗂️ สรุปสถานะการส่งงานแยกแต่ละงาน</span>
+          <span><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> สรุปสถานะการส่งงานแยกแต่ละงาน</span>
           <button class="btn btn-secondary btn-sm" id="btnExportReport" type="button">📄 รายงาน</button>
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">แสดงเฉพาะกำหนดการในปฏิทินที่ผูกกับ "ประเภทงาน" ไว้ — ไปเพิ่มได้ที่หน้าตั้งค่าเว็บ แท็บปฏิทิน — เลือกดร็อปดาวน์ด้านล่างเพื่อกรองดูทีละงาน</p>
@@ -292,7 +292,7 @@
         var missingCount = a.rows.filter(function (r) { return r.status === 'missing'; }).length;
         html += '<div class="card" style="margin-bottom:16px; box-shadow:none; border:1px solid var(--border);">' +
           '<div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">' +
-            '<span>📌 ' + escapeHtml(a.title) + '</span>' +
+            '<span>' + icon('tag', 16) + ' ' + escapeHtml(a.title) + '</span>' +
             '<span class="hint" style="margin:0;">กำหนดส่ง: ' + dateRange + '</span>' +
           '</div>' +
           '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.categoryName) + '</b> · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
