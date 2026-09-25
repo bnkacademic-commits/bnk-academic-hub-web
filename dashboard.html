@@ -22,29 +22,38 @@
     </div>
 
     <div class="card">
-      <div class="calendar-header">
-        <div class="section-title" style="margin-bottom:0;">📅 ปฏิทิน / กำหนดส่งงาน</div>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <button class="btn btn-ghost btn-sm" id="calPrev">‹</button>
-          <span class="month-label" id="calLabel">-</span>
-          <button class="btn btn-ghost btn-sm" id="calNext">›</button>
+      <!-- ปฏิทิน (ซ้าย) + กล่อง "หน้าผลงานของฉัน" (ขวา) วางติดกัน (ตั้งแต่ V9.8) -->
+      <div class="dash-cal-layout">
+        <div class="dash-cal-main">
+          <div class="calendar-header">
+            <div class="section-title" style="margin-bottom:0;">📅 ปฏิทิน / กำหนดส่งงาน</div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button class="btn btn-ghost btn-sm" id="calPrev">‹</button>
+              <span class="month-label" id="calLabel">-</span>
+              <button class="btn btn-ghost btn-sm" id="calNext">›</button>
+            </div>
+          </div>
+          <div class="term-badge" id="currentTermBadge">-</div>
+          <div class="calendar-grid" id="calGrid"></div>
+          <div id="calEventsUpcoming" style="margin-top:16px;"></div>
+        </div>
+        <div class="dash-cal-side">
+          <button class="action-tile action-tile-secondary" id="btnShowQr" type="button">
+            <span class="action-tile-icon">🔗</span>
+            <span class="action-tile-label">หน้าผลงานของฉัน</span>
+            <span class="action-tile-desc">ดู/แชร์ลิงก์และ QR ผลงานสาธารณะ</span>
+          </button>
         </div>
       </div>
-      <div class="calendar-grid" id="calGrid"></div>
-      <div id="calEventsUpcoming" style="margin-top:16px;"></div>
     </div>
 
     <div class="card">
       <div class="section-title">📤 ส่งงาน</div>
-      <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เลือกภาคเรียน ปีการศึกษา ประเภทงาน แล้วแนบไฟล์ได้สูงสุด 10 ไฟล์ต่อครั้ง · กดปุ่ม "หน้าผลงานของฉัน" เพื่อดูหรือแชร์ลิงก์/QR ผลงานสาธารณะแบบอ่านอย่างเดียว ไม่ต้องล็อกอิน</p>
-      <div class="action-tiles">
+      <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เลือกภาคเรียน ปีการศึกษา ประเภทงาน แล้วแนบไฟล์ได้สูงสุด 10 ไฟล์ต่อครั้ง</p>
+      <div class="action-tiles action-tiles-single">
         <button class="action-tile action-tile-primary" id="openUploadBtn" type="button">
           <span class="action-tile-icon">📤</span>
           <span class="action-tile-label">ส่งงาน</span>
-        </button>
-        <button class="action-tile action-tile-secondary" id="btnShowQr" type="button">
-          <span class="action-tile-icon">🔗</span>
-          <span class="action-tile-label">หน้าผลงานของฉัน</span>
         </button>
       </div>
     </div>
@@ -497,12 +506,14 @@
       renderCalendar();
     });
 
+    document.getElementById('currentTermBadge').textContent = currentTermLabel();
     loadCalendar();
     refreshCategoryColors();
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
     window.__refreshPageData = function () {
       resetSettingsCache();
+      document.getElementById('currentTermBadge').textContent = currentTermLabel();
       return Promise.all([applyBranding(), loadHubAnnouncements(), loadSubmissions(), loadCalendar(), refreshCategoryColors()]);
     };
   </script>

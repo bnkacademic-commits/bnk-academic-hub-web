@@ -10,7 +10,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 
 // เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
-var APP_VERSION = 'V9.7';
+var APP_VERSION = 'V9.8';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -433,6 +433,12 @@ function currentAcademicTerm() {
   if (month === 11 || month === 12) return { year: String(beYear), semester: '2' };
   if (month >= 1 && month <= 3) return { year: String(beYear - 1), semester: '2' };
   return { year: String(beYear - 1), semester: 'summer' }; // เมษายน
+}
+// ข้อความป้ายบอก "ตอนนี้คือปีการศึกษา/ภาคเรียนอะไร" จาก currentAcademicTerm() — ใช้แสดงในปฏิทินหน้าฮับครู (ตั้งแต่ V9.8)
+function currentTermLabel() {
+  var t = currentAcademicTerm();
+  var semText = t.semester === 'summer' ? 'ภาคฤดูร้อน' : ('ภาคเรียนที่ ' + t.semester);
+  return 'ตอนนี้: ' + semText + ' ปีการศึกษา ' + t.year;
 }
 function showToast(msg, isError) {
   var el = document.getElementById('toast');

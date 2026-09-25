@@ -90,8 +90,9 @@
   font-family: "TH Sarabun New", "Sarabun", "Noto Sans Thai", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color-scheme: light;
 }
-/* Sarabun/TH Sarabun New แสดงตัวอักษรเล็กกว่าฟอนต์ระบบทั่วไปที่ font-size เท่ากัน (เป็นลักษณะฟอนต์เอกสารราชการไทย) — ขยับขนาดพื้นฐานขึ้นเล็กน้อยเพื่อให้อ่านง่ายเท่าเดิม (ตั้งแต่ V9.6) */
-html { font-size: 17px; }
+/* Sarabun/TH Sarabun New แสดงตัวอักษรเล็กกว่าฟอนต์ระบบทั่วไปที่ font-size เท่ากัน (เป็นลักษณะฟอนต์เอกสารราชการไทย) — ขยับขนาดพื้นฐานขึ้นเล็กน้อยเพื่อให้อ่านง่ายเท่าเดิม (ตั้งแต่ V9.6)
+   ผู้ใช้แจ้งว่าตัวหนังสือยังเล็กเกินไป จึงขยับขนาดพื้นฐานขึ้นอีกครั้งเป็น 19px (ตั้งแต่ V9.8) — ทุกจุดในเว็บที่กำหนดขนาดด้วย rem จะขยายตามไปด้วยโดยอัตโนมัติ */
+html { font-size: 19px; }
 
 :root[data-theme="dark"] {
   --bg: #0e1220;
@@ -437,6 +438,8 @@ input[type="color"] {
 
 /* ---------- กล่องปุ่มหลัก 2 ช่องติดกัน เช่น "ส่งงาน" / "หน้าผลงานของฉัน" (ตั้งแต่ V9.7) ---------- */
 .action-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* ปุ่มเดี่ยว (เช่น "ส่งงาน" หลังย้ายปุ่ม "หน้าผลงานของฉัน" ไปข้างปฏิทินแล้ว) ยังคงหน้าตากล่องใหญ่เหมือนเดิมแต่เต็มความกว้าง (ตั้งแต่ V9.8) */
+.action-tiles.action-tiles-single { grid-template-columns: 1fr; }
 .action-tile {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 6px; padding: 18px 10px; min-height: 84px;
@@ -445,11 +448,30 @@ input[type="color"] {
   cursor: pointer; transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 .action-tile-icon { font-size: 1.6rem; line-height: 1; }
+.action-tile-desc { font-size: 0.78rem; font-weight: 500; opacity: 0.85; color: inherit; }
 .action-tile-primary { background: var(--primary); color: #fff; }
 .action-tile-primary:hover { background: var(--primary-dark); }
 .action-tile-secondary { background: var(--primary-light); color: var(--primary-dark); }
 .action-tile-secondary:hover { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
 .action-tile:active { transform: scale(0.97); }
+
+/* ---------- ปฏิทิน + กล่อง "หน้าผลงานของฉัน" วางเป็น 2 คอลัมน์ติดกัน (ตั้งแต่ V9.8) ---------- */
+/* คอลัมน์ซ้าย = ปฏิทิน, คอลัมน์ขวา = กล่อง "หน้าผลงานของฉัน" (ย้ายขึ้นมาจากการ์ด "ส่งงาน" เดิม) — ซ้อนกันเป็นแนวตั้งอัตโนมัติเมื่อจอแคบกว่า 720px */
+.dash-cal-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(148px, 210px); gap: 18px; align-items: stretch; }
+.dash-cal-side { display: flex; }
+.dash-cal-side .action-tile { flex: 1; height: 100%; }
+@media (max-width: 720px) {
+  .dash-cal-layout { grid-template-columns: 1fr; }
+  .dash-cal-side .action-tile { min-height: 64px; flex-direction: row; }
+}
+
+/* ---------- ป้ายบอกปีการศึกษา/ภาคเรียนปัจจุบัน (ตั้งแต่ V9.8) ---------- */
+.term-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent-light); color: var(--accent);
+  padding: 6px 13px; border-radius: 999px; font-size: 0.86rem; font-weight: 700;
+  margin: 10px 0 14px;
+}
 
 .error-box {
   background: var(--danger-light);
@@ -514,12 +536,12 @@ tr:last-child td { border-bottom: none; }
 /* ---------- Calendar ---------- */
 .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .calendar-header .month-label { font-weight: 700; }
-/* ปฏิทินย่อขนาดลงตั้งแต่ V9.7 (เดิมช่องใหญ่กว่านี้) แต่ยังคงรายละเอียดครบ: เลขวันที่, วงแหวนวันนี้, พื้นหลังวันที่มีกำหนดการ, จุดสีตามประเภทงาน */
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-.calendar-grid .dow { text-align: center; font-size: 0.68rem; color: var(--text-muted); font-weight: 700; padding-bottom: 3px; }
+/* ปฏิทินย่อขนาดลงตั้งแต่ V9.7 และย่อลงอีกใน V9.8 (ตอนนี้อยู่ข้างกล่อง "หน้าผลงานของฉัน" จึงมีพื้นที่แคบลง) — ย่อเฉพาะขนาดช่อง/ระยะห่าง ไม่ลดขนาดตัวอักษร เพราะฐาน font-size ทั้งเว็บขยับใหญ่ขึ้นใน V9.8 แล้ว ยังคงรายละเอียดครบ: เลขวันที่, วงแหวนวันนี้, พื้นหลังวันที่มีกำหนดการ, จุดสีตามประเภทงาน */
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.calendar-grid .dow { text-align: center; font-size: 0.68rem; color: var(--text-muted); font-weight: 700; padding-bottom: 2px; }
 .calendar-cell {
-  aspect-ratio: 1 / 1; min-height: 28px;
-  border-radius: 6px; padding: 2px 3px; font-size: 0.7rem;
+  aspect-ratio: 1 / 1; min-height: 22px;
+  border-radius: 5px; padding: 1px 2px; font-size: 0.7rem;
   background: var(--surface-2); position: relative; color: var(--text);
 }
 .calendar-cell.empty { background: transparent; }
@@ -527,8 +549,8 @@ tr:last-child td { border-bottom: none; }
 .calendar-cell.has-event { background: var(--primary-light); cursor: pointer; }
 .calendar-cell .day-num { font-weight: 600; }
 .calendar-cell .event-dot {
-  width: 5px; height: 5px; border-radius: 50%; background: var(--primary);
-  position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 50%; background: var(--primary);
+  position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
 }
 .event-list-item { display: flex; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); align-items: flex-start; }
 .event-list-item:last-child { border-bottom: none; }
