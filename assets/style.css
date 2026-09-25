@@ -463,8 +463,8 @@ input[type="color"] {
 /* คอลัมน์ซ้าย = ปฏิทิน, คอลัมน์ขวา = ปุ่ม "หน้าผลงานของฉัน" ขนาดเล็กอยู่บนสุด + เช็คลิสต์สถานะการส่งงานอยู่ด้านล่าง — ซ้อนกันเป็นแนวตั้งอัตโนมัติเมื่อจอแคบกว่า 720px */
 .dash-cal-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(168px, 240px); gap: 18px; align-items: stretch; }
 .dash-cal-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
-/* ปุ่ม "หน้าผลงานของฉัน" เล็กลงมาก (ประมาณ 1/6 ของความสูงเดิมที่เคยเต็มคอลัมน์) วางไว้บนสุดของคอลัมน์ขวา (ตั้งแต่ V9.9) */
-.dash-portfolio-btn { width: 100%; flex-shrink: 0; }
+/* ปุ่ม "หน้าผลงานของฉัน" วางไว้บนสุดของคอลัมน์ขวา (ตั้งแต่ V9.9) — ขยายให้สูงขึ้นอีกครั้งตั้งแต่ V-ถัดไปหลัง V10.0 ตามที่ผู้ใช้แจ้งว่าเล็กไป */
+.dash-portfolio-btn { width: 100%; flex-shrink: 0; min-height: 66px; padding: 16px 14px; font-size: 1.05rem; }
 .dash-checklist { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .dash-checklist-title { font-size: 0.86rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; flex-shrink: 0; }
 .dash-checklist-body { flex: 1; overflow-y: auto; min-height: 0; }
@@ -566,31 +566,36 @@ tr:last-child td { border-bottom: none; }
 /* ---------- Calendar ---------- */
 .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .calendar-header .month-label { font-weight: 700; }
-/* ปฏิทินย่อขนาดลงตั้งแต่ V9.7 และย่อลงอีกใน V9.8 (ตอนนี้อยู่ข้างกล่อง "หน้าผลงานของฉัน" จึงมีพื้นที่แคบลง) ยังคงรายละเอียดครบ: เลขวันที่, วงแหวนวันนี้, พื้นหลังวันที่มีกำหนดการ, จุดสีตามประเภทงาน
-   ตั้งแต่ V10.0: ปรับใหม่ตามที่ผู้ใช้ขอ — เลขวันที่ย้ายไปมุมซ้ายบนของช่อง (จากที่เคยอยู่กึ่งกลางเป็นวงกลม) และจุดสีเปลี่ยนเป็น "แถบสี" ที่ลากยาวตามช่วงวันที่ของกำหนดการ
-   (วันเริ่มต้นแถบจะมนหัวซ้าย วันสุดท้ายมนหัวขวา ให้ดูเป็นแท่งเดียวต่อเนื่องกันข้ามวัน) แทนจุดกลมจุดเดียวแบบเดิม รองรับแสดงได้สูงสุด 2 แถบซ้อนกันต่อวัน (เกินกว่านั้นจะย่อไม่แสดงเพิ่ม) */
+/* ปฏิทินสไตล์ปฏิทินทั่วไป (Google Calendar-like, ปรับตามที่ผู้ใช้ขอหลัง V10.0): ช่องวันสูงขึ้นพอให้เห็นชื่อกำหนดการเป็นตัวหนังสือในแถบสี
+   ไม่ใช่แค่เส้นสีบางๆ อีกต่อไป — วันนี้แสดงเป็นวงกลมสีล้อมตัวเลขวันที่ (แทนกรอบทั้งช่องแบบเดิม) แถบกำหนดการลากยาวเต็มความกว้างช่อง (ไม่มีระยะขอบซ้าย-ขวา)
+   ต่อเนื่องข้ามวันตามช่วงวันที่จริง มนหัวเฉพาะวันเริ่ม/วันจบเพื่อให้ดูเป็นแท่งเดียว รองรับแสดงได้สูงสุด 2 แถบซ้อนกันต่อวัน (เกินกว่านั้นจะย่อไม่แสดงเพิ่ม) */
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 .calendar-grid .dow { text-align: center; font-size: 0.74rem; color: var(--text-muted); font-weight: 700; padding-bottom: 3px; }
 .calendar-cell {
-  aspect-ratio: 1 / 1; min-height: 38px;
-  border-radius: 5px; padding: 2px 2px 3px; font-size: 0.7rem;
+  min-height: 84px;
+  border-radius: 6px; padding: 0 0 3px; font-size: 0.7rem;
   background: var(--surface-2); position: relative; color: var(--text);
-  display: block;
+  display: block; overflow: hidden;
 }
 .calendar-cell.empty { background: transparent; }
-.calendar-cell.today { box-shadow: inset 0 0 0 2px var(--primary); }
 .calendar-cell.has-event { cursor: pointer; }
 .calendar-cell .day-num {
-  position: absolute; top: 2px; left: 4px; z-index: 2;
-  font-weight: 700; font-size: 0.92rem; line-height: 1; color: var(--text);
+  position: absolute; top: 4px; left: 4px; z-index: 2;
+  width: 21px; height: 21px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; font-weight: 700; font-size: 0.82rem; line-height: 1; color: var(--text);
 }
+.calendar-cell .day-num.today { background: var(--primary); color: #fff; }
 .calendar-cell .event-bars {
-  position: absolute; left: 0; right: 0; bottom: 3px; z-index: 1;
-  display: flex; flex-direction: column; gap: 2px;
+  position: absolute; left: 0; right: 0; top: 27px; bottom: 2px; z-index: 1;
+  display: flex; flex-direction: column; gap: 2px; overflow: hidden;
 }
-.event-bar { height: 5px; background: var(--primary); }
-.event-bar.bar-start { margin-left: 3px; border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
-.event-bar.bar-end { margin-right: 3px; border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
+.event-bar {
+  height: 16px; line-height: 16px; background: var(--primary); color: #fff;
+  font-size: 0.62rem; font-weight: 600; padding: 0 4px;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.event-bar.bar-start { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+.event-bar.bar-end { border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
 .event-list-item { display: flex; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); align-items: flex-start; }
 .event-list-item:last-child { border-bottom: none; }
 .event-date-chip {
@@ -599,12 +604,12 @@ tr:last-child td { border-bottom: none; }
 }
 .event-submit-btn { align-self: center; flex-shrink: 0; }
 
-/* "กำหนดการใกล้ถึง" ท้ายปฏิทิน: ย้ายออกมาเป็นแถวเต็มความกว้างของการ์ด (นอก .dash-cal-layout) ตั้งแต่ V10.0 ตามที่ผู้ใช้ขอ
-   จอกว้างพอ (>=640px) จะไล่เรียงเป็นหลายคอลัมน์อัตโนมัติ ใช้พื้นที่ที่กว้างขึ้นให้คุ้ม แทนที่จะเรียงเป็นแถวเดียวยาวๆ เหมือนก่อนหน้า */
-.cal-upcoming-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
-.cal-upcoming-grid .event-list-item {
-  border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 0;
-}
+/* "กำหนดการ" (เดิม "กำหนดการใกล้ถึง") ท้ายปฏิทิน: ย้ายออกมาเป็นแถวเต็มความกว้างของการ์ด (นอก .dash-cal-layout) ตั้งแต่ V10.0 ตามที่ผู้ใช้ขอ
+   เดิมทดลองไล่เรียงเป็นหลายคอลัมน์อัตโนมัติเมื่อจอกว้าง แต่ทำให้ลำดับรายการดูสลับสับสน (ผู้ใช้แจ้งว่าเป็นบั๊ก) จึงแก้กลับมาเป็นรายการแถวเดียวเรียงลงมาตามลำดับวันที่เหมือนก่อน V10.0
+   เหลือไว้แค่ส่วนที่ยังเต็มความกว้างการ์ด (ไม่ถูกบีบอยู่ในคอลัมน์แคบข้างปฏิทินเหมือนก่อนหน้านั้น) */
+.cal-upcoming-grid { display: block; }
+.cal-upcoming-grid .event-list-item { border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 10px 4px; margin: 0; }
+.cal-upcoming-grid .event-list-item:last-child { border-bottom: none; }
 
 /* ---------- Modal ---------- */
 .modal-backdrop {

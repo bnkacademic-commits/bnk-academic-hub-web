@@ -44,7 +44,7 @@
           </div>
         </div>
       </div>
-      <!-- "กำหนดการใกล้ถึง" ย้ายออกมานอกกริด 2 คอลัมน์ด้านบน ให้ยาวเต็มความกว้างของการ์ด (ตั้งแต่ V10.0 ตามที่ผู้ใช้ขอ) -->
+      <!-- "กำหนดการ" (เดิมชื่อ "กำหนดการใกล้ถึง") ย้ายออกมานอกกริด 2 คอลัมน์ด้านบน ให้ยาวเต็มความกว้างของการ์ด แต่ยังเรียงลงมาเป็นแถวเดียวตามเดิม (ตั้งแต่ V10.0 ตามที่ผู้ใช้ขอ) -->
       <div id="calEventsUpcoming" style="margin-top:18px;"></div>
     </div>
 
@@ -510,24 +510,28 @@
       }
       for (var d = 1; d <= daysInMonth; d++) {
         var dateStr = calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(d);
+        var isToday = dateStr === todayStr;
         var cell = document.createElement('div');
         cell.className = 'calendar-cell';
-        if (dateStr === todayStr) cell.className += ' today';
         var evs = eventsOnDate(dateStr);
         if (evs.length > 0) { cell.className += ' has-event'; cell.title = evs.map(function (e) { return e.title; }).join(', '); }
-        // แถบสีของกำหนดการ (ตั้งแต่ V10.0): ลากยาวตามช่วงวันที่ (date-endDate) แทนจุดกลมเดิม — วันเริ่ม/วันจบของแต่ละกำหนดการจะมนหัวให้ดูต่อเนื่องกันเป็นแท่งเดียว
-        // ไม่ผูกประเภทงาน (กำหนดการทั่วไป) ใช้สีเทาอ่อนแทนสีประเภทงาน
+        // ตำแหน่งคอลัมน์ (0=อาทิตย์...6=เสาร์) ของวันนี้ในกริด — ใช้ตัดสินว่าต้องแสดงชื่อกำหนดการซ้ำในแถบหรือไม่ (ดูด้านล่าง)
+        var colIndex = (firstDay + d - 1) % 7;
+        // แถบสีของกำหนดการ (ตั้งแต่ V10.0, ปรับสไตล์ให้เหมือนปฏิทินทั่วไปอีกครั้งตามที่ผู้ใช้ขอ): ลากยาวเต็มความกว้างช่องแบบไร้ขอบ (ชิดขอบซ้าย-ขวาของช่อง)
+        // ต่อเนื่องข้ามวันตามช่วงวันที่ (date-endDate) มนหัวเฉพาะวันเริ่ม/วันจบจริงเพื่อให้ดูเป็นแท่งเดียวยาวต่อกัน และแสดง "ชื่อกำหนดการ" เป็นตัวหนังสือในแถบด้วย
+        // (แสดงชื่อเฉพาะวันเริ่มต้นจริง หรือวันแรกของแถวใหม่ที่แถบยังลากต่อเนื่องมา ไม่งั้นจะซ้ำทุกวัน) ไม่ผูกประเภทงาน (กำหนดการทั่วไป) ใช้สีเทาอ่อนแทนสีประเภทงาน
         var barsHtml = '';
         evs.slice().sort(function (a, b) { return (laneOf[a.id] || 0) - (laneOf[b.id] || 0); }).forEach(function (e) {
           var lane = laneOf[e.id] || 0;
           if (lane >= MAX_CALENDAR_LANES) return;
           var isStart = dateStr === e.date;
           var isEnd = dateStr === (e.endDate || e.date);
+          var showLabel = isStart || colIndex === 0;
           var barColor = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
           var cls = 'event-bar' + (isStart ? ' bar-start' : '') + (isEnd ? ' bar-end' : '');
-          barsHtml += '<div class="' + cls + '" style="background:' + barColor + ';"></div>';
+          barsHtml += '<div class="' + cls + '" style="background:' + barColor + ';" title="' + escapeHtml(e.title) + '">' + (showLabel ? escapeHtml(e.title) : '') + '</div>';
         });
-        cell.innerHTML = '<div class="day-num">' + d + '</div>' + (barsHtml ? '<div class="event-bars">' + barsHtml + '</div>' : '');
+        cell.innerHTML = '<div class="day-num' + (isToday ? ' today' : '') + '">' + d + '</div>' + (barsHtml ? '<div class="event-bars">' + barsHtml + '</div>' : '');
         grid.appendChild(cell);
       }
 
@@ -542,8 +546,9 @@
       if (upcoming.length === 0) {
         upcomingBox.innerHTML = '<div class="empty-state">ไม่มีกำหนดการในช่วงนี้</div>';
       } else {
-        // ตั้งแต่ V10.0: ครอบรายการด้วย .cal-upcoming-grid ให้ยาวเต็มความกว้างการ์ด และไล่เรียงหลายคอลัมน์อัตโนมัติเมื่อจอกว้างพอ
-        upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดการใกล้ถึง</div><div class="cal-upcoming-grid">' + upcoming.map(function (e) {
+        // ครอบรายการด้วย .cal-upcoming-grid ให้ยาวเต็มความกว้างการ์ด (ตั้งแต่ V10.0) — เรียงลงมาเป็นแถวเดียวตามลำดับวันที่เหมือนเดิม
+        // (V10.0 ตอนแรกทำเป็นกริดหลายคอลัมน์ ทำให้ลำดับดูสลับสับสน ผู้ใช้แจ้งว่าเป็นบั๊ก จึงแก้กลับมาเรียงแนวตั้งตามเดิม เหลือแค่ความกว้างที่ยังเต็มการ์ดอยู่)
+        upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดการ</div><div class="cal-upcoming-grid">' + upcoming.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
           var submitBtn = e.categoryId
