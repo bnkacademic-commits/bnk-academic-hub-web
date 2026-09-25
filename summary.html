@@ -127,6 +127,18 @@
 
     var allSubs = [];
     var allUsers = [];
+    // { categoryId: color } — ใช้แสดงจุดสีหน้าชื่อประเภทงานในตาราง/การ์ดของหน้านี้ (ตั้งแต่ V9.7)
+    // ใช้ calendarListWorkCategories แทน adminListWorkCategories เพราะหน้านี้เข้าได้ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการ
+    // (adminListWorkCategories จำกัดเฉพาะ Super Admin เท่านั้น ใช้ตรงนี้จะพังสำหรับบัญชีเจ้าหน้าที่)
+    var categoryColorMap = {};
+    async function refreshCategoryColors() {
+      try {
+        var cats = await apiCall('calendarListWorkCategories', {});
+        categoryColorMap = buildCategoryColorMap(cats);
+        renderTable();
+        renderAssignmentSummary();
+      } catch (err) { /* ไม่ต้องแจ้ง error — แค่ตกไปใช้สีเริ่มต้นแทน */ }
+    }
 
     async function loadData() {
       var wrap = document.getElementById('subTableWrap');
@@ -192,7 +204,7 @@
         html += '<tr>' +
           '<td>' + escapeHtml(s.teacherName) + '</td>' +
           '<td>' + escapeHtml(s.title) + '</td>' +
-          '<td>' + (s.categoryName ? '<span class="badge badge-admin">' + escapeHtml(s.categoryName) + '</span>' : '-') + '</td>' +
+          '<td>' + (s.categoryName ? '<span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' : '-') + '</td>' +
           '<td>' + escapeHtml(s.academicYear) + ' / ' + semLabel + '</td>' +
           '<td>' + formatDateTimeThai(s.uploadedAt) + '</td>' +
           '<td><a class="btn btn-secondary btn-sm" href="' + s.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></td>' +
@@ -221,7 +233,7 @@
 
     // ---------- สรุปแยกแต่ละงาน ----------
     function statusBadge(status) {
-      if (status === 'onTime') return '<span class="badge badge-ontime">ส่งปกติ</span>';
+      if (status === 'onTime') return '<span class="badge badge-ontime">ส่งตามกำหนด</span>';
       if (status === 'late') return '<span class="badge badge-late">ส่งเกินกำหนด</span>';
       return '<span class="badge badge-missing">ยังไม่ส่ง</span>';
     }
@@ -283,8 +295,8 @@
             '<span>📌 ' + escapeHtml(a.title) + '</span>' +
             '<span class="hint" style="margin:0;">กำหนดส่ง: ' + dateRange + '</span>' +
           '</div>' +
-          '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + escapeHtml(a.categoryName) + '</b> · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
-            ' · <span class="badge badge-ontime">ปกติ ' + onTimeCount + '</span> <span class="badge badge-late">เกินกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
+          '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.categoryName) + '</b> · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
+            ' · <span class="badge badge-ontime">ตามกำหนด ' + onTimeCount + '</span> <span class="badge badge-late">เกินกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
           '</div>' +
           '<div class="table-wrap"><table><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th></tr></thead><tbody>';
         a.rows.forEach(function (r) {
@@ -357,6 +369,7 @@
     document.getElementById('exportAsImageBtn').addEventListener('click', function () { exportReport('image'); });
 
     loadTabIfNeeded('all');
+    refreshCategoryColors();
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
     window.__refreshPageData = function () {
@@ -364,7 +377,7 @@
       var activeTabKey = activeBtn ? activeBtn.getAttribute('data-tab') : 'all';
       resetSettingsCache();
       _tabLoaded = {}; // เคลียร์สถานะทุกแท็บ ให้แท็บอื่นที่เคยเปิดไปแล้วโหลดข้อมูลใหม่ตอนสลับกลับไปดูอีกครั้ง
-      return Promise.all([applyBranding(), loadTabIfNeeded(activeTabKey)]);
+      return Promise.all([applyBranding(), loadTabIfNeeded(activeTabKey), refreshCategoryColors()]);
     };
   </script>
 </body>

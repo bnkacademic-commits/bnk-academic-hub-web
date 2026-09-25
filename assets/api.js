@@ -10,7 +10,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 
 // เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
-var APP_VERSION = 'V9.5';
+var APP_VERSION = 'V9.7';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -167,7 +167,7 @@ async function getSiteSettings() {
   if (_settingsCache) return _settingsCache;
   if (!_settingsPromise) {
     _settingsPromise = apiCall('publicGetSettings', {}).catch(function () {
-      return { siteName: 'BNKAcademicHub', iconDataUrl: '', logoDataUrl: '' };
+      return { siteName: 'BNKAcademicHub', iconDataUrl: '', logoDataUrl: '', summerEnabled: true };
     });
   }
   _settingsCache = await _settingsPromise;
@@ -195,7 +195,30 @@ async function applyBranding() {
   document.querySelectorAll('.js-brand-logo-lg').forEach(function (el) {
     if (s.logoDataUrl) el.outerHTML = '<img src="' + s.logoDataUrl + '" class="brand-logo-lg" alt="โลโก้" />';
   });
+  applySummerVisibility(s);
   return s;
+}
+
+// ซ่อนตัวเลือก "ภาคฤดูร้อน" ออกจากทุก <select> ในหน้า ถ้า Super Admin ปิดใช้งานไว้ (บางโรงเรียนไม่มีภาคเรียนนี้) — ตั้งแต่ V9.6
+// ทำงานได้ทั้งสองทาง (ปิด → เอาออก, เปิดกลับมา → ใส่คืน) โดยจำ select ที่เคยมีตัวเลือกนี้ไว้ด้วย data-had-summer เพื่อใส่คืนถูกตำแหน่ง (ภาคฤดูร้อนเป็นตัวเลือกสุดท้ายเสมอในทุก select ของระบบ)
+// หมายเหตุ: ถ้า select นั้นกำลังเลือกค่า "summer" อยู่พอดี (เช่นกำลังกรองข้อมูลเก่าที่เคยเป็นภาคฤดูร้อน) จะไม่ตัดตัวเลือกออก เพื่อไม่ให้ค่าที่เลือกอยู่หายไปเฉยๆ —
+// ข้อมูลเก่าที่เคยบันทึกเป็นภาคฤดูร้อนไว้ก่อนปิดตัวเลือกนี้ ยังแสดงผลได้ตามปกติเสมอ เพราะป้ายกำกับ "ภาคฤดูร้อน" ที่แสดงในตาราง/การ์ดต่างๆ คำนวณจากค่าที่บันทึกไว้ ไม่ได้อิงจาก <option> นี้
+function applySummerVisibility(s) {
+  var enabled = !s || s.summerEnabled !== false;
+  document.querySelectorAll('select').forEach(function (sel) {
+    var opt = sel.querySelector('option[value="summer"]');
+    if (enabled) {
+      if (!opt && sel.getAttribute('data-had-summer') === '1') {
+        var newOpt = document.createElement('option');
+        newOpt.value = 'summer';
+        newOpt.textContent = 'ภาคฤดูร้อน';
+        sel.appendChild(newOpt);
+      }
+    } else if (opt) {
+      sel.setAttribute('data-had-summer', '1');
+      if (sel.value !== 'summer') opt.remove();
+    }
+  });
 }
 
 // ---------- Helpers ----------
@@ -371,6 +394,17 @@ function avatarInnerHtml(avatarUrl) {
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+// จุดสีเล็กๆ แสดงหน้าชื่อประเภทงาน (ตั้งแต่ V9.7) — ใช้ร่วมกันทุกหน้าที่แสดงชื่อประเภทงาน (Hub ครู/สรุปรวม/ตั้งค่าเว็บ)
+function categoryDotHtml(color) {
+  return '<span class="category-dot" style="background:' + escapeHtml(color || '#3457d5') + ';"></span>';
+}
+// สร้าง map { categoryId: color } จากรายการประเภทงาน — ใช้เมื่อรายการที่จะแสดง (ผลงาน/กำหนดการ) มีแค่ categoryId/categoryName
+// (ไม่ได้เก็บสีติดไปด้วยตอนบันทึก) ให้ดึงสีปัจจุบันของประเภทงานนั้นมาแสดงแทนเสมอ — สีจะอัพเดตทันทีทุกจุดถ้า Super Admin เปลี่ยนสีทีหลัง
+function buildCategoryColorMap(categories) {
+  var map = {};
+  (categories || []).forEach(function (c) { map[c.id] = c.color || '#3457d5'; });
+  return map;
 }
 function formatDateThai(isoOrDateStr) {
   if (!isoOrDateStr) return '';

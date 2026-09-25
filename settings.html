@@ -40,6 +40,15 @@
       </div>
 
       <div class="card">
+        <div class="section-title">☀️ ภาคฤดูร้อน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ปิดตัวเลือกนี้ได้หากโรงเรียนไม่มีภาคฤดูร้อน — เมื่อปิดแล้ว จะซ่อนตัวเลือก "ภาคฤดูร้อน" ออกจากช่องเลือกภาคเรียนทั้งหมดในระบบ (ข้อมูลเก่าที่เคยบันทึกไว้เป็นภาคฤดูร้อนจะยังแสดงผลตามปกติ)</p>
+        <label class="toggle-row" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+          <input type="checkbox" id="setSummerEnabled" style="width:18px; height:18px;" />
+          <span>เปิดใช้งานภาคฤดูร้อนในระบบ</span>
+        </label>
+      </div>
+
+      <div class="card">
         <div class="section-title">🖼️ ไอคอนเว็บ (Favicon)</div>
         <div id="iconError" class="error-box" hidden></div>
         <div class="file-input-row">
@@ -70,8 +79,13 @@
             <label for="catName">ชื่อประเภทงาน</label>
             <input id="catName" required placeholder="เช่น ผลงานวิจัยในชั้นเรียน" />
           </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="catColor">สี</label>
+            <input type="color" id="catColor" value="#3457d5" title="เลือกสีประเภทงาน" />
+          </div>
           <button class="btn btn-primary" type="submit">เพิ่มประเภทงาน</button>
         </form>
+        <p class="hint" style="margin-top:-10px; margin-bottom:14px;">แต่ละประเภทงานเลือกสีได้ (ตั้งแต่ V9.7) เพื่อให้แยกแยะง่ายขึ้นทุกจุดที่แสดงชื่อประเภทงาน — คลิกจุดสีในรายการด้านล่างเพื่อเปลี่ยนสีของประเภทงานที่มีอยู่แล้วได้ทุกเมื่อ</p>
         <div id="catListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -330,6 +344,7 @@
     async function loadGeneralSettings() {
       var s = await getSiteSettings();
       document.getElementById('setSiteName').value = s.siteName || '';
+      document.getElementById('setSummerEnabled').checked = s.summerEnabled !== false;
       renderAssetPreview('iconPreview', s.iconDataUrl);
       renderAssetPreview('logoPreview', s.logoDataUrl);
     }
@@ -381,6 +396,25 @@
           errBox.hidden = false;
         }
       };
+      document.getElementById('setSummerEnabled').addEventListener('change', async function () {
+        var cb = document.getElementById('setSummerEnabled');
+        var nextVal = cb.checked;
+        var ok = await askConfirm(
+          nextVal ? 'ยืนยันเปิดใช้งานภาคฤดูร้อนในระบบ?' : 'ยืนยันปิดใช้งานภาคฤดูร้อนในระบบ? ตัวเลือกนี้จะถูกซ่อนออกจากช่องเลือกภาคเรียนทั้งหมด',
+          'ยืนยันการเปลี่ยนแปลง'
+        );
+        if (!ok) { cb.checked = !nextVal; return; }
+        var r = await withProgress('กำลังบันทึกการตั้งค่า', function () {
+          return apiCall('adminUpdateSettings', { summerEnabled: nextVal });
+        }, { successLabel: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' });
+        if (r.ok) {
+          resetSettingsCache();
+          applyBranding();
+        } else {
+          cb.checked = !nextVal;
+          showToast(r.error.message, true);
+        }
+      });
       document.getElementById('iconUploadBtn').addEventListener('click', function () { uploadAsset('icon', 'iconFile', 'iconError', 'iconPreview'); });
       document.getElementById('logoUploadBtn').addEventListener('click', function () { uploadAsset('logo', 'logoFile', 'logoError', 'logoPreview'); });
 
@@ -392,10 +426,26 @@
           if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประเภทงาน</div>'; return; }
           var html = '';
           rows.forEach(function (c) {
-            html += '<div class="event-list-item"><div style="flex:1;" class="sub-item-title">' + escapeHtml(c.name) + '</div>' +
+            html += '<div class="event-list-item">' +
+              '<input type="color" class="cat-color-input" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" value="' + (c.color || '#3457d5') + '" title="เปลี่ยนสีของประเภทงาน \'' + escapeHtml(c.name) + '\'" />' +
+              '<div style="flex:1;" class="sub-item-title">' + escapeHtml(c.name) + '</div>' +
               '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button></div>';
           });
           wrap.innerHTML = html;
+          wrap.querySelectorAll('input.cat-color-input').forEach(function (inp) {
+            inp.addEventListener('change', async function () {
+              var newColor = inp.value;
+              var catId = inp.getAttribute('data-id');
+              var catName = inp.getAttribute('data-name');
+              var ok = await askConfirm('ยืนยันเปลี่ยนสีของประเภทงาน "' + catName + '" เป็นสีที่เลือกไว้?', 'ยืนยันการเปลี่ยนสี');
+              if (!ok) { loadCategories(); return; }
+              var r = await withProgress('กำลังบันทึกสีประเภทงาน', function () {
+                return apiCall('adminSetWorkCategoryColor', { categoryId: catId, color: newColor });
+              }, { successLabel: 'เปลี่ยนสีประเภทงานแล้ว' });
+              if (!r.ok) showToast(r.error.message, true);
+              loadCategories();
+            });
+          });
           wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
             btn.addEventListener('click', async function () {
               var ok = await askConfirm('ลบประเภทงาน "' + btn.getAttribute('data-name') + '"? งานที่เคยส่งไว้ในประเภทนี้จะยังอยู่ตามเดิม แต่จะเลือกประเภทนี้ตอนส่งงานใหม่ไม่ได้อีก', 'ยืนยันการลบประเภทงาน');
@@ -416,10 +466,11 @@
         var errBox = document.getElementById('createCatError');
         errBox.hidden = true;
         var catNameVal = document.getElementById('catName').value.trim();
+        var catColorVal = document.getElementById('catColor').value;
         var ok = await askConfirm('ยืนยันเพิ่มประเภทงาน "' + catNameVal + '"?', 'ยืนยันการเพิ่มประเภทงาน');
         if (!ok) return;
         var r = await withProgress('กำลังเพิ่มประเภทงาน', function () {
-          return apiCall('adminCreateWorkCategory', { name: catNameVal });
+          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal });
         }, { successLabel: 'เพิ่มประเภทงานแล้ว' });
         if (r.ok) {
           document.getElementById('createCatForm').reset();

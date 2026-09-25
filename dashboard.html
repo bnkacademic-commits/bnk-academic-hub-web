@@ -37,9 +37,15 @@
     <div class="card">
       <div class="section-title">📤 ส่งงาน</div>
       <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เลือกภาคเรียน ปีการศึกษา ประเภทงาน แล้วแนบไฟล์ได้สูงสุด 10 ไฟล์ต่อครั้ง · กดปุ่ม "หน้าผลงานของฉัน" เพื่อดูหรือแชร์ลิงก์/QR ผลงานสาธารณะแบบอ่านอย่างเดียว ไม่ต้องล็อกอิน</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn btn-primary" id="openUploadBtn" type="button">📤 ส่งงาน</button>
-        <button class="btn btn-secondary" id="btnShowQr" type="button">🔗 หน้าผลงานของฉัน</button>
+      <div class="action-tiles">
+        <button class="action-tile action-tile-primary" id="openUploadBtn" type="button">
+          <span class="action-tile-icon">📤</span>
+          <span class="action-tile-label">ส่งงาน</span>
+        </button>
+        <button class="action-tile action-tile-secondary" id="btnShowQr" type="button">
+          <span class="action-tile-icon">🔗</span>
+          <span class="action-tile-label">หน้าผลงานของฉัน</span>
+        </button>
       </div>
     </div>
 
@@ -219,6 +225,7 @@
       var sel = document.getElementById('upCategory');
       try {
         var cats = await apiCall('hubListWorkCategories', {});
+        categoryColorMap = buildCategoryColorMap(cats);
         if (cats.length === 0) {
           sel.innerHTML = '<option value="">(ยังไม่มีประเภทงาน — ติดต่อฝ่ายวิชาการ)</option>';
           return;
@@ -303,6 +310,16 @@
     // ---------- Submissions list (ค้นหา + กรองปีการศึกษา/ภาคเรียน — ค่าเริ่มต้นคือเทอมปัจจุบันตามเวลาจริง) ----------
     var allSubmissions = [];
     var _subFiltersInitialized = false;
+    // { categoryId: color } — ใช้แสดงจุดสีหน้าชื่อประเภทงานในรายการผลงาน/ปฏิทิน (ตั้งแต่ V9.7)
+    var categoryColorMap = {};
+    async function refreshCategoryColors() {
+      try {
+        var cats = await apiCall('hubListWorkCategories', {});
+        categoryColorMap = buildCategoryColorMap(cats);
+        renderSubmissions();
+        renderCalendar();
+      } catch (err) { /* ไม่ต้องแจ้ง error — แค่ตกไปใช้สีเริ่มต้นแทน ไม่ใช่ปัญหาที่ควรขวางผู้ใช้ */ }
+    }
 
     function fillSubFilters() {
       var yearSel = document.getElementById('subFilterYear');
@@ -363,7 +380,7 @@
         html += '<div class="year-group"><div class="year-group-title">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
         g.items.forEach(function (s) {
           html += '<div class="sub-item">' +
-            '<div><div class="sub-item-title">' + escapeHtml(s.title) + (s.categoryName ? ' <span class="badge badge-admin">' + escapeHtml(s.categoryName) + '</span>' : '') + '</div>' +
+            '<div><div class="sub-item-title">' + escapeHtml(s.title) + (s.categoryName ? ' <span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' : '') + '</div>' +
             (s.description ? '<div class="sub-item-desc">' + escapeHtml(s.description) + '</div>' : '') +
             '<div class="sub-item-meta">อัพโหลดเมื่อ ' + formatDateThai(s.uploadedAt) + ' · <a href="' + s.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></div></div>' +
             '<div class="sub-item-actions"><button class="btn btn-danger btn-sm" data-id="' + s.id + '" data-name="' + escapeHtml(s.title) + '">ลบ</button></div>' +
@@ -433,7 +450,9 @@
         if (dateStr === todayStr) cell.className += ' today';
         var evs = eventsOnDate(dateStr);
         if (evs.length > 0) { cell.className += ' has-event'; cell.title = evs.map(function (e) { return e.title; }).join(', '); }
-        cell.innerHTML = '<div class="day-num">' + d + '</div>' + (evs.length > 0 ? '<div class="event-dot"></div>' : '');
+        // จุดสีในช่องปฏิทิน: ถ้ากำหนดการวันนั้นผูกกับประเภทงานไว้ ใช้สีของประเภทงานนั้นเลย (ตั้งแต่ V9.7) — มีหลายงานก็ใช้สีของงานแรกเป็นตัวแทน
+        var dotColor = evs.length > 0 && evs[0].categoryId ? (categoryColorMap[evs[0].categoryId] || '') : '';
+        cell.innerHTML = '<div class="day-num">' + d + '</div>' + (evs.length > 0 ? '<div class="event-dot"' + (dotColor ? ' style="background:' + dotColor + ';"' : '') + '></div>' : '');
         grid.appendChild(cell);
       }
 
@@ -452,11 +471,11 @@
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
           var submitBtn = e.categoryId
-            ? '<button class="btn btn-primary btn-sm" data-submit-event="' + e.id + '" style="align-self:center; flex-shrink:0;">📤 ส่งงาน</button>'
+            ? '<button class="btn btn-primary btn-sm event-submit-btn" data-submit-event="' + e.id + '">📤 ส่งงาน</button>'
             : '';
           return '<div class="event-list-item"><div class="event-date-chip">' + dateChip + '</div>' +
             '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(e.title) + '</div>' +
-            (e.categoryName ? '<div class="sub-item-meta">📎 กำหนดส่ง: ' + escapeHtml(e.categoryName) + '</div>' : '') +
+            (e.categoryName ? '<div class="sub-item-meta">📎 กำหนดส่ง: ' + categoryDotHtml(categoryColorMap[e.categoryId]) + escapeHtml(e.categoryName) + '</div>' : '') +
             (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + submitBtn + '</div>';
         }).join('');
         upcomingBox.querySelectorAll('button[data-submit-event]').forEach(function (btn) {
@@ -479,11 +498,12 @@
     });
 
     loadCalendar();
+    refreshCategoryColors();
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
     window.__refreshPageData = function () {
       resetSettingsCache();
-      return Promise.all([applyBranding(), loadHubAnnouncements(), loadSubmissions(), loadCalendar()]);
+      return Promise.all([applyBranding(), loadHubAnnouncements(), loadSubmissions(), loadCalendar(), refreshCategoryColors()]);
     };
   </script>
 </body>
