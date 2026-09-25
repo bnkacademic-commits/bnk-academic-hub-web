@@ -339,7 +339,8 @@
       try { calState.events = await apiCall('teacherListCalendar', {}); } catch (err) { calState.events = []; }
       renderCalendar();
     }
-    function eventsOnDate(dateStr) { return calState.events.filter(function (e) { return e.date === dateStr; }); }
+    // ครอบคลุมทั้งช่วงวันที่ (date ถึง endDate) ไม่ใช่แค่วันเริ่มต้น — เผื่อกำหนดการนี้เป็นช่วงระยะเวลาส่งงานหลายวัน
+    function eventsOnDate(dateStr) { return calState.events.filter(function (e) { return dateStr >= e.date && dateStr <= (e.endDate || e.date); }); }
 
     function renderCalendar() {
       document.getElementById('calLabel').textContent = thaiMonths[calState.month] + ' ' + (calState.year + 543);
@@ -369,7 +370,7 @@
       var upcomingBox = document.getElementById('calEventsUpcoming');
       var now = new Date();
       var upcoming = calState.events.filter(function (e) {
-        var ed = new Date(e.date);
+        var ed = new Date(e.endDate || e.date); // ใช้วันสิ้นสุดตัดสินว่ายังไม่ผ่านไป เผื่อเป็นกำหนดการช่วงหลายวัน
         var diffDays = (ed - now) / 86400000;
         return diffDays > -1 && diffDays < 60;
       }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
@@ -378,8 +379,10 @@
         upcomingBox.innerHTML = '<div class="empty-state">ไม่มีกำหนดการในช่วงนี้</div>';
       } else {
         upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดการใกล้ถึง</div>' + upcoming.map(function (e) {
-          return '<div class="event-list-item"><div class="event-date-chip">' + formatDateThai(e.date) + '</div>' +
+          var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
+          return '<div class="event-list-item"><div class="event-date-chip">' + dateChip + '</div>' +
             '<div><div class="sub-item-title">' + escapeHtml(e.title) + '</div>' +
+            (e.categoryName ? '<div class="sub-item-meta">📎 กำหนดส่ง: ' + escapeHtml(e.categoryName) + '</div>' : '') +
             (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div></div>';
         }).join('');
       }

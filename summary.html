@@ -24,30 +24,47 @@
       <p>ภาพรวมว่าใครส่งผลงานแล้วบ้าง ส่งเรื่องอะไร และส่งเมื่อไหร่</p>
     </div>
 
-    <div class="stat-row" id="statRow">
-      <div class="stat-tile"><div class="stat-value" id="statTotalUsers">-</div><div class="stat-label">บัญชีที่มีหน้าฮับทั้งหมด</div></div>
-      <div class="stat-tile"><div class="stat-value" id="statSubmittedUsers">-</div><div class="stat-label">ส่งผลงานแล้วอย่างน้อย 1 ชิ้น</div></div>
-      <div class="stat-tile"><div class="stat-value" id="statTotalSubs">-</div><div class="stat-label">จำนวนผลงานทั้งหมด</div></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="all">ทั้งหมด</button>
+      <button class="tab-btn" data-tab="byassignment">สรุปแยกแต่ละงาน</button>
     </div>
 
-    <div class="card">
-      <div class="section-title">📊 รายการผลงานทั้งหมด</div>
-      <div class="filter-row">
-        <input type="search" id="fSearch" placeholder="ค้นหาชื่อครู/ชื่อผลงาน" />
-        <select id="fYear"><option value="">ทุกปีการศึกษา</option></select>
-        <select id="fSemester">
-          <option value="">ทุกภาคเรียน</option>
-          <option value="1">ภาคเรียนที่ 1</option>
-          <option value="2">ภาคเรียนที่ 2</option>
-          <option value="summer">ภาคฤดูร้อน</option>
-        </select>
+    <!-- All submissions tab -->
+    <div class="tab-panel active" id="tab-all">
+      <div class="stat-row" id="statRow">
+        <div class="stat-tile"><div class="stat-value" id="statTotalUsers">-</div><div class="stat-label">บัญชีที่มีหน้าฮับทั้งหมด</div></div>
+        <div class="stat-tile"><div class="stat-value" id="statSubmittedUsers">-</div><div class="stat-label">ส่งผลงานแล้วอย่างน้อย 1 ชิ้น</div></div>
+        <div class="stat-tile"><div class="stat-value" id="statTotalSubs">-</div><div class="stat-label">จำนวนผลงานทั้งหมด</div></div>
       </div>
-      <div id="subTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+
+      <div class="card">
+        <div class="section-title">📊 รายการผลงานทั้งหมด</div>
+        <div class="filter-row">
+          <input type="search" id="fSearch" placeholder="ค้นหาชื่อครู/ชื่อผลงาน" />
+          <select id="fYear"><option value="">ทุกปีการศึกษา</option></select>
+          <select id="fSemester">
+            <option value="">ทุกภาคเรียน</option>
+            <option value="1">ภาคเรียนที่ 1</option>
+            <option value="2">ภาคเรียนที่ 2</option>
+            <option value="summer">ภาคฤดูร้อน</option>
+          </select>
+        </div>
+        <div id="subTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">🧑‍🏫 ใครยังไม่ส่งผลงานเลย</div>
+        <div id="notSubmittedWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
     </div>
 
-    <div class="card">
-      <div class="section-title">🧑‍🏫 ใครยังไม่ส่งผลงานเลย</div>
-      <div id="notSubmittedWrap"><div class="loading">กำลังโหลด</div></div>
+    <!-- Per-assignment breakdown tab -->
+    <div class="tab-panel" id="tab-byassignment">
+      <div class="card">
+        <div class="section-title">🗂️ สรุปสถานะการส่งงานแยกแต่ละงาน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">แสดงเฉพาะกำหนดการในปฏิทินที่ผูกกับ "ประเภทงาน" ไว้ — ไปเพิ่มได้ที่หน้าตั้งค่าเว็บ แท็บปฏิทิน</p>
+        <div id="assignmentSummaryWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
     </div>
   </div>
 
@@ -57,6 +74,29 @@
   <script>
     var session = requireAdminAccess();
     if (session) mountChrome('summary');
+
+    // ---------- Tabs (โหลดข้อมูลแบบ lazy — แท็บ "สรุปแยกแต่ละงาน" โหลดข้อมูลเฉพาะตอนเปิดแท็บนั้นครั้งแรก) ----------
+    var _tabLoaded = {};
+    var tabLoaders = {
+      all: function () { return loadData(); },
+      byassignment: function () { return loadAssignmentSummary(); }
+    };
+    function loadTabIfNeeded(tabKey) {
+      if (_tabLoaded[tabKey]) return;
+      _tabLoaded[tabKey] = true;
+      var fn = tabLoaders[tabKey];
+      if (fn) return fn();
+    }
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var tabKey = btn.getAttribute('data-tab');
+        document.getElementById('tab-' + tabKey).classList.add('active');
+        loadTabIfNeeded(tabKey);
+      });
+    });
 
     var allSubs = [];
     var allUsers = [];
@@ -152,12 +192,60 @@
     document.getElementById('fYear').addEventListener('change', renderTable);
     document.getElementById('fSemester').addEventListener('change', renderTable);
 
-    loadData();
+    // ---------- สรุปแยกแต่ละงาน ----------
+    function statusBadge(status) {
+      if (status === 'onTime') return '<span class="badge badge-ontime">ส่งปกติ</span>';
+      if (status === 'late') return '<span class="badge badge-late">ส่งเกินกำหนด</span>';
+      return '<span class="badge badge-missing">ยังไม่ส่ง</span>';
+    }
+    async function loadAssignmentSummary() {
+      var wrap = document.getElementById('assignmentSummaryWrap');
+      try {
+        var assignments = await apiCall('adminGetAssignmentSummary', {});
+        if (assignments.length === 0) {
+          wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการในปฏิทินที่ผูกกับประเภทงานไว้</div>';
+          return;
+        }
+        var html = '';
+        assignments.forEach(function (a) {
+          var dateRange = a.endDate && a.endDate !== a.date ? formatDateThai(a.date) + ' – ' + formatDateThai(a.endDate) : formatDateThai(a.date);
+          var semLabel = a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester;
+          var onTimeCount = a.rows.filter(function (r) { return r.status === 'onTime'; }).length;
+          var lateCount = a.rows.filter(function (r) { return r.status === 'late'; }).length;
+          var missingCount = a.rows.filter(function (r) { return r.status === 'missing'; }).length;
+          html += '<div class="card" style="margin-bottom:16px; box-shadow:none; border:1px solid var(--border);">' +
+            '<div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">' +
+              '<span>📌 ' + escapeHtml(a.title) + '</span>' +
+              '<span class="hint" style="margin:0;">กำหนดส่ง: ' + dateRange + '</span>' +
+            '</div>' +
+            '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + escapeHtml(a.categoryName) + '</b> · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
+              ' · <span class="badge badge-ontime">ปกติ ' + onTimeCount + '</span> <span class="badge badge-late">เกินกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
+            '</div>' +
+            '<div class="table-wrap"><table><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th></tr></thead><tbody>';
+          a.rows.forEach(function (r) {
+            html += '<tr>' +
+              '<td>' + escapeHtml(r.userName) + '</td>' +
+              '<td>' + statusBadge(r.status) + '</td>' +
+              '<td>' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '-') + '</td>' +
+            '</tr>';
+          });
+          html += '</tbody></table></div></div>';
+        });
+        wrap.innerHTML = html;
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    loadTabIfNeeded('all');
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
     window.__refreshPageData = function () {
+      var activeBtn = document.querySelector('.tab-btn.active');
+      var activeTabKey = activeBtn ? activeBtn.getAttribute('data-tab') : 'all';
       resetSettingsCache();
-      return Promise.all([applyBranding(), loadData()]);
+      _tabLoaded = {}; // เคลียร์สถานะทุกแท็บ ให้แท็บอื่นที่เคยเปิดไปแล้วโหลดข้อมูลใหม่ตอนสลับกลับไปดูอีกครั้ง
+      return Promise.all([applyBranding(), loadTabIfNeeded(activeTabKey)]);
     };
   </script>
 </body>

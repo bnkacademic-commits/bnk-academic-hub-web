@@ -279,6 +279,7 @@ input:focus, select:focus, textarea:focus {
 }
 .field { margin-bottom: 16px; }
 .field-row { display: flex; gap: 12px; }
+.field-row[hidden] { display: none; } /* author display:flex ชนะ UA [hidden] เสมอ ต้องบังคับซ่อนเอง (บั๊กเดียวกับ .btn[hidden] ที่แก้ไว้ก่อนหน้า) — ใช้กับ #evTermFields ในหน้าตั้งค่า ปฏิทิน */
 .field-row > .field { flex: 1; }
 textarea { resize: vertical; min-height: 70px; }
 .file-input-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -363,6 +364,10 @@ textarea { resize: vertical; min-height: 70px; }
 .badge-admin { background: var(--primary-light); color: var(--primary-dark); }
 .badge-teacher { background: var(--surface-2); color: var(--text-muted); }
 .badge-super { background: var(--danger-light); color: var(--danger); }
+/* สถานะการส่งงานในแท็บ "สรุปแยกแต่ละงาน" (V9.4) */
+.badge-ontime { background: var(--accent-light); color: var(--accent); }
+.badge-late { background: var(--danger-light); color: var(--danger); }
+.badge-missing { background: var(--surface-2); color: var(--text-muted); }
 
 /* ---------- Table ---------- */
 table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }

@@ -95,13 +95,17 @@
         <form id="createEventForm">
           <div class="field-row">
             <div class="field">
-              <label for="evDate">วันที่</label>
+              <label for="evDate">วันที่เริ่มต้น</label>
               <input id="evDate" type="date" required />
             </div>
             <div class="field">
-              <label for="evAudience">สำหรับ</label>
-              <select id="evAudience"><option value="all">ครูทุกคน</option></select>
+              <label for="evEndDate">วันที่สิ้นสุด</label>
+              <input id="evEndDate" type="date" />
             </div>
+          </div>
+          <div class="field">
+            <label for="evAudience">สำหรับ</label>
+            <select id="evAudience"><option value="all">ครูทุกคน</option></select>
           </div>
           <div class="field">
             <label for="evTitle">หัวข้อ</label>
@@ -110,6 +114,25 @@
           <div class="field">
             <label for="evMessage">รายละเอียดเพิ่มเติม</label>
             <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
+          </div>
+          <div class="field">
+            <label for="evCategory">ประเภทงาน (ถ้ากำหนดการนี้เป็นกำหนดส่งงาน)</label>
+            <select id="evCategory"><option value="">— ไม่ผูกกับงานใด (กำหนดการทั่วไป) —</option></select>
+            <div class="hint">เลือกประเภทงาน เพื่อให้ระบบนำไปคำนวณสถานะการส่งงานในหน้า "สรุปรวมการส่งงาน" ให้อัตโนมัติ (ใครส่งตรงเวลา/เกินกำหนด/ยังไม่ส่ง)</div>
+          </div>
+          <div class="field-row" id="evTermFields" hidden>
+            <div class="field">
+              <label for="evYear">ปีการศึกษา</label>
+              <select id="evYear"></select>
+            </div>
+            <div class="field">
+              <label for="evSemester">ภาคเรียน</label>
+              <select id="evSemester">
+                <option value="1">ภาคเรียนที่ 1</option>
+                <option value="2">ภาคเรียนที่ 2</option>
+                <option value="summer">ภาคฤดูร้อน</option>
+              </select>
+            </div>
           </div>
           <button class="btn btn-primary" type="submit">เพิ่มกำหนดการ</button>
         </form>
@@ -264,9 +287,14 @@
     var loadCategories;
     var _tabLoaded = {};
     var _usersPromise = null;
+    var _eventCategoriesPromise = null;
     function ensureUsersLoaded() {
       if (!_usersPromise) _usersPromise = loadUsers();
       return _usersPromise;
+    }
+    function ensureEventCategoriesLoaded() {
+      if (!_eventCategoriesPromise) _eventCategoriesPromise = loadEventCategories();
+      return _eventCategoriesPromise;
     }
     var tabLoaders = {
       general: function () {
@@ -275,8 +303,8 @@
         return Promise.all(tasks);
       },
       accounts: function () { return ensureUsersLoaded(); },
-      // แท็บปฏิทินใช้รายชื่อผู้ใช้ร่วมกับแท็บจัดการบัญชี (audience dropdown + ป้ายชื่อผู้รับ) จึงรอให้โหลดผู้ใช้เสร็จก่อน
-      calendar: function () { return ensureUsersLoaded().then(function () { return loadEvents(); }); },
+      // แท็บปฏิทินใช้รายชื่อผู้ใช้ร่วมกับแท็บจัดการบัญชี (audience dropdown + ป้ายชื่อผู้รับ) และรายชื่อประเภทงาน (dropdown ผูกกำหนดส่งงาน) จึงรอให้โหลดทั้งสองเสร็จก่อน
+      calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); },
       announcements: function () { return loadAnnouncements(); },
       annlog: function () { return loadAnnLog(); },
       log: function () { return loadLog(); }
@@ -576,6 +604,39 @@
     });
 
     // ---------- Calendar ----------
+    // ปีการศึกษา options ของฟอร์มเพิ่มกำหนดการ (รูปแบบเดียวกับ fillYearOptions ในหน้าแดชบอร์ดครู)
+    (function fillEvYearOptions() {
+      var beYear = new Date().getFullYear() + 543;
+      var sel = document.getElementById('evYear');
+      for (var y = beYear + 1; y >= beYear - 3; y--) {
+        var opt = document.createElement('option');
+        opt.value = y; opt.textContent = 'ปีการศึกษา ' + y;
+        if (y === beYear) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    })();
+
+    var eventCategories = [];
+    async function loadEventCategories() {
+      var sel = document.getElementById('evCategory');
+      try {
+        eventCategories = await apiCall('calendarListWorkCategories', {});
+        var current = sel.value;
+        sel.innerHTML = '<option value="">— ไม่ผูกกับงานใด (กำหนดการทั่วไป) —</option>';
+        eventCategories.forEach(function (c) {
+          var opt = document.createElement('option');
+          opt.value = c.id; opt.textContent = c.name;
+          sel.appendChild(opt);
+        });
+        sel.value = current || '';
+      } catch (err) {
+        // ถ้าโหลดรายชื่อประเภทงานไม่สำเร็จ ยังเพิ่มกำหนดการทั่วไป (ไม่ผูกงาน) ได้ตามปกติ ไม่ต้องบล็อกทั้งฟอร์ม
+      }
+    }
+    document.getElementById('evCategory').addEventListener('change', function () {
+      document.getElementById('evTermFields').hidden = !this.value;
+    });
+
     function renderAudienceOptions() {
       var sel = document.getElementById('evAudience');
       var current = sel.value;
@@ -599,11 +660,18 @@
             var u = allUsers.filter(function (x) { return x.id === ev.audience; })[0];
             return u ? u.name : 'ผู้ใช้เฉพาะราย';
           })();
+          var dateChip = ev.endDate && ev.endDate !== ev.date
+            ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate)
+            : formatDateThai(ev.date);
+          var categoryMeta = ev.categoryId
+            ? '<div class="sub-item-meta">📎 กำหนดส่งงาน: ' + escapeHtml(ev.categoryName) + ' · ปีการศึกษา ' + escapeHtml(ev.academicYear) + ' · ' + (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + '</div>'
+            : '';
           html += '<div class="event-list-item">' +
-            '<div class="event-date-chip">' + formatDateThai(ev.date) + '</div>' +
+            '<div class="event-date-chip">' + dateChip + '</div>' +
             '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(ev.title) + '</div>' +
             (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
-            '<div class="sub-item-meta">สำหรับ: ' + escapeHtml(audienceLabel) + '</div></div>' +
+            '<div class="sub-item-meta">สำหรับ: ' + escapeHtml(audienceLabel) + '</div>' +
+            categoryMeta + '</div>' +
             '<button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>' +
             '</div>';
         });
@@ -626,19 +694,32 @@
       e.preventDefault();
       var errBox = document.getElementById('createEventError');
       errBox.hidden = true;
+      var evDateVal = document.getElementById('evDate').value;
+      var evEndDateVal = document.getElementById('evEndDate').value;
+      var evCategoryVal = document.getElementById('evCategory').value;
+      if (evEndDateVal && evEndDateVal < evDateVal) {
+        errBox.textContent = 'วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่มต้น';
+        errBox.hidden = false;
+        return;
+      }
       var okEv = await askConfirm('ยืนยันเพิ่มกำหนดการนี้ในปฏิทิน?', 'ยืนยันการเพิ่มกำหนดการ');
       if (!okEv) return;
       var evPayload = {
-        date: document.getElementById('evDate').value,
+        date: evDateVal,
+        endDate: evEndDateVal,
         audience: document.getElementById('evAudience').value,
         title: document.getElementById('evTitle').value.trim(),
-        message: document.getElementById('evMessage').value.trim()
+        message: document.getElementById('evMessage').value.trim(),
+        categoryId: evCategoryVal,
+        academicYear: evCategoryVal ? document.getElementById('evYear').value : '',
+        semester: evCategoryVal ? document.getElementById('evSemester').value : ''
       };
       var r = await withProgress('กำลังเพิ่มกำหนดการ', function () {
         return apiCall('adminCreateEvent', evPayload);
       }, { successLabel: 'เพิ่มกำหนดการแล้ว' });
       if (r.ok) {
         document.getElementById('createEventForm').reset();
+        document.getElementById('evTermFields').hidden = true;
         loadEvents();
       } else {
         errBox.textContent = r.error.message;
@@ -756,6 +837,7 @@
       var activeTabKey = activeBtn ? activeBtn.getAttribute('data-tab') : (isSuperAdminSession ? 'general' : 'accounts');
       resetSettingsCache();
       _usersPromise = null; // บังคับให้ดึงรายชื่อผู้ใช้ใหม่เสมอ (แท็บจัดการบัญชี+ปฏิทินใช้ร่วมกัน)
+      _eventCategoriesPromise = null; // บังคับให้ดึงรายชื่อประเภทงานใหม่เสมอ (เผื่อมีการเพิ่ม/ลบประเภทงานจากแท็บทั่วไป)
       _tabLoaded = {}; // เคลียร์สถานะทุกแท็บ ให้แท็บอื่นที่เคยเปิดไปแล้วโหลดข้อมูลใหม่ตอนสลับกลับไปดูอีกครั้ง
       return Promise.all([applyBranding(), loadTabIfNeeded(activeTabKey)]);
     };
