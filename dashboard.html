@@ -35,7 +35,6 @@
           </div>
           <div class="term-badge" id="currentTermBadge">-</div>
           <div class="calendar-grid" id="calGrid"></div>
-          <div id="calEventsUpcoming" style="margin-top:16px;"></div>
         </div>
         <div class="dash-cal-side">
           <button class="btn btn-secondary dash-portfolio-btn" id="btnShowQr" type="button">🔗 หน้าผลงานของฉัน</button>
@@ -45,17 +44,8 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">📤 ส่งงาน</div>
-      <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เลือกภาคเรียน ปีการศึกษา ประเภทงาน แล้วแนบไฟล์ได้สูงสุด 10 ไฟล์ต่อครั้ง</p>
-      <div class="action-tiles action-tiles-single">
-        <button class="action-tile action-tile-primary" id="openUploadBtn" type="button">
-          <span class="action-tile-icon">📤</span>
-          <span class="action-tile-label">ส่งงาน</span>
-        </button>
-      </div>
+      <!-- "กำหนดการใกล้ถึง" ย้ายออกมานอกกริด 2 คอลัมน์ด้านบน ให้ยาวเต็มความกว้างของการ์ด (ตั้งแต่ V10.0 ตามที่ผู้ใช้ขอ) -->
+      <div id="calEventsUpcoming" style="margin-top:18px;"></div>
     </div>
 
     <div class="card">
@@ -69,6 +59,8 @@
           <option value="2">ภาคเรียนที่ 2</option>
           <option value="summer">ภาคฤดูร้อน</option>
         </select>
+        <!-- ปุ่ม "ส่งงาน" ย้ายมาที่นี่ + เปลี่ยนชื่อเป็น "ส่งงาน (กำหนดเอง)" ตั้งแต่ V10.0 (ก่อนหน้านี้เป็นการ์ดแยกด้านบน) -->
+        <button class="btn btn-primary btn-sm" id="openUploadBtn" type="button">📤 ส่งงาน (กำหนดเอง)</button>
       </div>
       <div id="submissionList"><div class="loading">กำลังโหลด</div></div>
     </div>
@@ -156,10 +148,11 @@
         // ไม่มีประกาศ -> ซ่อนการ์ดนี้ไปเลย ไม่ต้องโชว์กล่องว่างเปล่าค้างไว้ (V9.5)
         if (rows.length === 0) { card.hidden = true; return; }
         card.hidden = false;
+        // หน้าฮับไม่บอกชื่อผู้แจ้งประกาศ บอกแค่ "จากฝ่ายวิชาการ" เสมอ (ตั้งแต่ V10.0 — ชื่อผู้แจ้งจริงยังดูได้จากหน้าตั้งค่า > แท็บประกาศ สำหรับฝ่ายวิชาการ)
         wrap.innerHTML = rows.map(function (a) {
-          return '<div class="event-list-item"><div style="flex:1;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
+          return '<div class="event-list-item hub-ann-item"><div style="flex:1;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
             (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
-            '<div class="sub-item-meta">โดย ' + escapeHtml(a.createdByName) + ' · ' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
+            '<div class="sub-item-meta">จากฝ่ายวิชาการ · ' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
         }).join('');
       } catch (err) {
         card.hidden = false;
@@ -441,6 +434,27 @@
     // ครอบคลุมทั้งช่วงวันที่ (date ถึง endDate) ไม่ใช่แค่วันเริ่มต้น — เผื่อกำหนดการนี้เป็นช่วงระยะเวลาส่งงานหลายวัน
     function eventsOnDate(dateStr) { return calState.events.filter(function (e) { return dateStr >= e.date && dateStr <= (e.endDate || e.date); }); }
 
+    // ---------- จัดเรียง "แถว" (lane) ของแถบสีกำหนดการ ให้กำหนดการเดียวกันอยู่แถวเดิมทุกวันที่มันครอบคลุม (ตั้งแต่ V10.0) ----------
+    // ใช้หลักการเดียวกับ Gantt chart แบบง่าย: ไล่กำหนดการที่เกี่ยวข้องกับเดือนที่กำลังแสดงตามวันเริ่มต้น แล้วจัดลงแถวว่างแถวแรกที่ไม่ทับกับกำหนดการอื่นที่ยังไม่จบ
+    function computeEventLanes(events, monthStart, monthEnd) {
+      var relevant = events.filter(function (e) {
+        var s = e.date, en = e.endDate || e.date;
+        return en >= monthStart && s <= monthEnd;
+      }).slice().sort(function (a, b) { return a.date < b.date ? -1 : (a.date > b.date ? 1 : 0); });
+      var laneEndDates = [];
+      var laneOf = {};
+      relevant.forEach(function (e) {
+        var s = e.date, en = e.endDate || e.date;
+        var placed = false;
+        for (var i = 0; i < laneEndDates.length; i++) {
+          if (laneEndDates[i] < s) { laneEndDates[i] = en; laneOf[e.id] = i; placed = true; break; }
+        }
+        if (!placed) { laneEndDates.push(en); laneOf[e.id] = laneEndDates.length - 1; }
+      });
+      return laneOf;
+    }
+    var MAX_CALENDAR_LANES = 2; // ช่องปฏิทินเล็ก แสดงแถบสีซ้อนกันได้สูงสุด 2 แถวต่อวัน
+
     // ---------- เช็คลิสต์สถานะการส่งงาน (ข้างปฏิทิน, ตั้งแต่ V9.9) ----------
     // เทียบกำหนดการในปฏิทินที่ผูกประเภทงานไว้และตรงกับภาคเรียน/ปีการศึกษาปัจจุบัน กับผลงานที่เคยส่งแล้ว (categoryId+ปี+เทอมตรงกัน = นับว่าส่งแล้ว
     // เป็นเกณฑ์แบบเดียวกับที่หน้าสรุปรวม "สรุปแยกแต่ละงาน" ใช้ — ไม่ได้ผูกกับ eventId เจาะจง เพราะระบบไม่มีฟิลด์นั้นในตาราง submissions)
@@ -486,20 +500,34 @@
       var firstDay = new Date(calState.year, calState.month, 1).getDay();
       var daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
       var todayStr = new Date().toISOString().slice(0, 10);
+      var pad2 = function (n) { return String(n).padStart(2, '0'); };
+      var monthStartStr = calState.year + '-' + pad2(calState.month + 1) + '-01';
+      var monthEndStr = calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(daysInMonth);
+      var laneOf = computeEventLanes(calState.events, monthStartStr, monthEndStr);
 
       for (var i = 0; i < firstDay; i++) {
         var pad = document.createElement('div'); pad.className = 'calendar-cell empty'; grid.appendChild(pad);
       }
       for (var d = 1; d <= daysInMonth; d++) {
-        var dateStr = calState.year + '-' + String(calState.month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+        var dateStr = calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(d);
         var cell = document.createElement('div');
         cell.className = 'calendar-cell';
         if (dateStr === todayStr) cell.className += ' today';
         var evs = eventsOnDate(dateStr);
         if (evs.length > 0) { cell.className += ' has-event'; cell.title = evs.map(function (e) { return e.title; }).join(', '); }
-        // จุดสีในช่องปฏิทิน: ถ้ากำหนดการวันนั้นผูกกับประเภทงานไว้ ใช้สีของประเภทงานนั้นเลย (ตั้งแต่ V9.7) — มีหลายงานก็ใช้สีของงานแรกเป็นตัวแทน
-        var dotColor = evs.length > 0 && evs[0].categoryId ? (categoryColorMap[evs[0].categoryId] || '') : '';
-        cell.innerHTML = '<div class="day-num">' + d + '</div>' + (evs.length > 0 ? '<div class="event-dot"' + (dotColor ? ' style="background:' + dotColor + ';"' : '') + '></div>' : '');
+        // แถบสีของกำหนดการ (ตั้งแต่ V10.0): ลากยาวตามช่วงวันที่ (date-endDate) แทนจุดกลมเดิม — วันเริ่ม/วันจบของแต่ละกำหนดการจะมนหัวให้ดูต่อเนื่องกันเป็นแท่งเดียว
+        // ไม่ผูกประเภทงาน (กำหนดการทั่วไป) ใช้สีเทาอ่อนแทนสีประเภทงาน
+        var barsHtml = '';
+        evs.slice().sort(function (a, b) { return (laneOf[a.id] || 0) - (laneOf[b.id] || 0); }).forEach(function (e) {
+          var lane = laneOf[e.id] || 0;
+          if (lane >= MAX_CALENDAR_LANES) return;
+          var isStart = dateStr === e.date;
+          var isEnd = dateStr === (e.endDate || e.date);
+          var barColor = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
+          var cls = 'event-bar' + (isStart ? ' bar-start' : '') + (isEnd ? ' bar-end' : '');
+          barsHtml += '<div class="' + cls + '" style="background:' + barColor + ';"></div>';
+        });
+        cell.innerHTML = '<div class="day-num">' + d + '</div>' + (barsHtml ? '<div class="event-bars">' + barsHtml + '</div>' : '');
         grid.appendChild(cell);
       }
 
@@ -514,7 +542,8 @@
       if (upcoming.length === 0) {
         upcomingBox.innerHTML = '<div class="empty-state">ไม่มีกำหนดการในช่วงนี้</div>';
       } else {
-        upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดการใกล้ถึง</div>' + upcoming.map(function (e) {
+        // ตั้งแต่ V10.0: ครอบรายการด้วย .cal-upcoming-grid ให้ยาวเต็มความกว้างการ์ด และไล่เรียงหลายคอลัมน์อัตโนมัติเมื่อจอกว้างพอ
+        upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดการใกล้ถึง</div><div class="cal-upcoming-grid">' + upcoming.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
           var submitBtn = e.categoryId
@@ -524,7 +553,7 @@
             '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(e.title) + '</div>' +
             (e.categoryName ? '<div class="sub-item-meta">📎 กำหนดส่ง: ' + categoryDotHtml(categoryColorMap[e.categoryId]) + escapeHtml(e.categoryName) + '</div>' : '') +
             (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + submitBtn + '</div>';
-        }).join('');
+        }).join('') + '</div>';
         upcomingBox.querySelectorAll('button[data-submit-event]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var evId = btn.getAttribute('data-submit-event');

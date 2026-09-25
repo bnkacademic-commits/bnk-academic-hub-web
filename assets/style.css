@@ -358,8 +358,11 @@ input:focus, select:focus, textarea:focus {
 }
 .field { margin-bottom: 16px; }
 .field-row { display: flex; gap: 12px; }
-.filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
 .filter-row > * { flex: 1; min-width: 140px; }
+/* ช่องค้นหาผลงาน (หน้าฮับ) ยาวขึ้นกว่าช่องอื่นในแถวเดียวกัน + ปุ่ม "ส่งงาน (กำหนดเอง)" เป็นปุ่มเล็ก ไม่ยืดเต็มความกว้างเหมือนช่องอื่น (ตั้งแต่ V10.0) */
+.filter-row #subSearch { flex: 2.4; min-width: 200px; }
+.filter-row #openUploadBtn { flex: 0 0 auto; min-width: 0; white-space: nowrap; }
 .field-row[hidden] { display: none; } /* author display:flex ชนะ UA [hidden] เสมอ ต้องบังคับซ่อนเอง (บั๊กเดียวกับ .btn[hidden] ที่แก้ไว้ก่อนหน้า) — ใช้กับ #evTermFields ในหน้าตั้งค่า ปฏิทิน */
 .field-row > .field { flex: 1; }
 textarea { resize: vertical; min-height: 70px; }
@@ -552,34 +555,42 @@ tr:last-child td { border-bottom: none; }
 
 .empty-state { text-align: center; color: var(--text-muted); padding: 32px 12px; font-size: 0.95rem; }
 
+/* ---------- ประกาศจากฝ่ายวิชาการ (หน้าฮับ) — เด่นชัดขึ้น ตั้งแต่ V10.0 ---------- */
+#annCard { border-left: 5px solid var(--accent); background: var(--accent-light); }
+#annCard .section-title { font-size: 1.15rem; border-bottom-color: rgba(16,178,131,0.25); }
+.hub-ann-item { padding: 14px 10px; align-items: flex-start; }
+.hub-ann-item .sub-item-title { font-size: 1.12rem; font-weight: 800; color: var(--primary-dark); }
+.hub-ann-item .sub-item-desc { font-size: 1rem; margin-top: 5px; }
+.hub-ann-item .sub-item-meta { font-size: 0.85rem; margin-top: 7px; }
+
 /* ---------- Calendar ---------- */
 .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .calendar-header .month-label { font-weight: 700; }
 /* ปฏิทินย่อขนาดลงตั้งแต่ V9.7 และย่อลงอีกใน V9.8 (ตอนนี้อยู่ข้างกล่อง "หน้าผลงานของฉัน" จึงมีพื้นที่แคบลง) ยังคงรายละเอียดครบ: เลขวันที่, วงแหวนวันนี้, พื้นหลังวันที่มีกำหนดการ, จุดสีตามประเภทงาน
-   ตั้งแต่ V9.9: ตัวเลขวันที่ใหญ่ขึ้นชัดเจน และจุดสีของงาน (event-dot) ย้ายจากขอบล่างช่องมาเป็นวงกลมสีอยู่ตรงกลางช่องแทน (อยู่หลังตัวเลขวันที่ ตัวเลขจะเปลี่ยนเป็นสีขาวให้อ่านง่ายบนพื้นสี) ตามที่ผู้ใช้ขอ */
+   ตั้งแต่ V10.0: ปรับใหม่ตามที่ผู้ใช้ขอ — เลขวันที่ย้ายไปมุมซ้ายบนของช่อง (จากที่เคยอยู่กึ่งกลางเป็นวงกลม) และจุดสีเปลี่ยนเป็น "แถบสี" ที่ลากยาวตามช่วงวันที่ของกำหนดการ
+   (วันเริ่มต้นแถบจะมนหัวซ้าย วันสุดท้ายมนหัวขวา ให้ดูเป็นแท่งเดียวต่อเนื่องกันข้ามวัน) แทนจุดกลมจุดเดียวแบบเดิม รองรับแสดงได้สูงสุด 2 แถบซ้อนกันต่อวัน (เกินกว่านั้นจะย่อไม่แสดงเพิ่ม) */
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 .calendar-grid .dow { text-align: center; font-size: 0.74rem; color: var(--text-muted); font-weight: 700; padding-bottom: 3px; }
 .calendar-cell {
-  aspect-ratio: 1 / 1; min-height: 34px;
-  border-radius: 5px; padding: 1px 2px; font-size: 0.7rem;
+  aspect-ratio: 1 / 1; min-height: 38px;
+  border-radius: 5px; padding: 2px 2px 3px; font-size: 0.7rem;
   background: var(--surface-2); position: relative; color: var(--text);
-  display: flex; align-items: center; justify-content: center;
+  display: block;
 }
 .calendar-cell.empty { background: transparent; }
 .calendar-cell.today { box-shadow: inset 0 0 0 2px var(--primary); }
 .calendar-cell.has-event { cursor: pointer; }
 .calendar-cell .day-num {
-  font-weight: 700; font-size: 0.95rem; line-height: 1;
-  position: relative; z-index: 2;
-  width: 1.6rem; height: 1.6rem; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+  position: absolute; top: 2px; left: 4px; z-index: 2;
+  font-weight: 700; font-size: 0.92rem; line-height: 1; color: var(--text);
 }
-.calendar-cell.has-event .day-num { color: #fff; }
-.calendar-cell .event-dot {
-  width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--primary);
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  z-index: 1;
+.calendar-cell .event-bars {
+  position: absolute; left: 0; right: 0; bottom: 3px; z-index: 1;
+  display: flex; flex-direction: column; gap: 2px;
 }
+.event-bar { height: 5px; background: var(--primary); }
+.event-bar.bar-start { margin-left: 3px; border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+.event-bar.bar-end { margin-right: 3px; border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
 .event-list-item { display: flex; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); align-items: flex-start; }
 .event-list-item:last-child { border-bottom: none; }
 .event-date-chip {
@@ -587,6 +598,13 @@ tr:last-child td { border-bottom: none; }
   border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; font-weight: 700; text-align: center; min-width: 58px;
 }
 .event-submit-btn { align-self: center; flex-shrink: 0; }
+
+/* "กำหนดการใกล้ถึง" ท้ายปฏิทิน: ย้ายออกมาเป็นแถวเต็มความกว้างของการ์ด (นอก .dash-cal-layout) ตั้งแต่ V10.0 ตามที่ผู้ใช้ขอ
+   จอกว้างพอ (>=640px) จะไล่เรียงเป็นหลายคอลัมน์อัตโนมัติ ใช้พื้นที่ที่กว้างขึ้นให้คุ้ม แทนที่จะเรียงเป็นแถวเดียวยาวๆ เหมือนก่อนหน้า */
+.cal-upcoming-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.cal-upcoming-grid .event-list-item {
+  border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin: 0;
+}
 
 /* ---------- Modal ---------- */
 .modal-backdrop {

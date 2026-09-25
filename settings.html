@@ -16,13 +16,15 @@
       <p>ตั้งค่าทั่วไปของเว็บไซต์ จัดการบัญชีผู้ใช้ ปฏิทิน ประกาศ และตรวจสอบประวัติการทำรายการ</p>
     </div>
 
+    <!-- ลำดับแท็บตั้งแต่ V10.0: จัดการบัญชี เป็น Super Admin เท่านั้น (ตัดสิทธิ์เจ้าหน้าที่ฝ่ายวิชาการออก), "ประวัติการลบ" เปลี่ยนชื่อ+จำกัดสิทธิ์เป็น Super Admin เท่านั้น,
+         "Log ประกาศ" ถูกลบออก (ข้อมูลผู้แจ้งประกาศย้ายไปแสดงในแท็บ "ประกาศ" อยู่แล้ว) แทนที่ด้วย "ประวัติระบบ" ท้ายสุด ครอบคลุมทั้งค่าตั้งค่า/ประกาศ/กำหนดการ -->
     <div class="tabs">
       <button class="tab-btn active super-admin-only" data-tab="general">ทั่วไป</button>
-      <button class="tab-btn" data-tab="accounts">จัดการบัญชี</button>
+      <button class="tab-btn super-admin-only" data-tab="accounts">จัดการบัญชี</button>
       <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
       <button class="tab-btn" data-tab="announcements">ประกาศ</button>
-      <button class="tab-btn" data-tab="annlog">Log ประกาศ</button>
-      <button class="tab-btn" data-tab="log">ประวัติการลบ</button>
+      <button class="tab-btn super-admin-only" data-tab="log">ประวัติการส่งงานและลบงาน</button>
+      <button class="tab-btn" data-tab="systemlog">ประวัติระบบ</button>
     </div>
 
     <!-- General tab (เฉพาะ Super Admin) -->
@@ -90,8 +92,8 @@
       </div>
     </div>
 
-    <!-- Accounts tab -->
-    <div class="tab-panel" id="tab-accounts">
+    <!-- Accounts tab (เฉพาะ Super Admin ตั้งแต่ V10.0) -->
+    <div class="tab-panel super-admin-only" id="tab-accounts">
       <div class="card">
         <div class="section-title" style="justify-content:space-between;">
           <span>👥 รายชื่อผู้ใช้งานทั้งหมด</span>
@@ -106,7 +108,9 @@
       <div class="card">
         <div class="section-title">📅 เพิ่มกำหนดการในปฏิทิน</div>
         <div id="createEventError" class="error-box" hidden></div>
+        <div class="hint" id="evEditingHint" hidden style="margin-top:-8px; margin-bottom:14px; color:var(--primary-dark); font-weight:700;"></div>
         <form id="createEventForm">
+          <input type="hidden" id="evEditId" value="" />
           <div class="field-row">
             <div class="field">
               <label for="evDate">วันที่เริ่มต้น</label>
@@ -148,12 +152,16 @@
               </select>
             </div>
           </div>
-          <button class="btn btn-primary" type="submit">เพิ่มกำหนดการ</button>
+          <div style="display:flex; gap:10px;">
+            <button class="btn btn-primary" type="submit" id="evSubmitBtn">เพิ่มกำหนดการ</button>
+            <button class="btn btn-ghost" type="button" id="evCancelEditBtn" hidden>ยกเลิกการแก้ไข</button>
+          </div>
         </form>
       </div>
 
       <div class="card">
         <div class="section-title">รายการกำหนดการทั้งหมด</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">แก้ไขกำหนดการที่มีอยู่แล้วได้ (ตั้งแต่ V10.0) — กด "แก้ไข" เพื่อดึงข้อมูลมาแก้ในฟอร์มด้านบน</p>
         <div id="eventListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -173,6 +181,17 @@
             <label for="annMessage">รายละเอียดเพิ่มเติม (ถ้ามี)</label>
             <textarea id="annMessage" placeholder="ข้อความประกาศที่จะแสดงในหน้าฮับของทุกบัญชี"></textarea>
           </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="annShowFrom">เริ่มแสดง (ไม่บังคับ)</label>
+              <input id="annShowFrom" type="datetime-local" />
+            </div>
+            <div class="field">
+              <label for="annShowUntil">สิ้นสุดการแสดง (ไม่บังคับ)</label>
+              <input id="annShowUntil" type="datetime-local" />
+            </div>
+          </div>
+          <div class="hint" style="margin-top:-8px; margin-bottom:14px;">ถ้าไม่ระบุ ประกาศจะแสดงทันทีและแสดงตลอดไปจนกว่าจะลบ — ถ้าระบุ ระบบจะแสดง/ซ่อนประกาศในหน้าฮับให้อัตโนมัติตามช่วงเวลาที่ตั้งไว้ (ตั้งแต่ V10.0)</div>
           <button class="btn btn-primary" type="submit">เผยแพร่ประกาศ</button>
         </form>
       </div>
@@ -183,20 +202,21 @@
       </div>
     </div>
 
-    <!-- Announcement log tab -->
-    <div class="tab-panel" id="tab-annlog">
+    <!-- Log tab (ประวัติการส่งงานและลบงาน — เปลี่ยนชื่อจาก "ประวัติการลบ" และเฉพาะ Super Admin ตั้งแต่ V10.0) -->
+    <div class="tab-panel super-admin-only" id="tab-log">
       <div class="card">
-        <div class="section-title">🧾 ประวัติการประกาศ</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">บันทึกว่าใครเผยแพร่หรือลบประกาศ และเมื่อไหร่</p>
-        <div id="annLogTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+        <div class="section-title">🗑️ ประวัติการส่งงานและลบงาน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">บันทึกการส่งงาน การลบไฟล์ และการลบบัญชีถาวรทั้งหมดในระบบ — ลบรายการประวัติออกได้ด้วยปุ่ม "ลบ" ท้ายแถว</p>
+        <div id="logTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
 
-    <!-- Log tab -->
-    <div class="tab-panel" id="tab-log">
+    <!-- System log tab (ประวัติระบบ — แทนที่ "Log ประกาศ" เดิม, ย้ายมาเป็นแท็บสุดท้าย ตั้งแต่ V10.0) -->
+    <div class="tab-panel" id="tab-systemlog">
       <div class="card">
-        <div class="section-title">🗑️ ประวัติการลบไฟล์ / บัญชี</div>
-        <div id="logTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+        <div class="section-title">🗂️ ประวัติระบบ</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">บันทึกการปรับแต่งค่าเว็บ การแจ้งประกาศ และการกำหนดงาน/กำหนดการในปฏิทิน</p>
+        <div id="systemLogTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
   </div>
@@ -288,11 +308,12 @@
     // เฉพาะ Super Admin (role=admin, hasHub=false) เท่านั้นที่แก้ "ทั่วไป" (ชื่อเว็บ/โลโก้/ไอคอน) ได้ — เลขเวอร์ชันไม่ใช่ค่าตั้งค่าที่แก้ผ่านหน้าเว็บอีกต่อไป (ดูแถวล่างสุดของหน้านี้)
     var isSuperAdminSession = !!session && session.role === 'admin' && !session.hasHub;
     if (!isSuperAdminSession) {
+      // ตั้งแต่ V10.0: "จัดการบัญชี" และ "ประวัติการส่งงานและลบงาน" เป็น super-admin-only ด้วย จึงเหลือแท็บ "ปฏิทิน" เป็นแท็บเริ่มต้นสำหรับเจ้าหน้าที่ฝ่ายวิชาการ
       document.querySelectorAll('.super-admin-only').forEach(function (el) { el.remove(); });
-      var accountsBtn = document.querySelector('.tab-btn[data-tab="accounts"]');
-      if (accountsBtn) accountsBtn.classList.add('active');
-      var accountsPanel = document.getElementById('tab-accounts');
-      if (accountsPanel) accountsPanel.classList.add('active');
+      var calendarBtn = document.querySelector('.tab-btn[data-tab="calendar"]');
+      if (calendarBtn) calendarBtn.classList.add('active');
+      var calendarPanel = document.getElementById('tab-calendar');
+      if (calendarPanel) calendarPanel.classList.add('active');
     }
 
     // ---------- Tabs (โหลดข้อมูลของแต่ละแท็บแบบ lazy — เฉพาะตอนเปิดแท็บนั้นครั้งแรก ลดจำนวนคำขอตอนเข้าหน้าครั้งแรกให้เหลือน้อยที่สุด ลดอาการหน่วง) ----------
@@ -320,8 +341,8 @@
       // แท็บปฏิทินใช้รายชื่อผู้ใช้ร่วมกับแท็บจัดการบัญชี (audience dropdown + ป้ายชื่อผู้รับ) และรายชื่อประเภทงาน (dropdown ผูกกำหนดส่งงาน) จึงรอให้โหลดทั้งสองเสร็จก่อน
       calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); },
       announcements: function () { return loadAnnouncements(); },
-      annlog: function () { return loadAnnLog(); },
-      log: function () { return loadLog(); }
+      log: function () { return loadLog(); },
+      systemlog: function () { return loadSystemLog(); }
     };
     function loadTabIfNeeded(tabKey) {
       if (_tabLoaded[tabKey]) return;
@@ -498,6 +519,8 @@
       });
     }
 
+    // หมายเหตุ (ตั้งแต่ V10.0): loadUsers() ยังถูกเรียกจากแท็บ "ปฏิทิน" ด้วย (ensureUsersLoaded — ใช้เติม dropdown ผู้รับ/ป้ายชื่อผู้รับ)
+    // ซึ่งเจ้าหน้าที่ฝ่ายวิชาการก็เข้าแท็บนี้ได้ แต่แท็บ "จัดการบัญชี" (#userTableWrap) เป็น super-admin-only แล้ว จึงอาจไม่มีอยู่ใน DOM — ต้องกัน null ไว้
     async function loadUsers() {
       var wrap = document.getElementById('userTableWrap');
       try {
@@ -505,7 +528,7 @@
         renderUserTable();
         renderAudienceOptions();
       } catch (err) {
-        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+        if (wrap) wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
     }
 
@@ -520,6 +543,7 @@
 
     function renderUserTable() {
       var wrap = document.getElementById('userTableWrap');
+      if (!wrap) return; // แท็บ "จัดการบัญชี" เป็น super-admin-only ตั้งแต่ V10.0 — เจ้าหน้าที่ฝ่ายวิชาการไม่มี element นี้เลย ไม่ต้อง render
       // ซ่อนบัญชี Super Admin ออกจากตารางจัดการบัญชีเสมอ (ทั้งมุมมอง Super Admin เองและเจ้าหน้าที่ฝ่ายวิชาการ)
       var visibleUsers = allUsers.filter(function (u) { return !(u.role === 'admin' && !u.hasHub); });
       if (visibleUsers.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีผู้ใช้งาน</div>'; return; }
@@ -571,88 +595,93 @@
       });
     }
 
-    // ---------- Create user modal ----------
-    var createUserModal = document.getElementById('createUserModal');
-    document.getElementById('openCreateUserBtn').addEventListener('click', function () {
-      document.getElementById('createUserForm').reset();
-      var cuSuperAdminFieldEl2 = document.getElementById('cuSuperAdminField');
-      if (cuSuperAdminFieldEl2) cuSuperAdminFieldEl2.hidden = true;
-      document.getElementById('createUserError').hidden = true;
-      showModalEl(createUserModal);
-    });
-    document.getElementById('createUserClose').addEventListener('click', function () { hideModalEl(createUserModal); });
-    document.getElementById('createUserModalCloseX').addEventListener('click', function () { hideModalEl(createUserModal); });
-
-    document.getElementById('createUserForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var errBox = document.getElementById('createUserError');
-      errBox.hidden = true;
-      if (document.getElementById('cuPassword').value !== document.getElementById('cuPasswordConfirm').value) {
-        errBox.textContent = 'รหัสผ่านเริ่มต้นทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
-        errBox.hidden = false;
-        return;
-      }
-      var cuNameVal = document.getElementById('cuName').value.trim();
-      var ok = await askConfirm('ยืนยันสร้างบัญชีใหม่สำหรับ "' + cuNameVal + '"?', 'ยืนยันการสร้างบัญชี');
-      if (!ok) return;
-      var cuIsSuperAdminEl = document.getElementById('cuIsSuperAdmin');
-      var cuPayload = {
-        name: document.getElementById('cuName').value.trim(),
-        username: document.getElementById('cuUsername').value.trim(),
-        password: document.getElementById('cuPassword').value,
-        role: document.getElementById('cuRole').value,
-        isSuperAdmin: cuIsSuperAdminEl ? cuIsSuperAdminEl.checked : false
-      };
-      var r = await withProgress('กำลังสร้างบัญชีใหม่', function () {
-        return apiCall('adminCreateUser', cuPayload);
-      }, { successLabel: 'สร้างบัญชีเรียบร้อยแล้ว' });
-      if (r.ok) {
+    // ---------- Create user modal / Reset password modal ----------
+    // ตั้งแต่ V10.0 แท็บ "จัดการบัญชี" (และปุ่ม/ฟอร์มทั้งหมดในนี้ รวมถึง #openCreateUserBtn ที่อยู่ในแท็บนั้น) เป็น super-admin-only
+    // ต้องครอบทั้งบล็อกด้วย if (isSuperAdminSession) กัน error ตอนเจ้าหน้าที่ฝ่ายวิชาการเปิดหน้านี้ (องค์ประกอบในแท็บถูกลบไปแล้ว หา element ไม่เจอ)
+    // openResetPwModal ต้องประกาศ var ไว้นอกบล็อกก่อน (เหมือน loadCategories ด้านบน) เพราะถูกเรียกใช้จาก renderUserTable ที่อยู่นอกบล็อกนี้
+    var openResetPwModal;
+    if (isSuperAdminSession) {
+      var createUserModal = document.getElementById('createUserModal');
+      document.getElementById('openCreateUserBtn').addEventListener('click', function () {
         document.getElementById('createUserForm').reset();
-        var cuSuperAdminFieldEl = document.getElementById('cuSuperAdminField');
-        if (cuSuperAdminFieldEl) cuSuperAdminFieldEl.hidden = true;
-        hideModalEl(createUserModal);
-        loadUsers();
-      } else {
-        errBox.textContent = r.error.message;
-        errBox.hidden = false;
-      }
-    });
+        var cuSuperAdminFieldEl2 = document.getElementById('cuSuperAdminField');
+        if (cuSuperAdminFieldEl2) cuSuperAdminFieldEl2.hidden = true;
+        document.getElementById('createUserError').hidden = true;
+        showModalEl(createUserModal);
+      });
+      document.getElementById('createUserClose').addEventListener('click', function () { hideModalEl(createUserModal); });
+      document.getElementById('createUserModalCloseX').addEventListener('click', function () { hideModalEl(createUserModal); });
 
-    // ---------- Reset password modal ----------
-    var resetPwModal = document.getElementById('resetPwModal');
-    var resetPwUserId = null;
-    function openResetPwModal(userId, name) {
-      resetPwUserId = userId;
-      document.getElementById('resetPwTargetName').textContent = 'สำหรับผู้ใช้: ' + name;
-      document.getElementById('resetPwInput').value = '';
-      document.getElementById('resetPwConfirm').value = '';
-      document.getElementById('resetPwError').hidden = true;
-      showModalEl(resetPwModal);
+      document.getElementById('createUserForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('createUserError');
+        errBox.hidden = true;
+        if (document.getElementById('cuPassword').value !== document.getElementById('cuPasswordConfirm').value) {
+          errBox.textContent = 'รหัสผ่านเริ่มต้นทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
+          errBox.hidden = false;
+          return;
+        }
+        var cuNameVal = document.getElementById('cuName').value.trim();
+        var ok = await askConfirm('ยืนยันสร้างบัญชีใหม่สำหรับ "' + cuNameVal + '"?', 'ยืนยันการสร้างบัญชี');
+        if (!ok) return;
+        var cuIsSuperAdminEl = document.getElementById('cuIsSuperAdmin');
+        var cuPayload = {
+          name: document.getElementById('cuName').value.trim(),
+          username: document.getElementById('cuUsername').value.trim(),
+          password: document.getElementById('cuPassword').value,
+          role: document.getElementById('cuRole').value,
+          isSuperAdmin: cuIsSuperAdminEl ? cuIsSuperAdminEl.checked : false
+        };
+        var r = await withProgress('กำลังสร้างบัญชีใหม่', function () {
+          return apiCall('adminCreateUser', cuPayload);
+        }, { successLabel: 'สร้างบัญชีเรียบร้อยแล้ว' });
+        if (r.ok) {
+          document.getElementById('createUserForm').reset();
+          var cuSuperAdminFieldEl = document.getElementById('cuSuperAdminField');
+          if (cuSuperAdminFieldEl) cuSuperAdminFieldEl.hidden = true;
+          hideModalEl(createUserModal);
+          loadUsers();
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      });
+
+      var resetPwModal = document.getElementById('resetPwModal');
+      var resetPwUserId = null;
+      openResetPwModal = function (userId, name) {
+        resetPwUserId = userId;
+        document.getElementById('resetPwTargetName').textContent = 'สำหรับผู้ใช้: ' + name;
+        document.getElementById('resetPwInput').value = '';
+        document.getElementById('resetPwConfirm').value = '';
+        document.getElementById('resetPwError').hidden = true;
+        showModalEl(resetPwModal);
+      };
+      document.getElementById('resetPwClose').addEventListener('click', function () { hideModalEl(resetPwModal); });
+      document.getElementById('resetPwModalCloseX').addEventListener('click', function () { hideModalEl(resetPwModal); });
+      document.getElementById('resetPwForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('resetPwError');
+        errBox.hidden = true;
+        if (document.getElementById('resetPwInput').value !== document.getElementById('resetPwConfirm').value) {
+          errBox.textContent = 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
+          errBox.hidden = false;
+          return;
+        }
+        var okPw = await askConfirm('ยืนยันตั้งรหัสผ่านใหม่ให้บัญชีนี้?', 'ยืนยันการตั้งรหัสผ่านใหม่');
+        if (!okPw) return;
+        var newPwVal = document.getElementById('resetPwInput').value;
+        var r = await withProgress('กำลังตั้งรหัสผ่านใหม่', function () {
+          return apiCall('adminResetUserPassword', { userId: resetPwUserId, newPassword: newPwVal });
+        }, { successLabel: 'ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว' });
+        if (r.ok) {
+          hideModalEl(resetPwModal);
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      });
     }
-    document.getElementById('resetPwClose').addEventListener('click', function () { hideModalEl(resetPwModal); });
-    document.getElementById('resetPwModalCloseX').addEventListener('click', function () { hideModalEl(resetPwModal); });
-    document.getElementById('resetPwForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var errBox = document.getElementById('resetPwError');
-      errBox.hidden = true;
-      if (document.getElementById('resetPwInput').value !== document.getElementById('resetPwConfirm').value) {
-        errBox.textContent = 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
-        errBox.hidden = false;
-        return;
-      }
-      var okPw = await askConfirm('ยืนยันตั้งรหัสผ่านใหม่ให้บัญชีนี้?', 'ยืนยันการตั้งรหัสผ่านใหม่');
-      if (!okPw) return;
-      var newPwVal = document.getElementById('resetPwInput').value;
-      var r = await withProgress('กำลังตั้งรหัสผ่านใหม่', function () {
-        return apiCall('adminResetUserPassword', { userId: resetPwUserId, newPassword: newPwVal });
-      }, { successLabel: 'ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว' });
-      if (r.ok) {
-        hideModalEl(resetPwModal);
-      } else {
-        errBox.textContent = r.error.message;
-        errBox.hidden = false;
-      }
-    });
 
     // ---------- Calendar ----------
     // ปีการศึกษา options ของฟอร์มเพิ่มกำหนดการ (รูปแบบเดียวกับ fillYearOptions ในหน้าแดชบอร์ดครู)
@@ -700,10 +729,12 @@
       sel.value = current || 'all';
     }
 
+    var lastEvents = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่ V10.0)
     async function loadEvents() {
       var wrap = document.getElementById('eventListWrap');
       try {
         var events = await apiCall('adminListEvents', {});
+        lastEvents = events;
         if (events.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศ</div>'; return; }
         var html = '';
         events.forEach(function (ev) {
@@ -723,23 +754,63 @@
             (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
             '<div class="sub-item-meta">สำหรับ: ' + escapeHtml(audienceLabel) + '</div>' +
             categoryMeta + '</div>' +
+            '<div style="display:flex; gap:6px; flex-shrink:0;">' +
+            '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button>' +
             '<button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>' +
+            '</div>' +
             '</div>';
         });
         wrap.innerHTML = html;
+        wrap.querySelectorAll('button[data-edit-id]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var ev = lastEvents.filter(function (e) { return e.id === btn.getAttribute('data-edit-id'); })[0];
+            if (ev) startEditEvent(ev);
+          });
+        });
         wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
           btn.addEventListener('click', async function () {
             var ok = await askConfirm('ลบกำหนดการนี้?', 'ยืนยันการลบกำหนดการ');
             if (!ok) return;
             var evId = btn.getAttribute('data-id');
             var r = await withProgress('กำลังลบกำหนดการ', function () { return apiCall('adminDeleteEvent', { eventId: evId }); }, { successLabel: 'ลบกำหนดการแล้ว' });
-            if (r.ok) loadEvents();
+            if (r.ok) { loadEvents(); if (_tabLoaded.systemlog) loadSystemLog(); }
           });
         });
       } catch (err) {
         wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
     }
+
+    // ---------- แก้ไขกำหนดการ (ตั้งแต่ V10.0) — ดึงข้อมูลเดิมมาเติมฟอร์มเพิ่มกำหนดการด้านบน แล้วเปลี่ยนโหมดเป็น "แก้ไข" ----------
+    function startEditEvent(ev) {
+      document.getElementById('evEditId').value = ev.id;
+      document.getElementById('evDate').value = ev.date;
+      document.getElementById('evEndDate').value = (ev.endDate && ev.endDate !== ev.date) ? ev.endDate : '';
+      document.getElementById('evAudience').value = ev.audience;
+      document.getElementById('evTitle').value = ev.title;
+      document.getElementById('evMessage').value = ev.message || '';
+      document.getElementById('evCategory').value = ev.categoryId || '';
+      document.getElementById('evTermFields').hidden = !ev.categoryId;
+      if (ev.categoryId) {
+        document.getElementById('evYear').value = ev.academicYear;
+        document.getElementById('evSemester').value = ev.semester;
+      }
+      document.getElementById('evSubmitBtn').textContent = 'บันทึกการแก้ไข';
+      document.getElementById('evCancelEditBtn').hidden = false;
+      var hint = document.getElementById('evEditingHint');
+      hint.textContent = '✏️ กำลังแก้ไขกำหนดการ: ' + ev.title;
+      hint.hidden = false;
+      document.getElementById('createEventForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function cancelEditEvent() {
+      document.getElementById('evEditId').value = '';
+      document.getElementById('createEventForm').reset();
+      document.getElementById('evTermFields').hidden = true;
+      document.getElementById('evSubmitBtn').textContent = 'เพิ่มกำหนดการ';
+      document.getElementById('evCancelEditBtn').hidden = true;
+      document.getElementById('evEditingHint').hidden = true;
+    }
+    document.getElementById('evCancelEditBtn').addEventListener('click', cancelEditEvent);
 
     document.getElementById('createEventForm').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -753,7 +824,11 @@
         errBox.hidden = false;
         return;
       }
-      var okEv = await askConfirm('ยืนยันเพิ่มกำหนดการนี้ในปฏิทิน?', 'ยืนยันการเพิ่มกำหนดการ');
+      var editId = document.getElementById('evEditId').value;
+      var okEv = await askConfirm(
+        editId ? 'ยืนยันบันทึกการแก้ไขกำหนดการนี้?' : 'ยืนยันเพิ่มกำหนดการนี้ในปฏิทิน?',
+        editId ? 'ยืนยันการแก้ไขกำหนดการ' : 'ยืนยันการเพิ่มกำหนดการ'
+      );
       if (!okEv) return;
       var evPayload = {
         date: evDateVal,
@@ -765,13 +840,14 @@
         academicYear: evCategoryVal ? document.getElementById('evYear').value : '',
         semester: evCategoryVal ? document.getElementById('evSemester').value : ''
       };
-      var r = await withProgress('กำลังเพิ่มกำหนดการ', function () {
-        return apiCall('adminCreateEvent', evPayload);
-      }, { successLabel: 'เพิ่มกำหนดการแล้ว' });
+      if (editId) evPayload.eventId = editId;
+      var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเพิ่มกำหนดการ', function () {
+        return apiCall(editId ? 'adminUpdateEvent' : 'adminCreateEvent', evPayload);
+      }, { successLabel: editId ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มกำหนดการแล้ว' });
       if (r.ok) {
-        document.getElementById('createEventForm').reset();
-        document.getElementById('evTermFields').hidden = true;
+        cancelEditEvent();
         loadEvents();
+        if (_tabLoaded.systemlog) loadSystemLog();
       } else {
         errBox.textContent = r.error.message;
         errBox.hidden = false;
@@ -779,6 +855,14 @@
     });
 
     // ---------- Announcements ----------
+    // ป้ายบอกช่วงเวลาแสดงผล (ถ้าตั้งไว้) — ใช้ในแท็บนี้เท่านั้น (แท็บนี้ยังคงบอกชื่อผู้แจ้งประกาศไว้เหมือนเดิม ต่างจากหน้าฮับที่บอกแค่ "จากฝ่ายวิชาการ" ตั้งแต่ V10.0)
+    function annScheduleMeta(a) {
+      if (!a.showFrom && !a.showUntil) return '';
+      var parts = [];
+      if (a.showFrom) parts.push('เริ่ม ' + formatDateTimeThai(a.showFrom));
+      if (a.showUntil) parts.push('ถึง ' + formatDateTimeThai(a.showUntil));
+      return '<div class="sub-item-meta">⏰ ' + parts.join(' · ') + '</div>';
+    }
     async function loadAnnouncements() {
       var wrap = document.getElementById('annListWrap');
       try {
@@ -789,7 +873,8 @@
           html += '<div class="event-list-item">' +
             '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
             (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
-            '<div class="sub-item-meta">โดย ' + escapeHtml(a.createdByName) + ' · ' + formatDateTimeThai(a.createdAt) + '</div></div>' +
+            '<div class="sub-item-meta">โดย ' + escapeHtml(a.createdByName) + ' · ' + formatDateTimeThai(a.createdAt) + '</div>' +
+            annScheduleMeta(a) + '</div>' +
             '<button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button>' +
           '</div>';
         });
@@ -802,7 +887,7 @@
             var r = await withProgress('กำลังลบประกาศ', function () {
               return apiCall('adminDeleteAnnouncement', { announcementId: annId });
             }, { successLabel: 'ลบประกาศแล้ว' });
-            if (r.ok) { loadAnnouncements(); loadAnnLog(); }
+            if (r.ok) { loadAnnouncements(); if (_tabLoaded.systemlog) loadSystemLog(); }
           });
         });
       } catch (err) {
@@ -814,11 +899,21 @@
       e.preventDefault();
       var errBox = document.getElementById('createAnnError');
       errBox.hidden = true;
+      var showFromRaw = document.getElementById('annShowFrom').value;
+      var showUntilRaw = document.getElementById('annShowUntil').value;
+      if (showFromRaw && showUntilRaw && new Date(showUntilRaw) < new Date(showFromRaw)) {
+        errBox.textContent = 'เวลาสิ้นสุดการแสดงต้องไม่อยู่ก่อนเวลาเริ่มแสดง';
+        errBox.hidden = false;
+        return;
+      }
       var okAnn = await askConfirm('ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?', 'ยืนยันการเผยแพร่ประกาศ');
       if (!okAnn) return;
       var annPayload = {
         title: document.getElementById('annTitle').value.trim(),
-        message: document.getElementById('annMessage').value.trim()
+        message: document.getElementById('annMessage').value.trim(),
+        // datetime-local เป็นเวลาท้องถิ่นของเครื่องที่ตั้งค่า แปลงเป็น ISO (UTC) ก่อนส่ง ให้เทียบกับเวลาจริงฝั่ง backend ได้ตรง
+        showFrom: showFromRaw ? new Date(showFromRaw).toISOString() : '',
+        showUntil: showUntilRaw ? new Date(showUntilRaw).toISOString() : ''
       };
       var r = await withProgress('กำลังเผยแพร่ประกาศ', function () {
         return apiCall('adminCreateAnnouncement', annPayload);
@@ -826,25 +921,66 @@
       if (r.ok) {
         document.getElementById('createAnnForm').reset();
         loadAnnouncements();
-        loadAnnLog();
+        if (_tabLoaded.systemlog) loadSystemLog();
       } else {
         errBox.textContent = r.error.message;
         errBox.hidden = false;
       }
     });
 
-    // ---------- Announcement log ----------
-    async function loadAnnLog() {
-      var wrap = document.getElementById('annLogTableWrap');
+    // ---------- ประวัติการส่งงานและลบงาน (เดิมชื่อ "ประวัติการลบ" — ตั้งแต่ V10.0 รวม action='submit' ด้วย และมีปุ่มลบรายการต่อแถว) ----------
+    function logActionLabel(a) {
+      if (a === 'purge_user') return 'ลบบัญชีถาวร';
+      if (a === 'submit') return 'ส่งงาน';
+      return 'ลบไฟล์';
+    }
+    async function loadLog() {
+      var wrap = document.getElementById('logTableWrap');
       try {
-        var rows = await apiCall('adminListAnnouncementLog', {});
-        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติการประกาศ</div>'; return; }
-        var html = '<table><thead><tr><th>วันเวลา</th><th>การกระทำ</th><th>หัวข้อประกาศ</th><th>ผู้ทำรายการ</th></tr></thead><tbody>';
+        var rows = await apiCall('adminListDeleteLog', {});
+        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติ</div>'; return; }
+        var html = '<table><thead><tr><th>วันเวลา</th><th>การกระทำ</th><th>ไฟล์/บัญชี</th><th>เจ้าของ</th><th>ผู้ทำรายการ</th><th></th></tr></thead><tbody>';
         rows.forEach(function (r) {
           html += '<tr>' +
             '<td>' + formatDateTimeThai(r.at) + '</td>' +
-            '<td>' + (r.action === 'create' ? 'เผยแพร่ประกาศ' : 'ลบประกาศ') + '</td>' +
-            '<td>' + escapeHtml(r.title) + '</td>' +
+            '<td>' + logActionLabel(r.action) + '</td>' +
+            '<td>' + escapeHtml(r.fileName || '-') + '</td>' +
+            '<td>' + escapeHtml(r.teacherName || '-') + '</td>' +
+            '<td>' + escapeHtml(r.actorName || '-') + '</td>' +
+            '<td><button class="btn btn-danger btn-sm" data-id="' + r.id + '">ลบ</button></td>' +
+          '</tr>';
+        });
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var ok = await askConfirm('ลบรายการประวัตินี้ออกจากระบบ?', 'ยืนยันการลบประวัติ');
+            if (!ok) return;
+            var logId = btn.getAttribute('data-id');
+            var r = await withProgress('กำลังลบรายการประวัติ', function () {
+              return apiCall('adminDeleteLogEntry', { logId: logId });
+            }, { successLabel: 'ลบรายการประวัติแล้ว' });
+            if (r.ok) loadLog();
+          });
+        });
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    // ---------- ประวัติระบบ (ตั้งแต่ V10.0) ----------
+    async function loadSystemLog() {
+      var wrap = document.getElementById('systemLogTableWrap');
+      try {
+        var rows = await apiCall('adminListSystemLog', {});
+        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติระบบ</div>'; return; }
+        var catLabel = { settings: 'ปรับแต่งค่า', announcement: 'ประกาศ', event: 'กำหนดการ/งาน' };
+        var html = '<table><thead><tr><th>วันเวลา</th><th>หมวด</th><th>รายละเอียด</th><th>ผู้ทำรายการ</th></tr></thead><tbody>';
+        rows.forEach(function (r) {
+          html += '<tr>' +
+            '<td>' + formatDateTimeThai(r.at) + '</td>' +
+            '<td>' + (catLabel[r.category] || escapeHtml(r.category)) + '</td>' +
+            '<td>' + escapeHtml(r.detail || r.action) + '</td>' +
             '<td>' + escapeHtml(r.actorName) + '</td>' +
           '</tr>';
         });
@@ -855,32 +991,9 @@
       }
     }
 
-    // ---------- Delete log ----------
-    async function loadLog() {
-      var wrap = document.getElementById('logTableWrap');
-      try {
-        var rows = await apiCall('adminListDeleteLog', {});
-        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติการลบ</div>'; return; }
-        var html = '<table><thead><tr><th>วันเวลา</th><th>การกระทำ</th><th>ไฟล์/บัญชี</th><th>เจ้าของ</th><th>ผู้ทำรายการ</th></tr></thead><tbody>';
-        rows.forEach(function (r) {
-          var actLabel = r.action === 'purge_user' ? 'ลบบัญชีถาวร' : 'ลบไฟล์';
-          html += '<tr>' +
-            '<td>' + formatDateTimeThai(r.at) + '</td>' +
-            '<td>' + actLabel + '</td>' +
-            '<td>' + escapeHtml(r.fileName || '-') + '</td>' +
-            '<td>' + escapeHtml(r.teacherName || '-') + '</td>' +
-            '<td>' + escapeHtml(r.actorName || '-') + '</td>' +
-          '</tr>';
-        });
-        html += '</tbody></table>';
-        wrap.innerHTML = html;
-      } catch (err) {
-        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
-      }
-    }
-
     // โหลดเฉพาะแท็บที่กำลังแสดงอยู่ตอนแรกเท่านั้น (แท็บอื่นจะโหลดทีหลังตอนผู้ใช้กดเปิดเอง)
-    loadTabIfNeeded(isSuperAdminSession ? 'general' : 'accounts');
+    // ตั้งแต่ V10.0: เจ้าหน้าที่ฝ่ายวิชาการ (ไม่ใช่ Super Admin) เห็นแท็บ "ปฏิทิน" เป็นแท็บแรก (accounts ถูกจำกัดเฉพาะ Super Admin แล้ว)
+    loadTabIfNeeded(isSuperAdminSession ? 'general' : 'calendar');
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
     window.__refreshPageData = function () {
