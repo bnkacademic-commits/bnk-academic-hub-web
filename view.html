@@ -14,7 +14,7 @@
   </div>
 
   <div id="publicHeader" class="public-header" hidden>
-    <div class="avatar" id="avatarInitial">-</div>
+    <div class="avatar" id="publicAvatar"></div>
     <h1 id="teacherName">-</h1>
     <div class="status-note" id="statusNote"></div>
   </div>
@@ -44,7 +44,7 @@
         var data = await apiCall('publicGetSummary', { username: username });
         document.getElementById('publicHeader').hidden = false;
         document.getElementById('teacherName').textContent = data.name;
-        document.getElementById('avatarInitial').textContent = (data.name || '?').trim().charAt(0);
+        document.getElementById('publicAvatar').innerHTML = avatarInnerHtml(data.avatarUrl);
         var note = document.getElementById('statusNote');
         note.textContent = data.status === 'archived' ? 'บัญชีนี้พักการใช้งานแล้ว — แสดงผลงานที่บันทึกไว้เพื่ออ้างอิง' : '';
 

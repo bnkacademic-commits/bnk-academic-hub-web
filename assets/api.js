@@ -6,11 +6,11 @@
  * หลัง deploy — ดูขั้นตอนเต็มใน README.md (ตั้งแต่ V9 backend ย้ายจาก Google Apps Script มาเป็น
  * Cloudflare Worker + D1/KV แล้ว — ไฟล์ apps-script/ เดิมเก็บไว้เป็นข้อมูลอ้างอิงเท่านั้น ไม่ได้ใช้งานแล้ว)
  */
-var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev/';
+var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 
 // เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
-var APP_VERSION = 'V9.1';
+var APP_VERSION = 'V9.2';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -291,6 +291,83 @@ function resizeImageToBase64(file, maxSize) {
     reader.readAsDataURL(file);
   });
 }
+/**
+ * อ่านไฟล์รูปโปรไฟล์ ย่อขนาด (ไม่เกิน 480px ด้านที่ยาวที่สุด) แล้วบีบอัดเป็น JPEG คุณภาพ 0.85 ก่อนอัพโหลด
+ * เพื่อให้ไฟล์เล็กพอเหมาะกับการแสดงในหน้าเว็บเสมอ (ทั้งหน้าโปรไฟล์และหน้าผลงานสาธารณะ) โดยผู้ใช้ไม่ต้องไปย่อไฟล์เอง
+ */
+function resizeImageForAvatar(file) {
+  return new Promise(function (resolve, reject) {
+    if (!file.type || file.type.indexOf('image/') !== 0) {
+      reject(new Error('กรุณาเลือกไฟล์รูปภาพเท่านั้น'));
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth || img.width;
+        var h = img.naturalHeight || img.height;
+        var maxSize = 480;
+        var scale = Math.min(1, maxSize / Math.max(w, h));
+        var outW = Math.max(1, Math.round(w * scale));
+        var outH = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement('canvas');
+        canvas.width = outW;
+        canvas.height = outH;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff'; // กันพื้นหลังโปร่งใส (เช่น ไฟล์ PNG) กลายเป็นสีดำตอนแปลงเป็น JPEG
+        ctx.fillRect(0, 0, outW, outH);
+        ctx.drawImage(img, 0, 0, outW, outH);
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg', dataUrl: dataUrl, width: outW, height: outH });
+      };
+      img.onerror = function () { reject(new Error('ไม่สามารถอ่านไฟล์รูปภาพนี้ได้ ลองไฟล์อื่น')); };
+      img.src = String(reader.result);
+    };
+    reader.onerror = function () { reject(new Error('ไม่สามารถอ่านไฟล์นี้ได้')); };
+    reader.readAsDataURL(file);
+  });
+}
+/**
+ * อัพโหลดรูปโปรไฟล์ (ที่ย่อ/บีบอัดไว้แล้วจาก resizeImageForAvatar) ขึ้น Google Drive ผ่าน Drive relay
+ * ด้วยขั้นตอนเดียวกับการส่งไฟล์งาน (prepare -> ยิงตรงไป relay -> finalize) ดู submitWorkFile ด้านบนประกอบ
+ */
+async function uploadResizedAvatar(resized) {
+  var approxBytes = Math.ceil(resized.base64.length * 3 / 4);
+  var prep = await apiCall('profileAvatarUploadPrepare', { fileName: 'avatar.jpg', fileSize: approxBytes });
+  var relayText;
+  try {
+    var relayRes = await fetch(prep.relayUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ uploadToken: prep.uploadToken, base64: resized.base64, filename: 'avatar.jpg', mimeType: resized.mimeType })
+    });
+    relayText = await relayRes.text();
+  } catch (e) {
+    throw new Error('ติดต่อระบบเก็บไฟล์ไม่สำเร็จ (เครือข่ายขัดข้อง) กรุณาลองใหม่อีกครั้ง');
+  }
+  var relayJson;
+  try {
+    relayJson = JSON.parse(relayText);
+  } catch (e) {
+    throw new Error('ระบบเก็บไฟล์ตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+  }
+  if (!relayJson.ok) throw new Error(relayJson.error || 'อัพโหลดรูปโปรไฟล์ไม่สำเร็จ');
+  var result = relayJson.data;
+  return apiCall('profileAvatarUploadFinalize', {
+    fileId: result.fileId, fileUrl: result.url, directUrl: result.directUrl,
+    fileName: 'avatar.jpg', mimeType: resized.mimeType
+  });
+}
+
+// ไอคอนคนทั่วไป (SVG เส้น currentColor) — ใช้เป็นรูปโปรไฟล์เริ่มต้นเมื่อบัญชียังไม่ได้อัพโหลดรูปเอง
+var PERSON_ICON_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.68-10 5v3h20v-3c0-3.32-6.67-5-10-5z"/></svg>';
+// คืน HTML สำหรับวงกลมรูปโปรไฟล์: รูปที่อัพโหลดไว้ (ถ้ามี) หรือไอคอนคนเริ่มต้น
+function avatarInnerHtml(avatarUrl) {
+  if (avatarUrl) return '<img src="' + escapeHtml(avatarUrl) + '" alt="" />';
+  return PERSON_ICON_SVG;
+}
+
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -352,11 +429,28 @@ function ensureSharedModals() {
         '<form id="sharedPwForm" style="text-align:left;">' +
           '<div class="field"><label for="sharedOldPw">รหัสผ่านเดิม</label><input id="sharedOldPw" type="password" required autocomplete="current-password" /></div>' +
           '<div class="field"><label for="sharedNewPw">รหัสผ่านใหม่</label><input id="sharedNewPw" type="password" required minlength="4" autocomplete="new-password" /></div>' +
+          '<div class="field"><label for="sharedNewPwConfirm">ยืนยันรหัสผ่านใหม่</label><input id="sharedNewPwConfirm" type="password" required minlength="4" autocomplete="new-password" /></div>' +
           '<div class="modal-actions">' +
             '<button type="submit" class="btn btn-primary">บันทึก</button>' +
             '<button type="button" class="btn btn-ghost" id="sharedPwClose">ยกเลิก</button>' +
           '</div>' +
         '</form>' +
+      '</div>' +
+    '</div>' +
+    '<div class="modal-backdrop" id="sharedAvatarModal" hidden>' +
+      '<div class="modal-box">' +
+        '<button type="button" class="modal-close-x" id="sharedAvatarCloseX" aria-label="ปิด">✕</button>' +
+        '<h3>รูปโปรไฟล์</h3>' +
+        '<div id="sharedAvatarError" class="error-box" hidden></div>' +
+        '<div class="avatar-preview-wrap"><span class="profile-avatar avatar-preview-lg" id="sharedAvatarPreview"></span></div>' +
+        '<p class="hint" style="text-align:center; margin-top:-6px;">ระบบจะย่อขนาดและบีบอัดรูปให้อัตโนมัติก่อนอัพโหลด</p>' +
+        '<input type="file" id="sharedAvatarFileInput" accept="image/*" hidden />' +
+        '<div class="modal-actions" style="flex-wrap:wrap;">' +
+          '<button type="button" class="btn btn-secondary" id="sharedAvatarPickBtn">เลือกรูปภาพ</button>' +
+          '<button type="button" class="btn btn-primary" id="sharedAvatarSaveBtn" hidden>บันทึก</button>' +
+          '<button type="button" class="btn btn-danger" id="sharedAvatarRemoveBtn" hidden>ลบรูปโปรไฟล์</button>' +
+          '<button type="button" class="btn btn-ghost" id="sharedAvatarClose">ปิด</button>' +
+        '</div>' +
       '</div>' +
     '</div>' +
     '<div class="modal-backdrop" id="sharedExpireModal" hidden>' +
@@ -395,10 +489,16 @@ function ensureSharedModals() {
     e.preventDefault();
     var errBox = document.getElementById('sharedPwError');
     errBox.hidden = true;
+    var newPw = document.getElementById('sharedNewPw').value;
+    var newPwConfirm = document.getElementById('sharedNewPwConfirm').value;
+    if (newPw !== newPwConfirm) {
+      errBox.textContent = 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
+      errBox.hidden = false;
+      return;
+    }
     var ok = await askConfirm('ยืนยันเปลี่ยนรหัสผ่านของบัญชีนี้?', 'ยืนยันการเปลี่ยนรหัสผ่าน');
     if (!ok) return;
     var oldPw = document.getElementById('sharedOldPw').value;
-    var newPw = document.getElementById('sharedNewPw').value;
     var r = await withProgress('กำลังเปลี่ยนรหัสผ่าน', function () {
       return apiCall('changePassword', { oldPassword: oldPw, newPassword: newPw });
     }, { successLabel: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว' });
@@ -410,11 +510,94 @@ function ensureSharedModals() {
       errBox.hidden = false;
     }
   });
+
+  // ---------- ป็อปอัพรูปโปรไฟล์ ----------
+  var _pendingAvatar = null; // ผลลัพธ์จาก resizeImageForAvatar ระหว่างที่ยังไม่กดบันทึก
+  var avatarModal = document.getElementById('sharedAvatarModal');
+  var avatarErrBox = document.getElementById('sharedAvatarError');
+  var avatarPreview = document.getElementById('sharedAvatarPreview');
+  var avatarSaveBtn = document.getElementById('sharedAvatarSaveBtn');
+  var avatarRemoveBtn = document.getElementById('sharedAvatarRemoveBtn');
+  var avatarFileInput = document.getElementById('sharedAvatarFileInput');
+
+  function closeAvatarModal() { hideModalEl(avatarModal); }
+  document.getElementById('sharedAvatarClose').addEventListener('click', closeAvatarModal);
+  document.getElementById('sharedAvatarCloseX').addEventListener('click', closeAvatarModal);
+  document.getElementById('sharedAvatarPickBtn').addEventListener('click', function () { avatarFileInput.click(); });
+
+  avatarFileInput.addEventListener('change', async function () {
+    var file = avatarFileInput.files && avatarFileInput.files[0];
+    avatarFileInput.value = '';
+    if (!file) return;
+    avatarErrBox.hidden = true;
+    try {
+      var resized = await resizeImageForAvatar(file);
+      _pendingAvatar = resized;
+      avatarPreview.innerHTML = '<img src="' + resized.dataUrl + '" alt="" />';
+      avatarSaveBtn.hidden = false;
+    } catch (err) {
+      avatarErrBox.textContent = err.message;
+      avatarErrBox.hidden = false;
+    }
+  });
+
+  avatarSaveBtn.addEventListener('click', async function () {
+    if (!_pendingAvatar) return;
+    avatarErrBox.hidden = true;
+    var r = await withProgress('กำลังอัพโหลดรูปโปรไฟล์', function () {
+      return uploadResizedAvatar(_pendingAvatar);
+    }, { successLabel: 'อัพเดทรูปโปรไฟล์แล้ว' });
+    if (r.ok) {
+      _pendingAvatar = null;
+      avatarSaveBtn.hidden = true;
+      var s = getSession();
+      if (s) { s.avatarUrl = r.data.avatarUrl; setSession(getToken(), s); }
+      var topbarEl = document.getElementById('topbarAvatar');
+      if (topbarEl) topbarEl.innerHTML = avatarInnerHtml(r.data.avatarUrl);
+      avatarRemoveBtn.hidden = false;
+      hideModalEl(avatarModal);
+    } else {
+      avatarErrBox.textContent = r.error.message;
+      avatarErrBox.hidden = false;
+    }
+  });
+
+  avatarRemoveBtn.addEventListener('click', async function () {
+    var ok = await askConfirm('ลบรูปโปรไฟล์นี้? ระบบจะกลับไปใช้ไอคอนเริ่มต้นแทน', 'ยืนยันการลบรูปโปรไฟล์');
+    if (!ok) return;
+    avatarErrBox.hidden = true;
+    var r = await withProgress('กำลังลบรูปโปรไฟล์', function () {
+      return apiCall('profileRemoveAvatar', {});
+    }, { successLabel: 'ลบรูปโปรไฟล์แล้ว' });
+    if (r.ok) {
+      var s2 = getSession();
+      if (s2) { s2.avatarUrl = ''; setSession(getToken(), s2); }
+      var topbarEl2 = document.getElementById('topbarAvatar');
+      if (topbarEl2) topbarEl2.innerHTML = avatarInnerHtml('');
+      avatarPreview.innerHTML = avatarInnerHtml('');
+      avatarRemoveBtn.hidden = true;
+      _pendingAvatar = null;
+      avatarSaveBtn.hidden = true;
+    } else {
+      avatarErrBox.textContent = r.error.message;
+      avatarErrBox.hidden = false;
+    }
+  });
 }
 
 function openChangePasswordModal() {
   ensureSharedModals();
   showModalEl(document.getElementById('sharedPwModal'));
+}
+
+function openAvatarModal() {
+  ensureSharedModals();
+  var session = getSession();
+  document.getElementById('sharedAvatarError').hidden = true;
+  document.getElementById('sharedAvatarPreview').innerHTML = avatarInnerHtml(session && session.avatarUrl);
+  document.getElementById('sharedAvatarSaveBtn').hidden = true;
+  document.getElementById('sharedAvatarRemoveBtn').hidden = !(session && session.avatarUrl);
+  showModalEl(document.getElementById('sharedAvatarModal'));
 }
 
 function askConfirm(msg, title) {
@@ -514,7 +697,7 @@ async function withProgress(title, workFn, opts) {
 function navLinksFor(session) {
   var links = [];
   if (session && session.role === 'admin') {
-    if (session.hasHub) links.push({ href: 'dashboard.html', label: 'หน้าฮับ', key: 'dashboard' });
+    if (session.hasHub) links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard' });
     links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary' });
     links.push({ href: 'settings.html', label: 'ตั้งค่าเว็บ', key: 'settings' });
   }
@@ -529,16 +712,17 @@ function mountChrome(activePage) {
     var navHtml = links.map(function (l) {
       return '<a href="' + l.href + '" class="' + (l.key === activePage ? 'active' : '') + '">' + escapeHtml(l.label) + '</a>';
     }).join('');
-    var initial = (session.name || '?').trim().charAt(0);
     topbarRoot.innerHTML =
       '<div class="topbar">' +
         '<button class="brand js-home-btn" type="button"><span class="js-brand-logo"><span class="logo-dot"></span></span> <span class="js-site-name">BNKAcademicHub</span></button>' +
         '<div class="topbar-right">' +
           '<nav class="topbar-nav">' + navHtml + '</nav>' +
-          '<button class="refresh-btn" id="refreshDataBtn" type="button" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><span class="refresh-icon">🔄</span></button>' +
+          '<button class="refresh-btn" id="refreshDataBtn" type="button" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล">' +
+            '<svg class="refresh-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>' +
+          '</button>' +
           '<div class="profile-menu">' +
             '<button class="profile-trigger" id="profileTrigger" aria-expanded="false" type="button">' +
-              '<span class="profile-avatar">' + escapeHtml(initial) + '</span>' +
+              '<span class="profile-avatar" id="topbarAvatar">' + avatarInnerHtml(session.avatarUrl) + '</span>' +
               '<span class="profile-name">' + escapeHtml(session.name) + '</span>' +
               '<span class="chevron">▾</span>' +
             '</button>' +
@@ -546,6 +730,7 @@ function mountChrome(activePage) {
               '<div class="dd-header"><div class="dd-name">' + escapeHtml(session.name) + '</div><div class="dd-role">' + escapeHtml(roleLabel(session)) + '</div></div>' +
               '<div class="theme-switch-row"><span>โหมดมืด</span><label class="switch"><input type="checkbox" id="themeToggleInput"><span class="slider"></span></label></div>' +
               '<div class="dd-divider"></div>' +
+              '<button class="dd-item" id="ddChangeAvatar" type="button"><span class="dd-icon">🖼️</span> เปลี่ยนรูปโปรไฟล์</button>' +
               '<button class="dd-item" id="ddChangePw" type="button"><span class="dd-icon">🔑</span> เปลี่ยนรหัสผ่าน</button>' +
               '<button class="dd-item danger" id="ddLogout" type="button"><span class="dd-icon">🚪</span> ออกจากระบบ</button>' +
             '</div>' +
@@ -572,6 +757,10 @@ function mountChrome(activePage) {
     themeChk.checked = getTheme() === 'dark';
     themeChk.addEventListener('change', function () { setTheme(themeChk.checked ? 'dark' : 'light'); });
 
+    document.getElementById('ddChangeAvatar').addEventListener('click', function () {
+      dropdown.classList.remove('open');
+      openAvatarModal();
+    });
     document.getElementById('ddChangePw').addEventListener('click', function () {
       dropdown.classList.remove('open');
       openChangePasswordModal();

@@ -187,12 +187,16 @@
             <input id="cuPassword" required placeholder="อย่างน้อย 4 ตัวอักษร" />
           </div>
           <div class="field">
-            <label for="cuRole">Role</label>
-            <select id="cuRole">
-              <option value="teacher">ครู (Teacher)</option>
-              <option value="admin">เจ้าหน้าที่ฝ่ายวิชาการ (Admin)</option>
-            </select>
+            <label for="cuPasswordConfirm">ยืนยันรหัสผ่านเริ่มต้น</label>
+            <input id="cuPasswordConfirm" required placeholder="พิมพ์ซ้ำอีกครั้ง" />
           </div>
+        </div>
+        <div class="field">
+          <label for="cuRole">Role</label>
+          <select id="cuRole">
+            <option value="teacher">ครู (Teacher)</option>
+            <option value="admin">เจ้าหน้าที่ฝ่ายวิชาการ (Admin)</option>
+          </select>
         </div>
         <div class="field" id="cuSuperAdminField" hidden>
           <label style="display:flex; align-items:center; gap:8px; font-weight:500;">
@@ -220,6 +224,10 @@
         <div class="field">
           <label for="resetPwInput">รหัสผ่านใหม่</label>
           <input id="resetPwInput" type="text" required minlength="4" placeholder="อย่างน้อย 4 ตัวอักษร" />
+        </div>
+        <div class="field">
+          <label for="resetPwConfirm">ยืนยันรหัสผ่านใหม่</label>
+          <input id="resetPwConfirm" type="text" required minlength="4" placeholder="พิมพ์ซ้ำอีกครั้ง" />
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">บันทึก</button>
@@ -433,9 +441,11 @@
 
     function renderUserTable() {
       var wrap = document.getElementById('userTableWrap');
-      if (allUsers.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีผู้ใช้งาน</div>'; return; }
+      // ซ่อนบัญชี Super Admin ออกจากตารางจัดการบัญชีเสมอ (ทั้งมุมมอง Super Admin เองและเจ้าหน้าที่ฝ่ายวิชาการ)
+      var visibleUsers = allUsers.filter(function (u) { return !(u.role === 'admin' && !u.hasHub); });
+      if (visibleUsers.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีผู้ใช้งาน</div>'; return; }
       var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>Username</th><th>Role</th><th>สถานะ</th><th></th></tr></thead><tbody>';
-      allUsers.forEach(function (u) {
+      visibleUsers.forEach(function (u) {
         html += '<tr>' +
           '<td>' + escapeHtml(u.name) + '</td>' +
           '<td>' + escapeHtml(u.username) + '</td>' +
@@ -498,6 +508,11 @@
       e.preventDefault();
       var errBox = document.getElementById('createUserError');
       errBox.hidden = true;
+      if (document.getElementById('cuPassword').value !== document.getElementById('cuPasswordConfirm').value) {
+        errBox.textContent = 'รหัสผ่านเริ่มต้นทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
+        errBox.hidden = false;
+        return;
+      }
       var cuNameVal = document.getElementById('cuName').value.trim();
       var ok = await askConfirm('ยืนยันสร้างบัญชีใหม่สำหรับ "' + cuNameVal + '"?', 'ยืนยันการสร้างบัญชี');
       if (!ok) return;
@@ -531,6 +546,7 @@
       resetPwUserId = userId;
       document.getElementById('resetPwTargetName').textContent = 'สำหรับผู้ใช้: ' + name;
       document.getElementById('resetPwInput').value = '';
+      document.getElementById('resetPwConfirm').value = '';
       document.getElementById('resetPwError').hidden = true;
       showModalEl(resetPwModal);
     }
@@ -540,6 +556,11 @@
       e.preventDefault();
       var errBox = document.getElementById('resetPwError');
       errBox.hidden = true;
+      if (document.getElementById('resetPwInput').value !== document.getElementById('resetPwConfirm').value) {
+        errBox.textContent = 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
+        errBox.hidden = false;
+        return;
+      }
       var okPw = await askConfirm('ยืนยันตั้งรหัสผ่านใหม่ให้บัญชีนี้?', 'ยืนยันการตั้งรหัสผ่านใหม่');
       if (!okPw) return;
       var newPwVal = document.getElementById('resetPwInput').value;
