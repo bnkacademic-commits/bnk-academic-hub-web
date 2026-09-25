@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>สรุปรวมการส่งงาน — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/style.css" />
+<style>
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+  .stat-tile .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--primary-dark); }
+  .stat-tile .stat-label { color: var(--text-muted); font-size: 0.8rem; margin-top: 2px; }
+  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filter-row > * { flex: 1; min-width: 140px; }
+</style>
+</head>
+<body>
+  <div id="app-topbar"></div>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>สรุปรวมการส่งงาน</h1>
+      <p>ภาพรวมว่าใครส่งผลงานแล้วบ้าง ส่งเรื่องอะไร และส่งเมื่อไหร่</p>
+    </div>
+
+    <div class="stat-row" id="statRow">
+      <div class="stat-tile"><div class="stat-value" id="statTotalUsers">-</div><div class="stat-label">บัญชีที่มีหน้าฮับทั้งหมด</div></div>
+      <div class="stat-tile"><div class="stat-value" id="statSubmittedUsers">-</div><div class="stat-label">ส่งผลงานแล้วอย่างน้อย 1 ชิ้น</div></div>
+      <div class="stat-tile"><div class="stat-value" id="statTotalSubs">-</div><div class="stat-label">จำนวนผลงานทั้งหมด</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📊 รายการผลงานทั้งหมด</div>
+      <div class="filter-row">
+        <input type="search" id="fSearch" placeholder="ค้นหาชื่อครู/ชื่อผลงาน" />
+        <select id="fYear"><option value="">ทุกปีการศึกษา</option></select>
+        <select id="fSemester">
+          <option value="">ทุกภาคเรียน</option>
+          <option value="1">ภาคเรียนที่ 1</option>
+          <option value="2">ภาคเรียนที่ 2</option>
+          <option value="summer">ภาคฤดูร้อน</option>
+        </select>
+      </div>
+      <div id="subTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🧑‍🏫 ใครยังไม่ส่งผลงานเลย</div>
+      <div id="notSubmittedWrap"><div class="loading">กำลังโหลด</div></div>
+    </div>
+  </div>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/api.js"></script>
+  <script>
+    var session = requireAdminAccess();
+    if (session) mountChrome('summary');
+
+    var allSubs = [];
+    var allUsers = [];
+
+    async function loadData() {
+      var wrap = document.getElementById('subTableWrap');
+      try {
+        var results = await Promise.all([apiCall('adminListAllSubmissions', {}), apiCall('adminListUsers', {})]);
+        allSubs = results[0];
+        allUsers = results[1].filter(function (u) { return u.role === 'teacher' || u.hasHub; });
+        fillYearFilter();
+        renderStats();
+        renderTable();
+        renderNotSubmitted();
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    function fillYearFilter() {
+      var years = Array.from(new Set(allSubs.map(function (s) { return s.academicYear; }))).filter(Boolean).sort().reverse();
+      var sel = document.getElementById('fYear');
+      var currentVal = sel.value;
+      sel.innerHTML = '<option value="">ทุกปีการศึกษา</option>'; // เคลียร์ตัวเลือกเดิมก่อน กัน option ซ้ำตอนรีเฟรชข้อมูลซ้ำ
+      years.forEach(function (y) {
+        var opt = document.createElement('option');
+        opt.value = y; opt.textContent = 'ปีการศึกษา ' + y;
+        sel.appendChild(opt);
+      });
+      if (years.indexOf(currentVal) !== -1) sel.value = currentVal; // คงตัวกรองปีการศึกษาที่เลือกไว้ ไม่ให้รีเซ็ตตอนรีเฟรชข้อมูล
+    }
+
+    function renderStats() {
+      var submittedIds = new Set(allSubs.map(function (s) { return s.teacherId; }));
+      document.getElementById('statTotalUsers').textContent = allUsers.length;
+      document.getElementById('statSubmittedUsers').textContent = Array.from(submittedIds).filter(function (id) {
+        return allUsers.some(function (u) { return u.id === id; });
+      }).length;
+      document.getElementById('statTotalSubs').textContent = allSubs.length;
+    }
+
+    function currentFilters() {
+      return {
+        search: document.getElementById('fSearch').value.trim().toLowerCase(),
+        year: document.getElementById('fYear').value,
+        semester: document.getElementById('fSemester').value
+      };
+    }
+
+    function renderTable() {
+      var f = currentFilters();
+      var rows = allSubs.filter(function (s) {
+        if (f.year && s.academicYear !== f.year) return false;
+        if (f.semester && s.semester !== f.semester) return false;
+        if (f.search) {
+          var hay = (s.teacherName + ' ' + s.title).toLowerCase();
+          if (hay.indexOf(f.search) === -1) return false;
+        }
+        return true;
+      });
+      var wrap = document.getElementById('subTableWrap');
+      if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ไม่พบรายการที่ตรงกับเงื่อนไข</div>'; return; }
+      var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>ชื่อผลงาน</th><th>ประเภทงาน</th><th>ปีการศึกษา/ภาคเรียน</th><th>วันเวลาที่ส่ง</th><th></th></tr></thead><tbody>';
+      rows.forEach(function (s) {
+        var semLabel = s.semester === 'summer' ? 'ฤดูร้อน' : 'ภาค ' + s.semester;
+        html += '<tr>' +
+          '<td>' + escapeHtml(s.teacherName) + '</td>' +
+          '<td>' + escapeHtml(s.title) + '</td>' +
+          '<td>' + (s.categoryName ? '<span class="badge badge-admin">' + escapeHtml(s.categoryName) + '</span>' : '-') + '</td>' +
+          '<td>' + escapeHtml(s.academicYear) + ' / ' + semLabel + '</td>' +
+          '<td>' + formatDateTimeThai(s.uploadedAt) + '</td>' +
+          '<td><a class="btn btn-secondary btn-sm" href="' + s.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></td>' +
+        '</tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+    }
+
+    function renderNotSubmitted() {
+      var submittedIds = new Set(allSubs.map(function (s) { return s.teacherId; }));
+      var notSubmitted = allUsers.filter(function (u) { return !submittedIds.has(u.id); });
+      var wrap = document.getElementById('notSubmittedWrap');
+      if (notSubmitted.length === 0) {
+        wrap.innerHTML = '<div class="empty-state">ทุกคนส่งผลงานแล้วอย่างน้อย 1 ชิ้น 🎉</div>';
+        return;
+      }
+      wrap.innerHTML = notSubmitted.map(function (u) {
+        return '<span class="badge badge-archived" style="margin:3px 4px 3px 0; display:inline-block;">' + escapeHtml(u.name) + '</span>';
+      }).join('');
+    }
+
+    document.getElementById('fSearch').addEventListener('input', renderTable);
+    document.getElementById('fYear').addEventListener('change', renderTable);
+    document.getElementById('fSemester').addEventListener('change', renderTable);
+
+    loadData();
+
+    // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
+    window.__refreshPageData = function () {
+      resetSettingsCache();
+      return Promise.all([applyBranding(), loadData()]);
+    };
+  </script>
+</body>
+</html>

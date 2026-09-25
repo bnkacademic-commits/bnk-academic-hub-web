@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>ผลงาน — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <button class="brand js-home-btn" type="button" style="cursor:default;"><span class="js-brand-logo"><span class="logo-dot"></span></span> <span class="js-site-name">BNKAcademicHub</span></button>
+    <div class="user-info"><span>หน้าแสดงผลงาน (สาธารณะ)</span></div>
+  </div>
+
+  <div id="publicHeader" class="public-header" hidden>
+    <div class="avatar" id="avatarInitial">-</div>
+    <h1 id="teacherName">-</h1>
+    <div class="status-note" id="statusNote"></div>
+  </div>
+
+  <div class="container-narrow" style="max-width:640px;">
+    <div id="content"><div class="loading">กำลังโหลดข้อมูล</div></div>
+  </div>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/api.js"></script>
+  <script>
+    mountFooter();
+    applyBranding();
+    document.querySelector('.js-home-btn').addEventListener('click', function () { location.href = 'index.html'; });
+
+    function getParam(name) { return new URLSearchParams(location.search).get(name); }
+
+    async function load() {
+      var username = getParam('u') || getParam('username') || getParam('slug');
+      var content = document.getElementById('content');
+      if (!username) {
+        content.innerHTML = '<div class="error-box">ไม่พบพารามิเตอร์ผู้ใช้ (u) ในลิงก์</div>';
+        return;
+      }
+      try {
+        var data = await apiCall('publicGetSummary', { username: username });
+        document.getElementById('publicHeader').hidden = false;
+        document.getElementById('teacherName').textContent = data.name;
+        document.getElementById('avatarInitial').textContent = (data.name || '?').trim().charAt(0);
+        var note = document.getElementById('statusNote');
+        note.textContent = data.status === 'archived' ? 'บัญชีนี้พักการใช้งานแล้ว — แสดงผลงานที่บันทึกไว้เพื่ออ้างอิง' : '';
+
+        if (!data.groups || data.groups.length === 0) {
+          content.innerHTML = '<div class="card"><div class="empty-state">ยังไม่มีผลงานที่เผยแพร่</div></div>';
+          return;
+        }
+
+        var html = '';
+        data.groups.forEach(function (g) {
+          var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + g.semester;
+          html += '<div class="card"><div class="year-group-title" style="margin-bottom:12px;">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
+          g.items.forEach(function (it) {
+            html += '<div class="sub-item">' +
+              '<div><div class="sub-item-title">' + escapeHtml(it.title) + '</div>' +
+              (it.description ? '<div class="sub-item-desc">' + escapeHtml(it.description) + '</div>' : '') +
+              '<div class="sub-item-meta">' + formatDateThai(it.uploadedAt) + '</div></div>' +
+              '<div class="sub-item-actions"><a class="btn btn-secondary btn-sm" href="' + it.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></div>' +
+              '</div>';
+          });
+          html += '</div>';
+        });
+        content.innerHTML = html;
+      } catch (err) {
+        content.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

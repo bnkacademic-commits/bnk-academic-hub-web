@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>เข้าสู่ระบบ — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-title"><span class="js-brand-logo js-brand-logo-lg"><span class="logo-dot"></span></span></div>
+      <div class="login-title"><span class="js-site-name">BNKAcademicHub</span></div>
+      <div class="login-sub">ระบบส่งผลงานครูสำหรับฝ่ายวิชาการ</div>
+
+      <div id="errorBox" class="error-box" hidden></div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="username">ชื่อผู้ใช้ (Username)</label>
+          <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required />
+        </div>
+        <div class="field">
+          <label for="password">รหัสผ่าน</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="btn btn-primary btn-full" type="submit" id="loginBtn">เข้าสู่ระบบ</button>
+      </form>
+      <p class="hint" style="text-align:center; margin-top:18px;">ยังไม่มีบัญชี? ติดต่อฝ่ายวิชาการของโรงเรียนเพื่อขอสร้างบัญชีให้</p>
+    </div>
+  </div>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/api.js"></script>
+  <script>
+    mountFooter();
+    applyBranding();
+
+    // ถ้าล็อกอินอยู่แล้ว พาไปหน้าที่เหมาะสมทันที
+    (function () {
+      var s = getSession();
+      if (s && getToken()) location.href = homePageFor(s);
+    })();
+
+    var form = document.getElementById('loginForm');
+    var errorBox = document.getElementById('errorBox');
+    var loginBtn = document.getElementById('loginBtn');
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      errorBox.hidden = true;
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+      try {
+        var username = document.getElementById('username').value.trim();
+        var password = document.getElementById('password').value;
+        var data = await apiCall('login', { username: username, password: password });
+        setSession(data.token, data.user);
+        location.href = homePageFor(data.user);
+      } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.hidden = false;
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'เข้าสู่ระบบ';
+      }
+    });
+  </script>
+</body>
+</html>

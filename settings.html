@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>ตั้งค่าเว็บ — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <div id="app-topbar"></div>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>ตั้งค่าเว็บ</h1>
+      <p>ตั้งค่าทั่วไปของเว็บไซต์ จัดการบัญชีผู้ใช้ ปฏิทิน ประกาศ และตรวจสอบประวัติการทำรายการ</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active super-admin-only" data-tab="general">ทั่วไป</button>
+      <button class="tab-btn" data-tab="accounts">จัดการบัญชี</button>
+      <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
+      <button class="tab-btn" data-tab="announcements">ประกาศ</button>
+      <button class="tab-btn" data-tab="annlog">Log ประกาศ</button>
+      <button class="tab-btn" data-tab="log">ประวัติการลบ</button>
+    </div>
+
+    <!-- General tab (เฉพาะ Super Admin) -->
+    <div class="tab-panel active super-admin-only" id="tab-general">
+      <div class="card">
+        <div class="section-title">🏷️ ชื่อเว็บ / เวอร์ชัน</div>
+        <div id="generalError" class="error-box" hidden></div>
+        <form id="generalForm">
+          <div class="field">
+            <label for="setSiteName">ชื่อเว็บไซต์</label>
+            <input id="setSiteName" required />
+          </div>
+          <div class="field">
+            <label for="setVersion">รหัสเวอร์ชัน</label>
+            <input id="setVersion" placeholder="เช่น 3" />
+            <div class="hint">อัพเดตเลขนี้เองทุกครั้งที่มีการปรับปรุงเว็บ เพื่อใช้ติดตามเวอร์ชัน</div>
+          </div>
+          <button class="btn btn-primary" type="submit">บันทึก</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="section-title">🖼️ ไอคอนเว็บ (Favicon)</div>
+        <div id="iconError" class="error-box" hidden></div>
+        <div class="file-input-row">
+          <div class="asset-preview" id="iconPreview">—</div>
+          <input type="file" id="iconFile" accept="image/*" style="flex:1; min-width:180px;" />
+          <button class="btn btn-secondary" id="iconUploadBtn">อัพโหลด</button>
+        </div>
+        <div class="hint">แนะนำไฟล์สี่เหลี่ยมจัตุรัส — เลือกไฟล์ใหญ่แค่ไหนก็ได้ ระบบจะปรับขนาดให้เล็กลงอัตโนมัติก่อนอัพโหลด</div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">🎨 โลโก้เว็บ</div>
+        <div id="logoError" class="error-box" hidden></div>
+        <div class="file-input-row">
+          <div class="asset-preview" id="logoPreview">—</div>
+          <input type="file" id="logoFile" accept="image/*" style="flex:1; min-width:180px;" />
+          <button class="btn btn-secondary" id="logoUploadBtn">อัพโหลด</button>
+        </div>
+        <div class="hint">แสดงแทนไอคอนจุดกลมด้านซ้ายบนของทุกหน้า แนะนำพื้นหลังโปร่งใส — ระบบจะปรับขนาดไฟล์ให้อัตโนมัติก่อนอัพโหลด</div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">🗂️ ประเภทงาน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ</p>
+        <div id="createCatError" class="error-box" hidden></div>
+        <form id="createCatForm" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
+          <div class="field" style="flex:1; min-width:200px; margin-bottom:0;">
+            <label for="catName">ชื่อประเภทงาน</label>
+            <input id="catName" required placeholder="เช่น ผลงานวิจัยในชั้นเรียน" />
+          </div>
+          <button class="btn btn-primary" type="submit">เพิ่มประเภทงาน</button>
+        </form>
+        <div id="catListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Accounts tab -->
+    <div class="tab-panel" id="tab-accounts">
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;">
+          <span>👥 รายชื่อผู้ใช้งานทั้งหมด</span>
+          <button class="btn btn-primary btn-sm" id="openCreateUserBtn" type="button">➕ เพิ่มผู้ใช้ใหม่</button>
+        </div>
+        <div id="userTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Calendar tab -->
+    <div class="tab-panel" id="tab-calendar">
+      <div class="card">
+        <div class="section-title">📅 เพิ่มกำหนดการในปฏิทิน</div>
+        <div id="createEventError" class="error-box" hidden></div>
+        <form id="createEventForm">
+          <div class="field-row">
+            <div class="field">
+              <label for="evDate">วันที่</label>
+              <input id="evDate" type="date" required />
+            </div>
+            <div class="field">
+              <label for="evAudience">สำหรับ</label>
+              <select id="evAudience"><option value="all">ครูทุกคน</option></select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="evTitle">หัวข้อ</label>
+            <input id="evTitle" required placeholder="เช่น กำหนดส่งผลงานภาคเรียนที่ 1" />
+          </div>
+          <div class="field">
+            <label for="evMessage">รายละเอียดเพิ่มเติม</label>
+            <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
+          </div>
+          <button class="btn btn-primary" type="submit">เพิ่มกำหนดการ</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="section-title">รายการกำหนดการทั้งหมด</div>
+        <div id="eventListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Announcements tab -->
+    <div class="tab-panel" id="tab-announcements">
+      <div class="card">
+        <div class="section-title">📣 เพิ่มประกาศใหม่</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ประกาศจะไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ (ครูและเจ้าหน้าที่ฝ่ายวิชาการ) ทันที</p>
+        <div id="createAnnError" class="error-box" hidden></div>
+        <form id="createAnnForm">
+          <div class="field">
+            <label for="annTitle">หัวข้อประกาศ</label>
+            <input id="annTitle" required placeholder="เช่น แจ้งปิดปรับปรุงระบบชั่วคราว" />
+          </div>
+          <div class="field">
+            <label for="annMessage">รายละเอียดเพิ่มเติม (ถ้ามี)</label>
+            <textarea id="annMessage" placeholder="ข้อความประกาศที่จะแสดงในหน้าฮับของทุกบัญชี"></textarea>
+          </div>
+          <button class="btn btn-primary" type="submit">เผยแพร่ประกาศ</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="section-title">รายการประกาศทั้งหมด</div>
+        <div id="annListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Announcement log tab -->
+    <div class="tab-panel" id="tab-annlog">
+      <div class="card">
+        <div class="section-title">🧾 ประวัติการประกาศ</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">บันทึกว่าใครเผยแพร่หรือลบประกาศ และเมื่อไหร่</p>
+        <div id="annLogTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Log tab -->
+    <div class="tab-panel" id="tab-log">
+      <div class="card">
+        <div class="section-title">🗑️ ประวัติการลบไฟล์ / บัญชี</div>
+        <div id="logTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create user modal -->
+  <div class="modal-backdrop" id="createUserModal" hidden>
+    <div class="modal-box">
+      <h3>➕ เพิ่มผู้ใช้ใหม่</h3>
+      <div id="createUserError" class="error-box" hidden></div>
+      <form id="createUserForm" style="text-align:left;">
+        <div class="field-row">
+          <div class="field">
+            <label for="cuName">ชื่อ-สกุล</label>
+            <input id="cuName" required />
+          </div>
+          <div class="field">
+            <label for="cuUsername">Username</label>
+            <input id="cuUsername" required placeholder="เช่น kru.somchai" autocapitalize="none" spellcheck="false" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="cuPassword">รหัสผ่านเริ่มต้น</label>
+            <input id="cuPassword" required placeholder="อย่างน้อย 4 ตัวอักษร" />
+          </div>
+          <div class="field">
+            <label for="cuRole">Role</label>
+            <select id="cuRole">
+              <option value="teacher">ครู (Teacher)</option>
+              <option value="admin">เจ้าหน้าที่ฝ่ายวิชาการ (Admin)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" id="cuSuperAdminField" hidden>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:500;">
+            <input type="checkbox" id="cuIsSuperAdmin" style="width:auto;" />
+            ตั้งเป็น Super Admin (ไม่มีหน้าฮับส่วนตัว)
+          </label>
+        </div>
+        <div class="hint" style="margin-bottom:14px;">username จะถูกแปลงเป็นตัวพิมพ์เล็กให้อัตโนมัติ — ล็อกอินได้ทั้งตัวพิมพ์เล็กและใหญ่ ส่วนรหัสผ่านแยกตัวพิมพ์เล็ก/ใหญ่ตามที่ตั้งไว้</div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">สร้างบัญชี</button>
+          <button type="button" class="btn btn-ghost" id="createUserClose">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reset password modal -->
+  <div class="modal-backdrop" id="resetPwModal" hidden>
+    <div class="modal-box">
+      <h3>ตั้งรหัสผ่านใหม่</h3>
+      <p class="hint" id="resetPwTargetName"></p>
+      <div id="resetPwError" class="error-box" hidden></div>
+      <form id="resetPwForm" style="text-align:left;">
+        <div class="field">
+          <label for="resetPwInput">รหัสผ่านใหม่</label>
+          <input id="resetPwInput" type="text" required minlength="4" placeholder="อย่างน้อย 4 ตัวอักษร" />
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">บันทึก</button>
+          <button type="button" class="btn btn-ghost" id="resetPwClose">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="app-footer"></div>
+
+  <script src="assets/api.js"></script>
+  <script>
+    var session = requireAdminAccess();
+    if (session) mountChrome('settings');
+
+    // เฉพาะ Super Admin (role=admin, hasHub=false) เท่านั้นที่แก้ "ทั่วไป" (ชื่อเว็บ/โลโก้/ไอคอน/เวอร์ชัน) ได้
+    var isSuperAdminSession = !!session && session.role === 'admin' && !session.hasHub;
+    if (!isSuperAdminSession) {
+      document.querySelectorAll('.super-admin-only').forEach(function (el) { el.remove(); });
+      var accountsBtn = document.querySelector('.tab-btn[data-tab="accounts"]');
+      if (accountsBtn) accountsBtn.classList.add('active');
+      var accountsPanel = document.getElementById('tab-accounts');
+      if (accountsPanel) accountsPanel.classList.add('active');
+    }
+
+    // ---------- Tabs (โหลดข้อมูลของแต่ละแท็บแบบ lazy — เฉพาะตอนเปิดแท็บนั้นครั้งแรก ลดจำนวนคำขอตอนเข้าหน้าครั้งแรกให้เหลือน้อยที่สุด ลดอาการหน่วง) ----------
+    // ประกาศไว้ล่วงหน้าตรงนี้ (ตัวจริงถูกกำหนดค่าใน if (isSuperAdminSession) ด้านล่าง) เพราะ async function ที่ประกาศในบล็อก if
+    // จะไม่ถูก hoist ออกมาให้ tabLoaders ด้านล่างมองเห็นเหมือน function ปกติ ต้องประกาศ var ไว้นอกบล็อกก่อนแล้วค่อยไป assign ทีหลัง
+    var loadCategories;
+    var _tabLoaded = {};
+    var _usersPromise = null;
+    function ensureUsersLoaded() {
+      if (!_usersPromise) _usersPromise = loadUsers();
+      return _usersPromise;
+    }
+    var tabLoaders = {
+      general: function () {
+        var tasks = [loadGeneralSettings()];
+        if (isSuperAdminSession) tasks.push(loadCategories());
+        return Promise.all(tasks);
+      },
+      accounts: function () { return ensureUsersLoaded(); },
+      // แท็บปฏิทินใช้รายชื่อผู้ใช้ร่วมกับแท็บจัดการบัญชี (audience dropdown + ป้ายชื่อผู้รับ) จึงรอให้โหลดผู้ใช้เสร็จก่อน
+      calendar: function () { return ensureUsersLoaded().then(function () { return loadEvents(); }); },
+      announcements: function () { return loadAnnouncements(); },
+      annlog: function () { return loadAnnLog(); },
+      log: function () { return loadLog(); }
+    };
+    function loadTabIfNeeded(tabKey) {
+      if (_tabLoaded[tabKey]) return;
+      _tabLoaded[tabKey] = true;
+      var fn = tabLoaders[tabKey];
+      if (fn) return fn();
+    }
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var tabKey = btn.getAttribute('data-tab');
+        document.getElementById('tab-' + tabKey).classList.add('active');
+        loadTabIfNeeded(tabKey);
+      });
+    });
+
+    // ---------- General settings (เฉพาะ Super Admin) ----------
+    async function loadGeneralSettings() {
+      var s = await getSiteSettings();
+      document.getElementById('setSiteName').value = s.siteName || '';
+      document.getElementById('setVersion').value = s.version || '';
+      renderAssetPreview('iconPreview', s.iconDataUrl);
+      renderAssetPreview('logoPreview', s.logoDataUrl);
+    }
+    function renderAssetPreview(elId, dataUrl) {
+      var el = document.getElementById(elId);
+      el.innerHTML = dataUrl ? '<img src="' + dataUrl + '" alt="" />' : '—';
+    }
+
+    if (isSuperAdminSession) {
+      document.getElementById('generalForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('generalError');
+        errBox.hidden = true;
+        var ok = await askConfirm('ยืนยันบันทึกชื่อเว็บ/เวอร์ชันใหม่?', 'ยืนยันการบันทึก');
+        if (!ok) return;
+        var siteNameVal = document.getElementById('setSiteName').value.trim();
+        var versionVal = document.getElementById('setVersion').value.trim();
+        var r = await withProgress('กำลังบันทึกการตั้งค่า', function () {
+          return apiCall('adminUpdateSettings', { siteName: siteNameVal, version: versionVal });
+        }, { successLabel: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' });
+        if (r.ok) {
+          resetSettingsCache();
+          applyBranding();
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      });
+
+      var uploadAsset = async function (type, fileInputId, errorBoxId, previewId) {
+        var errBox = document.getElementById(errorBoxId);
+        errBox.hidden = true;
+        var file = document.getElementById(fileInputId).files[0];
+        if (!file) { errBox.textContent = 'กรุณาเลือกไฟล์รูปภาพก่อน'; errBox.hidden = false; return; }
+        var ok = await askConfirm('ยืนยันเปลี่ยน' + (type === 'logo' ? 'โลโก้เว็บ' : 'ไอคอนเว็บ') + 'เป็นไฟล์นี้? (ระบบจะปรับขนาดรูปให้อัตโนมัติ)', 'ยืนยันการอัพโหลด');
+        if (!ok) return;
+        var maxSize = type === 'icon' ? 128 : 480; // ไอคอนย่อเล็กกว่าโลโก้ เพราะแสดงเป็นจุดกลมเล็กๆ
+        var r = await withProgress('กำลังอัพโหลด' + (type === 'logo' ? 'โลโก้' : 'ไอคอน'), async function (p) {
+          p.setLabel('กำลังปรับขนาดรูป...');
+          var resized = await resizeImageToBase64(file, maxSize);
+          p.setLabel('กำลังอัพโหลดขึ้นเซิร์ฟเวอร์...');
+          return apiCall('adminUpdateSiteAsset', { type: type, fileBase64: resized.base64, mimeType: resized.mimeType });
+        }, { successLabel: 'อัพโหลดสำเร็จ (ปรับขนาดรูปให้อัตโนมัติแล้ว)' });
+        if (r.ok) {
+          _settingsCache = r.data;
+          renderAssetPreview(previewId, type === 'icon' ? r.data.iconDataUrl : r.data.logoDataUrl);
+          applyBranding();
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      };
+      document.getElementById('iconUploadBtn').addEventListener('click', function () { uploadAsset('icon', 'iconFile', 'iconError', 'iconPreview'); });
+      document.getElementById('logoUploadBtn').addEventListener('click', function () { uploadAsset('logo', 'logoFile', 'logoError', 'logoPreview'); });
+
+      // ---------- ประเภทงาน (เฉพาะ Super Admin) ----------
+      loadCategories = async function () {
+        var wrap = document.getElementById('catListWrap');
+        try {
+          var rows = await apiCall('adminListWorkCategories', {});
+          if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประเภทงาน</div>'; return; }
+          var html = '';
+          rows.forEach(function (c) {
+            html += '<div class="event-list-item"><div style="flex:1;" class="sub-item-title">' + escapeHtml(c.name) + '</div>' +
+              '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button></div>';
+          });
+          wrap.innerHTML = html;
+          wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+              var ok = await askConfirm('ลบประเภทงาน "' + btn.getAttribute('data-name') + '"? งานที่เคยส่งไว้ในประเภทนี้จะยังอยู่ตามเดิม แต่จะเลือกประเภทนี้ตอนส่งงานใหม่ไม่ได้อีก', 'ยืนยันการลบประเภทงาน');
+              if (!ok) return;
+              var catId = btn.getAttribute('data-id');
+              var r = await withProgress('กำลังลบประเภทงาน', function () {
+                return apiCall('adminDeleteWorkCategory', { categoryId: catId });
+              }, { successLabel: 'ลบประเภทงานแล้ว' });
+              if (r.ok) loadCategories();
+            });
+          });
+        } catch (err) {
+          wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+        }
+      };
+      document.getElementById('createCatForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('createCatError');
+        errBox.hidden = true;
+        var catNameVal = document.getElementById('catName').value.trim();
+        var ok = await askConfirm('ยืนยันเพิ่มประเภทงาน "' + catNameVal + '"?', 'ยืนยันการเพิ่มประเภทงาน');
+        if (!ok) return;
+        var r = await withProgress('กำลังเพิ่มประเภทงาน', function () {
+          return apiCall('adminCreateWorkCategory', { name: catNameVal });
+        }, { successLabel: 'เพิ่มประเภทงานแล้ว' });
+        if (r.ok) {
+          document.getElementById('createCatForm').reset();
+          loadCategories();
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      });
+      // หมายเหตุ: ไม่เรียก loadCategories() ตรงนี้ตั้งแต่แรก — ปล่อยให้ tabLoaders.general (ด้านล่าง) เป็นคนเรียกตอนแท็บ "ทั่วไป" ถูกเปิดจริง เพื่อเลี่ยงการโหลดซ้ำซ้อน
+    }
+
+    // ---------- Users ----------
+    var allUsers = [];
+
+    // เจ้าหน้าที่ฝ่ายวิชาการ (staff) สร้างได้เฉพาะบัญชีครู เลือก Role เป็นเจ้าหน้าที่ไม่ได้ (ต้องให้ Super Admin สร้างให้)
+    if (!isSuperAdminSession) {
+      var adminOpt = document.querySelector('#cuRole option[value="admin"]');
+      if (adminOpt) adminOpt.remove();
+      var superAdminField = document.getElementById('cuSuperAdminField');
+      if (superAdminField) superAdminField.remove();
+    } else {
+      document.getElementById('cuRole').addEventListener('change', function () {
+        document.getElementById('cuSuperAdminField').hidden = this.value !== 'admin';
+      });
+    }
+
+    async function loadUsers() {
+      var wrap = document.getElementById('userTableWrap');
+      try {
+        allUsers = await apiCall('adminListUsers', {});
+        renderUserTable();
+        renderAudienceOptions();
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    function roleBadge(u) {
+      if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>';
+      if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่ฝ่ายวิชาการ</span>';
+      return '<span class="badge badge-super">Super Admin</span>';
+    }
+
+    // เจ้าหน้าที่ฝ่ายวิชาการจัดการได้เฉพาะบัญชีครู ส่วนบัญชีเจ้าหน้าที่/Super Admin ต้องให้ Super Admin เป็นผู้จัดการ
+    function canManageUser(u) { return isSuperAdminSession || u.role === 'teacher'; }
+
+    function renderUserTable() {
+      var wrap = document.getElementById('userTableWrap');
+      if (allUsers.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีผู้ใช้งาน</div>'; return; }
+      var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>Username</th><th>Role</th><th>สถานะ</th><th></th></tr></thead><tbody>';
+      allUsers.forEach(function (u) {
+        html += '<tr>' +
+          '<td>' + escapeHtml(u.name) + '</td>' +
+          '<td>' + escapeHtml(u.username) + '</td>' +
+          '<td>' + roleBadge(u) + '</td>' +
+          '<td><span class="badge badge-' + (u.status === 'active' ? 'active' : 'archived') + '">' + (u.status === 'active' ? 'ใช้งานอยู่' : 'พักการใช้งาน') + '</span></td>' +
+          '<td style="white-space:nowrap;">' +
+            (canManageUser(u)
+              ? ((u.status === 'active'
+                  ? '<button class="btn btn-secondary btn-sm" data-act="archive" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">พักใช้งาน</button>'
+                  : '<button class="btn btn-secondary btn-sm" data-act="restore" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">คืนสิทธิ์</button>') + ' ' +
+                '<button class="btn btn-ghost btn-sm" data-act="resetpw" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">ตั้งรหัสผ่านใหม่</button> ' +
+                '<button class="btn btn-danger btn-sm" data-act="purge" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">ลบถาวร</button>')
+              : '<span class="hint">จัดการได้เฉพาะ Super Admin</span>') +
+          '</td>' +
+        '</tr>';
+      });
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+
+      wrap.querySelectorAll('button[data-act]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          var act = btn.getAttribute('data-act');
+          var id = btn.getAttribute('data-id');
+          var name = btn.getAttribute('data-name');
+          if (act === 'archive') {
+            var ok = await askConfirm('พักการใช้งานบัญชีของ "' + name + '"? จะล็อกอินไม่ได้ แต่ผลงานและหน้าสาธารณะยังดูได้ตามปกติ', 'ยืนยันการพักใช้งาน');
+            if (!ok) return;
+            var rA = await withProgress('กำลังพักการใช้งานบัญชี', function () { return apiCall('adminArchiveUser', { userId: id }); }, { successLabel: 'พักการใช้งานแล้ว' });
+            if (rA.ok) loadUsers();
+          } else if (act === 'restore') {
+            var okR = await askConfirm('คืนสิทธิ์การใช้งานบัญชีของ "' + name + '"? บัญชีนี้จะล็อกอินได้อีกครั้ง', 'ยืนยันการคืนสิทธิ์');
+            if (!okR) return;
+            var rR = await withProgress('กำลังคืนสิทธิ์การใช้งาน', function () { return apiCall('adminRestoreUser', { userId: id }); }, { successLabel: 'คืนสิทธิ์การใช้งานแล้ว' });
+            if (rR.ok) loadUsers();
+          } else if (act === 'purge') {
+            var ok2 = await askConfirm('ลบบัญชีของ "' + name + '" อย่างถาวร? การกระทำนี้ย้อนกลับไม่ได้ (ไฟล์ใน Drive จะยังอยู่ แต่บัญชีนี้จะหายไปจากระบบทั้งหมด)', 'ยืนยันการลบถาวร');
+            if (!ok2) return;
+            var rP = await withProgress('กำลังลบบัญชีถาวร', function () { return apiCall('adminPurgeUser', { userId: id }); }, { successLabel: 'ลบบัญชีถาวรแล้ว' });
+            if (rP.ok) loadUsers();
+          } else if (act === 'resetpw') {
+            openResetPwModal(id, name);
+          }
+        });
+      });
+    }
+
+    // ---------- Create user modal ----------
+    var createUserModal = document.getElementById('createUserModal');
+    document.getElementById('openCreateUserBtn').addEventListener('click', function () {
+      document.getElementById('createUserForm').reset();
+      var cuSuperAdminFieldEl2 = document.getElementById('cuSuperAdminField');
+      if (cuSuperAdminFieldEl2) cuSuperAdminFieldEl2.hidden = true;
+      document.getElementById('createUserError').hidden = true;
+      showModalEl(createUserModal);
+    });
+    document.getElementById('createUserClose').addEventListener('click', function () { hideModalEl(createUserModal); });
+
+    document.getElementById('createUserForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var errBox = document.getElementById('createUserError');
+      errBox.hidden = true;
+      var cuNameVal = document.getElementById('cuName').value.trim();
+      var ok = await askConfirm('ยืนยันสร้างบัญชีใหม่สำหรับ "' + cuNameVal + '"?', 'ยืนยันการสร้างบัญชี');
+      if (!ok) return;
+      var cuIsSuperAdminEl = document.getElementById('cuIsSuperAdmin');
+      var cuPayload = {
+        name: document.getElementById('cuName').value.trim(),
+        username: document.getElementById('cuUsername').value.trim(),
+        password: document.getElementById('cuPassword').value,
+        role: document.getElementById('cuRole').value,
+        isSuperAdmin: cuIsSuperAdminEl ? cuIsSuperAdminEl.checked : false
+      };
+      var r = await withProgress('กำลังสร้างบัญชีใหม่', function () {
+        return apiCall('adminCreateUser', cuPayload);
+      }, { successLabel: 'สร้างบัญชีเรียบร้อยแล้ว' });
+      if (r.ok) {
+        document.getElementById('createUserForm').reset();
+        var cuSuperAdminFieldEl = document.getElementById('cuSuperAdminField');
+        if (cuSuperAdminFieldEl) cuSuperAdminFieldEl.hidden = true;
+        hideModalEl(createUserModal);
+        loadUsers();
+      } else {
+        errBox.textContent = r.error.message;
+        errBox.hidden = false;
+      }
+    });
+
+    // ---------- Reset password modal ----------
+    var resetPwModal = document.getElementById('resetPwModal');
+    var resetPwUserId = null;
+    function openResetPwModal(userId, name) {
+      resetPwUserId = userId;
+      document.getElementById('resetPwTargetName').textContent = 'สำหรับผู้ใช้: ' + name;
+      document.getElementById('resetPwInput').value = '';
+      document.getElementById('resetPwError').hidden = true;
+      showModalEl(resetPwModal);
+    }
+    document.getElementById('resetPwClose').addEventListener('click', function () { hideModalEl(resetPwModal); });
+    document.getElementById('resetPwForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var errBox = document.getElementById('resetPwError');
+      errBox.hidden = true;
+      var okPw = await askConfirm('ยืนยันตั้งรหัสผ่านใหม่ให้บัญชีนี้?', 'ยืนยันการตั้งรหัสผ่านใหม่');
+      if (!okPw) return;
+      var newPwVal = document.getElementById('resetPwInput').value;
+      var r = await withProgress('กำลังตั้งรหัสผ่านใหม่', function () {
+        return apiCall('adminResetUserPassword', { userId: resetPwUserId, newPassword: newPwVal });
+      }, { successLabel: 'ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว' });
+      if (r.ok) {
+        hideModalEl(resetPwModal);
+      } else {
+        errBox.textContent = r.error.message;
+        errBox.hidden = false;
+      }
+    });
+
+    // ---------- Calendar ----------
+    function renderAudienceOptions() {
+      var sel = document.getElementById('evAudience');
+      var current = sel.value;
+      sel.innerHTML = '<option value="all">ครูทุกคน</option>';
+      allUsers.filter(function (u) { return u.role === 'teacher' || u.hasHub; }).forEach(function (u) {
+        var opt = document.createElement('option');
+        opt.value = u.id; opt.textContent = u.name;
+        sel.appendChild(opt);
+      });
+      sel.value = current || 'all';
+    }
+
+    async function loadEvents() {
+      var wrap = document.getElementById('eventListWrap');
+      try {
+        var events = await apiCall('adminListEvents', {});
+        if (events.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศ</div>'; return; }
+        var html = '';
+        events.forEach(function (ev) {
+          var audienceLabel = ev.audience === 'all' ? 'ครูทุกคน' : (function () {
+            var u = allUsers.filter(function (x) { return x.id === ev.audience; })[0];
+            return u ? u.name : 'ผู้ใช้เฉพาะราย';
+          })();
+          html += '<div class="event-list-item">' +
+            '<div class="event-date-chip">' + formatDateThai(ev.date) + '</div>' +
+            '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(ev.title) + '</div>' +
+            (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
+            '<div class="sub-item-meta">สำหรับ: ' + escapeHtml(audienceLabel) + '</div></div>' +
+            '<button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>' +
+            '</div>';
+        });
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var ok = await askConfirm('ลบกำหนดการนี้?', 'ยืนยันการลบกำหนดการ');
+            if (!ok) return;
+            var evId = btn.getAttribute('data-id');
+            var r = await withProgress('กำลังลบกำหนดการ', function () { return apiCall('adminDeleteEvent', { eventId: evId }); }, { successLabel: 'ลบกำหนดการแล้ว' });
+            if (r.ok) loadEvents();
+          });
+        });
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    document.getElementById('createEventForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var errBox = document.getElementById('createEventError');
+      errBox.hidden = true;
+      var okEv = await askConfirm('ยืนยันเพิ่มกำหนดการนี้ในปฏิทิน?', 'ยืนยันการเพิ่มกำหนดการ');
+      if (!okEv) return;
+      var evPayload = {
+        date: document.getElementById('evDate').value,
+        audience: document.getElementById('evAudience').value,
+        title: document.getElementById('evTitle').value.trim(),
+        message: document.getElementById('evMessage').value.trim()
+      };
+      var r = await withProgress('กำลังเพิ่มกำหนดการ', function () {
+        return apiCall('adminCreateEvent', evPayload);
+      }, { successLabel: 'เพิ่มกำหนดการแล้ว' });
+      if (r.ok) {
+        document.getElementById('createEventForm').reset();
+        loadEvents();
+      } else {
+        errBox.textContent = r.error.message;
+        errBox.hidden = false;
+      }
+    });
+
+    // ---------- Announcements ----------
+    async function loadAnnouncements() {
+      var wrap = document.getElementById('annListWrap');
+      try {
+        var rows = await apiCall('adminListAnnouncements', {});
+        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศ</div>'; return; }
+        var html = '';
+        rows.forEach(function (a) {
+          html += '<div class="event-list-item">' +
+            '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
+            (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
+            '<div class="sub-item-meta">โดย ' + escapeHtml(a.createdByName) + ' · ' + formatDateTimeThai(a.createdAt) + '</div></div>' +
+            '<button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button>' +
+          '</div>';
+        });
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var ok = await askConfirm('ลบประกาศนี้? ทุกบัญชีจะไม่เห็นประกาศนี้ในหน้าฮับอีกต่อไป', 'ยืนยันการลบประกาศ');
+            if (!ok) return;
+            var annId = btn.getAttribute('data-id');
+            var r = await withProgress('กำลังลบประกาศ', function () {
+              return apiCall('adminDeleteAnnouncement', { announcementId: annId });
+            }, { successLabel: 'ลบประกาศแล้ว' });
+            if (r.ok) { loadAnnouncements(); loadAnnLog(); }
+          });
+        });
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    document.getElementById('createAnnForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var errBox = document.getElementById('createAnnError');
+      errBox.hidden = true;
+      var okAnn = await askConfirm('ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?', 'ยืนยันการเผยแพร่ประกาศ');
+      if (!okAnn) return;
+      var annPayload = {
+        title: document.getElementById('annTitle').value.trim(),
+        message: document.getElementById('annMessage').value.trim()
+      };
+      var r = await withProgress('กำลังเผยแพร่ประกาศ', function () {
+        return apiCall('adminCreateAnnouncement', annPayload);
+      }, { successLabel: 'เผยแพร่ประกาศแล้ว' });
+      if (r.ok) {
+        document.getElementById('createAnnForm').reset();
+        loadAnnouncements();
+        loadAnnLog();
+      } else {
+        errBox.textContent = r.error.message;
+        errBox.hidden = false;
+      }
+    });
+
+    // ---------- Announcement log ----------
+    async function loadAnnLog() {
+      var wrap = document.getElementById('annLogTableWrap');
+      try {
+        var rows = await apiCall('adminListAnnouncementLog', {});
+        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติการประกาศ</div>'; return; }
+        var html = '<table><thead><tr><th>วันเวลา</th><th>การกระทำ</th><th>หัวข้อประกาศ</th><th>ผู้ทำรายการ</th></tr></thead><tbody>';
+        rows.forEach(function (r) {
+          html += '<tr>' +
+            '<td>' + formatDateTimeThai(r.at) + '</td>' +
+            '<td>' + (r.action === 'create' ? 'เผยแพร่ประกาศ' : 'ลบประกาศ') + '</td>' +
+            '<td>' + escapeHtml(r.title) + '</td>' +
+            '<td>' + escapeHtml(r.actorName) + '</td>' +
+          '</tr>';
+        });
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    // ---------- Delete log ----------
+    async function loadLog() {
+      var wrap = document.getElementById('logTableWrap');
+      try {
+        var rows = await apiCall('adminListDeleteLog', {});
+        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติการลบ</div>'; return; }
+        var html = '<table><thead><tr><th>วันเวลา</th><th>การกระทำ</th><th>ไฟล์/บัญชี</th><th>เจ้าของ</th><th>ผู้ทำรายการ</th></tr></thead><tbody>';
+        rows.forEach(function (r) {
+          var actLabel = r.action === 'purge_user' ? 'ลบบัญชีถาวร' : 'ลบไฟล์';
+          html += '<tr>' +
+            '<td>' + formatDateTimeThai(r.at) + '</td>' +
+            '<td>' + actLabel + '</td>' +
+            '<td>' + escapeHtml(r.fileName || '-') + '</td>' +
+            '<td>' + escapeHtml(r.teacherName || '-') + '</td>' +
+            '<td>' + escapeHtml(r.actorName || '-') + '</td>' +
+          '</tr>';
+        });
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    // โหลดเฉพาะแท็บที่กำลังแสดงอยู่ตอนแรกเท่านั้น (แท็บอื่นจะโหลดทีหลังตอนผู้ใช้กดเปิดเอง)
+    loadTabIfNeeded(isSuperAdminSession ? 'general' : 'accounts');
+
+    // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
+    window.__refreshPageData = function () {
+      var activeBtn = document.querySelector('.tab-btn.active');
+      var activeTabKey = activeBtn ? activeBtn.getAttribute('data-tab') : (isSuperAdminSession ? 'general' : 'accounts');
+      resetSettingsCache();
+      _usersPromise = null; // บังคับให้ดึงรายชื่อผู้ใช้ใหม่เสมอ (แท็บจัดการบัญชี+ปฏิทินใช้ร่วมกัน)
+      _tabLoaded = {}; // เคลียร์สถานะทุกแท็บ ให้แท็บอื่นที่เคยเปิดไปแล้วโหลดข้อมูลใหม่ตอนสลับกลับไปดูอีกครั้ง
+      return Promise.all([applyBranding(), loadTabIfNeeded(activeTabKey)]);
+    };
+  </script>
+</body>
+</html>
