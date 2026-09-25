@@ -28,17 +28,12 @@
     <!-- General tab (เฉพาะ Super Admin) -->
     <div class="tab-panel active super-admin-only" id="tab-general">
       <div class="card">
-        <div class="section-title">🏷️ ชื่อเว็บ / เวอร์ชัน</div>
+        <div class="section-title">🏷️ ชื่อเว็บไซต์</div>
         <div id="generalError" class="error-box" hidden></div>
         <form id="generalForm">
           <div class="field">
             <label for="setSiteName">ชื่อเว็บไซต์</label>
             <input id="setSiteName" required />
-          </div>
-          <div class="field">
-            <label for="setVersion">รหัสเวอร์ชัน</label>
-            <input id="setVersion" placeholder="เช่น 3" />
-            <div class="hint">อัพเดตเลขนี้เองทุกครั้งที่มีการปรับปรุงเว็บ เพื่อใช้ติดตามเวอร์ชัน</div>
           </div>
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
@@ -172,6 +167,7 @@
   <!-- Create user modal -->
   <div class="modal-backdrop" id="createUserModal" hidden>
     <div class="modal-box">
+      <button type="button" class="modal-close-x" id="createUserModalCloseX" aria-label="ปิด">✕</button>
       <h3>➕ เพิ่มผู้ใช้ใหม่</h3>
       <div id="createUserError" class="error-box" hidden></div>
       <form id="createUserForm" style="text-align:left;">
@@ -216,6 +212,7 @@
   <!-- Reset password modal -->
   <div class="modal-backdrop" id="resetPwModal" hidden>
     <div class="modal-box">
+      <button type="button" class="modal-close-x" id="resetPwModalCloseX" aria-label="ปิด">✕</button>
       <h3>ตั้งรหัสผ่านใหม่</h3>
       <p class="hint" id="resetPwTargetName"></p>
       <div id="resetPwError" class="error-box" hidden></div>
@@ -233,13 +230,17 @@
   </div>
 
   <div id="app-footer"></div>
+  <div id="app-version-tag" class="app-version-tag"></div>
 
   <script src="assets/api.js"></script>
   <script>
     var session = requireAdminAccess();
     if (session) mountChrome('settings');
 
-    // เฉพาะ Super Admin (role=admin, hasHub=false) เท่านั้นที่แก้ "ทั่วไป" (ชื่อเว็บ/โลโก้/ไอคอน/เวอร์ชัน) ได้
+    var versionTag = document.getElementById('app-version-tag');
+    if (versionTag) versionTag.textContent = 'BNKAcademicHub ' + APP_VERSION;
+
+    // เฉพาะ Super Admin (role=admin, hasHub=false) เท่านั้นที่แก้ "ทั่วไป" (ชื่อเว็บ/โลโก้/ไอคอน) ได้ — เลขเวอร์ชันไม่ใช่ค่าตั้งค่าที่แก้ผ่านหน้าเว็บอีกต่อไป (ดูแถวล่างสุดของหน้านี้)
     var isSuperAdminSession = !!session && session.role === 'admin' && !session.hasHub;
     if (!isSuperAdminSession) {
       document.querySelectorAll('.super-admin-only').forEach(function (el) { el.remove(); });
@@ -293,7 +294,6 @@
     async function loadGeneralSettings() {
       var s = await getSiteSettings();
       document.getElementById('setSiteName').value = s.siteName || '';
-      document.getElementById('setVersion').value = s.version || '';
       renderAssetPreview('iconPreview', s.iconDataUrl);
       renderAssetPreview('logoPreview', s.logoDataUrl);
     }
@@ -307,12 +307,11 @@
         e.preventDefault();
         var errBox = document.getElementById('generalError');
         errBox.hidden = true;
-        var ok = await askConfirm('ยืนยันบันทึกชื่อเว็บ/เวอร์ชันใหม่?', 'ยืนยันการบันทึก');
+        var ok = await askConfirm('ยืนยันบันทึกชื่อเว็บไซต์ใหม่?', 'ยืนยันการบันทึก');
         if (!ok) return;
         var siteNameVal = document.getElementById('setSiteName').value.trim();
-        var versionVal = document.getElementById('setVersion').value.trim();
         var r = await withProgress('กำลังบันทึกการตั้งค่า', function () {
-          return apiCall('adminUpdateSettings', { siteName: siteNameVal, version: versionVal });
+          return apiCall('adminUpdateSettings', { siteName: siteNameVal });
         }, { successLabel: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' });
         if (r.ok) {
           resetSettingsCache();
@@ -493,6 +492,7 @@
       showModalEl(createUserModal);
     });
     document.getElementById('createUserClose').addEventListener('click', function () { hideModalEl(createUserModal); });
+    document.getElementById('createUserModalCloseX').addEventListener('click', function () { hideModalEl(createUserModal); });
 
     document.getElementById('createUserForm').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -535,6 +535,7 @@
       showModalEl(resetPwModal);
     }
     document.getElementById('resetPwClose').addEventListener('click', function () { hideModalEl(resetPwModal); });
+    document.getElementById('resetPwModalCloseX').addEventListener('click', function () { hideModalEl(resetPwModal); });
     document.getElementById('resetPwForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       var errBox = document.getElementById('resetPwError');

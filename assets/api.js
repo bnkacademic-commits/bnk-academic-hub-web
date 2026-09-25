@@ -6,7 +6,11 @@
  * หลัง deploy — ดูขั้นตอนเต็มใน README.md (ตั้งแต่ V9 backend ย้ายจาก Google Apps Script มาเป็น
  * Cloudflare Worker + D1/KV แล้ว — ไฟล์ apps-script/ เดิมเก็บไว้เป็นข้อมูลอ้างอิงเท่านั้น ไม่ได้ใช้งานแล้ว)
  */
-var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev/';
+var API_URL = 'https://PASTE_YOUR_WORKER_URL_HERE.workers.dev';
+
+// เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
+// (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
+var APP_VERSION = 'V9.1';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -163,7 +167,7 @@ async function getSiteSettings() {
   if (_settingsCache) return _settingsCache;
   if (!_settingsPromise) {
     _settingsPromise = apiCall('publicGetSettings', {}).catch(function () {
-      return { siteName: 'BNKAcademicHub', version: '', iconDataUrl: '', logoDataUrl: '' };
+      return { siteName: 'BNKAcademicHub', iconDataUrl: '', logoDataUrl: '' };
     });
   }
   _settingsCache = await _settingsPromise;
@@ -331,6 +335,7 @@ function ensureSharedModals() {
   wrap.innerHTML =
     '<div class="modal-backdrop" id="sharedConfirmModal" hidden>' +
       '<div class="modal-box">' +
+        '<button type="button" class="modal-close-x" id="sharedConfirmCloseX" aria-label="ปิด">✕</button>' +
         '<h3 id="sharedConfirmTitle">ยืนยันการทำรายการ</h3>' +
         '<p id="sharedConfirmMsg" style="color:var(--text-muted); font-size:0.9rem;"></p>' +
         '<div class="modal-actions">' +
@@ -341,6 +346,7 @@ function ensureSharedModals() {
     '</div>' +
     '<div class="modal-backdrop" id="sharedPwModal" hidden>' +
       '<div class="modal-box">' +
+        '<button type="button" class="modal-close-x" id="sharedPwCloseX" aria-label="ปิด">✕</button>' +
         '<h3>เปลี่ยนรหัสผ่าน</h3>' +
         '<div id="sharedPwError" class="error-box" hidden></div>' +
         '<form id="sharedPwForm" style="text-align:left;">' +
@@ -355,6 +361,7 @@ function ensureSharedModals() {
     '</div>' +
     '<div class="modal-backdrop" id="sharedExpireModal" hidden>' +
       '<div class="modal-box">' +
+        '<button type="button" class="modal-close-x" id="sharedExpireCloseX" aria-label="ปิด">✕</button>' +
         '<h3>หมดเวลาการใช้งาน</h3>' +
         '<p style="color:var(--text-muted); font-size:0.9rem;">คุณอยู่ในระบบครบ 1 ชั่วโมงแล้ว เพื่อความปลอดภัยระบบได้นำคุณออกจากระบบโดยอัตโนมัติ กรุณาเข้าสู่ระบบใหม่อีกครั้ง</p>' +
         '<div class="modal-actions">' +
@@ -364,6 +371,7 @@ function ensureSharedModals() {
     '</div>' +
     '<div class="modal-backdrop" id="sharedProgressModal" hidden>' +
       '<div class="modal-box">' +
+        '<button type="button" class="modal-close-x" id="sharedProgressCloseX" aria-label="ปิด" hidden>✕</button>' +
         '<h3 id="sharedProgressTitle">กำลังดำเนินการ</h3>' +
         '<div id="sharedProgressBarWrap">' +
           '<div class="progress-track"><div class="progress-bar-fill" id="sharedProgressBar"></div></div>' +
@@ -376,11 +384,13 @@ function ensureSharedModals() {
       '</div>' +
     '</div>';
   document.body.appendChild(wrap);
-  document.getElementById('sharedExpireOk').addEventListener('click', function () {
-    location.href = 'index.html?_=' + Date.now();
-  });
+  var goToLoginFromExpire = function () { location.href = 'index.html?_=' + Date.now(); };
+  document.getElementById('sharedExpireOk').addEventListener('click', goToLoginFromExpire);
+  // X ของป็อปอัพหมดเวลาการใช้งานทำหน้าที่เดียวกับปุ่ม "เข้าสู่ระบบอีกครั้ง" เสมอ (ไม่ให้ปิดค้างไว้แล้วนั่งดูหน้าที่ session หมดอายุแล้วเฉยๆ)
+  document.getElementById('sharedExpireCloseX').addEventListener('click', goToLoginFromExpire);
 
   document.getElementById('sharedPwClose').addEventListener('click', function () { hideModalEl(document.getElementById('sharedPwModal')); });
+  document.getElementById('sharedPwCloseX').addEventListener('click', function () { hideModalEl(document.getElementById('sharedPwModal')); });
   document.getElementById('sharedPwForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     var errBox = document.getElementById('sharedPwError');
@@ -416,16 +426,19 @@ function askConfirm(msg, title) {
     showModalEl(modal);
     var yesBtn = document.getElementById('sharedConfirmYes');
     var noBtn = document.getElementById('sharedConfirmNo');
+    var closeXBtn = document.getElementById('sharedConfirmCloseX');
     function cleanup(val) {
       hideModalEl(modal);
       yesBtn.removeEventListener('click', onYes);
       noBtn.removeEventListener('click', onNo);
+      closeXBtn.removeEventListener('click', onNo);
       resolve(val);
     }
     function onYes() { cleanup(true); }
     function onNo() { cleanup(false); }
     yesBtn.addEventListener('click', onYes);
     noBtn.addEventListener('click', onNo);
+    closeXBtn.addEventListener('click', onNo);
   });
 }
 
@@ -437,6 +450,8 @@ function _showProgressModal(title) {
   document.getElementById('sharedProgressBarWrap').hidden = false;
   document.getElementById('sharedProgressResult').hidden = true;
   document.getElementById('sharedProgressOk').hidden = true;
+  // X ซ่อนไว้ระหว่างกำลังทำงานอยู่โดยตั้งใจ (เช่นเดียวกับปุ่ม "ตกลง") เพื่อให้ผู้ใช้เห็นผลลัพธ์แน่นอนก่อนปิดป็อปอัพได้เสมอ
+  document.getElementById('sharedProgressCloseX').hidden = true;
   setProgressIndeterminate('กำลังดำเนินการ...');
   showModalEl(document.getElementById('sharedProgressModal'));
 }
@@ -461,13 +476,17 @@ function _finishProgress(message, isError) {
     resultBox.className = 'progress-result ' + (isError ? 'is-error' : 'is-success');
     resultBox.textContent = message;
     var okBtn = document.getElementById('sharedProgressOk');
+    var closeXBtn = document.getElementById('sharedProgressCloseX');
     okBtn.hidden = false;
+    closeXBtn.hidden = false;
     function onOk() {
       okBtn.removeEventListener('click', onOk);
+      closeXBtn.removeEventListener('click', onOk);
       hideModalEl(document.getElementById('sharedProgressModal'));
       resolve();
     }
     okBtn.addEventListener('click', onOk);
+    closeXBtn.addEventListener('click', onOk);
   });
 }
 /**
@@ -602,4 +621,9 @@ function mountFooter() {
 }
 
 // เรียกทันทีตอนโหลดสคริปต์เพื่อกันธีมกะพริบ (เผื่อกรณี inline script หัวไฟล์ไม่ทำงาน)
-applyTheme(getTheme());
+// ยกเว้นหน้าล็อกอิน (index.html) ที่บังคับใช้ธีมสว่างเท่านั้นเสมอ ไม่ว่าจะเคยตั้งค่าธีมมืดไว้จากหน้าอื่นในเครื่องเดียวกันหรือไม่ก็ตาม
+function _isLoginPage() {
+  var p = location.pathname;
+  return /\/index\.html$/.test(p) || /\/$/.test(p) || p === '';
+}
+applyTheme(_isLoginPage() ? 'light' : getTheme());

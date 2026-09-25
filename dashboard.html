@@ -55,6 +55,7 @@
   <!-- Upload (ส่งงาน) Modal -->
   <div class="modal-backdrop" id="uploadModal" hidden>
     <div class="modal-box" style="max-width:480px;">
+      <button type="button" class="modal-close-x" id="uploadModalCloseX" aria-label="ปิด">✕</button>
       <h3>ส่งงาน</h3>
       <div id="uploadError" class="error-box" hidden></div>
       <form id="uploadForm" style="text-align:left;">
@@ -92,6 +93,7 @@
   <!-- QR Modal -->
   <div class="modal-backdrop" id="qrModal" hidden>
     <div class="modal-box">
+      <button type="button" class="modal-close-x" id="qrModalCloseX" aria-label="ปิด">✕</button>
       <h3>ลิงก์ผลงานสาธารณะของฉัน</h3>
       <div id="qrcode-box"></div>
       <div class="qr-link" id="qrLinkText"></div>
@@ -150,6 +152,7 @@
       showModalEl(qrModal);
     });
     document.getElementById('qrCloseBtn').addEventListener('click', function () { hideModalEl(qrModal); });
+    document.getElementById('qrModalCloseX').addEventListener('click', function () { hideModalEl(qrModal); });
     document.getElementById('qrCopyBtn').addEventListener('click', function () {
       var text = document.getElementById('qrLinkText').textContent;
       try { navigator.clipboard.writeText(text); showToast('คัดลอกลิงก์แล้ว'); } catch (e) { showToast('คัดลอกไม่สำเร็จ ลองคัดลอกด้วยตนเอง', true); }
@@ -221,6 +224,7 @@
       loadUploadCategories();
       showModalEl(uploadModal);
     });
+    document.getElementById('uploadModalCloseX').addEventListener('click', function () { hideModalEl(uploadModal); });
 
     document.getElementById('uploadForm').addEventListener('submit', async function (e) {
       e.preventDefault();
