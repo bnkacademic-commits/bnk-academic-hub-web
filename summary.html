@@ -61,9 +61,9 @@
       <div class="card">
         <div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">
           <span><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> สรุปสถานะการส่งงานแยกแต่ละงาน</span>
-          <button class="btn btn-secondary btn-sm" id="btnExportReport" type="button">📄 รายงาน</button>
+          <button class="btn btn-secondary btn-sm" id="btnExportReport" type="button"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6"/></svg> รายงาน</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">แสดงเฉพาะกำหนดการในปฏิทินที่ผูกกับ "ประเภทงาน" ไว้ — ไปเพิ่มได้ที่หน้าตั้งค่าเว็บ แท็บปฏิทิน — เลือกดร็อปดาวน์ด้านล่างเพื่อกรองดูทีละงาน</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">แสดงเฉพาะกำหนดการในปฏิทินที่ผูกกับ "ประเภทงาน" ไว้ — ไปเพิ่มได้ที่หน้าตั้งค่าระบบ แท็บปฏิทิน — เลือกดร็อปดาวน์ด้านล่างเพื่อกรองดูทีละงาน</p>
         <div class="filter-row">
           <select id="asgFilterAssignment"><option value="">ทุกงาน</option></select>
           <select id="asgFilterYear"><option value="">ทุกปีการศึกษา</option></select>
@@ -86,8 +86,8 @@
       <h3>ออกรายงาน</h3>
       <p class="hint" style="margin-bottom:14px;">เลือกรูปแบบไฟล์รายงานของรายการที่กำลังแสดงอยู่ในหน้านี้</p>
       <div class="modal-actions" style="flex-direction:column; align-items:stretch;">
-        <button class="btn btn-primary" id="exportAsPdfBtn" type="button" style="margin-bottom:8px;">📄 PDF</button>
-        <button class="btn btn-secondary" id="exportAsImageBtn" type="button" style="margin-bottom:8px;">🖼️ รูปภาพ (PNG)</button>
+        <button class="btn btn-primary" id="exportAsPdfBtn" type="button" style="margin-bottom:8px;"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6"/></svg> PDF</button>
+        <button class="btn btn-secondary" id="exportAsImageBtn" type="button" style="margin-bottom:8px;"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 15-5-5-9 9"/></svg> รูปภาพ (PNG)</button>
         <button class="btn btn-ghost" id="exportReportCancelBtn" type="button">ยกเลิก</button>
       </div>
     </div>

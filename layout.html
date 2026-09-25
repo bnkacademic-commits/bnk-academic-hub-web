@@ -45,7 +45,7 @@
   <script>
     var session = requireAdminAccess();
     if (session) mountChrome('layout');
-    // หน้านี้เป็นสิทธิ์ Super Admin เท่านั้นทั้งหมด (ต่างจากหน้าตั้งค่าเว็บที่บางแท็บเจ้าหน้าที่ฝ่ายวิชาการเข้าได้) — เด้งออกทันทีถ้าไม่ใช่ Super Admin
+    // หน้านี้เป็นสิทธิ์ Super Admin เท่านั้นทั้งหมด (ต่างจากหน้าตั้งค่าระบบที่บางแท็บเจ้าหน้าที่ฝ่ายวิชาการเข้าได้) — เด้งออกทันทีถ้าไม่ใช่ Super Admin
     var isSuperAdminSession = !!session && session.role === 'admin' && !session.hasHub;
     if (session && !isSuperAdminSession) {
       location.href = homePageFor(session);

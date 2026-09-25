@@ -10,7 +10,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 
 // เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
-var APP_VERSION = 'V11.1';
+var APP_VERSION = 'V11.2';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -396,7 +396,7 @@ function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-// จุดสีเล็กๆ แสดงหน้าชื่อประเภทงาน (ตั้งแต่ V9.7) — ใช้ร่วมกันทุกหน้าที่แสดงชื่อประเภทงาน (Hub ครู/สรุปรวม/ตั้งค่าเว็บ)
+// จุดสีเล็กๆ แสดงหน้าชื่อประเภทงาน (ตั้งแต่ V9.7) — ใช้ร่วมกันทุกหน้าที่แสดงชื่อประเภทงาน (Hub ครู/สรุปรวม/ตั้งค่าระบบ)
 function categoryDotHtml(color) {
   return '<span class="category-dot" style="background:' + escapeHtml(color || '#3457d5') + ';"></span>';
 }
@@ -432,7 +432,9 @@ var ICON_PATHS = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1.1.9-2 2-2H17a4 4 0 0 0 4-4c0-4.4-4-7.4-9-7.4z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="11.5" cy="7.5" r="1"/><circle cx="15.5" cy="9" r="1"/>',
   layout: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>',
-  pin: '<path d="M12 17v5"/><path d="M8 3h8l-1 7 3 3H6l3-3z"/>'
+  pin: '<path d="M12 17v5"/><path d="M8 3h8l-1 7 3 3H6l3-3z"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',
+  file: '<path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6"/>'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -788,7 +790,7 @@ function navLinksFor(session) {
     links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary', icon: 'summary' });
     // จัดการ Layout: Super Admin เท่านั้น (role=admin, hasHub=false) — ตั้งแต่ V11.1
     if (!session.hasHub) links.push({ href: 'layout.html', label: 'จัดการ Layout', key: 'layout', icon: 'layout' });
-    links.push({ href: 'settings.html', label: 'ตั้งค่าเว็บ', key: 'settings', icon: 'settings' });
+    links.push({ href: 'settings.html', label: 'ตั้งค่าระบบ', key: 'settings', icon: 'settings' });
   }
   return links;
 }

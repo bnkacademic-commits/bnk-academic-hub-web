@@ -186,7 +186,7 @@ a:hover { text-decoration: underline; }
 .topbar-right { display: flex; align-items: center; gap: 10px; }
 .topbar .user-info { color: var(--text-muted); font-size: 0.92rem; }
 
-/* Nav tabs (Hub / สรุปรวม / ตั้งค่าเว็บ) */
+/* Nav tabs (Hub / สรุปรวม / ตั้งค่าระบบ) */
 .topbar-nav { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .topbar-nav a {
   display: inline-flex; align-items: center; gap: 6px;

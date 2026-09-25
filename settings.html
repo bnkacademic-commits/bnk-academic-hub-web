@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
-<title>ตั้งค่าเว็บ — BNKAcademicHub</title>
+<title>ตั้งค่าระบบ — BNKAcademicHub</title>
 <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
@@ -12,7 +12,7 @@
 
   <div class="container">
     <div class="page-header">
-      <h1>ตั้งค่าเว็บ</h1>
+      <h1>ตั้งค่าระบบ</h1>
       <p>ตั้งค่าทั่วไปของเว็บไซต์ จัดการบัญชีผู้ใช้ ปฏิทิน ประกาศ และตรวจสอบประวัติการทำรายการ</p>
     </div>
 
@@ -87,7 +87,7 @@
       <div class="card">
         <div class="section-title" style="justify-content:space-between;">
           <span><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16.5 5.2a3.2 3.2 0 0 1 0 6.2"/><path d="M15 14a6.5 6.5 0 0 1 6.5 6"/></svg> รายชื่อผู้ใช้งานทั้งหมด</span>
-          <button class="btn btn-primary btn-sm" id="openCreateUserBtn" type="button">➕ เพิ่มผู้ใช้ใหม่</button>
+          <button class="btn btn-primary btn-sm" id="openCreateUserBtn" type="button"><svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> เพิ่มผู้ใช้ใหม่</button>
         </div>
         <div id="userTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
@@ -164,7 +164,7 @@
   <div class="modal-backdrop" id="createUserModal" hidden>
     <div class="modal-box">
       <button type="button" class="modal-close-x" id="createUserModalCloseX" aria-label="ปิด">✕</button>
-      <h3>➕ เพิ่มผู้ใช้ใหม่</h3>
+      <h3>เพิ่มผู้ใช้ใหม่</h3>
       <div id="createUserError" class="error-box" hidden></div>
       <form id="createUserForm" style="text-align:left;">
         <div class="field-row">
@@ -234,9 +234,9 @@
         <div class="field">
           <label for="evCategory">ประเภทงาน (ถ้ากำหนดการนี้เป็นกำหนดส่งงาน)</label>
           <select id="evCategory"><option value="">— ไม่ผูกกับงานใด (กำหนดการทั่วไป) —</option></select>
-          <div class="hint">เลือกประเภทงาน เพื่อให้ระบบนำไปคำนวณสถานะการส่งงานในหน้า "สรุปรวมการส่งงาน" ให้อัตโนมัติ (ใครส่งตรงเวลา/เกินกำหนด/ยังไม่ส่ง) — เมื่อเลือกแล้ว "หัวข้อ" ด้านล่างจะเติมชื่อประเภทงานให้อัตโนมัติ (แก้ไขเองได้)</div>
+          <div class="hint">เลือกประเภทงาน เพื่อให้ระบบนำไปคำนวณสถานะการส่งงานในหน้า "สรุปรวมการส่งงาน" ให้อัตโนมัติ (ใครส่งตรงเวลา/เกินกำหนด/ยังไม่ส่ง) — เมื่อเลือกแล้ว ระบบจะใช้ "ชื่อประเภทงาน" เป็นหัวข้อกำหนดการนี้โดยอัตโนมัติ (ไม่ต้องกรอกหัวข้อเอง)</div>
         </div>
-        <div class="field">
+        <div class="field" id="evTitleField">
           <label for="evTitle">หัวข้อ</label>
           <input id="evTitle" required placeholder="เช่น กำหนดส่งผลงานภาคเรียนที่ 1" />
         </div>
@@ -831,16 +831,25 @@
         // ถ้าโหลดรายชื่อประเภทงานไม่สำเร็จ ยังเพิ่มกำหนดการทั่วไป (ไม่ผูกงาน) ได้ตามปกติ ไม่ต้องบล็อกทั้งฟอร์ม
       }
     }
-    // เติม "หัวข้อ" ให้อัตโนมัติจากชื่อประเภทงานที่เลือก (ตั้งแต่ V-ถัดไปหลัง V10.1) — ยังแก้ไขเองได้เสมอ พอผู้ใช้พิมพ์แก้เองแล้วจะไม่เติมทับให้อีก
-    var evTitleAutoFilled = true;
-    document.getElementById('evTitle').addEventListener('input', function () { evTitleAutoFilled = false; });
+    // ประเภทงาน = หัวข้อกำหนดการโดยตรง (ตั้งแต่ V-ถัดไปหลัง V11.1) — เลือกประเภทงานแล้วซ่อนช่อง "หัวข้อ" ไปเลย ใช้ชื่อประเภทงานเป็นหัวข้อเสมอ ไม่ต้อง/ไม่ให้กรอกเอง
+    // ส่วนกำหนดการทั่วไปที่ไม่ผูกกับประเภทงาน (เลือก "— ไม่ผูกกับงานใด —") ยังต้องกรอกหัวข้อเองอยู่ เพราะไม่มีชื่อประเภทงานให้ใช้แทน
+    function applyEvTitleFieldVisibility(catId) {
+      var titleField = document.getElementById('evTitleField');
+      var titleInput = document.getElementById('evTitle');
+      if (catId) {
+        var cat = eventCategories.filter(function (c) { return c.id === catId; })[0];
+        titleInput.value = cat ? cat.name : '';
+        titleInput.required = false;
+        titleField.hidden = true;
+      } else {
+        titleInput.required = true;
+        titleField.hidden = false;
+      }
+    }
     document.getElementById('evCategory').addEventListener('change', function () {
       var catId = this.value;
       document.getElementById('evTermFields').hidden = !catId;
-      if (catId && evTitleAutoFilled) {
-        var cat = eventCategories.filter(function (c) { return c.id === catId; })[0];
-        if (cat) document.getElementById('evTitle').value = cat.name;
-      }
+      applyEvTitleFieldVisibility(catId);
     });
 
     function renderAudienceOptions() {
@@ -872,7 +881,7 @@
             ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate)
             : formatDateThai(ev.date);
           var categoryMeta = ev.categoryId
-            ? '<div class="sub-item-meta">📎 กำหนดส่งงาน: ' + escapeHtml(ev.categoryName) + ' · ปีการศึกษา ' + escapeHtml(ev.academicYear) + ' · ' + (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + '</div>'
+            ? '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('tag', 13) + ' กำหนดส่งงาน: ' + escapeHtml(ev.categoryName) + ' · ปีการศึกษา ' + escapeHtml(ev.academicYear) + ' · ' + (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + '</div>'
             : '';
           html += '<div class="event-list-item">' +
             '<div class="event-date-chip">' + dateChip + '</div>' +
@@ -915,7 +924,7 @@
       document.getElementById('evTermFields').hidden = true;
       document.getElementById('evSubmitBtn').textContent = 'เพิ่มกำหนดการ';
       document.getElementById('eventModalTitle').textContent = 'เพิ่มกำหนดการ';
-      evTitleAutoFilled = true;
+      applyEvTitleFieldVisibility(''); // ยังไม่ได้เลือกประเภทงาน — โชว์ช่องหัวข้อไว้ก่อน
       document.getElementById('createEventError').hidden = true;
       showModalEl(eventModalEl);
     }
@@ -931,8 +940,15 @@
       if (ev.categoryId) {
         document.getElementById('evYear').value = ev.academicYear;
         document.getElementById('evSemester').value = ev.semester;
+        // ซ่อนช่องหัวข้อเหมือนตอนเพิ่มใหม่ — ใช้ชื่อประเภทงานปัจจุบันถ้ายังมีอยู่ในระบบ ไม่งั้น fallback เป็นชื่อประเภทงาน/หัวข้อเดิมที่บันทึกไว้ (เผื่อประเภทงานถูกลบไปแล้ว ไม่ให้ข้อมูลหาย)
+        var cat = eventCategories.filter(function (c) { return c.id === ev.categoryId; })[0];
+        document.getElementById('evTitle').value = cat ? cat.name : (ev.categoryName || ev.title);
+        document.getElementById('evTitle').required = false;
+        document.getElementById('evTitleField').hidden = true;
+      } else {
+        document.getElementById('evTitle').required = true;
+        document.getElementById('evTitleField').hidden = false;
       }
-      evTitleAutoFilled = false; // แก้ไขรายการเดิม ไม่เติมทับหัวข้อที่มีอยู่แล้วให้อัตโนมัติ
       document.getElementById('evSubmitBtn').textContent = 'บันทึกการแก้ไข';
       document.getElementById('eventModalTitle').textContent = 'แก้ไขกำหนดการ: ' + ev.title;
       document.getElementById('createEventError').hidden = true;
@@ -998,7 +1014,7 @@
       var parts = [];
       if (a.showFrom) parts.push('เริ่ม ' + formatDateTimeThai(a.showFrom));
       if (a.showUntil) parts.push('ถึง ' + formatDateTimeThai(a.showUntil));
-      return '<div class="sub-item-meta">⏰ ' + parts.join(' · ') + '</div>';
+      return '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('clock', 13) + ' ' + parts.join(' · ') + '</div>';
     }
     async function loadAnnouncements() {
       var wrap = document.getElementById('annListWrap');
