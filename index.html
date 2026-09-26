@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <!-- หน้าล็อกอินบังคับใช้ธีมสว่างเท่านั้นเสมอ (ไม่ว่าจะเคยตั้งค่าธีมมืดไว้จากหน้าอื่นหรือไม่) จึงไม่มี script คืนค่าธีมมืดจาก localStorage แบบหน้าอื่นๆ ในตัว -->
 <title>เข้าสู่ระบบ — BNKAcademicHub</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // ป้องกัน error ถ้าโหลด Tailwind CDN ไม่สำเร็จ (เช่น เครือข่ายบางแห่งบล็อก CDN ภายนอก) — เว็บยังใช้งานได้ปกติเพราะ
+  // สไตล์หลักทั้งหมดมาจาก style.css ที่ฝังในเว็บเองอยู่แล้ว ไม่ได้พึ่ง Tailwind CDN เป็นตัวตัดสินหน้าตาเว็บ
+  if (window.tailwind) { window.tailwind.config = { darkMode: ['selector', '[data-theme="dark"]'] }; }
+</script>
+<!-- Font Awesome ฝังไฟล์ไว้ในเว็บเอง (ไม่พึ่ง CDN ภายนอก ตามแนวทางเดิมของโปรเจกต์ เหมือนฟอนต์ Sarabun) -->
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>

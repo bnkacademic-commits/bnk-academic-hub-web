@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <title>Hub ของฉัน — BNKAcademicHub</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // ป้องกัน error ถ้าโหลด Tailwind CDN ไม่สำเร็จ (เช่น เครือข่ายบางแห่งบล็อก CDN ภายนอก) — เว็บยังใช้งานได้ปกติเพราะ
+  // สไตล์หลักทั้งหมดมาจาก style.css ที่ฝังในเว็บเองอยู่แล้ว ไม่ได้พึ่ง Tailwind CDN เป็นตัวตัดสินหน้าตาเว็บ
+  if (window.tailwind) { window.tailwind.config = { darkMode: ['selector', '[data-theme="dark"]'] }; }
+</script>
+<!-- Font Awesome ฝังไฟล์ไว้ในเว็บเอง (ไม่พึ่ง CDN ภายนอก ตามแนวทางเดิมของโปรเจกต์ เหมือนฟอนต์ Sarabun) -->
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
@@ -17,7 +27,7 @@
     </div>
 
     <div class="card" id="annCard" hidden>
-      <div class="section-title"><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l4.5 3.5V6.5L6 10H4a1 1 0 0 0-1 1z"/><path d="M17 8a4.5 4.5 0 0 1 0 8M20 5.5a8.5 8.5 0 0 1 0 13"/></svg> ประกาศจากฝ่ายวิชาการ</div>
+      <div class="section-title"><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> ประกาศจากฝ่ายวิชาการ</div>
       <div id="hubAnnList"><div class="loading">กำลังโหลด</div></div>
     </div>
 
@@ -26,7 +36,7 @@
       <div class="dash-cal-layout">
         <div class="dash-cal-main">
           <div class="calendar-header">
-            <div class="section-title" style="margin-bottom:0;"><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg> ปฏิทิน</div>
+            <div class="section-title" style="margin-bottom:0;"><i class="fas fa-calendar-days ui-icon" style="font-size:17px" aria-hidden="true"></i> ปฏิทิน</div>
             <div style="display:flex; gap:6px; align-items:center;">
               <button class="btn btn-ghost btn-sm" id="calPrev">‹</button>
               <span class="month-label" id="calLabel">-</span>
@@ -37,9 +47,9 @@
           <div class="calendar-grid" id="calGrid"></div>
         </div>
         <div class="dash-cal-side">
-          <button class="btn btn-secondary dash-portfolio-btn" id="btnShowQr" type="button">🔗 หน้าผลงานของฉัน</button>
+          <button class="btn btn-secondary dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
           <div class="dash-checklist">
-            <div class="dash-checklist-title">✅ เช็คลิสต์การส่งงาน</div>
+            <div class="dash-checklist-title"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> เช็คลิสต์การส่งงาน</div>
             <div class="dash-checklist-body" id="assignmentChecklistBody"><div class="loading">กำลังโหลด</div></div>
           </div>
         </div>
@@ -49,7 +59,7 @@
     </div>
 
     <div class="card">
-      <div class="section-title"><svg class="ui-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> ผลงานของฉันทั้งหมด</div>
+      <div class="section-title"><i class="fas fa-folder-open ui-icon" style="font-size:17px" aria-hidden="true"></i> ผลงานของฉันทั้งหมด</div>
       <div class="filter-row">
         <input type="search" id="subSearch" placeholder="ค้นหาชื่อผลงาน/ประเภทงาน" />
         <select id="subFilterYear"><option value="">ทุกปีการศึกษา</option></select>
@@ -60,7 +70,7 @@
           <option value="summer">ภาคฤดูร้อน</option>
         </select>
         <!-- ปุ่ม "ส่งงาน" ย้ายมาที่นี่ + เปลี่ยนชื่อเป็น "ส่งงาน (กำหนดเอง)" ตั้งแต่ V10.0 (ก่อนหน้านี้เป็นการ์ดแยกด้านบน) -->
-        <button class="btn btn-primary btn-sm" id="openUploadBtn" type="button">📤 ส่งงาน (กำหนดเอง)</button>
+        <button class="btn btn-primary btn-sm" id="openUploadBtn" type="button"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน (กำหนดเอง)</button>
       </div>
       <div id="submissionList"><div class="loading">กำลังโหลด</div></div>
     </div>
@@ -95,7 +105,7 @@
         <div class="field">
           <label>ไฟล์ผลงาน (สูงสุด 10 ไฟล์ ไม่เกิน 25MB ต่อไฟล์)</label>
           <div class="dropzone" id="dropzone" tabindex="0">
-            <div>📎 ลากไฟล์มาวางที่นี่ หรือกดเพื่อเลือกไฟล์</div>
+            <div><i class="fas fa-paperclip ui-icon" aria-hidden="true"></i> ลากไฟล์มาวางที่นี่ หรือกดเพื่อเลือกไฟล์</div>
             <input type="file" id="upFiles" multiple hidden />
           </div>
           <div id="fileChipList"></div>
@@ -144,10 +154,12 @@
     if (session) document.getElementById('welcomeHeading').textContent = 'ยินดีต้อนรับ, ' + session.name;
 
     // ---------- ปีการศึกษา options ----------
+    // หมายเหตุ: ช่วงตัวเลือกคำนวณสดจากวันที่จริงทุกครั้งที่เปิดหน้า (ไม่ hardcode) จึงไม่มีวันที่ตัวเลือก "หมด"
+    // ตั้งแต่เวอร์ชันถัดจาก V11.2 ขยายช่วงมองไปข้างหน้าจาก +1 เป็น +2 ปี ให้ส่งงาน/ตั้งกำหนดการล่วงหน้าได้กว้างขึ้น
     (function fillYearOptions() {
       var beYear = new Date().getFullYear() + 543;
       var sel = document.getElementById('upYear');
-      for (var y = beYear + 1; y >= beYear - 3; y--) {
+      for (var y = beYear + 2; y >= beYear - 3; y--) {
         var opt = document.createElement('option');
         opt.value = y; opt.textContent = 'ปีการศึกษา ' + y;
         if (y === beYear) opt.selected = true;
@@ -538,7 +550,7 @@
         var rowsHtml = g.rows.map(function (r) {
           var dotColor = categoryColorMap[r.ev.categoryId] || '';
           return '<div class="checklist-item">' +
-            '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '✓' : '!') + '</div>' +
+            '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
             '<div class="checklist-text">' +
               '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + '</div>' +
               '<div class="checklist-status ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') + '</div>' +
@@ -612,7 +624,7 @@
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
           var submitBtn = e.categoryId
-            ? '<button class="btn btn-primary btn-sm event-submit-btn" data-submit-event="' + e.id + '">📤 ส่งงาน</button>'
+            ? '<button class="btn btn-primary btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
             : '';
           var termLabel = e.categoryId ? (e.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(e.semester)) + ' ปีการศึกษา ' + escapeHtml(e.academicYear) : '';
           // ตั้งแต่เวอร์ชันถัดจาก V11.1 หัวข้อกำหนดการที่ผูกประเภทงานจะเป็นชื่อประเภทงานเป๊ะๆ อยู่แล้ว (กรอกเองไม่ได้อีกต่อไป) — ไม่ต้องต่อท้าย "(ชื่อประเภทงาน)" ซ้ำอีกถ้าซ้ำกับหัวข้ออยู่แล้ว (กำหนดการเก่าก่อนอัพเดตที่หัวข้อเคยพิมพ์เองไว้ต่างจากชื่อประเภทงาน ยังโชว์วงเล็บต่อท้ายตามเดิม)
