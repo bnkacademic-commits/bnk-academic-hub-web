@@ -5,17 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 <title>ตั้งค่าระบบ — BNKAcademicHub</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  // ป้องกัน error ถ้าโหลด Tailwind CDN ไม่สำเร็จ (เช่น เครือข่ายบางแห่งบล็อก CDN ภายนอก) — เว็บยังใช้งานได้ปกติเพราะ
-  // สไตล์หลักทั้งหมดมาจาก style.css ที่ฝังในเว็บเองอยู่แล้ว ไม่ได้พึ่ง Tailwind CDN เป็นตัวตัดสินหน้าตาเว็บ
-  if (window.tailwind) { window.tailwind.config = { darkMode: ['selector', '[data-theme="dark"]'] }; }
-</script>
+<!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
+     ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
+     getComputedStyle(...).paddingLeft = "0px" จริง ทั้งที่ style.css ที่เซิร์ฟเวอร์ส่งออกมาตรงกับซอร์สทุกตัวอักษร:
+     สคริปต์ Tailwind CDN ตัวนี้เดิมใส่ไว้แค่ช่วงออกแบบเพื่ออ้างอิงโทนสีเท่านั้น (ไม่มี class ของ Tailwind ใช้งานจริงในเว็บเลย
+     สักจุด — เช็คแล้วทั้ง 5 หน้า) แต่ตัว CDN สร้าง Preflight (CSS reset มาตรฐานของ Tailwind ที่ตั้ง padding/border ของ
+     input ทุกตัวเป็น 0 เพื่อ "ล้างค่า default ของเบราว์เซอร์") แล้วแทรกสไตล์ของตัวเองเข้า <head> ทีหลัง (browser ประมวลผล
+     script แบบ async หลังโหลดเน็ตเวิร์กเสร็จ) ทำให้ชนะลำดับ cascade ทับ padding: 10px 28px ที่ style.css ของเราตั้งไว้
+     โดยไม่มีทางแก้จากฝั่ง style.css เองเลย (เพราะ specificity เท่ากัน ผู้มาทีหลังชนะ) — เกิดเฉพาะตอนเน็ตเวิร์กโหลด CDN
+     สำเร็จเท่านั้น (อธิบายได้ว่าทำไมตอนแรกผมทดสอบในเครื่องแล้วไม่เจอปัญหา เพราะเครื่องทดสอบบล็อกการเรียก CDN ภายนอกไว้)
+     ลบสคริปต์นี้ทิ้งเลยปลอดภัย 100% เพราะไม่มีอะไรในเว็บพึ่งพา class ของ Tailwind อยู่จริง -->
 <!-- Font Awesome ฝังไฟล์ไว้ในเว็บเอง (ไม่พึ่ง CDN ภายนอก ตามแนวทางเดิมของโปรเจกต์ เหมือนฟอนต์ Sarabun) -->
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=11.8.2" />
+<link rel="stylesheet" href="assets/style.css?v=11.8.3" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -398,7 +402,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=11.8.2"></script>
+  <script src="assets/api.js?v=11.8.3"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
