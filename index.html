@@ -22,7 +22,7 @@
     <div class="login-card">
       <div class="login-title"><span class="js-brand-logo js-brand-logo-lg"><span class="logo-dot"></span></span></div>
       <div class="login-title"><span class="js-site-name">BNKAcademicHub</span></div>
-      <div class="login-sub">ระบบส่งผลงานครูสำหรับฝ่ายวิชาการ</div>
+      <div class="login-sub">ระบบรวบรวมและส่งผลงานครู</div>
 
       <div id="errorBox" class="error-box" hidden></div>
 
@@ -33,11 +33,25 @@
         </div>
         <div class="field">
           <label for="password">รหัสผ่าน</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <div class="password-field-wrap">
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
+            <!-- ปุ่มแสดง/ซ่อนรหัสผ่าน (ตั้งแต่ V11.8) — tabindex="-1" กันไม่ให้แทรกลำดับ Tab ระหว่างช่องรหัสผ่านกับปุ่มเข้าสู่ระบบ -->
+            <button type="button" class="password-toggle-btn" id="togglePasswordBtn" tabindex="-1" aria-label="แสดง/ซ่อนรหัสผ่าน">
+              <i class="fas fa-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+        <!-- หมายเหตุ: ตั้งใจไม่ใส่คลาส "field" ที่ div นี้ (ต่างจาก .field ปกติ) เพราะ .login-card .field มี margin-bottom
+             ตายตัวไว้ค่อนข้างมาก พอรวมกับช่องนี้ที่เพิ่มเข้ามาใหม่ (V11.8) จะทำให้การ์ดสูงเกินจอมือถือจอเตี้ยอีกครั้ง
+             (ปัญหาเดียวกับที่เคยแก้ไว้ตั้งแต่ V11.6) จึงคุมระยะห่างเองแยกต่างหากให้กระชับกว่าแทน -->
+        <div class="remember-row">
+          <label class="remember-check">
+            <input type="checkbox" id="rememberMe" /> จดจำฉันไว้ในเบราว์เซอร์นี้
+          </label>
         </div>
         <button class="btn btn-primary btn-full" type="submit" id="loginBtn">เข้าสู่ระบบ</button>
       </form>
-      <p class="hint" style="text-align:center; margin-top:18px;">ยังไม่มีบัญชี? ติดต่อฝ่ายวิชาการของโรงเรียนเพื่อขอสร้างบัญชีให้</p>
+      <p class="hint" style="text-align:center; margin-top:12px;">ติดต่อฝ่ายวิชาการของโรงเรียนเพื่อขอสร้างบัญชี</p>
     </div>
   </div>
 
@@ -57,6 +71,36 @@
     var form = document.getElementById('loginForm');
     var errorBox = document.getElementById('errorBox');
     var loginBtn = document.getElementById('loginBtn');
+    var usernameInput = document.getElementById('username');
+    var passwordInput = document.getElementById('password');
+    var rememberCheckbox = document.getElementById('rememberMe');
+
+    // ---------- ปุ่มแสดง/ซ่อนรหัสผ่าน (ตั้งแต่ V11.8) ----------
+    var togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    var togglePasswordIcon = togglePasswordBtn.querySelector('i');
+    togglePasswordBtn.addEventListener('click', function () {
+      var showing = passwordInput.type === 'text';
+      passwordInput.type = showing ? 'password' : 'text';
+      togglePasswordIcon.classList.toggle('fa-eye', showing);
+      togglePasswordIcon.classList.toggle('fa-eye-slash', !showing);
+    });
+
+    // ---------- จดจำชื่อผู้ใช้/รหัสผ่านไว้ในเบราว์เซอร์นี้ (ตั้งแต่ V11.8) ----------
+    // เก็บไว้ใน localStorage ของเบราว์เซอร์นี้เท่านั้น (ไม่ได้ส่งไปที่ไหนเพิ่มเติม) ตามที่ผู้ใช้ขอ — ติ๊กถูกไว้ตอนล็อกอินสำเร็จ
+    // ครั้งถัดไปเปิดหน้านี้จากเบราว์เซอร์เดียวกันจะกรอกชื่อผู้ใช้/รหัสผ่านให้อัตโนมัติ ถ้าเอาติ๊กออกจะลบค่าที่เคยจำไว้ทิ้งทันที
+    var REMEMBER_LOGIN_KEY = 'bnkah_remember_login';
+    (function restoreRememberedLogin() {
+      try {
+        var raw = localStorage.getItem(REMEMBER_LOGIN_KEY);
+        if (!raw) return;
+        var saved = JSON.parse(raw);
+        if (saved && saved.username) {
+          usernameInput.value = saved.username;
+          passwordInput.value = saved.password || '';
+          rememberCheckbox.checked = true;
+        }
+      } catch (e) { /* localStorage อาจถูกปิด หรือค่าที่เก็บไว้เสียหาย — ข้ามไปเฉยๆ ไม่ต้องแจ้งเตือน */ }
+    })();
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -64,9 +108,16 @@
       loginBtn.disabled = true;
       loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
       try {
-        var username = document.getElementById('username').value.trim();
-        var password = document.getElementById('password').value;
+        var username = usernameInput.value.trim();
+        var password = passwordInput.value;
         var data = await apiCall('login', { username: username, password: password });
+        try {
+          if (rememberCheckbox.checked) {
+            localStorage.setItem(REMEMBER_LOGIN_KEY, JSON.stringify({ username: username, password: password }));
+          } else {
+            localStorage.removeItem(REMEMBER_LOGIN_KEY);
+          }
+        } catch (e) { /* localStorage อาจถูกปิด — ไม่กระทบการล็อกอิน แค่จำค่าไว้ให้ไม่ได้ */ }
         setSession(data.token, data.user);
         location.href = homePageFor(data.user);
       } catch (err) {
