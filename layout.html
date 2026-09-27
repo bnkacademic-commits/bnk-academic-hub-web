@@ -23,11 +23,11 @@
   <div class="container">
     <div class="page-header">
       <h1>จัดการ Layout หน้าโชว์ผลงานครู</h1>
-      <p>เฉพาะ Super Admin — จัดเรียงลำดับผลงานที่แสดงในหน้าโชว์ผลงานสาธารณะของครูแต่ละคน และเลือกรูปแบบพรีวิวให้เหมาะกับประเภทผลงาน (เช่น แผนการสอนเปิดเป็นเล่มหนังสือ, Infographic เป็นกรอบรูปห้อย)</p>
+      <p>เฉพาะ Super Admin — จัดเรียงลำดับผลงานที่แสดงในหน้าโชว์ผลงานสาธารณะของครูแต่ละคน (ลำดับเป็นของครูแต่ละคนแยกกัน) ส่วน<b>รูปแบบการ์ดพรีวิว</b>กำหนดจาก "ประเภทงาน" ที่หน้า <a href="settings.html">ตั้งค่าระบบ</a> ครั้งเดียว มีผลกับผลงานของ<b>ทุกครูอัตโนมัติ</b> — ไม่ต้องมาเลือกทีละคนอีกต่อไป</p>
     </div>
 
     <div class="card">
-      <div class="section-title"><i class="fas fa-table-cells-large ui-icon" style="font-size:17px" aria-hidden="true"></i> เลือกครูที่จะจัดการ Layout</div>
+      <div class="section-title"><i class="fas fa-table-cells-large ui-icon" style="font-size:17px" aria-hidden="true"></i> เลือกครูที่จะจัดลำดับผลงาน</div>
       <div class="field-row" style="align-items:flex-end;">
         <div class="field" style="flex:1;">
           <label for="teacherSelect">เลือกครู</label>
@@ -38,14 +38,14 @@
         </div>
       </div>
       <div class="hint" style="margin-top:-6px;">
-        รูปแบบพรีวิว: 📄 การ์ดมาตรฐาน · 📖 เปิดเป็นเล่มหนังสือ (แผนการสอน/เอกสารหลายหน้า) · 🖼️ กรอบรูปห้อย (Infographic/ภาพ) · 🗂️ การ์ดวิจัย/ข้อมูล (วิจัยในชั้นเรียน) · 📌 พินผลงานเด่น
+        รูปแบบการ์ดที่แสดงในวงเล็บของแต่ละชิ้นงานด้านล่างมาจากประเภทงานของชิ้นนั้น — ไปเปลี่ยนที่ <a href="settings.html">ตั้งค่าระบบ → ประเภทงาน</a> ถ้าต้องการรูปแบบอื่น (จะมีผลกับทุกครูที่ส่งงานประเภทเดียวกัน)
       </div>
     </div>
 
     <div id="layoutWrap"></div>
 
     <div id="saveBar" style="display:flex; justify-content:flex-end; gap:10px; margin: 6px 0 30px;" hidden>
-      <button class="btn btn-primary" id="saveLayoutBtn" type="button">บันทึก Layout</button>
+      <button class="btn btn-primary" id="saveLayoutBtn" type="button">บันทึกลำดับ</button>
     </div>
   </div>
 
@@ -139,12 +139,9 @@
         html += '<div class="layout-group-title">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
         g.items.forEach(function (it, ii) {
           html += '<div class="layout-row">' +
-            '<div class="thumb">' + templateEmoji(it.displayTemplate) + '</div>' +
+            '<div class="thumb" title="รูปแบบการ์ด (กำหนดจากประเภทงาน)">' + templateEmoji(it.displayTemplate) + '</div>' +
             '<div class="info"><div class="t">' + escapeHtml(it.title) + '</div><div class="s">' +
               (it.categoryName ? escapeHtml(it.categoryName) + ' · ' : '') + formatDateThai(it.uploadedAt) + '</div></div>' +
-            '<select class="tpl-select" data-gi="' + gi + '" data-ii="' + ii + '">' +
-              TEMPLATE_OPTIONS.map(function (o) { return '<option value="' + o.key + '"' + (o.key === it.displayTemplate ? ' selected' : '') + '>' + escapeHtml(o.label) + '</option>'; }).join('') +
-            '</select>' +
             '<div class="arrows">' +
               '<button type="button" class="btn btn-ghost btn-sm move-up" data-gi="' + gi + '" data-ii="' + ii + '"' + (ii === 0 ? ' disabled' : '') + ' title="เลื่อนขึ้น">▲</button>' +
               '<button type="button" class="btn btn-ghost btn-sm move-down" data-gi="' + gi + '" data-ii="' + ii + '"' + (ii === g.items.length - 1 ? ' disabled' : '') + ' title="เลื่อนลง">▼</button>' +
@@ -155,14 +152,6 @@
       html += '</div>';
       wrap.innerHTML = html;
 
-      wrap.querySelectorAll('.tpl-select').forEach(function (sel) {
-        sel.addEventListener('change', function () {
-          var gi = parseInt(sel.getAttribute('data-gi'), 10), ii = parseInt(sel.getAttribute('data-ii'), 10);
-          currentGroups[gi].items[ii].displayTemplate = sel.value;
-          var row = sel.closest('.layout-row');
-          if (row) row.querySelector('.thumb').textContent = templateEmoji(sel.value);
-        });
-      });
       wrap.querySelectorAll('.move-up').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var gi = parseInt(btn.getAttribute('data-gi'), 10), ii = parseInt(btn.getAttribute('data-ii'), 10);
@@ -198,22 +187,22 @@
     });
 
     document.getElementById('saveLayoutBtn').addEventListener('click', async function () {
-      var ok = await askConfirm('ต้องการบันทึกการจัดเรียง/รูปแบบผลงานของครูท่านนี้ใช่หรือไม่? การเปลี่ยนแปลงจะมีผลกับหน้าโชว์ผลงานสาธารณะทันที', 'ยืนยันการบันทึก Layout');
+      var ok = await askConfirm('ต้องการบันทึกการจัดลำดับผลงานของครูท่านนี้ใช่หรือไม่? การเปลี่ยนแปลงจะมีผลกับหน้าโชว์ผลงานสาธารณะทันที', 'ยืนยันการบันทึกลำดับ');
       if (!ok) return;
       var items = [];
       currentGroups.forEach(function (g) {
         g.items.forEach(function (it, idx) {
-          items.push({ submissionId: it.submissionId, order: idx, template: it.displayTemplate });
+          items.push({ submissionId: it.submissionId, order: idx });
         });
       });
-      var result = await withProgress('กำลังบันทึก Layout', function () {
+      var result = await withProgress('กำลังบันทึกลำดับ', function () {
         return apiCall('adminUpdateSubmissionLayout', { teacherId: currentTeacherId, items: items });
       });
       if (result.ok) {
         currentGroups.forEach(function (g) {
           g.items.forEach(function (it, idx) {
             var s = allSubs.filter(function (x) { return x.id === it.submissionId; })[0];
-            if (s) { s.displayOrder = idx; s.displayTemplate = it.displayTemplate; }
+            if (s) { s.displayOrder = idx; }
           });
         });
       }

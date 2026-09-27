@@ -658,7 +658,6 @@ tbody tr:hover { background: var(--surface-2); }
 .layout-row .info { flex: 1; min-width: 0; }
 .layout-row .info .t { font-weight: 700; font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .layout-row .info .s { font-size: 0.78rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.layout-row select { max-width: 180px; flex-shrink: 0; }
 .layout-row .arrows { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
 .layout-row .arrows button { width: 26px; height: 20px; line-height: 1; padding: 0; font-size: 0.7rem; }
 .layout-row .arrows button:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -705,6 +704,8 @@ tbody tr:hover { background: var(--surface-2); }
 .event-bar.bar-start { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
 .event-bar.bar-end { border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
 .event-list-item { display: flex; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+/* เลือกรูปแบบการ์ดต่อประเภทงาน (หน้าตั้งค่าระบบ → ประเภทงาน) — ให้สูงเท่ากับจุดสีข้างๆ และไม่ยืดเต็มแถว */
+.cat-template-select { flex-shrink: 0; align-self: center; width: auto; max-width: 170px; padding: 6px 10px; font-size: 0.86rem; }
 .event-list-item:last-child { border-bottom: none; }
 .event-date-chip {
   flex-shrink: 0; background: var(--primary-light); color: var(--primary-dark);
@@ -836,7 +837,6 @@ tbody tr:hover { background: var(--surface-2); }
   .sub-item-actions .btn { width: 100%; }
   .layout-row { flex-wrap: wrap; }
   .layout-row .info { min-width: 130px; }
-  .layout-row select { max-width: 140px; }
   .tpl-book-lightbox-box { height: 92vh; }
   .event-list-item { flex-direction: column; align-items: stretch; }
   .event-date-chip { align-self: flex-start; }

@@ -87,7 +87,7 @@
           <span><i class="fas fa-tag ui-icon" style="font-size:17px" aria-hidden="true"></i> ประเภทงาน</span>
           <button class="btn btn-primary btn-sm" id="openCreateCatBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประเภทงาน</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ แต่ละประเภทงานเลือกสีได้ (คลิกจุดสีในรายการด้านล่างเพื่อเปลี่ยน) และเลือกได้ว่าตอนส่งงานประเภทนี้ ครูต้องกรอกข้อมูลเพิ่มเติมอะไรบ้าง (กดปุ่ม "ข้อมูลที่ต้องกรอก" ที่แต่ละรายการ)</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ แต่ละประเภทงานเลือกสีได้ (คลิกจุดสีในรายการด้านล่างเพื่อเปลี่ยน) เลือกรูปแบบการ์ดที่จะใช้แสดงผลงานทุกชิ้นในประเภทนี้ได้ (คลิกไอคอนรูปแบบการ์ดในรายการเพื่อเปลี่ยน — มีผลกับผลงานของ<b>ทุกครู</b>ในประเภทงานนี้ทันที ทุกคนได้รูปแบบเดียวกัน) และเลือกได้ว่าตอนส่งงานประเภทนี้ ครูต้องกรอกข้อมูลเพิ่มเติมอะไรบ้าง (กดปุ่ม "ข้อมูลที่ต้องกรอก" ที่แต่ละรายการ)</p>
         <div id="catListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -319,6 +319,11 @@
           </div>
         </div>
         <div class="field">
+          <label for="catTemplate">รูปแบบการ์ดที่ใช้แสดงผลงาน</label>
+          <select id="catTemplate"></select>
+          <div class="hint" style="margin-top:4px;">มีผลกับผลงานทุกชิ้นของทุกครูที่ส่งในประเภทงานนี้ — เปลี่ยนทีหลังได้เสมอที่รายการด้านล่าง</div>
+        </div>
+        <div class="field">
           <label>ข้อมูลที่ครูผู้ส่งต้องกรอกเพิ่มเติม (ถ้ามี)</label>
           <div class="hint" style="margin-top:-2px; margin-bottom:8px;">เลือกเฉพาะที่จำเป็นสำหรับประเภทงานนี้ — เช่น ใบเกียรติบัตรอบรมมักต้องมี "วันที่" และ "สถานที่อบรม"</div>
           <div id="catFieldsCheckboxes"></div>
@@ -388,6 +393,20 @@
       { key: 'award', label: 'รางวัล', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นรางวัล' },
       { key: 'studentName', label: 'ชื่อนักเรียน', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นผลงานนักเรียนแต่ครูเป็นผู้สอน' }
     ];
+    // รูปแบบการ์ดพรีวิวของ "ประเภทงาน" — ตั้งแต่เวอร์ชันถัดจาก V11.3 กำหนดที่ประเภทงานครั้งเดียว มีผลกับทุกครูอัตโนมัติ
+    // (คัดลอกมาจาก DISPLAY_TEMPLATES ฝั่ง Worker — worker/src/handlers/admin.js — ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา)
+    var TEMPLATE_OPTIONS = [
+      { key: '', label: '📄 การ์ดมาตรฐาน' },
+      { key: 'book', label: '📖 เปิดเป็นเล่มหนังสือ' },
+      { key: 'frame', label: '🖼️ กรอบรูปห้อย' },
+      { key: 'research', label: '🗂️ การ์ดวิจัย/ข้อมูล' },
+      { key: 'pin', label: '📌 พินผลงานเด่น' }
+    ];
+    function renderTemplateOptions(selectEl, selectedKey) {
+      selectEl.innerHTML = TEMPLATE_OPTIONS.map(function (o) {
+        return '<option value="' + o.key + '"' + (o.key === selectedKey ? ' selected' : '') + '>' + o.label + '</option>';
+      }).join('');
+    }
     function renderFieldCheckboxes(containerId, namePrefix, checkedKeys) {
       var box = document.getElementById(containerId);
       box.innerHTML = CUSTOM_FIELD_DEFS.map(function (f) {
@@ -559,12 +578,17 @@
               '<input type="color" class="cat-color-input" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" value="' + (c.color || '#3457d5') + '" title="เปลี่ยนสีของประเภทงาน \'' + escapeHtml(c.name) + '\'" />' +
               '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(c.name) + '</div>' +
               '<div class="sub-item-meta">ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div></div>' +
+              '<select class="cat-template-select" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" title="รูปแบบการ์ดของประเภทงาน \'' + escapeHtml(c.name) + '\' (ใช้กับทุกครู)"></select>' +
               '<div style="display:flex; gap:6px; flex-shrink:0;">' +
               '<button class="btn btn-secondary btn-sm" data-fields-id="' + c.id + '" data-fields-name="' + escapeHtml(c.name) + '" data-fields="' + escapeHtml(JSON.stringify(c.customFields || [])) + '">ข้อมูลที่ต้องกรอก</button>' +
               '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button>' +
               '</div></div>';
           });
           wrap.innerHTML = html;
+          rows.forEach(function (c) {
+            var sel = wrap.querySelector('select.cat-template-select[data-id="' + c.id + '"]');
+            if (sel) renderTemplateOptions(sel, c.displayTemplate || '');
+          });
           wrap.querySelectorAll('input.cat-color-input').forEach(function (inp) {
             inp.addEventListener('change', async function () {
               var newColor = inp.value;
@@ -575,6 +599,20 @@
               var r = await withProgress('กำลังบันทึกสีประเภทงาน', function () {
                 return apiCall('adminSetWorkCategoryColor', { categoryId: catId, color: newColor });
               }, { successLabel: 'เปลี่ยนสีประเภทงานแล้ว' });
+              if (!r.ok) showToast(r.error.message, true);
+              loadCategories();
+            });
+          });
+          wrap.querySelectorAll('select.cat-template-select').forEach(function (sel) {
+            sel.addEventListener('change', async function () {
+              var newTemplate = sel.value;
+              var catId = sel.getAttribute('data-id');
+              var catName = sel.getAttribute('data-name');
+              var ok = await askConfirm('ยืนยันเปลี่ยนรูปแบบการ์ดของประเภทงาน "' + catName + '"? ผลงานทุกชิ้นของทุกครูในประเภทงานนี้จะแสดงผลด้วยรูปแบบใหม่ทันที', 'ยืนยันการเปลี่ยนรูปแบบการ์ด');
+              if (!ok) { loadCategories(); return; }
+              var r = await withProgress('กำลังบันทึกรูปแบบการ์ด', function () {
+                return apiCall('adminSetWorkCategoryTemplate', { categoryId: catId, template: newTemplate });
+              }, { successLabel: 'เปลี่ยนรูปแบบการ์ดแล้ว' });
               if (!r.ok) showToast(r.error.message, true);
               loadCategories();
             });
@@ -607,6 +645,7 @@
       document.getElementById('openCreateCatBtn').addEventListener('click', function () {
         document.getElementById('createCatForm').reset();
         document.getElementById('catColor').value = '#3457d5';
+        renderTemplateOptions(document.getElementById('catTemplate'), '');
         document.getElementById('createCatError').hidden = true;
         renderFieldCheckboxes('catFieldsCheckboxes', 'catFields', []);
         showModalEl(createCatModalEl);
@@ -619,11 +658,12 @@
         errBox.hidden = true;
         var catNameVal = document.getElementById('catName').value.trim();
         var catColorVal = document.getElementById('catColor').value;
+        var catTemplateVal = document.getElementById('catTemplate').value;
         var catFieldsVal = readCheckedFields('catFields');
         var ok = await askConfirm('ยืนยันเพิ่มประเภทงาน "' + catNameVal + '"?', 'ยืนยันการเพิ่มประเภทงาน');
         if (!ok) return;
         var r = await withProgress('กำลังเพิ่มประเภทงาน', function () {
-          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, customFields: catFieldsVal });
+          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, displayTemplate: catTemplateVal, customFields: catFieldsVal });
         }, { successLabel: 'เพิ่มประเภทงานแล้ว' });
         if (r.ok) {
           hideModalEl(createCatModalEl);
