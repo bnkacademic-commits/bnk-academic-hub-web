@@ -10,7 +10,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 
 // เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
-var APP_VERSION = 'V11.6';
+var APP_VERSION = 'V11.7';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -55,7 +55,13 @@ async function apiCall(action, payload) {
       throw e;
     }
   }
-  if (!json.ok) throw new Error(json.error || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ');
+  if (!json.ok) {
+    // code (ตั้งแต่ V11.7): ติด err.code ไว้กับ Error ที่ throw ออกไปด้วยถ้า backend ส่งมา (เช่น 'SESSION_REPLACED')
+    // เพื่อให้จุดที่เรียกใช้ตรวจจับ error เฉพาะเจาะจงได้ด้วยรหัส ไม่ต้องเทียบข้อความภาษาไทย (ดู startSessionWatch ด้านล่าง)
+    var err = new Error(json.error || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ');
+    err.code = json.code || null;
+    throw err;
+  }
   return json.data;
 }
 
@@ -103,6 +109,39 @@ function forceSessionExpire() {
   clearSession();
   ensureSharedModals();
   var modal = document.getElementById('sharedExpireModal');
+  if (!modal) { location.href = 'index.html?_=' + Date.now(); return; }
+  showModalEl(modal);
+}
+
+// ---------- ป้องกันล็อกอินซ้อนกัน (ตั้งแต่ V11.7) ----------
+// ตรวจเป็นระยะว่าบัญชีนี้ถูกเข้าสู่ระบบใหม่จากที่อื่น (เครื่อง/เบราว์เซอร์อื่น) มาแทนที่ session ปัจจุบันหรือยัง โดยเรียก
+// action 'checkSession' เบาๆ ทุก 10 วินาที — ถ้า backend ตอบกลับด้วย code 'SESSION_REPLACED' (ดู requireAuth ใน
+// worker/src/lib/util.js) แสดงว่ามีคนล็อกอินบัญชีนี้จากที่อื่นไปแล้ว จึงเด้งออกพร้อมป็อปอัพแจ้งเตือนทันที
+// error อื่นๆ ระหว่างตรวจ (เช่น เครือข่ายสะดุดชั่วคราว) ปล่อยผ่านเฉยๆ รอตรวจรอบถัดไป ไม่ถือเป็นการเด้งออก
+var SESSION_WATCH_INTERVAL_MS = 10 * 1000;
+var _sessionWatchHandle = null;
+function startSessionWatch() {
+  if (_sessionWatchHandle) return; // กันเรียกซ้ำ (เช่น mountChrome ถูกเรียกมากกว่า 1 ครั้งในหน้าเดียว)
+  _sessionWatchHandle = setInterval(async function () {
+    if (!getToken()) return;
+    try {
+      await apiCall('checkSession', {});
+    } catch (err) {
+      if (err && err.code === 'SESSION_REPLACED') {
+        stopSessionWatch();
+        showSessionReplacedModal();
+      }
+    }
+  }, SESSION_WATCH_INTERVAL_MS);
+}
+function stopSessionWatch() {
+  if (_sessionWatchHandle) { clearInterval(_sessionWatchHandle); _sessionWatchHandle = null; }
+}
+function showSessionReplacedModal() {
+  clearSession();
+  if (_sessionTimeoutHandle) { clearTimeout(_sessionTimeoutHandle); _sessionTimeoutHandle = null; } // ไม่ต้องรอเด้งซ้ำจากตัวจับเวลาหมดอายุอีก
+  ensureSharedModals();
+  var modal = document.getElementById('sharedSessionReplacedModal');
   if (!modal) { location.href = 'index.html?_=' + Date.now(); return; }
   showModalEl(modal);
 }
@@ -251,13 +290,17 @@ async function submitWorkFile(file, meta) {
     description: meta.description,
     customFieldValues: meta.customFieldValues
   });
+  // ชื่อไฟล์จริงที่จะใช้อัพโหลด (ตั้งแต่ V11.7): Worker คำนวณให้แล้วจากประเภทงาน/ภาคเรียน/ปีการศึกษา (ดู uploadFileName ที่
+  // teacherUploadPrepare คืนมา) แทนชื่อไฟล์เดิมจากเครื่องผู้ใช้ — เผื่อกรณี Worker เวอร์ชันเก่ายังไม่ส่งค่านี้มา จึงย้อนกลับไปใช้
+  // ชื่อไฟล์เดิมได้เสมอ (fallback)
+  var uploadFileName = prep.uploadFileName || file.name;
   var base64 = await fileToBase64(file);
   var relayText;
   try {
     var relayRes = await fetch(prep.relayUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ uploadToken: prep.uploadToken, base64: base64, filename: file.name, mimeType: file.type })
+      body: JSON.stringify({ uploadToken: prep.uploadToken, base64: base64, filename: uploadFileName, mimeType: file.type })
     });
     relayText = await relayRes.text();
   } catch (e) {
@@ -276,7 +319,7 @@ async function submitWorkFile(file, meta) {
     fileId: result.fileId,
     fileUrl: result.url,
     directUrl: result.directUrl,
-    fileName: file.name,
+    fileName: uploadFileName,
     mimeType: file.type
   });
 }
@@ -535,6 +578,16 @@ function ensureSharedModals() {
         '</div>' +
       '</div>' +
     '</div>' +
+    '<div class="modal-backdrop" id="sharedSessionReplacedModal" hidden>' +
+      '<div class="modal-box">' +
+        '<button type="button" class="modal-close-x" id="sharedSessionReplacedCloseX" aria-label="ปิด">✕</button>' +
+        '<h3>เข้าสู่ระบบจากที่อื่น</h3>' +
+        '<p style="color:var(--text-muted); font-size:0.9rem;">บัญชีนี้เพิ่งถูกเข้าสู่ระบบจากอุปกรณ์หรือเบราว์เซอร์อื่น เพื่อความปลอดภัยระบบอนุญาตให้ใช้งานได้ทีละ 1 ที่เท่านั้น จึงนำคุณออกจากระบบที่นี่โดยอัตโนมัติ</p>' +
+        '<div class="modal-actions">' +
+          '<button type="button" class="btn btn-primary" id="sharedSessionReplacedOk">เข้าสู่ระบบอีกครั้ง</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
     '<div class="modal-backdrop" id="sharedProgressModal" hidden>' +
       '<div class="modal-box">' +
         '<button type="button" class="modal-close-x" id="sharedProgressCloseX" aria-label="ปิด" hidden>✕</button>' +
@@ -554,6 +607,10 @@ function ensureSharedModals() {
   document.getElementById('sharedExpireOk').addEventListener('click', goToLoginFromExpire);
   // X ของป็อปอัพหมดเวลาการใช้งานทำหน้าที่เดียวกับปุ่ม "เข้าสู่ระบบอีกครั้ง" เสมอ (ไม่ให้ปิดค้างไว้แล้วนั่งดูหน้าที่ session หมดอายุแล้วเฉยๆ)
   document.getElementById('sharedExpireCloseX').addEventListener('click', goToLoginFromExpire);
+
+  // ป็อปอัพ "เข้าสู่ระบบจากที่อื่น" (ตั้งแต่ V11.7) — ปุ่ม "เข้าสู่ระบบอีกครั้ง" และ X ทำหน้าที่เดียวกันเสมอ เหมือนป็อปอัพหมดเวลาการใช้งานด้านบน
+  document.getElementById('sharedSessionReplacedOk').addEventListener('click', goToLoginFromExpire);
+  document.getElementById('sharedSessionReplacedCloseX').addEventListener('click', goToLoginFromExpire);
 
   document.getElementById('sharedPwClose').addEventListener('click', function () { hideModalEl(document.getElementById('sharedPwModal')); });
   document.getElementById('sharedPwCloseX').addEventListener('click', function () { hideModalEl(document.getElementById('sharedPwModal')); });
@@ -868,6 +925,7 @@ function mountChrome(activePage) {
     });
 
     scheduleSessionTimeout();
+    startSessionWatch(); // ตรวจป้องกันล็อกอินซ้อนกันเป็นระยะ (ตั้งแต่ V11.7) — เริ่มพร้อมกับทุกหน้าที่มี topbar (ต้องล็อกอินอยู่แล้วเสมอ)
   }
   mountFooter();
   applyBranding();

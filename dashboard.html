@@ -47,7 +47,8 @@
           <div class="calendar-grid" id="calGrid"></div>
         </div>
         <div class="dash-cal-side">
-          <button class="btn btn-secondary dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
+          <!-- ตั้งแต่ V11.7: ผู้ใช้ขอสลับปุ่มเด่น (.btn-cta) กลับมาไว้ที่ปุ่มนี้แทนปุ่ม "ส่งงาน (กำหนดเอง)" ด้านล่าง (ดูคอมเมนต์ตรงนั้น) -->
+          <button class="btn btn-cta dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
           <div class="dash-checklist">
             <div class="dash-checklist-title"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> เช็คลิสต์การส่งงาน</div>
             <div class="dash-checklist-body" id="assignmentChecklistBody"><div class="loading">กำลังโหลด</div></div>
@@ -70,9 +71,9 @@
           <option value="summer">ภาคฤดูร้อน</option>
         </select>
         <!-- ปุ่ม "ส่งงาน" ย้ายมาที่นี่ + เปลี่ยนชื่อเป็น "ส่งงาน (กำหนดเอง)" ตั้งแต่ V10.0 (ก่อนหน้านี้เป็นการ์ดแยกด้านบน)
-             ตั้งแต่รอบปรับปรุงนี้: เปลี่ยนจาก .btn-primary (สีเดียวกับปุ่มหลักทุกปุ่มในเว็บ ดูกลืนไปกับตัวกรองข้างๆ) มาใช้คลาส
-             .btn-cta ของตัวเอง — ไล่สีชมพู-ม่วงเด่นเฉพาะปุ่มนี้ปุ่มเดียว พร้อมเรืองแสงเบาๆ ให้สะดุดตาไม่เหมือนปุ่มอื่น -->
-        <button class="btn btn-cta" id="openUploadBtn" type="button"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน (กำหนดเอง)</button>
+             V11.6 เคยเปลี่ยนปุ่มนี้เป็น .btn-cta (ไล่สีชมพู-ม่วงเด่น) แต่ V11.7 ผู้ใช้ขอให้ปุ่มนี้กลับไปเป็นสีม่วงเดิม (.btn-primary)
+             เหมือนก่อนหน้า แล้วย้ายความเด่น (.btn-cta) ไปไว้ที่ปุ่ม "หน้าผลงานของฉัน" (#btnShowQr) แทน -->
+        <button class="btn btn-primary btn-sm" id="openUploadBtn" type="button"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน (กำหนดเอง)</button>
       </div>
       <div id="submissionList"><div class="loading">กำลังโหลด</div></div>
     </div>
