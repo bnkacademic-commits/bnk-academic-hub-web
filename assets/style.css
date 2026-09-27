@@ -359,39 +359,51 @@ a:hover { text-decoration: underline; }
 .switch input:checked + .slider { background: var(--primary); }
 .switch input:checked + .slider::before { transform: translateX(16px); }
 
-/* ---------- Login screen ---------- */
+/* ---------- Login screen ----------
+   หมายเหตุ: ปรับลดขนาดตัวหนังสือ/ระยะห่างของทั้งการ์ดล็อกอินลงรอบนี้ (เดิมใช้ขนาดเดียวกับ--font-size พื้นฐานของเว็บที่ 22px
+   ซึ่งใหญ่เกินไปสำหรับหน้าล็อกอินหน้าเดียว ทำให้การ์ดสูงเกินจนบางจอ (มือถือจอเตี้ย) ต้องเลื่อนดู) — ลดเฉพาะจุดในหน้านี้
+   ไม่ได้ไปแตะค่า html { font-size: 22px; } ที่เป็นค่าฐานของทั้งเว็บ (ตั้งใจให้ใหญ่ไว้ตามที่เคยขอปรับเพิ่มไว้ก่อนหน้านี้) */
+/* body.login-page ทำเป็น flex column สูงเต็มจอ (100vh/100dvh) แล้วให้ .login-wrap ยืด (flex:1) กินพื้นที่ที่เหลือจากฟุตเตอร์
+   จริงๆ แทนที่จะเดาความสูงฟุตเตอร์เป็นตัวเลขคงที่แบบเดิม (calc(100vh - 60px) ซึ่งผิดไปมากหลังฟุตเตอร์ขยายเป็น 2 บรรทัด/ฟอนต์
+   ใหญ่ขึ้น ทำให้เนื้อหาล้นจอต้องเลื่อนดู) วิธีนี้พอดีกับความสูงฟุตเตอร์จริงเสมอไม่ว่าจะกี่บรรทัดบนหน้าจอขนาดไหนก็ตาม
+   scope เฉพาะ body.login-page (index.html หน้าเดียว) ไม่กระทบ body ของหน้าอื่นที่ก็มี #app-footer เหมือนกัน */
+body.login-page { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+body.login-page .login-wrap { flex: 1 1 auto; min-height: 0; }
 .login-wrap {
-  min-height: calc(100vh - 60px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 20px;
 }
 .login-card {
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  padding: 36px 32px;
+  padding: 28px 26px;
   width: 100%;
-  max-width: 400px;
+  max-width: 360px;
   animation: cardIn 0.35s ease both;
 }
 .login-card .logo-dot { background: var(--accent); }
-.login-card .brand-logo-lg { height: 44px; width: auto; margin: 0 auto 12px; display: block; border-radius: 8px; }
+.login-card .brand-logo-lg { height: 36px; width: auto; margin: 0 auto 10px; display: block; border-radius: 8px; }
 .login-title {
   text-align: center;
-  margin-bottom: 4px;
-  font-size: 1.4rem;
+  margin-bottom: 3px;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--primary-dark);
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .login-sub {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.95rem;
-  margin-bottom: 28px;
+  font-size: 0.8rem;
+  margin-bottom: 18px;
 }
+.login-card label { font-size: 0.82rem; margin-bottom: 4px; }
+.login-card .field { margin-bottom: 12px; }
+.login-card .hint { font-size: 0.78rem; }
+.login-card .btn { padding: 9px 18px; font-size: 0.9rem; }
 
 /* ---------- Cards / sections ---------- */
 .card {
@@ -430,7 +442,10 @@ a:hover { text-decoration: underline; }
 label { font-size: 0.94rem; font-weight: 600; color: var(--text); display: block; margin-bottom: 6px; }
 input, select, textarea {
   width: 100%;
-  padding: 10px 14px;
+  /* padding ซ้าย-ขวาเพิ่มจาก 14px เป็น 18px (ตั้งแต่รอบปรับปรุงนี้) — เดิม 14px ถูกตั้งไว้ตอนฟอนต์ฐานของเว็บยังเล็กกว่านี้
+     พอเว็บขยับ html { font-size: 22px; } ให้ใหญ่ขึ้นในภายหลัง (ดูคอมเมนต์ที่ :root) ตัวหนังสือในช่องกรอกก็ใหญ่ขึ้นตาม แต่ padding
+     ยังเป็นค่าคงที่เท่าเดิม ทำให้ตัวหนังสือที่พิมพ์ดูชิดขอบซ้ายเกินไปเมื่อเทียบกับพื้นที่ว่างด้านบน-ล่างที่มีเยอะกว่า */
+  padding: 10px 18px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: inherit;
@@ -529,6 +544,24 @@ input[type="color"] {
 .btn-ghost { background: transparent; color: var(--text-muted); }
 .btn-ghost:hover { background: var(--surface-2); box-shadow: none; }
 .btn-sm { padding: 7px 14px; font-size: 0.88rem; border-radius: var(--radius-sm); }
+
+/* ---------- ปุ่ม CTA เด่นเฉพาะตัว (ตั้งแต่รอบปรับปรุงถัดจาก V11.5) ----------
+   ผู้ใช้ขอให้ปุ่ม "ส่งงาน (กำหนดเอง)" บนหน้าฮับสะดุดตาไม่เหมือนปุ่มอื่น (เดิมใช้ .btn-primary สีเดียวกับปุ่มหลักทุกปุ่มในเว็บ
+   เลยดูกลืนไปกับช่องกรองข้างๆ) ไล่สีชมพู-ม่วงเฉพาะปุ่มนี้ปุ่มเดียว ไม่ซ้ำกับโทนสีอื่นที่ใช้อยู่ในเว็บ (indigo/emerald/rose/amber)
+   พร้อมเงาเรืองแสงเบาๆ ที่ไล่ความเข้มขึ้นลงช้าๆ (ไม่กะพริบแรงจนรำคาญ) ให้สายตาสะดุดโดยธรรมชาติ — ปิดอนิเมชันให้อัตโนมัติถ้า
+   เครื่องผู้ใช้ตั้งค่า "ลดการเคลื่อนไหว" ไว้ (prefers-reduced-motion) */
+.btn-cta {
+  background: linear-gradient(135deg, #4f46e5 0%, #d6249f 55%, #f5576c 100%);
+  color: #fff;
+  box-shadow: 0 10px 20px -6px rgba(214, 36, 159, 0.45), 0 4px 10px -4px rgba(79, 70, 229, 0.4);
+  animation: btnCtaGlow 2.4s ease-in-out infinite;
+}
+.btn-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
+@keyframes btnCtaGlow {
+  0%, 100% { box-shadow: 0 10px 20px -6px rgba(214, 36, 159, 0.45), 0 4px 10px -4px rgba(79, 70, 229, 0.4); }
+  50% { box-shadow: 0 12px 26px -4px rgba(214, 36, 159, 0.7), 0 4px 14px -2px rgba(79, 70, 229, 0.6); }
+}
+@media (prefers-reduced-motion: reduce) { .btn-cta { animation: none; } }
 
 /* ---------- กล่องปุ่มหลัก 2 ช่องติดกัน เช่น "ส่งงาน" / "หน้าผลงานของฉัน" (ตั้งแต่ V9.7) ---------- */
 .action-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -816,7 +849,8 @@ tbody tr:hover { background: var(--surface-2); }
 }
 .modal-backdrop.show .modal-box { transform: translateY(0) scale(1); opacity: 1; }
 .modal-box h3 { margin-top: 0; }
-.modal-actions { display: flex; gap: 10px; margin-top: 18px; justify-content: center; }
+/* flex-wrap: wrap เพิ่มเข้ามา (ตั้งแต่รอบปรับปรุงป็อปอัพ "หน้าผลงานของฉัน" เป็น 3 ปุ่ม) กันปุ่มล้นแถวออกนอกกรอบบนจอมือถือแคบๆ — ไม่กระทบป็อปอัพอื่นที่มีแค่ 2 ปุ่มเพราะพอดีแถวเดียวอยู่แล้ว */
+.modal-actions { display: flex; gap: 10px; margin-top: 18px; justify-content: center; flex-wrap: wrap; }
 
 /* ปุ่ม X ปิดป็อปอัพ มุมบนขวา — ใช้ร่วมกันทุกป็อปอัพในเว็บ */
 .modal-close-x {
@@ -909,7 +943,7 @@ tbody tr:hover { background: var(--surface-2); }
   .page-header { padding: 16px 0 12px; margin-bottom: 16px; }
   .page-header h1 { font-size: 1.28rem; }
   .section-title { font-size: 0.98rem; }
-  .login-card { padding: 28px 18px; }
+  .login-card { padding: 22px 18px; }
   .sub-item { flex-direction: column; }
   .sub-item-actions { width: 100%; }
   .sub-item-actions .btn { width: 100%; }

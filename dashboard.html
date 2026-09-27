@@ -69,8 +69,10 @@
           <option value="2">ภาคเรียนที่ 2</option>
           <option value="summer">ภาคฤดูร้อน</option>
         </select>
-        <!-- ปุ่ม "ส่งงาน" ย้ายมาที่นี่ + เปลี่ยนชื่อเป็น "ส่งงาน (กำหนดเอง)" ตั้งแต่ V10.0 (ก่อนหน้านี้เป็นการ์ดแยกด้านบน) -->
-        <button class="btn btn-primary btn-sm" id="openUploadBtn" type="button"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน (กำหนดเอง)</button>
+        <!-- ปุ่ม "ส่งงาน" ย้ายมาที่นี่ + เปลี่ยนชื่อเป็น "ส่งงาน (กำหนดเอง)" ตั้งแต่ V10.0 (ก่อนหน้านี้เป็นการ์ดแยกด้านบน)
+             ตั้งแต่รอบปรับปรุงนี้: เปลี่ยนจาก .btn-primary (สีเดียวกับปุ่มหลักทุกปุ่มในเว็บ ดูกลืนไปกับตัวกรองข้างๆ) มาใช้คลาส
+             .btn-cta ของตัวเอง — ไล่สีชมพู-ม่วงเด่นเฉพาะปุ่มนี้ปุ่มเดียว พร้อมเรืองแสงเบาๆ ให้สะดุดตาไม่เหมือนปุ่มอื่น -->
+        <button class="btn btn-cta" id="openUploadBtn" type="button"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน (กำหนดเอง)</button>
       </div>
       <div id="submissionList"><div class="loading">กำลังโหลด</div></div>
     </div>
@@ -121,8 +123,11 @@
       <button type="button" class="modal-close-x" id="qrModalCloseX" aria-label="ปิด">✕</button>
       <h3>หน้าผลงานของฉัน</h3>
       <div id="qrcode-box"></div>
-      <div class="qr-link" id="qrLinkText"></div>
+      <!-- ตั้งแต่รอบปรับปรุงนี้: ไม่โชว์ตัวลิงก์เป็นตัวหนังสือให้ดูรกอีกต่อไป (มีปุ่ม "คัดลอกลิงก์" อยู่แล้ว) แต่ยังเก็บ element
+           นี้ไว้แบบซ่อน (hidden) เพื่อเป็นที่เก็บค่าลิงก์ให้ปุ่ม "เปิดลิงก์"/"คัดลอกลิงก์" อ่านไปใช้งานต่อ ไม่ต้องรื้อ JS เดิม -->
+      <div class="qr-link" id="qrLinkText" hidden></div>
       <div class="modal-actions">
+        <button class="btn btn-primary" id="qrOpenBtn"><i class="fas fa-up-right-from-square ui-icon" aria-hidden="true"></i> เปิดลิงก์</button>
         <button class="btn btn-secondary" id="qrCopyBtn">คัดลอกลิงก์</button>
         <button class="btn btn-ghost" id="qrCloseBtn">ปิด</button>
       </div>
@@ -204,6 +209,10 @@
     document.getElementById('qrCopyBtn').addEventListener('click', function () {
       var text = document.getElementById('qrLinkText').textContent;
       try { navigator.clipboard.writeText(text); showToast('คัดลอกลิงก์แล้ว'); } catch (e) { showToast('คัดลอกไม่สำเร็จ ลองคัดลอกด้วยตนเอง', true); }
+    });
+    document.getElementById('qrOpenBtn').addEventListener('click', function () {
+      var text = document.getElementById('qrLinkText').textContent;
+      window.open(text, '_blank', 'noopener');
     });
 
     // ---------- ส่งงาน (Upload) modal ----------
