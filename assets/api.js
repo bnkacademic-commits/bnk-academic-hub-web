@@ -10,7 +10,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 
 // เลขเวอร์ชันของเว็บ — เป็นค่าคงที่ในโค้ดเท่านั้น ไม่ใช่ "ค่าตั้งค่า" ที่แก้ผ่านหน้าเว็บได้อีกต่อไปตั้งแต่ V9.1
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
-var APP_VERSION = 'V11.4';
+var APP_VERSION = 'V11.5';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -771,8 +771,8 @@ function navLinksFor(session) {
   if (session && session.role === 'admin') {
     if (session.hasHub) links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard', icon: 'home' });
     links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary', icon: 'summary' });
-    // จัดการ Layout: Super Admin เท่านั้น (role=admin, hasHub=false) — ตั้งแต่ V11.1
-    if (!session.hasHub) links.push({ href: 'layout.html', label: 'จัดการ Layout', key: 'layout', icon: 'layout' });
+    // หมายเหตุ: เมนู "จัดการ Layout" (V11.1) ถูกยกเลิกตั้งแต่ V11.5 — ทั้งรูปแบบการ์ด (V11.3) และลำดับการแสดงผล (V11.5)
+    // ย้ายไปรวมอยู่ในหน้า "ตั้งค่าระบบ" แท็บ "ปรับแต่งการแสดงผลงาน" หมดแล้ว (Super Admin เท่านั้น)
     links.push({ href: 'settings.html', label: 'ตั้งค่าระบบ', key: 'settings', icon: 'settings' });
   }
   return links;

@@ -14,7 +14,7 @@
 <!-- Font Awesome ฝังไฟล์ไว้ในเว็บเอง (ไม่พึ่ง CDN ภายนอก ตามแนวทางเดิมของโปรเจกต์ เหมือนฟอนต์ Sarabun) -->
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body>
@@ -30,6 +30,7 @@
          "Log ประกาศ" ถูกลบออก (ข้อมูลผู้แจ้งประกาศย้ายไปแสดงในแท็บ "ประกาศ" อยู่แล้ว) แทนที่ด้วย "ประวัติระบบ" ท้ายสุด ครอบคลุมทั้งค่าตั้งค่า/ประกาศ/กำหนดการ -->
     <div class="tabs">
       <button class="tab-btn active super-admin-only" data-tab="general">ทั่วไป</button>
+      <button class="tab-btn super-admin-only" data-tab="display">ปรับแต่งการแสดงผลงาน</button>
       <button class="tab-btn super-admin-only" data-tab="accounts">จัดการบัญชี</button>
       <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
       <button class="tab-btn" data-tab="announcements">ประกาศ</button>
@@ -89,6 +90,20 @@
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ แต่ละประเภทงานเลือกสีได้ (คลิกจุดสีในรายการด้านล่างเพื่อเปลี่ยน) เลือกรูปแบบการ์ดที่จะใช้แสดงผลงานทุกชิ้นในประเภทนี้ได้ (คลิกไอคอนรูปแบบการ์ดในรายการเพื่อเปลี่ยน — มีผลกับผลงานของ<b>ทุกครู</b>ในประเภทงานนี้ทันที ทุกคนได้รูปแบบเดียวกัน) และเลือกได้ว่าตอนส่งงานประเภทนี้ ครูต้องกรอกข้อมูลเพิ่มเติมอะไรบ้าง (กดปุ่ม "ข้อมูลที่ต้องกรอก" ที่แต่ละรายการ)</p>
         <div id="catListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Display-order tab (ปรับแต่งการแสดงผลงาน — เฉพาะ Super Admin ตั้งแต่ V11.5)
+         แทนที่หน้า "จัดการ Layout" เดิม (V11.1) ที่ตัดออกไปแล้ว — เดิมต้องจัดเรียงทีละครู ตอนนี้จัดลำดับ "ประเภทงาน" ครั้งเดียว
+         มีผลกับผลงานทุกชิ้นของทุกครูโดยอัตโนมัติ (ใครส่งงานประเภทไหนไว้ ก็เรียงตามลำดับประเภทงานนี้เหมือนกันหมดทุกคน) -->
+    <div class="tab-panel super-admin-only" id="tab-display">
+      <div class="card">
+        <div class="section-title"><i class="fas fa-arrow-down-wide-short ui-icon" style="font-size:17px" aria-hidden="true"></i> ลำดับการแสดงผลงานตามประเภทงาน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">จัดลำดับก่อน-หลังของ "ประเภทงาน" ด้วยปุ่ม ▲ ▼ ด้านล่าง — ผลงานของครูทุกคนจะเรียงตามลำดับประเภทงานนี้เหมือนกันหมดโดยอัตโนมัติในหน้าโชว์ผลงานสาธารณะ (ผลงานในประเภทงานเดียวกันเรียงตามวันที่ส่งล่าสุดก่อนเป็นค่ารอง) ส่วน<b>รูปแบบการ์ดพรีวิว</b>ไปตั้งที่แท็บ "ทั่วไป → ประเภทงาน"</p>
+        <div id="displayOrderWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+      <div id="displayOrderSaveBar" style="display:flex; justify-content:flex-end; gap:10px; margin: 6px 0 30px;" hidden>
+        <button class="btn btn-primary" id="saveDisplayOrderBtn" type="button">บันทึกลำดับ</button>
       </div>
     </div>
 
@@ -442,6 +457,7 @@
     // ประกาศไว้ล่วงหน้าตรงนี้ (ตัวจริงถูกกำหนดค่าใน if (isSuperAdminSession) ด้านล่าง) เพราะ async function ที่ประกาศในบล็อก if
     // จะไม่ถูก hoist ออกมาให้ tabLoaders ด้านล่างมองเห็นเหมือน function ปกติ ต้องประกาศ var ไว้นอกบล็อกก่อนแล้วค่อยไป assign ทีหลัง
     var loadCategories;
+    var loadDisplayOrder;
     var _tabLoaded = {};
     var _usersPromise = null;
     var _eventCategoriesPromise = null;
@@ -459,6 +475,7 @@
         if (isSuperAdminSession) tasks.push(loadCategories());
         return Promise.all(tasks);
       },
+      display: function () { return loadDisplayOrder(); },
       accounts: function () { return ensureUsersLoaded(); },
       // แท็บปฏิทินใช้รายชื่อผู้ใช้ร่วมกับแท็บจัดการบัญชี (audience dropdown + ป้ายชื่อผู้รับ) และรายชื่อประเภทงาน (dropdown ผูกกำหนดส่งงาน) จึงรอให้โหลดทั้งสองเสร็จก่อน
       calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); },
@@ -642,6 +659,67 @@
           wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
         }
       };
+
+      // ---------- ปรับแต่งการแสดงผลงาน: จัดลำดับ "ประเภทงาน" (เฉพาะ Super Admin) — ตั้งแต่ V11.5 ----------
+      // แทนที่ระบบเดิม (หน้า "จัดการ Layout" V11.1) ที่ Super Admin ต้องจัดเรียงทีละครู — ตอนนี้จัดลำดับที่ "ประเภทงาน"
+      // ครั้งเดียว มีผลกับผลงานทุกชิ้นของทุกครูโดยอัตโนมัติ (เหมือนรูปแบบการ์ดพรีวิว ดู adminSetWorkCategoryTemplate ด้านบน)
+      var currentCatOrder = []; // array ของ object ประเภทงาน (จาก adminListWorkCategories) เรียงตามลำดับที่กำลังแก้ไขอยู่บนจอ
+      loadDisplayOrder = async function () {
+        var wrap = document.getElementById('displayOrderWrap');
+        var saveBar = document.getElementById('displayOrderSaveBar');
+        try {
+          var rows = await apiCall('adminListWorkCategories', {}); // เรียงตาม display_order มาจาก Worker อยู่แล้ว
+          currentCatOrder = rows;
+          if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประเภทงาน — ไปเพิ่มที่แท็บ "ทั่วไป" ก่อน</div>'; saveBar.hidden = true; return; }
+          saveBar.hidden = false;
+          renderDisplayOrder();
+        } catch (err) {
+          wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+          saveBar.hidden = true;
+        }
+      };
+      function renderDisplayOrder() {
+        var wrap = document.getElementById('displayOrderWrap');
+        var html = '<div class="card" style="padding:0; box-shadow:none; border:none;">';
+        currentCatOrder.forEach(function (c, idx) {
+          html += '<div class="layout-row">' +
+            '<div class="thumb" title="สีประเภทงาน" style="background:' + (c.color || '#3457d5') + ';"></div>' +
+            '<div class="info"><div class="t">' + escapeHtml(c.name) + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
+            '<div class="arrows">' +
+              '<button type="button" class="btn btn-ghost btn-sm cat-move-up" data-idx="' + idx + '"' + (idx === 0 ? ' disabled' : '') + ' title="เลื่อนขึ้น">▲</button>' +
+              '<button type="button" class="btn btn-ghost btn-sm cat-move-down" data-idx="' + idx + '"' + (idx === currentCatOrder.length - 1 ? ' disabled' : '') + ' title="เลื่อนลง">▼</button>' +
+            '</div>' +
+          '</div>';
+        });
+        html += '</div>';
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('.cat-move-up').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var idx = parseInt(btn.getAttribute('data-idx'), 10);
+            if (idx <= 0) return;
+            var tmp = currentCatOrder[idx - 1]; currentCatOrder[idx - 1] = currentCatOrder[idx]; currentCatOrder[idx] = tmp;
+            renderDisplayOrder();
+          });
+        });
+        wrap.querySelectorAll('.cat-move-down').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var idx = parseInt(btn.getAttribute('data-idx'), 10);
+            if (idx >= currentCatOrder.length - 1) return;
+            var tmp = currentCatOrder[idx + 1]; currentCatOrder[idx + 1] = currentCatOrder[idx]; currentCatOrder[idx] = tmp;
+            renderDisplayOrder();
+          });
+        });
+      }
+      document.getElementById('saveDisplayOrderBtn').addEventListener('click', async function () {
+        var ok = await askConfirm('ยืนยันบันทึกลำดับการแสดงผลงานตามประเภทงานนี้? การเปลี่ยนแปลงจะมีผลกับหน้าโชว์ผลงานสาธารณะของ<b>ทุกครู</b>ทันที', 'ยืนยันการบันทึกลำดับ');
+        if (!ok) return;
+        var categoryIds = currentCatOrder.map(function (c) { return c.id; });
+        var r = await withProgress('กำลังบันทึกลำดับ', function () {
+          return apiCall('adminReorderWorkCategories', { categoryIds: categoryIds });
+        }, { successLabel: 'บันทึกลำดับเรียบร้อยแล้ว' });
+        if (r.ok) { currentCatOrder = r.data; renderDisplayOrder(); }
+      });
+
       document.getElementById('openCreateCatBtn').addEventListener('click', function () {
         document.getElementById('createCatForm').reset();
         document.getElementById('catColor').value = '#3457d5';
