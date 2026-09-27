@@ -214,6 +214,19 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 * { box-sizing: border-box; }
 
+/* ---------- Scrollbar แบบกำหนดเอง (ตั้งแต่ V11.8.5 ตามที่ผู้ใช้ขอ) ----------
+   ผู้ใช้แจ้งว่าเห็น scrollbar มาตรฐานของระบบปฏิบัติการ/เบราว์เซอร์ (กล่องมีปุ่มลูกศรขึ้น-ลงเหลี่ยมๆ) โผล่ในหลายแท็บของหน้า
+   ตั้งค่า ดูไม่เข้ากับดีไซน์มนโค้ง/เรียบทันสมัยของเว็บทั้งระบบ — กำหนด scrollbar เองทั้งเว็บ (ทุกจุดที่มีเนื้อหาล้นจนต้องเลื่อน
+   ไม่ว่าจะเป็นแท็บ/ป็อปอัพ/รายการใดๆ ทั้งตอนนี้และที่จะเพิ่มในอนาคต) ให้บางเรียบ ไม่มีปุ่มลูกศรหัวท้าย และใช้สีจากตัวแปรธีม
+   (--border/--text-muted) จึงเข้ากับทั้งโหมดสว่างและโหมดมืดอัตโนมัติ */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background-color: var(--border); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background-color: var(--text-muted); background-clip: padding-box; }
+*::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+*::-webkit-scrollbar-corner { background: transparent; }
+
 html { background: var(--bg); }
 
 body {
@@ -395,27 +408,34 @@ body.login-page .login-wrap { flex: 1 1 auto; min-height: 0; }
   padding: 20px;
 }
 .login-card {
-  position: relative; /* จุดอ้างอิงตำแหน่งของแถบสีม่วงหัวการ์ด (::before) ด้านล่าง */
+  --lc-pad-x: 26px; /* ใช้ตัวแปรแทนตัวเลขตรงๆ เพราะ .login-hero ด้านล่างต้องอ้างอิงค่า padding ของการ์ดนี้เป๊ะๆ
+                        (ผ่าน negative margin) ให้ล้นเต็มขอบการ์ดพอดีไม่ว่า padding จะเปลี่ยนไปตามจอ (ดู media query ด้านล่าง) */
+  --lc-pad-y: 28px;
+  position: relative;
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  padding: 28px 26px;
+  padding: var(--lc-pad-y) var(--lc-pad-x);
   width: 100%;
   max-width: 360px;
   animation: cardIn 0.35s ease both;
 }
-/* แถบสีม่วงบางๆ ที่หัวการ์ดล็อกอิน (ตั้งแต่ V11.8 ตามที่ผู้ใช้ขอ) — สูงแค่ 6px อยู่แค่ในระยะ padding-top ของการ์ด
-   ไม่ยาวไปถึงช่องกรอกบัญชี/รหัสผ่านด้านใน ใช้ border-radius มุมบนเท่ากับตัวการ์ดเป๊ะๆ ให้เนียนไปกับขอบโค้งของการ์ดเอง
-   โดยไม่ต้องพึ่ง overflow:hidden ที่ตัวการ์ด (ซึ่งจะไปตัดเงา box-shadow ของการ์ดทิ้งด้วยโดยไม่ตั้งใจ) */
-.login-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 6px;
+/* พื้นหลังไล่สีม่วงบริเวณหัวการ์ดล็อกอิน (ตั้งแต่ V11.8, ขยายให้ยาวมาถึงบรรทัด "ระบบรวบรวมและส่งผลงานครู" ใน V11.8.5
+   ตามที่ผู้ใช้ขอ — เดิม V11.8 เป็นแถบบางๆ สูงแค่ 6px เท่านั้น) ครอบคลุมโลโก้ + ชื่อเว็บ + คำบรรยายทั้งหมดไว้ในกล่องเดียว
+   (.login-hero ห่อ 3 บรรทัดนี้ไว้ใน index.html) แต่ยังไม่ยาวไปถึงช่องกรอกบัญชี/รหัสผ่านเหมือนเดิมตามที่ผู้ใช้ย้ำไว้ตั้งแต่รอบแรก
+   ใช้ negative margin (อ้างอิงจาก --lc-pad-x/--lc-pad-y ของการ์ดเอง) ดึงให้ล้นออกไปจนสุดขอบการ์ดพอดีในทุกขนาดจอโดยอัตโนมัติ
+   ไม่ต้องคำนวณเลขซ้ำเวลา padding การ์ดเปลี่ยนตามจอ แล้วมนมุมบนให้เท่ากับตัวการ์ดเป๊ะๆ (ไม่ต้องพึ่ง overflow:hidden ที่ตัวการ์ด
+   ซึ่งจะไปตัดเงา box-shadow ของการ์ดทิ้งด้วยโดยไม่ตั้งใจ) ตัวหนังสือด้านในเปลี่ยนเป็นสีขาวให้อ่านง่ายบนพื้นสีเข้ม */
+.login-hero {
+  margin: calc(-1 * var(--lc-pad-y)) calc(-1 * var(--lc-pad-x)) 18px;
+  padding: 22px var(--lc-pad-x) 18px;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  background: linear-gradient(90deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #a855f7 100%);
 }
-.login-card .logo-dot { background: var(--accent); }
+.login-hero .logo-dot { background: #fff; }
+.login-hero .brand-logo-lg { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); }
+.login-hero .login-title { color: #fff; }
+.login-hero .login-sub { color: rgba(255, 255, 255, 0.9); margin-bottom: 0; }
 .login-card .brand-logo-lg { height: 36px; width: auto; margin: 0 auto 10px; display: block; border-radius: 8px; }
 .login-title {
   text-align: center;
@@ -429,7 +449,6 @@ body.login-page .login-wrap { flex: 1 1 auto; min-height: 0; }
   text-align: center;
   color: var(--text-muted);
   font-size: 0.8rem;
-  margin-bottom: 18px;
 }
 .login-card label { font-size: 0.82rem; margin-bottom: 4px; }
 .login-card .field { margin-bottom: 12px; }
@@ -467,7 +486,7 @@ body.login-page .login-wrap { flex: 1 1 auto; min-height: 0; }
    ไม่กระทบขนาดที่ปรับไว้แล้วสำหรับจอมือถือ (ซึ่งพอดีจอแล้วตามที่ผู้ใช้ยืนยัน) */
 @media (min-width: 700px) {
   .login-title { font-size: 1rem; }
-  .login-sub { font-size: 0.75rem; margin-bottom: 16px; }
+  .login-sub { font-size: 0.75rem; } /* margin-bottom คุมผ่าน .login-hero แทนแล้วตั้งแต่ V11.8.5 (ดูคอมเมนต์ที่ .login-hero) */
   .login-card label { font-size: 0.78rem; }
   /* ปรับเฉพาะขนาดตัวหนังสือในช่องกรอกลง ไม่แตะ padding (ยังใช้ค่า padding ที่เพิ่มไว้ตามข้อ 4 ทั่วเว็บ ไม่ให้ขัดกัน) */
   .login-card input { font-size: 0.85rem; }
@@ -1015,10 +1034,12 @@ tbody tr:hover { background: var(--surface-2); }
   .page-header { padding: 16px 0 12px; margin-bottom: 16px; }
   .page-header h1 { font-size: 1.28rem; }
   .section-title { font-size: 0.98rem; }
-  .login-card { padding: 22px 18px; }
+  /* ต้องเซ็ตตัวแปร --lc-pad-x/--lc-pad-y ด้วย ไม่ใช่แค่ padding ตรงๆ เพราะ .login-hero อ้างอิงตัวแปรนี้ไปคำนวณ negative
+     margin ให้ล้นเต็มขอบการ์ดพอดี ถ้าลืมเซ็ตตัวแปรตรงนี้ตอนจอแคบ .login-hero จะล้นเกิน/ไม่เต็มขอบการ์ดผิดขนาด */
+  .login-card { --lc-pad-x: 18px; --lc-pad-y: 22px; padding: var(--lc-pad-y) var(--lc-pad-x); }
+  .login-hero { margin-bottom: 14px; padding-top: 18px; padding-bottom: 14px; }
   /* กระชับระยะห่างในการ์ดล็อกอินลงอีกเฉพาะจอแคบ (ตั้งแต่ V11.8) — ช่องติ๊ก "จดจำฉันไว้" ที่เพิ่มเข้ามาใหม่รอบนี้ทำให้
      เนื้อหาสูงขึ้นกว่าเดิม ต้องลดระยะห่างจุดอื่นชดเชยเพื่อให้ยังพอดีจอมือถือจอเตี้ยไม่ต้องเลื่อนดู (เป้าหมายเดิมตั้งแต่ V11.6) */
-  .login-sub { margin-bottom: 10px; }
   .login-card .field { margin-bottom: 8px; }
   .remember-row { margin: 0 0 6px; }
   .sub-item { flex-direction: column; }
