@@ -922,12 +922,16 @@ tbody tr:hover { background: var(--surface-2); }
 .cal-upcoming-grid .event-list-item { border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 10px 4px; margin: 0; }
 .cal-upcoming-grid .event-list-item:last-child { border-bottom: none; }
 
-/* ---------- เว็บภายนอก (ตั้งแต่ V11.9): ปุ่มลิงก์ที่ Super Admin สร้างไว้ แสดงในหน้าฮับเป็นส่วนใหม่ก่อนปฏิทิน ----------
-   ปุ่มสีข้อความ (ไม่มีรูป) กับปุ่มรูปภาพใช้กริดเดียวกัน ทุกปุ่มสูงเท่ากัน (--ext-link-h) เพื่อให้แถวเรียงสวยงามแม้สัดส่วนรูปที่อัพโหลดมาต่างกัน
-   รูปภาพใช้ object-fit: contain ภายในกรอบสูงคงที่ (ไม่ครอบตัด) ตามขนาดแนะนำ ~320×120px (8:3) ที่บอกผู้ใช้ไว้ในหน้าตั้งค่า */
+/* ---------- เว็บภายนอก (ตั้งแต่ V11.9, แก้ขนาดปุ่มรูปภาพให้แม่นยำใน V11.9.1): ปุ่มลิงก์ที่ Super Admin สร้างไว้ แสดงในหน้าฮับเป็นส่วนใหม่ก่อนปฏิทิน ----------
+   ปุ่มสีข้อความ: สูงคงที่ (--ext-link-h) กว้างยืดหยุ่นตามความยาวชื่อปุ่ม (flex: 1 1 auto)
+   ปุ่มรูปภาพ (V11.9.1): แก้บั๊กที่ผู้ใช้แจ้งว่า "รูปไม่เต็มปุ่ม" — ต้นเหตุคือ V11.9 เดิมให้กล่องปุ่มกว้างยืดหยุ่น (flex:1 1 auto) บวก padding
+   8px 14px แล้วค่อยยัดรูปเข้าไปด้วย object-fit:contain ขนาดกล่องจริงจึงไม่คงที่ ไม่มีทางสร้างรูปให้พอดีเป๊ะได้เลย — เปลี่ยนเป็นกล่องขนาด
+   คงที่ตายตัว 160×60px (อัตราส่วน 8:3 เท่ากับขนาดรูปที่แนะนำในหน้าตั้งค่าพอดี — แนะนำอัพโหลดรูปต้นฉบับ 320×120px คือ 2 เท่าของขนาด
+   แสดงผลจริงเพื่อความคมชัดบนจอ retina) ไม่มี padding แล้ว ใช้ object-fit:cover เต็มกล่องไม่มีขอบขาวเหลือ ถ้าอัตราส่วนรูปตรง 8:3 พอดีจะเต็มปุ่ม
+   สนิทไม่มีครอบตัดเลย (คำนวณตัวเลขมาให้ลงตัวพอดี ไม่ใช่ค่าประมาณ) */
 .ext-links-grid { display: flex; flex-wrap: wrap; gap: 12px; }
 .ext-link-btn {
-  --ext-link-h: 64px;
+  --ext-link-h: 60px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   height: var(--ext-link-h); min-width: 140px; padding: 0 20px; border-radius: var(--radius-sm);
   color: #fff; font-weight: 700; font-size: 0.92rem; text-decoration: none; text-align: center;
@@ -935,9 +939,13 @@ tbody tr:hover { background: var(--surface-2); }
 }
 .ext-link-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 .ext-link-btn-image {
-  background: var(--surface-2); border: 1px solid var(--border); padding: 8px 14px;
+  /* ใช้ box-shadow แทน border จริงโดยตั้งใจ — border ปกติกิน 1px เข้าไปในกล่องเนื้อหา (box-sizing: border-box ทั้งเว็บ) ทำให้กล่องรูปเหลือ
+     แค่ 158×58px ไม่ตรง 160×60px ที่ตั้งใจไว้เป๊ะ (เคยเจอปัญหานี้จริงตอนทดสอบ) box-shadow ไม่กินพื้นที่เลย์เอาต์ จึงยังคงกล่อง 160×60px แม่นยำ */
+  background: var(--surface-2); box-shadow: var(--shadow), 0 0 0 1px var(--border);
+  width: 160px; height: 60px; padding: 0; flex: 0 0 auto; min-width: 0; max-width: 160px; overflow: hidden;
 }
-.ext-link-btn-image img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.ext-link-btn-image:hover { box-shadow: var(--shadow-lg), 0 0 0 1px var(--border); }
+.ext-link-btn-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* ---------- Modal ---------- */
 .modal-backdrop {

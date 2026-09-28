@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=11.9" />
+<link rel="stylesheet" href="assets/style.css?v=11.9.1" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -130,7 +130,7 @@
           <span><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> ปุ่มลิงก์เว็บภายนอก</span>
           <button class="btn btn-primary btn-sm" id="openCreateExtLinkBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มปุ่ม</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างปุ่มลิงก์ไปเว็บภายนอก (เช่น ระบบอื่นของโรงเรียน เว็บไซต์หน่วยงาน) ไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ เป็นส่วนใหม่ก่อนปฏิทิน — กดปุ่มแล้วเปิดลิงก์ในแท็บเบราว์เซอร์ใหม่ทันที ถ้าอัพโหลดรูปภาพไว้ด้วย ปุ่มจะแสดงเป็นรูปนั้นแทนปุ่มสีข้อความ (แนะนำรูปสัดส่วนแนวนอนประมาณ 320×120px พื้นหลังโปร่งใส ระบบจะปรับขนาดไฟล์ให้อัตโนมัติ) จัดลำดับก่อน-หลังได้ด้วยปุ่ม ▲ ▼ ท้ายแถว</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างปุ่มลิงก์ไปเว็บภายนอก (เช่น ระบบอื่นของโรงเรียน เว็บไซต์หน่วยงาน) ไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ เป็นส่วนใหม่ก่อนปฏิทิน — กดปุ่มแล้วเปิดลิงก์ในแท็บเบราว์เซอร์ใหม่ทันที ถ้าอัพโหลดรูปภาพไว้ด้วย ปุ่มจะแสดงเป็นรูปนั้นแทนปุ่มสีข้อความ (ปุ่มรูปภาพแสดงผลจริงที่ขนาด <b>160×60px</b> เป๊ะ — สร้างรูปต้นฉบับขนาด <b>320×120px</b> พอดี คือ 2 เท่าของขนาดแสดงผลจริงเพื่อความคมชัด อัตราส่วน 8:3 พื้นหลังโปร่งใส จะเต็มปุ่มสนิทไม่มีขอบขาวหรือถูกครอบตัด) จัดลำดับก่อน-หลังได้ด้วยปุ่ม ▲ ▼ ท้ายแถว</p>
         <div id="extLinkListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -417,7 +417,7 @@
             <input type="file" id="extLinkImageFile" accept="image/*" style="flex:1; min-width:180px;" />
             <button class="btn btn-secondary btn-sm" type="button" id="extLinkRemoveImageBtn" hidden>เอารูปออก</button>
           </div>
-          <div class="hint">ถ้าเลือกรูป ปุ่มนี้จะแสดงเป็นรูปภาพแทนปุ่มสี — แนะนำรูปแนวนอนประมาณ 320×120px (อัตราส่วนราว 8:3) พื้นหลังโปร่งใส ระบบจะปรับขนาดไฟล์ให้เล็กลงอัตโนมัติก่อนบันทึก</div>
+          <div class="hint">ถ้าเลือกรูป ปุ่มนี้จะแสดงเป็นรูปภาพแทนปุ่มสี — ปุ่มแสดงผลจริงขนาด <b>160×60px</b> เป๊ะ (อัตราส่วน 8:3) สร้างรูปต้นฉบับขนาด <b>320×120px</b> พอดี (2 เท่า เพื่อความคมชัดบนจอ retina) พื้นหลังโปร่งใส จะเต็มปุ่มสนิทไม่มีขอบขาว/ถูกครอบตัด — ถ้าอัตราส่วนไม่ตรง 8:3 เป๊ะ ระบบจะครอบตัดส่วนที่ล้นออก (เหมือนโหมด "เติมเต็มกรอบ" ของโปรแกรมแต่งรูปทั่วไป) ระบบจะปรับขนาดไฟล์ให้เล็กลงอัตโนมัติก่อนบันทึก</div>
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary" id="extLinkSubmitBtn">เพิ่มปุ่ม</button>
@@ -454,7 +454,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=11.9"></script>
+  <script src="assets/api.js?v=11.9.1"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
