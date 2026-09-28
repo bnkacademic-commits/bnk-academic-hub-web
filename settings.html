@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=11.8.5" />
+<link rel="stylesheet" href="assets/style.css?v=11.9" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -36,6 +36,7 @@
       <button class="tab-btn active super-admin-only" data-tab="general">ทั่วไป</button>
       <button class="tab-btn super-admin-only" data-tab="display">ปรับแต่งการแสดงผลงาน</button>
       <button class="tab-btn super-admin-only" data-tab="accounts">จัดการบัญชี</button>
+      <button class="tab-btn super-admin-only" data-tab="extlinks">เว็บภายนอก</button>
       <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
       <button class="tab-btn" data-tab="announcements">ประกาศ</button>
       <button class="tab-btn super-admin-only" data-tab="log">ประวัติการส่งงานและลบงาน</button>
@@ -119,6 +120,18 @@
           <button class="btn btn-primary btn-sm" id="openCreateUserBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มผู้ใช้ใหม่</button>
         </div>
         <div id="userTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- External links tab (เว็บภายนอก — ตั้งแต่ V11.9, เฉพาะ Super Admin) — ปุ่มลิงก์ไปเว็บภายนอกที่จะไปแสดงในหน้าฮับเป็นส่วนใหม่ก่อนปฏิทิน -->
+    <div class="tab-panel super-admin-only" id="tab-extlinks">
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> ปุ่มลิงก์เว็บภายนอก</span>
+          <button class="btn btn-primary btn-sm" id="openCreateExtLinkBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มปุ่ม</button>
+        </div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างปุ่มลิงก์ไปเว็บภายนอก (เช่น ระบบอื่นของโรงเรียน เว็บไซต์หน่วยงาน) ไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ เป็นส่วนใหม่ก่อนปฏิทิน — กดปุ่มแล้วเปิดลิงก์ในแท็บเบราว์เซอร์ใหม่ทันที ถ้าอัพโหลดรูปภาพไว้ด้วย ปุ่มจะแสดงเป็นรูปนั้นแทนปุ่มสีข้อความ (แนะนำรูปสัดส่วนแนวนอนประมาณ 320×120px พื้นหลังโปร่งใส ระบบจะปรับขนาดไฟล์ให้อัตโนมัติ) จัดลำดับก่อน-หลังได้ด้วยปุ่ม ▲ ▼ ท้ายแถว</p>
+        <div id="extLinkListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
 
@@ -375,6 +388,45 @@
     </div>
   </div>
 
+  <!-- Add/edit external link modal (เว็บภายนอก — ตั้งแต่ V11.9) -->
+  <div class="modal-backdrop" id="extLinkModal" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close-x" id="extLinkModalCloseX" aria-label="ปิด">✕</button>
+      <h3 id="extLinkModalTitle">เพิ่มปุ่มลิงก์เว็บภายนอก</h3>
+      <div id="createExtLinkError" class="error-box" hidden></div>
+      <form id="extLinkForm" style="text-align:left;">
+        <input type="hidden" id="extLinkEditId" value="" />
+        <div class="field-row">
+          <div class="field" style="flex:1;">
+            <label for="extLinkName">ชื่อปุ่ม</label>
+            <input id="extLinkName" required placeholder="เช่น ระบบ SGS" />
+          </div>
+          <div class="field" style="max-width:90px;">
+            <label for="extLinkColor">สีปุ่ม</label>
+            <input type="color" id="extLinkColor" value="#3457d5" title="สีปุ่ม (ใช้เมื่อไม่มีรูปภาพ)" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="extLinkUrl">ลิ้งก์ (URL)</label>
+          <input id="extLinkUrl" type="url" required placeholder="https://..." />
+        </div>
+        <div class="field">
+          <label>รูปภาพปุ่ม (ไม่บังคับ)</label>
+          <div class="file-input-row">
+            <div class="asset-preview" id="extLinkImagePreview">—</div>
+            <input type="file" id="extLinkImageFile" accept="image/*" style="flex:1; min-width:180px;" />
+            <button class="btn btn-secondary btn-sm" type="button" id="extLinkRemoveImageBtn" hidden>เอารูปออก</button>
+          </div>
+          <div class="hint">ถ้าเลือกรูป ปุ่มนี้จะแสดงเป็นรูปภาพแทนปุ่มสี — แนะนำรูปแนวนอนประมาณ 320×120px (อัตราส่วนราว 8:3) พื้นหลังโปร่งใส ระบบจะปรับขนาดไฟล์ให้เล็กลงอัตโนมัติก่อนบันทึก</div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary" id="extLinkSubmitBtn">เพิ่มปุ่ม</button>
+          <button type="button" class="btn btn-ghost" id="extLinkModalClose">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Reset password modal -->
   <div class="modal-backdrop" id="resetPwModal" hidden>
     <div class="modal-box">
@@ -402,7 +454,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=11.8.5"></script>
+  <script src="assets/api.js?v=11.9"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -462,6 +514,7 @@
     // จะไม่ถูก hoist ออกมาให้ tabLoaders ด้านล่างมองเห็นเหมือน function ปกติ ต้องประกาศ var ไว้นอกบล็อกก่อนแล้วค่อยไป assign ทีหลัง
     var loadCategories;
     var loadDisplayOrder;
+    var loadExtLinks;
     var _tabLoaded = {};
     var _usersPromise = null;
     var _eventCategoriesPromise = null;
@@ -481,6 +534,7 @@
       },
       display: function () { return loadDisplayOrder(); },
       accounts: function () { return ensureUsersLoaded(); },
+      extlinks: function () { return loadExtLinks(); },
       // แท็บปฏิทินใช้รายชื่อผู้ใช้ร่วมกับแท็บจัดการบัญชี (audience dropdown + ป้ายชื่อผู้รับ) และรายชื่อประเภทงาน (dropdown ผูกกำหนดส่งงาน) จึงรอให้โหลดทั้งสองเสร็จก่อน
       calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); },
       announcements: function () { return loadAnnouncements(); },
@@ -777,6 +831,150 @@
         }
       });
       // หมายเหตุ: ไม่เรียก loadCategories() ตรงนี้ตั้งแต่แรก — ปล่อยให้ tabLoaders.general (ด้านล่าง) เป็นคนเรียกตอนแท็บ "ทั่วไป" ถูกเปิดจริง เพื่อเลี่ยงการโหลดซ้ำซ้อน
+
+      // ---------- เว็บภายนอก (เฉพาะ Super Admin) — ตั้งแต่ V11.9 ----------
+      var extLinkModalEl = document.getElementById('extLinkModal');
+      var currentExtLinks = [];
+      var extLinkPendingImage = null; // { base64, mimeType } — รูปที่เพิ่งเลือกไว้ ยังไม่ได้บันทึกจนกว่าจะกด submit
+      var extLinkImageRemoved = false; // ผู้ใช้กด "เอารูปออก" ไว้ — ส่ง removeImage:true ตอนบันทึก
+
+      loadExtLinks = async function () {
+        var wrap = document.getElementById('extLinkListWrap');
+        try {
+          var rows = await apiCall('adminListExternalLinks', {});
+          currentExtLinks = rows;
+          renderExtLinks();
+        } catch (err) {
+          wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+        }
+      };
+      function renderExtLinks() {
+        var wrap = document.getElementById('extLinkListWrap');
+        if (currentExtLinks.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีปุ่มลิงก์เว็บภายนอก</div>'; return; }
+        var html = '';
+        currentExtLinks.forEach(function (l, idx) {
+          var thumb = l.imageDataUrl
+            ? '<img src="' + l.imageDataUrl + '" alt="" style="width:44px; height:44px; object-fit:contain; border-radius:8px;" />'
+            : '<div title="สีปุ่ม" style="width:44px; height:44px; border-radius:8px; background:' + (l.color || '#3457d5') + '; flex-shrink:0;"></div>';
+          html += '<div class="event-list-item">' + thumb +
+            '<div style="flex:1; min-width:0;"><div class="sub-item-title">' + escapeHtml(l.name) + '</div>' +
+            '<div class="sub-item-meta" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeHtml(l.url) + '</div></div>' +
+            '<div style="display:flex; gap:6px; flex-shrink:0; align-items:center;">' +
+            '<button type="button" class="btn btn-ghost btn-sm extlink-move-up" data-idx="' + idx + '"' + (idx === 0 ? ' disabled' : '') + ' title="เลื่อนขึ้น">▲</button>' +
+            '<button type="button" class="btn btn-ghost btn-sm extlink-move-down" data-idx="' + idx + '"' + (idx === currentExtLinks.length - 1 ? ' disabled' : '') + ' title="เลื่อนลง">▼</button>' +
+            '<button class="btn btn-secondary btn-sm" data-edit-id="' + l.id + '">แก้ไข</button>' +
+            '<button class="btn btn-danger btn-sm" data-del-id="' + l.id + '" data-del-name="' + escapeHtml(l.name) + '">ลบ</button>' +
+            '</div></div>';
+        });
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('.extlink-move-up').forEach(function (btn) {
+          btn.addEventListener('click', function () { moveExtLink(parseInt(btn.getAttribute('data-idx'), 10), -1); });
+        });
+        wrap.querySelectorAll('.extlink-move-down').forEach(function (btn) {
+          btn.addEventListener('click', function () { moveExtLink(parseInt(btn.getAttribute('data-idx'), 10), 1); });
+        });
+        wrap.querySelectorAll('button[data-edit-id]').forEach(function (btn) {
+          btn.addEventListener('click', function () { openExtLinkModal(btn.getAttribute('data-edit-id')); });
+        });
+        wrap.querySelectorAll('button[data-del-id]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var ok = await askConfirm('ลบปุ่มลิงก์ "' + btn.getAttribute('data-del-name') + '"? ปุ่มนี้จะหายไปจากหน้าฮับทันที', 'ยืนยันการลบ');
+            if (!ok) return;
+            var r = await withProgress('กำลังลบ', function () {
+              return apiCall('adminDeleteExternalLink', { linkId: btn.getAttribute('data-del-id') });
+            }, { successLabel: 'ลบปุ่มลิงก์แล้ว' });
+            if (r.ok) loadExtLinks(); else showToast(r.error.message, true);
+          });
+        });
+      }
+      async function moveExtLink(idx, dir) {
+        var otherIdx = idx + dir;
+        if (otherIdx < 0 || otherIdx >= currentExtLinks.length) return;
+        var tmp = currentExtLinks[otherIdx]; currentExtLinks[otherIdx] = currentExtLinks[idx]; currentExtLinks[idx] = tmp;
+        renderExtLinks();
+        try {
+          var linkIds = currentExtLinks.map(function (l) { return l.id; });
+          currentExtLinks = await apiCall('adminReorderExternalLinks', { linkIds: linkIds });
+          renderExtLinks();
+        } catch (err) {
+          showToast(err.message, true);
+          loadExtLinks();
+        }
+      }
+
+      function resetExtLinkImageState() {
+        extLinkPendingImage = null;
+        extLinkImageRemoved = false;
+        document.getElementById('extLinkImageFile').value = '';
+      }
+      function renderExtLinkImagePreview(dataUrl) {
+        var el = document.getElementById('extLinkImagePreview');
+        el.innerHTML = dataUrl ? '<img src="' + dataUrl + '" alt="" />' : '—';
+        document.getElementById('extLinkRemoveImageBtn').hidden = !dataUrl;
+      }
+      function openExtLinkModal(linkId) {
+        document.getElementById('createExtLinkError').hidden = true;
+        document.getElementById('extLinkForm').reset();
+        resetExtLinkImageState();
+        var target = linkId ? currentExtLinks.filter(function (l) { return l.id === linkId; })[0] : null;
+        document.getElementById('extLinkEditId').value = target ? target.id : '';
+        document.getElementById('extLinkModalTitle').textContent = target ? 'แก้ไขปุ่มลิงก์เว็บภายนอก' : 'เพิ่มปุ่มลิงก์เว็บภายนอก';
+        document.getElementById('extLinkSubmitBtn').textContent = target ? 'บันทึก' : 'เพิ่มปุ่ม';
+        document.getElementById('extLinkName').value = target ? target.name : '';
+        document.getElementById('extLinkUrl').value = target ? target.url : '';
+        document.getElementById('extLinkColor').value = (target && target.color) || '#3457d5';
+        renderExtLinkImagePreview(target ? target.imageDataUrl : '');
+        showModalEl(extLinkModalEl);
+      }
+      document.getElementById('openCreateExtLinkBtn').addEventListener('click', function () { openExtLinkModal(null); });
+      document.getElementById('extLinkModalClose').addEventListener('click', function () { hideModalEl(extLinkModalEl); });
+      document.getElementById('extLinkModalCloseX').addEventListener('click', function () { hideModalEl(extLinkModalEl); });
+      document.getElementById('extLinkImageFile').addEventListener('change', async function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        try {
+          var resized = await resizeImageToBase64(file, 480);
+          extLinkPendingImage = resized;
+          extLinkImageRemoved = false;
+          renderExtLinkImagePreview('data:' + resized.mimeType + ';base64,' + resized.base64);
+        } catch (err) {
+          showToast(err.message, true);
+        }
+        e.target.value = '';
+      });
+      document.getElementById('extLinkRemoveImageBtn').addEventListener('click', function () {
+        extLinkPendingImage = null;
+        extLinkImageRemoved = true;
+        renderExtLinkImagePreview('');
+      });
+      document.getElementById('extLinkForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('createExtLinkError');
+        errBox.hidden = true;
+        var editId = document.getElementById('extLinkEditId').value;
+        var nameVal = document.getElementById('extLinkName').value.trim();
+        var urlVal = document.getElementById('extLinkUrl').value.trim();
+        var colorVal = document.getElementById('extLinkColor').value;
+        var ok = await askConfirm(editId ? ('ยืนยันบันทึกการแก้ไขปุ่ม "' + nameVal + '"?') : ('ยืนยันเพิ่มปุ่มลิงก์ "' + nameVal + '"?'), 'ยืนยันการบันทึก');
+        if (!ok) return;
+        var payload = { name: nameVal, url: urlVal, color: colorVal };
+        if (extLinkPendingImage) { payload.imageBase64 = extLinkPendingImage.base64; payload.mimeType = extLinkPendingImage.mimeType; }
+        if (extLinkImageRemoved) payload.removeImage = true;
+        var r;
+        if (editId) {
+          payload.linkId = editId;
+          r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateExternalLink', payload); }, { successLabel: 'บันทึกแล้ว' });
+        } else {
+          r = await withProgress('กำลังเพิ่มปุ่ม', function () { return apiCall('adminCreateExternalLink', payload); }, { successLabel: 'เพิ่มปุ่มลิงก์แล้ว' });
+        }
+        if (r.ok) {
+          hideModalEl(extLinkModalEl);
+          loadExtLinks();
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      });
     }
 
     // ---------- Users ----------

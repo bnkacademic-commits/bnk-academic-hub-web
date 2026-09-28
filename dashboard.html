@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=11.8.5" />
+<link rel="stylesheet" href="assets/style.css?v=11.9" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -33,6 +33,13 @@
     <div class="card" id="annCard" hidden>
       <div class="section-title"><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> ประกาศจากฝ่ายวิชาการ</div>
       <div id="hubAnnList"><div class="loading">กำลังโหลด</div></div>
+    </div>
+
+    <!-- เว็บภายนอก (ตั้งแต่ V11.9) — ปุ่มลิงก์ที่ Super Admin สร้างไว้จากแท็บ "เว็บภายนอก" ในหน้าตั้งค่า วางไว้ก่อนส่วนปฏิทินตามที่ผู้ใช้ขอ
+         ซ่อนการ์ดนี้ไปเลยถ้ายังไม่มีปุ่มไหนเลย (เหมือนการ์ดประกาศด้านบน) ไม่ต้องโชว์กล่องว่างเปล่าค้างไว้ -->
+    <div class="card" id="extLinksCard" hidden>
+      <div class="section-title"><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> เว็บภายนอก</div>
+      <div class="ext-links-grid" id="extLinksGrid"></div>
     </div>
 
     <div class="card">
@@ -141,7 +148,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=11.8.5"></script>
+  <script src="assets/api.js?v=11.9"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -198,6 +205,29 @@
       }
     }
     loadHubAnnouncements();
+
+    // ---------- เว็บภายนอก (ตั้งแต่ V11.9) ----------
+    async function loadExternalLinks() {
+      var card = document.getElementById('extLinksCard');
+      var grid = document.getElementById('extLinksGrid');
+      try {
+        var rows = await apiCall('hubListExternalLinks', {});
+        if (rows.length === 0) { card.hidden = true; return; }
+        card.hidden = false;
+        grid.innerHTML = rows.map(function (l) {
+          if (l.imageDataUrl) {
+            return '<a class="ext-link-btn ext-link-btn-image" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(l.name) + '">' +
+              '<img src="' + l.imageDataUrl + '" alt="' + escapeHtml(l.name) + '" /></a>';
+          }
+          return '<a class="ext-link-btn" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" style="background:' + (l.color || '#3457d5') + ';">' +
+            '<span>' + escapeHtml(l.name) + '</span></a>';
+        }).join('');
+      } catch (err) {
+        card.hidden = false;
+        grid.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+    loadExternalLinks();
 
     // ---------- QR modal ----------
     var qrModal = document.getElementById('qrModal');
@@ -676,7 +706,7 @@
     window.__refreshPageData = function () {
       resetSettingsCache();
       document.getElementById('currentTermBadge').textContent = currentTermLabel();
-      return Promise.all([applyBranding(), loadHubAnnouncements(), loadSubmissions(), loadCalendar(), refreshCategoryColors()]);
+      return Promise.all([applyBranding(), loadHubAnnouncements(), loadExternalLinks(), loadSubmissions(), loadCalendar(), refreshCategoryColors()]);
     };
   </script>
 </body>

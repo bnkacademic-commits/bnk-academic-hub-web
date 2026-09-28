@@ -922,6 +922,23 @@ tbody tr:hover { background: var(--surface-2); }
 .cal-upcoming-grid .event-list-item { border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 10px 4px; margin: 0; }
 .cal-upcoming-grid .event-list-item:last-child { border-bottom: none; }
 
+/* ---------- เว็บภายนอก (ตั้งแต่ V11.9): ปุ่มลิงก์ที่ Super Admin สร้างไว้ แสดงในหน้าฮับเป็นส่วนใหม่ก่อนปฏิทิน ----------
+   ปุ่มสีข้อความ (ไม่มีรูป) กับปุ่มรูปภาพใช้กริดเดียวกัน ทุกปุ่มสูงเท่ากัน (--ext-link-h) เพื่อให้แถวเรียงสวยงามแม้สัดส่วนรูปที่อัพโหลดมาต่างกัน
+   รูปภาพใช้ object-fit: contain ภายในกรอบสูงคงที่ (ไม่ครอบตัด) ตามขนาดแนะนำ ~320×120px (8:3) ที่บอกผู้ใช้ไว้ในหน้าตั้งค่า */
+.ext-links-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.ext-link-btn {
+  --ext-link-h: 64px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: var(--ext-link-h); min-width: 140px; padding: 0 20px; border-radius: var(--radius-sm);
+  color: #fff; font-weight: 700; font-size: 0.92rem; text-decoration: none; text-align: center;
+  box-shadow: var(--shadow); transition: transform 0.15s ease, box-shadow 0.15s ease; flex: 1 1 auto; max-width: 260px;
+}
+.ext-link-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.ext-link-btn-image {
+  background: var(--surface-2); border: 1px solid var(--border); padding: 8px 14px;
+}
+.ext-link-btn-image img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
 /* ---------- Modal ---------- */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(10, 14, 24, 0.5);

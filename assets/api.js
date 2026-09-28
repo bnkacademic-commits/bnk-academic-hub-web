@@ -14,7 +14,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ของทุกไฟล์ .html (index/dashboard/settings/summary/view) ให้ตรงกันด้วย — เป็นตัวกันแคชเก่า (cache-busting) เพราะเบราว์เซอร์/
 // CDN ของโฮสติ้งบางเจ้ามักแคชไฟล์ .css/.js ชื่อเดิมไว้นาน ทำให้อัพโหลดไฟล์ใหม่ทับแล้วแต่ผู้ใช้ยังเห็นหน้าเว็บเวอร์ชันเก่าอยู่
 // (แม้จะลบแคชเบราว์เซอร์ตัวเองแล้วก็ตาม ถ้า CDN กลางทางยังแคชอยู่) เปลี่ยนเลขท้าย query string ทุกเวอร์ชันบังคับให้โหลดใหม่เสมอ
-var APP_VERSION = 'V11.8.5';
+var APP_VERSION = 'V11.9';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
