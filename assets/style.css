@@ -699,12 +699,17 @@ input[type="color"] {
 /* หมวดหมู่เทอม/ปีการศึกษา คั่นระหว่างกลุ่มงานในเช็คลิสต์ (ตั้งแต่ V-ถัดไปหลัง V10.1 — จัดกลุ่มตามเทอม/ปีการศึกษาแทนที่จะกรองแค่เทอมปัจจุบัน) */
 .checklist-group { margin-bottom: 10px; }
 .checklist-group:last-child { margin-bottom: 0; }
+/* หัวข้อ "เทอม ปีการศึกษา" ของแต่ละกลุ่มในเช็คลิสต์การส่งงาน — เดิมเป็นแค่ตัวหนังสือเล็กสีจางๆ ขีดเส้นใต้บางๆ (0.78rem, สี --primary-dark
+   ซึ่งกลืนกับตัวหนังสือปกติ) ผู้ใช้แจ้งว่ามองไม่ค่อยเด่น จึงเปลี่ยนเป็นป้ายแถบสีพื้นหลังทึบ (--primary) ตัวหนังสือขาวตัดกันชัดเจน
+   ใหญ่ขึ้น พร้อมไอคอนปฏิทินนำหน้า ให้แยกแต่ละกลุ่มเทอม/ปีการศึกษาออกจากกันได้ชัดเจนตั้งแต่กวาดตาดูรอบแรก (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) */
 .checklist-group-title {
-  font-size: 0.78rem; font-weight: 800; color: var(--primary-dark);
-  text-transform: uppercase; letter-spacing: 0.3px;
-  padding: 4px 2px; margin-top: 4px;
-  border-bottom: 1px solid var(--border-strong, var(--border));
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.86rem; font-weight: 800; color: #fff;
+  letter-spacing: 0.2px;
+  background: var(--primary);
+  padding: 7px 12px; margin: 4px 0 8px; border-radius: var(--radius-sm);
 }
+.checklist-group:first-child .checklist-group-title { margin-top: 0; }
 @media (max-width: 720px) {
   .dash-cal-layout { grid-template-columns: 1fr; }
   .dash-checklist-body { max-height: 260px; }
@@ -912,6 +917,15 @@ tbody tr:hover { background: var(--surface-2); }
 .event-date-chip {
   flex-shrink: 0; background: var(--primary-light); color: var(--primary-dark);
   border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; font-weight: 700; text-align: center; min-width: 58px;
+}
+/* เกินกำหนดส่งแล้ว + ยังไม่ส่ง (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) — เปลี่ยนชิปวันที่เป็นสีแดงเตือน + ป้าย "เกินกำหนด" ต่อท้ายชื่องาน
+   ให้เห็นชัดเจนตั้งแต่กวาดตาดูรอบแรกว่างานนี้ค้างส่งเกินกำหนดอยู่ (เดิมรายการนี้จะหายไปจาก "กำหนดส่งงาน" เงียบๆ หลังเกินกำหนด 1 วัน
+   ทำให้หาไม่เจอว่าจะกดส่งงานที่ค้างได้จากไหน ตอนนี้ค้างอยู่ต่อไปจนกว่าจะส่งจริง — ดู renderCalendar() ใน dashboard.html) */
+.event-date-chip.overdue { background: var(--danger-light); color: var(--danger); }
+.overdue-badge {
+  display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;
+  background: var(--danger-light); color: var(--danger);
+  font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: 6px;
 }
 .event-submit-btn { align-self: center; flex-shrink: 0; }
 

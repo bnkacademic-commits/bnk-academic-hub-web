@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=11.9.1" />
+<link rel="stylesheet" href="assets/style.css?v=11.9.2" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -148,7 +148,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=11.9.1"></script>
+  <script src="assets/api.js?v=11.9.2"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -512,6 +512,9 @@
         fillSubFilters();
         renderSubmissions();
         renderAssignmentChecklist();
+        // renderCalendar() อ่านสถานะ "ส่งแล้วหรือยัง" ด้วย (ตั้งแต่เวอร์ชันถัดจาก V11.9.1 เพื่อตัดสินป้าย "เกินกำหนด") ซึ่งต้องใช้ allSubmissions ที่เพิ่งโหลดเสร็จ
+        // ตรงนี้ — loadCalendar()/loadSubmissions() ยิงคำขอพร้อมกันตอนเปิดหน้า ลำดับเสร็จก่อนหลังไม่แน่นอน จึงเรียกซ้ำให้ชัวร์ว่าข้อมูลล่าสุดครบทั้งสองฝั่งเสมอ
+        renderCalendar();
       } catch (err) {
         el.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
@@ -558,6 +561,13 @@
     // ---------- เช็คลิสต์สถานะการส่งงาน (ข้างปฏิทิน, ตั้งแต่ V9.9) ----------
     // เทียบกำหนดการในปฏิทินที่ผูกประเภทงานไว้ กับผลงานที่เคยส่งแล้ว (categoryId+ปี+เทอมตรงกัน = นับว่าส่งแล้ว
     // เป็นเกณฑ์แบบเดียวกับที่หน้าสรุปรวม "สรุปแยกแต่ละงาน" ใช้ — ไม่ได้ผูกกับ eventId เจาะจง เพราะระบบไม่มีฟิลด์นั้นในตาราง submissions)
+    // ย้ายออกมาเป็นฟังก์ชันกลาง (เดิมประกาศซ้อนอยู่ในตัว renderAssignmentChecklist เท่านั้น) เพราะ renderCalendar() ด้านล่าง
+    // ก็ต้องใช้เกณฑ์เดียวกันนี้ด้วย เพื่อตัดสินว่ากำหนดการที่เกินกำหนดแล้วควรยังค้างอยู่ใน "กำหนดการ" ใต้ปฏิทินหรือไม่
+    function isAssignmentSubmitted(e) {
+      return allSubmissions.some(function (s) {
+        return s.categoryId === e.categoryId && s.academicYear === e.academicYear && s.semester === e.semester;
+      });
+    }
     // ตั้งแต่ V-ถัดไปหลัง V10.1: แสดงทุกภาคเรียน/ปีการศึกษา จัดเป็นหมวดใหญ่ "เทอม ปีการศึกษา" ก่อน แล้วค่อยลิสงานในเทอมนั้นลงมา (เดิมกรองแสดงแค่เทอมปัจจุบันเทอมเดียว)
     function renderAssignmentChecklist() {
       var wrap = document.getElementById('assignmentChecklistBody');
@@ -568,16 +578,11 @@
         wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่ง</div>';
         return;
       }
-      function isSubmitted(e) {
-        return allSubmissions.some(function (s) {
-          return s.categoryId === e.categoryId && s.academicYear === e.academicYear && s.semester === e.semester;
-        });
-      }
       var groups = {}; // key: "ปีการศึกษา|ภาคเรียน"
       assignments.forEach(function (e) {
         var key = e.academicYear + '|' + e.semester;
         if (!groups[key]) groups[key] = { academicYear: e.academicYear, semester: e.semester, rows: [] };
-        groups[key].rows.push({ ev: e, done: isSubmitted(e) });
+        groups[key].rows.push({ ev: e, done: isAssignmentSubmitted(e) });
       });
       var groupList = Object.keys(groups).map(function (k) { return groups[k]; });
       groupList.sort(function (a, b) {
@@ -601,7 +606,7 @@
             '</div>' +
           '</div>';
         }).join('');
-        return '<div class="checklist-group"><div class="checklist-group-title">' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '</div>' + rowsHtml + '</div>';
+        return '<div class="checklist-group"><div class="checklist-group-title"><i class="fas fa-calendar-days ui-icon" aria-hidden="true"></i> ' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '</div>' + rowsHtml + '</div>';
       }).join('');
     }
 
@@ -655,7 +660,12 @@
       var upcoming = calState.events.filter(function (e) {
         var ed = new Date(e.endDate || e.date); // ใช้วันสิ้นสุดตัดสินว่ายังไม่ผ่านไป เผื่อเป็นกำหนดการช่วงหลายวัน
         var diffDays = (ed - now) / 86400000;
-        return diffDays > -1 && diffDays < 60;
+        if (diffDays > -1 && diffDays < 60) return true;
+        // ตั้งแต่เวอร์ชันถัดจาก V11.9.1: งานที่ผูกประเภทงานไว้ (ส่งได้จริง) แต่ "ยังไม่ส่ง" ให้ค้างอยู่ในรายการนี้ต่อไปแม้เกินกำหนดส่งแล้ว
+        // (ไม่มีเพดาน 60 วันเหมือนกำหนดการทั่วไป) เพื่อให้ยังกดปุ่ม "ส่งงาน" ได้จากตรงนี้เสมอ — เคยหายไปจากรายการทันทีที่เกินกำหนดเกิน 1 วัน
+        // ซึ่งผู้ใช้แจ้งว่าไม่สะดวก เพราะหาไม่เจอว่าจะกดส่งงานที่ค้างได้จากไหน พองานถูกส่งแล้วจะหลุดออกจากรายการตามปกติเหมือนเดิม
+        if (diffDays <= -1 && e.categoryId && !isAssignmentSubmitted(e)) return true;
+        return false;
       }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
 
       if (upcoming.length === 0) {
@@ -666,16 +676,21 @@
         // เปลี่ยนชื่อหัวข้อจาก "กำหนดการ" เป็น "กำหนดส่งงาน" และรูปแบบแต่ละแถวเป็น "ชื่อ(ประเภทงาน) เทอม ปีการศึกษา" (ตั้งแต่ V-ถัดไปหลัง V10.1)
         upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดส่งงาน</div><div class="cal-upcoming-grid">' + upcoming.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
+          // เกินกำหนดส่งแล้ว + ยังไม่ส่ง (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) — แสดงป้าย "เกินกำหนด" สีแดงให้เห็นชัดเจน ไม่ใช่แค่หายเงียบๆ ไปจากรายการ
+          var isOverdue = e.categoryId && !isAssignmentSubmitted(e) && new Date(e.endDate || e.date) < now;
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
+          // ยังกดได้ตามปกติแม้เกินกำหนดแล้ว (ระบบไม่เคยบล็อกการส่งงานย้อนหลังอยู่แล้ว เพียงแต่เดิมรายการหายไปก่อนจะมีโอกาสกด)
           var submitBtn = e.categoryId
-            ? '<button class="btn btn-primary btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
+            ? '<button class="btn ' + (isOverdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
             : '';
           var termLabel = e.categoryId ? (e.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(e.semester)) + ' ปีการศึกษา ' + escapeHtml(e.academicYear) : '';
           // ตั้งแต่เวอร์ชันถัดจาก V11.1 หัวข้อกำหนดการที่ผูกประเภทงานจะเป็นชื่อประเภทงานเป๊ะๆ อยู่แล้ว (กรอกเองไม่ได้อีกต่อไป) — ไม่ต้องต่อท้าย "(ชื่อประเภทงาน)" ซ้ำอีกถ้าซ้ำกับหัวข้ออยู่แล้ว (กำหนดการเก่าก่อนอัพเดตที่หัวข้อเคยพิมพ์เองไว้ต่างจากชื่อประเภทงาน ยังโชว์วงเล็บต่อท้ายตามเดิม)
           var showCategorySuffix = e.categoryName && e.categoryName !== e.title;
-          return '<div class="event-list-item"><div class="event-date-chip">' + dateChip + '</div>' +
+          var overdueBadge = isOverdue ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> เกินกำหนด</span>' : '';
+          return '<div class="event-list-item"><div class="event-date-chip' + (isOverdue ? ' overdue' : '') + '">' + dateChip + '</div>' +
             '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(e.title) +
-              (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') + '</div>' +
+              (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
+              overdueBadge + '</div>' +
             (termLabel ? '<div class="sub-item-meta">' + categoryDotHtml(categoryColorMap[e.categoryId]) + escapeHtml(termLabel) + '</div>' : '') +
             (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + submitBtn + '</div>';
         }).join('') + '</div>';
