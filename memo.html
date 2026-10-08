@@ -8,9 +8,9 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.24.081026" />
+<link rel="stylesheet" href="assets/style.css?v=1.26.081026" />
 <style>
-  /* ---------- หน้า "บันทึกข้อความส่งงาน" (ตั้งแต่ 1.24.081026) ----------
+  /* ---------- หน้า "บันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026) ----------
      แบ่งเป็น 2 ส่วนชัดเจน: (1) ส่วนควบคุม/แก้ไขข้อมูล (.no-print) ใช้ .card/.field ปกติของเว็บ เห็นเฉพาะตอนดูบนจอ
      (2) กระดาษบันทึกข้อความจำลอง A4 จริง (#memoPaper) ที่ปริ้น/เซฟ PDF ได้ตรงจากเบราว์เซอร์ (window.print()) โดยตรง
      ไม่ผ่าน html2canvas/jsPDF เหมือนหน้า summary.html เพราะเป็นเอกสารทางการที่ต้องการตัวอักษรคมชัด เลือกคัดลอกได้จริง
@@ -121,15 +121,14 @@
 
   <div id="app-footer" class="no-print"></div>
 
-  <script src="assets/api.js?v=1.24.081026"></script>
+  <script src="assets/api.js?v=1.26.081026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireHubAccess();
     if (session) mountChrome('dashboard');
-    // หน้านี้สำหรับครูเท่านั้น (role='teacher') — เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับไม่ส่งงานผ่านระบบนี้เอง ไม่มีเนื้อหาให้รายงาน
-    if (session && session.role !== 'teacher') {
-      location.href = 'dashboard.html';
-    }
+    // หน้านี้เปิดให้ทุกบัญชีที่มีหน้าฮับและส่งงานผ่านระบบได้ (ตั้งแต่ 1.25.081026 แก้ตาม): ครู (role='teacher')
+    // และเจ้าหน้าที่ฝ่ายวิชาการ (role='admin' + hasHub) เพราะเจ้าหน้าที่ก็เป็นครูที่ต้องส่งงานเหมือนกัน — requireHubAccess()
+    // ด้านบนกรองให้เหลือแค่ 2 กลุ่มนี้อยู่แล้ว (Super Admin ไม่มีหน้าฮับจะถูกเด้งไปที่อื่นไปก่อนถึงจุดนี้) จึงไม่ต้องเช็ค role ซ้ำอีก
 
     var mySubmissions = [];
     var checkedIds = {}; // submissionId -> true/false ที่ผู้ใช้ติ๊ก/ยกเลิกติ๊กเอง
@@ -300,7 +299,7 @@
     document.getElementById('memoPrintBtn').addEventListener('click', function () { window.print(); });
 
     async function init() {
-      if (!session || session.role !== 'teacher') return;
+      if (!session) return;
       document.getElementById('memoDate').value = new Date().toISOString().slice(0, 10);
       var fresh = await refreshSessionUser();
       try {

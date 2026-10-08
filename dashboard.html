@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.24.081026" />
+<link rel="stylesheet" href="assets/style.css?v=1.26.081026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -60,7 +60,7 @@
         <div class="dash-cal-side">
           <!-- ตั้งแต่ V11.7: ผู้ใช้ขอสลับปุ่มเด่น (.btn-cta) กลับมาไว้ที่ปุ่มนี้แทนปุ่ม "ส่งงาน (กำหนดเอง)" ด้านล่าง (ดูคอมเมนต์ตรงนั้น) -->
           <button class="btn btn-cta dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
-          <!-- "ปริ้นบันทึกข้อความส่งงาน" (ตั้งแต่ 1.24.081026) — เฉพาะครู (role='teacher') เท่านั้น เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ
+          <!-- "ปริ้นบันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026) — เฉพาะครู (role='teacher') เท่านั้น เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ
                ไม่ส่งงานผ่านระบบนี้เอง จึงซ่อนปุ่มนี้ไว้ให้ (ดู session.role เช็คด้านล่างในสคริปต์) เปิดเป็นหน้าใหม่ (memo.html) -->
           <a class="btn btn-secondary dash-portfolio-btn" id="btnOpenMemo" href="memo.html" target="_blank" rel="noopener"><i class="fas fa-file-lines ui-icon" aria-hidden="true"></i> ปริ้นบันทึกข้อความส่งงาน</a>
           <div class="dash-checklist">
@@ -151,7 +151,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.24.081026"></script>
+  <script src="assets/api.js?v=1.26.081026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -172,11 +172,10 @@
     var session = requireHubAccess();
     if (session) mountChrome('dashboard');
     if (session) document.getElementById('welcomeHeading').textContent = 'ยินดีต้อนรับ, ' + session.name;
-    // ปุ่ม "ปริ้นบันทึกข้อความส่งงาน" เฉพาะครูเท่านั้น (ตั้งแต่ 1.24.081026)
-    if (session && session.role !== 'teacher') {
-      var memoBtn = document.getElementById('btnOpenMemo');
-      if (memoBtn) memoBtn.hidden = true;
-    }
+    // ปุ่ม "ปริ้นบันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026): เดิมจำกัดไว้เฉพาะ role==='teacher' เท่านั้น
+    // แก้ตามที่ผู้ใช้แจ้งว่าเจ้าหน้าที่ฝ่ายวิชาการ (role='admin' + hasHub) ก็เป็นครูที่ต้องส่งงานผ่านระบบเหมือนกัน
+    // จึงเปิดให้ทุกคนที่เข้าหน้าฮับนี้ได้ (requireHubAccess() ด้านบนกรองให้เหลือแค่ครู/เจ้าหน้าที่ฝ่ายวิชาการอยู่แล้ว)
+    // ไม่ต้องซ่อนปุ่มอีกต่อไป
 
     // ---------- ปีการศึกษา options ----------
     // หมายเหตุ: ช่วงตัวเลือกคำนวณสดจากวันที่จริงทุกครั้งที่เปิดหน้า (ไม่ hardcode) จึงไม่มีวันที่ตัวเลือก "หมด"

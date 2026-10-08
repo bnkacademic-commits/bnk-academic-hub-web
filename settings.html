@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.24.081026" />
+<link rel="stylesheet" href="assets/style.css?v=1.26.081026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -99,6 +99,25 @@
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ แต่ละประเภทงานเลือกสีได้ (คลิกจุดสีในรายการด้านล่างเพื่อเปลี่ยน) เลือกรูปแบบการ์ดที่จะใช้แสดงผลงานทุกชิ้นในประเภทนี้ได้ (คลิกไอคอนรูปแบบการ์ดในรายการเพื่อเปลี่ยน — มีผลกับผลงานของ<b>ทุกครู</b>ในประเภทงานนี้ทันที ทุกคนได้รูปแบบเดียวกัน) และเลือกได้ว่าตอนส่งงานประเภทนี้ ครูต้องกรอกข้อมูลเพิ่มเติมอะไรบ้าง (กดปุ่ม "ข้อมูลที่ต้องกรอก" ที่แต่ละรายการ)</p>
         <div id="catListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
+
+      <!-- รายชื่อ "ฝ่าย" ของเจ้าหน้าที่ (ตั้งแต่ 1.26.081026) — Super Admin กำหนดชื่อฝ่ายต่อท้ายคำว่า "เจ้าหน้าที่" ได้เอง
+           เช่น เจ้าหน้าที่วิชาการ, เจ้าหน้าที่บุคคล, เจ้าหน้าที่การเงิน ใช้ผูกกับบัญชีเจ้าหน้าที่ (แท็บ "จัดการบัญชี") และ
+           ประเภทงาน (การ์ด "ประเภทงาน" ด้านบน) เพื่อจำกัดการมองเห็น/จัดการปฏิทินและสรุปรวมเฉพาะฝ่ายนั้นๆ — สิทธิ์การใช้งาน
+           ของบัญชีเจ้าหน้าที่ยังเป็นแบบเดียวกันทั้งหมดเหมือนเดิม (admin + has_hub) เปลี่ยนแค่ชื่อที่แสดง/การมองเห็นงานเท่านั้น
+           ไม่ใช่สิทธิ์ใหม่แยกต่างหาก -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-building-user ui-icon" style="font-size:17px" aria-hidden="true"></i> ฝ่ายของเจ้าหน้าที่</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดรายชื่อฝ่ายที่จะต่อท้ายคำว่า "เจ้าหน้าที่" ได้ เช่น วิชาการ, บุคคล, การเงิน, กิจการนักเรียน, อาคารสถานที่ — ใช้ตั้งให้บัญชีเจ้าหน้าที่ที่แท็บ "จัดการบัญชี" และผูกกับประเภทงานที่การ์ด "ประเภทงาน" ด้านบน เพื่อให้เจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่เห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนั้น (Super Admin เห็นทุกฝ่ายเสมอ) <b>หมายเหตุ:</b> การลบ/เปลี่ยนชื่อฝ่ายในรายการนี้จะไม่ไปแก้ค่าที่ตั้งไว้แล้วในบัญชี/ประเภทงานเดิมให้อัตโนมัติ</p>
+        <div id="deptError" class="error-box" hidden></div>
+        <div id="deptListWrap"><div class="loading">กำลังโหลด</div></div>
+        <div class="field-row" style="margin-top:14px; align-items:flex-end;">
+          <div class="field" style="flex:1;">
+            <label for="deptNewName">เพิ่มฝ่ายใหม่</label>
+            <input id="deptNewName" placeholder="เช่น บุคคล, การเงิน, กิจการนักเรียน" />
+          </div>
+          <button class="btn btn-primary" id="deptAddBtn" type="button">เพิ่มฝ่าย</button>
+        </div>
+      </div>
     </div>
 
     <!-- "ระบบเว็บ" tab (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21) — แยกออกมาจาก "ทั่วไป" ไม่ใช่ super-admin-only: ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการจัดการได้
@@ -132,7 +151,7 @@
         </form>
       </div>
 
-      <!-- ข้อมูลหัวกระดาษ/ผู้ลงนาม "บันทึกข้อความส่งงาน" (ตั้งแต่ 1.24.081026) — ใช้พิมพ์ซ้ำอัตโนมัติในทุกใบบันทึกข้อความของทุกครูที่หน้า memo.html
+      <!-- ข้อมูลหัวกระดาษ/ผู้ลงนาม "บันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026) — ใช้พิมพ์ซ้ำอัตโนมัติในทุกใบบันทึกข้อความของทุกครูที่หน้า memo.html
            ไม่ต้องให้ครูพิมพ์ชื่อผู้บริหารเอง เปิดให้ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการแก้ไขได้เหมือนการ์ดเทอม/ปีการศึกษาด้านบน -->
       <div class="card">
         <div class="section-title"><i class="fas fa-file-lines ui-icon" style="font-size:17px" aria-hidden="true"></i> ข้อมูลสำหรับพิมพ์บันทึกข้อความ</div>
@@ -187,12 +206,13 @@
         </form>
       </div>
 
-      <!-- ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครูแต่ละคน (ตั้งแต่ 1.24.081026) — เติมในเนื้อหาเปิดของบันทึกข้อความอัตโนมัติเช่นกัน
-           เจ้าหน้าที่ฝ่ายวิชาการ/Super Admin เป็นผู้ตั้งค่าให้ (ครูไม่กรอกเอง) รายชื่อดึงจากรายชื่อผู้ใช้เดียวกับแท็บ "จัดการบัญชี" -->
+      <!-- ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครูแต่ละคน (ตั้งแต่ 1.25.081026) — เติมในเนื้อหาเปิดของบันทึกข้อความอัตโนมัติเช่นกัน
+           เจ้าหน้าที่ฝ่ายวิชาการ/Super Admin เป็นผู้ตั้งค่าให้ (ครูไม่กรอกเอง) รายชื่อดึงจากรายชื่อผู้ใช้เดียวกับแท็บ "จัดการบัญชี"
+           รวมบัญชีเจ้าหน้าที่ฝ่ายวิชาการ (ที่มีหน้าฮับ) ด้วย ไม่ใช่แค่บัญชีครู เพราะเจ้าหน้าที่ก็เป็นครูที่ส่งงานผ่านระบบเหมือนกัน -->
       <div class="card">
-        <div class="section-title"><i class="fas fa-users ui-icon" style="font-size:17px" aria-hidden="true"></i> ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ใช้เติมในเนื้อหาเปิดของบันทึกข้อความส่งงานของครูแต่ละคนโดยอัตโนมัติ — กดแก้ไขทีละคน</p>
-        <input type="search" id="teacherInfoSearch" placeholder="ค้นหาชื่อครู" style="margin-bottom:10px;" />
+        <div class="section-title"><i class="fas fa-users ui-icon" style="font-size:17px" aria-hidden="true"></i> ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู/เจ้าหน้าที่</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ใช้เติมในเนื้อหาเปิดของบันทึกข้อความส่งงานโดยอัตโนมัติ (ครูและเจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ) — กดแก้ไขทีละคน</p>
+        <input type="search" id="teacherInfoSearch" placeholder="ค้นหาชื่อ" style="margin-bottom:10px;" />
         <div id="teacherInfoError" class="error-box" hidden></div>
         <div id="teacherInfoTableWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
@@ -349,7 +369,7 @@
           <label for="cuRole">Role</label>
           <select id="cuRole">
             <option value="teacher">ครู (Teacher)</option>
-            <option value="admin">เจ้าหน้าที่ฝ่ายวิชาการ (Admin)</option>
+            <option value="admin">เจ้าหน้าที่ (Admin)</option>
           </select>
         </div>
         <div class="field" id="cuSuperAdminField" hidden>
@@ -357,6 +377,11 @@
             <input type="checkbox" id="cuIsSuperAdmin" style="width:auto;" />
             ตั้งเป็น Super Admin (ไม่มีหน้าฮับส่วนตัว)
           </label>
+        </div>
+        <!-- ฝ่ายของเจ้าหน้าที่ (ตั้งแต่ 1.26.081026) — แสดงเฉพาะตอนเลือก Role เป็นเจ้าหน้าที่ (admin) และไม่ได้ตั้งเป็น Super Admin เท่านั้น เลือกไม่ตั้งไว้ก็ได้ (ตั้งทีหลังได้ที่ตารางบัญชี) -->
+        <div class="field" id="cuDepartmentField" hidden>
+          <label for="cuDepartment">ฝ่าย</label>
+          <select id="cuDepartment"><option value="">ยังไม่ระบุ</option></select>
         </div>
         <div class="hint" style="margin-bottom:14px;">username จะถูกแปลงเป็นตัวพิมพ์เล็กให้อัตโนมัติ — ล็อกอินได้ทั้งตัวพิมพ์เล็กและใหญ่ ส่วนรหัสผ่านแยกตัวพิมพ์เล็ก/ใหญ่ตามที่ตั้งไว้</div>
         <div class="modal-actions">
@@ -476,6 +501,18 @@
               <span><span style="display:block;">ไม่ส่งผ่านระบบ (แจ้งเตือนอย่างเดียว)</span><span class="hint" style="margin:0;">กำหนดการของประเภทงานนี้จะไม่มีปุ่ม "ส่งงาน" และไม่ขึ้นในเช็คลิสต์การส่งงานของครู — เป็นแค่การ์ดแจ้งเตือนในปฏิทิน/กำหนดการเท่านั้น (เหมาะกับประกาศ/แจ้งเตือนที่ไม่ต้องอัพโหลดไฟล์)</span></span>
             </label>
           </div>
+          <!-- ฝ่ายที่ดูแล + การแสดงผลในหน้าสาธารณะ (ตั้งแต่ 1.26.081026) -->
+          <div class="field">
+            <label for="catDepartment">ฝ่ายที่ดูแล</label>
+            <select id="catDepartment"><option value="">ทุกฝ่าย (ไม่ระบุ)</option></select>
+            <div class="hint" style="margin-top:4px;">ถ้าเลือกฝ่าย เฉพาะเจ้าหน้าที่ฝ่ายนั้น (และ Super Admin) เท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้ — ปล่อยเป็น "ทุกฝ่าย" ให้เจ้าหน้าที่ทุกฝ่ายจัดการได้เหมือนเดิม</div>
+          </div>
+          <div class="field">
+            <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="catHideFromPortfolio" style="width:auto; margin-top:3px;" />
+              <span><span style="display:block;">ไม่แสดงในหน้าแสดงผลงานครู (view.html)</span><span class="hint" style="margin:0;">เผื่อผลงานประเภทนี้ไม่ควรเปิดเผยต่อสาธารณะ — ยังส่งงาน/เห็นในแดชบอร์ด/บันทึกข้อความ/สรุปรวมได้ตามปกติ แค่ไม่ขึ้นหน้าแสดงผลงานสาธารณะเท่านั้น</span></span>
+            </label>
+          </div>
         </div>
         <div class="ev-tab-panel" id="catTab-fields">
           <div class="field">
@@ -575,7 +612,27 @@
     </div>
   </div>
 
-  <!-- Edit teacher position/subject-group modal (ตั้งแต่ 1.24.081026 — สำหรับพิมพ์บันทึกข้อความ) -->
+  <!-- Edit department modal for a staff account (ตั้งแต่ 1.26.081026) — Super Admin เท่านั้น -->
+  <div class="modal-backdrop" id="editDeptModal" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close-x" id="editDeptModalCloseX" aria-label="ปิด">✕</button>
+      <h3>แก้ไขแผนก</h3>
+      <p class="hint" id="editDeptTargetName"></p>
+      <div id="editDeptError" class="error-box" hidden></div>
+      <form id="editDeptForm" style="text-align:left;">
+        <div class="field">
+          <label for="editDeptSelect">ฝ่าย</label>
+          <select id="editDeptSelect"><option value="">ยังไม่ระบุ</option></select>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">บันทึก</button>
+          <button type="button" class="btn btn-ghost" id="editDeptClose">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit teacher position/subject-group modal (ตั้งแต่ 1.25.081026 — สำหรับพิมพ์บันทึกข้อความ) -->
   <div class="modal-backdrop" id="teacherInfoModal" hidden>
     <div class="modal-box">
       <button type="button" class="modal-close-x" id="teacherInfoModalCloseX" aria-label="ปิด">✕</button>
@@ -602,7 +659,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.24.081026"></script>
+  <script src="assets/api.js?v=1.26.081026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -629,6 +686,15 @@
       selectEl.innerHTML = TEMPLATE_OPTIONS.map(function (o) {
         return '<option value="' + o.key + '"' + (o.key === selectedKey ? ' selected' : '') + '>' + o.label + '</option>';
       }).join('');
+    }
+    // รายชื่อฝ่าย (ตั้งแต่ 1.26.081026) — ใช้ร่วมกันทั้งช่อง "ฝ่ายที่ดูแล" ของประเภทงาน และช่อง "แผนก/ฝ่าย" ตอนสร้าง/แก้ไขบัญชีเจ้าหน้าที่
+    // currentDepartments มาจากการ์ด "ฝ่ายของเจ้าหน้าที่" ในแท็บ "ทั่วไป" (โหลดคู่กับ loadCategories ในแท็บเดียวกันเสมอ)
+    function renderDepartmentOptions(selectEl, selectedDept, emptyLabel) {
+      var opts = '<option value="">' + (emptyLabel || 'ทุกฝ่าย (ไม่ระบุ)') + '</option>';
+      (currentDepartments || []).forEach(function (d) {
+        opts += '<option value="' + escapeHtml(d) + '"' + (d === selectedDept ? ' selected' : '') + '>เจ้าหน้าที่' + escapeHtml(d) + '</option>';
+      });
+      selectEl.innerHTML = opts;
     }
     function renderFieldCheckboxes(containerId, namePrefix, checkedKeys) {
       var box = document.getElementById(containerId);
@@ -665,6 +731,7 @@
     // ประกาศไว้ล่วงหน้าตรงนี้ (ตัวจริงถูกกำหนดค่าใน if (isSuperAdminSession) ด้านล่าง) เพราะ async function ที่ประกาศในบล็อก if
     // จะไม่ถูก hoist ออกมาให้ tabLoaders ด้านล่างมองเห็นเหมือน function ปกติ ต้องประกาศ var ไว้นอกบล็อกก่อนแล้วค่อยไป assign ทีหลัง
     var loadCategories;
+    var loadDepartments;
     var loadDisplayOrder;
     var loadExtLinks;
     var _tabLoaded = {};
@@ -681,11 +748,11 @@
     var tabLoaders = {
       general: function () {
         var tasks = [loadGeneralSettings()];
-        if (isSuperAdminSession) tasks.push(loadCategories());
+        if (isSuperAdminSession) { tasks.push(loadCategories()); tasks.push(loadDepartments()); }
         return Promise.all(tasks);
       },
       // "ระบบเว็บ" (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21): แท็บนี้ไม่ใช่ super-admin-only เจ้าหน้าที่ฝ่ายวิชาการเปิดได้เช่นกัน
-      // ตั้งแต่ 1.24.081026: โหลดข้อมูลสำหรับพิมพ์บันทึกข้อความ + ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู (ใช้รายชื่อผู้ใช้ร่วมกับแท็บ "จัดการบัญชี") เพิ่มด้วย
+      // ตั้งแต่ 1.25.081026: โหลดข้อมูลสำหรับพิมพ์บันทึกข้อความ + ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู (ใช้รายชื่อผู้ใช้ร่วมกับแท็บ "จัดการบัญชี") เพิ่มด้วย
       website: function () { return Promise.all([loadCurTermSettings(), loadMemoSettings(), loadTeacherAcademicInfo()]); },
       display: function () { return loadDisplayOrder(); },
       accounts: function () { return ensureUsersLoaded(); },
@@ -769,7 +836,7 @@
       await saveCurTerm('', '', 'ยืนยันเคลียร์การตั้งเทอม/ปีการศึกษาปัจจุบันเอง กลับไปคำนวณจากวันที่จริงอัตโนมัติ?', 'กลับไปใช้การคำนวณอัตโนมัติแล้ว');
     });
 
-    // ---------- "ระบบเว็บ" → ข้อมูลสำหรับพิมพ์บันทึกข้อความ (ตั้งแต่ 1.24.081026 — ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการแก้ไขได้) ----------
+    // ---------- "ระบบเว็บ" → ข้อมูลสำหรับพิมพ์บันทึกข้อความ (ตั้งแต่ 1.25.081026 — ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการแก้ไขได้) ----------
     async function loadMemoSettings() {
       var s = await getSiteSettings();
       document.getElementById('setSchoolName').value = s.schoolName || '';
@@ -810,22 +877,30 @@
       }
     });
 
-    // ---------- "ระบบเว็บ" → ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู (ตั้งแต่ 1.24.081026) ----------
+    // ---------- "ระบบเว็บ" → ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู (ตั้งแต่ 1.25.081026) ----------
     var teacherInfoModal = document.getElementById('teacherInfoModal');
     var teacherInfoEditTarget = null;
+    // ตั้งแต่ 1.26.081026: เจ้าหน้าที่แก้ "ตำแหน่ง/กลุ่มสาระการเรียนรู้" ของตัวเองได้เองแล้ว (ดู adminSetTeacherAcademicInfo
+    // ฝั่ง Worker — self-edit carve-out) แต่ยังแก้ให้เจ้าหน้าที่คนอื่นไม่ได้เหมือนเดิม (สงวนไว้เฉพาะ Super Admin) จึงต้องกรอง
+    // ปุ่ม "แก้ไข" ในตารางนี้ให้ตรงกับสิทธิ์จริงฝั่ง Worker ไม่ให้กดแล้วเจอ error เปล่าๆ — ครู (role='teacher') จัดการได้โดย
+    // เจ้าหน้าที่ทุกคนเหมือนเดิม (assertManageableTarget อนุญาตอยู่แล้ว)
+    function canEditTeacherInfo(u) { return isSuperAdminSession || u.role === 'teacher' || u.id === session.id; }
     function renderTeacherInfoTable() {
       var wrap = document.getElementById('teacherInfoTableWrap');
       var q = (document.getElementById('teacherInfoSearch').value || '').trim().toLowerCase();
-      var teachers = allUsers.filter(function (u) { return u.role === 'teacher' && u.status === 'active'; });
+      // ตั้งแต่ 1.25.081026 (แก้ตามที่ผู้ใช้แจ้ง): รวมเจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ (role='admin' + hasHub) ด้วย ไม่ใช่แค่ role==='teacher'
+      var teachers = allUsers.filter(function (u) { return (u.role === 'teacher' || (u.role === 'admin' && u.hasHub)) && u.status === 'active'; });
       if (q) teachers = teachers.filter(function (u) { return u.name.toLowerCase().indexOf(q) !== -1; });
-      if (teachers.length === 0) { wrap.innerHTML = '<div class="empty-state">ไม่พบรายชื่อครู</div>'; return; }
+      if (teachers.length === 0) { wrap.innerHTML = '<div class="empty-state">ไม่พบรายชื่อ</div>'; return; }
       var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th><th>กลุ่มสาระการเรียนรู้</th><th></th></tr></thead><tbody>';
       teachers.forEach(function (u) {
         html += '<tr>' +
-          '<td>' + escapeHtml(u.name) + '</td>' +
+          '<td>' + escapeHtml(u.name) + (u.id === session.id ? ' <span class="hint">(คุณ)</span>' : '') + '</td>' +
           '<td>' + (u.position ? escapeHtml(u.position) : '<span class="hint">ยังไม่ได้ตั้งค่า</span>') + '</td>' +
           '<td>' + (u.subjectGroup ? escapeHtml(u.subjectGroup) : '<span class="hint">ยังไม่ได้ตั้งค่า</span>') + '</td>' +
-          '<td><button class="btn btn-ghost btn-sm" data-edit-teacher-info="' + u.id + '">แก้ไข</button></td>' +
+          '<td>' + (canEditTeacherInfo(u)
+            ? '<button class="btn btn-ghost btn-sm" data-edit-teacher-info="' + u.id + '">แก้ไข</button>'
+            : '<span class="hint">จัดการได้เฉพาะ Super Admin</span>') + '</td>' +
         '</tr>';
       });
       html += '</tbody></table>';
@@ -951,17 +1026,26 @@
               ? c.customFields.map(function (k) { var def = CUSTOM_FIELD_DEFS.filter(function (d) { return d.key === k; })[0]; return def ? def.label : k; }).join(', ')
               : 'ไม่มี';
             // ตั้งแต่ V12.0: ประเภทงาน "แจ้งเตือนอย่างเดียว" (c.noSubmission) ไม่มีผลงานส่งจริง จึงไม่ต้องมีรูปแบบการ์ด/ข้อมูลที่ต้องกรอก — ซ่อนสองช่องนั้นไปเลย
+            // ตั้งแต่ 1.26.081026: แสดงฝ่ายที่ดูแล (ถ้าผูกไว้) + badge ถ้าซ่อนจากหน้าแสดงผลงานสาธารณะ
+            var deptMeta = c.department ? ('<div class="sub-item-meta">ฝ่ายที่ดูแล: เจ้าหน้าที่' + escapeHtml(c.department) + '</div>') : '';
             html += '<div class="event-list-item">' +
               '<input type="color" class="cat-color-input" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" value="' + (c.color || '#3457d5') + '" title="เปลี่ยนสีของประเภทงาน \'' + escapeHtml(c.name) + '\'" />' +
-              '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(c.name) + (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '') + '</div>' +
+              '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(c.name) +
+                (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '') +
+                (c.hideFromPortfolio ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-eye-slash ui-icon" aria-hidden="true"></i> ไม่แสดงสาธารณะ</span>' : '') +
+              '</div>' +
               (c.noSubmission
                 ? '<div class="sub-item-meta">ไม่ส่งผ่านระบบ — ไม่มีรูปแบบการ์ดหรือข้อมูลที่ต้องกรอก</div>'
-                : '<div class="sub-item-meta">ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div>') + '</div>' +
+                : '<div class="sub-item-meta">ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div>') + deptMeta + '</div>' +
               (c.noSubmission ? '' : '<select class="cat-template-select" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" title="รูปแบบการ์ดของประเภทงาน \'' + escapeHtml(c.name) + '\' (ใช้กับทุกครู)"></select>') +
+              '<select class="cat-department-select" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" title="ฝ่ายที่ดูแลประเภทงาน \'' + escapeHtml(c.name) + '\'"></select>' +
               '<div style="display:flex; gap:6px; flex-shrink:0; align-items:center; flex-wrap:wrap;">' +
               (c.noSubmission ? '' : '<button class="btn btn-secondary btn-sm" data-fields-id="' + c.id + '" data-fields-name="' + escapeHtml(c.name) + '" data-fields="' + escapeHtml(JSON.stringify(c.customFields || [])) + '">ข้อมูลที่ต้องกรอก</button>') +
               '<label class="btn btn-ghost btn-sm" style="display:flex; align-items:center; gap:6px; cursor:pointer; white-space:nowrap;" title="สลับโหมดแจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ">' +
                 '<input type="checkbox" class="cat-nosub-toggle" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '"' + (c.noSubmission ? ' checked' : '') + ' style="width:auto;" /> แจ้งเตือนอย่างเดียว' +
+              '</label>' +
+              '<label class="btn btn-ghost btn-sm" style="display:flex; align-items:center; gap:6px; cursor:pointer; white-space:nowrap;" title="สลับการแสดงในหน้าแสดงผลงานครูสาธารณะ (view.html)">' +
+                '<input type="checkbox" class="cat-hideportfolio-toggle" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '"' + (c.hideFromPortfolio ? ' checked' : '') + ' style="width:auto;" /> ไม่แสดงสาธารณะ' +
               '</label>' +
               '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button>' +
               '</div></div>';
@@ -970,6 +1054,46 @@
           rows.forEach(function (c) {
             var sel = wrap.querySelector('select.cat-template-select[data-id="' + c.id + '"]');
             if (sel) renderTemplateOptions(sel, c.displayTemplate || '');
+            var deptSel = wrap.querySelector('select.cat-department-select[data-id="' + c.id + '"]');
+            if (deptSel) renderDepartmentOptions(deptSel, c.department || '');
+          });
+          wrap.querySelectorAll('select.cat-department-select').forEach(function (sel) {
+            sel.addEventListener('change', async function () {
+              var newDept = sel.value;
+              var catId = sel.getAttribute('data-id');
+              var catName = sel.getAttribute('data-name');
+              var ok = await askConfirm(
+                newDept
+                  ? 'ยืนยันผูกประเภทงาน "' + catName + '" กับฝ่าย "เจ้าหน้าที่' + newDept + '"? เฉพาะเจ้าหน้าที่ฝ่ายนี้ (และ Super Admin) จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้ได้'
+                  : 'ยืนยันเลิกผูกประเภทงาน "' + catName + '" กับฝ่ายใดฝ่ายหนึ่ง? เจ้าหน้าที่ทุกฝ่ายจะจัดการได้เหมือนเดิม',
+                'ยืนยันการเปลี่ยนแปลง'
+              );
+              if (!ok) { loadCategories(); return; }
+              var r = await withProgress('กำลังบันทึก', function () {
+                return apiCall('adminSetWorkCategoryDepartment', { categoryId: catId, department: newDept });
+              }, { successLabel: 'บันทึกแล้ว' });
+              if (!r.ok) showToast(r.error.message, true);
+              loadCategories();
+            });
+          });
+          wrap.querySelectorAll('input.cat-hideportfolio-toggle').forEach(function (inp) {
+            inp.addEventListener('change', async function () {
+              var nextVal = inp.checked;
+              var catId = inp.getAttribute('data-id');
+              var catName = inp.getAttribute('data-name');
+              var ok = await askConfirm(
+                nextVal
+                  ? 'ยืนยันซ่อนผลงานประเภทงาน "' + catName + '" จากหน้าแสดงผลงานครูสาธารณะ (view.html)? ยังส่งงาน/เห็นในที่อื่นๆ ได้ตามปกติ'
+                  : 'ยืนยันแสดงผลงานประเภทงาน "' + catName + '" ในหน้าแสดงผลงานครูสาธารณะตามปกติ?',
+                'ยืนยันการเปลี่ยนแปลง'
+              );
+              if (!ok) { loadCategories(); return; }
+              var r = await withProgress('กำลังบันทึก', function () {
+                return apiCall('adminSetWorkCategoryPortfolioVisibility', { categoryId: catId, hideFromPortfolio: nextVal });
+              }, { successLabel: 'บันทึกแล้ว' });
+              if (!r.ok) showToast(r.error.message, true);
+              loadCategories();
+            });
           });
           wrap.querySelectorAll('input.cat-nosub-toggle').forEach(function (inp) {
             inp.addEventListener('change', async function () {
@@ -1044,6 +1168,67 @@
         }
       };
 
+      // ---------- ฝ่ายของเจ้าหน้าที่ (เฉพาะ Super Admin) — ตั้งแต่ 1.26.081026 ----------
+      // ส่ง array ทั้งชุดทุกครั้งที่เพิ่ม/ลบ (เหมือน adminReorderWorkCategories ด้านล่าง) เพราะ adminUpdateSettings รับ
+      // p.departments เป็น array แทนที่ทั้งชุดเสมอ ไม่มี endpoint เพิ่ม/ลบทีละรายการแยก
+      var currentDepartments = [];
+      loadDepartments = async function () {
+        var wrap = document.getElementById('deptListWrap');
+        try {
+          var s = await getSiteSettings();
+          currentDepartments = (s.departments || []).slice();
+          renderDepartments();
+        } catch (err) {
+          wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+        }
+      };
+      function renderDepartments() {
+        var wrap = document.getElementById('deptListWrap');
+        if (currentDepartments.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีฝ่ายในระบบ</div>'; return; }
+        var html = '';
+        currentDepartments.forEach(function (d, idx) {
+          html += '<div class="event-list-item">' +
+            '<div style="flex:1;"><div class="sub-item-title">เจ้าหน้าที่' + escapeHtml(d) + '</div></div>' +
+            '<button class="btn btn-danger btn-sm" data-dept-remove="' + idx + '" data-dept-name="' + escapeHtml(d) + '">ลบ</button>' +
+            '</div>';
+        });
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('[data-dept-remove]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var idx = parseInt(btn.getAttribute('data-dept-remove'), 10);
+            var name = btn.getAttribute('data-dept-name');
+            var ok = await askConfirm('ยืนยันลบฝ่าย "เจ้าหน้าที่' + name + '" ออกจากรายชื่อ? บัญชี/ประเภทงานที่ตั้งฝ่ายนี้ไว้แล้วจะยังคงค้างชื่อฝ่ายนี้อยู่ แค่เลือกใหม่ไม่ได้อีก', 'ยืนยันการลบฝ่าย');
+            if (!ok) return;
+            await saveDepartments(currentDepartments.filter(function (_, i) { return i !== idx; }));
+          });
+        });
+      }
+      async function saveDepartments(nextList) {
+        var errBox = document.getElementById('deptError');
+        errBox.hidden = true;
+        var r = await withProgress('กำลังบันทึก', function () {
+          return apiCall('adminUpdateSettings', { departments: nextList });
+        }, { successLabel: 'บันทึกรายชื่อฝ่ายแล้ว' });
+        if (r.ok) {
+          resetSettingsCache();
+          currentDepartments = r.data.departments || [];
+          renderDepartments();
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      }
+      document.getElementById('deptAddBtn').addEventListener('click', async function () {
+        var errBox = document.getElementById('deptError');
+        errBox.hidden = true;
+        var input = document.getElementById('deptNewName');
+        var name = input.value.trim();
+        if (!name) { errBox.textContent = 'กรุณากรอกชื่อฝ่าย'; errBox.hidden = false; return; }
+        if (currentDepartments.indexOf(name) !== -1) { errBox.textContent = 'มีฝ่ายชื่อนี้อยู่แล้ว'; errBox.hidden = false; return; }
+        await saveDepartments(currentDepartments.concat([name]));
+        input.value = '';
+      });
+
       // ---------- ปรับแต่งการแสดงผลงาน: จัดลำดับ "ประเภทงาน" (เฉพาะ Super Admin) — ตั้งแต่ V11.5 ----------
       // แทนที่ระบบเดิม (หน้า "จัดการ Layout" V11.1) ที่ Super Admin ต้องจัดเรียงทีละครู — ตอนนี้จัดลำดับที่ "ประเภทงาน"
       // ครั้งเดียว มีผลกับผลงานทุกชิ้นของทุกครูโดยอัตโนมัติ (เหมือนรูปแบบการ์ดพรีวิว ดู adminSetWorkCategoryTemplate ด้านบน)
@@ -1108,6 +1293,8 @@
         document.getElementById('createCatForm').reset();
         document.getElementById('catColor').value = '#3457d5';
         renderTemplateOptions(document.getElementById('catTemplate'), '');
+        renderDepartmentOptions(document.getElementById('catDepartment'), '');
+        document.getElementById('catHideFromPortfolio').checked = false; // ค่าเริ่มต้น: แสดงในหน้าแสดงผลงานครูตามปกติ
         document.getElementById('createCatError').hidden = true;
         renderFieldCheckboxes('catFieldsCheckboxes', 'catFields', []);
         switchCatTab('basic');
@@ -1124,10 +1311,12 @@
         var catTemplateVal = document.getElementById('catTemplate').value;
         var catFieldsVal = readCheckedFields('catFields');
         var catNoSubmissionVal = document.getElementById('catNoSubmission').checked;
+        var catDepartmentVal = document.getElementById('catDepartment').value;
+        var catHideFromPortfolioVal = document.getElementById('catHideFromPortfolio').checked;
         var ok = await askConfirm('ยืนยันเพิ่มประเภทงาน "' + catNameVal + '"?', 'ยืนยันการเพิ่มประเภทงาน');
         if (!ok) return;
         var r = await withProgress('กำลังเพิ่มประเภทงาน', function () {
-          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, displayTemplate: catTemplateVal, customFields: catFieldsVal, noSubmission: catNoSubmissionVal });
+          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, displayTemplate: catTemplateVal, customFields: catFieldsVal, noSubmission: catNoSubmissionVal, department: catDepartmentVal, hideFromPortfolio: catHideFromPortfolioVal });
         }, { successLabel: 'เพิ่มประเภทงานแล้ว' });
         if (r.ok) {
           hideModalEl(createCatModalEl);
@@ -1315,9 +1504,17 @@
       var superAdminField = document.getElementById('cuSuperAdminField');
       if (superAdminField) superAdminField.remove();
     } else {
+      // แสดงช่อง "ฝ่าย" เฉพาะตอนเลือก Role เป็นเจ้าหน้าที่ (admin) และไม่ได้ตั้งเป็น Super Admin เท่านั้น (ตั้งแต่ 1.26.081026)
+      function syncCuDepartmentFieldVisibility() {
+        var roleVal = document.getElementById('cuRole').value;
+        var isSuper = document.getElementById('cuIsSuperAdmin').checked;
+        document.getElementById('cuDepartmentField').hidden = !(roleVal === 'admin' && !isSuper);
+      }
       document.getElementById('cuRole').addEventListener('change', function () {
         document.getElementById('cuSuperAdminField').hidden = this.value !== 'admin';
+        syncCuDepartmentFieldVisibility();
       });
+      document.getElementById('cuIsSuperAdmin').addEventListener('change', syncCuDepartmentFieldVisibility);
     }
 
     // หมายเหตุ (ตั้งแต่ V10.0): loadUsers() ยังถูกเรียกจากแท็บ "ปฏิทิน" ด้วย (ensureUsersLoaded — ใช้เติม dropdown ผู้รับ/ป้ายชื่อผู้รับ)
@@ -1333,9 +1530,10 @@
       }
     }
 
+    // ตั้งแต่ 1.26.081026: ป้ายชื่อเจ้าหน้าที่แสดงฝ่ายที่สังกัดต่อท้าย (ถ้าตั้งไว้) แทนชื่อ "เจ้าหน้าที่ฝ่ายวิชาการ" เดิมที่ hardcode ไว้ตัวเดียว
     function roleBadge(u) {
       if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>';
-      if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่ฝ่ายวิชาการ</span>';
+      if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่' + (u.department ? escapeHtml(u.department) : '') + '</span>';
       return '<span class="badge badge-super">Super Admin</span>';
     }
 
@@ -1361,6 +1559,8 @@
                   ? '<button class="btn btn-secondary btn-sm" data-act="archive" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">พักใช้งาน</button>'
                   : '<button class="btn btn-secondary btn-sm" data-act="restore" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">คืนสิทธิ์</button>') + ' ' +
                 '<button class="btn btn-ghost btn-sm" data-act="resetpw" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">ตั้งรหัสผ่านใหม่</button> ' +
+                // "แก้ไขแผนก" (ตั้งแต่ 1.26.081026) — เฉพาะบัญชีเจ้าหน้าที่ที่มีหน้าฮับ (role='admin' + hasHub) ไม่ใช่บัญชีครู
+                (u.role === 'admin' && u.hasHub ? '<button class="btn btn-ghost btn-sm" data-act="editdept" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">แก้ไขแผนก</button> ' : '') +
                 '<button class="btn btn-danger btn-sm" data-act="purge" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">ลบถาวร</button>')
               : '<span class="hint">จัดการได้เฉพาะ Super Admin</span>') +
           '</td>' +
@@ -1391,6 +1591,8 @@
             if (rP.ok) loadUsers();
           } else if (act === 'resetpw') {
             openResetPwModal(id, name);
+          } else if (act === 'editdept') {
+            openEditDeptModal(id, name);
           }
         });
       });
@@ -1401,12 +1603,15 @@
     // ต้องครอบทั้งบล็อกด้วย if (isSuperAdminSession) กัน error ตอนเจ้าหน้าที่ฝ่ายวิชาการเปิดหน้านี้ (องค์ประกอบในแท็บถูกลบไปแล้ว หา element ไม่เจอ)
     // openResetPwModal ต้องประกาศ var ไว้นอกบล็อกก่อน (เหมือน loadCategories ด้านบน) เพราะถูกเรียกใช้จาก renderUserTable ที่อยู่นอกบล็อกนี้
     var openResetPwModal;
+    var openEditDeptModal;
     if (isSuperAdminSession) {
       var createUserModal = document.getElementById('createUserModal');
       document.getElementById('openCreateUserBtn').addEventListener('click', function () {
         document.getElementById('createUserForm').reset();
         var cuSuperAdminFieldEl2 = document.getElementById('cuSuperAdminField');
         if (cuSuperAdminFieldEl2) cuSuperAdminFieldEl2.hidden = true;
+        var cuDepartmentFieldEl = document.getElementById('cuDepartmentField');
+        if (cuDepartmentFieldEl) { renderDepartmentOptions(document.getElementById('cuDepartment'), '', 'ยังไม่ระบุ'); cuDepartmentFieldEl.hidden = true; }
         document.getElementById('createUserError').hidden = true;
         showModalEl(createUserModal);
       });
@@ -1426,12 +1631,14 @@
         var ok = await askConfirm('ยืนยันสร้างบัญชีใหม่สำหรับ "' + cuNameVal + '"?', 'ยืนยันการสร้างบัญชี');
         if (!ok) return;
         var cuIsSuperAdminEl = document.getElementById('cuIsSuperAdmin');
+        var cuDepartmentEl = document.getElementById('cuDepartment');
         var cuPayload = {
           name: document.getElementById('cuName').value.trim(),
           username: document.getElementById('cuUsername').value.trim(),
           password: document.getElementById('cuPassword').value,
           role: document.getElementById('cuRole').value,
-          isSuperAdmin: cuIsSuperAdminEl ? cuIsSuperAdminEl.checked : false
+          isSuperAdmin: cuIsSuperAdminEl ? cuIsSuperAdminEl.checked : false,
+          department: (cuDepartmentEl && !document.getElementById('cuDepartmentField').hidden) ? cuDepartmentEl.value : ''
         };
         var r = await withProgress('กำลังสร้างบัญชีใหม่', function () {
           return apiCall('adminCreateUser', cuPayload);
@@ -1440,6 +1647,8 @@
           document.getElementById('createUserForm').reset();
           var cuSuperAdminFieldEl = document.getElementById('cuSuperAdminField');
           if (cuSuperAdminFieldEl) cuSuperAdminFieldEl.hidden = true;
+          var cuDepartmentFieldEl2 = document.getElementById('cuDepartmentField');
+          if (cuDepartmentFieldEl2) cuDepartmentFieldEl2.hidden = true;
           hideModalEl(createUserModal);
           loadUsers();
         } else {
@@ -1477,6 +1686,39 @@
         }, { successLabel: 'ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว' });
         if (r.ok) {
           hideModalEl(resetPwModal);
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      });
+
+      // ---------- แก้ไขแผนกของบัญชีเจ้าหน้าที่ (ตั้งแต่ 1.26.081026) — Super Admin เท่านั้น (ดู adminSetUserDepartment) ----------
+      var editDeptModal = document.getElementById('editDeptModal');
+      var editDeptUserId = null;
+      openEditDeptModal = function (userId, name) {
+        editDeptUserId = userId;
+        var target = allUsers.filter(function (x) { return x.id === userId; })[0];
+        document.getElementById('editDeptTargetName').textContent = 'สำหรับผู้ใช้: ' + name;
+        renderDepartmentOptions(document.getElementById('editDeptSelect'), target ? (target.department || '') : '', 'ยังไม่ระบุ');
+        document.getElementById('editDeptError').hidden = true;
+        showModalEl(editDeptModal);
+      };
+      document.getElementById('editDeptClose').addEventListener('click', function () { hideModalEl(editDeptModal); });
+      document.getElementById('editDeptModalCloseX').addEventListener('click', function () { hideModalEl(editDeptModal); });
+      document.getElementById('editDeptForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('editDeptError');
+        errBox.hidden = true;
+        var deptVal = document.getElementById('editDeptSelect').value;
+        var ok = await askConfirm('ยืนยันตั้งแผนกของบัญชีนี้เป็น "' + (deptVal ? ('เจ้าหน้าที่' + deptVal) : 'ยังไม่ระบุ') + '"?', 'ยืนยันการตั้งแผนก');
+        if (!ok) return;
+        var r = await withProgress('กำลังบันทึก', function () {
+          return apiCall('adminSetUserDepartment', { userId: editDeptUserId, department: deptVal });
+        }, { successLabel: 'ตั้งแผนกแล้ว' });
+        if (r.ok) {
+          for (var i = 0; i < allUsers.length; i++) { if (allUsers[i].id === r.data.id) { allUsers[i] = r.data; break; } }
+          renderUserTable();
+          hideModalEl(editDeptModal);
         } else {
           errBox.textContent = r.error.message;
           errBox.hidden = false;
