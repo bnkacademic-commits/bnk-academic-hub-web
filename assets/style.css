@@ -560,7 +560,11 @@ input:focus, select:focus, textarea:focus {
 .filter-row #subSearch { flex: 2.4; min-width: 200px; }
 .filter-row #openUploadBtn { flex: 0 0 auto; min-width: 0; white-space: nowrap; }
 .field-row[hidden] { display: none; } /* author display:flex ชนะ UA [hidden] เสมอ ต้องบังคับซ่อนเอง (บั๊กเดียวกับ .btn[hidden] ที่แก้ไว้ก่อนหน้า) — ใช้กับ #evTermFields ในหน้าตั้งค่า ปฏิทิน */
-.field-row > .field { flex: 1; }
+/* min-width: 0 สำคัญมาก — ค่าเริ่มต้นของ flex item คือ min-width: auto (ไม่ใช่ 0) ทำให้ยอมหดได้ไม่สุดกว่าความกว้าง "เนื้อหาภายใน"
+   ของตัวเอง แม้จะตั้ง width:100% ไว้แล้วก็ตาม ช่องที่กระทบชัดสุดคือ input[type=datetime-local] ซึ่ง Chromium คำนวณความกว้าง
+   ขั้นต่ำภายในไว้สูงกว่าที่คอลัมน์ field-row จัดสรรให้จริงเสมอ ทำให้ช่องนั้นล้นออกนอกป็อปอัพ (ไม่ขึ้นกับว่าป็อปอัพกว้างแค่ไหน
+   เป็นบั๊กเดิมของ flexbox ไม่ใช่เรื่องขนาดป็อปอัพ) — พบจากผู้ใช้แจ้ง "แถวยาวเกินไป" แล้วตรวจเจอที่ป็อปอัพ "ประกาศ" (ช่องวันที่เริ่ม/สิ้นสุด) */
+.field-row > .field { flex: 1; min-width: 0; }
 textarea { resize: vertical; min-height: 70px; }
 .file-input-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .asset-preview {
@@ -1048,6 +1052,11 @@ tbody tr:hover { background: var(--surface-2); }
   transform: translateY(10px) scale(0.97); opacity: 0; transition: transform 0.2s ease, opacity 0.2s ease;
   position: relative;
 }
+/* ป็อปอัพที่เนื้อหาเยอะ (ฟอร์มหลายแถว/ช่อง field-row คู่/คำอธิบายยาว) คับแคบเกินไปในกล่อง 420px เดิมบนจอที่กว้างพอ
+   (เช่น ป็อปอัพ "กำหนดการ"/"ประเภทงาน"/"ประกาศ"/"ผู้ใช้ใหม่"/"เว็บภายนอก"/"ส่งงาน" ที่มีฟิลด์สะสมเพิ่มมาเรื่อยๆ หลายเวอร์ชัน) —
+   เพิ่มคลาสนี้ใช้คู่กับ .modal-box เพื่อขยายเพดานความกว้างเป็น 620px ให้แถวคู่ (field-row) และคำอธิบายมีที่หายใจมากขึ้น
+   ไม่กระทบจอมือถือเลย เพราะ width:100% อยู่แล้วเท่าเดิม เพดานใหม่มีผลเฉพาะจอที่กว้างพอจะเห็นความต่างจริงๆ (ตั้งแต่เวอร์ชันถัดจาก V12.1) */
+.modal-box.modal-box-wide { max-width: 620px; }
 .modal-backdrop.show .modal-box { transform: translateY(0) scale(1); opacity: 1; }
 .modal-box h3 { margin-top: 0; }
 /* flex-wrap: wrap เพิ่มเข้ามา (ตั้งแต่รอบปรับปรุงป็อปอัพ "หน้าผลงานของฉัน" เป็น 3 ปุ่ม) กันปุ่มล้นแถวออกนอกกรอบบนจอมือถือแคบๆ — ไม่กระทบป็อปอัพอื่นที่มีแค่ 2 ปุ่มเพราะพอดีแถวเดียวอยู่แล้ว */
