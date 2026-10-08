@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=11.9.2" />
+<link rel="stylesheet" href="assets/style.css?v=12.1" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -64,6 +64,35 @@
           <input type="checkbox" id="setSummerEnabled" style="width:18px; height:18px;" />
           <span>เปิดใช้งานภาคฤดูร้อนในระบบ</span>
         </label>
+      </div>
+
+      <!-- เทอม/ปีการศึกษาปัจจุบัน (ตั้งแต่ V12.0) — เดิมคำนวณจากวันที่จริงอัตโนมัติเสมอ ตอนนี้ Super Admin ตั้งเองได้ มีผลเป็นค่าเริ่มต้น
+           ของตัวกรองเทอมปัจจุบันทั่วทั้งระบบ (ปฏิทิน/เช็คลิสต์/ตัวกรองหน้าฮับครู/หน้าแสดงผลงานสาธารณะ) ปล่อยว่างทั้งคู่ = กลับไปอัตโนมัติ -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-calendar-day ui-icon" style="font-size:17px" aria-hidden="true"></i> เทอม/ปีการศึกษาปัจจุบัน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ค่านี้ใช้เป็น "เทอม/ปีการศึกษาปัจจุบัน" เริ่มต้นทั่วทั้งระบบ (ปฏิทิน เช็คลิสต์การส่งงาน ตัวกรองต่างๆ ในหน้าฮับครู และหน้าแสดงผลงานสาธารณะ) — ถ้าปล่อยว่างทั้งสองช่อง ระบบจะคำนวณจากวันที่ปัจจุบันจริงให้อัตโนมัติเหมือนเดิม</p>
+        <div id="curTermError" class="error-box" hidden></div>
+        <form id="curTermForm">
+          <div class="field-row">
+            <div class="field">
+              <label for="setCurYear">ปีการศึกษา (พ.ศ.)</label>
+              <input id="setCurYear" placeholder="เช่น 2568 — ว่าง = อัตโนมัติ" inputmode="numeric" maxlength="4" />
+            </div>
+            <div class="field">
+              <label for="setCurSemester">ภาคเรียน</label>
+              <select id="setCurSemester">
+                <option value="">— ว่าง = อัตโนมัติ —</option>
+                <option value="1">ภาคเรียนที่ 1</option>
+                <option value="2">ภาคเรียนที่ 2</option>
+                <option value="summer">ภาคฤดูร้อน</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-primary" type="submit">บันทึก</button>
+            <button class="btn btn-ghost" type="button" id="curTermClearBtn">เคลียร์ (กลับไปอัตโนมัติ)</button>
+          </div>
+        </form>
       </div>
 
       <div class="card">
@@ -360,6 +389,12 @@
           <div class="hint" style="margin-top:-2px; margin-bottom:8px;">เลือกเฉพาะที่จำเป็นสำหรับประเภทงานนี้ — เช่น ใบเกียรติบัตรอบรมมักต้องมี "วันที่" และ "สถานที่อบรม"</div>
           <div id="catFieldsCheckboxes"></div>
         </div>
+        <div class="field">
+          <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+            <input type="checkbox" id="catNoSubmission" style="width:auto; margin-top:3px;" />
+            <span><span style="display:block;">ไม่ส่งผ่านระบบ (แจ้งเตือนอย่างเดียว)</span><span class="hint" style="margin:0;">กำหนดการของประเภทงานนี้จะไม่มีปุ่ม "ส่งงาน" และไม่ขึ้นในเช็คลิสต์การส่งงานของครู — เป็นแค่การ์ดแจ้งเตือนในปฏิทิน/กำหนดการเท่านั้น (เหมาะกับประกาศ/แจ้งเตือนที่ไม่ต้องอัพโหลดไฟล์)</span></span>
+          </label>
+        </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">เพิ่มประเภทงาน</button>
           <button type="button" class="btn btn-ghost" id="createCatClose">ยกเลิก</button>
@@ -454,7 +489,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=11.9.2"></script>
+  <script src="assets/api.js?v=12.1"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -466,12 +501,16 @@
     ];
     // รูปแบบการ์ดพรีวิวของ "ประเภทงาน" — ตั้งแต่เวอร์ชันถัดจาก V11.3 กำหนดที่ประเภทงานครั้งเดียว มีผลกับทุกครูอัตโนมัติ
     // (คัดลอกมาจาก DISPLAY_TEMPLATES ฝั่ง Worker — worker/src/handlers/admin.js — ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา)
+    // ตั้งแต่ V12.0: เพิ่ม 'bookInline' (เล่มหนังสือแสดงไฟล์ในตัวการ์ด ไม่ต้องกดเปิดป๊อปอัพ) และ 'compact' (รายการย่อ เหมาะกับ
+    // ประเภทงานที่มีผลงานจำนวนมากต่อครู) รวมเป็น 7 รูปแบบ (นับมาตรฐานด้วย) — 'frame' ขยายกรอบรูปให้ใหญ่ขึ้นแล้ว (ดู style.css)
     var TEMPLATE_OPTIONS = [
       { key: '', label: '📄 การ์ดมาตรฐาน' },
-      { key: 'book', label: '📖 เปิดเป็นเล่มหนังสือ' },
-      { key: 'frame', label: '🖼️ กรอบรูปห้อย' },
+      { key: 'book', label: '📖 เปิดเป็นเล่มหนังสือ (กดเปิดป๊อปอัพ)' },
+      { key: 'bookInline', label: '📗 เล่มหนังสือ แสดงไฟล์ในตัวการ์ดเลย' },
+      { key: 'frame', label: '🖼️ เกียรติบัตรกรอบทอง (ห้อย, ขนาดใหญ่)' },
       { key: 'research', label: '🗂️ การ์ดวิจัย/ข้อมูล' },
-      { key: 'pin', label: '📌 พินผลงานเด่น' }
+      { key: 'pin', label: '📌 พินผลงานเด่น' },
+      { key: 'compact', label: '📃 รายการย่อ (งานจำนวนมาก)' }
     ];
     function renderTemplateOptions(selectEl, selectedKey) {
       selectEl.innerHTML = TEMPLATE_OPTIONS.map(function (o) {
@@ -563,6 +602,8 @@
       var s = await getSiteSettings();
       document.getElementById('setSiteName').value = s.siteName || '';
       document.getElementById('setSummerEnabled').checked = s.summerEnabled !== false;
+      document.getElementById('setCurYear').value = s.currentAcademicYear || '';
+      document.getElementById('setCurSemester').value = s.currentSemester || '';
       renderAssetPreview('iconPreview', s.iconDataUrl);
       renderAssetPreview('logoPreview', s.logoDataUrl);
     }
@@ -589,6 +630,43 @@
           errBox.textContent = r.error.message;
           errBox.hidden = false;
         }
+      });
+
+      // ---------- เทอม/ปีการศึกษาปัจจุบัน (ตั้งเองโดย Super Admin — ตั้งแต่ V12.0) ----------
+      var saveCurTerm = async function (yearVal, semesterVal, confirmMsg, successLabel) {
+        var errBox = document.getElementById('curTermError');
+        errBox.hidden = true;
+        var ok = await askConfirm(confirmMsg, 'ยืนยันการบันทึก');
+        if (!ok) return;
+        var r = await withProgress('กำลังบันทึกการตั้งค่า', function () {
+          return apiCall('adminUpdateSettings', { currentAcademicYear: yearVal, currentSemester: semesterVal });
+        }, { successLabel: successLabel });
+        if (r.ok) {
+          resetSettingsCache();
+          document.getElementById('setCurYear').value = r.data.currentAcademicYear || '';
+          document.getElementById('setCurSemester').value = r.data.currentSemester || '';
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      };
+      document.getElementById('curTermForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var yearVal = document.getElementById('setCurYear').value.trim();
+        var semesterVal = document.getElementById('setCurSemester').value;
+        if (!!yearVal !== !!semesterVal) {
+          var errBox = document.getElementById('curTermError');
+          errBox.textContent = 'กรุณากรอกทั้งปีการศึกษาและเลือกภาคเรียนคู่กัน หรือปล่อยว่างทั้งสองช่องเพื่อใช้ค่าอัตโนมัติ';
+          errBox.hidden = false;
+          return;
+        }
+        var semLabel = semesterVal === 'summer' ? 'ภาคฤดูร้อน' : semesterVal ? ('เทอม ' + semesterVal) : '';
+        var msg = yearVal ? ('ยืนยันตั้งเทอม/ปีการศึกษาปัจจุบันเป็น "' + semLabel + ' ปีการศึกษา ' + yearVal + '"? มีผลเป็นค่าเริ่มต้นของตัวกรองเทอมปัจจุบันทั่วทั้งระบบทันที')
+          : 'ยืนยันเคลียร์การตั้งเทอม/ปีการศึกษาปัจจุบันเอง กลับไปคำนวณจากวันที่จริงอัตโนมัติ?';
+        await saveCurTerm(yearVal, semesterVal, msg, yearVal ? 'ตั้งเทอม/ปีการศึกษาปัจจุบันแล้ว' : 'กลับไปใช้การคำนวณอัตโนมัติแล้ว');
+      });
+      document.getElementById('curTermClearBtn').addEventListener('click', async function () {
+        await saveCurTerm('', '', 'ยืนยันเคลียร์การตั้งเทอม/ปีการศึกษาปัจจุบันเอง กลับไปคำนวณจากวันที่จริงอัตโนมัติ?', 'กลับไปใช้การคำนวณอัตโนมัติแล้ว');
       });
 
       var uploadAsset = async function (type, fileInputId, errorBoxId, previewId) {
@@ -649,13 +727,19 @@
             var fieldsLabel = (c.customFields && c.customFields.length > 0)
               ? c.customFields.map(function (k) { var def = CUSTOM_FIELD_DEFS.filter(function (d) { return d.key === k; })[0]; return def ? def.label : k; }).join(', ')
               : 'ไม่มี';
+            // ตั้งแต่ V12.0: ประเภทงาน "แจ้งเตือนอย่างเดียว" (c.noSubmission) ไม่มีผลงานส่งจริง จึงไม่ต้องมีรูปแบบการ์ด/ข้อมูลที่ต้องกรอก — ซ่อนสองช่องนั้นไปเลย
             html += '<div class="event-list-item">' +
               '<input type="color" class="cat-color-input" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" value="' + (c.color || '#3457d5') + '" title="เปลี่ยนสีของประเภทงาน \'' + escapeHtml(c.name) + '\'" />' +
-              '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(c.name) + '</div>' +
-              '<div class="sub-item-meta">ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div></div>' +
-              '<select class="cat-template-select" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" title="รูปแบบการ์ดของประเภทงาน \'' + escapeHtml(c.name) + '\' (ใช้กับทุกครู)"></select>' +
-              '<div style="display:flex; gap:6px; flex-shrink:0;">' +
-              '<button class="btn btn-secondary btn-sm" data-fields-id="' + c.id + '" data-fields-name="' + escapeHtml(c.name) + '" data-fields="' + escapeHtml(JSON.stringify(c.customFields || [])) + '">ข้อมูลที่ต้องกรอก</button>' +
+              '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(c.name) + (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '') + '</div>' +
+              (c.noSubmission
+                ? '<div class="sub-item-meta">ไม่ส่งผ่านระบบ — ไม่มีรูปแบบการ์ดหรือข้อมูลที่ต้องกรอก</div>'
+                : '<div class="sub-item-meta">ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div>') + '</div>' +
+              (c.noSubmission ? '' : '<select class="cat-template-select" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" title="รูปแบบการ์ดของประเภทงาน \'' + escapeHtml(c.name) + '\' (ใช้กับทุกครู)"></select>') +
+              '<div style="display:flex; gap:6px; flex-shrink:0; align-items:center; flex-wrap:wrap;">' +
+              (c.noSubmission ? '' : '<button class="btn btn-secondary btn-sm" data-fields-id="' + c.id + '" data-fields-name="' + escapeHtml(c.name) + '" data-fields="' + escapeHtml(JSON.stringify(c.customFields || [])) + '">ข้อมูลที่ต้องกรอก</button>') +
+              '<label class="btn btn-ghost btn-sm" style="display:flex; align-items:center; gap:6px; cursor:pointer; white-space:nowrap;" title="สลับโหมดแจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ">' +
+                '<input type="checkbox" class="cat-nosub-toggle" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '"' + (c.noSubmission ? ' checked' : '') + ' style="width:auto;" /> แจ้งเตือนอย่างเดียว' +
+              '</label>' +
               '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button>' +
               '</div></div>';
           });
@@ -663,6 +747,25 @@
           rows.forEach(function (c) {
             var sel = wrap.querySelector('select.cat-template-select[data-id="' + c.id + '"]');
             if (sel) renderTemplateOptions(sel, c.displayTemplate || '');
+          });
+          wrap.querySelectorAll('input.cat-nosub-toggle').forEach(function (inp) {
+            inp.addEventListener('change', async function () {
+              var nextVal = inp.checked;
+              var catId = inp.getAttribute('data-id');
+              var catName = inp.getAttribute('data-name');
+              var ok = await askConfirm(
+                nextVal
+                  ? 'ยืนยันตั้งประเภทงาน "' + catName + '" เป็น "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ"? กำหนดการของประเภทงานนี้จะไม่มีปุ่มส่งงานและไม่ขึ้นในเช็คลิสต์ของครูอีกต่อไป'
+                  : 'ยืนยันยกเลิกโหมดแจ้งเตือนอย่างเดียวของประเภทงาน "' + catName + '"? จะกลับมาส่งงานผ่านระบบได้ตามปกติ',
+                'ยืนยันการเปลี่ยนแปลง'
+              );
+              if (!ok) { loadCategories(); return; }
+              var r = await withProgress('กำลังบันทึก', function () {
+                return apiCall('adminSetWorkCategoryNoSubmission', { categoryId: catId, noSubmission: nextVal });
+              }, { successLabel: 'บันทึกแล้ว' });
+              if (!r.ok) showToast(r.error.message, true);
+              loadCategories();
+            });
           });
           wrap.querySelectorAll('input.cat-color-input').forEach(function (inp) {
             inp.addEventListener('change', async function () {
@@ -796,10 +899,11 @@
         var catColorVal = document.getElementById('catColor').value;
         var catTemplateVal = document.getElementById('catTemplate').value;
         var catFieldsVal = readCheckedFields('catFields');
+        var catNoSubmissionVal = document.getElementById('catNoSubmission').checked;
         var ok = await askConfirm('ยืนยันเพิ่มประเภทงาน "' + catNameVal + '"?', 'ยืนยันการเพิ่มประเภทงาน');
         if (!ok) return;
         var r = await withProgress('กำลังเพิ่มประเภทงาน', function () {
-          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, displayTemplate: catTemplateVal, customFields: catFieldsVal });
+          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, displayTemplate: catTemplateVal, customFields: catFieldsVal, noSubmission: catNoSubmissionVal });
         }, { successLabel: 'เพิ่มประเภทงานแล้ว' });
         if (r.ok) {
           hideModalEl(createCatModalEl);

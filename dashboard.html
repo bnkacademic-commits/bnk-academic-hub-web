@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=11.9.2" />
+<link rel="stylesheet" href="assets/style.css?v=12.1" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -148,7 +148,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=11.9.2"></script>
+  <script src="assets/api.js?v=12.1"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -302,11 +302,13 @@
         var cats = await apiCall('hubListWorkCategories', {});
         uploadCategories = cats;
         categoryColorMap = buildCategoryColorMap(cats);
-        if (cats.length === 0) {
+        // ตั้งแต่ V12.0: ตัดประเภทงาน "แจ้งเตือนอย่างเดียว" ออกจากตัวเลือกตอนส่งงาน — ไม่รับการส่งงานผ่านระบบอยู่แล้ว (Worker บล็อกไว้ชั้นหลังด้วย)
+        var selectableCats = cats.filter(function (c) { return !c.noSubmission; });
+        if (selectableCats.length === 0) {
           sel.innerHTML = '<option value="">(ยังไม่มีประเภทงาน — ติดต่อฝ่ายวิชาการ)</option>';
           return;
         }
-        sel.innerHTML = cats.map(function (c) { return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>'; }).join('');
+        sel.innerHTML = selectableCats.map(function (c) { return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>'; }).join('');
       } catch (err) {
         sel.innerHTML = '<option value="">โหลดประเภทงานไม่สำเร็จ</option>';
       }
@@ -423,11 +425,11 @@
       } catch (err) { /* ไม่ต้องแจ้ง error — แค่ตกไปใช้สีเริ่มต้นแทน ไม่ใช่ปัญหาที่ควรขวางผู้ใช้ */ }
     }
 
-    function fillSubFilters() {
+    async function fillSubFilters() {
       var yearSel = document.getElementById('subFilterYear');
       var curYear = yearSel.value;
       var years = Array.from(new Set(allSubmissions.map(function (s) { return s.academicYear; }))).filter(Boolean);
-      var term = currentAcademicTerm();
+      var term = await currentAcademicTerm();
       if (years.indexOf(term.year) === -1) years.push(term.year); // โชว์ปีการศึกษาปัจจุบันเป็นตัวเลือกเสมอ แม้จะยังไม่เคยมีผลงานส่งในปีนี้เลยก็ตาม
       years.sort().reverse();
       yearSel.innerHTML = '<option value="">ทุกปีการศึกษา</option>';
@@ -509,7 +511,7 @@
       var el = document.getElementById('submissionList');
       try {
         allSubmissions = await apiCall('teacherListMine', {});
-        fillSubFilters();
+        await fillSubFilters();
         renderSubmissions();
         renderAssignmentChecklist();
         // renderCalendar() อ่านสถานะ "ส่งแล้วหรือยัง" ด้วย (ตั้งแต่เวอร์ชันถัดจาก V11.9.1 เพื่อตัดสินป้าย "เกินกำหนด") ซึ่งต้องใช้ allSubmissions ที่เพิ่งโหลดเสร็จ
@@ -572,7 +574,9 @@
     function renderAssignmentChecklist() {
       var wrap = document.getElementById('assignmentChecklistBody');
       if (!wrap) return;
-      var assignments = calState.events.filter(function (e) { return !!e.categoryId; });
+      // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ — ไม่มีอะไรให้ "ส่งแล้ว/ยังไม่ส่ง" จริง
+      // ยังคงแสดงเป็นการ์ดแจ้งเตือนอยู่ใน "กำหนดการ" ใต้ปฏิทินตามปกติ (ดู renderCalendar ด้านล่าง)
+      var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission; });
 
       if (assignments.length === 0) {
         wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่ง</div>';
@@ -664,7 +668,8 @@
         // ตั้งแต่เวอร์ชันถัดจาก V11.9.1: งานที่ผูกประเภทงานไว้ (ส่งได้จริง) แต่ "ยังไม่ส่ง" ให้ค้างอยู่ในรายการนี้ต่อไปแม้เกินกำหนดส่งแล้ว
         // (ไม่มีเพดาน 60 วันเหมือนกำหนดการทั่วไป) เพื่อให้ยังกดปุ่ม "ส่งงาน" ได้จากตรงนี้เสมอ — เคยหายไปจากรายการทันทีที่เกินกำหนดเกิน 1 วัน
         // ซึ่งผู้ใช้แจ้งว่าไม่สะดวก เพราะหาไม่เจอว่าจะกดส่งงานที่ค้างได้จากไหน พองานถูกส่งแล้วจะหลุดออกจากรายการตามปกติเหมือนเดิม
-        if (diffDays <= -1 && e.categoryId && !isAssignmentSubmitted(e)) return true;
+        // ตั้งแต่ V12.0: ไม่ใช้กับ e.noSubmission (แจ้งเตือนอย่างเดียว ไม่มีอะไรให้ "ส่ง" จริง) ให้ตกไปใช้เพดาน 60 วันปกติเหมือนกำหนดการทั่วไปแทน
+        if (diffDays <= -1 && e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e)) return true;
         return false;
       }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
 
@@ -677,12 +682,14 @@
         upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดส่งงาน</div><div class="cal-upcoming-grid">' + upcoming.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // เกินกำหนดส่งแล้ว + ยังไม่ส่ง (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) — แสดงป้าย "เกินกำหนด" สีแดงให้เห็นชัดเจน ไม่ใช่แค่หายเงียบๆ ไปจากรายการ
-          var isOverdue = e.categoryId && !isAssignmentSubmitted(e) && new Date(e.endDate || e.date) < now;
+          // ตั้งแต่ V12.0: ไม่มีสถานะเกินกำหนดสำหรับ e.noSubmission เพราะไม่มีอะไรให้ "ส่ง" จริง
+          var isOverdue = e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && new Date(e.endDate || e.date) < now;
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
           // ยังกดได้ตามปกติแม้เกินกำหนดแล้ว (ระบบไม่เคยบล็อกการส่งงานย้อนหลังอยู่แล้ว เพียงแต่เดิมรายการหายไปก่อนจะมีโอกาสกด)
-          var submitBtn = e.categoryId
+          // ตั้งแต่ V12.0: ถ้าเป็นประเภทงาน "แจ้งเตือนอย่างเดียว" ไม่มีปุ่มส่งงานเลย ขึ้นป้ายแจ้งเตือนเฉยๆ แทน
+          var submitBtn = (e.categoryId && !e.noSubmission)
             ? '<button class="btn ' + (isOverdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
-            : '';
+            : (e.categoryId && e.noSubmission ? '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>' : '');
           var termLabel = e.categoryId ? (e.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(e.semester)) + ' ปีการศึกษา ' + escapeHtml(e.academicYear) : '';
           // ตั้งแต่เวอร์ชันถัดจาก V11.1 หัวข้อกำหนดการที่ผูกประเภทงานจะเป็นชื่อประเภทงานเป๊ะๆ อยู่แล้ว (กรอกเองไม่ได้อีกต่อไป) — ไม่ต้องต่อท้าย "(ชื่อประเภทงาน)" ซ้ำอีกถ้าซ้ำกับหัวข้ออยู่แล้ว (กำหนดการเก่าก่อนอัพเดตที่หัวข้อเคยพิมพ์เองไว้ต่างจากชื่อประเภทงาน ยังโชว์วงเล็บต่อท้ายตามเดิม)
           var showCategorySuffix = e.categoryName && e.categoryName !== e.title;
@@ -713,14 +720,14 @@
       renderCalendar();
     });
 
-    document.getElementById('currentTermBadge').textContent = currentTermLabel();
+    currentTermLabel().then(function (label) { document.getElementById('currentTermBadge').textContent = label; });
     loadCalendar();
     refreshCategoryColors();
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
     window.__refreshPageData = function () {
       resetSettingsCache();
-      document.getElementById('currentTermBadge').textContent = currentTermLabel();
+      currentTermLabel().then(function (label) { document.getElementById('currentTermBadge').textContent = label; });
       return Promise.all([applyBranding(), loadHubAnnouncements(), loadExternalLinks(), loadSubmissions(), loadCalendar(), refreshCategoryColors()]);
     };
   </script>

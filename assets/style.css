@@ -819,12 +819,77 @@ tbody tr:hover { background: var(--surface-2); }
 .tpl-book-cover .book .lines div { height: 4px; background: var(--surface-2); margin-bottom: 7px; border-radius: 2px; }
 .tpl-book-cover .book .lines div:nth-child(3) { width: 60%; }
 
-.tpl-frame-wrap { display: flex; justify-content: center; padding: 20px 0 8px; position: relative; }
-.tpl-frame-wrap .hang-rope { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 2px; height: 18px; background: #9aa4b8; }
-.tpl-frame-wrap .hang-pin { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
-.tpl-frame { width: 140px; height: 140px; margin-top: 22px; background: #fff; border: 5px solid #fff; box-shadow: 0 6px 16px rgba(0,0,0,0.22), 0 0 0 1px var(--border); overflow: hidden; }
-.tpl-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.tpl-frame .no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: #fff; }
+.tpl-frame-wrap { display: flex; justify-content: center; align-items: flex-start; padding: 30px 0 10px; position: relative; }
+.tpl-frame-wrap .hang-rope { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 2px; height: 28px; background: #9aa4b8; }
+/* หมุดแขวนปรับเป็นโทนทองให้เข้ากับกรอบ (เดิมเป็นจุดสีแดงธรรมดา) */
+.tpl-frame-wrap .hang-pin {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 9px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6d5, #c99b3f 55%, #7c5c13 100%); box-shadow: 0 1px 3px rgba(0,0,0,0.45);
+}
+/* "เกียรติบัตรใส่กรอบทองลวดลาย" (ปรับจากกรอบรูปห้อยธรรมดา ตามที่ผู้ใช้ขอ — ตั้งแต่ V12.1): ตัวกรอบใช้ linear-gradient
+   หลายสีทองไล่มุม 135deg จำลองผิวโลหะมีไฮไลต์/เงา (ไม่ใช้รูปภาพภายนอกตามแนวทางเดิมของโปรเจกต์ที่ฝังทุกอย่างในเว็บเอง)
+   คั่นด้วยชั้น .tpl-frame-mat สีงาช้าง (พาสปาร์ตู) ระหว่างกรอบทองกับรูป ให้ดูเหมือนกรอบเกียรติบัตรจริงที่มักมีขอบขาวคั่น
+   พร้อมมุมประดับทอง 4 มุม (.tpl-frame-corner) จำลองหมุด/ลวดลายกรอบรูปโบราณ
+   ปรับอีกรอบ (V12.1 รอบ 2 — ตามที่ผู้ใช้แจ้งหลัง V12.1 รอบแรก): เดิมกรอบเป็นกล่องตายตัว 280x210 (4:3) แล้วครอบตัดรูปด้วย
+   object-fit:cover ให้พอดีกล่องเสมอ ทำให้เกียรติบัตรแนวตั้ง/สัดส่วนอื่นที่ไม่ใช่ 4:3 ถูกครอบตัดขอบเสียรายละเอียดไป — เปลี่ยนมาให้
+   กรอบ "ห่อ" ตามสัดส่วนจริงของไฟล์ที่อัพโหลดแทน (ไม่มีการครอบตัดอีกต่อไป) โดยกำหนดเพดานขนาดสูงสุดไว้ที่ตัว <img> เอง
+   (max-width/max-height) แล้วให้ .tpl-frame/.tpl-frame-mat เป็น inline-block ห่อขนาดตามเนื้อหาจริง (ไม่ตั้ง width/height ตายตัว)
+   รูปแนวนอนจะได้กรอบกว้าง รูปแนวตั้ง/จัตุรัสจะได้กรอบทรงนั้นตามจริง */
+.tpl-frame {
+  position: relative; display: inline-block; max-width: 100%; margin: 34px auto 0; padding: 13px; box-sizing: border-box;
+  background: linear-gradient(135deg, #fdf3c8 0%, #e3bb5a 18%, #a9791f 36%, #f6dd8e 50%, #8a6416 64%, #e3bb5a 82%, #fdf3c8 100%);
+  border-radius: 6px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.32), inset 0 0 0 1px rgba(255,255,255,0.5), inset 0 0 16px rgba(0,0,0,0.35);
+}
+.tpl-frame-mat {
+  display: inline-block; max-width: 100%; background: #fdfbf3; border-radius: 2px; padding: 8px; box-sizing: border-box;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), inset 0 2px 8px rgba(0,0,0,0.14); line-height: 0;
+}
+/* เพดานขนาดรูปจริง: กว้าง/สูงไม่เกิน 280px ด้านใดด้านหนึ่ง (ย่อสัดส่วนลงถ้าเกิน แต่ไม่ขยายรูปเล็กให้ใหญ่เกินจริง) */
+.tpl-frame img { display: block; width: auto; height: auto; max-width: 280px; max-height: 280px; border-radius: 1px; }
+.tpl-frame .no-img { width: 220px; height: 165px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #f1e4bd, #d8c48a); color: #8a6416; font-size: 2.2rem; border-radius: 1px; }
+.tpl-frame-corner {
+  position: absolute; width: 16px; height: 16px; border-radius: 50%; z-index: 1;
+  background: radial-gradient(circle at 35% 30%, #fff6d5, #c99b3f 55%, #7c5c13 100%);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.4);
+}
+.tpl-frame-corner::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.75), transparent 60%); }
+.tpl-frame-corner-tl { top: -6px; left: -6px; }
+.tpl-frame-corner-tr { top: -6px; right: -6px; }
+.tpl-frame-corner-bl { bottom: -6px; left: -6px; }
+.tpl-frame-corner-br { bottom: -6px; right: -6px; }
+
+/* ---------- ดรอปดาวน์แยกตามประเภทงาน ในหน้าแสดงผลงานสาธารณะ (view.html — ตั้งแต่ V12.1) ----------
+   ใช้ <details>/<summary> มาตรฐานของเบราว์เซอร์ (ไม่ต้องเขียน JS คุมสถานะเปิด/ปิดเอง) ภายในกลุ่มเทอม/ปีเดียวกัน
+   ถ้ามีมากกว่า 1 ประเภทงาน — ป้องกันหน้าจอยาวเกินไปตอนมีผลงาน/เกียรติบัตรจำนวนมากต่อประเภท ตามที่ผู้ใช้ระบุไว้ */
+.cat-accordion-tools { text-align: right; margin: -4px 0 10px; font-size: 0.85rem; }
+.cat-accordion-tools .link-btn {
+  background: none; border: none; color: var(--primary); cursor: pointer; font-size: inherit; padding: 2px 4px;
+  font-family: inherit; text-decoration: underline; text-underline-offset: 2px;
+}
+.cat-accordion { border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; background: var(--surface-2); }
+.cat-accordion:last-child { margin-bottom: 0; }
+.cat-accordion-summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; font-weight: 600; color: var(--text); user-select: none; transition: background-color 0.15s ease;
+}
+.cat-accordion-summary::-webkit-details-marker { display: none; }
+.cat-accordion-summary::before { content: '▸'; display: inline-block; margin-right: 8px; color: var(--primary); font-size: 0.8em; transition: transform 0.15s ease; }
+.cat-accordion[open] > .cat-accordion-summary::before { transform: rotate(90deg); }
+.cat-accordion-name { flex: 1; }
+.cat-accordion-count { background: var(--primary-light); color: var(--primary-dark); font-size: 0.78rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; margin-left: 10px; flex-shrink: 0; }
+.cat-accordion-body { padding: 2px 14px 6px; background: var(--surface); }
+
+/* 'bookInline' (ตั้งแต่ V12.0): เล่มหนังสือที่ฝัง iframe พรีวิวของ Drive ไว้ในตัวการ์ดเลย ไม่ต้องกดเปิดป๊อปอัพก่อนเหมือน 'book' ปุ่ม "ดูแบบเต็มจอ" ยังเปิดป๊อปอัพเดิมได้ถ้าต้องการดูใหญ่ขึ้น */
+.tpl-bookinline-frame { width: 100%; height: 340px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.16), 0 0 0 1px var(--border); margin-bottom: 4px; background: var(--surface-2); }
+.tpl-bookinline-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+.tpl-bookinline-empty { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.95rem; }
+
+/* 'compact' (ตั้งแต่ V12.0): รายการย่อบรรทัดเดียว เหมาะกับประเภทงานที่มีผลงานจำนวนมากต่อครู (เช่น บันทึกเข้าร่วมกิจกรรม/ประชุม) — ตัดรายละเอียดอื่นออก กวาดตาดูได้เร็ว */
+.tpl-compact-item { align-items: center !important; padding: 9px 4px !important; gap: 10px; }
+.tpl-compact-bar { width: 4px; align-self: stretch; border-radius: 3px; background: var(--accent); flex-shrink: 0; }
+.tpl-compact-main { flex: 1; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.tpl-compact-date { color: var(--text-muted); font-size: 0.82rem; flex-shrink: 0; }
 
 .tpl-research .rtag {
   display: inline-block; background: var(--accent-light); color: var(--accent);
@@ -928,6 +993,12 @@ tbody tr:hover { background: var(--surface-2); }
   font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: 6px;
 }
 .event-submit-btn { align-self: center; flex-shrink: 0; }
+/* ป้าย "แจ้งเตือน" แทนปุ่ม "ส่งงาน" สำหรับประเภทงาน "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (ตั้งแต่ V12.0) — ดู renderCalendar() ใน dashboard.html */
+.notice-badge {
+  display: inline-flex; align-items: center; gap: 5px; align-self: center; flex-shrink: 0;
+  background: var(--accent-light); color: var(--accent);
+  font-size: 0.78rem; font-weight: 700; padding: 6px 12px; border-radius: 999px;
+}
 
 /* "กำหนดการ" (เดิม "กำหนดการใกล้ถึง") ท้ายปฏิทิน: ย้ายออกมาเป็นแถวเต็มความกว้างของการ์ด (นอก .dash-cal-layout) ตั้งแต่ V10.0 ตามที่ผู้ใช้ขอ
    เดิมทดลองไล่เรียงเป็นหลายคอลัมน์อัตโนมัติเมื่อจอกว้าง แต่ทำให้ลำดับรายการดูสลับสับสน (ผู้ใช้แจ้งว่าเป็นบั๊ก) จึงแก้กลับมาเป็นรายการแถวเดียวเรียงลงมาตามลำดับวันที่เหมือนก่อน V10.0
@@ -1070,6 +1141,11 @@ tbody tr:hover { background: var(--surface-2); }
   .topbar-nav { order: 3; width: 100%; justify-content: flex-start; }
   .container, .container-narrow { padding-left: 16px; padding-right: 16px; }
   .card { padding: 16px 14px; }
+  /* ย่อเพดานขนาดรูปในกรอบทองเกียรติบัตรลงบนจอมือถือแคบๆ กันล้นจอแนวนอน (ตัวกรอบยังห่อตามสัดส่วนจริงของรูปเหมือนเดิม — ตั้งแต่ V12.1) */
+  .tpl-frame { margin-top: 30px; padding: 10px; }
+  .tpl-frame img { max-width: 200px; max-height: 200px; }
+  .tpl-frame .no-img { width: 170px; height: 128px; }
+  .tpl-frame-corner { width: 13px; height: 13px; }
   .page-header { padding: 16px 0 12px; margin-bottom: 16px; }
   .page-header h1 { font-size: 1.28rem; }
   .section-title { font-size: 0.98rem; }

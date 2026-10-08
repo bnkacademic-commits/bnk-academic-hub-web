@@ -14,7 +14,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ของทุกไฟล์ .html (index/dashboard/settings/summary/view) ให้ตรงกันด้วย — เป็นตัวกันแคชเก่า (cache-busting) เพราะเบราว์เซอร์/
 // CDN ของโฮสติ้งบางเจ้ามักแคชไฟล์ .css/.js ชื่อเดิมไว้นาน ทำให้อัพโหลดไฟล์ใหม่ทับแล้วแต่ผู้ใช้ยังเห็นหน้าเว็บเวอร์ชันเก่าอยู่
 // (แม้จะลบแคชเบราว์เซอร์ตัวเองแล้วก็ตาม ถ้า CDN กลางทางยังแคชอยู่) เปลี่ยนเลขท้าย query string ทุกเวอร์ชันบังคับให้โหลดใหม่เสมอ
-var APP_VERSION = 'V11.9.2';
+var APP_VERSION = 'V12.1';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -210,7 +210,7 @@ async function getSiteSettings() {
   if (_settingsCache) return _settingsCache;
   if (!_settingsPromise) {
     _settingsPromise = apiCall('publicGetSettings', {}).catch(function () {
-      return { siteName: 'BNKAcademicHub', iconDataUrl: '', logoDataUrl: '', summerEnabled: true };
+      return { siteName: 'BNKAcademicHub', iconDataUrl: '', logoDataUrl: '', summerEnabled: true, currentAcademicYear: '', currentSemester: '' };
     });
   }
   _settingsCache = await _settingsPromise;
@@ -487,10 +487,12 @@ function formatDateTimeThai(isoStr) {
   return formatDateThai(isoStr) + ' ' + hh + ':' + mm + ' น.';
 }
 
-// คำนวณ "ปีการศึกษา/ภาคเรียนปัจจุบัน" จากวันที่จริงตอนนี้ (ปฏิทินการศึกษาไทยทั่วไป) — ใช้เป็นค่าเริ่มต้นของตัวกรองต่างๆ (V9.5)
+// คำนวณ "ปีการศึกษา/ภาคเรียนปัจจุบัน" จากวันที่จริงตอนนี้เสมอ (ปฏิทินการศึกษาไทยทั่วไป) ไม่สนใจค่าที่แอดมินตั้งไว้เอง — ใช้เป็น
+// "ค่าจริงตามเวลา" ล้วนๆ (เช่น ปุ่มรีเฟรชตัวกรองเทอม/ปีในหน้าแสดงผลงานสาธารณะ — ดู view.html) เดิมชื่อ currentAcademicTerm() (V9.5)
+// เปลี่ยนชื่อตั้งแต่ V12.0 เมื่อเพิ่มการตั้งค่าเทอม/ปีปัจจุบันเองได้ (ดู currentAcademicTerm() ด้านล่าง ซึ่งเป็นค่าที่ใช้จริงทั่วระบบแทน)
 // ปีการศึกษา X เริ่มพฤษภาคมปีปฏิทิน (X-543) ถึงเมษายนปีถัดไป: พ.ค.-ต.ค. = เทอม 1, พ.ย.-ธ.ค. = เทอม 2 (ปีการศึกษาเดียวกับเทอม 1),
 // ม.ค.-มี.ค. = เทอม 2 (แต่เป็นปีการศึกษาที่เริ่มพฤษภาคมปีก่อนหน้า), เม.ย. = ภาคฤดูร้อน (ปีการศึกษาเดียวกับเทอม 2 ก่อนหน้า)
-function currentAcademicTerm() {
+function trueCurrentAcademicTerm() {
   var now = new Date();
   var beYear = now.getFullYear() + 543;
   var month = now.getMonth() + 1; // 1-12
@@ -499,10 +501,20 @@ function currentAcademicTerm() {
   if (month >= 1 && month <= 3) return { year: String(beYear - 1), semester: '2' };
   return { year: String(beYear - 1), semester: 'summer' }; // เมษายน
 }
+// "ปีการศึกษา/ภาคเรียนปัจจุบัน" ที่ใช้จริงทั่วระบบ (ค่าเริ่มต้นของตัวกรองต่างๆ — V9.5) — ตั้งแต่ V12.0 เป็น async เพราะต้องเช็ค
+// ค่าที่ Super Admin ตั้งเอง (settings.currentAcademicYear/currentSemester จากแท็บ "ทั่วไป") ก่อน ถ้าตั้งไว้ครบคู่จะใช้ค่านั้นแทนทันที
+// ทั้งระบบ (ปฏิทิน/เช็คลิสต์/ตัวกรองหน้าฮับครู) ถ้ายังไม่ตั้ง (ค่าว่าง) จะ fallback กลับไปคำนวณจากเวลาจริงเหมือนเดิมทุกประการ (เข้ากันได้ย้อนหลัง)
+async function currentAcademicTerm() {
+  var s = await getSiteSettings();
+  if (s && s.currentAcademicYear && s.currentSemester) {
+    return { year: String(s.currentAcademicYear), semester: String(s.currentSemester) };
+  }
+  return trueCurrentAcademicTerm();
+}
 // ข้อความป้ายบอก "ตอนนี้คือปีการศึกษา/ภาคเรียนอะไร" จาก currentAcademicTerm() — ใช้แสดงในปฏิทินหน้าฮับครู (ตั้งแต่ V9.8)
-// ตัดคำนำหน้า "ตอนนี้: " ออกตามที่ผู้ใช้ขอ (ตั้งแต่ V9.9) เหลือแค่ตัวข้อความภาคเรียน/ปีการศึกษาล้วนๆ
-function currentTermLabel() {
-  var t = currentAcademicTerm();
+// ตัดคำนำหน้า "ตอนนี้: " ออกตามที่ผู้ใช้ขอ (ตั้งแต่ V9.9) เหลือแค่ตัวข้อความภาคเรียน/ปีการศึกษาล้วนๆ — เป็น async ตั้งแต่ V12.0 (ดู currentAcademicTerm() ด้านบน)
+async function currentTermLabel() {
+  var t = await currentAcademicTerm();
   var semText = t.semester === 'summer' ? 'ภาคฤดูร้อน' : ('ภาคเรียนที่ ' + t.semester);
   return semText + ' ปีการศึกษา ' + t.year;
 }

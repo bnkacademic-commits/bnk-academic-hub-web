@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=11.9.2" />
+<link rel="stylesheet" href="assets/style.css?v=12.1" />
 </head>
 <body>
   <div class="topbar">
@@ -33,7 +33,24 @@
     <div class="status-note" id="statusNote"></div>
   </div>
 
+  <!-- ตัวกรองเทอม/ปีการศึกษา + ช่องค้นหา + ปุ่มรีเฟรช (ตั้งแต่ V12.0) — ค่าเริ่มต้นของเทอม/ปีคือค่าที่ Super Admin ตั้งไว้ (หรือคำนวณจากเวลาจริงถ้ายังไม่ตั้ง)
+       ปุ่มรีเฟรชจะดึงข้อมูลผลงานใหม่ทั้งหมด + รีเซ็ตตัวกรองกลับไปที่เทอม/ปี "ปัจจุบันจริงตามเวลา" เสมอ (ไม่ใช้ค่าที่แอดมินตั้งเอง) -->
   <div class="container-narrow" style="max-width:640px;">
+    <div id="viewFilterBar" class="card" hidden style="padding:12px 14px; margin-bottom:14px;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <select id="viewFilterYear" style="flex:1; min-width:130px;"></select>
+        <select id="viewFilterSemester" style="flex:1; min-width:130px;">
+          <option value="">ทุกภาคเรียน</option>
+          <option value="1">ภาคเรียนที่ 1</option>
+          <option value="2">ภาคเรียนที่ 2</option>
+          <option value="summer">ภาคฤดูร้อน</option>
+        </select>
+        <button type="button" class="btn btn-secondary btn-sm" id="viewRefreshBtn" title="รีเฟรชข้อมูล + กลับไปเทอม/ปีปัจจุบันจริงตามเวลา"><i class="fas fa-rotate ui-icon" aria-hidden="true"></i> รีเฟรช</button>
+      </div>
+      <div style="margin-top:8px;">
+        <input type="search" id="viewSearchInput" placeholder="ค้นหาชื่อผลงาน..." style="width:100%;" />
+      </div>
+    </div>
     <div id="content"><div class="loading">กำลังโหลดข้อมูล</div></div>
   </div>
 
@@ -50,7 +67,7 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=11.9.2"></script>
+  <script src="assets/api.js?v=12.1"></script>
   <script>
     mountFooter();
     applyBranding();
@@ -76,6 +93,9 @@
     // '' = การ์ดมาตรฐานเดิม, 'book' = เปิดเป็นเล่มหนังสือ (ใช้ตัวแสดงตัวอย่าง /preview ของ Google Drive เอง แทนการสร้างแอนิเมชันพลิกหน้าเอง
     // เพื่อลดความเสี่ยงเรื่อง CORS/ไลบรารีภายนอก — ตัวแสดงตัวอย่างของ Drive พลิกดูทีละหน้าได้ในตัวอยู่แล้ว), 'frame' = กรอบรูปห้อย (ใช้ directUrl),
     // 'research' = การ์ดวิจัยในชั้นเรียน, 'pin' = พินผลงานเด่น
+    // ตั้งแต่ V12.0: 'bookInline' = เล่มหนังสือแบบเดียวกับ 'book' แต่ฝัง iframe พรีวิวของ Drive ไว้ในตัวการ์ดเลย ไม่ต้องกดเปิดป๊อปอัพก่อน
+    // (ยังมีปุ่ม "ดูแบบเต็มจอ" ไว้เปิดป๊อปอัพเดิมได้ถ้าต้องการดูใหญ่ขึ้น), 'compact' = รายการย่อบรรทัดเดียว เหมาะกับประเภทงานที่มีผลงานจำนวนมากต่อครู
+    // (เช่น บันทึกเข้าร่วมกิจกรรม/ประชุม) ตัดรายละเอียดอื่นออกเหลือแค่ชื่อ+วันที่+ปุ่มเปิดไฟล์ ให้กวาดตาดูทีละหลายรายการได้เร็ว
     function renderItemHtml(it) {
       var titleHtml = escapeHtml(it.title) +
         (it.categoryName ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(it.categoryName) + ')</span>' : '');
@@ -94,10 +114,30 @@
           '<div class="sub-item-actions"><button type="button" class="btn btn-primary btn-sm tpl-book-open" data-file-id="' + escapeHtml(it.fileId || '') + '" data-title="' + escapeHtml(it.title) + '">📖 เปิดอ่าน</button>' + openFileBtn + '</div></div>' +
         '</div>';
       }
+      if (it.displayTemplate === 'bookInline') {
+        var hasFile = !!it.fileId;
+        var inlineFrameHtml = hasFile
+          ? '<div class="tpl-bookinline-frame"><iframe src="https://drive.google.com/file/d/' + encodeURIComponent(it.fileId) + '/preview" loading="lazy" title="' + escapeHtml(it.title) + '"></iframe></div>'
+          : '<div class="tpl-bookinline-frame tpl-bookinline-empty"><span>📖 ไม่มีไฟล์แนบ</span></div>';
+        var fullscreenBtn = hasFile ? '<button type="button" class="btn btn-secondary btn-sm tpl-book-open" data-file-id="' + escapeHtml(it.fileId || '') + '" data-title="' + escapeHtml(it.title) + '"><i class="fas fa-expand ui-icon" aria-hidden="true"></i> ดูแบบเต็มจอ</button>' : '';
+        return '<div class="sub-item tpl-item">' +
+          inlineFrameHtml +
+          '<div class="tpl-body"><div><div class="sub-item-title">' + titleHtml + '</div>' + descHtml + customHtml + metaHtml + '</div>' +
+          '<div class="sub-item-actions">' + fullscreenBtn + openFileBtn + '</div></div>' +
+        '</div>';
+      }
       if (it.displayTemplate === 'frame') {
+        // 'frame' (ปรับใหม่ตั้งแต่ V12.1): เดิมเป็นกรอบรูปห้อยธรรมดา ตอนนี้ปรับเป็น "เกียรติบัตรใส่กรอบทองลวดลาย" ตามที่ผู้ใช้ขอ —
+        // เพิ่มชั้น .tpl-frame-mat (ขอบผ้าใบ/พาสปาร์ตู สีงาช้างคั่นระหว่างกรอบทองกับรูป เหมือนกรอบเกียรติบัตรจริง) และมุมประดับทอง 4 มุม (.tpl-frame-corner)
         var imgHtml = it.directUrl ? '<img src="' + escapeHtml(it.directUrl) + '" alt="' + escapeHtml(it.title) + '" />' : '<div class="no-img">🖼️</div>';
         return '<div class="sub-item tpl-item">' +
-          '<div class="tpl-frame-wrap"><div class="hang-rope"></div><div class="hang-pin"></div><div class="tpl-frame">' + imgHtml + '</div></div>' +
+          '<div class="tpl-frame-wrap"><div class="hang-rope"></div><div class="hang-pin"></div>' +
+            '<div class="tpl-frame">' +
+              '<span class="tpl-frame-corner tpl-frame-corner-tl"></span><span class="tpl-frame-corner tpl-frame-corner-tr"></span>' +
+              '<span class="tpl-frame-corner tpl-frame-corner-bl"></span><span class="tpl-frame-corner tpl-frame-corner-br"></span>' +
+              '<div class="tpl-frame-mat">' + imgHtml + '</div>' +
+            '</div>' +
+          '</div>' +
           '<div class="tpl-body"><div><div class="sub-item-title">' + titleHtml + '</div>' + descHtml + customHtml + metaHtml + '</div>' +
           '<div class="sub-item-actions">' + openFileBtn + '</div></div>' +
         '</div>';
@@ -111,6 +151,14 @@
       if (it.displayTemplate === 'pin') {
         return '<div class="sub-item tpl-pin-item">' +
           '<div><span class="tpl-pin-badge">📌 ผลงานเด่น</span><div class="sub-item-title">' + titleHtml + '</div>' + descHtml + customHtml + metaHtml + '</div>' +
+          '<div class="sub-item-actions">' + openFileBtn + '</div>' +
+        '</div>';
+      }
+      if (it.displayTemplate === 'compact') {
+        return '<div class="sub-item tpl-compact-item">' +
+          '<div class="tpl-compact-bar"></div>' +
+          '<div class="tpl-compact-main"><span class="sub-item-title">' + titleHtml + '</span>' +
+          '<span class="tpl-compact-date">' + formatDateThai(it.uploadedAt) + '</span></div>' +
           '<div class="sub-item-actions">' + openFileBtn + '</div>' +
         '</div>';
       }
@@ -135,6 +183,119 @@
       if (e.target === document.getElementById('bookLightbox')) closeBookLightbox();
     });
 
+    // ---------- ตัวกรองเทอม/ปีการศึกษา + ค้นหา + รีเฟรช (ตั้งแต่ V12.0) ----------
+    var allGroups = []; // cache ของ data.groups ที่โหลดมาล่าสุด — ใช้กรอง/ค้นหาซ้ำในเครื่องได้โดยไม่ต้องยิง API ใหม่ทุกครั้งที่เปลี่ยนตัวกรอง
+    var _viewFiltersInitialized = false;
+
+    function fillViewFilters() {
+      var yearSel = document.getElementById('viewFilterYear');
+      var curYear = yearSel.value;
+      var years = Array.from(new Set(allGroups.map(function (g) { return g.academicYear; }))).filter(Boolean);
+      years.sort().reverse();
+      yearSel.innerHTML = '<option value="">ทุกปีการศึกษา</option>' + years.map(function (y) {
+        return '<option value="' + escapeHtml(y) + '">ปีการศึกษา ' + escapeHtml(y) + '</option>';
+      }).join('');
+      if (years.indexOf(curYear) !== -1) yearSel.value = curYear;
+    }
+
+    // ตั้งค่าตัวกรองเทอม/ปีตามที่กำหนด — เพิ่มปีนั้นเป็นตัวเลือกเองถ้ายังไม่มีในลิสต์ (เผื่อยังไม่เคยมีผลงานเผยแพร่ในเทอมนั้นเลย)
+    // trueNow = true: ใช้เวลาจริงตอนนี้เสมอ (ปุ่มรีเฟรช) / false: ใช้ค่าเริ่มต้นที่ Super Admin ตั้งไว้ (หรือเวลาจริงถ้ายังไม่ตั้ง)
+    async function applyTermFilter(trueNow) {
+      var term = trueNow ? trueCurrentAcademicTerm() : await currentAcademicTerm();
+      var yearSel = document.getElementById('viewFilterYear');
+      var hasOption = Array.from(yearSel.options).some(function (o) { return o.value === term.year; });
+      if (!hasOption) {
+        var opt = document.createElement('option');
+        opt.value = term.year; opt.textContent = 'ปีการศึกษา ' + term.year;
+        yearSel.appendChild(opt);
+      }
+      yearSel.value = term.year;
+      document.getElementById('viewFilterSemester').value = term.semester;
+    }
+
+    function renderFilteredContent() {
+      var content = document.getElementById('content');
+      if (allGroups.length === 0) {
+        content.innerHTML = '<div class="card"><div class="empty-state">ยังไม่มีผลงานที่เผยแพร่</div></div>';
+        return;
+      }
+      var yearFilter = document.getElementById('viewFilterYear').value;
+      var semFilter = document.getElementById('viewFilterSemester').value;
+      var searchTerm = document.getElementById('viewSearchInput').value.trim().toLowerCase();
+
+      var visibleGroups = allGroups.filter(function (g) {
+        if (yearFilter && g.academicYear !== yearFilter) return false;
+        if (semFilter && g.semester !== semFilter) return false;
+        return true;
+      }).map(function (g) {
+        // ค้นหา: กรองเฉพาะ "ชิ้นงาน" ที่ชื่อตรงกับคำค้นภายในกลุ่ม ไม่ตัดกลุ่มทั้งกลุ่มออกถ้าเจอแค่บางชิ้น
+        var items = searchTerm ? g.items.filter(function (it) { return (it.title || '').toLowerCase().indexOf(searchTerm) !== -1; }) : g.items;
+        return { academicYear: g.academicYear, semester: g.semester, items: items };
+      }).filter(function (g) { return g.items.length > 0; });
+
+      if (visibleGroups.length === 0) {
+        content.innerHTML = '<div class="card"><div class="empty-state">' + (searchTerm ? 'ไม่พบผลงานที่ตรงกับคำค้นหา' : 'ยังไม่มีผลงานที่เผยแพร่ในภาคเรียนที่เลือก') + '</div></div>';
+        return;
+      }
+      // แยกชิ้นงานภายในแต่ละกลุ่มเทอม/ปี ออกเป็นกลุ่มย่อยตาม "ประเภทงาน" (ตั้งแต่ V12.1) — เพื่อไม่ให้ประเภทงานที่มีผลงาน/เกียรติบัตรจำนวนมาก
+      // (เช่น เกียรติบัตรอบรม) ยืดหน้าจอยาวเกินไป ลำดับของประเภทงานที่ปรากฏก่อน-หลัง อิงตามลำดับ g.items ที่ Worker จัดมาให้แล้ว (display_order)
+      function groupItemsByCategory(items) {
+        var order = [], map = {};
+        items.forEach(function (it) {
+          var key = it.categoryName || 'ไม่ระบุประเภทงาน';
+          if (!map[key]) { map[key] = []; order.push(key); }
+          map[key].push(it);
+        });
+        return order.map(function (key) { return { categoryName: key, items: map[key] }; });
+      }
+
+      var html = '';
+      visibleGroups.forEach(function (g) {
+        var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + g.semester;
+        html += '<div class="card"><div class="year-group-title" style="margin-bottom:12px;">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
+        var catGroups = groupItemsByCategory(g.items);
+        // มีมากกว่า 1 ประเภทงานในกลุ่มนี้เท่านั้นถึงจะคุ้มที่จะทำเป็นดรอปดาวน์แยก (ถ้ามีประเภทเดียวแสดงรายการตรงๆ เหมือนเดิม ไม่มีประโยชน์ที่จะหุบ)
+        if (catGroups.length > 1) {
+          html += '<div class="cat-accordion-tools"><button type="button" class="link-btn cat-expand-all">เปิดทั้งหมด</button> · <button type="button" class="link-btn cat-collapse-all">ปิดทั้งหมด</button></div>';
+          catGroups.forEach(function (cg) {
+            // ค้นหาอยู่ (searchTerm ไม่ว่าง): กางดรอปดาวน์ที่มีผลลัพธ์ตรงกับคำค้นให้อัตโนมัติ ไม่งั้นผู้ใช้ต้องกดเปิดเองถึงจะเห็นผลค้นหา
+            // ไม่ได้ค้นหา: หุบไว้ก่อนเป็นค่าเริ่มต้นเสมอ (ตามที่ผู้ใช้ระบุจุดประสงค์ไว้ว่าอยากประหยัดพื้นที่จอตอนมีผลงานเยอะ)
+            var openAttr = searchTerm ? ' open' : '';
+            html += '<details class="cat-accordion"' + openAttr + '>' +
+              '<summary class="cat-accordion-summary"><span class="cat-accordion-name">' + escapeHtml(cg.categoryName) + '</span>' +
+              '<span class="cat-accordion-count">' + cg.items.length + '</span></summary>' +
+              '<div class="cat-accordion-body">';
+            cg.items.forEach(function (it) { html += renderItemHtml(it); });
+            html += '</div></details>';
+          });
+        } else {
+          g.items.forEach(function (it) { html += renderItemHtml(it); });
+        }
+        html += '</div>';
+      });
+      content.innerHTML = html;
+      content.querySelectorAll('.tpl-book-open').forEach(function (el) {
+        el.addEventListener('click', function () {
+          openBookLightbox(el.getAttribute('data-file-id'), el.getAttribute('data-title'));
+        });
+      });
+      content.querySelectorAll('.cat-expand-all').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          btn.closest('.card').querySelectorAll('details.cat-accordion').forEach(function (d) { d.open = true; });
+        });
+      });
+      content.querySelectorAll('.cat-collapse-all').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          btn.closest('.card').querySelectorAll('details.cat-accordion').forEach(function (d) { d.open = false; });
+        });
+      });
+    }
+
+    ['viewFilterYear', 'viewFilterSemester'].forEach(function (id) {
+      document.getElementById(id).addEventListener('change', renderFilteredContent);
+    });
+    document.getElementById('viewSearchInput').addEventListener('input', renderFilteredContent);
+
     async function load() {
       var username = getParam('u') || getParam('username') || getParam('slug');
       var content = document.getElementById('content');
@@ -150,29 +311,25 @@
         var note = document.getElementById('statusNote');
         note.textContent = data.status === 'archived' ? 'บัญชีนี้พักการใช้งานแล้ว — แสดงผลงานที่บันทึกไว้เพื่ออ้างอิง' : '';
 
-        if (!data.groups || data.groups.length === 0) {
-          content.innerHTML = '<div class="card"><div class="empty-state">ยังไม่มีผลงานที่เผยแพร่</div></div>';
-          return;
+        allGroups = data.groups || [];
+        document.getElementById('viewFilterBar').hidden = allGroups.length === 0;
+        fillViewFilters();
+        // ตั้งค่าเริ่มต้นตัวกรองแค่ตอนโหลดหน้าครั้งแรกเท่านั้น (ครั้งต่อไป เช่น กดรีเฟรช คงค่าตัวกรองที่เลือกไว้เอง — ปุ่มรีเฟรชจัดการ reset เอง)
+        if (!_viewFiltersInitialized) {
+          await applyTermFilter(false);
+          _viewFiltersInitialized = true;
         }
-
-        var html = '';
-        data.groups.forEach(function (g) {
-          var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + g.semester;
-          html += '<div class="card"><div class="year-group-title" style="margin-bottom:12px;">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
-          // ลำดับ g.items มาจาก Worker แล้ว (เรียงตาม display_order ที่ Super Admin จัดไว้ในหน้า "จัดการ Layout" — ตั้งแต่ V11.1)
-          g.items.forEach(function (it) { html += renderItemHtml(it); });
-          html += '</div>';
-        });
-        content.innerHTML = html;
-        content.querySelectorAll('.tpl-book-open').forEach(function (el) {
-          el.addEventListener('click', function () {
-            openBookLightbox(el.getAttribute('data-file-id'), el.getAttribute('data-title'));
-          });
-        });
+        renderFilteredContent();
       } catch (err) {
         content.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
     }
+    document.getElementById('viewRefreshBtn').addEventListener('click', async function () {
+      document.getElementById('viewSearchInput').value = '';
+      await load(); // ดึงผลงานล่าสุดใหม่ทั้งหมด
+      await applyTermFilter(true); // แล้วรีเซ็ตตัวกรองกลับไปเทอม/ปี "ปัจจุบันจริงตามเวลา" เสมอ ไม่ใช้ค่าที่แอดมินตั้งเอง
+      renderFilteredContent();
+    });
     load();
   </script>
 </body>
