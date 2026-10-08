@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>บันทึกข้อความส่งงาน — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=1.24.081026" />
+<style>
+  /* ---------- หน้า "บันทึกข้อความส่งงาน" (ตั้งแต่ 1.24.081026) ----------
+     แบ่งเป็น 2 ส่วนชัดเจน: (1) ส่วนควบคุม/แก้ไขข้อมูล (.no-print) ใช้ .card/.field ปกติของเว็บ เห็นเฉพาะตอนดูบนจอ
+     (2) กระดาษบันทึกข้อความจำลอง A4 จริง (#memoPaper) ที่ปริ้น/เซฟ PDF ได้ตรงจากเบราว์เซอร์ (window.print()) โดยตรง
+     ไม่ผ่าน html2canvas/jsPDF เหมือนหน้า summary.html เพราะเป็นเอกสารทางการที่ต้องการตัวอักษรคมชัด เลือกคัดลอกได้จริง
+     ไม่ใช่ภาพถ่ายหน้าจอ — หลีกเลี่ยงปัญหา "สีซีด"/คุณภาพภาพที่เคยเจอกับการจับภาพ canvas ไปในตัว */
+  .memo-controls-wrap { max-width: 900px; margin: 0 auto; padding: 0 16px 32px; }
+  .memo-paper-outer { background: #525659; padding: 24px 0 60px; }
+  .memo-paper {
+    width: 210mm; min-height: 297mm; margin: 0 auto; background: #ffffff; color: #111827;
+    padding: 20mm 18mm; box-shadow: 0 6px 24px rgba(0,0,0,0.35); font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+    font-size: 15.5px; line-height: 1.85; box-sizing: border-box;
+  }
+  .memo-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 4px; }
+  .memo-head img { width: 42px; height: auto; flex-shrink: 0; margin-top: 2px; }
+  .memo-head h1 { flex: 1; text-align: center; font-size: 1.5rem; font-weight: 700; margin: 0; padding-right: 56px; }
+  .memo-line { margin: 6px 0; }
+  .memo-row { display: flex; justify-content: space-between; gap: 20px; margin: 6px 0; }
+  .memo-indent { text-indent: 2.5em; }
+  .memo-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14.5px; }
+  .memo-table th, .memo-table td { border: 1px solid #333; padding: 5px 8px; text-align: left; vertical-align: top; }
+  .memo-table th { background: #f1f1f1; font-weight: 700; text-align: center; }
+  .memo-table td.memo-no { text-align: center; width: 36px; }
+  .memo-qr-box { display: flex; align-items: center; gap: 14px; margin: 10px 0 18px; }
+  .memo-qr-box .memo-qr-caption { font-size: 13px; color: #374151; max-width: 320px; }
+  .memo-sign-block { margin-top: 26px; text-align: center; width: 280px; margin-left: auto; margin-right: 0; }
+  .memo-sign-line { margin-bottom: 2px; }
+  .memo-approval { margin-top: 30px; }
+  .memo-approval-title { font-weight: 700; margin-bottom: 6px; }
+  .memo-checkbox-line { margin: 4px 0 4px 0; }
+  .memo-dotted { border-bottom: 1px dotted #333; display: inline-block; min-width: 60px; }
+  @media print {
+    #app-topbar, #app-footer, .no-print { display: none !important; }
+    .memo-paper-outer { background: #fff; padding: 0; }
+    .memo-paper { width: auto; min-height: 0; margin: 0; box-shadow: none; padding: 14mm 16mm; }
+    @page { size: A4; margin: 0; }
+    body { margin: 0; }
+  }
+</style>
+</head>
+<body>
+  <div id="app-topbar" class="no-print"></div>
+
+  <div class="container no-print memo-controls-wrap">
+    <div class="page-header">
+      <h1>บันทึกข้อความส่งงาน</h1>
+      <p>กรอก/แก้ไขข้อมูลด้านล่างให้ตรงกับความเป็นจริง แล้วกด "พิมพ์ / บันทึกเป็น PDF" — ระบบจะดึงรายชื่อครูและรายการผลงานที่ส่งแล้วมาเติมให้อัตโนมัติ</p>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-calendar-day ui-icon" style="font-size:17px" aria-hidden="true"></i> ภาคเรียน/ปีการศึกษาที่รายงาน</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="memoYear">ปีการศึกษา</label>
+          <select id="memoYear"></select>
+        </div>
+        <div class="field">
+          <label for="memoSemester">ภาคเรียน</label>
+          <select id="memoSemester">
+            <option value="1">ภาคเรียนที่ 1</option>
+            <option value="2">ภาคเรียนที่ 2</option>
+            <option value="summer">ภาคฤดูร้อน</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-list-check ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการที่จะแนบในบันทึกข้อความ</div>
+      <p class="hint" style="margin-top:-8px; margin-bottom:10px;">ค่าเริ่มต้นเลือกไว้ทุกรายการที่ส่งแล้วในภาคเรียนที่เลือก — ยกเลิกติ๊กรายการที่ไม่ต้องการแนบได้</p>
+      <div id="memoItemsList"><div class="loading">กำลังโหลด</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title"><i class="fas fa-file-lines ui-icon" style="font-size:17px" aria-hidden="true"></i> ข้อมูลบันทึกข้อความ</div>
+      <div class="field-row">
+        <div class="field">
+          <label for="memoNumber">ที่ (เลขที่หนังสือ — ถ้ามี)</label>
+          <input id="memoNumber" placeholder="เช่น บค. ๑๒/๒๕๖๙ — เว้นว่างได้" />
+        </div>
+        <div class="field">
+          <label for="memoDate">วันที่</label>
+          <input id="memoDate" type="date" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="memoSubject">เรื่อง</label>
+        <input id="memoSubject" />
+      </div>
+      <div class="field">
+        <label for="memoTo">เรียน</label>
+        <input id="memoTo" />
+      </div>
+      <div class="field">
+        <label for="memoBody">เนื้อหา (แก้ไขได้อิสระให้ตรงกับความเป็นจริง)</label>
+        <textarea id="memoBody" rows="5"></textarea>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-primary" type="button" id="memoPrintBtn"><i class="fas fa-print ui-icon" aria-hidden="true"></i> พิมพ์ / บันทึกเป็น PDF</button>
+      </div>
+      <p class="hint" style="margin-top:10px;">กด "พิมพ์ / บันทึกเป็น PDF" แล้วเลือกปลายทางเป็นเครื่องพิมพ์ หรือเลือก "Save as PDF" ในหน้าต่างพิมพ์ของเบราว์เซอร์ได้เลย</p>
+    </div>
+  </div>
+
+  <div class="memo-paper-outer">
+    <div class="memo-paper" id="memoPaper">
+      <div class="loading" style="padding:40px; text-align:center;">กำลังเตรียมเอกสาร...</div>
+    </div>
+  </div>
+
+  <div id="app-footer" class="no-print"></div>
+
+  <script src="assets/api.js?v=1.24.081026"></script>
+  <script src="assets/qrcode.min.js"></script>
+  <script>
+    var session = requireHubAccess();
+    if (session) mountChrome('dashboard');
+    // หน้านี้สำหรับครูเท่านั้น (role='teacher') — เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับไม่ส่งงานผ่านระบบนี้เอง ไม่มีเนื้อหาให้รายงาน
+    if (session && session.role !== 'teacher') {
+      location.href = 'dashboard.html';
+    }
+
+    var mySubmissions = [];
+    var checkedIds = {}; // submissionId -> true/false ที่ผู้ใช้ติ๊ก/ยกเลิกติ๊กเอง
+
+    (function fillYearOptions() {
+      var beYear = new Date().getFullYear() + 543;
+      var sel = document.getElementById('memoYear');
+      for (var y = beYear + 2; y >= beYear - 3; y--) {
+        var opt = document.createElement('option');
+        opt.value = y; opt.textContent = 'ปีการศึกษา ' + y;
+        if (y === beYear) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    })();
+
+    function selectedSubmissions() {
+      var year = document.getElementById('memoYear').value;
+      var semester = document.getElementById('memoSemester').value;
+      return mySubmissions.filter(function (s) { return String(s.academicYear) === String(year) && s.semester === semester; });
+    }
+    function checkedSubmissions() {
+      return selectedSubmissions().filter(function (s) { return checkedIds[s.id] !== false; }); // ค่าเริ่มต้น = ติ๊กไว้ (undefined ก็ถือว่าติ๊ก)
+    }
+
+    function renderItemsList() {
+      var wrap = document.getElementById('memoItemsList');
+      var items = selectedSubmissions();
+      if (items.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีผลงานที่ส่งแล้วในภาคเรียนนี้</div>'; renderMemoPaper(); return; }
+      var html = '<div>';
+      items.forEach(function (s) {
+        var checked = checkedIds[s.id] !== false;
+        html += '<label class="event-list-item" style="cursor:pointer;">' +
+          '<input type="checkbox" class="memo-item-check" data-id="' + s.id + '" ' + (checked ? 'checked' : '') + ' style="width:auto; flex-shrink:0; margin-right:10px;" />' +
+          '<div style="flex:1;">' +
+            '<div class="sub-item-title">' + escapeHtml(s.title || s.fileName) + '</div>' +
+            '<div class="sub-item-meta">' + escapeHtml(s.categoryName) + ' · ส่งเมื่อ ' + formatDateThai(s.uploadedAt) + '</div>' +
+          '</div>' +
+        '</label>';
+      });
+      html += '</div>';
+      wrap.innerHTML = html;
+      wrap.querySelectorAll('.memo-item-check').forEach(function (chk) {
+        chk.addEventListener('change', function () {
+          checkedIds[chk.getAttribute('data-id')] = chk.checked;
+          renderMemoPaper();
+        });
+      });
+      renderMemoPaper();
+    }
+
+    function termLabelOf(semester) {
+      return semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + semester;
+    }
+
+    function defaultSubjectAndBody() {
+      var year = document.getElementById('memoYear').value;
+      var semester = document.getElementById('memoSemester').value;
+      var termText = termLabelOf(semester) + ' ปีการศึกษา ' + year;
+      return {
+        subject: 'รายงานการส่งผลงาน/เอกสารการปฏิบัติงาน ประจำ' + termText,
+        body: 'ข้าพเจ้าได้จัดทำและส่งผลงาน/เอกสารตามที่ได้รับมอบหมาย ประจำ' + termText + ' เรียบร้อยแล้ว จำนวน {N} รายการ ดังรายละเอียดที่แนบมาพร้อมนี้ จึงเรียนมาเพื่อโปรดทราบและพิจารณา'
+      };
+    }
+
+    var subjectTouched = false, bodyTouched = false;
+    document.getElementById('memoSubject').addEventListener('input', function () { subjectTouched = true; renderMemoPaper(); });
+    document.getElementById('memoBody').addEventListener('input', function () { bodyTouched = true; renderMemoPaper(); });
+    document.getElementById('memoTo').addEventListener('input', renderMemoPaper);
+    document.getElementById('memoNumber').addEventListener('input', renderMemoPaper);
+    document.getElementById('memoDate').addEventListener('input', renderMemoPaper);
+    ['memoYear', 'memoSemester'].forEach(function (id) {
+      document.getElementById(id).addEventListener('change', function () {
+        if (!subjectTouched) document.getElementById('memoSubject').value = defaultSubjectAndBody().subject;
+        if (!bodyTouched) document.getElementById('memoBody').value = bodyWithCount();
+        renderItemsList();
+      });
+    });
+
+    function bodyWithCount() {
+      var n = checkedSubmissions().length;
+      return defaultSubjectAndBody().body.replace('{N}', String(n));
+    }
+
+    async function renderMemoPaper() {
+      var paper = document.getElementById('memoPaper');
+      var settings = await getSiteSettings();
+      var fresh = await refreshSessionUser();
+      var items = checkedSubmissions();
+
+      var number = document.getElementById('memoNumber').value.trim();
+      var dateVal = document.getElementById('memoDate').value;
+      var dateThai = dateVal ? formatDateThai(dateVal + 'T00:00:00') : formatDateThai(new Date().toISOString());
+      var subject = document.getElementById('memoSubject').value.trim();
+      var toWhom = document.getElementById('memoTo').value.trim();
+      var body = document.getElementById('memoBody').value.trim();
+
+      var schoolLine = [settings.schoolName, settings.schoolDistrict, settings.schoolProvince].filter(Boolean).join(' ');
+      var qrUrl = location.origin + location.pathname.replace(/memo\.html$/, '') + 'view.html?u=' + encodeURIComponent(fresh.username);
+
+      var tableRows = items.map(function (s, i) {
+        return '<tr><td class="memo-no">' + (i + 1) + '</td><td>' + escapeHtml(s.title || s.fileName) + '</td><td>' + escapeHtml(s.categoryName) + '</td><td>' + formatDateThai(s.uploadedAt) + '</td></tr>';
+      }).join('');
+      var tableHtml = items.length > 0
+        ? '<table class="memo-table"><thead><tr><th>ที่</th><th>ชื่อผลงาน/เอกสาร</th><th>ประเภทงาน</th><th>วันที่ส่ง</th></tr></thead><tbody>' + tableRows + '</tbody></table>'
+        : '<p class="hint" style="margin:10px 0;">(ยังไม่ได้เลือกรายการที่จะแนบ)</p>';
+
+      var html = '';
+      html += '<div class="memo-head"><img src="assets/garuda-emblem.png" alt="" /><h1>บันทึกข้อความ</h1></div>';
+      html += '<div class="memo-line">ส่วนราชการ&nbsp;&nbsp;' + escapeHtml(schoolLine || '.................................................') + '</div>';
+      html += '<div class="memo-row">' +
+        '<div>ที่&nbsp;&nbsp;' + (number ? escapeHtml(number) : '<span class="memo-dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>') + '</div>' +
+        '<div>วันที่&nbsp;&nbsp;' + escapeHtml(dateThai) + '</div>' +
+      '</div>';
+      html += '<div class="memo-line">เรื่อง&nbsp;&nbsp;' + escapeHtml(subject) + '</div>';
+      html += '<div class="memo-line">เรียน&nbsp;&nbsp;' + escapeHtml(toWhom) + '</div>';
+      html += '<div class="memo-line memo-indent">ด้วยข้าพเจ้า ' + escapeHtml(fresh.name) +
+        (fresh.position ? ' ตำแหน่ง ' + escapeHtml(fresh.position) : ' ตำแหน่ง<span class="memo-dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>') +
+        (fresh.subjectGroup ? ' กลุ่มสาระการเรียนรู้' + escapeHtml(fresh.subjectGroup) : ' กลุ่มสาระการเรียนรู้<span class="memo-dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>') +
+      '</div>';
+      html += '<div class="memo-line memo-indent">' + escapeHtml(body) + '</div>';
+      html += tableHtml;
+      if (items.length > 0) {
+        html += '<div class="memo-qr-box"><div id="memoQrBox"></div><div class="memo-qr-caption">สแกนเพื่อดูผลงานทั้งหมดของ ' + escapeHtml(fresh.name) + ' ทางออนไลน์</div></div>';
+      }
+      html += '<div class="memo-sign-block">' +
+        '<div class="memo-sign-line">ลงชื่อ.................................................</div>' +
+        '<div class="memo-sign-line">(' + escapeHtml(fresh.name) + ')</div>' +
+        '<div class="memo-sign-line">ตำแหน่ง ' + escapeHtml(fresh.position || '.................................................') + '</div>' +
+      '</div>';
+
+      html += '<div class="memo-approval">' +
+        '<div class="memo-approval-title">ความเห็นของหัวหน้างานวิชาการ</div>' +
+        '<div class="memo-checkbox-line">(&nbsp;&nbsp;&nbsp;) เห็นควรรายงานต่อ &nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;) เห็นควรให้แก้ไขเพิ่มเติม เนื่องจาก<span class="memo-dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>' +
+        '<div class="memo-sign-block">' +
+          '<div class="memo-sign-line">ลงชื่อ.................................................</div>' +
+          '<div class="memo-sign-line">(' + escapeHtml(settings.memoHeadName || '.................................................') + ')</div>' +
+          '<div class="memo-sign-line">ตำแหน่ง ' + escapeHtml(settings.memoHeadPosition || 'หัวหน้างานวิชาการ') + '</div>' +
+        '</div>' +
+      '</div>';
+
+      html += '<div class="memo-approval">' +
+        '<div class="memo-approval-title">ความเห็นของรองผู้อำนวยการฝ่ายวิชาการ</div>' +
+        '<div class="memo-checkbox-line">(&nbsp;&nbsp;&nbsp;) เห็นควรอนุมัติ &nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;) เห็นควรไม่อนุมัติ เนื่องจาก<span class="memo-dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>' +
+        '<div class="memo-sign-block">' +
+          '<div class="memo-sign-line">ลงชื่อ.................................................</div>' +
+          '<div class="memo-sign-line">(' + escapeHtml(settings.memoDeputyName || '.................................................') + ')</div>' +
+          '<div class="memo-sign-line">ตำแหน่ง ' + escapeHtml(settings.memoDeputyPosition || 'รองผู้อำนวยการฝ่ายวิชาการ') + '</div>' +
+        '</div>' +
+      '</div>';
+
+      html += '<div class="memo-approval">' +
+        '<div class="memo-approval-title">ความเห็นของผู้อำนวยการโรงเรียน</div>' +
+        '<div class="memo-checkbox-line">(&nbsp;&nbsp;&nbsp;) อนุมัติ &nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;) ไม่อนุมัติ เนื่องจาก<span class="memo-dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>' +
+        '<div class="memo-sign-block">' +
+          '<div class="memo-sign-line">ลงชื่อ.................................................</div>' +
+          '<div class="memo-sign-line">(' + escapeHtml(settings.memoDirectorName || '.................................................') + ')</div>' +
+          '<div class="memo-sign-line">ตำแหน่ง ' + escapeHtml(settings.memoDirectorPosition || 'ผู้อำนวยการโรงเรียน') + '</div>' +
+        '</div>' +
+      '</div>';
+
+      paper.innerHTML = html;
+      if (items.length > 0) {
+        var qrBox = document.getElementById('memoQrBox');
+        if (qrBox) new QRCode(qrBox, { text: qrUrl, width: 96, height: 96 });
+      }
+    }
+
+    document.getElementById('memoPrintBtn').addEventListener('click', function () { window.print(); });
+
+    async function init() {
+      if (!session || session.role !== 'teacher') return;
+      document.getElementById('memoDate').value = new Date().toISOString().slice(0, 10);
+      var fresh = await refreshSessionUser();
+      try {
+        mySubmissions = await apiCall('teacherListMine', {});
+      } catch (err) {
+        document.getElementById('memoItemsList').innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+      var term = await currentAcademicTerm();
+      document.getElementById('memoYear').value = term.year;
+      document.getElementById('memoSemester').value = term.semester;
+      var d = defaultSubjectAndBody();
+      document.getElementById('memoSubject').value = d.subject;
+      document.getElementById('memoBody').value = d.body.replace('{N}', String(selectedSubmissions().length));
+      var settings = await getSiteSettings();
+      document.getElementById('memoTo').value = settings.schoolName ? ('ผู้อำนวยการ' + settings.schoolName) : 'ผู้อำนวยการโรงเรียน';
+      renderItemsList();
+    }
+    if (session) init();
+  </script>
+</body>
+</html>

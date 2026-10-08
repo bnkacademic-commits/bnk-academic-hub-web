@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.22.081026';
+var APP_VERSION = '1.24.081026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -83,6 +83,22 @@ function setSession(token, user) {
     localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
     localStorage.setItem(SESSION_LOGIN_AT_KEY, String(Date.now()));
   } catch (e) { /* localStorage อาจถูกปิด */ }
+}
+// อัพเดตข้อมูลผู้ใช้ที่แคชไว้ใน localStorage ให้สดขึ้น โดย "ไม่แตะ" เวลา login (SESSION_LOGIN_AT_KEY) และ token เดิม
+// (ตั้งแต่ 1.24.081026) — ต่างจาก setSession() ด้านบนตรงที่ setSession() รีเซ็ตตัวจับเวลาหมดอายุ 1 ชั่วโมงใหม่ทุกครั้ง ซึ่งไม่ใช่
+// สิ่งที่ต้องการตอนแค่รีเฟรชข้อมูลโปรไฟล์ (เช่น ตำแหน่ง/กลุ่มสาระการเรียนรู้ที่เจ้าหน้าที่ฝ่ายวิชาการเพิ่งตั้งให้) กลางเซสชัน
+function updateCachedSessionUser(user) {
+  try { localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user)); } catch (e) { /* localStorage อาจถูกปิด */ }
+}
+// เรียก checkSession ครั้งเดียวเพื่อดึงข้อมูลผู้ใช้ปัจจุบันสดๆ จากเซิร์ฟเวอร์มาอัพเดตแคช แล้วคืนค่า session ที่อัพเดตแล้วกลับไป
+// (ตั้งแต่ 1.24.081026) ใช้ที่หน้า memo.html เพื่อให้แน่ใจว่าตำแหน่ง/กลุ่มสาระการเรียนรู้ที่แสดงเป็นค่าล่าสุดเสมอ ไม่ใช่ค่าเก่า
+// ที่ค้างมาตั้งแต่ตอน login ครั้งก่อน (ถ้าเรียกไม่สำเร็จ เช่น เน็ตสะดุด ก็ปล่อยผ่านคืนค่า session เดิมที่มีอยู่ไปเฉยๆ)
+async function refreshSessionUser() {
+  try {
+    var data = await apiCall('checkSession', {});
+    if (data && data.user) { updateCachedSessionUser(data.user); return data.user; }
+  } catch (e) { /* ปล่อยผ่าน ใช้ค่าที่แคชไว้เดิม */ }
+  return getSession();
 }
 function clearSession() {
   try {
@@ -213,7 +229,11 @@ async function getSiteSettings() {
   if (_settingsCache) return _settingsCache;
   if (!_settingsPromise) {
     _settingsPromise = apiCall('publicGetSettings', {}).catch(function () {
-      return { siteName: 'BNKAcademicHub', iconDataUrl: '', logoDataUrl: '', summerEnabled: true, currentAcademicYear: '', currentSemester: '' };
+      return {
+        siteName: 'BNKAcademicHub', iconDataUrl: '', logoDataUrl: '', summerEnabled: true, currentAcademicYear: '', currentSemester: '',
+        schoolName: '', schoolDistrict: '', schoolProvince: '',
+        memoHeadName: '', memoHeadPosition: '', memoDeputyName: '', memoDeputyPosition: '', memoDirectorName: '', memoDirectorPosition: ''
+      };
     });
   }
   _settingsCache = await _settingsPromise;

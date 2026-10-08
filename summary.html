@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.22.081026" />
+<link rel="stylesheet" href="assets/style.css?v=1.24.081026" />
 <style>
   .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
   .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
@@ -109,7 +109,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.22.081026"></script>
+  <script src="assets/api.js?v=1.24.081026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -350,16 +350,43 @@
     document.getElementById('exportReportCancelBtn').addEventListener('click', function () { hideModalEl(exportReportModal); });
     document.getElementById('exportReportModalCloseX').addEventListener('click', function () { hideModalEl(exportReportModal); });
 
+    // หัวเรื่องรายงาน (ตั้งแต่เวอร์ชันถัดไปหลัง 1.22 — ผู้ใช้ขอให้ระบุ "งานที่เลือกมารายงาน" ในไฟล์ที่ออก) แทรกไว้บนสุดของ
+    // #assignmentSummaryWrap ชั่วคราวแค่ตอน capture แล้วลบออกทันทีหลัง capture เสร็จ ไม่กระทบหน้าจอจริงที่ผู้ใช้เห็น
+    function buildReportHeadingEl() {
+      var asgSel = document.getElementById('asgFilterAssignment');
+      var yearSel = document.getElementById('asgFilterYear');
+      var semSel = document.getElementById('asgFilterSemester');
+      var asgLabel = asgSel.value ? asgSel.options[asgSel.selectedIndex].textContent : 'ทุกงาน';
+      var yearLabel = yearSel.value ? ('ปีการศึกษา ' + yearSel.value) : 'ทุกปีการศึกษา';
+      var semLabel = semSel.value === 'summer' ? 'ภาคฤดูร้อน' : semSel.value ? ('ภาคเรียนที่ ' + semSel.value) : 'ทุกภาคเรียน';
+      var el = document.createElement('div');
+      el.id = '__reportHeadingTmp';
+      el.style.textAlign = 'center';
+      el.style.marginBottom = '18px';
+      el.style.paddingBottom = '14px';
+      el.style.borderBottom = '2px solid #334155';
+      el.innerHTML =
+        '<div style="font-size:1.3rem; font-weight:700; color:#1e293b; margin-bottom:6px;">รายงานสรุปการส่งงาน</div>' +
+        '<div style="font-size:1.05rem; color:#334155;">งานที่เลือกมารายงาน: <b>' + escapeHtml(asgLabel) + '</b></div>' +
+        '<div style="font-size:0.9rem; color:#64748b; margin-top:4px;">' + escapeHtml(yearLabel) + ' · ' + escapeHtml(semLabel) +
+          ' &nbsp;|&nbsp; ออกรายงานวันที่ ' + escapeHtml(formatDateThai(new Date().toISOString())) + '</div>';
+      return el;
+    }
+
     async function exportReport(kind) {
       hideModalEl(exportReportModal);
       var target = document.getElementById('assignmentSummaryWrap');
       // บังคับออกรายงานเป็นโหมดสว่างเสมอ ไม่ว่าผู้ใช้จะเปิดใช้งาน Dark Mode อยู่หรือไม่ (ตั้งแต่ V9.9)
       // สลับ data-theme ของทั้งหน้าเป็น "light" ชั่วคราวก่อน capture แล้วค่อยคืนค่าเดิมกลับหลัง capture เสร็จ (ไม่แตะ localStorage จึงไม่กระทบธีมที่ผู้ใช้ตั้งไว้)
       var prevTheme = document.documentElement.getAttribute('data-theme');
+      var headingEl = buildReportHeadingEl();
       var r = await withProgress('กำลังสร้างไฟล์รายงาน', async function () {
         document.documentElement.setAttribute('data-theme', 'light');
-        // รอ 2 เฟรมให้เบราว์เซอร์ apply ตัวแปรสี CSS ของโหมดสว่างให้เสร็จก่อนเริ่ม capture
+        target.insertBefore(headingEl, target.firstChild);
+        // รอ 2 เฟรมให้เบราว์เซอร์ apply ตัวแปรสี CSS ของโหมดสว่างให้เสร็จก่อนเริ่ม capture + รอให้ไอคอน Font Awesome (เว็บฟอนต์)
+        // โหลด/พร้อมเต็มที่ก่อน (document.fonts.ready) กัน html2canvas แคปเจอร์ไปตอนไอคอนยังไม่ขึ้นสมบูรณ์ จะเห็นเป็นสี่เหลี่ยม/จางผิดสี
         await new Promise(function (resolve) { requestAnimationFrame(function () { requestAnimationFrame(resolve); }); });
+        if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) { /* บางเบราว์เซอร์อาจไม่รองรับ ไม่ต้องหยุดทำงาน */ } }
         try {
           var canvas = await html2canvas(target, {
             backgroundColor: '#ffffff',
@@ -373,18 +400,45 @@
             link.download = 'bnk-assignment-report-' + stamp + '.png';
             link.click();
           } else {
+            // ---------- ตั้งแต่เวอร์ชันถัดไปหลัง 1.22: ตัดแบ่งเป็นหน้ากระดาษ A4 จริง ----------
+            // เดิมสร้าง PDF เป็น "หน้าเดียวยักษ์" ขนาดเท่าภาพที่ capture มาทั้งแผ่น (format: [widthMm, heightMm] ตามขนาดจริง) —
+            // ถ้ารายการที่แสดงมีหลายงาน/หลายแถวสะสมมาก (เช่นเลือก "ทุกงาน" ที่มีกำหนดการสะสมมาหลายเทอม) หน้าเดียวนั้นจะสูงมาก
+            // (หลักพัน-หมื่น มม.) โปรแกรมอ่าน PDF ส่วนใหญ่จะ auto-fit ภาพยักษ์นี้ให้พอดีจอ ทำให้ของจริงที่มีสีเหลือเป็นแถบเล็กๆ
+            // ท่ามกลางพื้นที่ขาวมหาศาล ดูเหมือน "สีซีด/จาง" ทั้งที่สีจริงถูกต้องทุกจุด (ยืนยันด้วยการอ่านค่าพิกเซลเทียบ CSS
+            // ตรงกันเป๊ะ) ที่ถูกต้องคือต้องตัดแบ่งเป็นหน้า A4 มาตรฐานหลายหน้าเหมือนรายงานทั่วไป ปริ้นได้ตรงขนาดจริง
             var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
             if (!jsPDFCtor) throw new Error('โหลดไลบรารี PDF ไม่สำเร็จ');
-            var imgData = canvas.toDataURL('image/jpeg', 0.92); // ใช้ JPEG คุณภาพสูงแทน PNG เฉพาะตอนฝังใน PDF เพื่อลดขนาดไฟล์ (PNG คุณภาพเท่ากันแต่ไฟล์ใหญ่กว่ามาก)
-            var pxToMm = 0.264583;
-            var widthMm = canvas.width * pxToMm / 2; // scale:2 ตอน capture แล้วหารกลับ
-            var heightMm = canvas.height * pxToMm / 2;
-            var doc = new jsPDFCtor({ orientation: widthMm > heightMm ? 'l' : 'p', unit: 'mm', format: [widthMm, heightMm] });
-            doc.addImage(imgData, 'JPEG', 0, 0, widthMm, heightMm);
+            var scale = 2; // ตรงกับ scale ตอน html2canvas ด้านบน
+            var pxToMm = 0.264583; // 1 CSS px ที่ 96dpi = 0.264583 มม.
+            var canvasPxToMm = pxToMm / scale;
+            var marginMm = 10;
+            var pageWmm = 210, pageHmm = 297; // A4 แนวตั้ง
+            var usableWmm = pageWmm - marginMm * 2;
+            var usableHmm = pageHmm - marginMm * 2;
+            var fullWmm = canvas.width * canvasPxToMm;
+            var renderScale = usableWmm / fullWmm; // ย่อ/ขยายภาพทั้งแผ่นให้พอดีความกว้างหน้า A4 เสมอ
+            var sliceHeightPx = usableHmm / renderScale / canvasPxToMm; // ความสูง (px บน canvas ต้นฉบับ) ต่อ 1 หน้า A4
+            var totalPages = Math.max(1, Math.ceil(canvas.height / sliceHeightPx));
+            var doc = new jsPDFCtor({ orientation: 'p', unit: 'mm', format: 'a4' });
+            var sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            var sctx = sliceCanvas.getContext('2d');
+            for (var pageI = 0; pageI < totalPages; pageI++) {
+              var startPx = Math.round(pageI * sliceHeightPx);
+              var thisSliceH = Math.min(Math.round(sliceHeightPx), canvas.height - startPx);
+              sliceCanvas.height = thisSliceH;
+              sctx.clearRect(0, 0, sliceCanvas.width, thisSliceH);
+              sctx.drawImage(canvas, 0, startPx, canvas.width, thisSliceH, 0, 0, canvas.width, thisSliceH);
+              var sliceImgData = sliceCanvas.toDataURL('image/jpeg', 0.95); // ใช้ JPEG คุณภาพสูงแทน PNG เฉพาะตอนฝังใน PDF เพื่อลดขนาดไฟล์ (PNG คุณภาพเท่ากันแต่ไฟล์ใหญ่กว่ามาก)
+              var sliceHmmOnPage = thisSliceH * canvasPxToMm * renderScale;
+              if (pageI > 0) doc.addPage();
+              doc.addImage(sliceImgData, 'JPEG', marginMm, marginMm, usableWmm, sliceHmmOnPage);
+            }
             doc.save('bnk-assignment-report-' + stamp + '.pdf');
           }
           return { ok: true };
         } finally {
+          headingEl.remove();
           if (prevTheme) document.documentElement.setAttribute('data-theme', prevTheme);
           else document.documentElement.removeAttribute('data-theme');
         }
