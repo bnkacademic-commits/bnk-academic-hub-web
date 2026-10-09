@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.26.081026" />
+<link rel="stylesheet" href="assets/style.css?v=1.28.091026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -151,11 +151,13 @@
         </form>
       </div>
 
-      <!-- ข้อมูลหัวกระดาษ/ผู้ลงนาม "บันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026) — ใช้พิมพ์ซ้ำอัตโนมัติในทุกใบบันทึกข้อความของทุกครูที่หน้า memo.html
-           ไม่ต้องให้ครูพิมพ์ชื่อผู้บริหารเอง เปิดให้ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการแก้ไขได้เหมือนการ์ดเทอม/ปีการศึกษาด้านบน -->
-      <div class="card">
-        <div class="section-title"><i class="fas fa-file-lines ui-icon" style="font-size:17px" aria-hidden="true"></i> ข้อมูลสำหรับพิมพ์บันทึกข้อความ</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ข้อมูลหัวกระดาษและชื่อ-ตำแหน่งผู้ลงนาม ที่จะพิมพ์ซ้ำอัตโนมัติในใบ "บันทึกข้อความส่งงาน" ของครูทุกคน (เปิดจากหน้าฮับครู) ตั้งค่าไว้ครั้งเดียวที่นี่</p>
+      <!-- ข้อมูลหัวกระดาษ/ผู้ลงนามผู้อำนวยการ "บันทึกข้อความ" (ตั้งแต่ 1.25.081026) — ใช้พิมพ์ซ้ำอัตโนมัติในทุกใบบันทึกข้อความของทุกครูที่หน้า memo.html
+           ไม่ต้องให้ครูพิมพ์ชื่อผู้บริหารเอง — ตั้งแต่ 1.28.xxxxxx: เฉพาะ Super Admin เท่านั้น (ชื่อหัวหน้าฝ่าย/รองผู้อำนวยการฝ่าย
+           ย้ายไปอยู่การ์ด "ชื่อผู้ลงนามตามฝ่าย" ด้านล่างแล้ว ซึ่งเจ้าหน้าที่แต่ละฝ่ายกำหนดเองได้ — การ์ดนี้ถูกซ่อนจาก DOM เลยสำหรับ
+           เจ้าหน้าที่ฝ่ายวิชาการที่ไม่ใช่ Super Admin ด้วย class "super-admin-only" เหมือนส่วนอื่นๆ ที่สงวนสิทธิ์ไว้ -->
+      <div class="card super-admin-only">
+        <div class="section-title"><i class="fas fa-file-lines ui-icon" style="font-size:17px" aria-hidden="true"></i> ข้อมูลสำหรับพิมพ์บันทึกข้อความ (ระดับโรงเรียน)</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ข้อมูลหัวกระดาษและชื่อ-ตำแหน่งผู้อำนวยการ ที่จะพิมพ์ซ้ำอัตโนมัติในใบ "บันทึกข้อความ" ของครูทุกคน (เปิดจากหน้าฮับครู) ตั้งค่าไว้ครั้งเดียวที่นี่ — ส่วนชื่อหัวหน้าฝ่าย/รองผู้อำนวยการฝ่าย แต่ละฝ่ายไปตั้งที่การ์ด "ชื่อผู้ลงนามตามฝ่าย" ด้านล่าง</p>
         <div id="memoSettingsError" class="error-box" hidden></div>
         <form id="memoSettingsForm">
           <div class="field">
@@ -174,26 +176,6 @@
           </div>
           <div class="field-row">
             <div class="field">
-              <label for="setMemoHeadName">ชื่อ-สกุล หัวหน้างานวิชาการ</label>
-              <input id="setMemoHeadName" placeholder="เช่น นางสาวสมหญิง ใจดี" />
-            </div>
-            <div class="field">
-              <label for="setMemoHeadPosition">ตำแหน่ง</label>
-              <input id="setMemoHeadPosition" placeholder="หัวหน้างานวิชาการ" />
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label for="setMemoDeputyName">ชื่อ-สกุล รองผู้อำนวยการฝ่ายวิชาการ</label>
-              <input id="setMemoDeputyName" placeholder="เช่น นายอนุชา คำแดง" />
-            </div>
-            <div class="field">
-              <label for="setMemoDeputyPosition">ตำแหน่ง</label>
-              <input id="setMemoDeputyPosition" placeholder="รองผู้อำนวยการฝ่ายวิชาการ" />
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
               <label for="setMemoDirectorName">ชื่อ-สกุล ผู้อำนวยการโรงเรียน</label>
               <input id="setMemoDirectorName" placeholder="เช่น นายสุรจิตย์ ผิวงาม" />
             </div>
@@ -206,6 +188,53 @@
         </form>
       </div>
 
+      <!-- ชื่อผู้ลงนามตามฝ่าย (ตั้งแต่ 1.28.xxxxxx): ชื่อ-ตำแหน่ง "หัวหน้าฝ่าย" + "รองผู้อำนวยการฝ่าย" ของแต่ละฝ่าย — เจ้าหน้าที่
+           แต่ละฝ่ายกำหนดชื่อของฝ่ายตัวเองได้เอง (ไม่ต้องรอ Super Admin) Super Admin เลือกฝ่ายจากดรอปดาวน์ได้ทุกฝ่าย ส่วนเจ้าหน้าที่
+           ฝ่ายวิชาการ (staff) จะเห็นเฉพาะฝ่ายของตัวเองล็อกไว้ให้เลย (ตรงกับสิทธิ์จริงฝั่ง Worker — requireDepartmentManager) -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-user-tie ui-icon" style="font-size:17px" aria-hidden="true"></i> ชื่อผู้ลงนามตามฝ่าย</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ชื่อ-ตำแหน่งหัวหน้าฝ่าย และรองผู้อำนวยการฝ่าย ที่จะพิมพ์ในใบ "บันทึกข้อความ" ของครู — แต่ละฝ่ายกำหนดชื่อของตัวเองได้เลย (Super Admin ตั้งให้ทุกฝ่ายได้)</p>
+        <div id="deptSignersError" class="error-box" hidden></div>
+        <form id="deptSignersForm">
+          <div class="field" id="deptSignersDeptFieldWrap">
+            <label for="deptSignersDept">ฝ่าย</label>
+            <select id="deptSignersDept"></select>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="setDeptHeadName">ชื่อ-สกุล หัวหน้าฝ่าย</label>
+              <input id="setDeptHeadName" placeholder="เช่น นางสาวสมหญิง ใจดี" />
+            </div>
+            <div class="field">
+              <label for="setDeptHeadPosition">ตำแหน่ง</label>
+              <input id="setDeptHeadPosition" placeholder="เช่น หัวหน้าฝ่ายวิชาการ" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="setDeptDeputyName">ชื่อ-สกุล รองผู้อำนวยการฝ่าย</label>
+              <input id="setDeptDeputyName" placeholder="เช่น นายอนุชา คำแดง" />
+            </div>
+            <div class="field">
+              <label for="setDeptDeputyPosition">ตำแหน่ง</label>
+              <input id="setDeptDeputyPosition" placeholder="เช่น รองผู้อำนวยการฝ่ายวิชาการ" />
+            </div>
+          </div>
+          <button class="btn btn-primary" type="submit">บันทึก</button>
+        </form>
+      </div>
+
+      <!-- หัวเรื่องบันทึกข้อความ (ตั้งแต่ 1.28.xxxxxx): เจ้าหน้าที่แต่ละฝ่ายสร้างหัวเรื่องของฝ่ายตัวเองไว้ล่วงหน้า พร้อมผูกกับ
+           "ประเภทงาน" ที่เกี่ยวข้อง — ครูเลือกหัวเรื่องนี้จากหน้าฮับแทนการพิมพ์หัวเรื่องเองทั้งหมด (ตามข้อ 1 ที่ผู้ใช้ขอ) -->
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-list-check ui-icon" style="font-size:17px" aria-hidden="true"></i> หัวเรื่องบันทึกข้อความ</span>
+          <button class="btn btn-primary btn-sm" id="openCreateMemoSubjectBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มหัวเรื่อง</button>
+        </div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">หัวเรื่องที่ครูเลือกได้ตอนกดปุ่ม "จัดทำบันทึกข้อความ" ในหน้าฮับ — ผูกกับประเภทงานที่เกี่ยวข้องไว้ รายการผลงานที่แนบได้จะถูกกรองให้เหลือเฉพาะประเภทงานที่เลือกไว้นี้เท่านั้น (เจ้าหน้าที่ฝ่ายวิชาการเห็น/จัดการได้เฉพาะหัวเรื่องของฝ่ายตัวเอง Super Admin เห็นและจัดการได้ทุกฝ่าย)</p>
+        <div id="memoSubjectListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+
       <!-- ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครูแต่ละคน (ตั้งแต่ 1.25.081026) — เติมในเนื้อหาเปิดของบันทึกข้อความอัตโนมัติเช่นกัน
            เจ้าหน้าที่ฝ่ายวิชาการ/Super Admin เป็นผู้ตั้งค่าให้ (ครูไม่กรอกเอง) รายชื่อดึงจากรายชื่อผู้ใช้เดียวกับแท็บ "จัดการบัญชี"
            รวมบัญชีเจ้าหน้าที่ฝ่ายวิชาการ (ที่มีหน้าฮับ) ด้วย ไม่ใช่แค่บัญชีครู เพราะเจ้าหน้าที่ก็เป็นครูที่ส่งงานผ่านระบบเหมือนกัน -->
@@ -215,6 +244,38 @@
         <input type="search" id="teacherInfoSearch" placeholder="ค้นหาชื่อ" style="margin-bottom:10px;" />
         <div id="teacherInfoError" class="error-box" hidden></div>
         <div id="teacherInfoTableWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Create/edit memo-subject modal (ตั้งแต่ 1.28.xxxxxx) -->
+    <div class="modal-backdrop" id="memoSubjectModal" hidden>
+      <div class="modal-box modal-box-wide">
+        <button type="button" class="modal-close-x" id="memoSubjectModalCloseX" aria-label="ปิด">✕</button>
+        <h3 id="memoSubjectModalTitle">เพิ่มหัวเรื่องบันทึกข้อความ</h3>
+        <div id="memoSubjectError" class="error-box" hidden></div>
+        <form id="memoSubjectForm" style="text-align:left;">
+          <input type="hidden" id="msEditId" value="" />
+          <div class="field" id="msDeptFieldWrap">
+            <label for="msDepartment">ฝ่าย</label>
+            <select id="msDepartment"></select>
+          </div>
+          <div class="field">
+            <label for="msSubject">หัวเรื่อง</label>
+            <input id="msSubject" required placeholder="เช่น ส่งแผนและกำหนดการสอน" />
+          </div>
+          <div class="field">
+            <label for="msDefaultBody">เนื้อหาเริ่มต้น</label>
+            <textarea id="msDefaultBody" rows="3" placeholder="เนื้อหาเริ่มต้นของบันทึกข้อความ (ใส่ {N} แทนจำนวนรายการที่แนบได้ — ไม่บังคับ)"></textarea>
+          </div>
+          <div class="field">
+            <label>ประเภทงานที่เกี่ยวข้อง (เลือกได้หลายรายการ)</label>
+            <div id="msCategoryCheckboxes"><div class="loading">กำลังโหลด</div></div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit" id="msSubmitBtn">เพิ่มหัวเรื่อง</button>
+            <button class="btn btn-ghost" type="button" id="memoSubjectModalClose">ยกเลิก</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -659,7 +720,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.26.081026"></script>
+  <script src="assets/api.js?v=1.28.091026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -753,7 +814,7 @@
       },
       // "ระบบเว็บ" (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21): แท็บนี้ไม่ใช่ super-admin-only เจ้าหน้าที่ฝ่ายวิชาการเปิดได้เช่นกัน
       // ตั้งแต่ 1.25.081026: โหลดข้อมูลสำหรับพิมพ์บันทึกข้อความ + ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู (ใช้รายชื่อผู้ใช้ร่วมกับแท็บ "จัดการบัญชี") เพิ่มด้วย
-      website: function () { return Promise.all([loadCurTermSettings(), loadMemoSettings(), loadTeacherAcademicInfo()]); },
+      website: function () { return Promise.all([loadCurTermSettings(), loadMemoSettings(), loadDeptSigners(), loadMemoSubjects(), loadTeacherAcademicInfo()]); },
       display: function () { return loadDisplayOrder(); },
       accounts: function () { return ensureUsersLoaded(); },
       extlinks: function () { return loadExtLinks(); },
@@ -836,41 +897,254 @@
       await saveCurTerm('', '', 'ยืนยันเคลียร์การตั้งเทอม/ปีการศึกษาปัจจุบันเอง กลับไปคำนวณจากวันที่จริงอัตโนมัติ?', 'กลับไปใช้การคำนวณอัตโนมัติแล้ว');
     });
 
-    // ---------- "ระบบเว็บ" → ข้อมูลสำหรับพิมพ์บันทึกข้อความ (ตั้งแต่ 1.25.081026 — ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการแก้ไขได้) ----------
+    // ---------- "ระบบเว็บ" → ข้อมูลสำหรับพิมพ์บันทึกข้อความ (ระดับโรงเรียน) — ตั้งแต่ 1.28.xxxxxx: เฉพาะ Super Admin ----------
+    // การ์ดนี้ถูกลบออกจาก DOM แล้วสำหรับเจ้าหน้าที่ฝ่ายวิชาการ (class="super-admin-only" — ดูบรรทัด 782-784) จึงต้องกัน null ไว้
+    // เผื่อ loadMemoSettings() ถูกเรียกจาก tabLoaders.website ของเจ้าหน้าที่ด้วย (ไม่มี element ให้เซ็ตค่าเลย)
     async function loadMemoSettings() {
+      if (!document.getElementById('setSchoolName')) return;
       var s = await getSiteSettings();
       document.getElementById('setSchoolName').value = s.schoolName || '';
       document.getElementById('setSchoolDistrict').value = s.schoolDistrict || '';
       document.getElementById('setSchoolProvince').value = s.schoolProvince || '';
-      document.getElementById('setMemoHeadName').value = s.memoHeadName || '';
-      document.getElementById('setMemoHeadPosition').value = s.memoHeadPosition || '';
-      document.getElementById('setMemoDeputyName').value = s.memoDeputyName || '';
-      document.getElementById('setMemoDeputyPosition').value = s.memoDeputyPosition || '';
       document.getElementById('setMemoDirectorName').value = s.memoDirectorName || '';
       document.getElementById('setMemoDirectorPosition').value = s.memoDirectorPosition || '';
     }
-    document.getElementById('memoSettingsForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var errBox = document.getElementById('memoSettingsError');
+    if (isSuperAdminSession) {
+      document.getElementById('memoSettingsForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('memoSettingsError');
+        errBox.hidden = true;
+        var ok = await askConfirm('ยืนยันบันทึกข้อมูลสำหรับพิมพ์บันทึกข้อความ?', 'ยืนยันการบันทึก');
+        if (!ok) return;
+        var payload = {
+          schoolName: document.getElementById('setSchoolName').value.trim(),
+          schoolDistrict: document.getElementById('setSchoolDistrict').value.trim(),
+          schoolProvince: document.getElementById('setSchoolProvince').value.trim(),
+          memoDirectorName: document.getElementById('setMemoDirectorName').value.trim(),
+          memoDirectorPosition: document.getElementById('setMemoDirectorPosition').value.trim()
+        };
+        var r = await withProgress('กำลังบันทึกการตั้งค่า', function () {
+          return apiCall('adminUpdateSettings', payload);
+        }, { successLabel: 'บันทึกข้อมูลสำหรับพิมพ์บันทึกข้อความแล้ว' });
+        if (r.ok) {
+          resetSettingsCache();
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      });
+    }
+
+    // ---------- "ระบบเว็บ" → ชื่อผู้ลงนามตามฝ่าย (ตั้งแต่ 1.28.xxxxxx) ----------
+    // เจ้าหน้าที่ฝ่ายวิชาการ (staff): ล็อกไว้ที่ฝ่ายตัวเอง (session.department) เปลี่ยนฝ่ายไม่ได้ — ถ้ายังไม่ได้ตั้งฝ่ายให้ตัวเอง
+    // (department ว่าง) จะปิดฟอร์มไว้พร้อมข้อความแจ้งให้ติดต่อ Super Admin (ตรงกับสิทธิ์จริงฝั่ง Worker — requireDepartmentManager)
+    // Super Admin: เลือกฝ่ายจากดรอปดาวน์ได้ทุกฝ่าย เปลี่ยนฝ่ายแล้วโหลดชื่อผู้ลงนามของฝ่ายนั้นมาแสดงใหม่ทันที
+    function fillDeptSignersFields(dept, s) {
+      var signer = (s.departmentSigners && s.departmentSigners[dept]) || {};
+      document.getElementById('setDeptHeadName').value = signer.headName || '';
+      document.getElementById('setDeptHeadPosition').value = signer.headPosition || '';
+      document.getElementById('setDeptDeputyName').value = signer.deputyName || '';
+      document.getElementById('setDeptDeputyPosition').value = signer.deputyPosition || '';
+    }
+    function setDeptSignersFormDisabled(disabled) {
+      document.querySelectorAll('#deptSignersForm input, #deptSignersForm button[type="submit"]').forEach(function (el) { el.disabled = disabled; });
+    }
+    async function loadDeptSigners() {
+      var s = await getSiteSettings();
+      var sel = document.getElementById('deptSignersDept');
+      var deptFieldWrap = document.getElementById('deptSignersDeptFieldWrap');
+      var errBox = document.getElementById('deptSignersError');
       errBox.hidden = true;
-      var ok = await askConfirm('ยืนยันบันทึกข้อมูลสำหรับพิมพ์บันทึกข้อความ?', 'ยืนยันการบันทึก');
+      if (isSuperAdminSession) {
+        deptFieldWrap.hidden = false;
+        var depts = s.departments || [];
+        var current = sel.value;
+        sel.innerHTML = depts.length > 0
+          ? depts.map(function (d) { return '<option value="' + escapeHtml(d) + '">เจ้าหน้าที่' + escapeHtml(d) + '</option>'; }).join('')
+          : '<option value="">— ยังไม่มีฝ่ายในระบบ —</option>';
+        if (current && depts.indexOf(current) !== -1) sel.value = current;
+        setDeptSignersFormDisabled(depts.length === 0);
+        fillDeptSignersFields(sel.value, s);
+      } else {
+        deptFieldWrap.hidden = true;
+        var myDept = session.department || '';
+        if (!myDept) {
+          setDeptSignersFormDisabled(true);
+          errBox.textContent = 'คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อ Super Admin เพื่อตั้งฝ่ายให้บัญชีนี้ก่อน จึงจะตั้งชื่อผู้ลงนามของฝ่ายได้';
+          errBox.hidden = false;
+          return;
+        }
+        setDeptSignersFormDisabled(false);
+        fillDeptSignersFields(myDept, s);
+      }
+    }
+    if (isSuperAdminSession) {
+      document.getElementById('deptSignersDept').addEventListener('change', async function () {
+        fillDeptSignersFields(this.value, await getSiteSettings());
+      });
+    }
+    document.getElementById('deptSignersForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var errBox = document.getElementById('deptSignersError');
+      errBox.hidden = true;
+      var dept = isSuperAdminSession ? document.getElementById('deptSignersDept').value : (session.department || '');
+      if (!dept) { errBox.textContent = 'ไม่พบฝ่ายที่จะบันทึก'; errBox.hidden = false; return; }
+      var ok = await askConfirm('ยืนยันบันทึกชื่อผู้ลงนามของฝ่าย "เจ้าหน้าที่' + dept + '"?', 'ยืนยันการบันทึก');
       if (!ok) return;
       var payload = {
-        schoolName: document.getElementById('setSchoolName').value.trim(),
-        schoolDistrict: document.getElementById('setSchoolDistrict').value.trim(),
-        schoolProvince: document.getElementById('setSchoolProvince').value.trim(),
-        memoHeadName: document.getElementById('setMemoHeadName').value.trim(),
-        memoHeadPosition: document.getElementById('setMemoHeadPosition').value.trim(),
-        memoDeputyName: document.getElementById('setMemoDeputyName').value.trim(),
-        memoDeputyPosition: document.getElementById('setMemoDeputyPosition').value.trim(),
-        memoDirectorName: document.getElementById('setMemoDirectorName').value.trim(),
-        memoDirectorPosition: document.getElementById('setMemoDirectorPosition').value.trim()
+        department: dept,
+        headName: document.getElementById('setDeptHeadName').value.trim(),
+        headPosition: document.getElementById('setDeptHeadPosition').value.trim(),
+        deputyName: document.getElementById('setDeptDeputyName').value.trim(),
+        deputyPosition: document.getElementById('setDeptDeputyPosition').value.trim()
       };
-      var r = await withProgress('กำลังบันทึกการตั้งค่า', function () {
-        return apiCall('adminUpdateSettings', payload);
-      }, { successLabel: 'บันทึกข้อมูลสำหรับพิมพ์บันทึกข้อความแล้ว' });
+      var r = await withProgress('กำลังบันทึก', function () {
+        return apiCall('adminSetDepartmentSigners', payload);
+      }, { successLabel: 'บันทึกชื่อผู้ลงนามแล้ว' });
       if (r.ok) {
         resetSettingsCache();
+      } else {
+        errBox.textContent = r.error.message;
+        errBox.hidden = false;
+      }
+    });
+
+    // ---------- "ระบบเว็บ" → หัวเรื่องบันทึกข้อความ (memo_subjects) — ตั้งแต่ 1.28.xxxxxx ----------
+    // เจ้าหน้าที่เห็น/จัดการได้เฉพาะหัวเรื่องของฝ่ายตัวเอง (ฝั่ง Worker กรองให้แล้วที่ adminListMemoSubjects) Super Admin เห็นทุกฝ่าย
+    var currentMemoSubjects = [];
+    var msAllCategories = [];
+    async function loadMemoSubjects() {
+      var wrap = document.getElementById('memoSubjectListWrap');
+      try {
+        currentMemoSubjects = await apiCall('adminListMemoSubjects', {});
+        renderMemoSubjectList();
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+    function renderMemoSubjectList() {
+      var wrap = document.getElementById('memoSubjectListWrap');
+      if (currentMemoSubjects.length === 0) {
+        var emptyMsg = isSuperAdminSession
+          ? 'ยังไม่มีหัวเรื่องบันทึกข้อความในระบบ'
+          : (session.department ? 'ฝ่ายของคุณยังไม่มีหัวเรื่องบันทึกข้อความ — กด "เพิ่มหัวเรื่อง" เพื่อสร้างได้เลย' : 'คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อ Super Admin ก่อนจึงจะสร้างหัวเรื่องได้');
+        wrap.innerHTML = '<div class="empty-state">' + escapeHtml(emptyMsg) + '</div>';
+        return;
+      }
+      var html = '';
+      currentMemoSubjects.forEach(function (m) {
+        html += '<div class="event-list-item">' +
+          '<div style="flex:1 1 220px; min-width:220px;">' +
+            '<div class="sub-item-title">' + escapeHtml(m.subject) + '</div>' +
+            '<div class="sub-item-meta">ฝ่าย' + escapeHtml(m.department) + ' · ผูกประเภทงาน ' + m.categoryIds.length + ' รายการ</div>' +
+          '</div>' +
+          '<button class="btn btn-ghost btn-sm" data-ms-edit="' + m.id + '">แก้ไข</button>' +
+          '<button class="btn btn-danger btn-sm" data-ms-delete="' + m.id + '" data-ms-name="' + escapeHtml(m.subject) + '">ลบ</button>' +
+        '</div>';
+      });
+      wrap.innerHTML = html;
+      wrap.querySelectorAll('[data-ms-edit]').forEach(function (btn) {
+        btn.addEventListener('click', function () { openMemoSubjectModal(btn.getAttribute('data-ms-edit')); });
+      });
+      wrap.querySelectorAll('[data-ms-delete]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          var ok = await askConfirm('ยืนยันลบหัวเรื่องบันทึกข้อความ "' + btn.getAttribute('data-ms-name') + '"? ครูที่เคยใช้หัวเรื่องนี้จะยังพิมพ์บันทึกเดิมที่ปริ้นไปแล้วได้ตามปกติ แค่เลือกหัวเรื่องนี้ใหม่ไม่ได้อีก', 'ยืนยันการลบหัวเรื่อง');
+          if (!ok) return;
+          var r = await withProgress('กำลังลบ', function () {
+            return apiCall('adminDeleteMemoSubject', { subjectId: btn.getAttribute('data-ms-delete') });
+          }, { successLabel: 'ลบหัวเรื่องแล้ว' });
+          if (r.ok) loadMemoSubjects();
+        });
+      });
+    }
+    async function ensureMsCategoriesLoaded() {
+      try { msAllCategories = await apiCall(isSuperAdminSession ? 'adminListWorkCategories' : 'hubListWorkCategories', {}); } catch (e) { msAllCategories = []; }
+      return msAllCategories;
+    }
+    // กรองประเภทงานให้เหลือเฉพาะที่ฝ่ายนี้จัดการได้ (ไม่ผูกฝ่ายใด = ทุกฝ่ายเลือกได้, ผูกฝ่ายนี้ = เลือกได้, ผูกฝ่ายอื่น = ไม่แสดง)
+    // ตรงกับ categoryVisibleToActor ฝั่ง Worker (util.js) — ป้องกันเจ้าหน้าที่ผูกหัวเรื่องของฝ่ายตัวเองกับประเภทงานฝ่ายอื่น
+    function renderMsCategoryCheckboxes(checkedIds) {
+      var box = document.getElementById('msCategoryCheckboxes');
+      var deptVal = isSuperAdminSession ? document.getElementById('msDepartment').value : (session.department || '');
+      var visible = msAllCategories.filter(function (c) { return !c.department || c.department === deptVal; });
+      if (visible.length === 0) {
+        box.innerHTML = '<div class="hint">ไม่พบประเภทงานที่เลือกได้สำหรับฝ่ายนี้ — ไปเพิ่ม/ผูกฝ่ายของประเภทงานที่แท็บ "ทั่วไป" ก่อน</div>';
+        return;
+      }
+      box.innerHTML = visible.map(function (c) {
+        var checked = checkedIds && checkedIds.indexOf(c.id) !== -1 ? ' checked' : '';
+        return '<label style="display:flex; align-items:center; gap:8px; font-weight:500; padding:6px 2px;">' +
+          '<input type="checkbox" class="ms-cat-cb" value="' + c.id + '" style="width:auto;"' + checked + ' />' +
+          '<span>' + escapeHtml(c.name) + '</span>' +
+        '</label>';
+      }).join('');
+    }
+    var memoSubjectModalEl = document.getElementById('memoSubjectModal');
+    var msEditTarget = null;
+    async function openMemoSubjectModal(subjectId) {
+      document.getElementById('memoSubjectError').hidden = true;
+      await ensureMsCategoriesLoaded();
+      msEditTarget = subjectId ? currentMemoSubjects.filter(function (m) { return m.id === subjectId; })[0] : null;
+      document.getElementById('msEditId').value = subjectId || '';
+      document.getElementById('memoSubjectModalTitle').textContent = msEditTarget ? 'แก้ไขหัวเรื่องบันทึกข้อความ' : 'เพิ่มหัวเรื่องบันทึกข้อความ';
+      document.getElementById('msSubmitBtn').textContent = msEditTarget ? 'บันทึกการแก้ไข' : 'เพิ่มหัวเรื่อง';
+      document.getElementById('msSubject').value = msEditTarget ? msEditTarget.subject : '';
+      document.getElementById('msDefaultBody').value = msEditTarget ? msEditTarget.defaultBody : '';
+      var deptWrap = document.getElementById('msDeptFieldWrap');
+      var deptSel = document.getElementById('msDepartment');
+      if (isSuperAdminSession) {
+        deptWrap.hidden = false;
+        var s = await getSiteSettings();
+        var depts = s.departments || [];
+        deptSel.innerHTML = depts.length > 0
+          ? depts.map(function (d) { return '<option value="' + escapeHtml(d) + '">เจ้าหน้าที่' + escapeHtml(d) + '</option>'; }).join('')
+          : '<option value="">— ยังไม่มีฝ่ายในระบบ —</option>';
+        deptSel.value = msEditTarget ? msEditTarget.department : (deptSel.options[0] ? deptSel.options[0].value : '');
+        // แก้ไขหัวเรื่องเดิมแล้วเปลี่ยนฝ่ายเจ้าของไม่ได้ (เลี่ยงความสับสนเรื่องสิทธิ์จัดการที่เปลี่ยนไปกลางทาง) — จะย้ายฝ่ายต้องลบแล้วสร้างใหม่
+        deptSel.disabled = !!msEditTarget;
+      } else {
+        deptWrap.hidden = true;
+      }
+      renderMsCategoryCheckboxes(msEditTarget ? msEditTarget.categoryIds : []);
+      showModalEl(memoSubjectModalEl);
+    }
+    document.getElementById('openCreateMemoSubjectBtn').addEventListener('click', function () {
+      if (!isSuperAdminSession && !session.department) {
+        showToast('คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อ Super Admin ก่อน', true);
+        return;
+      }
+      openMemoSubjectModal(null);
+    });
+    document.getElementById('memoSubjectModalClose').addEventListener('click', function () { hideModalEl(memoSubjectModalEl); });
+    document.getElementById('memoSubjectModalCloseX').addEventListener('click', function () { hideModalEl(memoSubjectModalEl); });
+    if (isSuperAdminSession) {
+      document.getElementById('msDepartment').addEventListener('change', function () {
+        renderMsCategoryCheckboxes(msEditTarget ? msEditTarget.categoryIds : []);
+      });
+    }
+    document.getElementById('memoSubjectForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var errBox = document.getElementById('memoSubjectError');
+      errBox.hidden = true;
+      var subjectId = document.getElementById('msEditId').value;
+      var department = isSuperAdminSession ? document.getElementById('msDepartment').value : (session.department || '');
+      if (!department) { errBox.textContent = 'ไม่พบฝ่าย'; errBox.hidden = false; return; }
+      var categoryIds = Array.from(document.querySelectorAll('.ms-cat-cb:checked')).map(function (cb) { return cb.value; });
+      if (categoryIds.length === 0) { errBox.textContent = 'กรุณาเลือกประเภทงานที่เกี่ยวข้องอย่างน้อย 1 รายการ'; errBox.hidden = false; return; }
+      var payload = {
+        subject: document.getElementById('msSubject').value.trim(),
+        defaultBody: document.getElementById('msDefaultBody').value.trim(),
+        categoryIds: categoryIds
+      };
+      if (!subjectId) payload.department = department; else payload.subjectId = subjectId;
+      var ok = await askConfirm(subjectId ? 'ยืนยันบันทึกการแก้ไขหัวเรื่องนี้?' : 'ยืนยันเพิ่มหัวเรื่องบันทึกข้อความนี้?', 'ยืนยันการบันทึก');
+      if (!ok) return;
+      var r = await withProgress('กำลังบันทึก', function () {
+        return apiCall(subjectId ? 'adminUpdateMemoSubject' : 'adminCreateMemoSubject', payload);
+      }, { successLabel: subjectId ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มหัวเรื่องแล้ว' });
+      if (r.ok) {
+        hideModalEl(memoSubjectModalEl);
+        loadMemoSubjects();
       } else {
         errBox.textContent = r.error.message;
         errBox.hidden = false;
@@ -1030,7 +1304,7 @@
             var deptMeta = c.department ? ('<div class="sub-item-meta">ฝ่ายที่ดูแล: เจ้าหน้าที่' + escapeHtml(c.department) + '</div>') : '';
             html += '<div class="event-list-item">' +
               '<input type="color" class="cat-color-input" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" value="' + (c.color || '#3457d5') + '" title="เปลี่ยนสีของประเภทงาน \'' + escapeHtml(c.name) + '\'" />' +
-              '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(c.name) +
+              '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(c.name) +
                 (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '') +
                 (c.hideFromPortfolio ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-eye-slash ui-icon" aria-hidden="true"></i> ไม่แสดงสาธารณะ</span>' : '') +
               '</div>' +
@@ -1188,7 +1462,7 @@
         var html = '';
         currentDepartments.forEach(function (d, idx) {
           html += '<div class="event-list-item">' +
-            '<div style="flex:1;"><div class="sub-item-title">เจ้าหน้าที่' + escapeHtml(d) + '</div></div>' +
+            '<div style="flex:1 1 180px; min-width:180px;"><div class="sub-item-title">เจ้าหน้าที่' + escapeHtml(d) + '</div></div>' +
             '<button class="btn btn-danger btn-sm" data-dept-remove="' + idx + '" data-dept-name="' + escapeHtml(d) + '">ลบ</button>' +
             '</div>';
         });
@@ -1822,7 +2096,7 @@
             : '';
           html += '<div class="event-list-item">' +
             '<div class="event-date-chip">' + dateChip + '</div>' +
-            '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(ev.title) + '</div>' +
+            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(ev.title) + '</div>' +
             (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
             '<div class="sub-item-meta">สำหรับ: ' + escapeHtml(audienceLabel) + '</div>' +
             categoryMeta + '</div>' +
@@ -1963,7 +2237,7 @@
         var html = '';
         rows.forEach(function (a) {
           html += '<div class="event-list-item">' +
-            '<div style="flex:1;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
+            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
             (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
             '<div class="sub-item-meta">โดย ' + escapeHtml(a.createdByName) + ' · ' + formatDateTimeThai(a.createdAt) + '</div>' +
             annScheduleMeta(a) + '</div>' +

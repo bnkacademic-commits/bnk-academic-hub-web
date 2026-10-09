@@ -980,9 +980,16 @@ tbody tr:hover { background: var(--surface-2); }
 }
 .event-bar.bar-start { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
 .event-bar.bar-end { border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
-.event-list-item { display: flex; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); align-items: flex-start; }
-/* เลือกรูปแบบการ์ดต่อประเภทงาน (หน้าตั้งค่าระบบ → ประเภทงาน) — ให้สูงเท่ากับจุดสีข้างๆ และไม่ยืดเต็มแถว */
-.cat-template-select { flex-shrink: 0; align-self: center; width: auto; max-width: 170px; padding: 6px 10px; font-size: 0.86rem; }
+/* flex-wrap: wrap (ตั้งแต่ 1.27.081026) — เดิมแถวนี้ไม่ยอมขึ้นบรรทัดใหม่เลย (nowrap โดย default) พอของในแถวเยอะ
+   (เช่นแถวประเภทงานที่มีทั้งช่องสี + ชื่อ + เลือกรูปแบบการ์ด + เลือกฝ่าย + ปุ่มอีก 3-4 ปุ่ม) ตัว browser เลยบีบกล่องข้อความ
+   (flex:1 ซึ่ง basis เริ่มต้นคือ 0%) ลงจนเหลือความกว้างแค่ "หน่วยที่ตัดคำไม่ได้ที่สั้นที่สุด" ของข้อความไทย (ภาษาไทยไม่มีเว้นวรรค
+   ระหว่างคำ ตัดบรรทัดได้เกือบทุกพยางค์) ทำให้ดูเหมือนตัวหนังสือ "ไหล" เป็นคอลัมน์แคบๆ ทีละพยางค์ — ใส่ flex-wrap: wrap ให้รายการ
+   ที่ไม่พอที่ตกไปขึ้นบรรทัดใหม่แทนที่จะบีบตัวหนังสือ เป็น safety net ทั่วทั้งเว็บ (ใช้ class นี้ร่วมกันหลายหน้า) */
+.event-list-item { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+/* เลือกรูปแบบการ์ด / เลือกฝ่ายที่ดูแล ต่อประเภทงาน (หน้าตั้งค่าระบบ → ประเภทงาน) — ให้สูงเท่ากับจุดสีข้างๆ และไม่ยืดเต็มแถว
+   (ตั้งแต่ 1.27.081026: รวม .cat-department-select เข้ามาด้วย — เดิมตกหล่นไม่มี CSS ของตัวเอง เลยสืบทอด `select{width:100%}`
+   ส่วนกลางมาใช้ ทำให้กินพื้นที่ทั้งแถวและเป็นสาเหตุหลักที่ทำให้กล่องข้อความข้างๆ ถูกบีบจนตัวหนังสือล้นแบบในคอมเมนต์ข้างบน) */
+.cat-template-select, .cat-department-select { flex-shrink: 0; align-self: center; width: auto; max-width: 170px; padding: 6px 10px; font-size: 0.86rem; }
 .event-list-item:last-child { border-bottom: none; }
 .event-date-chip {
   flex-shrink: 0; background: var(--primary-light); color: var(--primary-dark);
