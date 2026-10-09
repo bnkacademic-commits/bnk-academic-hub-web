@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.28.091026" />
+<link rel="stylesheet" href="assets/style.css?v=1.30.091026" />
 <style>
   /* ---------- หน้า "บันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026) ----------
      แบ่งเป็น 2 ส่วนชัดเจน: (1) ส่วนควบคุม/แก้ไขข้อมูล (.no-print) ใช้ .card/.field ปกติของเว็บ เห็นเฉพาะตอนดูบนจอ
@@ -94,7 +94,7 @@
           <input id="memoDate" type="date" />
         </div>
       </div>
-      <!-- หัวเรื่องบันทึกข้อความ (ตั้งแต่ 1.28.xxxxxx): เลือกจากหัวเรื่องที่เจ้าหน้าที่ฝ่ายต่างๆ สร้างไว้ล่วงหน้าเป็นทางหลัก
+      <!-- หัวเรื่องบันทึกข้อความ (ตั้งแต่ 1.28.091026): เลือกจากหัวเรื่องที่เจ้าหน้าที่ฝ่ายต่างๆ สร้างไว้ล่วงหน้าเป็นทางหลัก
            (เลือกแล้วจะเติม "เรื่อง"/"เนื้อหา" ให้อัตโนมัติ และกรอง "รายการที่จะแนบ" ด้านบนให้เหลือเฉพาะประเภทงานที่หัวเรื่องนี้ผูกไว้)
            หรือเลือก "พิมพ์เอง" เพื่อกรอกหัวเรื่องแบบอิสระเหมือนเดิม (ไม่กรองรายการที่จะแนบ) — ตอนนั้นจะมีช่อง "ฝ่ายที่จะส่งถึง"
            เพิ่มมาให้เลือก เพื่อให้ชื่อหัวหน้าฝ่าย/รองผู้อำนวยการฝ่ายที่พิมพ์ท้ายใบยังถูกต้องตามฝ่ายที่เลือก -->
@@ -133,11 +133,11 @@
 
   <div id="app-footer" class="no-print"></div>
 
-  <script src="assets/api.js?v=1.28.091026"></script>
+  <script src="assets/api.js?v=1.30.091026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireHubAccess();
-    if (session) mountChrome('dashboard');
+    if (session) mountChrome('memo');
     // หน้านี้เปิดให้ทุกบัญชีที่มีหน้าฮับและส่งงานผ่านระบบได้ (ตั้งแต่ 1.25.081026 แก้ตาม): ครู (role='teacher')
     // และเจ้าหน้าที่ฝ่ายวิชาการ (role='admin' + hasHub) เพราะเจ้าหน้าที่ก็เป็นครูที่ต้องส่งงานเหมือนกัน — requireHubAccess()
     // ด้านบนกรองให้เหลือแค่ 2 กลุ่มนี้อยู่แล้ว (Super Admin ไม่มีหน้าฮับจะถูกเด้งไปที่อื่นไปก่อนถึงจุดนี้) จึงไม่ต้องเช็ค role ซ้ำอีก
@@ -145,7 +145,7 @@
     var mySubmissions = [];
     var checkedIds = {}; // submissionId -> true/false ที่ผู้ใช้ติ๊ก/ยกเลิกติ๊กเอง
 
-    // หัวเรื่องบันทึกข้อความ (memo_subjects) + ฝ่ายที่จะส่งถึง (ตั้งแต่ 1.28.xxxxxx) — ดูคอมเมนต์ที่ #memoSubjectSelect ด้านบน
+    // หัวเรื่องบันทึกข้อความ (memo_subjects) + ฝ่ายที่จะส่งถึง (ตั้งแต่ 1.28.091026) — ดูคอมเมนต์ที่ #memoSubjectSelect ด้านบน
     var CUSTOM_SUBJECT_VALUE = '__custom__';
     var memoSubjectsList = [];
     var memoDepartmentsList = [];
@@ -178,7 +178,7 @@
       var year = document.getElementById('memoYear').value;
       var semester = document.getElementById('memoSemester').value;
       var items = mySubmissions.filter(function (s) { return String(s.academicYear) === String(year) && s.semester === semester; });
-      // ตั้งแต่ 1.28.xxxxxx: เลือกหัวเรื่องจากรายการ (ไม่ใช่โหมด "พิมพ์เอง") แล้ว กรองให้เหลือเฉพาะประเภทงานที่หัวเรื่องนี้ผูกไว้
+      // ตั้งแต่ 1.28.091026: เลือกหัวเรื่องจากรายการ (ไม่ใช่โหมด "พิมพ์เอง") แล้ว กรองให้เหลือเฉพาะประเภทงานที่หัวเรื่องนี้ผูกไว้
       // (hard filter ตามที่ผู้ใช้เลือกไว้ใน AskUserQuestion — ไม่ใช่แค่ค่าเริ่มต้นที่ยกเลิกติ๊กได้)
       var tpl = selectedTemplateSubject();
       if (tpl) items = items.filter(function (s) { return tpl.categoryIds.indexOf(s.categoryId) !== -1; });
@@ -222,7 +222,7 @@
       var year = document.getElementById('memoYear').value;
       var semester = document.getElementById('memoSemester').value;
       var termText = termLabelOf(semester) + ' ปีการศึกษา ' + year;
-      // ตั้งแต่ 1.28.xxxxxx: ถ้าเลือกหัวเรื่องจากรายการ (ไม่ใช่ "พิมพ์เอง") ใช้เรื่อง/เนื้อหาเริ่มต้นของหัวเรื่องนั้นแทนข้อความทั่วไปเดิม
+      // ตั้งแต่ 1.28.091026: ถ้าเลือกหัวเรื่องจากรายการ (ไม่ใช่ "พิมพ์เอง") ใช้เรื่อง/เนื้อหาเริ่มต้นของหัวเรื่องนั้นแทนข้อความทั่วไปเดิม
       var tpl = selectedTemplateSubject();
       if (tpl) {
         return { subject: tpl.subject, body: tpl.defaultBody || ('ข้าพเจ้าได้จัดทำและส่งผลงาน/เอกสารตามหัวเรื่องนี้ ประจำ' + termText + ' เรียบร้อยแล้ว จำนวน {N} รายการ ดังรายละเอียดที่แนบมาพร้อมนี้ จึงเรียนมาเพื่อโปรดทราบและพิจารณา') };
@@ -247,7 +247,7 @@
       });
     });
 
-    // เลือก/เปลี่ยนหัวเรื่องบันทึกข้อความ (ตั้งแต่ 1.28.xxxxxx) — เลือกหัวเรื่องจริงแล้วเติม "เรื่อง"/"เนื้อหา" ให้ใหม่เสมอ (ทับของเดิม
+    // เลือก/เปลี่ยนหัวเรื่องบันทึกข้อความ (ตั้งแต่ 1.28.091026) — เลือกหัวเรื่องจริงแล้วเติม "เรื่อง"/"เนื้อหา" ให้ใหม่เสมอ (ทับของเดิม
     // ที่พิมพ์ไว้) และกรองรายการที่จะแนบให้เหลือเฉพาะประเภทงานที่ผูกไว้ ส่วน "พิมพ์เอง" จะโชว์ช่อง "ฝ่ายที่จะส่งถึง" เพิ่มมาให้เลือก
     // (ตามที่ผู้ใช้ยืนยันผ่าน AskUserQuestion — primary path คือเลือกจากรายการ แต่ยังพิมพ์เองได้เสมอ)
     document.getElementById('memoSubjectSelect').addEventListener('change', function () {
@@ -282,7 +282,7 @@
       var schoolLine = [settings.schoolName, settings.schoolDistrict, settings.schoolProvince].filter(Boolean).join(' ');
       var qrUrl = location.origin + location.pathname.replace(/memo\.html$/, '') + 'view.html?u=' + encodeURIComponent(fresh.username);
 
-      // ชื่อผู้ลงนามตามฝ่าย (ตั้งแต่ 1.28.xxxxxx) — หาฝ่ายจากหัวเรื่องที่เลือก (หรือ "ฝ่ายที่จะส่งถึง" ถ้าอยู่โหมด "พิมพ์เอง")
+      // ชื่อผู้ลงนามตามฝ่าย (ตั้งแต่ 1.28.091026) — หาฝ่ายจากหัวเรื่องที่เลือก (หรือ "ฝ่ายที่จะส่งถึง" ถ้าอยู่โหมด "พิมพ์เอง")
       // แล้วดึงชื่อหัวหน้าฝ่าย/รองผู้อำนวยการฝ่ายของฝ่ายนั้นจาก settings.departmentSigners — แทนที่ settings.memoHeadName/
       // memoDeputyName แบบ global เดิม ยังไม่เลือกฝ่าย/ฝ่ายยังไม่ตั้งชื่อผู้ลงนาม = เว้นจุดประ + ใช้ตำแหน่งทั่วไปแทน
       var memoDept = currentMemoDepartment();
@@ -375,7 +375,7 @@
       var settings = await getSiteSettings();
       memoDepartmentsList = settings.departments || [];
 
-      // หัวเรื่องบันทึกข้อความ (ตั้งแต่ 1.28.xxxxxx) — เลือกจากรายการเป็นทางหลัก ค่าเริ่มต้น = หัวเรื่องแรกที่มี (ถ้ามี) ไม่งั้น
+      // หัวเรื่องบันทึกข้อความ (ตั้งแต่ 1.28.091026) — เลือกจากรายการเป็นทางหลัก ค่าเริ่มต้น = หัวเรื่องแรกที่มี (ถ้ามี) ไม่งั้น
       // ค่อยตกไปที่ "พิมพ์เอง" (ไม่มีหัวเรื่องให้เลือกเลยในระบบ) — ดู AskUserQuestion ที่ยืนยันกับผู้ใช้ไว้
       try {
         memoSubjectsList = await apiCall('hubListMemoSubjects', {});

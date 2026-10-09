@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.28.091026';
+var APP_VERSION = '1.30.091026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -485,7 +485,7 @@ function buildCategoryColorMap(categories) {
 // เดิมใช้ SVG เส้นวาดเอง (ICON_PATHS) มาตั้งแต่ V-ถัดไปหลัง V10.1 เปลี่ยนมาใช้ไอคอน Font Awesome (โหลดจาก CDN ใน <head>
 // ทุกหน้าแล้ว) แทน เพื่อให้ตรงกับชุดไลบรารีของเว็บต้นแบบ — คง API เดิม icon(name, size) ไว้ทุกจุดเรียกใช้เดิมไม่ต้องแก้
 var ICON_FA = {
-  home: 'fa-house', summary: 'fa-chart-column', settings: 'fa-gear', calendar: 'fa-calendar-days',
+  home: 'fa-house', memo: 'fa-file-lines', summary: 'fa-chart-column', settings: 'fa-gear', calendar: 'fa-calendar-days',
   announce: 'fa-bullhorn', folder: 'fa-folder-open', tag: 'fa-tag', users: 'fa-users', trash: 'fa-trash',
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
@@ -867,8 +867,13 @@ async function withProgress(title, workFn, opts) {
 // ---------- Shared chrome: topbar + profile dropdown + footer ----------
 function navLinksFor(session) {
   var links = [];
+  // ตั้งแต่ 1.29.091026: "จัดทำบันทึกข้อความ" เป็นแท็บในเมนูบนสุด (ไปหน้า memo.html ในแท็บเบราว์เซอร์เดิม ไม่เปิดหน้าใหม่) ของทุกบัญชีที่มี
+  // หน้าฮับ (ครู และเจ้าหน้าที่ role='admin' + hasHub) — ครูเดิมไม่มีเมนูบนสุดเลย จึงเพิ่ม "หน้าแรก" ให้ด้วยเพื่อให้แถบแท็บสมบูรณ์
+  if (session && (session.role === 'teacher' || (session.role === 'admin' && session.hasHub))) {
+    links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard', icon: 'home' });
+    links.push({ href: 'memo.html', label: 'จัดทำบันทึกข้อความ', key: 'memo', icon: 'memo' });
+  }
   if (session && session.role === 'admin') {
-    if (session.hasHub) links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard', icon: 'home' });
     links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary', icon: 'summary' });
     // หมายเหตุ: เมนู "จัดการ Layout" (V11.1) ถูกยกเลิกตั้งแต่ V11.5 — ทั้งรูปแบบการ์ด (V11.3) และลำดับการแสดงผล (V11.5)
     // ย้ายไปรวมอยู่ในหน้า "ตั้งค่าระบบ" แท็บ "ปรับแต่งการแสดงผลงาน" หมดแล้ว (Super Admin เท่านั้น)
@@ -973,13 +978,22 @@ function mountChrome(activePage) {
   applyBranding();
 }
 
+// Footer มาตรฐานทุกหน้า (ตั้งแต่ 1.29.091026 ตามที่ผู้ใช้กำหนดไว้): ชื่อโรงเรียน, ลิขสิทธิ์ (ปีอัตโนมัติ เป็น พ.ศ.), ลิขสิทธิ์ผลงานเป็นของเจ้าของ
+// ผลงาน, ผู้พัฒนา, ระบุว่าใช้ AI ช่วยพัฒนา + เวอร์ชัน, ลิงก์นโยบายความเป็นส่วนตัว/แจ้งปัญหา (mailto) — หน้า privacy.html ใช้ฟังก์ชันนี้ร่วมกัน
+var SUPPORT_EMAIL = 'Tear.Jeerasak@gmail.com'; // อีเมลผู้ดูแลระบบ (แจ้งปัญหา/ติดต่อเรื่องข้อมูลส่วนบุคคล)
 function mountFooter() {
   var root = document.getElementById('app-footer');
   if (!root) return;
+  var yearBE = new Date().getFullYear() + 543;
   root.innerHTML =
     '<div class="site-footer">' +
-      '<div class="line1">Developed and Created by Jeerasak Chomphuwattana</div>' +
-      '<div>Powered by AI</div>' +
+      '<div class="footer-school">โรงเรียนบุ่งคล้านคร</div>' +
+      '<div>© ' + yearBE + ' โรงเรียนบุ่งคล้านคร สงวนลิขสิทธิ์</div>' +
+      '<div>ผลงานในระบบเป็นลิขสิทธิ์ของเจ้าของผลงาน</div>' +
+      '<div>Developed by Jeerasak Chomphuwattana</div>' +
+      '<div>Built with AI assistance · v' + escapeHtml(APP_VERSION) + '</div>' +
+      '<div class="footer-links"><a href="privacy.html">นโยบายความเป็นส่วนตัว</a> · ' +
+        '<a href="mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub') + '">แจ้งปัญหาการใช้งาน</a></div>' +
     '</div>';
 }
 

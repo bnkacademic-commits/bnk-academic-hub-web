@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.28.091026" />
+<link rel="stylesheet" href="assets/style.css?v=1.30.091026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -96,7 +96,7 @@
           <span><i class="fas fa-tag ui-icon" style="font-size:17px" aria-hidden="true"></i> ประเภทงาน</span>
           <button class="btn btn-primary btn-sm" id="openCreateCatBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประเภทงาน</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ แต่ละประเภทงานเลือกสีได้ (คลิกจุดสีในรายการด้านล่างเพื่อเปลี่ยน) เลือกรูปแบบการ์ดที่จะใช้แสดงผลงานทุกชิ้นในประเภทนี้ได้ (คลิกไอคอนรูปแบบการ์ดในรายการเพื่อเปลี่ยน — มีผลกับผลงานของ<b>ทุกครู</b>ในประเภทงานนี้ทันที ทุกคนได้รูปแบบเดียวกัน) และเลือกได้ว่าตอนส่งงานประเภทนี้ ครูต้องกรอกข้อมูลเพิ่มเติมอะไรบ้าง (กดปุ่ม "ข้อมูลที่ต้องกรอก" ที่แต่ละรายการ)</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ กดปุ่ม <b>"แก้ไข"</b> ที่แต่ละรายการเพื่อเปลี่ยนสี รูปแบบการ์ด (มีผลกับผลงานของ<b>ทุกครู</b>ในประเภทนี้ทันที) ฝ่ายที่ดูแล การแจ้งเตือนอย่างเดียว การซ่อนจากหน้าสาธารณะ และข้อมูลเพิ่มเติมที่ครูต้องกรอกตอนส่งงาน</p>
         <div id="catListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
 
@@ -152,7 +152,7 @@
       </div>
 
       <!-- ข้อมูลหัวกระดาษ/ผู้ลงนามผู้อำนวยการ "บันทึกข้อความ" (ตั้งแต่ 1.25.081026) — ใช้พิมพ์ซ้ำอัตโนมัติในทุกใบบันทึกข้อความของทุกครูที่หน้า memo.html
-           ไม่ต้องให้ครูพิมพ์ชื่อผู้บริหารเอง — ตั้งแต่ 1.28.xxxxxx: เฉพาะ Super Admin เท่านั้น (ชื่อหัวหน้าฝ่าย/รองผู้อำนวยการฝ่าย
+           ไม่ต้องให้ครูพิมพ์ชื่อผู้บริหารเอง — ตั้งแต่ 1.28.091026: เฉพาะ Super Admin เท่านั้น (ชื่อหัวหน้าฝ่าย/รองผู้อำนวยการฝ่าย
            ย้ายไปอยู่การ์ด "ชื่อผู้ลงนามตามฝ่าย" ด้านล่างแล้ว ซึ่งเจ้าหน้าที่แต่ละฝ่ายกำหนดเองได้ — การ์ดนี้ถูกซ่อนจาก DOM เลยสำหรับ
            เจ้าหน้าที่ฝ่ายวิชาการที่ไม่ใช่ Super Admin ด้วย class "super-admin-only" เหมือนส่วนอื่นๆ ที่สงวนสิทธิ์ไว้ -->
       <div class="card super-admin-only">
@@ -188,7 +188,7 @@
         </form>
       </div>
 
-      <!-- ชื่อผู้ลงนามตามฝ่าย (ตั้งแต่ 1.28.xxxxxx): ชื่อ-ตำแหน่ง "หัวหน้าฝ่าย" + "รองผู้อำนวยการฝ่าย" ของแต่ละฝ่าย — เจ้าหน้าที่
+      <!-- ชื่อผู้ลงนามตามฝ่าย (ตั้งแต่ 1.28.091026): ชื่อ-ตำแหน่ง "หัวหน้าฝ่าย" + "รองผู้อำนวยการฝ่าย" ของแต่ละฝ่าย — เจ้าหน้าที่
            แต่ละฝ่ายกำหนดชื่อของฝ่ายตัวเองได้เอง (ไม่ต้องรอ Super Admin) Super Admin เลือกฝ่ายจากดรอปดาวน์ได้ทุกฝ่าย ส่วนเจ้าหน้าที่
            ฝ่ายวิชาการ (staff) จะเห็นเฉพาะฝ่ายของตัวเองล็อกไว้ให้เลย (ตรงกับสิทธิ์จริงฝั่ง Worker — requireDepartmentManager) -->
       <div class="card">
@@ -224,7 +224,7 @@
         </form>
       </div>
 
-      <!-- หัวเรื่องบันทึกข้อความ (ตั้งแต่ 1.28.xxxxxx): เจ้าหน้าที่แต่ละฝ่ายสร้างหัวเรื่องของฝ่ายตัวเองไว้ล่วงหน้า พร้อมผูกกับ
+      <!-- หัวเรื่องบันทึกข้อความ (ตั้งแต่ 1.28.091026): เจ้าหน้าที่แต่ละฝ่ายสร้างหัวเรื่องของฝ่ายตัวเองไว้ล่วงหน้า พร้อมผูกกับ
            "ประเภทงาน" ที่เกี่ยวข้อง — ครูเลือกหัวเรื่องนี้จากหน้าฮับแทนการพิมพ์หัวเรื่องเองทั้งหมด (ตามข้อ 1 ที่ผู้ใช้ขอ) -->
       <div class="card">
         <div class="section-title" style="justify-content:space-between;">
@@ -247,7 +247,7 @@
       </div>
     </div>
 
-    <!-- Create/edit memo-subject modal (ตั้งแต่ 1.28.xxxxxx) -->
+    <!-- Create/edit memo-subject modal (ตั้งแต่ 1.28.091026) -->
     <div class="modal-backdrop" id="memoSubjectModal" hidden>
       <div class="modal-box modal-box-wide">
         <button type="button" class="modal-close-x" id="memoSubjectModalCloseX" aria-label="ปิด">✕</button>
@@ -590,21 +590,105 @@
     </div>
   </div>
 
-  <!-- Edit required-fields-only modal for an existing category (ตั้งแต่ V-ถัดไปหลัง V10.1) -->
-  <div class="modal-backdrop" id="editCatFieldsModal" hidden>
+  <!-- จัดการบัญชี (ตั้งแต่ 1.29.091026) — รวมปุ่มจัดการบัญชีของแต่ละแถวไว้ในป็อปอัพเดียว (แสดงเฉพาะ Super Admin เหมือนตารางบัญชี) -->
+  <div class="modal-backdrop" id="manageUserModal" hidden>
     <div class="modal-box">
-      <button type="button" class="modal-close-x" id="editCatFieldsModalCloseX" aria-label="ปิด">✕</button>
-      <h3 id="editCatFieldsTitle">ข้อมูลที่ต้องกรอก</h3>
-      <div id="editCatFieldsError" class="error-box" hidden></div>
-      <form id="editCatFieldsForm" style="text-align:left;">
-        <input type="hidden" id="editCatFieldsId" value="" />
-        <div class="field">
-          <div class="hint" style="margin-top:-2px; margin-bottom:8px;">เลือกข้อมูลที่ครูผู้ส่งต้องกรอกเพิ่มเติมตอนส่งงานประเภทนี้</div>
-          <div id="editCatFieldsCheckboxes"></div>
+      <button type="button" class="modal-close-x" id="manageUserModalCloseX" aria-label="ปิด">✕</button>
+      <h3>จัดการบัญชี</h3>
+      <div id="manageUserTarget" style="margin-bottom:14px;"></div>
+      <div id="manageUserActions" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost" id="manageUserClose">ปิด</button></div>
+    </div>
+  </div>
+
+  <!-- ลบบัญชีถาวร (ตั้งแต่ 1.30.091026) — ลบได้เฉพาะบัญชีที่ "ระงับ" แล้ว และต้องพิมพ์ Username ยืนยัน (เซิร์ฟเวอร์ตรวจซ้ำอีกชั้น)
+       หน้าเว็บเรียก adminPurgeUser ซ้ำเป็นรอบๆ จนได้ done:true (Worker แผนฟรีลบไฟล์ได้ครั้งละจำกัด) แล้วแสดงสรุปผลในป็อปอัพเดียวกันนี้ -->
+  <div class="modal-backdrop" id="purgeUserModal" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close-x" id="purgeUserModalCloseX" aria-label="ปิด">✕</button>
+      <h3>ลบบัญชีถาวร</h3>
+      <div id="purgeUserForm">
+        <p id="purgeUserTarget" style="margin:0 0 10px;"></p>
+        <div class="error-box" style="margin-bottom:12px;">
+          <strong>การกระทำนี้ย้อนกลับไม่ได้</strong> สิ่งที่จะถูกลบ:
+          <ul style="margin:6px 0 0 18px; padding:0;">
+            <li>บัญชีผู้ใช้ และรูปโปรไฟล์</li>
+            <li>ผลงานที่ส่งไว้ทั้งหมด (ไฟล์ใน Google Drive จะถูกย้ายลงถังขยะ กู้คืนได้ประมาณ 30 วัน)</li>
+            <li>ชื่อในประวัติต่างๆ จะถูกแทนด้วย "บัญชีที่ถูกลบ" (เก็บแถวประวัติไว้)</li>
+          </ul>
+        </div>
+        <label for="purgeUserConfirmInput" style="display:block; margin-bottom:6px;">พิมพ์ Username <strong id="purgeUserNeedName"></strong> เพื่อยืนยัน</label>
+        <input type="text" id="purgeUserConfirmInput" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;">
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="purgeUserCancel">ยกเลิก</button>
+          <button type="button" class="btn btn-danger" id="purgeUserGo" disabled>ลบถาวร</button>
+        </div>
+      </div>
+      <div id="purgeUserProgress" hidden>
+        <p id="purgeUserStatus" style="margin:0 0 10px;"></p>
+        <div id="purgeUserFailed" class="error-box" hidden></div>
+        <div class="modal-actions"><button type="button" class="btn btn-primary" id="purgeUserDone" hidden>ปิด</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- แก้ไขประเภทงาน (ตั้งแต่ 1.29.091026) — รวมตัวเลือกแก้ไขทั้งหมดของประเภทงานไว้ในป็อปอัพเดียว แทนการวาง dropdown/checkbox ไว้ในแต่ละแถวของรายการ
+       (เดิมมีแค่ป็อปอัพ "ข้อมูลที่ต้องกรอก" อย่างเดียว) โครงเดียวกับป็อปอัพ "เพิ่มประเภทงาน" (แท็บ พื้นฐาน / ข้อมูลที่ต้องกรอก) -->
+  <div class="modal-backdrop" id="editCatModal" hidden>
+    <div class="modal-box modal-box-wide">
+      <button type="button" class="modal-close-x" id="editCatModalCloseX" aria-label="ปิด">✕</button>
+      <h3 id="editCatTitle">แก้ไขประเภทงาน</h3>
+      <div id="editCatError" class="error-box" hidden></div>
+      <div class="tabs" style="margin-bottom:14px;">
+        <button type="button" class="ev-tab-btn active" id="ecTabBtn-basic">พื้นฐาน</button>
+        <button type="button" class="ev-tab-btn" id="ecTabBtn-fields">ข้อมูลที่ต้องกรอก</button>
+      </div>
+      <form id="editCatForm" style="text-align:left;">
+        <input type="hidden" id="editCatId" value="" />
+        <div class="ev-tab-panel active" id="ecTab-basic">
+          <div class="field-row">
+            <div class="field" style="flex:1;">
+              <label>ชื่อประเภทงาน</label>
+              <div id="editCatNameText" style="padding:9px 0; font-weight:600;"></div>
+            </div>
+            <div class="field" style="max-width:90px;">
+              <label for="editCatColor">สี</label>
+              <input type="color" id="editCatColor" value="#3457d5" title="เลือกสีประเภทงาน" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="editCatTemplate">รูปแบบการ์ดที่ใช้แสดงผลงาน</label>
+            <select id="editCatTemplate"></select>
+            <div class="hint" style="margin-top:4px;">มีผลกับผลงานทุกชิ้นของทุกครูที่ส่งในประเภทงานนี้ทันทีที่บันทึก</div>
+          </div>
+          <div class="field">
+            <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="editCatNoSubmission" style="width:auto; margin-top:3px;" />
+              <span><span style="display:block;">ไม่ส่งผ่านระบบ (แจ้งเตือนอย่างเดียว)</span><span class="hint" style="margin:0;">กำหนดการของประเภทงานนี้จะไม่มีปุ่ม "ส่งงาน" และไม่ขึ้นในเช็คลิสต์การส่งงานของครู</span></span>
+            </label>
+          </div>
+          <div class="field">
+            <label for="editCatDepartment">ฝ่ายที่ดูแล</label>
+            <select id="editCatDepartment"><option value="">ทุกฝ่าย (ไม่ระบุ)</option></select>
+            <div class="hint" style="margin-top:4px;">ถ้าเลือกฝ่าย เฉพาะเจ้าหน้าที่ฝ่ายนั้น (และ Super Admin) เท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้</div>
+          </div>
+          <div class="field">
+            <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="editCatHideFromPortfolio" style="width:auto; margin-top:3px;" />
+              <span><span style="display:block;">ไม่แสดงในหน้าแสดงผลงานครู (view.html)</span><span class="hint" style="margin:0;">ยังส่งงาน/เห็นในแดชบอร์ด/บันทึกข้อความ/สรุปรวมได้ตามปกติ แค่ไม่ขึ้นหน้าแสดงผลงานสาธารณะ</span></span>
+            </label>
+          </div>
+        </div>
+        <div class="ev-tab-panel" id="ecTab-fields">
+          <div class="field">
+            <label>ข้อมูลที่ครูผู้ส่งต้องกรอกเพิ่มเติม (ถ้ามี)</label>
+            <div class="hint" style="margin-top:-2px; margin-bottom:8px;">เลือกเฉพาะที่จำเป็นสำหรับประเภทงานนี้</div>
+            <div id="editCatFieldsCheckboxes"></div>
+          </div>
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">บันทึก</button>
-          <button type="button" class="btn btn-ghost" id="editCatFieldsClose">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost" id="editCatClose">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -720,7 +804,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.28.091026"></script>
+  <script src="assets/api.js?v=1.30.091026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -897,7 +981,7 @@
       await saveCurTerm('', '', 'ยืนยันเคลียร์การตั้งเทอม/ปีการศึกษาปัจจุบันเอง กลับไปคำนวณจากวันที่จริงอัตโนมัติ?', 'กลับไปใช้การคำนวณอัตโนมัติแล้ว');
     });
 
-    // ---------- "ระบบเว็บ" → ข้อมูลสำหรับพิมพ์บันทึกข้อความ (ระดับโรงเรียน) — ตั้งแต่ 1.28.xxxxxx: เฉพาะ Super Admin ----------
+    // ---------- "ระบบเว็บ" → ข้อมูลสำหรับพิมพ์บันทึกข้อความ (ระดับโรงเรียน) — ตั้งแต่ 1.28.091026: เฉพาะ Super Admin ----------
     // การ์ดนี้ถูกลบออกจาก DOM แล้วสำหรับเจ้าหน้าที่ฝ่ายวิชาการ (class="super-admin-only" — ดูบรรทัด 782-784) จึงต้องกัน null ไว้
     // เผื่อ loadMemoSettings() ถูกเรียกจาก tabLoaders.website ของเจ้าหน้าที่ด้วย (ไม่มี element ให้เซ็ตค่าเลย)
     async function loadMemoSettings() {
@@ -935,7 +1019,7 @@
       });
     }
 
-    // ---------- "ระบบเว็บ" → ชื่อผู้ลงนามตามฝ่าย (ตั้งแต่ 1.28.xxxxxx) ----------
+    // ---------- "ระบบเว็บ" → ชื่อผู้ลงนามตามฝ่าย (ตั้งแต่ 1.28.091026) ----------
     // เจ้าหน้าที่ฝ่ายวิชาการ (staff): ล็อกไว้ที่ฝ่ายตัวเอง (session.department) เปลี่ยนฝ่ายไม่ได้ — ถ้ายังไม่ได้ตั้งฝ่ายให้ตัวเอง
     // (department ว่าง) จะปิดฟอร์มไว้พร้อมข้อความแจ้งให้ติดต่อ Super Admin (ตรงกับสิทธิ์จริงฝั่ง Worker — requireDepartmentManager)
     // Super Admin: เลือกฝ่ายจากดรอปดาวน์ได้ทุกฝ่าย เปลี่ยนฝ่ายแล้วโหลดชื่อผู้ลงนามของฝ่ายนั้นมาแสดงใหม่ทันที
@@ -1009,7 +1093,7 @@
       }
     });
 
-    // ---------- "ระบบเว็บ" → หัวเรื่องบันทึกข้อความ (memo_subjects) — ตั้งแต่ 1.28.xxxxxx ----------
+    // ---------- "ระบบเว็บ" → หัวเรื่องบันทึกข้อความ (memo_subjects) — ตั้งแต่ 1.28.091026 ----------
     // เจ้าหน้าที่เห็น/จัดการได้เฉพาะหัวเรื่องของฝ่ายตัวเอง (ฝั่ง Worker กรองให้แล้วที่ adminListMemoSubjects) Super Admin เห็นทุกฝ่าย
     var currentMemoSubjects = [];
     var msAllCategories = [];
@@ -1288,142 +1372,44 @@
 
       // ---------- ประเภทงาน (เฉพาะ Super Admin) — ตั้งแต่ V-ถัดไปหลัง V10.1 เพิ่มเป็นป็อปอัพ + เลือกข้อมูลที่ต้องกรอกได้ ----------
       var createCatModalEl = document.getElementById('createCatModal');
-      var editCatFieldsModalEl = document.getElementById('editCatFieldsModal');
+      var editCatModalEl = document.getElementById('editCatModal');
+      var currentCategoryRows = [];
+      var openEditCatModal;
       loadCategories = async function () {
         var wrap = document.getElementById('catListWrap');
         try {
           var rows = await apiCall('adminListWorkCategories', {});
           if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประเภทงาน</div>'; return; }
           var html = '';
+          // ตั้งแต่ 1.29.091026: แถวรายการประเภทงานเหลือแค่ "สรุป + ปุ่มแก้ไข/ลบ" — ตัวเลือกแก้ไขทั้งหมด (สี/รูปแบบการ์ด/ฝ่าย/แจ้งเตือนอย่างเดียว/
+          // ไม่แสดงสาธารณะ/ข้อมูลที่ต้องกรอก) ย้ายไปอยู่ในป็อปอัพ "แก้ไขประเภทงาน" (editCatModal) ที่เปิดจากปุ่ม "แก้ไข" แทน ตามที่ผู้ใช้ขอ
+          // เพราะเดิมแต่ละแถวมี dropdown 2 ตัว + checkbox 2 ตัว + ปุ่ม 2 ปุ่มวางเรียงกันจนดูรก
           rows.forEach(function (c) {
             var fieldsLabel = (c.customFields && c.customFields.length > 0)
               ? c.customFields.map(function (k) { var def = CUSTOM_FIELD_DEFS.filter(function (d) { return d.key === k; })[0]; return def ? def.label : k; }).join(', ')
               : 'ไม่มี';
-            // ตั้งแต่ V12.0: ประเภทงาน "แจ้งเตือนอย่างเดียว" (c.noSubmission) ไม่มีผลงานส่งจริง จึงไม่ต้องมีรูปแบบการ์ด/ข้อมูลที่ต้องกรอก — ซ่อนสองช่องนั้นไปเลย
-            // ตั้งแต่ 1.26.081026: แสดงฝ่ายที่ดูแล (ถ้าผูกไว้) + badge ถ้าซ่อนจากหน้าแสดงผลงานสาธารณะ
+            var tplDef = TEMPLATE_OPTIONS.filter(function (o) { return o.key === (c.displayTemplate || ''); })[0];
             var deptMeta = c.department ? ('<div class="sub-item-meta">ฝ่ายที่ดูแล: เจ้าหน้าที่' + escapeHtml(c.department) + '</div>') : '';
-            html += '<div class="event-list-item">' +
-              '<input type="color" class="cat-color-input" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" value="' + (c.color || '#3457d5') + '" title="เปลี่ยนสีของประเภทงาน \'' + escapeHtml(c.name) + '\'" />' +
+            html += '<div class="event-list-item" data-cat-row="' + c.id + '">' +
+              '<span class="cat-color-swatch" style="display:inline-block; width:26px; height:26px; border-radius:7px; flex-shrink:0; background:' + escapeHtml(c.color || '#3457d5') + ';" title="สีของประเภทงาน"></span>' +
               '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(c.name) +
                 (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '') +
                 (c.hideFromPortfolio ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-eye-slash ui-icon" aria-hidden="true"></i> ไม่แสดงสาธารณะ</span>' : '') +
               '</div>' +
               (c.noSubmission
                 ? '<div class="sub-item-meta">ไม่ส่งผ่านระบบ — ไม่มีรูปแบบการ์ดหรือข้อมูลที่ต้องกรอก</div>'
-                : '<div class="sub-item-meta">ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div>') + deptMeta + '</div>' +
-              (c.noSubmission ? '' : '<select class="cat-template-select" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" title="รูปแบบการ์ดของประเภทงาน \'' + escapeHtml(c.name) + '\' (ใช้กับทุกครู)"></select>') +
-              '<select class="cat-department-select" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '" title="ฝ่ายที่ดูแลประเภทงาน \'' + escapeHtml(c.name) + '\'"></select>' +
-              '<div style="display:flex; gap:6px; flex-shrink:0; align-items:center; flex-wrap:wrap;">' +
-              (c.noSubmission ? '' : '<button class="btn btn-secondary btn-sm" data-fields-id="' + c.id + '" data-fields-name="' + escapeHtml(c.name) + '" data-fields="' + escapeHtml(JSON.stringify(c.customFields || [])) + '">ข้อมูลที่ต้องกรอก</button>') +
-              '<label class="btn btn-ghost btn-sm" style="display:flex; align-items:center; gap:6px; cursor:pointer; white-space:nowrap;" title="สลับโหมดแจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ">' +
-                '<input type="checkbox" class="cat-nosub-toggle" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '"' + (c.noSubmission ? ' checked' : '') + ' style="width:auto;" /> แจ้งเตือนอย่างเดียว' +
-              '</label>' +
-              '<label class="btn btn-ghost btn-sm" style="display:flex; align-items:center; gap:6px; cursor:pointer; white-space:nowrap;" title="สลับการแสดงในหน้าแสดงผลงานครูสาธารณะ (view.html)">' +
-                '<input type="checkbox" class="cat-hideportfolio-toggle" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '"' + (c.hideFromPortfolio ? ' checked' : '') + ' style="width:auto;" /> ไม่แสดงสาธารณะ' +
-              '</label>' +
-              '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button>' +
+                : '<div class="sub-item-meta">รูปแบบการ์ด: ' + escapeHtml(tplDef ? tplDef.label : 'มาตรฐาน') + ' · ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div>') + deptMeta + '</div>' +
+              '<div style="display:flex; gap:6px; flex-shrink:0; align-items:center;">' +
+                '<button class="btn btn-secondary btn-sm" data-cat-edit="' + c.id + '">แก้ไข</button>' +
+                '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button>' +
               '</div></div>';
           });
           wrap.innerHTML = html;
-          rows.forEach(function (c) {
-            var sel = wrap.querySelector('select.cat-template-select[data-id="' + c.id + '"]');
-            if (sel) renderTemplateOptions(sel, c.displayTemplate || '');
-            var deptSel = wrap.querySelector('select.cat-department-select[data-id="' + c.id + '"]');
-            if (deptSel) renderDepartmentOptions(deptSel, c.department || '');
-          });
-          wrap.querySelectorAll('select.cat-department-select').forEach(function (sel) {
-            sel.addEventListener('change', async function () {
-              var newDept = sel.value;
-              var catId = sel.getAttribute('data-id');
-              var catName = sel.getAttribute('data-name');
-              var ok = await askConfirm(
-                newDept
-                  ? 'ยืนยันผูกประเภทงาน "' + catName + '" กับฝ่าย "เจ้าหน้าที่' + newDept + '"? เฉพาะเจ้าหน้าที่ฝ่ายนี้ (และ Super Admin) จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้ได้'
-                  : 'ยืนยันเลิกผูกประเภทงาน "' + catName + '" กับฝ่ายใดฝ่ายหนึ่ง? เจ้าหน้าที่ทุกฝ่ายจะจัดการได้เหมือนเดิม',
-                'ยืนยันการเปลี่ยนแปลง'
-              );
-              if (!ok) { loadCategories(); return; }
-              var r = await withProgress('กำลังบันทึก', function () {
-                return apiCall('adminSetWorkCategoryDepartment', { categoryId: catId, department: newDept });
-              }, { successLabel: 'บันทึกแล้ว' });
-              if (!r.ok) showToast(r.error.message, true);
-              loadCategories();
-            });
-          });
-          wrap.querySelectorAll('input.cat-hideportfolio-toggle').forEach(function (inp) {
-            inp.addEventListener('change', async function () {
-              var nextVal = inp.checked;
-              var catId = inp.getAttribute('data-id');
-              var catName = inp.getAttribute('data-name');
-              var ok = await askConfirm(
-                nextVal
-                  ? 'ยืนยันซ่อนผลงานประเภทงาน "' + catName + '" จากหน้าแสดงผลงานครูสาธารณะ (view.html)? ยังส่งงาน/เห็นในที่อื่นๆ ได้ตามปกติ'
-                  : 'ยืนยันแสดงผลงานประเภทงาน "' + catName + '" ในหน้าแสดงผลงานครูสาธารณะตามปกติ?',
-                'ยืนยันการเปลี่ยนแปลง'
-              );
-              if (!ok) { loadCategories(); return; }
-              var r = await withProgress('กำลังบันทึก', function () {
-                return apiCall('adminSetWorkCategoryPortfolioVisibility', { categoryId: catId, hideFromPortfolio: nextVal });
-              }, { successLabel: 'บันทึกแล้ว' });
-              if (!r.ok) showToast(r.error.message, true);
-              loadCategories();
-            });
-          });
-          wrap.querySelectorAll('input.cat-nosub-toggle').forEach(function (inp) {
-            inp.addEventListener('change', async function () {
-              var nextVal = inp.checked;
-              var catId = inp.getAttribute('data-id');
-              var catName = inp.getAttribute('data-name');
-              var ok = await askConfirm(
-                nextVal
-                  ? 'ยืนยันตั้งประเภทงาน "' + catName + '" เป็น "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ"? กำหนดการของประเภทงานนี้จะไม่มีปุ่มส่งงานและไม่ขึ้นในเช็คลิสต์ของครูอีกต่อไป'
-                  : 'ยืนยันยกเลิกโหมดแจ้งเตือนอย่างเดียวของประเภทงาน "' + catName + '"? จะกลับมาส่งงานผ่านระบบได้ตามปกติ',
-                'ยืนยันการเปลี่ยนแปลง'
-              );
-              if (!ok) { loadCategories(); return; }
-              var r = await withProgress('กำลังบันทึก', function () {
-                return apiCall('adminSetWorkCategoryNoSubmission', { categoryId: catId, noSubmission: nextVal });
-              }, { successLabel: 'บันทึกแล้ว' });
-              if (!r.ok) showToast(r.error.message, true);
-              loadCategories();
-            });
-          });
-          wrap.querySelectorAll('input.cat-color-input').forEach(function (inp) {
-            inp.addEventListener('change', async function () {
-              var newColor = inp.value;
-              var catId = inp.getAttribute('data-id');
-              var catName = inp.getAttribute('data-name');
-              var ok = await askConfirm('ยืนยันเปลี่ยนสีของประเภทงาน "' + catName + '" เป็นสีที่เลือกไว้?', 'ยืนยันการเปลี่ยนสี');
-              if (!ok) { loadCategories(); return; }
-              var r = await withProgress('กำลังบันทึกสีประเภทงาน', function () {
-                return apiCall('adminSetWorkCategoryColor', { categoryId: catId, color: newColor });
-              }, { successLabel: 'เปลี่ยนสีประเภทงานแล้ว' });
-              if (!r.ok) showToast(r.error.message, true);
-              loadCategories();
-            });
-          });
-          wrap.querySelectorAll('select.cat-template-select').forEach(function (sel) {
-            sel.addEventListener('change', async function () {
-              var newTemplate = sel.value;
-              var catId = sel.getAttribute('data-id');
-              var catName = sel.getAttribute('data-name');
-              var ok = await askConfirm('ยืนยันเปลี่ยนรูปแบบการ์ดของประเภทงาน "' + catName + '"? ผลงานทุกชิ้นของทุกครูในประเภทงานนี้จะแสดงผลด้วยรูปแบบใหม่ทันที', 'ยืนยันการเปลี่ยนรูปแบบการ์ด');
-              if (!ok) { loadCategories(); return; }
-              var r = await withProgress('กำลังบันทึกรูปแบบการ์ด', function () {
-                return apiCall('adminSetWorkCategoryTemplate', { categoryId: catId, template: newTemplate });
-              }, { successLabel: 'เปลี่ยนรูปแบบการ์ดแล้ว' });
-              if (!r.ok) showToast(r.error.message, true);
-              loadCategories();
-            });
-          });
-          wrap.querySelectorAll('button[data-fields-id]').forEach(function (btn) {
+          currentCategoryRows = rows;
+          wrap.querySelectorAll('button[data-cat-edit]').forEach(function (btn) {
             btn.addEventListener('click', function () {
-              document.getElementById('editCatFieldsId').value = btn.getAttribute('data-fields-id');
-              document.getElementById('editCatFieldsTitle').textContent = 'ข้อมูลที่ต้องกรอก: ' + btn.getAttribute('data-fields-name');
-              document.getElementById('editCatFieldsError').hidden = true;
-              var currentFields = JSON.parse(btn.getAttribute('data-fields') || '[]');
-              renderFieldCheckboxes('editCatFieldsCheckboxes', 'editCatFields', currentFields);
-              showModalEl(editCatFieldsModalEl);
+              var cat = currentCategoryRows.filter(function (x) { return x.id === btn.getAttribute('data-cat-edit'); })[0];
+              if (cat) openEditCatModal(cat);
             });
           });
           wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
@@ -1600,25 +1586,73 @@
           errBox.hidden = false;
         }
       });
-      document.getElementById('editCatFieldsClose').addEventListener('click', function () { hideModalEl(editCatFieldsModalEl); });
-      document.getElementById('editCatFieldsModalCloseX').addEventListener('click', function () { hideModalEl(editCatFieldsModalEl); });
-      document.getElementById('editCatFieldsForm').addEventListener('submit', async function (e) {
+      // ---------- ป็อปอัพ "แก้ไขประเภทงาน" (ตั้งแต่ 1.29.091026) ----------
+      // บันทึกเฉพาะค่าที่เปลี่ยนจริง (เทียบกับค่าเดิมตอนเปิดป็อปอัพ) โดยเรียก endpoint เดิมทีละตัว — ไม่ต้องเพิ่ม API ฝั่ง Worker
+      var editCatOriginal = null;
+      function switchEditCatTab(tabName) {
+        ['basic', 'fields'].forEach(function (t) {
+          document.getElementById('ecTabBtn-' + t).classList.toggle('active', t === tabName);
+          document.getElementById('ecTab-' + t).classList.toggle('active', t === tabName);
+        });
+      }
+      document.getElementById('ecTabBtn-basic').addEventListener('click', function () { switchEditCatTab('basic'); });
+      document.getElementById('ecTabBtn-fields').addEventListener('click', function () { switchEditCatTab('fields'); });
+      openEditCatModal = function (cat) {
+        editCatOriginal = {
+          color: cat.color || '#3457d5', template: cat.displayTemplate || '', noSubmission: !!cat.noSubmission,
+          department: cat.department || '', hideFromPortfolio: !!cat.hideFromPortfolio,
+          fields: (cat.customFields || []).slice().sort().join(',')
+        };
+        document.getElementById('editCatId').value = cat.id;
+        document.getElementById('editCatTitle').textContent = 'แก้ไขประเภทงาน';
+        document.getElementById('editCatNameText').textContent = cat.name;
+        document.getElementById('editCatColor').value = editCatOriginal.color;
+        renderTemplateOptions(document.getElementById('editCatTemplate'), editCatOriginal.template);
+        document.getElementById('editCatNoSubmission').checked = editCatOriginal.noSubmission;
+        renderDepartmentOptions(document.getElementById('editCatDepartment'), editCatOriginal.department);
+        document.getElementById('editCatHideFromPortfolio').checked = editCatOriginal.hideFromPortfolio;
+        renderFieldCheckboxes('editCatFieldsCheckboxes', 'editCat', cat.customFields || []);
+        document.getElementById('editCatError').hidden = true;
+        switchEditCatTab('basic');
+        showModalEl(editCatModalEl);
+      };
+      document.getElementById('editCatClose').addEventListener('click', function () { hideModalEl(editCatModalEl); });
+      document.getElementById('editCatModalCloseX').addEventListener('click', function () { hideModalEl(editCatModalEl); });
+      document.getElementById('editCatForm').addEventListener('submit', async function (e) {
         e.preventDefault();
-        var errBox = document.getElementById('editCatFieldsError');
+        var errBox = document.getElementById('editCatError');
         errBox.hidden = true;
-        var catId = document.getElementById('editCatFieldsId').value;
-        var fieldsVal = readCheckedFields('editCatFields');
-        var ok = await askConfirm('ยืนยันบันทึกข้อมูลที่ต้องกรอกของประเภทงานนี้?', 'ยืนยันการบันทึก');
+        var catId = document.getElementById('editCatId').value;
+        var o = editCatOriginal;
+        var next = {
+          color: document.getElementById('editCatColor').value,
+          template: document.getElementById('editCatTemplate').value,
+          noSubmission: document.getElementById('editCatNoSubmission').checked,
+          department: document.getElementById('editCatDepartment').value,
+          hideFromPortfolio: document.getElementById('editCatHideFromPortfolio').checked,
+          fields: readCheckedFields('editCat')
+        };
+        var calls = [];
+        if (next.color !== o.color) calls.push(['adminSetWorkCategoryColor', { categoryId: catId, color: next.color }]);
+        if (next.template !== o.template) calls.push(['adminSetWorkCategoryTemplate', { categoryId: catId, template: next.template }]);
+        if (next.noSubmission !== o.noSubmission) calls.push(['adminSetWorkCategoryNoSubmission', { categoryId: catId, noSubmission: next.noSubmission }]);
+        if (next.department !== o.department) calls.push(['adminSetWorkCategoryDepartment', { categoryId: catId, department: next.department }]);
+        if (next.hideFromPortfolio !== o.hideFromPortfolio) calls.push(['adminSetWorkCategoryPortfolioVisibility', { categoryId: catId, hideFromPortfolio: next.hideFromPortfolio }]);
+        if (next.fields.slice().sort().join(',') !== o.fields) calls.push(['adminUpdateWorkCategoryFields', { categoryId: catId, customFields: next.fields }]);
+        if (calls.length === 0) { hideModalEl(editCatModalEl); return; }
+        var ok = await askConfirm('ยืนยันบันทึกการแก้ไขประเภทงานนี้? (' + calls.length + ' รายการที่เปลี่ยน)', 'ยืนยันการบันทึก');
         if (!ok) return;
-        var r = await withProgress('กำลังบันทึก', function () {
-          return apiCall('adminUpdateWorkCategoryFields', { categoryId: catId, customFields: fieldsVal });
+        var r = await withProgress('กำลังบันทึก', async function () {
+          for (var i = 0; i < calls.length; i++) { await apiCall(calls[i][0], calls[i][1]); }
+          return true;
         }, { successLabel: 'บันทึกแล้ว' });
         if (r.ok) {
-          hideModalEl(editCatFieldsModalEl);
+          hideModalEl(editCatModalEl);
           loadCategories();
         } else {
           errBox.textContent = r.error.message;
           errBox.hidden = false;
+          loadCategories();
         }
       });
       // หมายเหตุ: ไม่เรียก loadCategories() ตรงนี้ตั้งแต่แรก — ปล่อยให้ tabLoaders.general (ด้านล่าง) เป็นคนเรียกตอนแท็บ "ทั่วไป" ถูกเปิดจริง เพื่อเลี่ยงการโหลดซ้ำซ้อน
@@ -1826,16 +1860,12 @@
           '<td>' + escapeHtml(u.name) + '</td>' +
           '<td>' + escapeHtml(u.username) + '</td>' +
           '<td>' + roleBadge(u) + '</td>' +
-          '<td><span class="badge badge-' + (u.status === 'active' ? 'active' : 'archived') + '">' + (u.status === 'active' ? 'ใช้งานอยู่' : 'พักการใช้งาน') + '</span></td>' +
+          '<td><span class="badge badge-' + (u.status === 'active' ? 'active' : 'archived') + '">' + (u.status === 'active' ? 'ใช้งานอยู่' : 'ระงับ') + '</span></td>' +
           '<td style="white-space:nowrap;">' +
             (canManageUser(u)
-              ? ((u.status === 'active'
-                  ? '<button class="btn btn-secondary btn-sm" data-act="archive" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">พักใช้งาน</button>'
-                  : '<button class="btn btn-secondary btn-sm" data-act="restore" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">คืนสิทธิ์</button>') + ' ' +
-                '<button class="btn btn-ghost btn-sm" data-act="resetpw" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">ตั้งรหัสผ่านใหม่</button> ' +
-                // "แก้ไขแผนก" (ตั้งแต่ 1.26.081026) — เฉพาะบัญชีเจ้าหน้าที่ที่มีหน้าฮับ (role='admin' + hasHub) ไม่ใช่บัญชีครู
-                (u.role === 'admin' && u.hasHub ? '<button class="btn btn-ghost btn-sm" data-act="editdept" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">แก้ไขแผนก</button> ' : '') +
-                '<button class="btn btn-danger btn-sm" data-act="purge" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '">ลบถาวร</button>')
+              // ตั้งแต่ 1.29.091026: รวมปุ่มจัดการบัญชี (พักใช้งาน/คืนสิทธิ์/ตั้งรหัสผ่านใหม่/แก้ไขแผนก/ลบถาวร) ไว้ในป็อปอัพ "จัดการบัญชี" ที่เปิดจากปุ่มเดียว
+              // แทนการวางเรียงหลายปุ่มต่อแถวจนรก — ปุ่มในป็อปอัพยังใช้ data-act เดิมทุกตัว
+              ? '<button class="btn btn-secondary btn-sm" data-manage-user="' + u.id + '" data-name="' + escapeHtml(u.name) + '"><i class="fas fa-sliders ui-icon" aria-hidden="true"></i> จัดการ</button>'
               : '<span class="hint">จัดการได้เฉพาะ Super Admin</span>') +
           '</td>' +
         '</tr>';
@@ -1843,34 +1873,129 @@
       html += '</tbody></table>';
       wrap.innerHTML = html;
 
-      wrap.querySelectorAll('button[data-act]').forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-          var act = btn.getAttribute('data-act');
-          var id = btn.getAttribute('data-id');
-          var name = btn.getAttribute('data-name');
-          if (act === 'archive') {
-            var ok = await askConfirm('พักการใช้งานบัญชีของ "' + name + '"? จะล็อกอินไม่ได้ แต่ผลงานและหน้าสาธารณะยังดูได้ตามปกติ', 'ยืนยันการพักใช้งาน');
-            if (!ok) return;
-            var rA = await withProgress('กำลังพักการใช้งานบัญชี', function () { return apiCall('adminArchiveUser', { userId: id }); }, { successLabel: 'พักการใช้งานแล้ว' });
-            if (rA.ok) loadUsers();
-          } else if (act === 'restore') {
-            var okR = await askConfirm('คืนสิทธิ์การใช้งานบัญชีของ "' + name + '"? บัญชีนี้จะล็อกอินได้อีกครั้ง', 'ยืนยันการคืนสิทธิ์');
-            if (!okR) return;
-            var rR = await withProgress('กำลังคืนสิทธิ์การใช้งาน', function () { return apiCall('adminRestoreUser', { userId: id }); }, { successLabel: 'คืนสิทธิ์การใช้งานแล้ว' });
-            if (rR.ok) loadUsers();
-          } else if (act === 'purge') {
-            var ok2 = await askConfirm('ลบบัญชีของ "' + name + '" อย่างถาวร? การกระทำนี้ย้อนกลับไม่ได้ (ไฟล์ใน Drive จะยังอยู่ แต่บัญชีนี้จะหายไปจากระบบทั้งหมด)', 'ยืนยันการลบถาวร');
-            if (!ok2) return;
-            var rP = await withProgress('กำลังลบบัญชีถาวร', function () { return apiCall('adminPurgeUser', { userId: id }); }, { successLabel: 'ลบบัญชีถาวรแล้ว' });
-            if (rP.ok) loadUsers();
-          } else if (act === 'resetpw') {
-            openResetPwModal(id, name);
-          } else if (act === 'editdept') {
-            openEditDeptModal(id, name);
-          }
+      wrap.querySelectorAll('button[data-manage-user]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var u = allUsers.filter(function (x) { return x.id === btn.getAttribute('data-manage-user'); })[0];
+          if (u) openManageUserModal(u);
         });
       });
     }
+
+    // ---------- ป็อปอัพ "จัดการบัญชี" (ตั้งแต่ 1.29.091026) ----------
+    var manageUserModalEl = document.getElementById('manageUserModal');
+    function openManageUserModal(u) {
+      document.getElementById('manageUserTarget').innerHTML = escapeHtml(u.name) + ' <span class="hint">(' + escapeHtml(u.username) + ')</span> ' + roleBadge(u);
+      var nm = escapeHtml(u.name);
+      var btns = (u.status === 'active'
+          ? '<button class="btn btn-secondary" data-act="archive">ระงับบัญชี</button>'
+          : '<button class="btn btn-secondary" data-act="restore">คืนสิทธิ์</button>') +
+        '<button class="btn btn-ghost" data-act="resetpw">ตั้งรหัสผ่านใหม่</button>' +
+        // "แก้ไขแผนก" (ตั้งแต่ 1.26.081026) — เฉพาะบัญชีเจ้าหน้าที่ที่มีหน้าฮับ (role='admin' + hasHub) ไม่ใช่บัญชีครู
+        (u.role === 'admin' && u.hasHub ? '<button class="btn btn-ghost" data-act="editdept">แก้ไขแผนก</button>' : '') +
+        // ลบถาวร (ตั้งแต่ 1.30.091026): กดได้เฉพาะบัญชีที่ระงับแล้ว — ถ้ายังใช้งานอยู่ปุ่มจะปิดไว้พร้อมคำอธิบาย
+        (u.status === 'active'
+          ? '<button class="btn btn-danger" data-act="purge" disabled>ลบถาวร</button><div class="hint">ต้องระงับบัญชีนี้ก่อน จึงจะลบถาวรได้</div>'
+          : '<button class="btn btn-danger" data-act="purge">ลบถาวร</button><div class="hint">ล้างบัญชีและผลงานทั้งหมด (ย้อนกลับไม่ได้)</div>');
+      var box = document.getElementById('manageUserActions');
+      box.innerHTML = btns;
+      box.querySelectorAll('button[data-act]:not([disabled])').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          hideModalEl(manageUserModalEl);
+          runUserAction(btn.getAttribute('data-act'), u.id, u.name);
+        });
+      });
+      showModalEl(manageUserModalEl);
+    }
+    async function runUserAction(act, id, name) {
+      if (act === 'archive') {
+        var ok = await askConfirm('ระงับบัญชีของ "' + name + '"? จะล็อกอินไม่ได้ และหน้าแสดงผลงานสาธารณะจะถูกซ่อน แต่ข้อมูลและไฟล์ทั้งหมดยังอยู่ (คืนสิทธิ์ได้ทุกเมื่อ)', 'ยืนยันการระงับบัญชี');
+        if (!ok) return;
+        var rA = await withProgress('กำลังระงับบัญชี', function () { return apiCall('adminArchiveUser', { userId: id }); }, { successLabel: 'ระงับบัญชีแล้ว' });
+        if (rA.ok) loadUsers();
+      } else if (act === 'restore') {
+        var okR = await askConfirm('คืนสิทธิ์การใช้งานบัญชีของ "' + name + '"? บัญชีนี้จะล็อกอินได้อีกครั้ง', 'ยืนยันการคืนสิทธิ์');
+        if (!okR) return;
+        var rR = await withProgress('กำลังคืนสิทธิ์การใช้งาน', function () { return apiCall('adminRestoreUser', { userId: id }); }, { successLabel: 'คืนสิทธิ์การใช้งานแล้ว' });
+        if (rR.ok) loadUsers();
+      } else if (act === 'purge') {
+        openPurgeUserModal(id, name);
+      } else if (act === 'resetpw') {
+        openResetPwModal(id, name);
+      } else if (act === 'editdept') {
+        openEditDeptModal(id, name);
+      }
+    }
+    // ---------- ป็อปอัพ "ลบบัญชีถาวร" (ตั้งแต่ 1.30.091026) ----------
+    var purgeUserModalEl = document.getElementById('purgeUserModal');
+    var purgeBusy = false;
+    var purgeTarget = null;
+    function openPurgeUserModal(id, name) {
+      var u = allUsers.filter(function (x) { return x.id === id; })[0];
+      if (!u) return;
+      purgeTarget = u;
+      purgeBusy = false;
+      document.getElementById('purgeUserTarget').innerHTML = 'บัญชี: <strong>' + escapeHtml(u.name) + '</strong>';
+      document.getElementById('purgeUserNeedName').textContent = u.username;
+      var inp = document.getElementById('purgeUserConfirmInput');
+      inp.value = '';
+      document.getElementById('purgeUserGo').disabled = true;
+      document.getElementById('purgeUserForm').hidden = false;
+      document.getElementById('purgeUserProgress').hidden = true;
+      document.getElementById('purgeUserFailed').hidden = true;
+      document.getElementById('purgeUserDone').hidden = true;
+      showModalEl(purgeUserModalEl);
+    }
+    function closePurgeUserModal() {
+      if (purgeBusy) return; // ระหว่างลบห้ามปิด — ปิดแล้วงานจะค้างครึ่งๆ กลางๆ
+      hideModalEl(purgeUserModalEl);
+      loadUsers();
+    }
+    document.getElementById('purgeUserConfirmInput').addEventListener('input', function () {
+      document.getElementById('purgeUserGo').disabled = !(purgeTarget && this.value.trim().toLowerCase() === String(purgeTarget.username).toLowerCase());
+    });
+    document.getElementById('purgeUserCancel').addEventListener('click', closePurgeUserModal);
+    document.getElementById('purgeUserModalCloseX').addEventListener('click', closePurgeUserModal);
+    document.getElementById('purgeUserDone').addEventListener('click', closePurgeUserModal);
+    document.getElementById('purgeUserGo').addEventListener('click', async function () {
+      if (!purgeTarget || purgeBusy) return;
+      var typed = document.getElementById('purgeUserConfirmInput').value.trim();
+      purgeBusy = true;
+      document.getElementById('purgeUserForm').hidden = true;
+      document.getElementById('purgeUserProgress').hidden = false;
+      var statusEl = document.getElementById('purgeUserStatus');
+      var failedBox = document.getElementById('purgeUserFailed');
+      var doneBtn = document.getElementById('purgeUserDone');
+      statusEl.textContent = 'กำลังลบ...';
+      var totalDeleted = 0, failedAll = [], finished = false, errMsg = '';
+      try {
+        // วนเรียกจนเซิร์ฟเวอร์ตอบ done:true (แต่ละรอบลบผลงานได้จำกัด) — กันวนไม่รู้จบด้วยเพดาน 500 รอบ
+        for (var i = 0; i < 500 && !finished; i++) {
+          var res = await apiCall('adminPurgeUser', { userId: purgeTarget.id, confirmUsername: typed });
+          totalDeleted += res.deleted || 0;
+          (res.failedFiles || []).forEach(function (f) { failedAll.push(f); });
+          if (res.done) finished = true;
+          else statusEl.textContent = 'กำลังลบผลงาน... ลบแล้ว ' + totalDeleted + ' ชิ้น (เหลืออีก ' + res.remaining + ')';
+        }
+        if (!finished) errMsg = 'ลบไม่ครบในรอบนี้ กรุณาเปิดป็อปอัพนี้แล้วกดลบถาวรอีกครั้งเพื่อทำต่อ';
+      } catch (err) {
+        errMsg = (err && err.message) || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ';
+      }
+      purgeBusy = false;
+      if (finished) {
+        statusEl.innerHTML = '<strong>ลบบัญชีถาวรเรียบร้อยแล้ว</strong> (ลบผลงาน ' + totalDeleted + ' ชิ้น)';
+        if (failedAll.length) {
+          failedBox.innerHTML = 'ไฟล์ต่อไปนี้ย้ายลงถังขยะ Drive ไม่สำเร็จ ควรตรวจและลบเองใน Google Drive:<ul style="margin:6px 0 0 18px; padding:0;">' +
+            failedAll.map(function (f) { return '<li>' + escapeHtml(f) + '</li>'; }).join('') + '</ul>';
+          failedBox.hidden = false;
+        }
+      } else {
+        statusEl.textContent = errMsg + (totalDeleted ? ' (ลบผลงานไปแล้ว ' + totalDeleted + ' ชิ้น — กดลบถาวรอีกครั้งเพื่อทำต่อได้)' : '');
+      }
+      doneBtn.hidden = false;
+    });
+
+    document.getElementById('manageUserClose').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
+    document.getElementById('manageUserModalCloseX').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
 
     // ---------- Create user modal / Reset password modal ----------
     // ตั้งแต่ V10.0 แท็บ "จัดการบัญชี" (และปุ่ม/ฟอร์มทั้งหมดในนี้ รวมถึง #openCreateUserBtn ที่อยู่ในแท็บนั้น) เป็น super-admin-only

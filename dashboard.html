@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.28.091026" />
+<link rel="stylesheet" href="assets/style.css?v=1.30.091026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -60,10 +60,11 @@
         <div class="dash-cal-side">
           <!-- ตั้งแต่ V11.7: ผู้ใช้ขอสลับปุ่มเด่น (.btn-cta) กลับมาไว้ที่ปุ่มนี้แทนปุ่ม "ส่งงาน (กำหนดเอง)" ด้านล่าง (ดูคอมเมนต์ตรงนั้น) -->
           <button class="btn btn-cta dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
-          <!-- "จัดทำบันทึกข้อความ" (ตั้งแต่ 1.25.081026, เปลี่ยนชื่อปุ่มจาก "ปริ้นบันทึกข้อความส่งงาน" ตั้งแต่ 1.28.xxxxxx ตามที่ผู้ใช้ขอ
+          <!-- "จัดทำบันทึกข้อความ" (ตั้งแต่ 1.25.081026, เปลี่ยนชื่อปุ่มจาก "ปริ้นบันทึกข้อความส่งงาน" ตั้งแต่ 1.28.091026 ตามที่ผู้ใช้ขอ
                เพราะตอนนี้ต้องเลือก "หัวเรื่องบันทึกข้อความ" ก่อนด้วย ไม่ใช่แค่ปริ้นอย่างเดียวแล้ว — ดู memo.html) เปิดได้ทั้งครูและ
-               เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ (ทั้งคู่ส่งงานผ่านระบบเหมือนกัน — requireHubAccess() ด้านบนกรองให้แล้ว) เปิดเป็นหน้าใหม่ -->
-          <a class="btn btn-secondary dash-portfolio-btn" id="btnOpenMemo" href="memo.html" target="_blank" rel="noopener"><i class="fas fa-file-lines ui-icon" aria-hidden="true"></i> จัดทำบันทึกข้อความ</a>
+               เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ (ทั้งคู่ส่งงานผ่านระบบเหมือนกัน — requireHubAccess() ด้านบนกรองให้แล้ว)
+               ตั้งแต่ 1.29.091026: ไปหน้า memo.html ในแท็บเดิม (ไม่เด้งเปิดหน้าใหม่) เหมือนกดแท็บเมนูบนสุด + ตัวอักษรเล็กลงให้พอดีปุ่ม (.dash-memo-btn) -->
+          <a class="btn btn-secondary dash-portfolio-btn dash-memo-btn" id="btnOpenMemo" href="memo.html"><i class="fas fa-file-lines ui-icon" aria-hidden="true"></i> จัดทำบันทึกข้อความ</a>
           <div class="dash-checklist">
             <div class="dash-checklist-title"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> เช็คลิสต์การส่งงาน</div>
             <div class="dash-checklist-body" id="assignmentChecklistBody"><div class="loading">กำลังโหลด</div></div>
@@ -152,7 +153,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.28.091026"></script>
+  <script src="assets/api.js?v=1.30.091026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -346,7 +347,7 @@
       document.getElementById('uploadError').hidden = true;
       if (preset && preset.academicYear) document.getElementById('upYear').value = preset.academicYear;
       if (preset && preset.semester) document.getElementById('upSemester').value = preset.semester;
-      // บั๊กที่ผู้ใช้แจ้ง (ตั้งแต่ 1.28.xxxxxx แก้): ปุ่ม "ส่งงาน (กำหนดเอง)" ไม่มี preset มาให้ — ช่อง "ภาคเรียน" เป็น
+      // บั๊กที่ผู้ใช้แจ้ง (ตั้งแต่ 1.28.091026 แก้): ปุ่ม "ส่งงาน (กำหนดเอง)" ไม่มี preset มาให้ — ช่อง "ภาคเรียน" เป็น
       // <select> ธรรมดาที่ไม่มี option ไหนตั้ง selected ไว้เลย เบราว์เซอร์เลยเลือกตัวเลือกแรก ("ภาคเรียนที่ 1") ให้เสมอ
       // ไม่ว่าตอนนี้จะเป็นภาคเรียนไหนจริงๆ ก็ตาม ส่วนช่อง "ปีการศึกษา" แม้จะมีค่าเริ่มต้นอยู่แล้ว (fillYearOptions() ด้านบน)
       // ก็คำนวณจากวันที่ปฏิทินล้วนๆ ไม่รู้จักค่า "ปีการศึกษา/ภาคเรียนปัจจุบัน" ที่ Super Admin อาจตั้ง override ไว้เอง

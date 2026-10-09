@@ -683,6 +683,7 @@ input[type="color"] {
 .dash-cal-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 /* ปุ่ม "หน้าผลงานของฉัน" วางไว้บนสุดของคอลัมน์ขวา (ตั้งแต่ V9.9) — ขยายให้สูงขึ้นอีกครั้งตั้งแต่ V-ถัดไปหลัง V10.0 ตามที่ผู้ใช้แจ้งว่าเล็กไป */
 .dash-portfolio-btn { width: 100%; flex-shrink: 0; min-height: 66px; padding: 16px 14px; font-size: 1.05rem; }
+.dash-portfolio-btn.dash-memo-btn { font-size: 0.88rem; padding: 16px 10px; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 6px; } /* ตั้งแต่ 1.29.091026: ตัวอักษรเล็กลงให้ข้อความ "จัดทำบันทึกข้อความ" พอดีปุ่มบรรทัดเดียว */
 .dash-checklist { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .dash-checklist-title { font-size: 0.86rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; flex-shrink: 0; }
 .dash-checklist-body { flex: 1; overflow-y: auto; min-height: 0; }
@@ -1146,10 +1147,14 @@ tbody tr:hover { background: var(--surface-2); }
 
 /* ---------- Footer signature ---------- */
 .site-footer {
-  text-align: center; padding: 28px 16px 20px; color: var(--text-muted); font-size: 0.84rem;
-  line-height: 1.7;
+  text-align: center; padding: 14px 16px 12px; color: var(--text-muted); font-size: 0.62rem;
+  line-height: 1.5;
 }
-.site-footer .line1 { font-weight: 600; }
+.site-footer .footer-school { font-weight: 700; }
+.site-footer .footer-links a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.site-footer .footer-links a:hover { color: var(--primary); }
+/* หน้าล็อกอินต้องพอดีจอมือถือเตี้ย (ดู body.login-page ด้านบน) — footer มี 6 บรรทัดตั้งแต่ 1.29.091026 จึงบีบช่องไฟเพิ่มเฉพาะหน้านี้ */
+body.login-page .site-footer { padding: 6px 12px 8px; line-height: 1.4; }
 
 .app-version-tag {
   text-align: center; padding: 0 16px 20px; color: var(--text-muted); font-size: 0.7rem; opacity: 0.7;
