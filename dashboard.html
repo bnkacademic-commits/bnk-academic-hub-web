@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.30.091026" />
+<link rel="stylesheet" href="assets/style.css?v=1.31.091026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -153,7 +153,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.30.091026"></script>
+  <script src="assets/api.js?v=1.31.091026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -634,7 +634,7 @@
             '</div>' +
           '</div>';
         }).join('');
-        return '<div class="checklist-group"><div class="checklist-group-title"><i class="fas fa-calendar-days ui-icon" aria-hidden="true"></i> ' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '</div>' + rowsHtml + '</div>';
+        return '<div class="checklist-group"><div class="checklist-group-title" title="' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '"><i class="fas fa-calendar-days ui-icon" aria-hidden="true"></i> ' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '</div>' + rowsHtml + '</div>';
       }).join('');
     }
 
@@ -697,13 +697,16 @@
         return false;
       }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
 
+      // ตั้งแต่ 1.31.091026: หัวข้อ "กำหนดส่งงาน" ทำให้โดดเด่น (เดิมเป็นข้อความ hint เล็กๆ สีจาง จนผู้ใช้แจ้งว่าไม่เด่นเลย) — เป็นแถบหัวข้อขนาดใหญ่
+      // มีไอคอนและแถบสีด้านซ้าย (.cal-upcoming-heading) แสดงทั้งตอนมีและไม่มีรายการ
+      var upcomingHeadingHtml = '<div class="cal-upcoming-heading"><i class="fas fa-bell ui-icon" aria-hidden="true"></i> กำหนดส่งงาน</div>';
       if (upcoming.length === 0) {
-        upcomingBox.innerHTML = '<div class="empty-state">ไม่มีกำหนดการในช่วงนี้</div>';
+        upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="empty-state">ไม่มีกำหนดการในช่วงนี้</div>';
       } else {
         // ครอบรายการด้วย .cal-upcoming-grid ให้ยาวเต็มความกว้างการ์ด (ตั้งแต่ V10.0) — เรียงลงมาเป็นแถวเดียวตามลำดับวันที่เหมือนเดิม
         // (V10.0 ตอนแรกทำเป็นกริดหลายคอลัมน์ ทำให้ลำดับดูสลับสับสน ผู้ใช้แจ้งว่าเป็นบั๊ก จึงแก้กลับมาเรียงแนวตั้งตามเดิม เหลือแค่ความกว้างที่ยังเต็มการ์ดอยู่)
         // เปลี่ยนชื่อหัวข้อจาก "กำหนดการ" เป็น "กำหนดส่งงาน" และรูปแบบแต่ละแถวเป็น "ชื่อ(ประเภทงาน) เทอม ปีการศึกษา" (ตั้งแต่ V-ถัดไปหลัง V10.1)
-        upcomingBox.innerHTML = '<div class="hint" style="margin-bottom:6px;">กำหนดส่งงาน</div><div class="cal-upcoming-grid">' + upcoming.map(function (e) {
+        upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="cal-upcoming-grid">' + upcoming.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // เกินกำหนดส่งแล้ว + ยังไม่ส่ง (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) — แสดงป้าย "เกินกำหนด" สีแดงให้เห็นชัดเจน ไม่ใช่แค่หายเงียบๆ ไปจากรายการ
           // ตั้งแต่ V12.0: ไม่มีสถานะเกินกำหนดสำหรับ e.noSubmission เพราะไม่มีอะไรให้ "ส่ง" จริง

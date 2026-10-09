@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.30.091026" />
+<link rel="stylesheet" href="assets/style.css?v=1.31.091026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -787,11 +787,11 @@
       <form id="teacherInfoForm" style="text-align:left;">
         <div class="field">
           <label for="teacherInfoPosition">ตำแหน่ง</label>
-          <input id="teacherInfoPosition" placeholder="เช่น ครู คศ.1" />
+          <select id="teacherInfoPosition"></select>
         </div>
         <div class="field">
           <label for="teacherInfoSubjectGroup">กลุ่มสาระการเรียนรู้</label>
-          <input id="teacherInfoSubjectGroup" placeholder="เช่น วิทยาศาสตร์และเทคโนโลยี" />
+          <select id="teacherInfoSubjectGroup"></select>
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">บันทึก</button>
@@ -804,7 +804,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.30.091026"></script>
+  <script src="assets/api.js?v=1.31.091026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1238,6 +1238,16 @@
     // ---------- "ระบบเว็บ" → ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู (ตั้งแต่ 1.25.081026) ----------
     var teacherInfoModal = document.getElementById('teacherInfoModal');
     var teacherInfoEditTarget = null;
+    // ตั้งแต่ 1.31.091026: "ตำแหน่ง" และ "กลุ่มสาระการเรียนรู้" เลือกจากดร็อปดาวน์แทนการพิมพ์เอง (เรียงตามลำดับวิทยฐานะ / 8 กลุ่มสาระฯ ตามหลักสูตรแกนกลาง)
+    // ค่าเดิมที่เคยพิมพ์เองไว้ก่อนหน้า (ไม่อยู่ในรายการ) จะถูกเพิ่มเป็นตัวเลือกพิเศษ "(ค่าเดิม) …" เพื่อไม่ให้ค่าหายเงียบๆ ตอนเปิดแก้ไข
+    var TEACHER_POSITIONS = ['ครูผู้ช่วย', 'ครู', 'ครูชำนาญการ', 'ครูชำนาญการพิเศษ', 'ครูเชี่ยวชาญ', 'ครูเชี่ยวชาญพิเศษ'];
+    var SUBJECT_GROUPS = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ'];
+    function fillSelectOptions(selectEl, options, current) {
+      var html = '<option value="">— ยังไม่ระบุ —</option>' + options.map(function (o) { return '<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</option>'; }).join('');
+      if (current && options.indexOf(current) === -1) html += '<option value="' + escapeHtml(current) + '">(ค่าเดิม) ' + escapeHtml(current) + '</option>';
+      selectEl.innerHTML = html;
+      selectEl.value = current || '';
+    }
     // ตั้งแต่ 1.26.081026: เจ้าหน้าที่แก้ "ตำแหน่ง/กลุ่มสาระการเรียนรู้" ของตัวเองได้เองแล้ว (ดู adminSetTeacherAcademicInfo
     // ฝั่ง Worker — self-edit carve-out) แต่ยังแก้ให้เจ้าหน้าที่คนอื่นไม่ได้เหมือนเดิม (สงวนไว้เฉพาะ Super Admin) จึงต้องกรอง
     // ปุ่ม "แก้ไข" ในตารางนี้ให้ตรงกับสิทธิ์จริงฝั่ง Worker ไม่ให้กดแล้วเจอ error เปล่าๆ — ครู (role='teacher') จัดการได้โดย
@@ -1269,8 +1279,8 @@
           if (!u) return;
           teacherInfoEditTarget = u;
           document.getElementById('teacherInfoTargetName').textContent = u.name;
-          document.getElementById('teacherInfoPosition').value = u.position || '';
-          document.getElementById('teacherInfoSubjectGroup').value = u.subjectGroup || '';
+          fillSelectOptions(document.getElementById('teacherInfoPosition'), TEACHER_POSITIONS, u.position || '');
+          fillSelectOptions(document.getElementById('teacherInfoSubjectGroup'), SUBJECT_GROUPS, u.subjectGroup || '');
           document.getElementById('teacherInfoModalError').hidden = true;
           showModalEl(teacherInfoModal);
         });
@@ -1291,8 +1301,8 @@
       var r = await withProgress('กำลังบันทึก', function () {
         return apiCall('adminSetTeacherAcademicInfo', {
           userId: teacherInfoEditTarget.id,
-          position: document.getElementById('teacherInfoPosition').value.trim(),
-          subjectGroup: document.getElementById('teacherInfoSubjectGroup').value.trim()
+          position: document.getElementById('teacherInfoPosition').value,
+          subjectGroup: document.getElementById('teacherInfoSubjectGroup').value
         });
       }, { successLabel: 'บันทึกแล้ว' });
       if (r.ok) {

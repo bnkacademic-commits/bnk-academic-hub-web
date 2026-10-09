@@ -707,12 +707,15 @@ input[type="color"] {
 /* หัวข้อ "เทอม ปีการศึกษา" ของแต่ละกลุ่มในเช็คลิสต์การส่งงาน — เดิมเป็นแค่ตัวหนังสือเล็กสีจางๆ ขีดเส้นใต้บางๆ (0.78rem, สี --primary-dark
    ซึ่งกลืนกับตัวหนังสือปกติ) ผู้ใช้แจ้งว่ามองไม่ค่อยเด่น จึงเปลี่ยนเป็นป้ายแถบสีพื้นหลังทึบ (--primary) ตัวหนังสือขาวตัดกันชัดเจน
    ใหญ่ขึ้น พร้อมไอคอนปฏิทินนำหน้า ให้แยกแต่ละกลุ่มเทอม/ปีการศึกษาออกจากกันได้ชัดเจนตั้งแต่กวาดตาดูรอบแรก (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) */
+/* ตั้งแต่ 1.31.091026: ลดขนาดตัวอักษรของ "เทอม ปีการศึกษา" ให้พอดีบรรทัดเดียวในคอลัมน์แคบข้างปฏิทิน (เดิม 0.86rem ตัดขึ้นบรรทัดที่ 2) —
+   white-space: nowrap กันตัดบรรทัด และ text-overflow ellipsis เป็นตาข่ายรองสำหรับจอที่แคบจนไม่พอจริงๆ */
 .checklist-group-title {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 0.86rem; font-weight: 800; color: #fff;
-  letter-spacing: 0.2px;
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.72rem; font-weight: 800; color: #fff;
+  letter-spacing: 0;
   background: var(--primary);
-  padding: 7px 12px; margin: 4px 0 8px; border-radius: var(--radius-sm);
+  padding: 6px 9px; margin: 4px 0 8px; border-radius: var(--radius-sm);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .checklist-group:first-child .checklist-group-title { margin-top: 0; }
 @media (max-width: 720px) {
@@ -1017,6 +1020,21 @@ tbody tr:hover { background: var(--surface-2); }
    เดิมทดลองไล่เรียงเป็นหลายคอลัมน์อัตโนมัติเมื่อจอกว้าง แต่ทำให้ลำดับรายการดูสลับสับสน (ผู้ใช้แจ้งว่าเป็นบั๊ก) จึงแก้กลับมาเป็นรายการแถวเดียวเรียงลงมาตามลำดับวันที่เหมือนก่อน V10.0
    เหลือไว้แค่ส่วนที่ยังเต็มความกว้างการ์ด (ไม่ถูกบีบอยู่ในคอลัมน์แคบข้างปฏิทินเหมือนก่อนหน้านั้น) */
 .cal-upcoming-grid { display: block; }
+/* หัวข้อ "กำหนดส่งงาน" ใต้ปฏิทิน (ตั้งแต่ 1.31.091026): เดิมเป็น .hint ตัวเล็กสีจางไม่เด่น — เปลี่ยนเป็นแถบหัวข้อใหญ่ ตัวหนา มีไอคอนกระดิ่งในวงกลมสีหลัก
+   แถบสีทึบด้านซ้าย และพื้นหลังสีอ่อนเต็มความกว้าง ให้เป็นส่วนที่สะดุดตาที่สุดใต้ปฏิทิน (ใช้ตัวแปรสีของธีม จึงดูดีทั้งโหมดสว่างและมืด) */
+.cal-upcoming-heading {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); letter-spacing: 0.1px;
+  background: var(--primary-light);
+  border-left: 5px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 11px 16px; margin-bottom: 8px;
+}
+.cal-upcoming-heading .ui-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--primary); color: #fff; font-size: 0.9rem; flex-shrink: 0;
+}
 .cal-upcoming-grid .event-list-item { border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 10px 4px; margin: 0; }
 .cal-upcoming-grid .event-list-item:last-child { border-bottom: none; }
 
