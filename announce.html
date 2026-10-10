@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>ประกาศและปฏิทิน — BNKAcademicHub</title>
+<!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
+     ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
+     getComputedStyle(...).paddingLeft = "0px" จริง ทั้งที่ style.css ที่เซิร์ฟเวอร์ส่งออกมาตรงกับซอร์สทุกตัวอักษร:
+     สคริปต์ Tailwind CDN ตัวนี้เดิมใส่ไว้แค่ช่วงออกแบบเพื่ออ้างอิงโทนสีเท่านั้น (ไม่มี class ของ Tailwind ใช้งานจริงในเว็บเลย
+     สักจุด — เช็คแล้วทั้ง 5 หน้า) แต่ตัว CDN สร้าง Preflight (CSS reset มาตรฐานของ Tailwind ที่ตั้ง padding/border ของ
+     input ทุกตัวเป็น 0 เพื่อ "ล้างค่า default ของเบราว์เซอร์") แล้วแทรกสไตล์ของตัวเองเข้า <head> ทีหลัง (browser ประมวลผล
+     script แบบ async หลังโหลดเน็ตเวิร์กเสร็จ) ทำให้ชนะลำดับ cascade ทับ padding: 10px 28px ที่ style.css ของเราตั้งไว้
+     โดยไม่มีทางแก้จากฝั่ง style.css เองเลย (เพราะ specificity เท่ากัน ผู้มาทีหลังชนะ) — เกิดเฉพาะตอนเน็ตเวิร์กโหลด CDN
+     สำเร็จเท่านั้น (อธิบายได้ว่าทำไมตอนแรกผมทดสอบในเครื่องแล้วไม่เจอปัญหา เพราะเครื่องทดสอบบล็อกการเรียก CDN ภายนอกไว้)
+     ลบสคริปต์นี้ทิ้งเลยปลอดภัย 100% เพราะไม่มีอะไรในเว็บพึ่งพา class ของ Tailwind อยู่จริง -->
+<!-- Font Awesome ฝังไฟล์ไว้ในเว็บเอง (ไม่พึ่ง CDN ภายนอก ตามแนวทางเดิมของโปรเจกต์ เหมือนฟอนต์ Sarabun) -->
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=1.32.101026" />
+</head>
+<body>
+  <div id="app-topbar"></div>
+
+  <div class="container">
+    <div class="page-header">
+      <h1>ประกาศและปฏิทิน</h1>
+      <p id="announcePageSub">จัดการประกาศและกำหนดการ/กำหนดส่งงานที่จะแสดงในหน้าแรกของครูและเจ้าหน้าที่</p>
+    </div>
+
+    <!-- หน้านี้ (ตั้งแต่ 1.32.101026) รวมแท็บ "ประกาศ" และ "ปฏิทิน" ที่เดิมอยู่ในหน้าตั้งค่าระบบมาไว้ที่เดียว เป็นแท็บบนสุดของเมนู
+         เจ้าหน้าที่/Super Admin จัดการได้เหมือนเดิมทุกอย่าง ส่วนผู้บริหาร (role 'executive') เปิดดูได้อย่างเดียว — ไม่มีปุ่มเพิ่ม/แก้ไข/ลบ
+         (ฝั่ง Worker ก็ปิดสิทธิ์เขียนไว้ด้วย: เรียกได้เฉพาะ endpoint ที่เป็นการอ่าน) -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="announcements">ประกาศ</button>
+      <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
+    </div>
+
+    <!-- Calendar tab -->
+    <div class="tab-panel" id="tab-calendar">
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-calendar-days ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการกำหนดการทั้งหมด</span>
+          <button class="btn btn-primary btn-sm" id="openCreateEventBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มกำหนดการ</button>
+        </div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กด "แก้ไข" ที่รายการด้านล่าง เพื่อเปิดป็อปอัพนี้พร้อมข้อมูลเดิมมาแก้ไขได้ (ตั้งแต่ V10.0)</p>
+        <div id="eventListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Announcements tab (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่เวอร์ชันถัดจาก V11.2 เปลี่ยนเป็นป็อปอัพเหมือนกำหนดการ + แก้ไขประกาศที่เผยแพร่ไปแล้วได้ด้วย) -->
+    <div class="tab-panel active" id="tab-announcements">
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการประกาศทั้งหมด</span>
+          <button class="btn btn-primary btn-sm" id="openCreateAnnBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประกาศ</button>
+        </div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ประกาศจะไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ (ครูและเจ้าหน้าที่ฝ่ายวิชาการ) ทันที — กด "แก้ไข" ที่รายการด้านล่าง เพื่อเปิดป็อปอัพนี้พร้อมข้อมูลเดิมมาแก้ไขได้</p>
+        <div id="annListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Add/edit announcement modal (ตั้งแต่เวอร์ชันถัดจาก V11.2) -->
+    <div class="modal-backdrop" id="annModal" hidden>
+      <div class="modal-box modal-box-wide">
+        <button type="button" class="modal-close-x" id="annModalCloseX" aria-label="ปิด">✕</button>
+        <h3 id="annModalTitle">เพิ่มประกาศ</h3>
+        <div id="createAnnError" class="error-box" hidden></div>
+        <form id="createAnnForm" style="text-align:left;">
+          <input type="hidden" id="annEditId" value="" />
+          <div class="field">
+            <label for="annTitle">หัวข้อประกาศ</label>
+            <input id="annTitle" required placeholder="เช่น แจ้งปิดปรับปรุงระบบชั่วคราว" />
+          </div>
+          <div class="field">
+            <label for="annMessage">รายละเอียดเพิ่มเติม (ถ้ามี)</label>
+            <textarea id="annMessage" placeholder="ข้อความประกาศที่จะแสดงในหน้าฮับของทุกบัญชี"></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="annShowFrom">เริ่มแสดง (ไม่บังคับ)</label>
+              <input id="annShowFrom" type="datetime-local" />
+            </div>
+            <div class="field">
+              <label for="annShowUntil">สิ้นสุดการแสดง (ไม่บังคับ)</label>
+              <input id="annShowUntil" type="datetime-local" />
+            </div>
+          </div>
+          <div class="hint" style="margin-top:-8px; margin-bottom:14px;">ถ้าไม่ระบุ ประกาศจะแสดงทันทีและแสดงตลอดไปจนกว่าจะลบ — ถ้าระบุ ระบบจะแสดง/ซ่อนประกาศในหน้าฮับให้อัตโนมัติตามช่วงเวลาที่ตั้งไว้ (ตั้งแต่ V10.0)</div>
+          <div class="modal-actions">
+            <button class="btn btn-primary" type="submit" id="annSubmitBtn">เพิ่มประกาศ</button>
+            <button class="btn btn-ghost" type="button" id="annModalClose">ยกเลิก</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- Add/edit calendar event modal (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่ V11.0 เปลี่ยนเป็นป็อปอัพ)
+       ตั้งแต่เวอร์ชันถัดจาก V11.2: แบ่งเป็น 2 แท็บ (ระยะเวลา/ประเภทงาน) และ "ประเภทงาน" กลายเป็นช่องบังคับเลือกเสมอ
+       (เลิกมี "กำหนดการทั่วไป" ที่ไม่ผูกประเภทงานแล้ว — กำหนดงานทุกรายการต้องมาจากระบบกลางเท่านั้น) ช่อง "หัวข้อ" ที่เคยกรอก
+       เองถูกตัดออกจากฟอร์มไปเลย เพราะหัวข้อ = ชื่อประเภทงานเสมอ (คำนวณฝั่ง Worker ให้อัตโนมัติ ไม่ต้องส่งหัวข้อมาจากหน้าเว็บอีกต่อไป) -->
+  <div class="modal-backdrop" id="eventModal" hidden>
+    <div class="modal-box modal-box-wide">
+      <button type="button" class="modal-close-x" id="eventModalCloseX" aria-label="ปิด">✕</button>
+      <h3 id="eventModalTitle">เพิ่มกำหนดการ</h3>
+      <div id="createEventError" class="error-box" hidden></div>
+      <div class="tabs" style="margin-bottom:14px;">
+        <button type="button" class="ev-tab-btn active" id="evTabBtn-period" data-ev-tab="period">ระยะเวลา</button>
+        <button type="button" class="ev-tab-btn" id="evTabBtn-category" data-ev-tab="category">ประเภทงาน</button>
+      </div>
+      <form id="createEventForm" style="text-align:left;">
+        <input type="hidden" id="evEditId" value="" />
+
+        <div class="ev-tab-panel active" id="evTab-period">
+          <div class="field-row">
+            <div class="field">
+              <label for="evDate">วันที่เริ่มต้น</label>
+              <input id="evDate" type="date" required />
+            </div>
+            <div class="field">
+              <label for="evEndDate">วันที่สิ้นสุด</label>
+              <input id="evEndDate" type="date" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="evAudience">สำหรับ</label>
+            <select id="evAudience"><option value="all">ครูทุกคน</option></select>
+          </div>
+          <div class="field">
+            <label for="evMessage">รายละเอียดเพิ่มเติม</label>
+            <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
+          </div>
+        </div>
+
+        <div class="ev-tab-panel" id="evTab-category">
+          <div class="field">
+            <label for="evCategory">ประเภทงาน</label>
+            <!-- ไม่ใส่ required ตรงๆ เพราะช่องนี้อยู่ในแท็บที่อาจไม่ active (display:none) ตอน submit — required บน select
+                 ที่ซ่อนอยู่ทำให้ Chrome เงียบๆ บล็อกการ submit เองโดยไม่มี error โชว์เลย (ไม่ trigger event submit ให้ JS จัดการต่อ)
+                 จึงตรวจสอบเองด้วย JS ในตอน submit แทน (ดู errBox ด้านล่าง) -->
+            <select id="evCategory"></select>
+            <div class="hint">ระบบจะใช้ "ชื่อประเภทงาน" เป็นหัวข้อกำหนดการนี้โดยอัตโนมัติ และนำไปคำนวณสถานะการส่งงานให้ในหน้า "สรุปรวมการส่งงาน" (ใครส่งตรงเวลา/เกินกำหนด/ยังไม่ส่ง)</div>
+            <div class="hint" id="evNoCategoryHint" hidden>ยังไม่มีประเภทงานในระบบ — ไปเพิ่มที่หน้า "ตั้งค่าระบบ" แท็บ "ข้อมูลหลัก" ก่อน ถึงจะเพิ่มกำหนดการได้</div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="evYear">ปีการศึกษา</label>
+              <select id="evYear"></select>
+            </div>
+            <div class="field">
+              <label for="evSemester">ภาคเรียน</label>
+              <select id="evSemester">
+                <option value="1">ภาคเรียนที่ 1</option>
+                <option value="2">ภาคเรียนที่ 2</option>
+                <option value="summer">ภาคฤดูร้อน</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary" type="submit" id="evSubmitBtn">เพิ่มกำหนดการ</button>
+          <button class="btn btn-ghost" type="button" id="eventModalClose">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="app-footer"></div>
+  <div id="app-version-tag" class="app-version-tag"></div>
+
+  <script src="assets/api.js?v=1.32.101026"></script>
+  <script>
+    var session = requireViewerAccess();
+    if (session) mountChrome('announce');
+    var versionTag = document.getElementById('app-version-tag');
+    if (versionTag) versionTag.textContent = 'Version ' + APP_VERSION;
+
+    // เจ้าหน้าที่/Super Admin จัดการได้ ผู้บริหารดูอย่างเดียว
+    var canManage = !!session && session.role === 'admin';
+    if (!canManage) {
+      document.getElementById('openCreateEventBtn').hidden = true;
+      document.getElementById('openCreateAnnBtn').hidden = true;
+      document.getElementById('announcePageSub').textContent = 'ดูประกาศและกำหนดการ/กำหนดส่งงานของโรงเรียน (ดูได้อย่างเดียว)';
+      document.querySelectorAll('#tab-calendar .hint, #tab-announcements .hint').forEach(function (h) { h.hidden = true; });
+    }
+
+    // ---------- Tabs (โหลดข้อมูลแบบ lazy เฉพาะตอนเปิดแท็บ) ----------
+    var _tabLoaded = {};
+    var _usersPromise = null;
+    var _eventCategoriesPromise = null;
+    var allUsers = [];
+    async function loadUsers() {
+      try {
+        allUsers = await apiCall('adminListUsers', {});
+        renderAudienceOptions();
+      } catch (err) { /* ไม่ต้องแจ้ง — ป้ายชื่อผู้รับจะตกไปแสดงเป็น "ผู้ใช้เฉพาะราย" แทน */ }
+    }
+    function ensureUsersLoaded() {
+      if (!_usersPromise) _usersPromise = loadUsers();
+      return _usersPromise;
+    }
+    function ensureEventCategoriesLoaded() {
+      if (!_eventCategoriesPromise) _eventCategoriesPromise = loadEventCategories();
+      return _eventCategoriesPromise;
+    }
+    var tabLoaders = {
+      announcements: function () { return loadAnnouncements(); },
+      calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); }
+    };
+    function loadTabIfNeeded(tabKey) {
+      if (_tabLoaded[tabKey]) return;
+      _tabLoaded[tabKey] = true;
+      var fn = tabLoaders[tabKey];
+      if (fn) return fn();
+    }
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var tabKey = btn.getAttribute('data-tab');
+        document.getElementById('tab-' + tabKey).classList.add('active');
+        loadTabIfNeeded(tabKey);
+      });
+    });
+
+    // ---------- Calendar ----------
+    // ปีการศึกษา options ของฟอร์มเพิ่มกำหนดการ (รูปแบบเดียวกับ fillYearOptions ในหน้าแดชบอร์ดครู)
+    // หมายเหตุ: ช่วงตัวเลือกคำนวณสดจากวันที่จริงทุกครั้งที่เปิดหน้า (ไม่ hardcode) จึงไม่มีวันที่ตัวเลือก "หมด" — ขยับตามปีปัจจุบันเองอัตโนมัติ
+    // ตั้งแต่เวอร์ชันถัดจาก V11.2 ขยายช่วงมองไปข้างหน้าจาก +1 เป็น +2 ปี ให้ตั้งกำหนดการล่วงหน้าได้กว้างขึ้น
+    (function fillEvYearOptions() {
+      var beYear = new Date().getFullYear() + 543;
+      var sel = document.getElementById('evYear');
+      for (var y = beYear + 2; y >= beYear - 3; y--) {
+        var opt = document.createElement('option');
+        opt.value = y; opt.textContent = 'ปีการศึกษา ' + y;
+        if (y === beYear) opt.selected = true;
+        sel.appendChild(opt);
+      }
+    })();
+
+    // ตั้งแต่เวอร์ชันถัดจาก V11.2: "ประเภทงาน" บังคับเลือกเสมอ (เลิกมี "กำหนดการทั่วไป" ที่ไม่ผูกประเภทงาน) —
+    // dropdown จึงไม่มี option ว่างให้เลือกอีกต่อไป ถ้ายังไม่มีประเภทงานในระบบเลยจะโชว์คำแนะนำแทน (evNoCategoryHint)
+    var eventCategories = [];
+    async function loadEventCategories() {
+      var sel = document.getElementById('evCategory');
+      var hintEl = document.getElementById('evNoCategoryHint');
+      try {
+        eventCategories = await apiCall('calendarListWorkCategories', {});
+        var current = sel.value;
+        sel.innerHTML = '';
+        if (eventCategories.length === 0) {
+          sel.innerHTML = '<option value="">— ยังไม่มีประเภทงาน —</option>';
+          hintEl.hidden = false;
+        } else {
+          sel.innerHTML = '<option value="" disabled' + (current ? '' : ' selected') + '>— เลือกประเภทงาน —</option>';
+          hintEl.hidden = true;
+        }
+        eventCategories.forEach(function (c) {
+          var opt = document.createElement('option');
+          opt.value = c.id; opt.textContent = c.name;
+          sel.appendChild(opt);
+        });
+        sel.value = current || '';
+      } catch (err) {
+        // ถ้าโหลดรายชื่อประเภทงานไม่สำเร็จ ปล่อยให้ error ตอน submit จัดการแทน (ประเภทงานบังคับเลือกอยู่แล้ว)
+      }
+    }
+
+    // ---------- แท็บในป็อปอัพกำหนดการ (ระยะเวลา / ประเภทงาน) ----------
+    function switchEvTab(tabName) {
+      ['period', 'category'].forEach(function (t) {
+        document.getElementById('evTabBtn-' + t).classList.toggle('active', t === tabName);
+        document.getElementById('evTab-' + t).classList.toggle('active', t === tabName);
+      });
+    }
+    document.getElementById('evTabBtn-period').addEventListener('click', function () { switchEvTab('period'); });
+    document.getElementById('evTabBtn-category').addEventListener('click', function () { switchEvTab('category'); });
+
+    function renderAudienceOptions() {
+      var sel = document.getElementById('evAudience');
+      var current = sel.value;
+      sel.innerHTML = '<option value="all">ครูทุกคน</option>';
+      allUsers.filter(function (u) { return u.role === 'teacher' || u.hasHub; }).forEach(function (u) {
+        var opt = document.createElement('option');
+        opt.value = u.id; opt.textContent = u.name;
+        sel.appendChild(opt);
+      });
+      sel.value = current || 'all';
+    }
+
+    var lastEvents = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่ V10.0)
+    async function loadEvents() {
+      var wrap = document.getElementById('eventListWrap');
+      try {
+        var events = await apiCall('adminListEvents', {});
+        lastEvents = events;
+        if (events.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการ</div>'; return; }
+        var html = '';
+        events.forEach(function (ev) {
+          var audienceLabel = ev.audience === 'all' ? 'ครูทุกคน' : (function () {
+            var u = allUsers.filter(function (x) { return x.id === ev.audience; })[0];
+            return u ? u.name : 'ผู้ใช้เฉพาะราย';
+          })();
+          var dateChip = ev.endDate && ev.endDate !== ev.date
+            ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate)
+            : formatDateThai(ev.date);
+          var categoryMeta = ev.categoryId
+            ? '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('tag', 13) + ' กำหนดส่งงาน: ' + escapeHtml(ev.categoryName) + ' · ปีการศึกษา ' + escapeHtml(ev.academicYear) + ' · ' + (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + '</div>'
+            : '';
+          html += '<div class="event-list-item">' +
+            '<div class="event-date-chip">' + dateChip + '</div>' +
+            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(ev.title) + '</div>' +
+            (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
+            '<div class="sub-item-meta">สำหรับ: ' + escapeHtml(audienceLabel) + '</div>' +
+            categoryMeta + '</div>' +
+            (canManage ? '<div style="display:flex; gap:6px; flex-shrink:0;">' +
+            '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button>' +
+            '<button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>' +
+            '</div>' : '') +
+            '</div>';
+        });
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('button[data-edit-id]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var ev = lastEvents.filter(function (e) { return e.id === btn.getAttribute('data-edit-id'); })[0];
+            if (ev) startEditEvent(ev);
+          });
+        });
+        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var ok = await askConfirm('ลบกำหนดการนี้?', 'ยืนยันการลบกำหนดการ');
+            if (!ok) return;
+            var evId = btn.getAttribute('data-id');
+            var r = await withProgress('กำลังลบกำหนดการ', function () { return apiCall('adminDeleteEvent', { eventId: evId }); }, { successLabel: 'ลบกำหนดการแล้ว' });
+            if (r.ok) { loadEvents(); }
+          });
+        });
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    // ---------- เพิ่ม/แก้ไขกำหนดการเป็นป็อปอัพ (ตั้งแต่ V11.0 — เดิมเป็นฟอร์มฝังอยู่ในหน้า) ----------
+    var eventModalEl = document.getElementById('eventModal');
+    function openCreateEvent() {
+      document.getElementById('evEditId').value = '';
+      document.getElementById('createEventForm').reset();
+      switchEvTab('period');
+      loadEventCategories(); // รีเฟรชรายชื่อประเภทงานทุกครั้งที่เปิด เผื่อเพิ่ม/ลบประเภทงานที่แท็บ "ทั่วไป" มาระหว่างนี้
+      document.getElementById('evSubmitBtn').textContent = 'เพิ่มกำหนดการ';
+      document.getElementById('eventModalTitle').textContent = 'เพิ่มกำหนดการ';
+      document.getElementById('createEventError').hidden = true;
+      showModalEl(eventModalEl);
+    }
+    function startEditEvent(ev) {
+      document.getElementById('evEditId').value = ev.id;
+      document.getElementById('evDate').value = ev.date;
+      document.getElementById('evEndDate').value = (ev.endDate && ev.endDate !== ev.date) ? ev.endDate : '';
+      document.getElementById('evAudience').value = ev.audience;
+      document.getElementById('evMessage').value = ev.message || '';
+      switchEvTab('period');
+      loadEventCategories().then(function () {
+        document.getElementById('evCategory').value = ev.categoryId || '';
+        if (ev.categoryId) {
+          document.getElementById('evYear').value = ev.academicYear;
+          document.getElementById('evSemester').value = ev.semester;
+        }
+        // กำหนดการเก่าก่อนอัพเดต (ทั่วไป ไม่ผูกประเภทงาน) จะไม่มี categoryId ให้ตั้งไว้ — ต้องเลือกประเภทงานใหม่ก่อนถึงจะบันทึกได้
+      });
+      document.getElementById('evSubmitBtn').textContent = 'บันทึกการแก้ไข';
+      document.getElementById('eventModalTitle').textContent = 'แก้ไขกำหนดการ: ' + ev.title;
+      document.getElementById('createEventError').hidden = true;
+      showModalEl(eventModalEl);
+    }
+    function cancelEditEvent() {
+      hideModalEl(eventModalEl);
+      document.getElementById('evEditId').value = '';
+      document.getElementById('createEventForm').reset();
+      document.getElementById('evSubmitBtn').textContent = 'เพิ่มกำหนดการ';
+    }
+    document.getElementById('openCreateEventBtn').addEventListener('click', openCreateEvent);
+    document.getElementById('eventModalClose').addEventListener('click', cancelEditEvent);
+    document.getElementById('eventModalCloseX').addEventListener('click', cancelEditEvent);
+
+    document.getElementById('createEventForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var errBox = document.getElementById('createEventError');
+      errBox.hidden = true;
+      var evDateVal = document.getElementById('evDate').value;
+      var evEndDateVal = document.getElementById('evEndDate').value;
+      var evCategoryVal = document.getElementById('evCategory').value;
+      if (evEndDateVal && evEndDateVal < evDateVal) {
+        errBox.textContent = 'วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่มต้น';
+        switchEvTab('period');
+        errBox.hidden = false;
+        return;
+      }
+      // ประเภทงานบังคับเลือกเสมอตั้งแต่เวอร์ชันถัดจาก V11.2 (ไม่มี "กำหนดการทั่วไป" อีกต่อไป)
+      if (!evCategoryVal) {
+        errBox.textContent = 'กรุณาเลือกประเภทงาน (แท็บ "ประเภทงาน")';
+        switchEvTab('category');
+        errBox.hidden = false;
+        return;
+      }
+      var editId = document.getElementById('evEditId').value;
+      var okEv = await askConfirm(
+        editId ? 'ยืนยันบันทึกการแก้ไขกำหนดการนี้?' : 'ยืนยันเพิ่มกำหนดการนี้ในปฏิทิน?',
+        editId ? 'ยืนยันการแก้ไขกำหนดการ' : 'ยืนยันการเพิ่มกำหนดการ'
+      );
+      if (!okEv) return;
+      var evPayload = {
+        date: evDateVal,
+        endDate: evEndDateVal,
+        audience: document.getElementById('evAudience').value,
+        message: document.getElementById('evMessage').value.trim(),
+        categoryId: evCategoryVal,
+        academicYear: document.getElementById('evYear').value,
+        semester: document.getElementById('evSemester').value
+      };
+      if (editId) evPayload.eventId = editId;
+      var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเพิ่มกำหนดการ', function () {
+        return apiCall(editId ? 'adminUpdateEvent' : 'adminCreateEvent', evPayload);
+      }, { successLabel: editId ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มกำหนดการแล้ว' });
+      if (r.ok) {
+        cancelEditEvent();
+        loadEvents();
+      } else {
+        errBox.textContent = r.error.message;
+        errBox.hidden = false;
+      }
+    });
+
+    // ---------- Announcements ----------
+    // ป้ายบอกช่วงเวลาแสดงผล (ถ้าตั้งไว้) — ใช้ในแท็บนี้เท่านั้น (แท็บนี้ยังคงบอกชื่อผู้แจ้งประกาศไว้เหมือนเดิม ต่างจากหน้าฮับที่บอกแค่ "จากฝ่ายวิชาการ" ตั้งแต่ V10.0)
+    function annScheduleMeta(a) {
+      if (!a.showFrom && !a.showUntil) return '';
+      var parts = [];
+      if (a.showFrom) parts.push('เริ่ม ' + formatDateTimeThai(a.showFrom));
+      if (a.showUntil) parts.push('ถึง ' + formatDateTimeThai(a.showUntil));
+      return '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('clock', 13) + ' ' + parts.join(' · ') + '</div>';
+    }
+    var lastAnnouncements = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่เวอร์ชันถัดจาก V11.2)
+    async function loadAnnouncements() {
+      var wrap = document.getElementById('annListWrap');
+      try {
+        var rows = await apiCall('adminListAnnouncements', {});
+        lastAnnouncements = rows;
+        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศ</div>'; return; }
+        var html = '';
+        rows.forEach(function (a) {
+          html += '<div class="event-list-item">' +
+            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
+            (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
+            '<div class="sub-item-meta">โดย ' + escapeHtml(a.createdByName) + ' · ' + formatDateTimeThai(a.createdAt) + '</div>' +
+            annScheduleMeta(a) + '</div>' +
+            (canManage ? '<div style="display:flex; gap:6px; flex-shrink:0;">' +
+            '<button class="btn btn-secondary btn-sm" data-edit-id="' + a.id + '">แก้ไข</button>' +
+            '<button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button>' +
+            '</div>' : '') +
+          '</div>';
+        });
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('button[data-edit-id]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var a = lastAnnouncements.filter(function (x) { return x.id === btn.getAttribute('data-edit-id'); })[0];
+            if (a) startEditAnn(a);
+          });
+        });
+        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var ok = await askConfirm('ลบประกาศนี้? ทุกบัญชีจะไม่เห็นประกาศนี้ในหน้าฮับอีกต่อไป', 'ยืนยันการลบประกาศ');
+            if (!ok) return;
+            var annId = btn.getAttribute('data-id');
+            var r = await withProgress('กำลังลบประกาศ', function () {
+              return apiCall('adminDeleteAnnouncement', { announcementId: annId });
+            }, { successLabel: 'ลบประกาศแล้ว' });
+            if (r.ok) { loadAnnouncements(); }
+          });
+        });
+      } catch (err) {
+        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    }
+
+    // ---------- เพิ่ม/แก้ไขประกาศเป็นป็อปอัพ (ตั้งแต่เวอร์ชันถัดจาก V11.2 — เดิมเป็นฟอร์มฝังอยู่ในหน้า และแก้ไขประกาศที่เผยแพร่ไปแล้วไม่ได้เลย) ----------
+    var annModalEl = document.getElementById('annModal');
+    // แปลง ISO (UTC) ที่เก็บไว้ กลับเป็นรูปแบบเวลาท้องถิ่นสำหรับช่อง input type="datetime-local" (YYYY-MM-DDTHH:mm)
+    function isoToLocalDatetimeInput(iso) {
+      if (!iso) return '';
+      var d = new Date(iso);
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+    function openCreateAnn() {
+      document.getElementById('annEditId').value = '';
+      document.getElementById('createAnnForm').reset();
+      document.getElementById('annSubmitBtn').textContent = 'เพิ่มประกาศ';
+      document.getElementById('annModalTitle').textContent = 'เพิ่มประกาศ';
+      document.getElementById('createAnnError').hidden = true;
+      showModalEl(annModalEl);
+    }
+    function startEditAnn(a) {
+      document.getElementById('annEditId').value = a.id;
+      document.getElementById('annTitle').value = a.title;
+      document.getElementById('annMessage').value = a.message || '';
+      document.getElementById('annShowFrom').value = isoToLocalDatetimeInput(a.showFrom);
+      document.getElementById('annShowUntil').value = isoToLocalDatetimeInput(a.showUntil);
+      document.getElementById('annSubmitBtn').textContent = 'บันทึกการแก้ไข';
+      document.getElementById('annModalTitle').textContent = 'แก้ไขประกาศ: ' + a.title;
+      document.getElementById('createAnnError').hidden = true;
+      showModalEl(annModalEl);
+    }
+    function cancelEditAnn() {
+      hideModalEl(annModalEl);
+      document.getElementById('annEditId').value = '';
+      document.getElementById('createAnnForm').reset();
+      document.getElementById('annSubmitBtn').textContent = 'เพิ่มประกาศ';
+    }
+    document.getElementById('openCreateAnnBtn').addEventListener('click', openCreateAnn);
+    document.getElementById('annModalClose').addEventListener('click', cancelEditAnn);
+    document.getElementById('annModalCloseX').addEventListener('click', cancelEditAnn);
+
+    document.getElementById('createAnnForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var errBox = document.getElementById('createAnnError');
+      errBox.hidden = true;
+      var showFromRaw = document.getElementById('annShowFrom').value;
+      var showUntilRaw = document.getElementById('annShowUntil').value;
+      if (showFromRaw && showUntilRaw && new Date(showUntilRaw) < new Date(showFromRaw)) {
+        errBox.textContent = 'เวลาสิ้นสุดการแสดงต้องไม่อยู่ก่อนเวลาเริ่มแสดง';
+        errBox.hidden = false;
+        return;
+      }
+      var editId = document.getElementById('annEditId').value;
+      var okAnn = await askConfirm(
+        editId ? 'ยืนยันบันทึกการแก้ไขประกาศนี้?' : 'ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?',
+        editId ? 'ยืนยันการแก้ไขประกาศ' : 'ยืนยันการเผยแพร่ประกาศ'
+      );
+      if (!okAnn) return;
+      var annPayload = {
+        title: document.getElementById('annTitle').value.trim(),
+        message: document.getElementById('annMessage').value.trim(),
+        // datetime-local เป็นเวลาท้องถิ่นของเครื่องที่ตั้งค่า แปลงเป็น ISO (UTC) ก่อนส่ง ให้เทียบกับเวลาจริงฝั่ง backend ได้ตรง
+        showFrom: showFromRaw ? new Date(showFromRaw).toISOString() : '',
+        showUntil: showUntilRaw ? new Date(showUntilRaw).toISOString() : ''
+      };
+      if (editId) annPayload.announcementId = editId;
+      var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเผยแพร่ประกาศ', function () {
+        return apiCall(editId ? 'adminUpdateAnnouncement' : 'adminCreateAnnouncement', annPayload);
+      }, { successLabel: editId ? 'บันทึกการแก้ไขแล้ว' : 'เผยแพร่ประกาศแล้ว' });
+      if (r.ok) {
+        cancelEditAnn();
+        loadAnnouncements();
+      } else {
+        errBox.textContent = r.error.message;
+        errBox.hidden = false;
+      }
+    });
+
+
+    loadTabIfNeeded('announcements');
+
+    // ---------- ปุ่มรีเฟรชข้อมูล (บนแถบเมนู) ----------
+    window.__refreshPageData = function () {
+      var activeBtn = document.querySelector('.tab-btn.active');
+      var activeTabKey = activeBtn ? activeBtn.getAttribute('data-tab') : 'announcements';
+      resetSettingsCache();
+      _usersPromise = null;
+      _eventCategoriesPromise = null;
+      _tabLoaded = {};
+      return Promise.all([applyBranding(), loadTabIfNeeded(activeTabKey)]);
+    };
+  </script>
+</body>
+</html>

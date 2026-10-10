@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.31.091026" />
+<link rel="stylesheet" href="assets/style.css?v=1.32.101026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -27,7 +27,7 @@
   <div class="container">
     <div class="page-header">
       <h1>ตั้งค่าระบบ</h1>
-      <p>ตั้งค่าทั่วไปของเว็บไซต์ จัดการบัญชีผู้ใช้ ปฏิทิน ประกาศ และตรวจสอบประวัติการทำรายการ</p>
+      <p>ตั้งค่าทั่วไปของเว็บไซต์ ข้อมูลหลักและข้อมูลฝ่าย จัดการบัญชีผู้ใช้ และตรวจสอบประวัติการทำรายการ</p>
     </div>
 
     <!-- ลำดับแท็บตั้งแต่ V10.0: จัดการบัญชี เป็น Super Admin เท่านั้น (ตัดสิทธิ์เจ้าหน้าที่ฝ่ายวิชาการออก), "ประวัติการลบ" เปลี่ยนชื่อ+จำกัดสิทธิ์เป็น Super Admin เท่านั้น,
@@ -36,12 +36,10 @@
          "เทอม/ปีการศึกษาปัจจุบัน" ได้ด้วยตามที่ผู้ใช้ขอ (ส่วนอื่นของ "ทั่วไป" เช่น ชื่อเว็บ/โลโก้/ไอคอน ยังเป็น Super Admin เท่านั้นเหมือนเดิม) -->
     <div class="tabs">
       <button class="tab-btn active super-admin-only" data-tab="general">ทั่วไป</button>
-      <button class="tab-btn" data-tab="website">ระบบเว็บ</button>
-      <button class="tab-btn super-admin-only" data-tab="display">ปรับแต่งการแสดงผลงาน</button>
+      <button class="tab-btn" data-tab="website">ข้อมูลหลัก</button>
+      <button class="tab-btn" data-tab="deptinfo">ข้อมูลฝ่าย</button>
       <button class="tab-btn super-admin-only" data-tab="accounts">จัดการบัญชี</button>
-      <button class="tab-btn super-admin-only" data-tab="extlinks">เว็บภายนอก</button>
-      <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
-      <button class="tab-btn" data-tab="announcements">ประกาศ</button>
+      <button class="tab-btn super-admin-only" data-tab="extlinks">เว็บไซต์โรงเรียน</button>
       <button class="tab-btn super-admin-only" data-tab="log">ประวัติการส่งงานและลบงาน</button>
       <button class="tab-btn" data-tab="systemlog">ประวัติระบบ</button>
     </div>
@@ -89,34 +87,6 @@
           <button class="btn btn-secondary" id="logoUploadBtn">อัพโหลด</button>
         </div>
         <div class="hint">แสดงแทนไอคอนจุดกลมด้านซ้ายบนของทุกหน้า แนะนำพื้นหลังโปร่งใส — ระบบจะปรับขนาดไฟล์ให้อัตโนมัติก่อนอัพโหลด</div>
-      </div>
-
-      <div class="card">
-        <div class="section-title" style="justify-content:space-between;">
-          <span><i class="fas fa-tag ui-icon" style="font-size:17px" aria-hidden="true"></i> ประเภทงาน</span>
-          <button class="btn btn-primary btn-sm" id="openCreateCatBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประเภทงาน</button>
-        </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ กดปุ่ม <b>"แก้ไข"</b> ที่แต่ละรายการเพื่อเปลี่ยนสี รูปแบบการ์ด (มีผลกับผลงานของ<b>ทุกครู</b>ในประเภทนี้ทันที) ฝ่ายที่ดูแล การแจ้งเตือนอย่างเดียว การซ่อนจากหน้าสาธารณะ และข้อมูลเพิ่มเติมที่ครูต้องกรอกตอนส่งงาน</p>
-        <div id="catListWrap"><div class="loading">กำลังโหลด</div></div>
-      </div>
-
-      <!-- รายชื่อ "ฝ่าย" ของเจ้าหน้าที่ (ตั้งแต่ 1.26.081026) — Super Admin กำหนดชื่อฝ่ายต่อท้ายคำว่า "เจ้าหน้าที่" ได้เอง
-           เช่น เจ้าหน้าที่วิชาการ, เจ้าหน้าที่บุคคล, เจ้าหน้าที่การเงิน ใช้ผูกกับบัญชีเจ้าหน้าที่ (แท็บ "จัดการบัญชี") และ
-           ประเภทงาน (การ์ด "ประเภทงาน" ด้านบน) เพื่อจำกัดการมองเห็น/จัดการปฏิทินและสรุปรวมเฉพาะฝ่ายนั้นๆ — สิทธิ์การใช้งาน
-           ของบัญชีเจ้าหน้าที่ยังเป็นแบบเดียวกันทั้งหมดเหมือนเดิม (admin + has_hub) เปลี่ยนแค่ชื่อที่แสดง/การมองเห็นงานเท่านั้น
-           ไม่ใช่สิทธิ์ใหม่แยกต่างหาก -->
-      <div class="card">
-        <div class="section-title"><i class="fas fa-building-user ui-icon" style="font-size:17px" aria-hidden="true"></i> ฝ่ายของเจ้าหน้าที่</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดรายชื่อฝ่ายที่จะต่อท้ายคำว่า "เจ้าหน้าที่" ได้ เช่น วิชาการ, บุคคล, การเงิน, กิจการนักเรียน, อาคารสถานที่ — ใช้ตั้งให้บัญชีเจ้าหน้าที่ที่แท็บ "จัดการบัญชี" และผูกกับประเภทงานที่การ์ด "ประเภทงาน" ด้านบน เพื่อให้เจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่เห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนั้น (Super Admin เห็นทุกฝ่ายเสมอ) <b>หมายเหตุ:</b> การลบ/เปลี่ยนชื่อฝ่ายในรายการนี้จะไม่ไปแก้ค่าที่ตั้งไว้แล้วในบัญชี/ประเภทงานเดิมให้อัตโนมัติ</p>
-        <div id="deptError" class="error-box" hidden></div>
-        <div id="deptListWrap"><div class="loading">กำลังโหลด</div></div>
-        <div class="field-row" style="margin-top:14px; align-items:flex-end;">
-          <div class="field" style="flex:1;">
-            <label for="deptNewName">เพิ่มฝ่ายใหม่</label>
-            <input id="deptNewName" placeholder="เช่น บุคคล, การเงิน, กิจการนักเรียน" />
-          </div>
-          <button class="btn btn-primary" id="deptAddBtn" type="button">เพิ่มฝ่าย</button>
-        </div>
       </div>
     </div>
 
@@ -188,6 +158,75 @@
         </form>
       </div>
 
+      <div class="card super-admin-only">
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-tag ui-icon" style="font-size:17px" aria-hidden="true"></i> ประเภทงาน</span>
+          <button class="btn btn-primary btn-sm" id="openCreateCatBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประเภทงาน</button>
+        </div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ กดปุ่ม <b>"แก้ไข"</b> ที่แต่ละรายการเพื่อเปลี่ยนสี รูปแบบการ์ด (มีผลกับผลงานของ<b>ทุกครู</b>ในประเภทนี้ทันที) ฝ่ายที่ดูแล การแจ้งเตือนอย่างเดียว การซ่อนจากหน้าสาธารณะ และข้อมูลเพิ่มเติมที่ครูต้องกรอกตอนส่งงาน</p>
+        <div id="catListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+
+      <!-- รายชื่อ "ฝ่าย" ของเจ้าหน้าที่ (ตั้งแต่ 1.26.081026) — Super Admin กำหนดชื่อฝ่ายต่อท้ายคำว่า "เจ้าหน้าที่" ได้เอง
+           เช่น เจ้าหน้าที่วิชาการ, เจ้าหน้าที่บุคคล, เจ้าหน้าที่การเงิน ใช้ผูกกับบัญชีเจ้าหน้าที่ (แท็บ "จัดการบัญชี") และ
+           ประเภทงาน (การ์ด "ประเภทงาน" ด้านบน) เพื่อจำกัดการมองเห็น/จัดการปฏิทินและสรุปรวมเฉพาะฝ่ายนั้นๆ — สิทธิ์การใช้งาน
+           ของบัญชีเจ้าหน้าที่ยังเป็นแบบเดียวกันทั้งหมดเหมือนเดิม (admin + has_hub) เปลี่ยนแค่ชื่อที่แสดง/การมองเห็นงานเท่านั้น
+           ไม่ใช่สิทธิ์ใหม่แยกต่างหาก -->
+      <div class="card super-admin-only">
+        <div class="section-title"><i class="fas fa-building-user ui-icon" style="font-size:17px" aria-hidden="true"></i> ฝ่ายของเจ้าหน้าที่</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดรายชื่อฝ่ายที่จะต่อท้ายคำว่า "เจ้าหน้าที่" ได้ เช่น วิชาการ, บุคคล, การเงิน, กิจการนักเรียน, อาคารสถานที่ — ใช้ตั้งให้บัญชีเจ้าหน้าที่ที่แท็บ "จัดการบัญชี" และผูกกับประเภทงานที่การ์ด "ประเภทงาน" ด้านบน เพื่อให้เจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่เห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนั้น (Super Admin เห็นทุกฝ่ายเสมอ) <b>หมายเหตุ:</b> การลบ/เปลี่ยนชื่อฝ่ายในรายการนี้จะไม่ไปแก้ค่าที่ตั้งไว้แล้วในบัญชี/ประเภทงานเดิมให้อัตโนมัติ</p>
+        <div id="deptError" class="error-box" hidden></div>
+        <div id="deptListWrap"><div class="loading">กำลังโหลด</div></div>
+        <div class="field-row" style="margin-top:14px; align-items:flex-end;">
+          <div class="field" style="flex:1;">
+            <label for="deptNewName">เพิ่มฝ่ายใหม่</label>
+            <input id="deptNewName" placeholder="เช่น บุคคล, การเงิน, กิจการนักเรียน" />
+          </div>
+          <button class="btn btn-primary" id="deptAddBtn" type="button">เพิ่มฝ่าย</button>
+        </div>
+      </div>
+
+      <!-- ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครูแต่ละคน (ตั้งแต่ 1.25.081026) — เติมในเนื้อหาเปิดของบันทึกข้อความอัตโนมัติเช่นกัน
+           เจ้าหน้าที่ฝ่ายวิชาการ/Super Admin เป็นผู้ตั้งค่าให้ (ครูไม่กรอกเอง) รายชื่อดึงจากรายชื่อผู้ใช้เดียวกับแท็บ "จัดการบัญชี"
+           รวมบัญชีเจ้าหน้าที่ฝ่ายวิชาการ (ที่มีหน้าฮับ) ด้วย ไม่ใช่แค่บัญชีครู เพราะเจ้าหน้าที่ก็เป็นครูที่ส่งงานผ่านระบบเหมือนกัน -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-users ui-icon" style="font-size:17px" aria-hidden="true"></i> ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู/เจ้าหน้าที่</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ใช้เติมในเนื้อหาเปิดของบันทึกข้อความส่งงานโดยอัตโนมัติ (ครูและเจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ) — กดแก้ไขทีละคน</p>
+        <input type="search" id="teacherInfoSearch" placeholder="ค้นหาชื่อ" style="margin-bottom:10px;" />
+        <div id="teacherInfoError" class="error-box" hidden></div>
+        <div id="teacherInfoTableWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+
+    <!-- Display-order tab (ปรับแต่งการแสดงผลงาน — เฉพาะ Super Admin ตั้งแต่ V11.5)
+         แทนที่หน้า "จัดการ Layout" เดิม (V11.1) ที่ตัดออกไปแล้ว — เดิมต้องจัดเรียงทีละครู ตอนนี้จัดลำดับ "ประเภทงาน" ครั้งเดียว
+         มีผลกับผลงานทุกชิ้นของทุกครูโดยอัตโนมัติ (ใครส่งงานประเภทไหนไว้ ก็เรียงตามลำดับประเภทงานนี้เหมือนกันหมดทุกคน) -->
+      <div class="card super-admin-only">
+        <div class="section-title"><i class="fas fa-arrow-down-wide-short ui-icon" style="font-size:17px" aria-hidden="true"></i> ลำดับการแสดงผลงานตามประเภทงาน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">จัดลำดับก่อน-หลังของ "ประเภทงาน" ด้วยปุ่ม ▲ ▼ ด้านล่าง — ผลงานของครูทุกคนจะเรียงตามลำดับประเภทงานนี้เหมือนกันหมดโดยอัตโนมัติในหน้าโชว์ผลงานสาธารณะ (ผลงานในประเภทงานเดียวกันเรียงตามวันที่ส่งล่าสุดก่อนเป็นค่ารอง) ส่วน<b>รูปแบบการ์ดพรีวิว</b>ไปตั้งที่แท็บ "ทั่วไป → ประเภทงาน"</p>
+        <div id="displayOrderWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+      <div class="super-admin-only" id="displayOrderSaveBar" style="display:flex; justify-content:flex-end; gap:10px; margin: 6px 0 30px;" hidden>
+        <button class="btn btn-primary" id="saveDisplayOrderBtn" type="button">บันทึกลำดับ</button>
+      </div>
+
+      <!-- ทำเนียบบุคลากร (ตั้งแต่ 1.32.101026): Super Admin เลือกได้ว่าจะเปิดให้ใครดู -->
+      <div class="card super-admin-only">
+        <div class="section-title"><i class="fas fa-address-book ui-icon" style="font-size:17px" aria-hidden="true"></i> ทำเนียบบุคลากรโรงเรียน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เลือกว่าจะให้ใครดูหน้า "ทำเนียบบุคลากร" ได้ — หน้านี้แสดงชื่อ ตำแหน่ง กลุ่มสาระฯ ฝ่าย และรูปโปรไฟล์ของผู้บริหารและครู/เจ้าหน้าที่ (ไม่แสดงชื่อผู้ใช้หรือข้อมูลบัญชี)</p>
+        <div id="directoryModeError" class="error-box" hidden></div>
+        <div class="field">
+          <label for="setDirectoryMode">การแสดงทำเนียบ</label>
+          <select id="setDirectoryMode">
+            <option value="login">เฉพาะผู้ที่เข้าสู่ระบบ (ค่าเริ่มต้น)</option>
+            <option value="public">เปิดสาธารณะ (ใครก็เปิดดูได้ ไม่ต้องล็อกอิน)</option>
+            <option value="off">ปิดทำเนียบ</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- แท็บ "ข้อมูลฝ่าย" (ตั้งแต่ 1.32.101026): ย้าย "ชื่อผู้ลงนามตามฝ่าย" และ "หัวเรื่องบันทึกข้อความ" มาไว้ที่นี่ -->
+    <div class="tab-panel" id="tab-deptinfo">
       <!-- ชื่อผู้ลงนามตามฝ่าย (ตั้งแต่ 1.28.091026): ชื่อ-ตำแหน่ง "หัวหน้าฝ่าย" + "รองผู้อำนวยการฝ่าย" ของแต่ละฝ่าย — เจ้าหน้าที่
            แต่ละฝ่ายกำหนดชื่อของฝ่ายตัวเองได้เอง (ไม่ต้องรอ Super Admin) Super Admin เลือกฝ่ายจากดรอปดาวน์ได้ทุกฝ่าย ส่วนเจ้าหน้าที่
            ฝ่ายวิชาการ (staff) จะเห็นเฉพาะฝ่ายของตัวเองล็อกไว้ให้เลย (ตรงกับสิทธิ์จริงฝั่ง Worker — requireDepartmentManager) -->
@@ -234,17 +273,6 @@
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">หัวเรื่องที่ครูเลือกได้ตอนกดปุ่ม "จัดทำบันทึกข้อความ" ในหน้าฮับ — ผูกกับประเภทงานที่เกี่ยวข้องไว้ รายการผลงานที่แนบได้จะถูกกรองให้เหลือเฉพาะประเภทงานที่เลือกไว้นี้เท่านั้น (เจ้าหน้าที่ฝ่ายวิชาการเห็น/จัดการได้เฉพาะหัวเรื่องของฝ่ายตัวเอง Super Admin เห็นและจัดการได้ทุกฝ่าย)</p>
         <div id="memoSubjectListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
-
-      <!-- ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครูแต่ละคน (ตั้งแต่ 1.25.081026) — เติมในเนื้อหาเปิดของบันทึกข้อความอัตโนมัติเช่นกัน
-           เจ้าหน้าที่ฝ่ายวิชาการ/Super Admin เป็นผู้ตั้งค่าให้ (ครูไม่กรอกเอง) รายชื่อดึงจากรายชื่อผู้ใช้เดียวกับแท็บ "จัดการบัญชี"
-           รวมบัญชีเจ้าหน้าที่ฝ่ายวิชาการ (ที่มีหน้าฮับ) ด้วย ไม่ใช่แค่บัญชีครู เพราะเจ้าหน้าที่ก็เป็นครูที่ส่งงานผ่านระบบเหมือนกัน -->
-      <div class="card">
-        <div class="section-title"><i class="fas fa-users ui-icon" style="font-size:17px" aria-hidden="true"></i> ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู/เจ้าหน้าที่</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ใช้เติมในเนื้อหาเปิดของบันทึกข้อความส่งงานโดยอัตโนมัติ (ครูและเจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ) — กดแก้ไขทีละคน</p>
-        <input type="search" id="teacherInfoSearch" placeholder="ค้นหาชื่อ" style="margin-bottom:10px;" />
-        <div id="teacherInfoError" class="error-box" hidden></div>
-        <div id="teacherInfoTableWrap"><div class="loading">กำลังโหลด</div></div>
-      </div>
     </div>
 
     <!-- Create/edit memo-subject modal (ตั้งแต่ 1.28.091026) -->
@@ -279,20 +307,6 @@
       </div>
     </div>
 
-    <!-- Display-order tab (ปรับแต่งการแสดงผลงาน — เฉพาะ Super Admin ตั้งแต่ V11.5)
-         แทนที่หน้า "จัดการ Layout" เดิม (V11.1) ที่ตัดออกไปแล้ว — เดิมต้องจัดเรียงทีละครู ตอนนี้จัดลำดับ "ประเภทงาน" ครั้งเดียว
-         มีผลกับผลงานทุกชิ้นของทุกครูโดยอัตโนมัติ (ใครส่งงานประเภทไหนไว้ ก็เรียงตามลำดับประเภทงานนี้เหมือนกันหมดทุกคน) -->
-    <div class="tab-panel super-admin-only" id="tab-display">
-      <div class="card">
-        <div class="section-title"><i class="fas fa-arrow-down-wide-short ui-icon" style="font-size:17px" aria-hidden="true"></i> ลำดับการแสดงผลงานตามประเภทงาน</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">จัดลำดับก่อน-หลังของ "ประเภทงาน" ด้วยปุ่ม ▲ ▼ ด้านล่าง — ผลงานของครูทุกคนจะเรียงตามลำดับประเภทงานนี้เหมือนกันหมดโดยอัตโนมัติในหน้าโชว์ผลงานสาธารณะ (ผลงานในประเภทงานเดียวกันเรียงตามวันที่ส่งล่าสุดก่อนเป็นค่ารอง) ส่วน<b>รูปแบบการ์ดพรีวิว</b>ไปตั้งที่แท็บ "ทั่วไป → ประเภทงาน"</p>
-        <div id="displayOrderWrap"><div class="loading">กำลังโหลด</div></div>
-      </div>
-      <div id="displayOrderSaveBar" style="display:flex; justify-content:flex-end; gap:10px; margin: 6px 0 30px;" hidden>
-        <button class="btn btn-primary" id="saveDisplayOrderBtn" type="button">บันทึกลำดับ</button>
-      </div>
-    </div>
-
     <!-- Accounts tab (เฉพาะ Super Admin ตั้งแต่ V10.0) -->
     <div class="tab-panel super-admin-only" id="tab-accounts">
       <div class="card">
@@ -304,74 +318,15 @@
       </div>
     </div>
 
-    <!-- External links tab (เว็บภายนอก — ตั้งแต่ V11.9, เฉพาะ Super Admin) — ปุ่มลิงก์ไปเว็บภายนอกที่จะไปแสดงในหน้าฮับเป็นส่วนใหม่ก่อนปฏิทิน -->
+    <!-- External links tab (เว็บไซต์โรงเรียน — ตั้งแต่ V11.9, เฉพาะ Super Admin) — ปุ่มลิงก์ไปเว็บไซต์โรงเรียนที่จะไปแสดงในหน้าฮับเป็นส่วนใหม่ก่อนปฏิทิน -->
     <div class="tab-panel super-admin-only" id="tab-extlinks">
       <div class="card">
         <div class="section-title" style="justify-content:space-between;">
-          <span><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> ปุ่มลิงก์เว็บภายนอก</span>
+          <span><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> ปุ่มลิงก์เว็บไซต์โรงเรียน</span>
           <button class="btn btn-primary btn-sm" id="openCreateExtLinkBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มปุ่ม</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างปุ่มลิงก์ไปเว็บภายนอก (เช่น ระบบอื่นของโรงเรียน เว็บไซต์หน่วยงาน) ไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ เป็นส่วนใหม่ก่อนปฏิทิน — กดปุ่มแล้วเปิดลิงก์ในแท็บเบราว์เซอร์ใหม่ทันที ถ้าอัพโหลดรูปภาพไว้ด้วย ปุ่มจะแสดงเป็นรูปนั้นแทนปุ่มสีข้อความ (ปุ่มรูปภาพแสดงผลจริงที่ขนาด <b>160×60px</b> เป๊ะ — สร้างรูปต้นฉบับขนาด <b>320×120px</b> พอดี คือ 2 เท่าของขนาดแสดงผลจริงเพื่อความคมชัด อัตราส่วน 8:3 พื้นหลังโปร่งใส จะเต็มปุ่มสนิทไม่มีขอบขาวหรือถูกครอบตัด) จัดลำดับก่อน-หลังได้ด้วยปุ่ม ▲ ▼ ท้ายแถว</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างปุ่มลิงก์ไปเว็บไซต์โรงเรียน (เช่น ระบบอื่นของโรงเรียน เว็บไซต์หน่วยงาน) ไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ เป็นส่วนใหม่ก่อนปฏิทิน — กดปุ่มแล้วเปิดลิงก์ในแท็บเบราว์เซอร์ใหม่ทันที ถ้าอัพโหลดรูปภาพไว้ด้วย ปุ่มจะแสดงเป็นรูปนั้นแทนปุ่มสีข้อความ (ปุ่มรูปภาพแสดงผลจริงที่ขนาด <b>160×60px</b> เป๊ะ — สร้างรูปต้นฉบับขนาด <b>320×120px</b> พอดี คือ 2 เท่าของขนาดแสดงผลจริงเพื่อความคมชัด อัตราส่วน 8:3 พื้นหลังโปร่งใส จะเต็มปุ่มสนิทไม่มีขอบขาวหรือถูกครอบตัด) จัดลำดับก่อน-หลังได้ด้วยปุ่ม ▲ ▼ ท้ายแถว</p>
         <div id="extLinkListWrap"><div class="loading">กำลังโหลด</div></div>
-      </div>
-    </div>
-
-    <!-- Calendar tab -->
-    <div class="tab-panel" id="tab-calendar">
-      <div class="card">
-        <div class="section-title" style="justify-content:space-between;">
-          <span><i class="fas fa-calendar-days ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการกำหนดการทั้งหมด</span>
-          <button class="btn btn-primary btn-sm" id="openCreateEventBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มกำหนดการ</button>
-        </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กด "แก้ไข" ที่รายการด้านล่าง เพื่อเปิดป็อปอัพนี้พร้อมข้อมูลเดิมมาแก้ไขได้ (ตั้งแต่ V10.0)</p>
-        <div id="eventListWrap"><div class="loading">กำลังโหลด</div></div>
-      </div>
-    </div>
-
-    <!-- Announcements tab (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่เวอร์ชันถัดจาก V11.2 เปลี่ยนเป็นป็อปอัพเหมือนกำหนดการ + แก้ไขประกาศที่เผยแพร่ไปแล้วได้ด้วย) -->
-    <div class="tab-panel" id="tab-announcements">
-      <div class="card">
-        <div class="section-title" style="justify-content:space-between;">
-          <span><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการประกาศทั้งหมด</span>
-          <button class="btn btn-primary btn-sm" id="openCreateAnnBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประกาศ</button>
-        </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ประกาศจะไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ (ครูและเจ้าหน้าที่ฝ่ายวิชาการ) ทันที — กด "แก้ไข" ที่รายการด้านล่าง เพื่อเปิดป็อปอัพนี้พร้อมข้อมูลเดิมมาแก้ไขได้</p>
-        <div id="annListWrap"><div class="loading">กำลังโหลด</div></div>
-      </div>
-    </div>
-
-    <!-- Add/edit announcement modal (ตั้งแต่เวอร์ชันถัดจาก V11.2) -->
-    <div class="modal-backdrop" id="annModal" hidden>
-      <div class="modal-box modal-box-wide">
-        <button type="button" class="modal-close-x" id="annModalCloseX" aria-label="ปิด">✕</button>
-        <h3 id="annModalTitle">เพิ่มประกาศ</h3>
-        <div id="createAnnError" class="error-box" hidden></div>
-        <form id="createAnnForm" style="text-align:left;">
-          <input type="hidden" id="annEditId" value="" />
-          <div class="field">
-            <label for="annTitle">หัวข้อประกาศ</label>
-            <input id="annTitle" required placeholder="เช่น แจ้งปิดปรับปรุงระบบชั่วคราว" />
-          </div>
-          <div class="field">
-            <label for="annMessage">รายละเอียดเพิ่มเติม (ถ้ามี)</label>
-            <textarea id="annMessage" placeholder="ข้อความประกาศที่จะแสดงในหน้าฮับของทุกบัญชี"></textarea>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label for="annShowFrom">เริ่มแสดง (ไม่บังคับ)</label>
-              <input id="annShowFrom" type="datetime-local" />
-            </div>
-            <div class="field">
-              <label for="annShowUntil">สิ้นสุดการแสดง (ไม่บังคับ)</label>
-              <input id="annShowUntil" type="datetime-local" />
-            </div>
-          </div>
-          <div class="hint" style="margin-top:-8px; margin-bottom:14px;">ถ้าไม่ระบุ ประกาศจะแสดงทันทีและแสดงตลอดไปจนกว่าจะลบ — ถ้าระบุ ระบบจะแสดง/ซ่อนประกาศในหน้าฮับให้อัตโนมัติตามช่วงเวลาที่ตั้งไว้ (ตั้งแต่ V10.0)</div>
-          <div class="modal-actions">
-            <button class="btn btn-primary" type="submit" id="annSubmitBtn">เพิ่มประกาศ</button>
-            <button class="btn btn-ghost" type="button" id="annModalClose">ยกเลิก</button>
-          </div>
-        </form>
       </div>
     </div>
 
@@ -431,6 +386,15 @@
           <select id="cuRole">
             <option value="teacher">ครู (Teacher)</option>
             <option value="admin">เจ้าหน้าที่ (Admin)</option>
+            <option value="executive">ผู้บริหาร (Executive)</option>
+          </select>
+        </div>
+        <!-- ตำแหน่งผู้บริหาร (ตั้งแต่ 1.32.101026) — แสดงเฉพาะตอนเลือก Role เป็นผู้บริหาร -->
+        <div class="field" id="cuExecPositionField" hidden>
+          <label for="cuExecPosition">ตำแหน่งผู้บริหาร</label>
+          <select id="cuExecPosition">
+            <option value="ผู้อำนวยการ">ผู้อำนวยการ</option>
+            <option value="รองผู้อำนวยการ">รองผู้อำนวยการ</option>
           </select>
         </div>
         <div class="field" id="cuSuperAdminField" hidden>
@@ -448,77 +412,6 @@
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">สร้างบัญชี</button>
           <button type="button" class="btn btn-ghost" id="createUserClose">ยกเลิก</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Add/edit calendar event modal (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่ V11.0 เปลี่ยนเป็นป็อปอัพ)
-       ตั้งแต่เวอร์ชันถัดจาก V11.2: แบ่งเป็น 2 แท็บ (ระยะเวลา/ประเภทงาน) และ "ประเภทงาน" กลายเป็นช่องบังคับเลือกเสมอ
-       (เลิกมี "กำหนดการทั่วไป" ที่ไม่ผูกประเภทงานแล้ว — กำหนดงานทุกรายการต้องมาจากระบบกลางเท่านั้น) ช่อง "หัวข้อ" ที่เคยกรอก
-       เองถูกตัดออกจากฟอร์มไปเลย เพราะหัวข้อ = ชื่อประเภทงานเสมอ (คำนวณฝั่ง Worker ให้อัตโนมัติ ไม่ต้องส่งหัวข้อมาจากหน้าเว็บอีกต่อไป) -->
-  <div class="modal-backdrop" id="eventModal" hidden>
-    <div class="modal-box modal-box-wide">
-      <button type="button" class="modal-close-x" id="eventModalCloseX" aria-label="ปิด">✕</button>
-      <h3 id="eventModalTitle">เพิ่มกำหนดการ</h3>
-      <div id="createEventError" class="error-box" hidden></div>
-      <div class="tabs" style="margin-bottom:14px;">
-        <button type="button" class="ev-tab-btn active" id="evTabBtn-period" data-ev-tab="period">ระยะเวลา</button>
-        <button type="button" class="ev-tab-btn" id="evTabBtn-category" data-ev-tab="category">ประเภทงาน</button>
-      </div>
-      <form id="createEventForm" style="text-align:left;">
-        <input type="hidden" id="evEditId" value="" />
-
-        <div class="ev-tab-panel active" id="evTab-period">
-          <div class="field-row">
-            <div class="field">
-              <label for="evDate">วันที่เริ่มต้น</label>
-              <input id="evDate" type="date" required />
-            </div>
-            <div class="field">
-              <label for="evEndDate">วันที่สิ้นสุด</label>
-              <input id="evEndDate" type="date" />
-            </div>
-          </div>
-          <div class="field">
-            <label for="evAudience">สำหรับ</label>
-            <select id="evAudience"><option value="all">ครูทุกคน</option></select>
-          </div>
-          <div class="field">
-            <label for="evMessage">รายละเอียดเพิ่มเติม</label>
-            <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
-          </div>
-        </div>
-
-        <div class="ev-tab-panel" id="evTab-category">
-          <div class="field">
-            <label for="evCategory">ประเภทงาน</label>
-            <!-- ไม่ใส่ required ตรงๆ เพราะช่องนี้อยู่ในแท็บที่อาจไม่ active (display:none) ตอน submit — required บน select
-                 ที่ซ่อนอยู่ทำให้ Chrome เงียบๆ บล็อกการ submit เองโดยไม่มี error โชว์เลย (ไม่ trigger event submit ให้ JS จัดการต่อ)
-                 จึงตรวจสอบเองด้วย JS ในตอน submit แทน (ดู errBox ด้านล่าง) -->
-            <select id="evCategory"></select>
-            <div class="hint">ระบบจะใช้ "ชื่อประเภทงาน" เป็นหัวข้อกำหนดการนี้โดยอัตโนมัติ และนำไปคำนวณสถานะการส่งงานให้ในหน้า "สรุปรวมการส่งงาน" (ใครส่งตรงเวลา/เกินกำหนด/ยังไม่ส่ง)</div>
-            <div class="hint" id="evNoCategoryHint" hidden>ยังไม่มีประเภทงานในระบบ — ไปเพิ่มที่แท็บ "ทั่วไป" ก่อน ถึงจะเพิ่มกำหนดการได้</div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label for="evYear">ปีการศึกษา</label>
-              <select id="evYear"></select>
-            </div>
-            <div class="field">
-              <label for="evSemester">ภาคเรียน</label>
-              <select id="evSemester">
-                <option value="1">ภาคเรียนที่ 1</option>
-                <option value="2">ภาคเรียนที่ 2</option>
-                <option value="summer">ภาคฤดูร้อน</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button class="btn btn-primary" type="submit" id="evSubmitBtn">เพิ่มกำหนดการ</button>
-          <button class="btn btn-ghost" type="button" id="eventModalClose">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -694,11 +587,11 @@
     </div>
   </div>
 
-  <!-- Add/edit external link modal (เว็บภายนอก — ตั้งแต่ V11.9) -->
+  <!-- Add/edit external link modal (เว็บไซต์โรงเรียน — ตั้งแต่ V11.9) -->
   <div class="modal-backdrop" id="extLinkModal" hidden>
     <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="extLinkModalCloseX" aria-label="ปิด">✕</button>
-      <h3 id="extLinkModalTitle">เพิ่มปุ่มลิงก์เว็บภายนอก</h3>
+      <h3 id="extLinkModalTitle">เพิ่มปุ่มลิงก์เว็บไซต์โรงเรียน</h3>
       <div id="createExtLinkError" class="error-box" hidden></div>
       <form id="extLinkForm" style="text-align:left;">
         <input type="hidden" id="extLinkEditId" value="" />
@@ -789,9 +682,22 @@
           <label for="teacherInfoPosition">ตำแหน่ง</label>
           <select id="teacherInfoPosition"></select>
         </div>
-        <div class="field">
+        <div class="field" id="teacherInfoSubjectGroupField">
           <label for="teacherInfoSubjectGroup">กลุ่มสาระการเรียนรู้</label>
           <select id="teacherInfoSubjectGroup"></select>
+        </div>
+        <!-- ตำแหน่งหัวหน้า (ตั้งแต่ 1.32.101026): แสดงในทำเนียบบุคลากร -->
+        <div class="field" id="teacherInfoHeadSubjectField">
+          <label style="display:flex; align-items:center; gap:8px; font-weight:500;">
+            <input type="checkbox" id="teacherInfoHeadSubject" style="width:auto;" />
+            หัวหน้ากลุ่มสาระการเรียนรู้ (ต้องเลือกกลุ่มสาระฯ ก่อน)
+          </label>
+        </div>
+        <div class="field" id="teacherInfoHeadDeptField" hidden>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:500;">
+            <input type="checkbox" id="teacherInfoHeadDept" style="width:auto;" />
+            หัวหน้าฝ่าย (ฝ่ายที่เจ้าหน้าที่สังกัด)
+          </label>
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">บันทึก</button>
@@ -804,7 +710,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.31.091026"></script>
+  <script src="assets/api.js?v=1.32.101026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -866,10 +772,11 @@
     if (!isSuperAdminSession) {
       // ตั้งแต่ V10.0: "จัดการบัญชี" และ "ประวัติการส่งงานและลบงาน" เป็น super-admin-only ด้วย จึงเหลือแท็บ "ปฏิทิน" เป็นแท็บเริ่มต้นสำหรับเจ้าหน้าที่ฝ่ายวิชาการ
       document.querySelectorAll('.super-admin-only').forEach(function (el) { el.remove(); });
-      var calendarBtn = document.querySelector('.tab-btn[data-tab="calendar"]');
-      if (calendarBtn) calendarBtn.classList.add('active');
-      var calendarPanel = document.getElementById('tab-calendar');
-      if (calendarPanel) calendarPanel.classList.add('active');
+      // เจ้าหน้าที่ฝ่าย (ไม่ใช่ Super Admin): แท็บเริ่มต้นคือ "ข้อมูลหลัก" (ตั้งแต่ 1.32.101026 ปฏิทิน/ประกาศย้ายไปหน้า "ประกาศและปฏิทิน")
+      var firstBtn = document.querySelector('.tab-btn[data-tab="website"]');
+      if (firstBtn) firstBtn.classList.add('active');
+      var firstPanel = document.getElementById('tab-website');
+      if (firstPanel) firstPanel.classList.add('active');
     }
 
     // ---------- Tabs (โหลดข้อมูลของแต่ละแท็บแบบ lazy — เฉพาะตอนเปิดแท็บนั้นครั้งแรก ลดจำนวนคำขอตอนเข้าหน้าครั้งแรกให้เหลือน้อยที่สุด ลดอาการหน่วง) ----------
@@ -881,30 +788,26 @@
     var loadExtLinks;
     var _tabLoaded = {};
     var _usersPromise = null;
-    var _eventCategoriesPromise = null;
     function ensureUsersLoaded() {
       if (!_usersPromise) _usersPromise = loadUsers();
       return _usersPromise;
     }
-    function ensureEventCategoriesLoaded() {
-      if (!_eventCategoriesPromise) _eventCategoriesPromise = loadEventCategories();
-      return _eventCategoriesPromise;
-    }
     var tabLoaders = {
       general: function () {
-        var tasks = [loadGeneralSettings()];
-        if (isSuperAdminSession) { tasks.push(loadCategories()); tasks.push(loadDepartments()); }
-        return Promise.all(tasks);
+        return loadGeneralSettings();
       },
       // "ระบบเว็บ" (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21): แท็บนี้ไม่ใช่ super-admin-only เจ้าหน้าที่ฝ่ายวิชาการเปิดได้เช่นกัน
       // ตั้งแต่ 1.25.081026: โหลดข้อมูลสำหรับพิมพ์บันทึกข้อความ + ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู (ใช้รายชื่อผู้ใช้ร่วมกับแท็บ "จัดการบัญชี") เพิ่มด้วย
-      website: function () { return Promise.all([loadCurTermSettings(), loadMemoSettings(), loadDeptSigners(), loadMemoSubjects(), loadTeacherAcademicInfo()]); },
-      display: function () { return loadDisplayOrder(); },
+      // ตั้งแต่ 1.32.101026: แท็บ "ข้อมูลหลัก" (เดิม "ระบบเว็บ") รวมประเภทงาน / ฝ่ายของเจ้าหน้าที่ / ลำดับการแสดงผลงาน (เฉพาะ Super Admin) + ทำเนียบ
+      website: function () {
+        var tasks = [loadCurTermSettings(), loadMemoSettings(), loadTeacherAcademicInfo()];
+        if (isSuperAdminSession) { tasks.push(loadCategories()); tasks.push(loadDepartments()); tasks.push(loadDirectoryMode()); } // (loadCategories รีเฟรชการ์ดลำดับการแสดงผลงานให้เอง)
+        return Promise.all(tasks);
+      },
+      // แท็บ "ข้อมูลฝ่าย": ชื่อผู้ลงนามตามฝ่าย + หัวเรื่องบันทึกข้อความ (ทั้ง Super Admin และเจ้าหน้าที่ฝ่าย)
+      deptinfo: function () { return Promise.all([loadDeptSigners(), loadMemoSubjects()]); },
       accounts: function () { return ensureUsersLoaded(); },
       extlinks: function () { return loadExtLinks(); },
-      // แท็บปฏิทินใช้รายชื่อผู้ใช้ร่วมกับแท็บจัดการบัญชี (audience dropdown + ป้ายชื่อผู้รับ) และรายชื่อประเภทงาน (dropdown ผูกกำหนดส่งงาน) จึงรอให้โหลดทั้งสองเสร็จก่อน
-      calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); },
-      announcements: function () { return loadAnnouncements(); },
       log: function () { return loadLog(); },
       systemlog: function () { return loadSystemLog(); }
     };
@@ -980,6 +883,32 @@
     document.getElementById('curTermClearBtn').addEventListener('click', async function () {
       await saveCurTerm('', '', 'ยืนยันเคลียร์การตั้งเทอม/ปีการศึกษาปัจจุบันเอง กลับไปคำนวณจากวันที่จริงอัตโนมัติ?', 'กลับไปใช้การคำนวณอัตโนมัติแล้ว');
     });
+
+    // ---------- "ข้อมูลหลัก" → ทำเนียบบุคลากร: เลือกว่าใครดูได้ (login / public / off) — ตั้งแต่ 1.32.101026, เฉพาะ Super Admin ----------
+    async function loadDirectoryMode() {
+      var sel = document.getElementById('setDirectoryMode');
+      if (!sel) return; // การ์ดนี้ถูกลบออกจาก DOM สำหรับเจ้าหน้าที่ฝ่าย (super-admin-only)
+      var s = await getSiteSettings();
+      sel.value = s.directoryMode || 'login';
+    }
+    (function () {
+      var sel = document.getElementById('setDirectoryMode');
+      if (!sel) return;
+      sel.addEventListener('change', async function () {
+        var errBox = document.getElementById('directoryModeError');
+        errBox.hidden = true;
+        var r = await withProgress('กำลังบันทึกการตั้งค่า', function () {
+          return apiCall('adminUpdateSettings', { directoryMode: sel.value });
+        }, { successLabel: 'บันทึกแล้ว' });
+        if (r.ok) {
+          resetSettingsCache();
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+          loadDirectoryMode();
+        }
+      });
+    })();
 
     // ---------- "ระบบเว็บ" → ข้อมูลสำหรับพิมพ์บันทึกข้อความ (ระดับโรงเรียน) — ตั้งแต่ 1.28.091026: เฉพาะ Super Admin ----------
     // การ์ดนี้ถูกลบออกจาก DOM แล้วสำหรับเจ้าหน้าที่ฝ่ายวิชาการ (class="super-admin-only" — ดูบรรทัด 782-784) จึงต้องกัน null ไว้
@@ -1252,20 +1181,29 @@
     // ฝั่ง Worker — self-edit carve-out) แต่ยังแก้ให้เจ้าหน้าที่คนอื่นไม่ได้เหมือนเดิม (สงวนไว้เฉพาะ Super Admin) จึงต้องกรอง
     // ปุ่ม "แก้ไข" ในตารางนี้ให้ตรงกับสิทธิ์จริงฝั่ง Worker ไม่ให้กดแล้วเจอ error เปล่าๆ — ครู (role='teacher') จัดการได้โดย
     // เจ้าหน้าที่ทุกคนเหมือนเดิม (assertManageableTarget อนุญาตอยู่แล้ว)
+    // ป้ายหัวหน้ากลุ่มสาระฯ / หัวหน้าฝ่าย (ตั้งแต่ 1.32.101026)
+    function headRolesText(u) {
+      var hr = u.headRoles || [], out = [];
+      if (hr.indexOf('subject') !== -1) out.push('หัวหน้ากลุ่มสาระฯ');
+      if (hr.indexOf('dept') !== -1) out.push('หัวหน้าฝ่าย');
+      return out.length ? out.map(function (x) { return '<span class="badge badge-admin">' + x + '</span>'; }).join(' ') : '<span class="hint">—</span>';
+    }
+    var EXEC_POSITIONS = ['ผู้อำนวยการ', 'รองผู้อำนวยการ'];
     function canEditTeacherInfo(u) { return isSuperAdminSession || u.role === 'teacher' || u.id === session.id; }
     function renderTeacherInfoTable() {
       var wrap = document.getElementById('teacherInfoTableWrap');
       var q = (document.getElementById('teacherInfoSearch').value || '').trim().toLowerCase();
       // ตั้งแต่ 1.25.081026 (แก้ตามที่ผู้ใช้แจ้ง): รวมเจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ (role='admin' + hasHub) ด้วย ไม่ใช่แค่ role==='teacher'
-      var teachers = allUsers.filter(function (u) { return (u.role === 'teacher' || (u.role === 'admin' && u.hasHub)) && u.status === 'active'; });
+      var teachers = allUsers.filter(function (u) { return (u.role === 'teacher' || u.role === 'executive' || (u.role === 'admin' && u.hasHub)) && u.status === 'active'; });
       if (q) teachers = teachers.filter(function (u) { return u.name.toLowerCase().indexOf(q) !== -1; });
       if (teachers.length === 0) { wrap.innerHTML = '<div class="empty-state">ไม่พบรายชื่อ</div>'; return; }
-      var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th><th>กลุ่มสาระการเรียนรู้</th><th></th></tr></thead><tbody>';
+      var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th><th>กลุ่มสาระการเรียนรู้</th><th>หัวหน้า</th><th></th></tr></thead><tbody>';
       teachers.forEach(function (u) {
         html += '<tr>' +
           '<td>' + escapeHtml(u.name) + (u.id === session.id ? ' <span class="hint">(คุณ)</span>' : '') + '</td>' +
           '<td>' + (u.position ? escapeHtml(u.position) : '<span class="hint">ยังไม่ได้ตั้งค่า</span>') + '</td>' +
-          '<td>' + (u.subjectGroup ? escapeHtml(u.subjectGroup) : '<span class="hint">ยังไม่ได้ตั้งค่า</span>') + '</td>' +
+          '<td>' + (u.role === 'executive' ? '<span class="hint">—</span>' : (u.subjectGroup ? escapeHtml(u.subjectGroup) : '<span class="hint">ยังไม่ได้ตั้งค่า</span>')) + '</td>' +
+          '<td>' + headRolesText(u) + '</td>' +
           '<td>' + (canEditTeacherInfo(u)
             ? '<button class="btn btn-ghost btn-sm" data-edit-teacher-info="' + u.id + '">แก้ไข</button>'
             : '<span class="hint">จัดการได้เฉพาะ Super Admin</span>') + '</td>' +
@@ -1279,8 +1217,15 @@
           if (!u) return;
           teacherInfoEditTarget = u;
           document.getElementById('teacherInfoTargetName').textContent = u.name;
-          fillSelectOptions(document.getElementById('teacherInfoPosition'), TEACHER_POSITIONS, u.position || '');
+          var isExec = u.role === 'executive';
+          fillSelectOptions(document.getElementById('teacherInfoPosition'), isExec ? EXEC_POSITIONS : TEACHER_POSITIONS, u.position || '');
           fillSelectOptions(document.getElementById('teacherInfoSubjectGroup'), SUBJECT_GROUPS, u.subjectGroup || '');
+          // ผู้บริหาร: ไม่มีกลุ่มสาระฯ/หัวหน้า | หัวหน้าฝ่าย: เฉพาะเจ้าหน้าที่ที่มีฝ่าย
+          document.getElementById('teacherInfoSubjectGroupField').hidden = isExec;
+          document.getElementById('teacherInfoHeadSubjectField').hidden = isExec;
+          document.getElementById('teacherInfoHeadDeptField').hidden = !(u.role === 'admin' && u.hasHub && u.department);
+          document.getElementById('teacherInfoHeadSubject').checked = (u.headRoles || []).indexOf('subject') !== -1;
+          document.getElementById('teacherInfoHeadDept').checked = (u.headRoles || []).indexOf('dept') !== -1;
           document.getElementById('teacherInfoModalError').hidden = true;
           showModalEl(teacherInfoModal);
         });
@@ -1302,7 +1247,9 @@
         return apiCall('adminSetTeacherAcademicInfo', {
           userId: teacherInfoEditTarget.id,
           position: document.getElementById('teacherInfoPosition').value,
-          subjectGroup: document.getElementById('teacherInfoSubjectGroup').value
+          subjectGroup: document.getElementById('teacherInfoSubjectGroup').value,
+          headSubject: document.getElementById('teacherInfoHeadSubject').checked,
+          headDept: document.getElementById('teacherInfoHeadDept').checked
         });
       }, { successLabel: 'บันทึกแล้ว' });
       if (r.ok) {
@@ -1509,7 +1456,7 @@
         try {
           var rows = await apiCall('adminListWorkCategories', {}); // เรียงตาม display_order มาจาก Worker อยู่แล้ว
           currentCatOrder = rows;
-          if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประเภทงาน — ไปเพิ่มที่แท็บ "ทั่วไป" ก่อน</div>'; saveBar.hidden = true; return; }
+          if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประเภทงาน — ไปเพิ่มที่แท็บ "ข้อมูลหลัก" ก่อน</div>'; saveBar.hidden = true; return; }
           saveBar.hidden = false;
           renderDisplayOrder();
         } catch (err) {
@@ -1517,6 +1464,9 @@
           saveBar.hidden = true;
         }
       };
+      // (1.32.101026) การ์ด "ลำดับการแสดงผลงาน" อยู่แท็บเดียวกับ "ประเภทงาน" แล้ว — เพิ่ม/แก้/ลบประเภทงานทุกครั้งต้องรีเฟรชรายการจัดลำดับให้ตรงกันด้วย
+      var _loadCategoriesBase = loadCategories;
+      loadCategories = async function () { await _loadCategoriesBase(); await loadDisplayOrder(); };
       function renderDisplayOrder() {
         var wrap = document.getElementById('displayOrderWrap');
         var html = '<div class="card" style="padding:0; box-shadow:none; border:none;">';
@@ -1667,7 +1617,7 @@
       });
       // หมายเหตุ: ไม่เรียก loadCategories() ตรงนี้ตั้งแต่แรก — ปล่อยให้ tabLoaders.general (ด้านล่าง) เป็นคนเรียกตอนแท็บ "ทั่วไป" ถูกเปิดจริง เพื่อเลี่ยงการโหลดซ้ำซ้อน
 
-      // ---------- เว็บภายนอก (เฉพาะ Super Admin) — ตั้งแต่ V11.9 ----------
+      // ---------- เว็บไซต์โรงเรียน (เฉพาะ Super Admin) — ตั้งแต่ V11.9 ----------
       var extLinkModalEl = document.getElementById('extLinkModal');
       var currentExtLinks = [];
       var extLinkPendingImage = null; // { base64, mimeType } — รูปที่เพิ่งเลือกไว้ ยังไม่ได้บันทึกจนกว่าจะกด submit
@@ -1685,7 +1635,7 @@
       };
       function renderExtLinks() {
         var wrap = document.getElementById('extLinkListWrap');
-        if (currentExtLinks.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีปุ่มลิงก์เว็บภายนอก</div>'; return; }
+        if (currentExtLinks.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีปุ่มลิงก์เว็บไซต์โรงเรียน</div>'; return; }
         var html = '';
         currentExtLinks.forEach(function (l, idx) {
           var thumb = l.imageDataUrl
@@ -1753,7 +1703,7 @@
         resetExtLinkImageState();
         var target = linkId ? currentExtLinks.filter(function (l) { return l.id === linkId; })[0] : null;
         document.getElementById('extLinkEditId').value = target ? target.id : '';
-        document.getElementById('extLinkModalTitle').textContent = target ? 'แก้ไขปุ่มลิงก์เว็บภายนอก' : 'เพิ่มปุ่มลิงก์เว็บภายนอก';
+        document.getElementById('extLinkModalTitle').textContent = target ? 'แก้ไขปุ่มลิงก์เว็บไซต์โรงเรียน' : 'เพิ่มปุ่มลิงก์เว็บไซต์โรงเรียน';
         document.getElementById('extLinkSubmitBtn').textContent = target ? 'บันทึก' : 'เพิ่มปุ่ม';
         document.getElementById('extLinkName').value = target ? target.name : '';
         document.getElementById('extLinkUrl').value = target ? target.url : '';
@@ -1827,6 +1777,7 @@
         var roleVal = document.getElementById('cuRole').value;
         var isSuper = document.getElementById('cuIsSuperAdmin').checked;
         document.getElementById('cuDepartmentField').hidden = !(roleVal === 'admin' && !isSuper);
+        document.getElementById('cuExecPositionField').hidden = roleVal !== 'executive';
       }
       document.getElementById('cuRole').addEventListener('change', function () {
         document.getElementById('cuSuperAdminField').hidden = this.value !== 'admin';
@@ -1842,7 +1793,6 @@
       try {
         allUsers = await apiCall('adminListUsers', {});
         renderUserTable();
-        renderAudienceOptions();
       } catch (err) {
         if (wrap) wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
@@ -1850,6 +1800,7 @@
 
     // ตั้งแต่ 1.26.081026: ป้ายชื่อเจ้าหน้าที่แสดงฝ่ายที่สังกัดต่อท้าย (ถ้าตั้งไว้) แทนชื่อ "เจ้าหน้าที่ฝ่ายวิชาการ" เดิมที่ hardcode ไว้ตัวเดียว
     function roleBadge(u) {
+      if (u.role === 'executive') return '<span class="badge badge-exec">' + escapeHtml(u.position || 'ผู้บริหาร') + '</span>';
       if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>';
       if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่' + (u.department ? escapeHtml(u.department) : '') + '</span>';
       return '<span class="badge badge-super">Super Admin</span>';
@@ -2021,6 +1972,8 @@
         if (cuSuperAdminFieldEl2) cuSuperAdminFieldEl2.hidden = true;
         var cuDepartmentFieldEl = document.getElementById('cuDepartmentField');
         if (cuDepartmentFieldEl) { renderDepartmentOptions(document.getElementById('cuDepartment'), '', 'ยังไม่ระบุ'); cuDepartmentFieldEl.hidden = true; }
+        var cuExecPosFieldEl = document.getElementById('cuExecPositionField');
+        if (cuExecPosFieldEl) cuExecPosFieldEl.hidden = true;
         document.getElementById('createUserError').hidden = true;
         showModalEl(createUserModal);
       });
@@ -2049,6 +2002,7 @@
           isSuperAdmin: cuIsSuperAdminEl ? cuIsSuperAdminEl.checked : false,
           department: (cuDepartmentEl && !document.getElementById('cuDepartmentField').hidden) ? cuDepartmentEl.value : ''
         };
+        if (cuPayload.role === 'executive') cuPayload.position = document.getElementById('cuExecPosition').value;
         var r = await withProgress('กำลังสร้างบัญชีใหม่', function () {
           return apiCall('adminCreateUser', cuPayload);
         }, { successLabel: 'สร้างบัญชีเรียบร้อยแล้ว' });
@@ -2058,6 +2012,8 @@
           if (cuSuperAdminFieldEl) cuSuperAdminFieldEl.hidden = true;
           var cuDepartmentFieldEl2 = document.getElementById('cuDepartmentField');
           if (cuDepartmentFieldEl2) cuDepartmentFieldEl2.hidden = true;
+          var cuExecPosFieldEl2 = document.getElementById('cuExecPositionField');
+          if (cuExecPosFieldEl2) cuExecPosFieldEl2.hidden = true;
           hideModalEl(createUserModal);
           loadUsers();
         } else {
@@ -2135,58 +2091,7 @@
       });
     }
 
-    // ---------- Calendar ----------
-    // ปีการศึกษา options ของฟอร์มเพิ่มกำหนดการ (รูปแบบเดียวกับ fillYearOptions ในหน้าแดชบอร์ดครู)
-    // หมายเหตุ: ช่วงตัวเลือกคำนวณสดจากวันที่จริงทุกครั้งที่เปิดหน้า (ไม่ hardcode) จึงไม่มีวันที่ตัวเลือก "หมด" — ขยับตามปีปัจจุบันเองอัตโนมัติ
-    // ตั้งแต่เวอร์ชันถัดจาก V11.2 ขยายช่วงมองไปข้างหน้าจาก +1 เป็น +2 ปี ให้ตั้งกำหนดการล่วงหน้าได้กว้างขึ้น
-    (function fillEvYearOptions() {
-      var beYear = new Date().getFullYear() + 543;
-      var sel = document.getElementById('evYear');
-      for (var y = beYear + 2; y >= beYear - 3; y--) {
-        var opt = document.createElement('option');
-        opt.value = y; opt.textContent = 'ปีการศึกษา ' + y;
-        if (y === beYear) opt.selected = true;
-        sel.appendChild(opt);
-      }
-    })();
-
-    // ตั้งแต่เวอร์ชันถัดจาก V11.2: "ประเภทงาน" บังคับเลือกเสมอ (เลิกมี "กำหนดการทั่วไป" ที่ไม่ผูกประเภทงาน) —
-    // dropdown จึงไม่มี option ว่างให้เลือกอีกต่อไป ถ้ายังไม่มีประเภทงานในระบบเลยจะโชว์คำแนะนำแทน (evNoCategoryHint)
-    var eventCategories = [];
-    async function loadEventCategories() {
-      var sel = document.getElementById('evCategory');
-      var hintEl = document.getElementById('evNoCategoryHint');
-      try {
-        eventCategories = await apiCall('calendarListWorkCategories', {});
-        var current = sel.value;
-        sel.innerHTML = '';
-        if (eventCategories.length === 0) {
-          sel.innerHTML = '<option value="">— ยังไม่มีประเภทงาน —</option>';
-          hintEl.hidden = false;
-        } else {
-          sel.innerHTML = '<option value="" disabled' + (current ? '' : ' selected') + '>— เลือกประเภทงาน —</option>';
-          hintEl.hidden = true;
-        }
-        eventCategories.forEach(function (c) {
-          var opt = document.createElement('option');
-          opt.value = c.id; opt.textContent = c.name;
-          sel.appendChild(opt);
-        });
-        sel.value = current || '';
-      } catch (err) {
-        // ถ้าโหลดรายชื่อประเภทงานไม่สำเร็จ ปล่อยให้ error ตอน submit จัดการแทน (ประเภทงานบังคับเลือกอยู่แล้ว)
-      }
-    }
-
-    // ---------- แท็บในป็อปอัพกำหนดการ (ระยะเวลา / ประเภทงาน) ----------
-    function switchEvTab(tabName) {
-      ['period', 'category'].forEach(function (t) {
-        document.getElementById('evTabBtn-' + t).classList.toggle('active', t === tabName);
-        document.getElementById('evTab-' + t).classList.toggle('active', t === tabName);
-      });
-    }
-    document.getElementById('evTabBtn-period').addEventListener('click', function () { switchEvTab('period'); });
-    document.getElementById('evTabBtn-category').addEventListener('click', function () { switchEvTab('category'); });
+    // (1.32.101026) ปฏิทินและประกาศย้ายไปหน้า "ประกาศและปฏิทิน" (announce.html) แล้ว
 
     // ---------- แท็บในป็อปอัพ "ประเภทงาน" (พื้นฐาน / ข้อมูลที่ต้องกรอก) — ตั้งแต่เวอร์ชันถัดไปหลัง 1.22 ----------
     function switchCatTab(tabName) {
@@ -2197,289 +2102,6 @@
     }
     document.getElementById('catTabBtn-basic').addEventListener('click', function () { switchCatTab('basic'); });
     document.getElementById('catTabBtn-fields').addEventListener('click', function () { switchCatTab('fields'); });
-
-    function renderAudienceOptions() {
-      var sel = document.getElementById('evAudience');
-      var current = sel.value;
-      sel.innerHTML = '<option value="all">ครูทุกคน</option>';
-      allUsers.filter(function (u) { return u.role === 'teacher' || u.hasHub; }).forEach(function (u) {
-        var opt = document.createElement('option');
-        opt.value = u.id; opt.textContent = u.name;
-        sel.appendChild(opt);
-      });
-      sel.value = current || 'all';
-    }
-
-    var lastEvents = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่ V10.0)
-    async function loadEvents() {
-      var wrap = document.getElementById('eventListWrap');
-      try {
-        var events = await apiCall('adminListEvents', {});
-        lastEvents = events;
-        if (events.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศ</div>'; return; }
-        var html = '';
-        events.forEach(function (ev) {
-          var audienceLabel = ev.audience === 'all' ? 'ครูทุกคน' : (function () {
-            var u = allUsers.filter(function (x) { return x.id === ev.audience; })[0];
-            return u ? u.name : 'ผู้ใช้เฉพาะราย';
-          })();
-          var dateChip = ev.endDate && ev.endDate !== ev.date
-            ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate)
-            : formatDateThai(ev.date);
-          var categoryMeta = ev.categoryId
-            ? '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('tag', 13) + ' กำหนดส่งงาน: ' + escapeHtml(ev.categoryName) + ' · ปีการศึกษา ' + escapeHtml(ev.academicYear) + ' · ' + (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + '</div>'
-            : '';
-          html += '<div class="event-list-item">' +
-            '<div class="event-date-chip">' + dateChip + '</div>' +
-            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(ev.title) + '</div>' +
-            (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
-            '<div class="sub-item-meta">สำหรับ: ' + escapeHtml(audienceLabel) + '</div>' +
-            categoryMeta + '</div>' +
-            '<div style="display:flex; gap:6px; flex-shrink:0;">' +
-            '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button>' +
-            '<button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>' +
-            '</div>' +
-            '</div>';
-        });
-        wrap.innerHTML = html;
-        wrap.querySelectorAll('button[data-edit-id]').forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            var ev = lastEvents.filter(function (e) { return e.id === btn.getAttribute('data-edit-id'); })[0];
-            if (ev) startEditEvent(ev);
-          });
-        });
-        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
-          btn.addEventListener('click', async function () {
-            var ok = await askConfirm('ลบกำหนดการนี้?', 'ยืนยันการลบกำหนดการ');
-            if (!ok) return;
-            var evId = btn.getAttribute('data-id');
-            var r = await withProgress('กำลังลบกำหนดการ', function () { return apiCall('adminDeleteEvent', { eventId: evId }); }, { successLabel: 'ลบกำหนดการแล้ว' });
-            if (r.ok) { loadEvents(); if (_tabLoaded.systemlog) loadSystemLog(); }
-          });
-        });
-      } catch (err) {
-        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
-      }
-    }
-
-    // ---------- เพิ่ม/แก้ไขกำหนดการเป็นป็อปอัพ (ตั้งแต่ V11.0 — เดิมเป็นฟอร์มฝังอยู่ในหน้า) ----------
-    var eventModalEl = document.getElementById('eventModal');
-    function openCreateEvent() {
-      document.getElementById('evEditId').value = '';
-      document.getElementById('createEventForm').reset();
-      switchEvTab('period');
-      loadEventCategories(); // รีเฟรชรายชื่อประเภทงานทุกครั้งที่เปิด เผื่อเพิ่ม/ลบประเภทงานที่แท็บ "ทั่วไป" มาระหว่างนี้
-      document.getElementById('evSubmitBtn').textContent = 'เพิ่มกำหนดการ';
-      document.getElementById('eventModalTitle').textContent = 'เพิ่มกำหนดการ';
-      document.getElementById('createEventError').hidden = true;
-      showModalEl(eventModalEl);
-    }
-    function startEditEvent(ev) {
-      document.getElementById('evEditId').value = ev.id;
-      document.getElementById('evDate').value = ev.date;
-      document.getElementById('evEndDate').value = (ev.endDate && ev.endDate !== ev.date) ? ev.endDate : '';
-      document.getElementById('evAudience').value = ev.audience;
-      document.getElementById('evMessage').value = ev.message || '';
-      switchEvTab('period');
-      loadEventCategories().then(function () {
-        document.getElementById('evCategory').value = ev.categoryId || '';
-        if (ev.categoryId) {
-          document.getElementById('evYear').value = ev.academicYear;
-          document.getElementById('evSemester').value = ev.semester;
-        }
-        // กำหนดการเก่าก่อนอัพเดต (ทั่วไป ไม่ผูกประเภทงาน) จะไม่มี categoryId ให้ตั้งไว้ — ต้องเลือกประเภทงานใหม่ก่อนถึงจะบันทึกได้
-      });
-      document.getElementById('evSubmitBtn').textContent = 'บันทึกการแก้ไข';
-      document.getElementById('eventModalTitle').textContent = 'แก้ไขกำหนดการ: ' + ev.title;
-      document.getElementById('createEventError').hidden = true;
-      showModalEl(eventModalEl);
-    }
-    function cancelEditEvent() {
-      hideModalEl(eventModalEl);
-      document.getElementById('evEditId').value = '';
-      document.getElementById('createEventForm').reset();
-      document.getElementById('evSubmitBtn').textContent = 'เพิ่มกำหนดการ';
-    }
-    document.getElementById('openCreateEventBtn').addEventListener('click', openCreateEvent);
-    document.getElementById('eventModalClose').addEventListener('click', cancelEditEvent);
-    document.getElementById('eventModalCloseX').addEventListener('click', cancelEditEvent);
-
-    document.getElementById('createEventForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var errBox = document.getElementById('createEventError');
-      errBox.hidden = true;
-      var evDateVal = document.getElementById('evDate').value;
-      var evEndDateVal = document.getElementById('evEndDate').value;
-      var evCategoryVal = document.getElementById('evCategory').value;
-      if (evEndDateVal && evEndDateVal < evDateVal) {
-        errBox.textContent = 'วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่มต้น';
-        switchEvTab('period');
-        errBox.hidden = false;
-        return;
-      }
-      // ประเภทงานบังคับเลือกเสมอตั้งแต่เวอร์ชันถัดจาก V11.2 (ไม่มี "กำหนดการทั่วไป" อีกต่อไป)
-      if (!evCategoryVal) {
-        errBox.textContent = 'กรุณาเลือกประเภทงาน (แท็บ "ประเภทงาน")';
-        switchEvTab('category');
-        errBox.hidden = false;
-        return;
-      }
-      var editId = document.getElementById('evEditId').value;
-      var okEv = await askConfirm(
-        editId ? 'ยืนยันบันทึกการแก้ไขกำหนดการนี้?' : 'ยืนยันเพิ่มกำหนดการนี้ในปฏิทิน?',
-        editId ? 'ยืนยันการแก้ไขกำหนดการ' : 'ยืนยันการเพิ่มกำหนดการ'
-      );
-      if (!okEv) return;
-      var evPayload = {
-        date: evDateVal,
-        endDate: evEndDateVal,
-        audience: document.getElementById('evAudience').value,
-        message: document.getElementById('evMessage').value.trim(),
-        categoryId: evCategoryVal,
-        academicYear: document.getElementById('evYear').value,
-        semester: document.getElementById('evSemester').value
-      };
-      if (editId) evPayload.eventId = editId;
-      var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเพิ่มกำหนดการ', function () {
-        return apiCall(editId ? 'adminUpdateEvent' : 'adminCreateEvent', evPayload);
-      }, { successLabel: editId ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มกำหนดการแล้ว' });
-      if (r.ok) {
-        cancelEditEvent();
-        loadEvents();
-        if (_tabLoaded.systemlog) loadSystemLog();
-      } else {
-        errBox.textContent = r.error.message;
-        errBox.hidden = false;
-      }
-    });
-
-    // ---------- Announcements ----------
-    // ป้ายบอกช่วงเวลาแสดงผล (ถ้าตั้งไว้) — ใช้ในแท็บนี้เท่านั้น (แท็บนี้ยังคงบอกชื่อผู้แจ้งประกาศไว้เหมือนเดิม ต่างจากหน้าฮับที่บอกแค่ "จากฝ่ายวิชาการ" ตั้งแต่ V10.0)
-    function annScheduleMeta(a) {
-      if (!a.showFrom && !a.showUntil) return '';
-      var parts = [];
-      if (a.showFrom) parts.push('เริ่ม ' + formatDateTimeThai(a.showFrom));
-      if (a.showUntil) parts.push('ถึง ' + formatDateTimeThai(a.showUntil));
-      return '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('clock', 13) + ' ' + parts.join(' · ') + '</div>';
-    }
-    var lastAnnouncements = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่เวอร์ชันถัดจาก V11.2)
-    async function loadAnnouncements() {
-      var wrap = document.getElementById('annListWrap');
-      try {
-        var rows = await apiCall('adminListAnnouncements', {});
-        lastAnnouncements = rows;
-        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศ</div>'; return; }
-        var html = '';
-        rows.forEach(function (a) {
-          html += '<div class="event-list-item">' +
-            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
-            (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
-            '<div class="sub-item-meta">โดย ' + escapeHtml(a.createdByName) + ' · ' + formatDateTimeThai(a.createdAt) + '</div>' +
-            annScheduleMeta(a) + '</div>' +
-            '<div style="display:flex; gap:6px; flex-shrink:0;">' +
-            '<button class="btn btn-secondary btn-sm" data-edit-id="' + a.id + '">แก้ไข</button>' +
-            '<button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button>' +
-            '</div>' +
-          '</div>';
-        });
-        wrap.innerHTML = html;
-        wrap.querySelectorAll('button[data-edit-id]').forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            var a = lastAnnouncements.filter(function (x) { return x.id === btn.getAttribute('data-edit-id'); })[0];
-            if (a) startEditAnn(a);
-          });
-        });
-        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
-          btn.addEventListener('click', async function () {
-            var ok = await askConfirm('ลบประกาศนี้? ทุกบัญชีจะไม่เห็นประกาศนี้ในหน้าฮับอีกต่อไป', 'ยืนยันการลบประกาศ');
-            if (!ok) return;
-            var annId = btn.getAttribute('data-id');
-            var r = await withProgress('กำลังลบประกาศ', function () {
-              return apiCall('adminDeleteAnnouncement', { announcementId: annId });
-            }, { successLabel: 'ลบประกาศแล้ว' });
-            if (r.ok) { loadAnnouncements(); if (_tabLoaded.systemlog) loadSystemLog(); }
-          });
-        });
-      } catch (err) {
-        wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
-      }
-    }
-
-    // ---------- เพิ่ม/แก้ไขประกาศเป็นป็อปอัพ (ตั้งแต่เวอร์ชันถัดจาก V11.2 — เดิมเป็นฟอร์มฝังอยู่ในหน้า และแก้ไขประกาศที่เผยแพร่ไปแล้วไม่ได้เลย) ----------
-    var annModalEl = document.getElementById('annModal');
-    // แปลง ISO (UTC) ที่เก็บไว้ กลับเป็นรูปแบบเวลาท้องถิ่นสำหรับช่อง input type="datetime-local" (YYYY-MM-DDTHH:mm)
-    function isoToLocalDatetimeInput(iso) {
-      if (!iso) return '';
-      var d = new Date(iso);
-      var pad = function (n) { return String(n).padStart(2, '0'); };
-      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-    }
-    function openCreateAnn() {
-      document.getElementById('annEditId').value = '';
-      document.getElementById('createAnnForm').reset();
-      document.getElementById('annSubmitBtn').textContent = 'เพิ่มประกาศ';
-      document.getElementById('annModalTitle').textContent = 'เพิ่มประกาศ';
-      document.getElementById('createAnnError').hidden = true;
-      showModalEl(annModalEl);
-    }
-    function startEditAnn(a) {
-      document.getElementById('annEditId').value = a.id;
-      document.getElementById('annTitle').value = a.title;
-      document.getElementById('annMessage').value = a.message || '';
-      document.getElementById('annShowFrom').value = isoToLocalDatetimeInput(a.showFrom);
-      document.getElementById('annShowUntil').value = isoToLocalDatetimeInput(a.showUntil);
-      document.getElementById('annSubmitBtn').textContent = 'บันทึกการแก้ไข';
-      document.getElementById('annModalTitle').textContent = 'แก้ไขประกาศ: ' + a.title;
-      document.getElementById('createAnnError').hidden = true;
-      showModalEl(annModalEl);
-    }
-    function cancelEditAnn() {
-      hideModalEl(annModalEl);
-      document.getElementById('annEditId').value = '';
-      document.getElementById('createAnnForm').reset();
-      document.getElementById('annSubmitBtn').textContent = 'เพิ่มประกาศ';
-    }
-    document.getElementById('openCreateAnnBtn').addEventListener('click', openCreateAnn);
-    document.getElementById('annModalClose').addEventListener('click', cancelEditAnn);
-    document.getElementById('annModalCloseX').addEventListener('click', cancelEditAnn);
-
-    document.getElementById('createAnnForm').addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var errBox = document.getElementById('createAnnError');
-      errBox.hidden = true;
-      var showFromRaw = document.getElementById('annShowFrom').value;
-      var showUntilRaw = document.getElementById('annShowUntil').value;
-      if (showFromRaw && showUntilRaw && new Date(showUntilRaw) < new Date(showFromRaw)) {
-        errBox.textContent = 'เวลาสิ้นสุดการแสดงต้องไม่อยู่ก่อนเวลาเริ่มแสดง';
-        errBox.hidden = false;
-        return;
-      }
-      var editId = document.getElementById('annEditId').value;
-      var okAnn = await askConfirm(
-        editId ? 'ยืนยันบันทึกการแก้ไขประกาศนี้?' : 'ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?',
-        editId ? 'ยืนยันการแก้ไขประกาศ' : 'ยืนยันการเผยแพร่ประกาศ'
-      );
-      if (!okAnn) return;
-      var annPayload = {
-        title: document.getElementById('annTitle').value.trim(),
-        message: document.getElementById('annMessage').value.trim(),
-        // datetime-local เป็นเวลาท้องถิ่นของเครื่องที่ตั้งค่า แปลงเป็น ISO (UTC) ก่อนส่ง ให้เทียบกับเวลาจริงฝั่ง backend ได้ตรง
-        showFrom: showFromRaw ? new Date(showFromRaw).toISOString() : '',
-        showUntil: showUntilRaw ? new Date(showUntilRaw).toISOString() : ''
-      };
-      if (editId) annPayload.announcementId = editId;
-      var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเผยแพร่ประกาศ', function () {
-        return apiCall(editId ? 'adminUpdateAnnouncement' : 'adminCreateAnnouncement', annPayload);
-      }, { successLabel: editId ? 'บันทึกการแก้ไขแล้ว' : 'เผยแพร่ประกาศแล้ว' });
-      if (r.ok) {
-        cancelEditAnn();
-        loadAnnouncements();
-        if (_tabLoaded.systemlog) loadSystemLog();
-      } else {
-        errBox.textContent = r.error.message;
-        errBox.hidden = false;
-      }
-    });
 
     // ---------- ประวัติการส่งงานและลบงาน (เดิมชื่อ "ประวัติการลบ" — ตั้งแต่ V10.0 รวม action='submit' ด้วย และมีปุ่มลบรายการต่อแถว) ----------
     function logActionLabel(a) {
@@ -2574,7 +2196,7 @@
 
     // โหลดเฉพาะแท็บที่กำลังแสดงอยู่ตอนแรกเท่านั้น (แท็บอื่นจะโหลดทีหลังตอนผู้ใช้กดเปิดเอง)
     // ตั้งแต่ V10.0: เจ้าหน้าที่ฝ่ายวิชาการ (ไม่ใช่ Super Admin) เห็นแท็บ "ปฏิทิน" เป็นแท็บแรก (accounts ถูกจำกัดเฉพาะ Super Admin แล้ว)
-    loadTabIfNeeded(isSuperAdminSession ? 'general' : 'calendar');
+    loadTabIfNeeded(isSuperAdminSession ? 'general' : 'website');
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
     window.__refreshPageData = function () {
@@ -2582,7 +2204,6 @@
       var activeTabKey = activeBtn ? activeBtn.getAttribute('data-tab') : (isSuperAdminSession ? 'general' : 'accounts');
       resetSettingsCache();
       _usersPromise = null; // บังคับให้ดึงรายชื่อผู้ใช้ใหม่เสมอ (แท็บจัดการบัญชี+ปฏิทินใช้ร่วมกัน)
-      _eventCategoriesPromise = null; // บังคับให้ดึงรายชื่อประเภทงานใหม่เสมอ (เผื่อมีการเพิ่ม/ลบประเภทงานจากแท็บทั่วไป)
       _tabLoaded = {}; // เคลียร์สถานะทุกแท็บ ให้แท็บอื่นที่เคยเปิดไปแล้วโหลดข้อมูลใหม่ตอนสลับกลับไปดูอีกครั้ง
       return Promise.all([applyBranding(), loadTabIfNeeded(activeTabKey)]);
     };

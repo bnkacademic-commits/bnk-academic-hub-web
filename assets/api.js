@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.31.091026';
+var APP_VERSION = '1.32.101026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -172,6 +172,7 @@ function showSessionReplacedModal() {
 function homePageFor(session) {
   if (!session) return 'index.html';
   if (session.role === 'teacher') return 'dashboard.html';
+  if (session.role === 'executive') return 'executive.html'; // ผู้บริหาร (ตั้งแต่ 1.32.101026): หน้าแรก = ปฏิทิน + สรุปภาพรวมการส่งงาน (อ่านอย่างเดียว)
   if (session.role === 'admin' && session.hasHub) return 'dashboard.html';
   return 'summary.html'; // เจ้าหน้าที่ระดับ Super Admin (ไม่มีหน้าฮับ)
 }
@@ -188,6 +189,13 @@ function requireHubAccess() {
   location.href = homePageFor(s);
   return null;
 }
+// หน้าที่ผู้บริหารเข้าดูได้ด้วย (อ่านอย่างเดียว): สรุปรวมการส่งงาน, ประกาศและปฏิทิน (ตั้งแต่ 1.32.101026)
+function requireViewerAccess() {
+  var s = requireLogin();
+  if (!s) return null;
+  if (s.role !== 'admin' && s.role !== 'executive') { location.href = homePageFor(s); return null; }
+  return s;
+}
 function requireAdminAccess() {
   var s = requireLogin();
   if (!s) return null;
@@ -201,6 +209,7 @@ function requireAdminAccess() {
 function roleLabel(session) {
   if (!session) return '';
   if (session.role === 'teacher') return 'ครู';
+  if (session.role === 'executive') return session.position || 'ผู้บริหาร';
   if (session.role === 'admin') return session.hasHub ? ('เจ้าหน้าที่' + (session.department || '')) : 'Super Admin';
   return '';
 }
@@ -490,7 +499,7 @@ var ICON_FA = {
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
   sun: 'fa-sun', palette: 'fa-palette', layout: 'fa-table-cells-large', pin: 'fa-thumbtack', clock: 'fa-clock',
-  file: 'fa-file-lines'
+  file: 'fa-file-lines', directory: 'fa-address-book'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -867,16 +876,27 @@ async function withProgress(title, workFn, opts) {
 // ---------- Shared chrome: topbar + profile dropdown + footer ----------
 function navLinksFor(session) {
   var links = [];
+  var isExec = !!session && session.role === 'executive';
+  var isAdmin = !!session && session.role === 'admin';
   // ตั้งแต่ 1.29.091026: "จัดทำบันทึกข้อความ" เป็นแท็บในเมนูบนสุด (ไปหน้า memo.html ในแท็บเบราว์เซอร์เดิม ไม่เปิดหน้าใหม่) ของทุกบัญชีที่มี
   // หน้าฮับ (ครู และเจ้าหน้าที่ role='admin' + hasHub) — ครูเดิมไม่มีเมนูบนสุดเลย จึงเพิ่ม "หน้าแรก" ให้ด้วยเพื่อให้แถบแท็บสมบูรณ์
-  if (session && (session.role === 'teacher' || (session.role === 'admin' && session.hasHub))) {
+  if (session && (session.role === 'teacher' || (isAdmin && session.hasHub))) {
     links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard', icon: 'home' });
     links.push({ href: 'memo.html', label: 'จัดทำบันทึกข้อความ', key: 'memo', icon: 'memo' });
   }
-  if (session && session.role === 'admin') {
+  // ผู้บริหาร (ตั้งแต่ 1.32.101026): หน้าแรกของตัวเอง = ปฏิทิน + สรุปภาพรวม (executive.html) — ไม่มีหน้าฮับ ไม่ส่งงาน
+  if (isExec) links.push({ href: 'executive.html', label: 'หน้าแรก', key: 'executive', icon: 'home' });
+  if (isAdmin || isExec) {
     links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary', icon: 'summary' });
+    // "ประกาศและปฏิทิน" (ตั้งแต่ 1.32.101026): ย้ายแท็บ "ปฏิทิน" และ "ประกาศ" ออกจากหน้าตั้งค่ามารวมกันเป็นแท็บบนสุดนี้ — เจ้าหน้าที่/Super Admin จัดการได้
+    // ผู้บริหารดูได้อย่างเดียว (ครูไม่มีแท็บนี้เพราะเห็นปฏิทินและประกาศในหน้าแรกอยู่แล้ว)
+    links.push({ href: 'announce.html', label: 'ประกาศและปฏิทิน', key: 'announce', icon: 'announce' });
+  }
+  // "ทำเนียบบุคลากรโรงเรียน" (ตั้งแต่ 1.32.101026): ทุกบทบาทที่ล็อกอินเห็นแท็บนี้ — mountChrome ซ่อนให้เองถ้า Super Admin ตั้งไว้ว่า "ปิด" (settings.directoryMode)
+  if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
+  if (isAdmin) {
     // หมายเหตุ: เมนู "จัดการ Layout" (V11.1) ถูกยกเลิกตั้งแต่ V11.5 — ทั้งรูปแบบการ์ด (V11.3) และลำดับการแสดงผล (V11.5)
-    // ย้ายไปรวมอยู่ในหน้า "ตั้งค่าระบบ" แท็บ "ปรับแต่งการแสดงผลงาน" หมดแล้ว (Super Admin เท่านั้น)
+    // ย้ายไปรวมอยู่ในหน้า "ตั้งค่าระบบ" (ตั้งแต่ 1.32.101026 อยู่ในแท็บ "ข้อมูลหลัก") (Super Admin เท่านั้น)
     links.push({ href: 'settings.html', label: 'ตั้งค่าระบบ', key: 'settings', icon: 'settings' });
   }
   return links;
@@ -917,6 +937,13 @@ function mountChrome(activePage) {
       '</div>';
 
     document.querySelector('.js-home-btn').addEventListener('click', function () { location.href = homePageFor(session); });
+    // ซ่อนแท็บ "ทำเนียบบุคลากร" ถ้า Super Admin ปิดทำเนียบไว้ (settings.directoryMode = 'off') — ตั้งแต่ 1.32.101026
+    getSiteSettings().then(function (st) {
+      if (st && st.directoryMode === 'off') {
+        var dl = document.querySelector('.topbar-nav a[href="directory.html"]');
+        if (dl && activePage !== 'directory') dl.remove();
+      }
+    });
 
     var trigger = document.getElementById('profileTrigger');
     var dropdown = document.getElementById('profileDropdown');

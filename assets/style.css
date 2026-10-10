@@ -749,6 +749,7 @@ input[type="color"] {
 .badge-admin { background: var(--primary-light); color: var(--primary-dark); }
 .badge-teacher { background: var(--surface-2); color: var(--text-muted); }
 .badge-super { background: var(--danger-light); color: var(--danger); }
+.badge-exec { background: var(--accent-light); color: var(--accent); }
 /* สถานะการส่งงานในแท็บ "สรุปแยกแต่ละงาน" (V9.4) — ส่งช้า=ส้ม (warn), ยังไม่ส่ง=แดง (danger) ตั้งแต่ V9.5 */
 .badge-ontime { background: var(--accent-light); color: var(--accent); }
 .badge-late { background: var(--warn-light); color: var(--warn); }
