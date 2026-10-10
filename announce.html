@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.36.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.37.101026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -174,7 +174,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.36.101026"></script>
+  <script src="assets/api.js?v=1.37.101026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -253,6 +253,7 @@
       var hintEl = document.getElementById('evNoCategoryHint');
       try {
         eventCategories = await apiCall('calendarListWorkCategories', {});
+        buildCategoryColorMap(eventCategories); // เก็บฝ่ายของประเภทงานไว้แสดงป้ายฝ่าย (1.37.101026)
         var current = sel.value;
         sel.innerHTML = '';
         if (eventCategories.length === 0) {
@@ -264,7 +265,7 @@
         }
         eventCategories.forEach(function (c) {
           var opt = document.createElement('option');
-          opt.value = c.id; opt.textContent = c.name;
+          opt.value = c.id; opt.textContent = c.name + (c.department ? ' · ฝ่าย' + c.department : '');
           sel.appendChild(opt);
         });
         sel.value = current || '';
@@ -312,7 +313,7 @@
             ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate)
             : formatDateThai(ev.date);
           var categoryMeta = ev.categoryId
-            ? '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('tag', 13) + ' กำหนดส่งงาน: ' + escapeHtml(ev.categoryName) + ' · ปีการศึกษา ' + escapeHtml(ev.academicYear) + ' · ' + (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + '</div>'
+            ? '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('tag', 13) + ' กำหนดส่งงาน: ' + escapeHtml(ev.categoryName) + categoryDeptBadgeHtml(ev.categoryId) + ' · ปีการศึกษา ' + escapeHtml(ev.academicYear) + ' · ' + (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + '</div>'
             : '';
           html += '<div class="event-list-item">' +
             '<div class="event-date-chip">' + dateChip + '</div>' +

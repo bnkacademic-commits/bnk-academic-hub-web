@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.36.101026';
+var APP_VERSION = '1.37.101026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -65,7 +65,11 @@ async function apiCall(action, payload) {
   if (!json.ok) {
     // code (ตั้งแต่ V11.7): ติด err.code ไว้กับ Error ที่ throw ออกไปด้วยถ้า backend ส่งมา (เช่น 'SESSION_REPLACED')
     // เพื่อให้จุดที่เรียกใช้ตรวจจับ error เฉพาะเจาะจงได้ด้วยรหัส ไม่ต้องเทียบข้อความภาษาไทย (ดู startSessionWatch ด้านล่าง)
-    var err = new Error(json.error || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ');
+    var errMsg = json.error || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ';
+    // ตั้งแต่ 1.37.101026: "ไม่รู้จักคำสั่ง: xxx" = หน้าเว็บใหม่แต่ Worker บนเซิร์ฟเวอร์ยังเป็นโค้ดเก่า (ยังไม่ได้ deploy) — บอกวิธีแก้ให้ชัด
+    var unk = /^ไม่รู้จักคำสั่ง:\s*(\S+)/.exec(errMsg);
+    if (unk) errMsg = 'เซิร์ฟเวอร์ (Worker) ยังเป็นโค้ดเก่า ไม่มีคำสั่ง "' + unk[1] + '" — ต้องอัพเดตไฟล์ Worker เป็นชุดเดียวกับหน้าเว็บ (เวอร์ชัน ' + APP_VERSION + ') แล้ว Deploy Worker ใหม่ (ดู README ขั้นตอนอัพเดต) ก่อนใช้ฟีเจอร์นี้';
+    var err = new Error(errMsg);
     err.code = json.code || null;
     throw err;
   }
@@ -105,7 +109,7 @@ function clearSession() {
     localStorage.removeItem(SESSION_TOKEN_KEY);
     localStorage.removeItem(SESSION_USER_KEY);
     localStorage.removeItem(SESSION_LOGIN_AT_KEY);
-    localStorage.removeItem(THEME_KEY); // 1.36.101026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
+    localStorage.removeItem(THEME_KEY); // 1.37.101026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
   } catch (e) {}
 }
 // ออกจากระบบแล้วรีเฟรชหน้าเว็บ 1 ครั้งเสมอ (นำทางไปหน้าล็อกอินแบบโหลดใหม่จริง ไม่ใช้แคชหน้าเดิม)
@@ -226,7 +230,7 @@ function setTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
   applyTheme(theme);
 }
-// Dark Mode ผูกกับบัญชี (ตั้งแต่ 1.36.101026): ตอน login Worker ส่งค่าที่บัญชีนี้เคยเลือกไว้มา (user.theme: 'dark' | 'light' | '' = ยังไม่เคยเลือก)
+// Dark Mode ผูกกับบัญชี (ตั้งแต่ 1.37.101026): ตอน login Worker ส่งค่าที่บัญชีนี้เคยเลือกไว้มา (user.theme: 'dark' | 'light' | '' = ยังไม่เคยเลือก)
 // หน้าเว็บตั้งค่าตามนั้นทันที (ไม่ให้โหมดของคนก่อนหน้าบนเครื่องเดียวกันค้างมา) — ยังไม่เคยเลือก = โหมดสว่าง
 function applyAccountTheme(user) {
   var t = user && user.theme === 'dark' ? 'dark' : 'light';
@@ -504,8 +508,19 @@ function categoryDotHtml(color) {
 // (ไม่ได้เก็บสีติดไปด้วยตอนบันทึก) ให้ดึงสีปัจจุบันของประเภทงานนั้นมาแสดงแทนเสมอ — สีจะอัพเดตทันทีทุกจุดถ้า Super Admin เปลี่ยนสีทีหลัง
 function buildCategoryColorMap(categories) {
   var map = {};
-  (categories || []).forEach(function (c) { map[c.id] = c.color || '#3457d5'; });
+  (categories || []).forEach(function (c) { map[c.id] = c.color || '#3457d5'; _catDeptMap[c.id] = c.department || ''; });
   return map;
+}
+// ฝ่ายของประเภทงาน (ตั้งแต่ 1.37.101026) — buildCategoryColorMap เก็บ { categoryId: ชื่อฝ่าย } ไว้ด้วยทุกครั้งที่หน้าโหลดรายการประเภทงาน
+// categoryDeptBadgeHtml(id) คืนป้าย "ฝ่ายวิชาการ" (ไม่ผูกฝ่าย/ไม่รู้จัก id = ไม่แสดงอะไร) ใช้ต่อท้ายชื่อประเภทงานทุกจุด
+var _catDeptMap = {};
+function categoryDeptBadgeHtml(categoryId) {
+  var d = _catDeptMap[categoryId];
+  return d ? ' <span class="cat-dept-badge">ฝ่าย' + escapeHtml(d) + '</span>' : '';
+}
+function categoryDeptSuffix(categoryId) {
+  var d = _catDeptMap[categoryId];
+  return d ? ' · ฝ่าย' + d : '';
 }
 
 // ---------- ชุดไอคอน Font Awesome — ตั้งแต่รอบปรับสไตล์เว็บทั้งระบบให้เหมือน bnksa-attendance (Tailwind + Font Awesome)
@@ -531,7 +546,7 @@ function formatDateThai(isoOrDateStr) {
   var months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   return d.getDate() + ' ' + months[d.getMonth()] + ' ' + (d.getFullYear() + 543);
 }
-// ขนาดไฟล์อ่านง่าย (ตั้งแต่ 1.36.101026) — ใช้ในแท็บ "ข้อมูลระบบ"
+// ขนาดไฟล์อ่านง่าย (ตั้งแต่ 1.37.101026) — ใช้ในแท็บ "ข้อมูลระบบ"
 function formatBytes(n) {
   if (n === null || n === undefined || isNaN(Number(n))) return '-';
   var units = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0, v = Number(n);
@@ -927,19 +942,85 @@ function navLinksFor(session) {
   return links;
 }
 
+
+// ---------- แถบเมนูด้านซ้าย (ตั้งแต่ 1.37.101026 — สไตล์ Google Keep สำหรับทุกบัญชี/ทุกหน้าที่มี topbar) ----------
+// - ปุ่ม 3 ขีดหน้าโลโก้ (#navToggle): คอม/แท็บเล็ต = สลับ "เปิดค้างไว้ (ปักหมุด)" ↔ "ย่อเหลือแต่ไอคอน" จำค่าไว้ใน localStorage (bnkah_nav_pinned)
+//   มือถือ (< 768px) = เปิด/ปิดเป็นลิ้นชักทับหน้าจอ มีฉากดำจางๆ ด้านหลัง
+// - ตอนย่ออยู่ ถ้าเอาเมาส์ชี้ที่แถบจะกางเต็มออกมาทับเนื้อหาชั่วคราว (ไม่ดันเนื้อหา) พอเอาเมาส์ออกก็ย่อกลับ
+// - ค่าเริ่มต้นเมื่อยังไม่เคยเลือก: จอกว้าง ≥ 1280px เปิดค้าง, จอเล็กกว่านั้นย่อ
+var NAV_PIN_KEY = 'bnkah_nav_pinned';
+function _navIsMobile() { return window.matchMedia('(max-width: 767px)').matches; }
+function _navGetPinned() {
+  try { var v = localStorage.getItem(NAV_PIN_KEY); if (v === '1') return true; if (v === '0') return false; } catch (e) { /* ใช้ค่าเริ่มต้น */ }
+  return window.innerWidth >= 1280;
+}
+function mountSideNav(links, activePage) {
+  var old = document.getElementById('app-sidenav');
+  if (old) old.remove();
+  var oldBd = document.getElementById('app-sidenav-backdrop');
+  if (oldBd) oldBd.remove();
+  var aside = document.createElement('aside');
+  aside.id = 'app-sidenav';
+  aside.className = 'sidenav no-print';
+  aside.setAttribute('aria-label', 'เมนูหลัก');
+  aside.innerHTML = '<nav class="sidenav-list">' + links.map(function (l) {
+    return '<a href="' + l.href + '" class="sidenav-item' + (l.key === activePage ? ' active' : '') + '" title="' + escapeHtml(l.label) + '"' + (l.key === activePage ? ' aria-current="page"' : '') + '>' +
+      '<span class="sidenav-icon">' + icon(l.icon, 19) + '</span><span class="sidenav-label">' + escapeHtml(l.label) + '</span></a>';
+  }).join('') + '</nav>';
+  var backdrop = document.createElement('div');
+  backdrop.id = 'app-sidenav-backdrop';
+  backdrop.className = 'sidenav-backdrop no-print';
+  document.body.appendChild(aside);
+  document.body.appendChild(backdrop);
+  document.body.classList.add('has-sidenav');
+
+  var toggle = document.getElementById('navToggle');
+  var pinned = _navGetPinned();
+  var hovering = false;
+  var mobileOpen = false;
+  function render() {
+    var mobile = _navIsMobile();
+    var open = mobile ? mobileOpen : (pinned || hovering);
+    document.body.classList.toggle('nav-pinned', !mobile && pinned);
+    document.body.classList.toggle('nav-mobile-open', mobile && mobileOpen);
+    aside.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', (mobile ? mobileOpen : pinned) ? 'true' : 'false');
+  }
+  function syncTopbarHeight() {
+    var tb = document.querySelector('.topbar');
+    if (tb) document.documentElement.style.setProperty('--topbar-h', tb.offsetHeight + 'px');
+  }
+  toggle.addEventListener('click', function () {
+    if (_navIsMobile()) { mobileOpen = !mobileOpen; }
+    else { pinned = !pinned; hovering = false; try { localStorage.setItem(NAV_PIN_KEY, pinned ? '1' : '0'); } catch (e) { /* ไม่เป็นไร */ } }
+    render();
+  });
+  backdrop.addEventListener('click', function () { mobileOpen = false; render(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && mobileOpen) { mobileOpen = false; render(); } });
+  aside.addEventListener('mouseenter', function () { if (!_navIsMobile() && window.matchMedia('(hover: hover)').matches) { hovering = true; render(); } });
+  aside.addEventListener('mouseleave', function () { hovering = false; render(); });
+  aside.addEventListener('focusin', function () { if (!_navIsMobile()) { hovering = true; render(); } });
+  aside.addEventListener('focusout', function () { hovering = false; render(); });
+  window.addEventListener('resize', function () { if (!_navIsMobile()) mobileOpen = false; syncTopbarHeight(); render(); });
+  syncTopbarHeight();
+  if (window.ResizeObserver) { var tbEl = document.querySelector('.topbar'); if (tbEl) new ResizeObserver(syncTopbarHeight).observe(tbEl); }
+  render();
+}
+
 function mountChrome(activePage) {
   var session = getSession();
   var topbarRoot = document.getElementById('app-topbar');
   if (topbarRoot && session) {
     var links = navLinksFor(session);
-    var navHtml = links.map(function (l) {
-      return '<a href="' + l.href + '" class="' + (l.key === activePage ? 'active' : '') + '">' + icon(l.icon, 15) + escapeHtml(l.label) + '</a>';
-    }).join('');
+    // ตั้งแต่ 1.37.101026: เมนูทั้งหมดย้ายจากแถบบนสุดมาเป็นแถบเมนูด้านซ้าย (สไตล์ Google Keep) — ปุ่ม 3 ขีดหน้าโลโก้ = ปักหมุดเปิดค้าง/ย่อ,
+    // ตอนย่อให้ชี้เมาส์เพื่อกางเต็มชั่วคราว, มือถือเป็นลิ้นชักเลื่อนออกมา (ดู mountSideNav ด้านล่าง)
     topbarRoot.innerHTML =
       '<div class="topbar">' +
-        '<button class="brand js-home-btn" type="button"><span class="js-brand-logo"><span class="logo-dot"></span></span> <span class="js-site-name">BNKAcademicHub</span></button>' +
+        '<div class="topbar-left">' +
+          '<button class="nav-toggle" id="navToggle" type="button" aria-label="เปิด/ปิดเมนู" aria-expanded="false" aria-controls="app-sidenav"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>' +
+          '<button class="brand js-home-btn" type="button"><span class="js-brand-logo"><span class="logo-dot"></span></span> <span class="js-site-name">BNKAcademicHub</span></button>' +
+        '</div>' +
         '<div class="topbar-right">' +
-          '<nav class="topbar-nav">' + navHtml + '</nav>' +
           '<button class="refresh-btn" id="refreshDataBtn" type="button" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล">' +
             '<svg class="refresh-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>' +
           '</button>' +
@@ -962,10 +1043,11 @@ function mountChrome(activePage) {
       '</div>';
 
     document.querySelector('.js-home-btn').addEventListener('click', function () { location.href = homePageFor(session); });
-    // ซ่อนแท็บ "ทำเนียบบุคลากร" ถ้า Super Admin ปิดทำเนียบไว้ (settings.directoryMode = 'off') — ตั้งแต่ 1.32.101026
+    mountSideNav(links, activePage);
+    // ซ่อนเมนู "ทำเนียบบุคลากร" ถ้า Super Admin ปิดทำเนียบไว้ (settings.directoryMode = 'off') — ตั้งแต่ 1.32.101026
     getSiteSettings().then(function (st) {
       if (st && st.directoryMode === 'off') {
-        var dl = document.querySelector('.topbar-nav a[href="directory.html"]');
+        var dl = document.querySelector('.sidenav a[href="directory.html"]');
         if (dl && activePage !== 'directory') dl.remove();
       }
     });

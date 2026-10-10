@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.36.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.37.101026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -153,7 +153,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.36.101026"></script>
+  <script src="assets/api.js?v=1.37.101026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -317,7 +317,7 @@
           sel.innerHTML = '<option value="">(ยังไม่มีประเภทงาน — ติดต่อฝ่ายวิชาการ)</option>';
           return;
         }
-        sel.innerHTML = selectableCats.map(function (c) { return '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>'; }).join('');
+        sel.innerHTML = selectableCats.map(function (c) { return '<option value="' + c.id + '">' + escapeHtml(c.name + (c.department ? ' · ฝ่าย' + c.department : '')) + '</option>'; }).join('');
       } catch (err) {
         sel.innerHTML = '<option value="">โหลดประเภทงานไม่สำเร็จ</option>';
       }
@@ -508,7 +508,7 @@
         html += '<div class="year-group"><div class="year-group-title">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
         g.items.forEach(function (s) {
           html += '<div class="sub-item">' +
-            '<div><div class="sub-item-title">' + escapeHtml(s.title) + (s.categoryName ? ' <span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' : '') + '</div>' +
+            '<div><div class="sub-item-title">' + escapeHtml(s.title) + (s.categoryName ? ' <span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' + categoryDeptBadgeHtml(s.categoryId) : '') + '</div>' +
             (s.description ? '<div class="sub-item-desc">' + escapeHtml(s.description) + '</div>' : '') +
             formatCustomFieldValuesLine(s.customFieldValues) +
             '<div class="sub-item-meta">อัพโหลดเมื่อ ' + formatDateThai(s.uploadedAt) + ' · <a href="' + s.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></div></div>' +
@@ -629,7 +629,7 @@
           return '<div class="checklist-item">' +
             '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
             '<div class="checklist-text">' +
-              '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + '</div>' +
+              '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + (r.ev.categoryId ? categoryDeptBadgeHtml(r.ev.categoryId) : '') + '</div>' +
               '<div class="checklist-status ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') + '</div>' +
             '</div>' +
           '</div>';
@@ -724,7 +724,7 @@
           return '<div class="event-list-item"><div class="event-date-chip' + (isOverdue ? ' overdue' : '') + '">' + dateChip + '</div>' +
             '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(e.title) +
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
-              overdueBadge + '</div>' +
+              (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + overdueBadge + '</div>' +
             (termLabel ? '<div class="sub-item-meta">' + categoryDotHtml(categoryColorMap[e.categoryId]) + escapeHtml(termLabel) + '</div>' : '') +
             (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + submitBtn + '</div>';
         }).join('') + '</div>';

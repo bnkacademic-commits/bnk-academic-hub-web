@@ -1238,3 +1238,77 @@ body.login-page .site-footer { padding: 6px 12px 8px; line-height: 1.4; }
 .sys-bar-fill { height: 100%; border-radius: 999px; background: var(--primary); min-width: 2px; }
 .sys-bar-warn .sys-bar-fill { background: var(--warn); }
 .sys-bar-danger .sys-bar-fill { background: var(--danger); }
+
+/* ---------- 1.37.101026: ป้ายฝ่ายของประเภทงาน + หัวกลุ่มรายการประเภทงานตามฝ่าย ---------- */
+.cat-dept-badge { display: inline-block; font-size: 0.78em; font-weight: 600; line-height: 1.5; padding: 0 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; white-space: nowrap; background: var(--primary-soft, rgba(52,87,213,.12)); color: var(--primary, #3457d5); border: 1px solid var(--border); }
+.cat-dept-badge.cat-dept-none { background: rgba(217,119,6,.12); color: #b45309; border-color: rgba(217,119,6,.35); }
+:root[data-theme="dark"] .cat-dept-badge.cat-dept-none { color: #fbbf24; }
+.cat-group-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 12px; margin: 14px 0 2px; border-radius: 10px; background: var(--surface-2, rgba(127,127,127,.08)); border: 1px solid var(--border); }
+.cat-group-head:first-child { margin-top: 0; }
+.cat-group-head-none { border-color: rgba(217,119,6,.45); background: rgba(217,119,6,.08); }
+.cat-bulk-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cat-bulk-row select { min-width: 160px; }
+.cat-bulk-row select.input-error { border-color: #dc2626; }
+
+/* 1.37.101026: ปุ่ม (ลิงก์ที่ใช้คลาส .btn) ไม่ขีดเส้นใต้ตอนชี้/โฟกัส — เช่นปุ่ม "จัดทำบันทึกข้อความ" หน้าแรก */
+a.btn, a.btn:hover, a.btn:focus, a.btn:focus-visible, a.btn:active { text-decoration: none; }
+
+/* ---------- 1.37.101026: แถบเมนูด้านซ้ายสไตล์ Google Keep ---------- */
+:root { --nav-w-rail: 72px; --nav-w-full: 264px; --topbar-h: 57px; }
+.topbar-left { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.nav-toggle {
+  display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; flex-shrink: 0;
+  border: none; border-radius: 50%; background: none; color: var(--text-muted); cursor: pointer; padding: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.nav-toggle:hover, .nav-toggle:focus-visible { background: var(--surface-2); color: var(--text); }
+.topbar-nav { display: none; } /* เมนูเดิมบนแถบบนสุด ย้ายไปแถบซ้ายแล้ว */
+
+.sidenav {
+  position: fixed; left: 0; top: var(--topbar-h); bottom: 0; z-index: 45;
+  width: var(--nav-w-rail); overflow-x: hidden; overflow-y: auto;
+  background: var(--surface); border-right: 1px solid transparent;
+  padding: 8px 0 16px; box-sizing: border-box;
+  transition: width 0.18s ease, box-shadow 0.18s ease;
+}
+.sidenav.is-open { width: var(--nav-w-full); }
+/* กางชั่วคราวตอนชี้เมาส์ (ยังไม่ปักหมุด) = ลอยทับเนื้อหา มีเงา */
+body:not(.nav-pinned) .sidenav.is-open { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22); border-right-color: var(--border); }
+body.nav-pinned .sidenav { border-right-color: var(--border); }
+.sidenav-list { display: flex; flex-direction: column; gap: 2px; }
+.sidenav-item {
+  display: flex; align-items: center; gap: 22px; height: 48px; box-sizing: border-box;
+  margin-left: 12px; width: 48px; padding-left: 14px; border-radius: 24px;
+  color: var(--text); font-weight: 600; font-size: 0.95rem; white-space: nowrap; text-decoration: none;
+  transition: background-color 0.15s ease, width 0.18s ease;
+}
+.sidenav-item:hover, .sidenav-item:focus-visible { background: var(--surface-2); text-decoration: none; }
+.sidenav-item.active { background: var(--primary-light); color: var(--primary-dark); }
+.sidenav-icon { width: 20px; display: inline-flex; justify-content: center; flex-shrink: 0; }
+.sidenav-label { opacity: 0; transition: opacity 0.12s ease; overflow: hidden; text-overflow: ellipsis; }
+.sidenav.is-open .sidenav-item { width: calc(100% - 12px); padding-left: 24px; border-radius: 0 24px 24px 0; margin-left: 0; }
+.sidenav.is-open .sidenav-label { opacity: 1; transition-delay: 0.06s; }
+
+/* เนื้อหาหน้า: ขยับหนีแถบเมนู (ย่อ = กว้าง 72px, ปักหมุดเปิด = กว้าง 264px; มือถือ = 0 เพราะเป็นลิ้นชักทับ) */
+body.has-sidenav { --nav-w: var(--nav-w-rail); }
+body.has-sidenav.nav-pinned { --nav-w: var(--nav-w-full); }
+body.has-sidenav > .container { margin-left: var(--nav-w); margin-right: 0; width: calc(100% - var(--nav-w)); transition: margin-left 0.18s ease, width 0.18s ease; }
+body.has-sidenav > #app-footer, body.has-sidenav > .app-version-tag { margin-left: var(--nav-w); transition: margin-left 0.18s ease; }
+.sidenav-backdrop { display: none; }
+
+@media (max-width: 767px) {
+  .sidenav { width: min(280px, 82vw); transform: translateX(-102%); transition: transform 0.2s ease; box-shadow: none; z-index: 60; border-right-color: var(--border); }
+  .sidenav.is-open { width: min(280px, 82vw); transform: translateX(0); box-shadow: 0 0 40px rgba(0, 0, 0, 0.35); }
+  .sidenav .sidenav-item { width: calc(100% - 12px); padding-left: 24px; border-radius: 0 24px 24px 0; margin-left: 0; }
+  .sidenav .sidenav-label { opacity: 1; }
+  body.has-sidenav, body.has-sidenav.nav-pinned { --nav-w: 0px; }
+  body.nav-mobile-open .sidenav-backdrop { display: block; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 55; }
+}
+@media print { .sidenav, .sidenav-backdrop, .nav-toggle { display: none !important; } body.has-sidenav > .container, body.has-sidenav > #app-footer { margin-left: 0 !important; width: 100% !important; } }
+@media (max-width: 767px) {
+  body.has-sidenav .topbar { flex-wrap: nowrap; gap: 8px; padding: 8px 12px; }
+  body.has-sidenav .topbar-left { flex: 1 1 auto; min-width: 0; }
+  body.has-sidenav .topbar .brand { min-width: 0; }
+  body.has-sidenav .topbar .brand .js-site-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.has-sidenav .topbar-right { flex-shrink: 0; gap: 4px; }
+}

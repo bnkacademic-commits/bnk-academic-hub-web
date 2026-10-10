@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.36.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.37.101026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -89,13 +89,8 @@
         </div>
         <div class="hint">แสดงแทนไอคอนจุดกลมด้านซ้ายบนของทุกหน้า แนะนำพื้นหลังโปร่งใส — ระบบจะปรับขนาดไฟล์ให้อัตโนมัติก่อนอัพโหลด</div>
       </div>
-    </div>
 
-    <!-- "ระบบเว็บ" tab (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21) — แยกออกมาจาก "ทั่วไป" ไม่ใช่ super-admin-only: ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการจัดการได้
-         เทอม/ปีการศึกษาปัจจุบัน (ตั้งแต่ V12.0) — เดิมคำนวณจากวันที่จริงอัตโนมัติเสมอ ตั้งเองได้ มีผลเป็นค่าเริ่มต้นของตัวกรองเทอมปัจจุบันทั่วทั้งระบบ
-         (ปฏิทิน/เช็คลิสต์/ตัวกรองหน้าฮับครู/หน้าแสดงผลงานสาธารณะ) ปล่อยว่างทั้งคู่ = กลับไปอัตโนมัติ -->
-    <div class="tab-panel" id="tab-website">
-      <div class="card">
+      <div class="card" id="curTermCard">
         <div class="section-title"><i class="fas fa-calendar-day ui-icon" style="font-size:17px" aria-hidden="true"></i> เทอม/ปีการศึกษาปัจจุบัน</div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ค่านี้ใช้เป็น "เทอม/ปีการศึกษาปัจจุบัน" เริ่มต้นทั่วทั้งระบบ (ปฏิทิน เช็คลิสต์การส่งงาน ตัวกรองต่างๆ ในหน้าฮับครู และหน้าแสดงผลงานสาธารณะ) — ถ้าปล่อยว่างทั้งสองช่อง ระบบจะคำนวณจากวันที่ปัจจุบันจริงให้อัตโนมัติเหมือนเดิม</p>
         <div id="curTermError" class="error-box" hidden></div>
@@ -121,6 +116,12 @@
           </div>
         </form>
       </div>
+    </div>
+
+    <!-- "ระบบเว็บ" tab (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21) — แยกออกมาจาก "ทั่วไป" ไม่ใช่ super-admin-only: ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการจัดการได้
+         เทอม/ปีการศึกษาปัจจุบัน (ตั้งแต่ V12.0) — เดิมคำนวณจากวันที่จริงอัตโนมัติเสมอ ตั้งเองได้ มีผลเป็นค่าเริ่มต้นของตัวกรองเทอมปัจจุบันทั่วทั้งระบบ
+         (ปฏิทิน/เช็คลิสต์/ตัวกรองหน้าฮับครู/หน้าแสดงผลงานสาธารณะ) ปล่อยว่างทั้งคู่ = กลับไปอัตโนมัติ -->
+    <div class="tab-panel" id="tab-website">
 
       <!-- ข้อมูลหัวกระดาษ/ผู้ลงนามผู้อำนวยการ "บันทึกข้อความ" (ตั้งแต่ 1.25.081026) — ใช้พิมพ์ซ้ำอัตโนมัติในทุกใบบันทึกข้อความของทุกครูที่หน้า memo.html
            ไม่ต้องให้ครูพิมพ์ชื่อผู้บริหารเอง — ตั้งแต่ 1.28.091026: เฉพาะ Super Admin เท่านั้น (ชื่อหัวหน้าฝ่าย/รองผู้อำนวยการฝ่าย
@@ -357,7 +358,7 @@
       </div>
     </div>
 
-    <!-- System info tab (ข้อมูลระบบ — ตั้งแต่ 1.36.101026, Super Admin เท่านั้น): ขนาดฐานข้อมูล D1, พื้นที่ Google Drive และพื้นที่ที่แต่ละบัญชีใช้
+    <!-- System info tab (ข้อมูลระบบ — ตั้งแต่ 1.37.101026, Super Admin เท่านั้น): ขนาดฐานข้อมูล D1, พื้นที่ Google Drive และพื้นที่ที่แต่ละบัญชีใช้
          ไม่กำหนดเพดานให้ Drive (เป็นของโรงเรียน) แสดงตัวเลขจริงอย่างเดียว — ต้องใช้ Drive relay เวอร์ชัน 1.36 ขึ้นไป (มี action storageSummary/folderUsage) -->
     <div class="tab-panel super-admin-only" id="tab-sysinfo">
       <div class="card">
@@ -699,8 +700,8 @@
     </div>
   </div>
 
-  <!-- Change role modal (ตั้งแต่ 1.36.101026) — Super Admin เปลี่ยน Role ของบัญชีใดก็ได้ (ดู adminSetRole) -->
-  <div class="modal-backdrop" id="changeRoleModal" hidden>
+  <!-- Change role modal (ตั้งแต่ 1.37.101026) — Super Admin เปลี่ยน Role ของบัญชีใดก็ได้ (ดู adminSetRole) -->
+  <div class="modal-backdrop super-admin-only" id="changeRoleModal" hidden>
     <div class="modal-box">
       <button type="button" class="modal-close-x" id="changeRoleModalCloseX" aria-label="ปิด">✕</button>
       <h3>เปลี่ยน Role</h3>
@@ -776,7 +777,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.36.101026"></script>
+  <script src="assets/api.js?v=1.37.101026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -860,19 +861,24 @@
     }
     var tabLoaders = {
       general: function () {
-        return loadGeneralSettings();
+        return Promise.all([loadGeneralSettings(), loadCurTermSettings()]);
       },
       // "ระบบเว็บ" (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21): แท็บนี้ไม่ใช่ super-admin-only เจ้าหน้าที่ฝ่ายวิชาการเปิดได้เช่นกัน
       // ตั้งแต่ 1.25.081026: โหลดข้อมูลสำหรับพิมพ์บันทึกข้อความ + ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู (ใช้รายชื่อผู้ใช้ร่วมกับแท็บ "จัดการบัญชี") เพิ่มด้วย
       // ตั้งแต่ 1.32.101026: แท็บ "ข้อมูลหลัก" (เดิม "ระบบเว็บ") รวมประเภทงาน / ฝ่ายของเจ้าหน้าที่ / ลำดับการแสดงผลงาน (เฉพาะ Super Admin) + ทำเนียบ
       website: function () {
-        var tasks = [loadCurTermSettings(), loadMemoSettings(), loadTeacherAcademicInfo()];
+        var tasks = [loadMemoSettings(), loadTeacherAcademicInfo()];
         if (isSuperAdminSession) { tasks.push(loadCategories()); tasks.push(loadDepartments()); tasks.push(loadDirectoryMode()); } // (loadCategories รีเฟรชการ์ดลำดับการแสดงผลงานให้เอง)
         return Promise.all(tasks);
       },
       // แท็บ "ข้อมูลฝ่าย": ชื่อผู้ลงนามตามฝ่าย + หัวเรื่องบันทึกข้อความ (ทั้ง Super Admin และเจ้าหน้าที่ฝ่าย)
       deptinfo: function () { return Promise.all([loadDeptSigners(), loadMemoSubjects()]); },
-      accounts: function () { return ensureUsersLoaded(); },
+      // 1.37.101026: โหลดรายชื่อฝ่ายด้วย — เดิมช่องเลือกฝ่าย (สร้างบัญชี/แก้ฝ่าย/เปลี่ยน Role) จะว่างถ้ายังไม่เคยเปิดแท็บ "ข้อมูลหลัก" ก่อน
+      accounts: function () {
+        return Promise.all([ensureUsersLoaded(), getSiteSettings().then(function (st) {
+          if (!currentDepartments || currentDepartments.length === 0) currentDepartments = ((st && st.departments) || []).slice();
+        })]);
+      },
       extlinks: function () { return loadExtLinks(); },
       log: function () { return loadLog(); },
       systemlog: function () { return loadSystemLog(); },
@@ -911,6 +917,7 @@
     // ---------- "ระบบเว็บ" → เทอม/ปีการศึกษาปัจจุบัน (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21: ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการตั้งเองได้ ไม่ต้องเช็ค
     // isSuperAdminSession แล้ว เพราะย้ายออกมาจากบล็อก Super Admin เดิม — เซิร์ฟเวอร์ฝั่ง adminUpdateSettings ก็เปิดให้ทั้งสอง role แล้วเช่นกัน) ----------
     async function loadCurTermSettings() {
+      if (!document.getElementById('setCurYear')) return; // ตั้งแต่ 1.37: การ์ดนี้อยู่แท็บ "ทั่วไป" (Super Admin เท่านั้น) — ถูกลบจาก DOM ของเจ้าหน้าที่
       var s = await getSiteSettings();
       document.getElementById('setCurYear').value = s.currentAcademicYear || '';
       document.getElementById('setCurSemester').value = s.currentSemester || '';
@@ -932,7 +939,7 @@
         errBox.hidden = false;
       }
     };
-    document.getElementById('curTermForm').addEventListener('submit', async function (e) {
+    if (document.getElementById('curTermForm')) document.getElementById('curTermForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       var yearVal = document.getElementById('setCurYear').value.trim();
       var semesterVal = document.getElementById('setCurSemester').value;
@@ -947,7 +954,7 @@
         : 'ยืนยันเคลียร์การตั้งเทอม/ปีการศึกษาปัจจุบันเอง กลับไปคำนวณจากวันที่จริงอัตโนมัติ?';
       await saveCurTerm(yearVal, semesterVal, msg, yearVal ? 'ตั้งเทอม/ปีการศึกษาปัจจุบันแล้ว' : 'กลับไปใช้การคำนวณอัตโนมัติแล้ว');
     });
-    document.getElementById('curTermClearBtn').addEventListener('click', async function () {
+    if (document.getElementById('curTermClearBtn')) document.getElementById('curTermClearBtn').addEventListener('click', async function () {
       await saveCurTerm('', '', 'ยืนยันเคลียร์การตั้งเทอม/ปีการศึกษาปัจจุบันเอง กลับไปคำนวณจากวันที่จริงอัตโนมัติ?', 'กลับไปใช้การคำนวณอัตโนมัติแล้ว');
     });
 
@@ -1155,7 +1162,7 @@
         var checked = checkedIds && checkedIds.indexOf(c.id) !== -1 ? ' checked' : '';
         return '<label style="display:flex; align-items:center; gap:8px; font-weight:500; padding:6px 2px;">' +
           '<input type="checkbox" class="ms-cat-cb" value="' + c.id + '" style="width:auto;"' + checked + ' />' +
-          '<span>' + escapeHtml(c.name) + '</span>' +
+          '<span>' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge">ฝ่าย' + escapeHtml(c.department) + '</span>' : '') + '</span>' +
         '</label>';
       }).join('');
     }
@@ -1405,6 +1412,10 @@
           var rows = await apiCall('adminListWorkCategories', {});
           if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประเภทงาน</div>'; return; }
           var html = '';
+          var rowHtml = {};
+          var siteS = await getSiteSettings();
+          var deptOrder = (currentDepartments && currentDepartments.length ? currentDepartments : (siteS.departments || [])).slice();
+          // ตั้งแต่ 1.37.101026: ป้ายฝ่ายข้างชื่อประเภทงาน
           // ตั้งแต่ 1.29.091026: แถวรายการประเภทงานเหลือแค่ "สรุป + ปุ่มแก้ไข/ลบ" — ตัวเลือกแก้ไขทั้งหมด (สี/รูปแบบการ์ด/ฝ่าย/แจ้งเตือนอย่างเดียว/
           // ไม่แสดงสาธารณะ/ข้อมูลที่ต้องกรอก) ย้ายไปอยู่ในป็อปอัพ "แก้ไขประเภทงาน" (editCatModal) ที่เปิดจากปุ่ม "แก้ไข" แทน ตามที่ผู้ใช้ขอ
           // เพราะเดิมแต่ละแถวมี dropdown 2 ตัว + checkbox 2 ตัว + ปุ่ม 2 ปุ่มวางเรียงกันจนดูรก
@@ -1413,10 +1424,11 @@
               ? c.customFields.map(function (k) { var def = CUSTOM_FIELD_DEFS.filter(function (d) { return d.key === k; })[0]; return def ? def.label : k; }).join(', ')
               : 'ไม่มี';
             var tplDef = TEMPLATE_OPTIONS.filter(function (o) { return o.key === (c.displayTemplate || ''); })[0];
-            var deptMeta = c.department ? ('<div class="sub-item-meta">ฝ่ายที่ดูแล: เจ้าหน้าที่' + escapeHtml(c.department) + '</div>') : '';
-            html += '<div class="event-list-item" data-cat-row="' + c.id + '">' +
+            var deptMeta = '';
+            rowHtml[c.id] = '<div class="event-list-item" data-cat-row="' + c.id + '">' +
               '<span class="cat-color-swatch" style="display:inline-block; width:26px; height:26px; border-radius:7px; flex-shrink:0; background:' + escapeHtml(c.color || '#3457d5') + ';" title="สีของประเภทงาน"></span>' +
               '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(c.name) +
+                (c.department ? ' <span class="cat-dept-badge">ฝ่าย' + escapeHtml(c.department) + '</span>' : ' <span class="cat-dept-badge cat-dept-none">ยังไม่ผูกฝ่าย</span>') +
                 (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '') +
                 (c.hideFromPortfolio ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-eye-slash ui-icon" aria-hidden="true"></i> ไม่แสดงสาธารณะ</span>' : '') +
               '</div>' +
@@ -1428,7 +1440,42 @@
                 '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button>' +
               '</div></div>';
           });
+          // จัดกลุ่มตามฝ่าย (1.37.101026): "ยังไม่ผูกฝ่าย" ขึ้นก่อนพร้อมปุ่มผูกทีเดียว ตามด้วยแต่ละฝ่ายตามลำดับที่ตั้งไว้
+          var groups = {}; var order = [];
+          rows.forEach(function (c) { var k = c.department || ''; if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(c); });
+          var keys = [];
+          if (groups['']) keys.push('');
+          deptOrder.forEach(function (d) { if (groups[d]) keys.push(d); });
+          order.forEach(function (k) { if (k && keys.indexOf(k) === -1) keys.push(k); });
+          keys.forEach(function (k) {
+            var list = groups[k];
+            if (k === '') {
+              html += '<div class="cat-group-head cat-group-head-none" data-cat-group="none"><div><b>ยังไม่ผูกฝ่าย (' + list.length + ')</b><div class="hint" style="margin:2px 0 0;">ประเภทงานเหล่านี้ยังไม่ถูกจัดให้อยู่ฝ่ายใด (มักเป็นประเภทที่สร้างไว้ก่อนมีระบบฝ่าย) — เจ้าหน้าที่ทุกฝ่ายเห็นและจัดการได้</div></div>' +
+                '<div class="cat-bulk-row"><select id="catBulkDept" aria-label="เลือกฝ่าย"></select><button type="button" class="btn btn-primary btn-sm" id="catBulkBtn">ผูกทั้งหมดเข้าฝ่ายนี้</button></div></div>';
+            } else {
+              html += '<div class="cat-group-head" data-cat-group="' + escapeHtml(k) + '"><b>ฝ่าย' + escapeHtml(k) + ' (' + list.length + ')</b></div>';
+            }
+            list.forEach(function (c) { html += rowHtml[c.id]; });
+          });
           wrap.innerHTML = html;
+          var bulkSel = document.getElementById('catBulkDept');
+          if (bulkSel) {
+            bulkSel.innerHTML = '<option value="">— เลือกฝ่าย —</option>' + deptOrder.map(function (d) { return '<option value="' + escapeHtml(d) + '">ฝ่าย' + escapeHtml(d) + '</option>'; }).join('');
+            document.getElementById('catBulkBtn').addEventListener('click', async function () {
+              var dept = bulkSel.value;
+              if (!dept) { bulkSel.focus(); bulkSel.classList.add('input-error'); return; }
+              var targets = groups[''] || [];
+              var ok = await askConfirm('ผูกประเภทงานที่ยังไม่ผูกฝ่าย ' + targets.length + ' รายการ เข้ากับ "ฝ่าย' + dept + '"? หลังผูกแล้ว เฉพาะเจ้าหน้าที่ฝ่ายนี้ (และ Super Admin) จะเห็น/จัดการกำหนดการของประเภทงานเหล่านี้ได้', 'ยืนยันการผูกฝ่าย');
+              if (!ok) return;
+              var r = await withProgress('กำลังผูกฝ่ายให้ประเภทงาน', async function () {
+                for (var i = 0; i < targets.length; i++) {
+                  await apiCall('adminSetWorkCategoryDepartment', { categoryId: targets[i].id, department: dept });
+                }
+                return true;
+              }, { successLabel: 'ผูกฝ่ายแล้ว' });
+              if (r.ok) loadCategories();
+            });
+          }
           currentCategoryRows = rows;
           wrap.querySelectorAll('button[data-cat-edit]').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -1540,7 +1587,7 @@
         currentCatOrder.forEach(function (c, idx) {
           html += '<div class="layout-row">' +
             '<div class="thumb" title="สีประเภทงาน" style="background:' + (c.color || '#3457d5') + ';"></div>' +
-            '<div class="info"><div class="t">' + escapeHtml(c.name) + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
+            '<div class="info"><div class="t">' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge">ฝ่าย' + escapeHtml(c.department) + '</span>' : '') + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
             '<div class="arrows">' +
               '<button type="button" class="btn btn-ghost btn-sm cat-move-up" data-idx="' + idx + '"' + (idx === 0 ? ' disabled' : '') + ' title="เลื่อนขึ้น">▲</button>' +
               '<button type="button" class="btn btn-ghost btn-sm cat-move-down" data-idx="' + idx + '"' + (idx === currentCatOrder.length - 1 ? ' disabled' : '') + ' title="เลื่อนลง">▼</button>' +
@@ -2216,7 +2263,7 @@
         }
       });
 
-      // ---------- เปลี่ยน Role ของบัญชี (ตั้งแต่ 1.36.101026) — Super Admin เท่านั้น (ดู adminSetRole) ----------
+      // ---------- เปลี่ยน Role ของบัญชี (ตั้งแต่ 1.37.101026) — Super Admin เท่านั้น (ดู adminSetRole) ----------
       var changeRoleModal = document.getElementById('changeRoleModal');
       var changeRoleUserId = null;
       var CHANGE_ROLE_LABEL = { teacher: 'ครู', staff: 'เจ้าหน้าที่', executive: 'ผู้บริหาร', superadmin: 'Super Admin' };
@@ -2392,7 +2439,7 @@
       });
     }
 
-    // ---------- ข้อมูลระบบ (ตั้งแต่ 1.36.101026) ----------
+    // ---------- ข้อมูลระบบ (ตั้งแต่ 1.37.101026) ----------
     // ขนาดฐานข้อมูล D1 + พื้นที่ Google Drive (ผ่าน Drive relay) + พื้นที่รายบัญชี (หน้าเว็บเรียกทีละโฟลเดอร์ 3 งานพร้อมกัน แล้วเติมตารางไปเรื่อยๆ)
     var _sysInfoRun = 0;
     function sysBarHtml(pct, label) {

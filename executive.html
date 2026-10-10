@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.36.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.37.101026" />
 <style>
   .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
   .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
@@ -86,7 +86,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.36.101026"></script>
+  <script src="assets/api.js?v=1.37.101026"></script>
   <script>
     var session = requireViewerAccess();
     // ผู้บริหารเท่านั้นที่ใช้หน้านี้เป็นหน้าแรก (เจ้าหน้าที่/Super Admin มีหน้าแรกของตัวเองอยู่แล้ว) — ส่งกลับหน้าแรกของบทบาทนั้น
@@ -202,7 +202,7 @@
         var ok = 0, late = 0, miss = 0;
         a.rows.forEach(function (r) { if (r.status === 'onTime') ok++; else if (r.status === 'late') late++; else miss++; });
         var t = a.rows.length || 1;
-        return '<div class="exec-sum-item"><div class="exec-sum-title">' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.title) + '</div>' +
+        return '<div class="exec-sum-item"><div class="exec-sum-title">' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.title) + categoryDeptBadgeHtml(a.categoryId) + '</div>' +
           '<div class="exec-sum-meta">ครบกำหนด ' + formatDateThai(a.endDate || a.date) + '</div>' +
           '<div class="exec-bar"><span class="ok" style="width:' + (ok * 100 / t) + '%"></span><span class="late" style="width:' + (late * 100 / t) + '%"></span></div>' +
           '<div class="exec-sum-nums"><span class="ok">ตรงเวลา ' + ok + '</span><span class="late">ช้า ' + late + '</span><span class="miss">ยังไม่ส่ง ' + miss + '</span></div></div>';
