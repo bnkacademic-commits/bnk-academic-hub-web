@@ -19,13 +19,15 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.32.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.34.101026" />
 <style>
   .dir-section { margin-bottom: 22px; }
   .dir-section-title { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 800; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-light); color: var(--primary-dark); }
   .dir-section-title .dir-count { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
   .dir-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
   .dir-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 12px; text-align: center; box-shadow: var(--shadow); }
+  a.dir-link { display: block; color: inherit; text-decoration: none; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
+  a.dir-link:hover, a.dir-link:focus-visible { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--primary); outline: none; }
   .dir-card.dir-exec { border-color: var(--primary); }
   .dir-avatar { width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 10px; overflow: hidden; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; }
   .dir-exec .dir-avatar { width: 104px; height: 104px; }
@@ -36,6 +38,53 @@
   .dir-sub { font-size: 0.78rem; margin-top: 4px; color: var(--primary-dark); font-weight: 600; }
   .dir-head { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 999px; background: var(--warn-light); color: var(--warn); font-size: 0.74rem; font-weight: 700; }
   .dir-notice { text-align: center; color: var(--text-muted); padding: 40px 10px; }
+  /* ---- ปุ่มสลับมุมมอง ---- */
+  .dir-toolbar { display: flex; justify-content: flex-end; margin: 0 0 14px; }
+  .dir-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--surface); }
+  .dir-toggle button { border: 0; background: transparent; color: var(--text-muted); font: inherit; font-size: 0.85rem; font-weight: 700; padding: 7px 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .dir-toggle button[aria-pressed="true"] { background: var(--primary); color: #fff; }
+  .dir-toggle button:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+  /* ---- มุมมองผังองค์กร (แบบเส้นโครง) ---- */
+  .tree-hint { display: none; text-align: center; color: var(--text-muted); font-size: 0.8rem; margin: 0 0 6px; }
+  .tree-hint.show { display: block; }
+  .tree-wrap { overflow-x: auto; padding: 4px 4px 18px; -webkit-overflow-scrolling: touch; }
+  .tree { --tl: #9aa5c4; display: flex; flex-direction: column; align-items: center; width: max-content; margin: 0 auto; }
+  [data-theme="dark"] .tree { --tl: #5b6685; }
+  .tree ul { padding-top: 22px; position: relative; display: flex; justify-content: center; margin: 0; }
+  .tree li { list-style: none; text-align: center; position: relative; padding: 22px 10px 0; }
+  .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; width: 50%; height: 22px; border-top: 2px solid var(--tl); }
+  .tree li::after { right: auto; left: 50%; border-left: 2px solid var(--tl); }
+  .tree li:only-child::before, .tree li:only-child::after { display: none; }
+  .tree li:only-child { padding-top: 0; }
+  .tree li:first-child::before, .tree li:last-child::after { border: 0; }
+  .tree li:last-child::before { border-right: 2px solid var(--tl); border-radius: 0 8px 0 0; }
+  .tree li:first-child::after { border-radius: 8px 0 0 0; }
+  .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid var(--tl); height: 22px; }
+  .tree .bus > ul { padding-top: 34px; align-items: flex-start; }
+  .tree .bus > ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid var(--tl); height: 34px; }
+  .tree .bus > ul > li { padding-top: 22px; }
+  .tree .bus > ul > li:only-child::before { display: block; right: auto; left: 50%; width: 0; border: 0; border-left: 2px solid var(--tl); border-radius: 0; }
+  .tree .bus.noroot > ul { padding-top: 0; }
+  .tree .bus.noroot > ul::before { display: none; }
+  .tree .bus.noroot > ul > li { padding-top: 0; }
+  .tree .bus.noroot > ul > li::before, .tree .bus.noroot > ul > li::after { display: none; }
+  .tn { position: relative; display: inline-block; width: 170px; box-sizing: border-box; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 8px; box-shadow: var(--shadow); text-align: center; color: inherit; text-decoration: none; vertical-align: top; }
+  a.tn-link { transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
+  a.tn-link:hover, a.tn-link:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--primary); outline: none; }
+  .tn.ex1 { width: 220px; border: 2px solid var(--primary); }
+  .tn.ex2 { width: 200px; border-color: var(--primary); }
+  .tn.head { border: 2px solid #f59e0b; }
+  .tav { width: 54px; height: 54px; border-radius: 50%; margin: 0 auto 6px; overflow: hidden; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; }
+  .tn.ex1 .tav { width: 70px; height: 70px; }
+  .tav img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tav svg { width: 55%; height: 55%; display: block; }
+  .tname { font-weight: 700; font-size: 0.86rem; line-height: 1.3; }
+  .tpos { color: var(--text-muted); font-size: 0.76rem; margin-top: 2px; }
+  .tsub { display: inline-block; margin-top: 4px; padding: 1px 8px; border-radius: 10px; background: var(--warn-light); color: var(--warn); font-size: 0.68rem; font-weight: 700; line-height: 1.4; }
+  .gtitle { display: inline-block; max-width: 170px; box-sizing: border-box; padding: 5px 12px; border-radius: 12px; background: var(--primary-light); color: var(--primary-dark); font-size: 0.8rem; font-weight: 800; line-height: 1.35; }
+  .vlist { position: relative; margin: 0 auto; }
+  .vlist::before { content: ''; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 2px solid var(--tl); }
+  .vitem { position: relative; padding-top: 14px; }
 </style>
 </head>
 <body>
@@ -43,11 +92,12 @@
   <div class="container">
     <div class="page-header">
       <h1>ทำเนียบบุคลากรโรงเรียน</h1>
-      <p id="dirSub">คณะผู้บริหารและครู/บุคลากรของโรงเรียน เรียงตามตำแหน่งจากสูงไปต่ำ</p>
+      <p id="dirSub">คณะผู้บริหารและครู/บุคลากรของโรงเรียน</p>
     </div>
+    <div class="dir-toolbar"><div class="dir-toggle" role="group" aria-label="เลือกมุมมอง"><button type="button" id="dirViewTree" data-view="tree" aria-pressed="false"><i class="fa-solid fa-sitemap"></i> ผังองค์กร</button><button type="button" id="dirViewCards" data-view="cards" aria-pressed="false"><i class="fa-solid fa-th-large"></i> การ์ด</button></div></div>
     <div id="dirRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
-  <script src="assets/api.js?v=1.32.101026"></script>
+  <script src="assets/api.js?v=1.34.101026"></script>
   <script>
     var SUBJECT_GROUP_ORDER = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ'];
     var POSITION_RANK = ['ครูเชี่ยวชาญพิเศษ', 'ครูเชี่ยวชาญ', 'ครูชำนาญการพิเศษ', 'ครูชำนาญการ', 'ครู', 'ครูผู้ช่วย'];
@@ -72,17 +122,29 @@
       if (r) return r;
       return String(a.name).localeCompare(String(b.name), 'th');
     }
-    function cardHtml(p, isExec) {
+    function subTags(p, short) {
       var sub = [];
-      if (hasHead(p, 'subject')) sub.push('หัวหน้ากลุ่มสาระการเรียนรู้' + (p.subjectGroup || ''));
+      // ในผังชื่อกลุ่มสาระฯ อยู่บนหัวคอลัมน์แล้ว -> ใช้ป้ายสั้นๆ ไม่ให้ล้นกรอบ
+      if (hasHead(p, 'subject')) sub.push(short ? 'หัวหน้ากลุ่มสาระฯ' : 'หัวหน้ากลุ่มสาระการเรียนรู้' + (p.subjectGroup || ''));
       if (p.kind === 'staff') sub.push('เจ้าหน้าที่' + (p.department ? 'ฝ่าย' + String(p.department).replace(/^ฝ่าย/, '') : ''));
       if (hasHead(p, 'dept')) sub.push('หัวหน้าฝ่าย' + String(p.department || '').replace(/^ฝ่าย/, ''));
-      return '<div class="dir-card' + (isExec ? ' dir-exec' : '') + '" data-kind="' + p.kind + '">' +
-        '<div class="dir-avatar">' + avatarInnerHtml(p.avatarUrl) + '</div>' +
+      return sub;
+    }
+    function linkAttrs(p) {
+      return ' href="view.html?id=' + encodeURIComponent(p.id) + '" target="_blank" rel="noopener" title="เปิดหน้าแสดงผลงานของ ' + escapeHtml(p.name) + '"';
+    }
+    function cardHtml(p, isExec) {
+      var sub = subTags(p);
+      var inner = '<div class="dir-avatar">' + avatarInnerHtml(p.avatarUrl) + '</div>' +
         '<div class="dir-name">' + escapeHtml(p.name) + '</div>' +
         '<div class="dir-pos">' + escapeHtml(p.position || (isExec ? 'ผู้บริหาร' : '')) + '</div>' +
-        sub.map(function (t) { return '<div class="dir-sub">' + escapeHtml(t) + '</div>'; }).join('') +
-        '</div>';
+        sub.map(function (t) { return '<div class="dir-sub">' + escapeHtml(t) + '</div>'; }).join('');
+      var cls = 'dir-card' + (isExec ? ' dir-exec' : '');
+      // คลิกที่ใดก็ได้ในกรอบการ์ด -> เปิดหน้าแสดงผลงานของคนนั้นในแท็บใหม่ (ผู้บริหารไม่มีหน้าผลงาน จึงไม่เป็นลิงก์)
+      if (p.hasPage) {
+        return '<a class="' + cls + ' dir-link" data-kind="' + p.kind + '"' + linkAttrs(p) + '>' + inner + '</a>';
+      }
+      return '<div class="' + cls + '" data-kind="' + p.kind + '">' + inner + '</div>';
     }
     function sectionHtml(title, people, isExec, key) {
       if (!people.length) return '';
@@ -90,19 +152,93 @@
         ' <span class="dir-count">' + people.length + ' คน</span></h2><div class="dir-grid">' +
         people.map(function (p) { return cardHtml(p, isExec); }).join('') + '</div></section>';
     }
-    function render(people) {
-      var root = document.getElementById('dirRoot');
+    // ---- มุมมองผังองค์กร ----
+    function nodeHtml(p, extra) {
+      var isExec = p.kind === 'executive';
+      var cls = 'tn' + (extra ? ' ' + extra : '') + ((p.headRoles || []).length ? ' head' : '') + (p.hasPage ? ' tn-link' : '');
+      var inner = '<div class="tav">' + avatarInnerHtml(p.avatarUrl) + '</div>' +
+        '<div class="tname">' + escapeHtml(p.name) + '</div>' +
+        '<div class="tpos">' + escapeHtml(p.position || (isExec ? 'ผู้บริหาร' : '')) + '</div>' +
+        subTags(p, true).map(function (t) { return '<div class="tsub">' + escapeHtml(t) + '</div>'; }).join('');
+      if (p.hasPage) return '<a class="' + cls + '" data-kind="' + p.kind + '"' + linkAttrs(p) + '>' + inner + '</a>';
+      return '<div class="' + cls + '" data-kind="' + p.kind + '">' + inner + '</div>';
+    }
+    function columnHtml(title, list, key) {
+      if (!list.length) return '';
+      return '<li data-group="' + escapeHtml(key) + '"><div class="gtitle">' + escapeHtml(title) + '</div><div class="vlist">' +
+        list.map(function (p) { return '<div class="vitem">' + nodeHtml(p, '') + '</div>'; }).join('') + '</div></li>';
+    }
+    function splitPeople(people) {
       var execs = people.filter(function (p) { return p.kind === 'executive'; })
         .sort(function (a, b) { return rankIndex(EXEC_RANK, a.position) - rankIndex(EXEC_RANK, b.position) || String(a.name).localeCompare(String(b.name), 'th'); });
-      var rest = people.filter(function (p) { return p.kind !== 'executive'; });
-      var html = sectionHtml('คณะผู้บริหาร', execs, true, 'executive');
+      return { execs: execs, rest: people.filter(function (p) { return p.kind !== 'executive'; }) };
+    }
+    function treeHtml(people) {
+      var sp = splitPeople(people), execs = sp.execs, rest = sp.rest;
+      var cols = '';
       SUBJECT_GROUP_ORDER.forEach(function (g) {
-        var list = rest.filter(function (p) { return p.subjectGroup === g; }).sort(cmpPerson);
-        html += sectionHtml('กลุ่มสาระการเรียนรู้' + g, list, false, g);
+        cols += columnHtml('กลุ่มสาระการเรียนรู้' + g, rest.filter(function (p) { return p.subjectGroup === g; }).sort(cmpPerson), g);
       });
-      var others = rest.filter(function (p) { return SUBJECT_GROUP_ORDER.indexOf(p.subjectGroup) < 0; }).sort(cmpPerson);
-      html += sectionHtml('ครูและบุคลากรอื่นๆ', others, false, 'other');
+      cols += columnHtml('ครูและบุคลากรอื่นๆ', rest.filter(function (p) { return SUBJECT_GROUP_ORDER.indexOf(p.subjectGroup) < 0; }).sort(cmpPerson), 'other');
+      if (!execs.length && !cols) return '';
+      var h = '<div class="tree-hint" id="treeHint"><i class="fa-solid fa-arrows-left-right"></i> เลื่อนซ้าย-ขวาเพื่อดูกลุ่มสาระฯ อื่นๆ</div><div class="tree-wrap"><div class="tree" id="dirTree">';
+      if (execs.length) {
+        h += '<ul><li>' + nodeHtml(execs[0], 'ex1');
+        if (execs.length > 1) h += '<ul>' + execs.slice(1).map(function (e) { return '<li>' + nodeHtml(e, 'ex2') + '</li>'; }).join('') + '</ul>';
+        h += '</li></ul>';
+      }
+      if (cols) h += '<div class="bus' + (execs.length ? '' : ' noroot') + '"><ul>' + cols + '</ul></div>';
+      return h + '</div></div>';
+    }
+    function cardsHtml(people) {
+      var sp = splitPeople(people), rest = sp.rest;
+      var html = sectionHtml('คณะผู้บริหาร', sp.execs, true, 'executive');
+      SUBJECT_GROUP_ORDER.forEach(function (g) {
+        html += sectionHtml('กลุ่มสาระการเรียนรู้' + g, rest.filter(function (p) { return p.subjectGroup === g; }).sort(cmpPerson), false, g);
+      });
+      html += sectionHtml('ครูและบุคลากรอื่นๆ', rest.filter(function (p) { return SUBJECT_GROUP_ORDER.indexOf(p.subjectGroup) < 0; }).sort(cmpPerson), false, 'other');
+      return html;
+    }
+    // ---- เลือกมุมมอง: ค่าเริ่มต้นตามความกว้างจอ (>=768px = ผังองค์กร, มือถือ = การ์ด) ผู้ใช้กดสลับเองได้และจำไว้ในเครื่องนั้น ----
+    var VIEW_KEY = 'bnkah_dir_view';
+    var wideMq = window.matchMedia ? window.matchMedia('(min-width: 768px)') : null;
+    var allPeople = null;
+    function storedView() { try { var v = localStorage.getItem(VIEW_KEY); return (v === 'tree' || v === 'cards') ? v : null; } catch (e) { return null; } }
+    function currentView() { return storedView() || ((wideMq && wideMq.matches) ? 'tree' : 'cards'); }
+    function render(people) {
+      if (people) allPeople = people;
+      var root = document.getElementById('dirRoot');
+      var view = currentView();
+      Array.prototype.forEach.call(document.querySelectorAll('.dir-toggle button'), function (b) {
+        b.setAttribute('aria-pressed', b.getAttribute('data-view') === view ? 'true' : 'false');
+      });
+      root.setAttribute('data-view', view);
+      var html = view === 'tree' ? treeHtml(allPeople || []) : cardsHtml(allPeople || []);
       root.innerHTML = html || '<div class="dir-notice">ยังไม่มีข้อมูลบุคลากร</div>';
+      updateTreeHint();
+      centerTreeOnRoot();
+    }
+    // ผังกว้างเกินจอ: เลื่อนให้ ผอ. (บนสุด) อยู่กลางจอตั้งแต่แรก ไม่ต้องไปไล่หาทางขวา
+    function centerTreeOnRoot() {
+      var w = document.querySelector('.tree-wrap'), r = document.querySelector('#dirTree > ul .tn');
+      if (!w || !r || w.scrollWidth <= w.clientWidth) return;
+      var wr = w.getBoundingClientRect(), rr = r.getBoundingClientRect();
+      w.scrollLeft = Math.max(0, w.scrollLeft + (rr.left + rr.width / 2) - (wr.left + wr.width / 2));
+    }
+    function updateTreeHint() {
+      var w = document.querySelector('.tree-wrap'), h = document.getElementById('treeHint');
+      if (w && h) h.classList.toggle('show', w.scrollWidth > w.clientWidth + 2);
+    }
+    window.addEventListener('resize', updateTreeHint);
+    Array.prototype.forEach.call(document.querySelectorAll('.dir-toggle button'), function (b) {
+      b.addEventListener('click', function () {
+        try { localStorage.setItem(VIEW_KEY, b.getAttribute('data-view')); } catch (e) {}
+        if (allPeople) render();
+      });
+    });
+    if (wideMq) {
+      var onMq = function () { if (allPeople) render(); };
+      if (wideMq.addEventListener) wideMq.addEventListener('change', onMq); else if (wideMq.addListener) wideMq.addListener(onMq);
     }
     async function load() {
       var root = document.getElementById('dirRoot');

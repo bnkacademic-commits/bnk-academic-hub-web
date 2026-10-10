@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.32.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.34.101026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -489,6 +489,18 @@
       <button type="button" class="modal-close-x" id="manageUserModalCloseX" aria-label="ปิด">✕</button>
       <h3>จัดการบัญชี</h3>
       <div id="manageUserTarget" style="margin-bottom:14px;"></div>
+      <!-- รูปโปรไฟล์ของบัญชีนี้ (ตั้งแต่ 1.33.101026) — Super Admin อัพโหลด/เปลี่ยน/ลบให้ได้ -->
+      <div class="manage-avatar-box" id="manageAvatarBox">
+        <span class="profile-avatar" id="manageAvatarPreview"></span>
+        <div class="manage-avatar-actions">
+          <div class="hint" style="margin:0;">รูปโปรไฟล์</div>
+          <input type="file" id="manageAvatarFile" accept="image/*" hidden />
+          <button type="button" class="btn btn-secondary btn-sm" id="manageAvatarPick">เลือก/เปลี่ยนรูป</button>
+          <button type="button" class="btn btn-primary btn-sm" id="manageAvatarSave" hidden>บันทึกรูปนี้</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="manageAvatarRemove" hidden>ลบรูป</button>
+          <div class="error-box" id="manageAvatarError" hidden style="margin:0;"></div>
+        </div>
+      </div>
       <div id="manageUserActions" style="display:flex; flex-direction:column; gap:8px;"></div>
       <div class="modal-actions"><button type="button" class="btn btn-ghost" id="manageUserClose">ปิด</button></div>
     </div>
@@ -710,7 +722,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.32.101026"></script>
+  <script src="assets/api.js?v=1.34.101026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1818,7 +1830,7 @@
       var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>Username</th><th>Role</th><th>สถานะ</th><th></th></tr></thead><tbody>';
       visibleUsers.forEach(function (u) {
         html += '<tr>' +
-          '<td>' + escapeHtml(u.name) + '</td>' +
+          '<td><div class="user-cell"><span class="profile-avatar"' + (canManageUser(u) ? ' data-manage-user="' + u.id + '" title="คลิกเพื่อจัดการบัญชี/เปลี่ยนรูป"' : '') + '>' + avatarInnerHtml(u.avatarUrl) + '</span><span>' + escapeHtml(u.name) + '</span></div></td>' +
           '<td>' + escapeHtml(u.username) + '</td>' +
           '<td>' + roleBadge(u) + '</td>' +
           '<td><span class="badge badge-' + (u.status === 'active' ? 'active' : 'archived') + '">' + (u.status === 'active' ? 'ใช้งานอยู่' : 'ระงับ') + '</span></td>' +
@@ -1834,7 +1846,7 @@
       html += '</tbody></table>';
       wrap.innerHTML = html;
 
-      wrap.querySelectorAll('button[data-manage-user]').forEach(function (btn) {
+      wrap.querySelectorAll('[data-manage-user]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var u = allUsers.filter(function (x) { return x.id === btn.getAttribute('data-manage-user'); })[0];
           if (u) openManageUserModal(u);
@@ -1844,7 +1856,62 @@
 
     // ---------- ป็อปอัพ "จัดการบัญชี" (ตั้งแต่ 1.29.091026) ----------
     var manageUserModalEl = document.getElementById('manageUserModal');
+    // ---------- รูปโปรไฟล์ของบัญชีในป็อปอัพจัดการบัญชี (ตั้งแต่ 1.33.101026) ----------
+    var manageAvatarTarget = null;   // บัญชีที่กำลังเปิดป็อปอัพอยู่
+    var manageAvatarPending = null;  // รูปที่เลือกแล้วแต่ยังไม่บันทึก (ผลจาก resizeImageForAvatar)
+    function syncManageAvatarUi() {
+      var u = manageAvatarTarget;
+      document.getElementById('manageAvatarPreview').innerHTML = manageAvatarPending ? '<img src="' + manageAvatarPending.dataUrl + '" alt="" />' : avatarInnerHtml(u ? u.avatarUrl : '');
+      document.getElementById('manageAvatarSave').hidden = !manageAvatarPending;
+      document.getElementById('manageAvatarRemove').hidden = !(u && u.avatarUrl) || !!manageAvatarPending;
+    }
+    function patchUserAvatar(userId, url) {
+      for (var i = 0; i < allUsers.length; i++) { if (allUsers[i].id === userId) { allUsers[i].avatarUrl = url; break; } }
+      renderUserTable();
+      renderTeacherInfoTable();
+    }
+    document.getElementById('manageAvatarPick').addEventListener('click', function () { document.getElementById('manageAvatarFile').click(); });
+    document.getElementById('manageAvatarFile').addEventListener('change', async function () {
+      var input = this, file = input.files && input.files[0];
+      input.value = '';
+      if (!file) return;
+      var errBox = document.getElementById('manageAvatarError');
+      errBox.hidden = true;
+      try {
+        manageAvatarPending = await resizeImageForAvatar(file);
+        syncManageAvatarUi();
+      } catch (err) { errBox.textContent = err.message; errBox.hidden = false; }
+    });
+    document.getElementById('manageAvatarSave').addEventListener('click', async function () {
+      if (!manageAvatarPending || !manageAvatarTarget) return;
+      var target = manageAvatarTarget, errBox = document.getElementById('manageAvatarError');
+      errBox.hidden = true;
+      var r = await withProgress('กำลังอัพโหลดรูปโปรไฟล์', function () { return uploadResizedAvatar(manageAvatarPending, target.id); }, { successLabel: 'อัพเดทรูปโปรไฟล์แล้ว' });
+      if (r.ok) {
+        manageAvatarPending = null;
+        target.avatarUrl = r.data.avatarUrl;
+        patchUserAvatar(target.id, r.data.avatarUrl);
+        syncManageAvatarUi();
+      } else { errBox.textContent = r.error.message; errBox.hidden = false; }
+    });
+    document.getElementById('manageAvatarRemove').addEventListener('click', async function () {
+      if (!manageAvatarTarget) return;
+      var target = manageAvatarTarget, errBox = document.getElementById('manageAvatarError');
+      errBox.hidden = true;
+      var ok = await askConfirm('ลบรูปโปรไฟล์ของ "' + target.name + '"? ระบบจะกลับไปใช้ไอคอนเริ่มต้นแทน', 'ยืนยันการลบรูป');
+      if (!ok) return;
+      var r = await withProgress('กำลังลบรูปโปรไฟล์', function () { return apiCall('adminRemoveUserAvatar', { userId: target.id }); }, { successLabel: 'ลบรูปโปรไฟล์แล้ว' });
+      if (r.ok) {
+        target.avatarUrl = '';
+        patchUserAvatar(target.id, '');
+        syncManageAvatarUi();
+      } else { errBox.textContent = r.error.message; errBox.hidden = false; }
+    });
+
     function openManageUserModal(u) {
+      manageAvatarTarget = u; manageAvatarPending = null;
+      document.getElementById('manageAvatarError').hidden = true;
+      syncManageAvatarUi();
       document.getElementById('manageUserTarget').innerHTML = escapeHtml(u.name) + ' <span class="hint">(' + escapeHtml(u.username) + ')</span> ' + roleBadge(u);
       var nm = escapeHtml(u.name);
       var btns = (u.status === 'active'

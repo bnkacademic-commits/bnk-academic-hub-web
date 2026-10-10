@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.32.101026';
+var APP_VERSION = '1.34.101026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -438,9 +438,10 @@ function resizeImageForAvatar(file) {
  * อัพโหลดรูปโปรไฟล์ (ที่ย่อ/บีบอัดไว้แล้วจาก resizeImageForAvatar) ขึ้น Google Drive ผ่าน Drive relay
  * ด้วยขั้นตอนเดียวกับการส่งไฟล์งาน (prepare -> ยิงตรงไป relay -> finalize) ดู submitWorkFile ด้านบนประกอบ
  */
-async function uploadResizedAvatar(resized) {
+// targetUserId (ตั้งแต่ 1.33.101026): ถ้าระบุ = Super Admin อัพรูปให้บัญชีอื่น (adminAvatarUpload*) ไม่ระบุ = รูปของตัวเอง
+async function uploadResizedAvatar(resized, targetUserId) {
   var approxBytes = Math.ceil(resized.base64.length * 3 / 4);
-  var prep = await apiCall('profileAvatarUploadPrepare', { fileName: 'avatar.jpg', fileSize: approxBytes });
+  var prep = await apiCall(targetUserId ? 'adminAvatarUploadPrepare' : 'profileAvatarUploadPrepare', targetUserId ? { userId: targetUserId, fileName: 'avatar.jpg', fileSize: approxBytes } : { fileName: 'avatar.jpg', fileSize: approxBytes });
   var relayText;
   try {
     var relayRes = await fetch(prep.relayUrl, {
@@ -460,10 +461,12 @@ async function uploadResizedAvatar(resized) {
   }
   if (!relayJson.ok) throw new Error(relayJson.error || 'อัพโหลดรูปโปรไฟล์ไม่สำเร็จ');
   var result = relayJson.data;
-  return apiCall('profileAvatarUploadFinalize', {
+  var finalizePayload = {
     fileId: result.fileId, fileUrl: result.url, directUrl: result.directUrl,
     fileName: 'avatar.jpg', mimeType: resized.mimeType
-  });
+  };
+  if (targetUserId) finalizePayload.userId = targetUserId;
+  return apiCall(targetUserId ? 'adminAvatarUploadFinalize' : 'profileAvatarUploadFinalize', finalizePayload);
 }
 
 // ไอคอนคนทั่วไป (SVG เส้น currentColor) — ใช้เป็นรูปโปรไฟล์เริ่มต้นเมื่อบัญชียังไม่ได้อัพโหลดรูปเอง
