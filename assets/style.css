@@ -1181,9 +1181,6 @@ tbody tr:hover { background: var(--surface-2); }
 /* หน้าล็อกอินต้องพอดีจอมือถือเตี้ย (ดู body.login-page ด้านบน) — footer มี 6 บรรทัดตั้งแต่ 1.29.091026 จึงบีบช่องไฟเพิ่มเฉพาะหน้านี้ */
 body.login-page .site-footer { padding: 6px 12px 8px; line-height: 1.4; }
 
-.app-version-tag {
-  text-align: center; padding: 0 16px 20px; color: var(--text-muted); font-size: 0.7rem; opacity: 0.7;
-}
 
 /* ---------- ปรับให้ใช้งานบนมือถือสะดวกขึ้น (ตั้งแต่ V9.7) ---------- */
 @media (max-width: 560px) {
@@ -1293,7 +1290,7 @@ body.nav-pinned .sidenav { border-right-color: var(--border); }
 body.has-sidenav { --nav-w: var(--nav-w-rail); }
 body.has-sidenav.nav-pinned { --nav-w: var(--nav-w-full); }
 body.has-sidenav > .container { margin-left: var(--nav-w); margin-right: 0; width: calc(100% - var(--nav-w)); transition: margin-left 0.18s ease, width 0.18s ease; }
-body.has-sidenav > #app-footer, body.has-sidenav > .app-version-tag { margin-left: var(--nav-w); transition: margin-left 0.18s ease; }
+body.has-sidenav > #app-footer { margin-left: var(--nav-w); transition: margin-left 0.18s ease; }
 .sidenav-backdrop { display: none; }
 
 @media (max-width: 767px) {
@@ -1312,3 +1309,46 @@ body.has-sidenav > #app-footer, body.has-sidenav > .app-version-tag { margin-lef
   body.has-sidenav .topbar .brand .js-site-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   body.has-sidenav .topbar-right { flex-shrink: 0; gap: 4px; }
 }
+
+/* ---------- 1.38.101026: แถบบนสุดล็อกตามตลอดเมื่อเลื่อนหน้า ----------
+   เดิมตั้ง position:sticky ที่ .topbar ซึ่งอยู่ใน <div id="app-topbar"> ที่สูงเท่าแถบพอดี — sticky ทำงานได้เฉพาะภายในพ่อของตัวเอง
+   จึงไม่เคยล็อกจริง ย้ายการล็อกมาไว้ที่ตัวห่อ #app-topbar (พ่อคือ body ที่ยาวตลอดหน้า) */
+#app-topbar { position: sticky; top: 0; z-index: 48; }
+#app-topbar .topbar { position: relative; top: auto; }
+
+/* ---------- 1.38.101026: หน้าแรก — ข้อความต้อนรับ + ปุ่มฝั่งขวา, เช็คลิสต์ย่อ/ขยายต่อเทอม + ช่องเลือกปี ---------- */
+.dash-welcome-row { display: flex; align-items: center; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap; }
+.dash-welcome-row h1 { margin: 0; flex: 1 1 0; min-width: 240px; overflow-wrap: anywhere; }
+.dash-welcome-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex: 0 0 auto; }
+.dash-welcome-actions .dash-portfolio-btn { width: auto; min-height: 0; padding: 11px 18px; font-size: 0.95rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.dash-welcome-actions .dash-portfolio-btn.dash-memo-btn { font-size: 0.95rem; padding: 11px 18px; }
+@media (max-width: 560px) {
+  .dash-welcome-actions { width: 100%; }
+  .dash-welcome-actions .dash-portfolio-btn { flex: 1 1 0; justify-content: center; }
+}
+.dash-checklist-title { display: flex; align-items: center; justify-content: space-between; gap: 6px 8px; flex-wrap: wrap; }
+.dash-checklist-controls { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.dash-checklist-controls select { width: auto; max-width: 118px; padding: 3px 24px 3px 8px; font-size: 0.78rem; border-radius: 8px; min-height: 0; height: 28px; }
+.dash-checklist-controls .refresh-btn { width: 28px; height: 28px; }
+button.checklist-group-toggle {
+  width: 100%; border: none; cursor: pointer; font-family: inherit; text-align: left; box-sizing: border-box;
+  transition: filter 0.15s ease;
+}
+button.checklist-group-toggle:hover, button.checklist-group-toggle:focus-visible { filter: brightness(1.08); }
+.checklist-group-toggle .cl-group-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.checklist-group-toggle .cl-group-count { flex-shrink: 0; min-width: 1.15rem; height: 1.15rem; line-height: 1.15rem; padding: 0 5px; border-radius: 999px; background: #fff; color: var(--danger); font-size: 0.7rem; font-weight: 800; text-align: center; }
+.checklist-group-toggle .cl-group-allok { flex-shrink: 0; font-size: 0.72rem; opacity: 0.95; }
+.checklist-group-toggle .cl-group-chevron { flex-shrink: 0; font-size: 0.7rem; transition: transform 0.18s ease; }
+.checklist-group.open .cl-group-chevron { transform: rotate(180deg); }
+.checklist-group-body[hidden] { display: none; }
+.checklist-group { margin-bottom: 8px; }
+
+/* ---------- 1.39.101026: การ์ด "เทอม/ปีการศึกษาปัจจุบัน" เลือกได้ 2 โหมด ---------- */
+.term-mode-options { display: grid; gap: 8px; margin-bottom: 14px; }
+.term-mode-opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; font-weight: 500; }
+.term-mode-opt:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
+.term-mode-opt input[type="radio"] { width: auto; margin-top: 4px; flex-shrink: 0; }
+.term-panel[hidden] { display: none; }
+.term-md-row { display: flex; gap: 8px; }
+.term-md-row select { flex: 1 1 0; min-width: 0; }
+.term-md-row select:first-child { flex: 0 0 76px; }

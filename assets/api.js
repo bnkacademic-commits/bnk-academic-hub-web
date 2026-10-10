@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.37.101026';
+var APP_VERSION = '1.40.101026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -66,7 +66,7 @@ async function apiCall(action, payload) {
     // code (ตั้งแต่ V11.7): ติด err.code ไว้กับ Error ที่ throw ออกไปด้วยถ้า backend ส่งมา (เช่น 'SESSION_REPLACED')
     // เพื่อให้จุดที่เรียกใช้ตรวจจับ error เฉพาะเจาะจงได้ด้วยรหัส ไม่ต้องเทียบข้อความภาษาไทย (ดู startSessionWatch ด้านล่าง)
     var errMsg = json.error || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ';
-    // ตั้งแต่ 1.37.101026: "ไม่รู้จักคำสั่ง: xxx" = หน้าเว็บใหม่แต่ Worker บนเซิร์ฟเวอร์ยังเป็นโค้ดเก่า (ยังไม่ได้ deploy) — บอกวิธีแก้ให้ชัด
+    // ตั้งแต่ 1.40.101026: "ไม่รู้จักคำสั่ง: xxx" = หน้าเว็บใหม่แต่ Worker บนเซิร์ฟเวอร์ยังเป็นโค้ดเก่า (ยังไม่ได้ deploy) — บอกวิธีแก้ให้ชัด
     var unk = /^ไม่รู้จักคำสั่ง:\s*(\S+)/.exec(errMsg);
     if (unk) errMsg = 'เซิร์ฟเวอร์ (Worker) ยังเป็นโค้ดเก่า ไม่มีคำสั่ง "' + unk[1] + '" — ต้องอัพเดตไฟล์ Worker เป็นชุดเดียวกับหน้าเว็บ (เวอร์ชัน ' + APP_VERSION + ') แล้ว Deploy Worker ใหม่ (ดู README ขั้นตอนอัพเดต) ก่อนใช้ฟีเจอร์นี้';
     var err = new Error(errMsg);
@@ -109,7 +109,7 @@ function clearSession() {
     localStorage.removeItem(SESSION_TOKEN_KEY);
     localStorage.removeItem(SESSION_USER_KEY);
     localStorage.removeItem(SESSION_LOGIN_AT_KEY);
-    localStorage.removeItem(THEME_KEY); // 1.37.101026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
+    localStorage.removeItem(THEME_KEY); // 1.40.101026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
   } catch (e) {}
 }
 // ออกจากระบบแล้วรีเฟรชหน้าเว็บ 1 ครั้งเสมอ (นำทางไปหน้าล็อกอินแบบโหลดใหม่จริง ไม่ใช้แคชหน้าเดิม)
@@ -230,7 +230,7 @@ function setTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
   applyTheme(theme);
 }
-// Dark Mode ผูกกับบัญชี (ตั้งแต่ 1.37.101026): ตอน login Worker ส่งค่าที่บัญชีนี้เคยเลือกไว้มา (user.theme: 'dark' | 'light' | '' = ยังไม่เคยเลือก)
+// Dark Mode ผูกกับบัญชี (ตั้งแต่ 1.40.101026): ตอน login Worker ส่งค่าที่บัญชีนี้เคยเลือกไว้มา (user.theme: 'dark' | 'light' | '' = ยังไม่เคยเลือก)
 // หน้าเว็บตั้งค่าตามนั้นทันที (ไม่ให้โหมดของคนก่อนหน้าบนเครื่องเดียวกันค้างมา) — ยังไม่เคยเลือก = โหมดสว่าง
 function applyAccountTheme(user) {
   var t = user && user.theme === 'dark' ? 'dark' : 'light';
@@ -511,7 +511,7 @@ function buildCategoryColorMap(categories) {
   (categories || []).forEach(function (c) { map[c.id] = c.color || '#3457d5'; _catDeptMap[c.id] = c.department || ''; });
   return map;
 }
-// ฝ่ายของประเภทงาน (ตั้งแต่ 1.37.101026) — buildCategoryColorMap เก็บ { categoryId: ชื่อฝ่าย } ไว้ด้วยทุกครั้งที่หน้าโหลดรายการประเภทงาน
+// ฝ่ายของประเภทงาน (ตั้งแต่ 1.40.101026) — buildCategoryColorMap เก็บ { categoryId: ชื่อฝ่าย } ไว้ด้วยทุกครั้งที่หน้าโหลดรายการประเภทงาน
 // categoryDeptBadgeHtml(id) คืนป้าย "ฝ่ายวิชาการ" (ไม่ผูกฝ่าย/ไม่รู้จัก id = ไม่แสดงอะไร) ใช้ต่อท้ายชื่อประเภทงานทุกจุด
 var _catDeptMap = {};
 function categoryDeptBadgeHtml(categoryId) {
@@ -546,7 +546,7 @@ function formatDateThai(isoOrDateStr) {
   var months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   return d.getDate() + ' ' + months[d.getMonth()] + ' ' + (d.getFullYear() + 543);
 }
-// ขนาดไฟล์อ่านง่าย (ตั้งแต่ 1.37.101026) — ใช้ในแท็บ "ข้อมูลระบบ"
+// ขนาดไฟล์อ่านง่าย (ตั้งแต่ 1.40.101026) — ใช้ในแท็บ "ข้อมูลระบบ"
 function formatBytes(n) {
   if (n === null || n === undefined || isNaN(Number(n))) return '-';
   var units = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0, v = Number(n);
@@ -562,29 +562,43 @@ function formatDateTimeThai(isoStr) {
   return formatDateThai(isoStr) + ' ' + hh + ':' + mm + ' น.';
 }
 
-// คำนวณ "ปีการศึกษา/ภาคเรียนปัจจุบัน" จากวันที่จริงตอนนี้เสมอ (ปฏิทินการศึกษาไทยทั่วไป) ไม่สนใจค่าที่แอดมินตั้งไว้เอง — ใช้เป็น
-// "ค่าจริงตามเวลา" ล้วนๆ (เช่น ปุ่มรีเฟรชตัวกรองเทอม/ปีในหน้าแสดงผลงานสาธารณะ — ดู view.html) เดิมชื่อ currentAcademicTerm() (V9.5)
-// เปลี่ยนชื่อตั้งแต่ V12.0 เมื่อเพิ่มการตั้งค่าเทอม/ปีปัจจุบันเองได้ (ดู currentAcademicTerm() ด้านล่าง ซึ่งเป็นค่าที่ใช้จริงทั่วระบบแทน)
-// ปีการศึกษา X เริ่มพฤษภาคมปีปฏิทิน (X-543) ถึงเมษายนปีถัดไป: พ.ค.-ต.ค. = เทอม 1, พ.ย.-ธ.ค. = เทอม 2 (ปีการศึกษาเดียวกับเทอม 1),
-// ม.ค.-มี.ค. = เทอม 2 (แต่เป็นปีการศึกษาที่เริ่มพฤษภาคมปีก่อนหน้า), เม.ย. = ภาคฤดูร้อน (ปีการศึกษาเดียวกับเทอม 2 ก่อนหน้า)
-function trueCurrentAcademicTerm() {
-  var now = new Date();
-  var beYear = now.getFullYear() + 543;
-  var month = now.getMonth() + 1; // 1-12
-  if (month >= 5 && month <= 10) return { year: String(beYear), semester: '1' };
-  if (month === 11 || month === 12) return { year: String(beYear), semester: '2' };
-  if (month >= 1 && month <= 3) return { year: String(beYear - 1), semester: '2' };
-  return { year: String(beYear - 1), semester: 'summer' }; // เมษายน
+// ตารางวันเริ่มภาคเรียน (ตั้งแต่ 1.40.101026) — Super Admin กำหนดเองในตั้งค่า → ทั่วไป เก็บเป็น 'MM-DD' ซ้ำทุกปี (ค่าเริ่มต้นตรงกับ Worker)
+//   term1Start = เริ่มภาคเรียนที่ 1 (16 พ.ค.) · term2Start = เริ่มภาคเรียนที่ 2 (15 ต.ค.) · summerStart = เริ่มภาคฤดูร้อน (1 เม.ย. — ใช้เฉพาะเมื่อเปิดภาคฤดูร้อนไว้)
+var DEFAULT_TERM_SCHEDULE = { term1Start: '05-16', term2Start: '10-15', summerStart: '04-01' };
+function termScheduleOf(settings) {
+  var ts = (settings && settings.termSchedule && typeof settings.termSchedule === 'object') ? settings.termSchedule : {};
+  return {
+    term1Start: ts.term1Start || DEFAULT_TERM_SCHEDULE.term1Start,
+    term2Start: ts.term2Start || DEFAULT_TERM_SCHEDULE.term2Start,
+    summerStart: ts.summerStart !== undefined ? ts.summerStart : DEFAULT_TERM_SCHEDULE.summerStart
+  };
 }
-// "ปีการศึกษา/ภาคเรียนปัจจุบัน" ที่ใช้จริงทั่วระบบ (ค่าเริ่มต้นของตัวกรองต่างๆ — V9.5) — ตั้งแต่ V12.0 เป็น async เพราะต้องเช็ค
-// ค่าที่ Super Admin ตั้งเอง (settings.currentAcademicYear/currentSemester จากแท็บ "ทั่วไป") ก่อน ถ้าตั้งไว้ครบคู่จะใช้ค่านั้นแทนทันที
-// ทั้งระบบ (ปฏิทิน/เช็คลิสต์/ตัวกรองหน้าฮับครู) ถ้ายังไม่ตั้ง (ค่าว่าง) จะ fallback กลับไปคำนวณจากเวลาจริงเหมือนเดิมทุกประการ (เข้ากันได้ย้อนหลัง)
+// คำนวณ "ปีการศึกษา/ภาคเรียนปัจจุบัน" จากวันที่จริง "ตามตารางวันเริ่มภาคเรียน" (โหมดอัตโนมัติ) — ไม่สนใจค่าที่ตั้งเอง (โหมด manual)
+// ใช้ตรงๆ เมื่อต้องการ "ค่าตามเวลาจริง" ล้วนๆ (เช่น ปุ่มรีเฟรชตัวกรองเทอม/ปีในหน้าแสดงผลงานสาธารณะ) · settings (ไม่ส่ง = ค่าเริ่มต้น) · now (ไม่ส่ง = ตอนนี้)
+// เทียบด้วยสตริง 'MM-DD' ของวันนี้กับวันเริ่มแต่ละเทอมตามลำดับในปีปฏิทิน:
+//   ตั้งแต่ term2Start เป็นต้นไป = เทอม 2 ของปีการศึกษา = ปี พ.ศ. ปัจจุบัน · term1Start ถึงก่อน term2Start = เทอม 1 ของปี พ.ศ. ปัจจุบัน
+//   ก่อน term1Start = ยังเป็นปีการศึกษาก่อนหน้า (ปี พ.ศ. − 1): ถ้าเปิดภาคฤดูร้อนและถึง summerStart แล้ว = ภาคฤดูร้อน ไม่งั้น = เทอม 2 ของปีก่อน
+function trueCurrentAcademicTerm(settings, now) {
+  now = now || new Date();
+  var sch = termScheduleOf(settings);
+  var summerOn = !settings || settings.summerEnabled !== false;
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  var md = pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  var beYear = now.getFullYear() + 543;
+  if (md >= sch.term2Start) return { year: String(beYear), semester: '2' };
+  if (md >= sch.term1Start) return { year: String(beYear), semester: '1' };
+  if (summerOn && sch.summerStart && md >= sch.summerStart) return { year: String(beYear - 1), semester: 'summer' };
+  return { year: String(beYear - 1), semester: '2' };
+}
+// "ปีการศึกษา/ภาคเรียนปัจจุบัน" ที่ใช้จริงทั่วระบบ (ค่าเริ่มต้นของตัวกรอง/ปฏิทิน/เช็คลิสต์/ป้ายเทอมในหน้าฮับ) — ตั้งแต่ 1.40.101026 มี 2 โหมดตาม settings.termMode:
+//   'manual' = ใช้ปี+ภาคเรียนที่ Super Admin กรอกไว้ (currentAcademicYear/currentSemester) · 'auto' = คำนวณจากวันที่ตามตารางวันเริ่มภาคเรียน
 async function currentAcademicTerm() {
   var s = await getSiteSettings();
-  if (s && s.currentAcademicYear && s.currentSemester) {
+  var mode = s && (s.termMode === 'manual' || s.termMode === 'auto') ? s.termMode : ((s && s.currentAcademicYear && s.currentSemester) ? 'manual' : 'auto');
+  if (mode === 'manual' && s.currentAcademicYear && s.currentSemester) {
     return { year: String(s.currentAcademicYear), semester: String(s.currentSemester) };
   }
-  return trueCurrentAcademicTerm();
+  return trueCurrentAcademicTerm(s);
 }
 // ข้อความป้ายบอก "ตอนนี้คือปีการศึกษา/ภาคเรียนอะไร" จาก currentAcademicTerm() — ใช้แสดงในปฏิทินหน้าฮับครู (ตั้งแต่ V9.8)
 // ตัดคำนำหน้า "ตอนนี้: " ออกตามที่ผู้ใช้ขอ (ตั้งแต่ V9.9) เหลือแค่ตัวข้อความภาคเรียน/ปีการศึกษาล้วนๆ — เป็น async ตั้งแต่ V12.0 (ดู currentAcademicTerm() ด้านบน)
@@ -943,7 +957,7 @@ function navLinksFor(session) {
 }
 
 
-// ---------- แถบเมนูด้านซ้าย (ตั้งแต่ 1.37.101026 — สไตล์ Google Keep สำหรับทุกบัญชี/ทุกหน้าที่มี topbar) ----------
+// ---------- แถบเมนูด้านซ้าย (ตั้งแต่ 1.40.101026 — สไตล์ Google Keep สำหรับทุกบัญชี/ทุกหน้าที่มี topbar) ----------
 // - ปุ่ม 3 ขีดหน้าโลโก้ (#navToggle): คอม/แท็บเล็ต = สลับ "เปิดค้างไว้ (ปักหมุด)" ↔ "ย่อเหลือแต่ไอคอน" จำค่าไว้ใน localStorage (bnkah_nav_pinned)
 //   มือถือ (< 768px) = เปิด/ปิดเป็นลิ้นชักทับหน้าจอ มีฉากดำจางๆ ด้านหลัง
 // - ตอนย่ออยู่ ถ้าเอาเมาส์ชี้ที่แถบจะกางเต็มออกมาทับเนื้อหาชั่วคราว (ไม่ดันเนื้อหา) พอเอาเมาส์ออกก็ย่อกลับ
@@ -1012,7 +1026,7 @@ function mountChrome(activePage) {
   var topbarRoot = document.getElementById('app-topbar');
   if (topbarRoot && session) {
     var links = navLinksFor(session);
-    // ตั้งแต่ 1.37.101026: เมนูทั้งหมดย้ายจากแถบบนสุดมาเป็นแถบเมนูด้านซ้าย (สไตล์ Google Keep) — ปุ่ม 3 ขีดหน้าโลโก้ = ปักหมุดเปิดค้าง/ย่อ,
+    // ตั้งแต่ 1.40.101026: เมนูทั้งหมดย้ายจากแถบบนสุดมาเป็นแถบเมนูด้านซ้าย (สไตล์ Google Keep) — ปุ่ม 3 ขีดหน้าโลโก้ = ปักหมุดเปิดค้าง/ย่อ,
     // ตอนย่อให้ชี้เมาส์เพื่อกางเต็มชั่วคราว, มือถือเป็นลิ้นชักเลื่อนออกมา (ดู mountSideNav ด้านล่าง)
     topbarRoot.innerHTML =
       '<div class="topbar">' +

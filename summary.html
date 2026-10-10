@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.37.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.40.101026" />
 <style>
   .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
   .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
@@ -63,11 +63,6 @@
         </div>
         <div id="subTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
-
-      <div class="card">
-        <div class="section-title"><i class="fas fa-users ui-icon" style="font-size:17px" aria-hidden="true"></i> ใครยังไม่ส่งผลงานเลย</div>
-        <div id="notSubmittedWrap"><div class="loading">กำลังโหลด</div></div>
-      </div>
     </div>
 
     <!-- Per-assignment breakdown tab -->
@@ -109,7 +104,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.37.101026"></script>
+  <script src="assets/api.js?v=1.40.101026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -163,7 +158,6 @@
         fillYearFilter();
         renderStats();
         renderTable();
-        renderNotSubmitted();
       } catch (err) {
         wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
@@ -226,19 +220,6 @@
       });
       html += '</tbody></table>';
       wrap.innerHTML = html;
-    }
-
-    function renderNotSubmitted() {
-      var submittedIds = new Set(allSubs.map(function (s) { return s.teacherId; }));
-      var notSubmitted = allUsers.filter(function (u) { return !submittedIds.has(u.id); });
-      var wrap = document.getElementById('notSubmittedWrap');
-      if (notSubmitted.length === 0) {
-        wrap.innerHTML = '<div class="empty-state"><i class="fas fa-champagne-glasses" aria-hidden="true"></i> ทุกคนส่งผลงานแล้วอย่างน้อย 1 ชิ้น</div>';
-        return;
-      }
-      wrap.innerHTML = notSubmitted.map(function (u) {
-        return '<span class="badge badge-archived" style="margin:3px 4px 3px 0; display:inline-block;">' + escapeHtml(u.name) + '</span>';
-      }).join('');
     }
 
     document.getElementById('fSearch').addEventListener('input', renderTable);

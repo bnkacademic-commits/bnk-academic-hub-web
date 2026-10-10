@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.37.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.40.101026" />
 </head>
 <body>
   <div class="topbar">
@@ -67,7 +67,7 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.37.101026"></script>
+  <script src="assets/api.js?v=1.40.101026"></script>
   <script>
     mountFooter();
     applyBranding();
@@ -201,7 +201,7 @@
     // ตั้งค่าตัวกรองเทอม/ปีตามที่กำหนด — เพิ่มปีนั้นเป็นตัวเลือกเองถ้ายังไม่มีในลิสต์ (เผื่อยังไม่เคยมีผลงานเผยแพร่ในเทอมนั้นเลย)
     // trueNow = true: ใช้เวลาจริงตอนนี้เสมอ (ปุ่มรีเฟรช) / false: ใช้ค่าเริ่มต้นที่ Super Admin ตั้งไว้ (หรือเวลาจริงถ้ายังไม่ตั้ง)
     async function applyTermFilter(trueNow) {
-      var term = trueNow ? trueCurrentAcademicTerm() : await currentAcademicTerm();
+      var term = trueNow ? trueCurrentAcademicTerm(await getSiteSettings()) : await currentAcademicTerm();
       var yearSel = document.getElementById('viewFilterYear');
       var hasOption = Array.from(yearSel.options).some(function (o) { return o.value === term.year; });
       if (!hasOption) {

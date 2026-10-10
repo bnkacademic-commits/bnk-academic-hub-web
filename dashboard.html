@@ -19,15 +19,32 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.37.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.40.101026" />
 </head>
 <body>
   <div id="app-topbar"></div>
 
   <div class="container">
-    <div class="page-header">
+    <!-- เว็บภายนอก (ตั้งแต่ V11.9) — ปุ่มลิงก์ที่ Super Admin สร้างไว้จากแท็บ "เว็บภายนอก" ในหน้าตั้งค่า วางไว้ก่อนส่วนปฏิทินตามที่ผู้ใช้ขอ
+         ซ่อนการ์ดนี้ไปเลยถ้ายังไม่มีปุ่มไหนเลย (เหมือนการ์ดประกาศด้านบน) ไม่ต้องโชว์กล่องว่างเปล่าค้างไว้ -->
+    <div class="card" id="extLinksCard" hidden>
+      <div class="section-title"><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> เว็บไซต์โรงเรียน</div>
+      <div class="ext-links-grid" id="extLinksGrid"></div>
+    </div>
+
+    <!-- ตั้งแต่ 1.40.101026: การ์ด "เว็บไซต์โรงเรียน" อยู่บนสุด เหนือข้อความต้อนรับ · ปุ่ม "หน้าผลงานของฉัน" และ "จัดทำบันทึกข้อความ" อยู่ฝั่งขวาของข้อความต้อนรับ
+         · ตัดคำอธิบาย "อัพโหลด จัดการ และแชร์ผลงาน…" ออกตามที่ผู้ใช้ขอ -->
+    <div class="page-header dash-welcome-row">
       <h1 id="welcomeHeading">ยินดีต้อนรับ</h1>
-      <p>อัพโหลด จัดการ และแชร์ผลงานของคุณให้ฝ่ายวิชาการหรือบุคคลภายนอกดูได้</p>
+      <div class="dash-welcome-actions">
+        <!-- ตั้งแต่ V11.7: ผู้ใช้ขอสลับปุ่มเด่น (.btn-cta) กลับมาไว้ที่ปุ่มนี้แทนปุ่ม "ส่งงาน (กำหนดเอง)" ด้านล่าง (ดูคอมเมนต์ตรงนั้น) -->
+        <button class="btn btn-cta dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
+        <!-- "จัดทำบันทึกข้อความ" (ตั้งแต่ 1.25.081026, เปลี่ยนชื่อปุ่มจาก "ปริ้นบันทึกข้อความส่งงาน" ตั้งแต่ 1.28.091026 ตามที่ผู้ใช้ขอ
+             เพราะตอนนี้ต้องเลือก "หัวเรื่องบันทึกข้อความ" ก่อนด้วย ไม่ใช่แค่ปริ้นอย่างเดียวแล้ว — ดู memo.html) เปิดได้ทั้งครูและ
+             เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ (ทั้งคู่ส่งงานผ่านระบบเหมือนกัน — requireHubAccess() ด้านบนกรองให้แล้ว)
+             ตั้งแต่ 1.29.091026: ไปหน้า memo.html ในแท็บเดิม (ไม่เด้งเปิดหน้าใหม่) เหมือนกดแท็บเมนูบนสุด + ตัวอักษรเล็กลงให้พอดีปุ่ม (.dash-memo-btn) -->
+        <a class="btn btn-secondary dash-portfolio-btn dash-memo-btn" id="btnOpenMemo" href="memo.html"><i class="fas fa-file-lines ui-icon" aria-hidden="true"></i> จัดทำบันทึกข้อความ</a>
+      </div>
     </div>
 
     <div class="card" id="annCard" hidden>
@@ -35,12 +52,6 @@
       <div id="hubAnnList"><div class="loading">กำลังโหลด</div></div>
     </div>
 
-    <!-- เว็บภายนอก (ตั้งแต่ V11.9) — ปุ่มลิงก์ที่ Super Admin สร้างไว้จากแท็บ "เว็บภายนอก" ในหน้าตั้งค่า วางไว้ก่อนส่วนปฏิทินตามที่ผู้ใช้ขอ
-         ซ่อนการ์ดนี้ไปเลยถ้ายังไม่มีปุ่มไหนเลย (เหมือนการ์ดประกาศด้านบน) ไม่ต้องโชว์กล่องว่างเปล่าค้างไว้ -->
-    <div class="card" id="extLinksCard" hidden>
-      <div class="section-title"><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> เว็บไซต์โรงเรียน</div>
-      <div class="ext-links-grid" id="extLinksGrid"></div>
-    </div>
 
     <div class="card">
       <!-- ปฏิทิน (ซ้าย) + ปุ่ม "หน้าผลงานของฉัน" + เช็คลิสต์การส่งงาน (ขวา) วางติดกัน (ตั้งแต่ V9.8, ปรับคอลัมน์ขวาใน V9.9) -->
@@ -58,15 +69,14 @@
           <div class="calendar-grid" id="calGrid"></div>
         </div>
         <div class="dash-cal-side">
-          <!-- ตั้งแต่ V11.7: ผู้ใช้ขอสลับปุ่มเด่น (.btn-cta) กลับมาไว้ที่ปุ่มนี้แทนปุ่ม "ส่งงาน (กำหนดเอง)" ด้านล่าง (ดูคอมเมนต์ตรงนั้น) -->
-          <button class="btn btn-cta dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
-          <!-- "จัดทำบันทึกข้อความ" (ตั้งแต่ 1.25.081026, เปลี่ยนชื่อปุ่มจาก "ปริ้นบันทึกข้อความส่งงาน" ตั้งแต่ 1.28.091026 ตามที่ผู้ใช้ขอ
-               เพราะตอนนี้ต้องเลือก "หัวเรื่องบันทึกข้อความ" ก่อนด้วย ไม่ใช่แค่ปริ้นอย่างเดียวแล้ว — ดู memo.html) เปิดได้ทั้งครูและ
-               เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ (ทั้งคู่ส่งงานผ่านระบบเหมือนกัน — requireHubAccess() ด้านบนกรองให้แล้ว)
-               ตั้งแต่ 1.29.091026: ไปหน้า memo.html ในแท็บเดิม (ไม่เด้งเปิดหน้าใหม่) เหมือนกดแท็บเมนูบนสุด + ตัวอักษรเล็กลงให้พอดีปุ่ม (.dash-memo-btn) -->
-          <a class="btn btn-secondary dash-portfolio-btn dash-memo-btn" id="btnOpenMemo" href="memo.html"><i class="fas fa-file-lines ui-icon" aria-hidden="true"></i> จัดทำบันทึกข้อความ</a>
           <div class="dash-checklist">
-            <div class="dash-checklist-title"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> เช็คลิสต์การส่งงาน</div>
+            <div class="dash-checklist-title">
+              <span class="dash-checklist-name"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> เช็คลิสต์การส่งงาน</span>
+              <span class="dash-checklist-controls">
+                <select id="clYear" aria-label="เลือกปีการศึกษาของเช็คลิสต์"></select>
+                <button class="refresh-btn" id="clReset" type="button" title="กลับไปปีการศึกษา/เทอมปัจจุบัน" aria-label="กลับไปปีการศึกษาปัจจุบัน"><svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+              </span>
+            </div>
             <div class="dash-checklist-body" id="assignmentChecklistBody"><div class="loading">กำลังโหลด</div></div>
           </div>
         </div>
@@ -153,7 +163,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.37.101026"></script>
+  <script src="assets/api.js?v=1.40.101026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -595,35 +605,61 @@
       });
     }
     // ตั้งแต่ V-ถัดไปหลัง V10.1: แสดงทุกภาคเรียน/ปีการศึกษา จัดเป็นหมวดใหญ่ "เทอม ปีการศึกษา" ก่อน แล้วค่อยลิสงานในเทอมนั้นลงมา (เดิมกรองแสดงแค่เทอมปัจจุบันเทอมเดียว)
+    // ตั้งแต่ 1.40.101026: เช็คลิสต์ย่อ/ขยายได้เหมือนดร็อปดาวน์ต่อ "เทอม ปีการศึกษา" — ค่าเริ่มต้นขยายเฉพาะเทอมปัจจุบัน (ตาม currentAcademicTerm()
+    // ที่ Super Admin ตั้งไว้หรืออัตโนมัติ) · มีช่องเลือกปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · ปุ่ม ↻ = กลับไปปีปัจจุบัน + ย่อ/ขยายกลับค่าเริ่มต้น
+    var checklistState = { term: null, loading: false, year: '', expanded: {} }; // expanded: { "ปี|เทอม": true/false } ที่ผู้ใช้กดเองแล้ว (ไม่มี key = ใช้ค่าเริ่มต้น)
     function renderAssignmentChecklist() {
       var wrap = document.getElementById('assignmentChecklistBody');
       if (!wrap) return;
-      // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ — ไม่มีอะไรให้ "ส่งแล้ว/ยังไม่ส่ง" จริง
+      if (!checklistState.term) {
+        // ต้องรู้เทอมปัจจุบันก่อนถึงจะรู้ว่าจะขยายอันไหน/เลือกปีไหนเป็นค่าเริ่มต้น
+        if (!checklistState.loading) {
+          checklistState.loading = true;
+          currentAcademicTerm().then(function (t) {
+            checklistState.term = t; checklistState.year = t.year; checklistState.loading = false;
+            renderAssignmentChecklist();
+          });
+        }
+        return;
+      }
+      var yearSel = document.getElementById('clYear');
+      // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ — ไม่มีอะไรให้ "ส่งแล้ว/ยังไม่ส่ง"
       // ยังคงแสดงเป็นการ์ดแจ้งเตือนอยู่ใน "กำหนดการ" ใต้ปฏิทินตามปกติ (ดู renderCalendar ด้านล่าง)
       var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission; });
-
-      if (assignments.length === 0) {
-        wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่ง</div>';
+      // รายการปีให้เลือก = ทุกปีที่มีงาน + ปีปัจจุบัน (เผื่อยังไม่มีงานในปีนี้ ก็ยังกลับมาเลือกได้)
+      var years = {};
+      assignments.forEach(function (e) { years[String(e.academicYear)] = true; });
+      years[String(checklistState.term.year)] = true;
+      var yearList = Object.keys(years).sort(function (a, b) { return String(b).localeCompare(String(a)); });
+      if (!years[checklistState.year]) checklistState.year = String(checklistState.term.year);
+      if (yearSel) {
+        yearSel.innerHTML = yearList.map(function (y) {
+          return '<option value="' + escapeHtml(y) + '"' + (y === checklistState.year ? ' selected' : '') + '>ปี ' + escapeHtml(y) + (y === String(checklistState.term.year) ? ' (ปัจจุบัน)' : '') + '</option>';
+        }).join('');
+      }
+      var inYear = assignments.filter(function (e) { return String(e.academicYear) === checklistState.year; });
+      if (inYear.length === 0) {
+        wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่งในปีการศึกษา ' + escapeHtml(checklistState.year) + '</div>';
         return;
       }
       var groups = {}; // key: "ปีการศึกษา|ภาคเรียน"
-      assignments.forEach(function (e) {
+      inYear.forEach(function (e) {
         var key = e.academicYear + '|' + e.semester;
-        if (!groups[key]) groups[key] = { academicYear: e.academicYear, semester: e.semester, rows: [] };
+        if (!groups[key]) groups[key] = { key: key, academicYear: e.academicYear, semester: e.semester, rows: [] };
         groups[key].rows.push({ ev: e, done: isAssignmentSubmitted(e) });
       });
       var groupList = Object.keys(groups).map(function (k) { return groups[k]; });
-      groupList.sort(function (a, b) {
-        if (a.academicYear !== b.academicYear) return String(b.academicYear).localeCompare(String(a.academicYear));
-        return String(b.semester).localeCompare(String(a.semester));
-      });
+      groupList.sort(function (a, b) { return String(b.semester).localeCompare(String(a.semester)); });
+      var currentKey = String(checklistState.term.year) + '|' + String(checklistState.term.semester);
 
       wrap.innerHTML = groupList.map(function (g) {
         g.rows.sort(function (a, b) {
           if (a.done !== b.done) return a.done ? 1 : -1; // ยังไม่ส่งขึ้นก่อนเสมอ (ต้องรีบทำ)
           return new Date(a.ev.date) - new Date(b.ev.date);
         });
+        var open = Object.prototype.hasOwnProperty.call(checklistState.expanded, g.key) ? !!checklistState.expanded[g.key] : (g.key === currentKey);
         var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(g.semester);
+        var pendingCount = g.rows.filter(function (r) { return !r.done; }).length;
         var rowsHtml = g.rows.map(function (r) {
           var dotColor = categoryColorMap[r.ev.categoryId] || '';
           return '<div class="checklist-item">' +
@@ -634,9 +670,40 @@
             '</div>' +
           '</div>';
         }).join('');
-        return '<div class="checklist-group"><div class="checklist-group-title" title="' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '"><i class="fas fa-calendar-days ui-icon" aria-hidden="true"></i> ' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '</div>' + rowsHtml + '</div>';
+        return '<div class="checklist-group' + (open ? ' open' : '') + '" data-cl-key="' + escapeHtml(g.key) + '">' +
+          '<button type="button" class="checklist-group-title checklist-group-toggle" aria-expanded="' + (open ? 'true' : 'false') + '" title="' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '">' +
+            '<i class="fas fa-calendar-days ui-icon" aria-hidden="true"></i><span class="cl-group-text">' + semLabel + ' ปี ' + escapeHtml(g.academicYear) + '</span>' +
+            (pendingCount > 0 ? '<span class="cl-group-count" title="ยังไม่ส่ง ' + pendingCount + ' งาน">' + pendingCount + '</span>' : '<i class="fas fa-check cl-group-allok" aria-label="ส่งครบแล้ว"></i>') +
+            '<i class="fas fa-chevron-down cl-group-chevron" aria-hidden="true"></i>' +
+          '</button>' +
+          '<div class="checklist-group-body"' + (open ? '' : ' hidden') + '>' + rowsHtml + '</div>' +
+        '</div>';
       }).join('');
     }
+    (function wireChecklistControls() {
+      var wrap = document.getElementById('assignmentChecklistBody');
+      if (!wrap) return;
+      wrap.addEventListener('click', function (ev) {
+        var btn = ev.target.closest ? ev.target.closest('.checklist-group-toggle') : null;
+        if (!btn) return;
+        var grp = btn.parentNode;
+        var open = grp.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        grp.querySelector('.checklist-group-body').hidden = !open;
+        checklistState.expanded[grp.getAttribute('data-cl-key')] = open;
+      });
+      document.getElementById('clYear').addEventListener('change', function () {
+        checklistState.year = this.value;
+        renderAssignmentChecklist();
+      });
+      document.getElementById('clReset').addEventListener('click', async function () {
+        // กลับไปปีปัจจุบัน + ย่อ/ขยายกลับค่าเริ่มต้น (อ่านเทอมปัจจุบันใหม่ เผื่อ Super Admin เพิ่งเปลี่ยนค่าตั้งต้นในระบบ)
+        resetSettingsCache();
+        var t = await currentAcademicTerm();
+        checklistState.term = t; checklistState.year = String(t.year); checklistState.expanded = {};
+        renderAssignmentChecklist();
+      });
+    })();
 
     function renderCalendar() {
       document.getElementById('calLabel').textContent = thaiMonths[calState.month] + ' ' + (calState.year + 543);
