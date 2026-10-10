@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.35.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.36.101026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -42,6 +42,7 @@
       <button class="tab-btn super-admin-only" data-tab="extlinks">เว็บไซต์โรงเรียน</button>
       <button class="tab-btn super-admin-only" data-tab="log">ประวัติการส่งงานและลบงาน</button>
       <button class="tab-btn" data-tab="systemlog">ประวัติระบบ</button>
+      <button class="tab-btn super-admin-only" data-tab="sysinfo">ข้อมูลระบบ</button>
     </div>
 
     <!-- General tab (เฉพาะ Super Admin) -->
@@ -353,6 +354,19 @@
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">บันทึกการปรับแต่งค่าเว็บ การแจ้งประกาศ และการกำหนดงาน/กำหนดการในปฏิทิน</p>
         <div id="systemLogTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- System info tab (ข้อมูลระบบ — ตั้งแต่ 1.36.101026, Super Admin เท่านั้น): ขนาดฐานข้อมูล D1, พื้นที่ Google Drive และพื้นที่ที่แต่ละบัญชีใช้
+         ไม่กำหนดเพดานให้ Drive (เป็นของโรงเรียน) แสดงตัวเลขจริงอย่างเดียว — ต้องใช้ Drive relay เวอร์ชัน 1.36 ขึ้นไป (มี action storageSummary/folderUsage) -->
+    <div class="tab-panel super-admin-only" id="tab-sysinfo">
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-database ui-icon" style="font-size:17px" aria-hidden="true"></i> ข้อมูลระบบ</span>
+          <button class="btn btn-secondary btn-sm" id="sysInfoRefreshBtn" type="button"><i class="fas fa-rotate ui-icon" style="font-size:15px" aria-hidden="true"></i> คำนวณใหม่</button>
+        </div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ดูว่าพื้นที่เก็บข้อมูลของระบบใช้ไปเท่าไรแล้ว — ฐานข้อมูล (Cloudflare D1) และไฟล์ผลงานใน Google Drive ของโรงเรียน พร้อมพื้นที่ที่แต่ละบัญชีใช้ (ไม่มีการกำหนดเพดานให้แต่ละบัญชี)</p>
+        <div id="sysInfoBody"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
   </div>
@@ -685,6 +699,43 @@
     </div>
   </div>
 
+  <!-- Change role modal (ตั้งแต่ 1.36.101026) — Super Admin เปลี่ยน Role ของบัญชีใดก็ได้ (ดู adminSetRole) -->
+  <div class="modal-backdrop" id="changeRoleModal" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close-x" id="changeRoleModalCloseX" aria-label="ปิด">✕</button>
+      <h3>เปลี่ยน Role</h3>
+      <p class="hint" id="changeRoleTargetName"></p>
+      <div id="changeRoleError" class="error-box" hidden></div>
+      <form id="changeRoleForm" style="text-align:left;">
+        <div class="field">
+          <label for="changeRoleSelect">Role</label>
+          <select id="changeRoleSelect">
+            <option value="teacher">ครู</option>
+            <option value="staff">เจ้าหน้าที่</option>
+            <option value="executive">ผู้บริหาร</option>
+            <option value="superadmin">Super Admin</option>
+          </select>
+        </div>
+        <div class="field" id="changeRoleDeptField" hidden>
+          <label for="changeRoleDept">ฝ่าย</label>
+          <select id="changeRoleDept"><option value="">ยังไม่ระบุ</option></select>
+        </div>
+        <div class="field" id="changeRolePosField" hidden>
+          <label for="changeRolePos">ตำแหน่งผู้บริหาร</label>
+          <select id="changeRolePos">
+            <option value="ผู้อำนวยการ">ผู้อำนวยการ</option>
+            <option value="รองผู้อำนวยการ">รองผู้อำนวยการ</option>
+          </select>
+        </div>
+        <div class="hint" id="changeRoleHint" style="margin-bottom:12px;"></div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">บันทึก</button>
+          <button type="button" class="btn btn-ghost" id="changeRoleClose">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Edit teacher position/subject-group modal (ตั้งแต่ 1.25.081026 — สำหรับพิมพ์บันทึกข้อความ) -->
   <div class="modal-backdrop" id="teacherInfoModal" hidden>
     <div class="modal-box">
@@ -725,7 +776,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.35.101026"></script>
+  <script src="assets/api.js?v=1.36.101026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -824,7 +875,8 @@
       accounts: function () { return ensureUsersLoaded(); },
       extlinks: function () { return loadExtLinks(); },
       log: function () { return loadLog(); },
-      systemlog: function () { return loadSystemLog(); }
+      systemlog: function () { return loadSystemLog(); },
+      sysinfo: function () { return loadSysInfo(); }
     };
     function loadTabIfNeeded(tabKey) {
       if (_tabLoaded[tabKey]) return;
@@ -1921,6 +1973,7 @@
           ? '<button class="btn btn-secondary" data-act="archive">ระงับบัญชี</button>'
           : '<button class="btn btn-secondary" data-act="restore">คืนสิทธิ์</button>') +
         '<button class="btn btn-ghost" data-act="resetpw">ตั้งรหัสผ่านใหม่</button>' +
+        '<button class="btn btn-ghost" data-act="changerole">เปลี่ยน Role</button>' +
         // "แก้ไขแผนก" (ตั้งแต่ 1.26.081026) — เฉพาะบัญชีเจ้าหน้าที่ที่มีหน้าฮับ (role='admin' + hasHub) ไม่ใช่บัญชีครู
         (u.role === 'admin' && u.hasHub ? '<button class="btn btn-ghost" data-act="editdept">แก้ไขแผนก</button>' : '') +
         // ลบถาวร (ตั้งแต่ 1.30.091026): กดได้เฉพาะบัญชีที่ระงับแล้ว — ถ้ายังใช้งานอยู่ปุ่มจะปิดไว้พร้อมคำอธิบาย
@@ -1954,6 +2007,8 @@
         openResetPwModal(id, name);
       } else if (act === 'editdept') {
         openEditDeptModal(id, name);
+      } else if (act === 'changerole') {
+        openChangeRoleModal(id, name);
       }
     }
     // ---------- ป็อปอัพ "ลบบัญชีถาวร" (ตั้งแต่ 1.30.091026) ----------
@@ -2034,6 +2089,7 @@
     // openResetPwModal ต้องประกาศ var ไว้นอกบล็อกก่อน (เหมือน loadCategories ด้านบน) เพราะถูกเรียกใช้จาก renderUserTable ที่อยู่นอกบล็อกนี้
     var openResetPwModal;
     var openEditDeptModal;
+    var openChangeRoleModal;
     if (isSuperAdminSession) {
       var createUserModal = document.getElementById('createUserModal');
       document.getElementById('openCreateUserBtn').addEventListener('click', function () {
@@ -2159,6 +2215,64 @@
           errBox.hidden = false;
         }
       });
+
+      // ---------- เปลี่ยน Role ของบัญชี (ตั้งแต่ 1.36.101026) — Super Admin เท่านั้น (ดู adminSetRole) ----------
+      var changeRoleModal = document.getElementById('changeRoleModal');
+      var changeRoleUserId = null;
+      var CHANGE_ROLE_LABEL = { teacher: 'ครู', staff: 'เจ้าหน้าที่', executive: 'ผู้บริหาร', superadmin: 'Super Admin' };
+      function currentRoleKind(u) {
+        if (u.role === 'executive') return 'executive';
+        if (u.role === 'teacher') return 'teacher';
+        return u.hasHub ? 'staff' : 'superadmin';
+      }
+      function syncChangeRoleFields() {
+        var v = document.getElementById('changeRoleSelect').value;
+        document.getElementById('changeRoleDeptField').hidden = v !== 'staff';
+        document.getElementById('changeRolePosField').hidden = v !== 'executive';
+        document.getElementById('changeRoleHint').textContent =
+          v === 'executive' ? 'ผู้บริหารดูสรุป/ปฏิทิน/ประกาศได้อย่างเดียว ไม่ต้องส่งงาน — ผลงานเดิมของบัญชีนี้ยังอยู่ในระบบ แต่จะไม่แสดง' :
+          v === 'superadmin' ? 'ระวัง: บัญชี Super Admin จะไม่แสดงในตารางจัดการบัญชีนี้ (เป็นความลับ) จึงเปลี่ยนกลับผ่านหน้านี้ไม่ได้ และไม่มีหน้าฮับส่วนตัว' :
+          v === 'staff' ? 'เจ้าหน้าที่ส่งงานของตนเองได้เหมือนครู และจัดการงานของฝ่ายที่เลือก' : 'ครูส่งงานและมีหน้าแสดงผลงานของตนเอง';
+      }
+      openChangeRoleModal = function (userId, name) {
+        changeRoleUserId = userId;
+        var target = allUsers.filter(function (x) { return x.id === userId; })[0];
+        if (!target) return;
+        document.getElementById('changeRoleTargetName').textContent = 'สำหรับผู้ใช้: ' + name + ' (ปัจจุบัน: ' + CHANGE_ROLE_LABEL[currentRoleKind(target)] + ')';
+        document.getElementById('changeRoleSelect').value = currentRoleKind(target);
+        renderDepartmentOptions(document.getElementById('changeRoleDept'), target.department || '', 'ยังไม่ระบุ');
+        document.getElementById('changeRolePos').value = target.role === 'executive' && target.position ? target.position : 'ผู้อำนวยการ';
+        document.getElementById('changeRoleError').hidden = true;
+        syncChangeRoleFields();
+        showModalEl(changeRoleModal);
+      };
+      document.getElementById('changeRoleSelect').addEventListener('change', syncChangeRoleFields);
+      document.getElementById('changeRoleClose').addEventListener('click', function () { hideModalEl(changeRoleModal); });
+      document.getElementById('changeRoleModalCloseX').addEventListener('click', function () { hideModalEl(changeRoleModal); });
+      document.getElementById('changeRoleForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('changeRoleError');
+        errBox.hidden = true;
+        var target = allUsers.filter(function (x) { return x.id === changeRoleUserId; })[0];
+        if (!target) return;
+        var kind = document.getElementById('changeRoleSelect').value;
+        if (kind === currentRoleKind(target) && kind !== 'staff' && kind !== 'executive') { errBox.textContent = 'บัญชีนี้เป็น ' + CHANGE_ROLE_LABEL[kind] + ' อยู่แล้ว'; errBox.hidden = false; return; }
+        var msg = 'ยืนยันเปลี่ยน Role ของ "' + target.name + '" เป็น "' + CHANGE_ROLE_LABEL[kind] + '"? ผู้ใช้ต้องออกจากระบบแล้วเข้าใหม่เพื่อให้เมนูตรงกับ Role ใหม่' +
+          (kind === 'superadmin' ? ' — บัญชีนี้จะไม่แสดงในตารางจัดการบัญชีอีก และเปลี่ยนกลับผ่านหน้านี้ไม่ได้' : '');
+        var ok = await askConfirm(msg, 'ยืนยันการเปลี่ยน Role');
+        if (!ok) return;
+        var payload = { userId: changeRoleUserId, role: kind, department: document.getElementById('changeRoleDept').value, position: document.getElementById('changeRolePos').value };
+        var r = await withProgress('กำลังเปลี่ยน Role', function () { return apiCall('adminSetRole', payload); }, { successLabel: 'เปลี่ยน Role แล้ว' });
+        if (r.ok) {
+          for (var i = 0; i < allUsers.length; i++) { if (allUsers[i].id === r.data.id) { allUsers[i] = r.data; break; } }
+          renderUserTable();
+          renderTeacherInfoTable();
+          hideModalEl(changeRoleModal);
+        } else {
+          errBox.textContent = r.error.message;
+          errBox.hidden = false;
+        }
+      });
     }
 
     // (1.32.101026) ปฏิทินและประกาศย้ายไปหน้า "ประกาศและปฏิทิน" (announce.html) แล้ว
@@ -2277,6 +2391,108 @@
         if (r.ok) loadLog();
       });
     }
+
+    // ---------- ข้อมูลระบบ (ตั้งแต่ 1.36.101026) ----------
+    // ขนาดฐานข้อมูล D1 + พื้นที่ Google Drive (ผ่าน Drive relay) + พื้นที่รายบัญชี (หน้าเว็บเรียกทีละโฟลเดอร์ 3 งานพร้อมกัน แล้วเติมตารางไปเรื่อยๆ)
+    var _sysInfoRun = 0;
+    function sysBarHtml(pct, label) {
+      var p = Math.max(0, Math.min(100, pct));
+      var cls = p >= 95 ? ' sys-bar-danger' : (p >= 80 ? ' sys-bar-warn' : '');
+      return '<div class="sys-bar' + cls + '" role="img" aria-label="' + escapeHtml(label || '') + '"><div class="sys-bar-fill" style="width:' + p.toFixed(1) + '%"></div></div>';
+    }
+    function sysStatHtml(title, valueText, barHtml, noteHtml) {
+      return '<div class="sys-stat"><div class="sys-stat-title">' + title + '</div><div class="sys-stat-value">' + valueText + '</div>' + (barHtml || '') + (noteHtml ? '<div class="hint" style="margin-top:6px;">' + noteHtml + '</div>' : '') + '</div>';
+    }
+    async function loadSysInfo() {
+      var body = document.getElementById('sysInfoBody');
+      var run = ++_sysInfoRun;
+      body.innerHTML = '<div class="loading">กำลังโหลด</div>';
+      var info;
+      try { info = await apiCall('adminSystemInfo', {}); }
+      catch (err) { body.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>'; return; }
+      if (run !== _sysInfoRun) return;
+      var d1 = info.d1 || {}, relay = info.relay || {};
+      var html = '<div class="sys-grid">';
+      // D1
+      var d1Pct = d1.sizeBytes != null ? (d1.sizeBytes / d1.freePlanLimitBytes * 100) : 0;
+      var counts = d1.counts || {};
+      html += sysStatHtml('ฐานข้อมูล (Cloudflare D1)',
+        d1.sizeBytes != null ? '<b>' + formatBytes(d1.sizeBytes) + '</b> <span class="hint">/ ' + formatBytes(d1.freePlanLimitBytes) + ' (เกณฑ์แผนฟรีต่อฐานข้อมูล)</span>' : '<span class="hint">อ่านขนาดไม่ได้ในขณะนี้</span>',
+        d1.sizeBytes != null ? sysBarHtml(d1Pct, 'ใช้ไป ' + d1Pct.toFixed(1) + '%') : '',
+        d1.sizeBytes != null ? ('ใช้ไป ' + d1Pct.toFixed(d1Pct < 1 ? 2 : 1) + '% ของเกณฑ์แผนฟรี · ถ้าใช้แผนจ่ายเงินของ Cloudflare เพดานคือ 10 GB · ผู้ใช้ ' + (counts.users != null ? counts.users : '-') + ' บัญชี · ผลงาน ' + (counts.submissions != null ? counts.submissions : '-') + ' รายการ') : '');
+      // Drive
+      if (relay.ok) {
+        var hasLimit = relay.driveLimitBytes && relay.driveLimitBytes > 0 && relay.driveUsedBytes != null;
+        var drivePct = hasLimit ? relay.driveUsedBytes / relay.driveLimitBytes * 100 : 0;
+        html += sysStatHtml('พื้นที่ Google Drive ทั้งบัญชี',
+          relay.driveUsedBytes != null ? '<b>' + formatBytes(relay.driveUsedBytes) + '</b>' + (hasLimit ? ' <span class="hint">/ ' + formatBytes(relay.driveLimitBytes) + '</span>' : '') : '<span class="hint">อ่านโควตาไม่ได้</span>',
+          hasLimit ? sysBarHtml(drivePct, 'ใช้ไป ' + drivePct.toFixed(1) + '%') : '',
+          (hasLimit ? 'ใช้ไป ' + drivePct.toFixed(drivePct < 1 ? 2 : 1) + '% · ' : '') + 'ตัวเลขนี้รวมทุกอย่างในบัญชี Google ที่ติดตั้ง Drive relay (ไม่ใช่เฉพาะไฟล์ของระบบนี้)' + (relay.rootFolderUrl ? ' · <a href="' + escapeHtml(relay.rootFolderUrl) + '" target="_blank" rel="noopener">เปิดโฟลเดอร์ไฟล์ผลงาน</a>' : ''));
+        html += sysStatHtml('ไฟล์ของระบบนี้ใน Drive (รวมทุกบัญชี)', '<b id="sysFilesTotal">กำลังคำนวณ…</b>', '', '<span id="sysFilesTotalNote"></span>');
+      } else {
+        html += '<div class="sys-stat sys-stat-wide"><div class="sys-stat-title">พื้นที่ Google Drive</div><div class="error-box">' + escapeHtml(relay.error || 'อ่านข้อมูลจาก Drive relay ไม่สำเร็จ') + '</div>' +
+          (relay.needsUpdate ? '<div class="hint">Drive relay ที่ติดตั้งอยู่ยังเป็นโค้ดเวอร์ชันเก่า (ยังไม่มีคำสั่งอ่านพื้นที่) — เปิดโปรเจกต์ Apps Script ของ relay วางโค้ดจากไฟล์ <code>drive-relay/Code.gs</code> ชุด 1.36 ทับ แล้ว Deploy → Manage deployments → แก้ไข → Version: New version → Deploy (ใช้ Web App URL เดิม ไม่ต้องตั้งค่าใน Cloudflare ใหม่)</div>' : '') + '</div>';
+      }
+      html += '</div>';
+      if (relay.ok) {
+        html += '<h3 class="sys-subtitle">พื้นที่ที่แต่ละบัญชีใช้ <span class="hint" id="sysProgress"></span></h3>' +
+          '<div class="table-wrap"><table><thead><tr><th>บัญชี</th><th>บทบาท</th><th style="text-align:right;">จำนวนไฟล์</th><th style="text-align:right;">พื้นที่ที่ใช้</th><th style="min-width:140px;">สัดส่วน</th></tr></thead><tbody id="sysAccountsBody"></tbody></table></div>' +
+          '<div class="hint" style="margin-top:8px;">นับเฉพาะไฟล์ในโฟลเดอร์ของแต่ละบัญชี (ผลงาน + รูปโปรไฟล์) · ไฟล์ที่ย้ายลงถังขยะของ Drive ไม่นับ · บัญชีที่ยังไม่เคยส่งไฟล์ไม่แสดงในตาราง' +
+          (relay.looseFiles ? ' · มีไฟล์อยู่นอกโฟลเดอร์บัญชี ' + relay.looseFiles + ' ไฟล์ (' + formatBytes(relay.looseBytes) + ')' : '') + '</div>';
+      }
+      body.innerHTML = html;
+      if (!relay.ok) return;
+      var rows = (relay.folders || []).map(function (f) { return { f: f, bytes: null, files: null, partial: false, err: '' }; });
+      var tbody = document.getElementById('sysAccountsBody');
+      function nameCell(r) {
+        var f = r.f;
+        if (f.matched) return escapeHtml(f.userName) + ' <span class="hint">(' + escapeHtml(f.username) + ')</span>';
+        return escapeHtml(f.name) + ' <span class="hint">— ไม่พบบัญชีนี้ในระบบ (อาจถูกลบถาวรแล้ว)</span>';
+      }
+      function paint(sorted) {
+        var list = sorted ? rows.slice().sort(function (a, b) { return (b.bytes || 0) - (a.bytes || 0); }) : rows;
+        var maxBytes = 0; rows.forEach(function (r) { if (r.bytes > maxBytes) maxBytes = r.bytes; });
+        if (!list.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">ยังไม่มีไฟล์ใน Drive</div></td></tr>'; return; }
+        tbody.innerHTML = list.map(function (r) {
+          var size = r.err ? '<span class="hint" title="' + escapeHtml(r.err) + '">คำนวณไม่สำเร็จ</span>' : (r.bytes == null ? '<span class="hint">รอคำนวณ…</span>' : (r.partial ? '≥ ' : '') + formatBytes(r.bytes));
+          var bar = r.bytes != null && maxBytes > 0 ? sysBarHtml(r.bytes / maxBytes * 100, '') : '';
+          return '<tr data-folder="' + escapeHtml(r.f.id) + '"><td>' + nameCell(r) + '</td><td>' + escapeHtml(r.f.roleLabel || '-') + '</td>' +
+            '<td style="text-align:right;">' + (r.files == null ? '-' : r.files) + '</td><td style="text-align:right; white-space:nowrap;">' + size + '</td><td>' + bar + '</td></tr>';
+        }).join('');
+      }
+      paint(false);
+      var done = 0, next = 0, running = 0;
+      function updateProgress() {
+        var pe = document.getElementById('sysProgress');
+        if (pe) pe.textContent = done < rows.length ? '— กำลังคำนวณ ' + done + '/' + rows.length : '— คำนวณครบแล้ว';
+      }
+      updateProgress();
+      await new Promise(function (resolve) {
+        if (!rows.length) return resolve();
+        function pump() {
+          while (running < 3 && next < rows.length) {
+            (function (r) {
+              running++;
+              apiCall('adminFolderUsage', { folderId: r.f.id }).then(function (u) { r.bytes = u.bytes; r.files = u.files; r.partial = !!u.partial; }, function (e) { r.err = e.message || 'ผิดพลาด'; }).then(function () {
+                running--; done++;
+                if (run !== _sysInfoRun) return resolve();
+                updateProgress(); paint(false);
+                if (done >= rows.length) resolve(); else pump();
+              });
+            })(rows[next++]);
+          }
+        }
+        pump();
+      });
+      if (run !== _sysInfoRun) return;
+      paint(true); updateProgress();
+      var total = 0, files = 0, anyPartial = false, anyErr = false;
+      rows.forEach(function (r) { total += r.bytes || 0; files += r.files || 0; if (r.partial) anyPartial = true; if (r.err) anyErr = true; });
+      var te = document.getElementById('sysFilesTotal'); if (te) te.textContent = (anyPartial ? '≥ ' : '') + formatBytes(total + (relay.looseBytes || 0));
+      var tn = document.getElementById('sysFilesTotalNote'); if (tn) tn.textContent = (files + (relay.looseFiles || 0)) + ' ไฟล์ จาก ' + rows.length + ' โฟลเดอร์บัญชี' + (anyErr ? ' (บางโฟลเดอร์คำนวณไม่สำเร็จ ตัวเลขอาจต่ำกว่าจริง)' : '');
+    }
+    var sysInfoRefreshBtnEl = document.getElementById('sysInfoRefreshBtn');
+    if (sysInfoRefreshBtnEl) sysInfoRefreshBtnEl.addEventListener('click', function () { loadSysInfo(); });
 
     // โหลดเฉพาะแท็บที่กำลังแสดงอยู่ตอนแรกเท่านั้น (แท็บอื่นจะโหลดทีหลังตอนผู้ใช้กดเปิดเอง)
     // ตั้งแต่ V10.0: เจ้าหน้าที่ฝ่ายวิชาการ (ไม่ใช่ Super Admin) เห็นแท็บ "ปฏิทิน" เป็นแท็บแรก (accounts ถูกจำกัดเฉพาะ Super Admin แล้ว)

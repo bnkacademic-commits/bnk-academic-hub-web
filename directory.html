@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.35.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.36.101026" />
 <style>
   .dir-section { margin-bottom: 22px; }
   .dir-section-title { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 800; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-light); color: var(--primary-dark); }
@@ -76,7 +76,7 @@
   .tn.ex1 .tav { width: 70px; height: 70px; }
   .tav img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .tav svg { width: 55%; height: 55%; display: block; }
-  /* ชื่อ-สกุลบรรทัดเดียวเสมอ (ไม่ตัดขึ้นบรรทัดใหม่) — ถ้ายาวเกินกรอบจริงๆ ตัดท้ายด้วย … (เอาเมาส์ชี้/กดเปิดหน้าผลงานดูชื่อเต็มได้) */
+  /* ชื่อ-สกุลบรรทัดเดียวเสมอ (ไม่ตัดขึ้นบรรทัดใหม่) — ชื่อยาวจะ "ย่อขนาดตัวอักษร" ให้พอดีกรอบ (fitTreeNames ใน JS ตั้งแต่ 1.36.101026) ตัดท้ายด้วย … เฉพาะกรณีย่อถึงขนาดเล็กสุดแล้วยังไม่พอ */
   .tname { font-weight: 700; font-size: 0.82rem; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tn-empty { position: relative; background: var(--surface) !important; width: 190px; box-sizing: border-box; padding: 10px 8px; border: 2px dashed var(--border); border-radius: 14px; color: var(--text-muted); font-size: 0.78rem; }
   .tpos { color: var(--text-muted); font-size: 0.76rem; margin-top: 2px; }
@@ -97,7 +97,7 @@
     <div class="dir-toolbar"><div class="dir-toggle" role="group" aria-label="เลือกมุมมอง"><button type="button" id="dirViewTree" data-view="tree" aria-pressed="false"><i class="fa-solid fa-sitemap"></i> ผังองค์กร</button><button type="button" id="dirViewCards" data-view="cards" aria-pressed="false"><i class="fa-solid fa-th-large"></i> การ์ด</button></div></div>
     <div id="dirRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
-  <script src="assets/api.js?v=1.35.101026"></script>
+  <script src="assets/api.js?v=1.36.101026"></script>
   <script>
     var SUBJECT_GROUP_ORDER = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ'];
     var POSITION_RANK = ['ครูเชี่ยวชาญพิเศษ', 'ครูเชี่ยวชาญ', 'ครูชำนาญการพิเศษ', 'ครูชำนาญการ', 'ครู', 'ครูผู้ช่วย'];
@@ -218,9 +218,24 @@
       root.setAttribute('data-view', view);
       var html = view === 'tree' ? treeHtml(allPeople || []) : cardsHtml(allPeople || []);
       root.innerHTML = html || '<div class="dir-notice">ยังไม่มีข้อมูลบุคลากร</div>';
+      fitTreeNames();
       updateTreeHint();
       centerTreeOnRoot();
     }
+    // ชื่อยาวเกินกรอบ -> ลดขนาดตัวอักษรทีละ 0.5px จนพอดีบรรทัดเดียว (ขั้นต่ำ 10px; ต่ำกว่านั้นอ่านยาก จึงปล่อยให้ตัดท้ายด้วย …)
+    var NAME_MIN_PX = 10;
+    function fitTreeNames() {
+      Array.prototype.forEach.call(document.querySelectorAll('#dirTree .tname'), function (el) {
+        el.style.fontSize = '';
+        var size = parseFloat(getComputedStyle(el).fontSize) || 13;
+        while (el.scrollWidth > el.clientWidth + 0.5 && size > NAME_MIN_PX) {
+          size -= 0.5;
+          el.style.fontSize = size + 'px';
+        }
+      });
+    }
+    // ฟอนต์ Sarabun โหลดเสร็จทีหลังแล้วความกว้างตัวอักษรเปลี่ยน -> วัดใหม่อีกรอบ
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fitTreeNames(); updateTreeHint(); });
     // ผังกว้างเกินจอ: เลื่อนให้ ผอ. (บนสุด) อยู่กลางจอตั้งแต่แรก ไม่ต้องไปไล่หาทางขวา
     function centerTreeOnRoot() {
       var w = document.querySelector('.tree-wrap'), r = document.querySelector('#dirTree > ul .tn');

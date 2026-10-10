@@ -1226,3 +1226,15 @@ body.login-page .site-footer { padding: 6px 12px 8px; line-height: 1.4; }
   table { font-size: 0.84rem; }
   th, td { padding: 8px 8px; }
 }
+
+/* ---- แท็บ "ข้อมูลระบบ" (ตั้งแต่ 1.36.101026) ---- */
+.sys-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.sys-stat { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; background: var(--surface); }
+.sys-stat-wide { grid-column: 1 / -1; }
+.sys-stat-title { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; }
+.sys-stat-value { font-size: 1.35rem; margin-bottom: 8px; }
+.sys-subtitle { font-size: 1.02rem; font-weight: 800; margin: 4px 0 10px; }
+.sys-bar { height: 10px; border-radius: 999px; background: var(--primary-light); overflow: hidden; }
+.sys-bar-fill { height: 100%; border-radius: 999px; background: var(--primary); min-width: 2px; }
+.sys-bar-warn .sys-bar-fill { background: var(--warn); }
+.sys-bar-danger .sys-bar-fill { background: var(--danger); }

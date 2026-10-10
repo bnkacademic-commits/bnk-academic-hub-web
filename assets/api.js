@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.35.101026';
+var APP_VERSION = '1.36.101026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -105,6 +105,7 @@ function clearSession() {
     localStorage.removeItem(SESSION_TOKEN_KEY);
     localStorage.removeItem(SESSION_USER_KEY);
     localStorage.removeItem(SESSION_LOGIN_AT_KEY);
+    localStorage.removeItem(THEME_KEY); // 1.36.101026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
   } catch (e) {}
 }
 // ออกจากระบบแล้วรีเฟรชหน้าเว็บ 1 ครั้งเสมอ (นำทางไปหน้าล็อกอินแบบโหลดใหม่จริง ไม่ใช้แคชหน้าเดิม)
@@ -225,9 +226,23 @@ function setTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
   applyTheme(theme);
 }
+// Dark Mode ผูกกับบัญชี (ตั้งแต่ 1.36.101026): ตอน login Worker ส่งค่าที่บัญชีนี้เคยเลือกไว้มา (user.theme: 'dark' | 'light' | '' = ยังไม่เคยเลือก)
+// หน้าเว็บตั้งค่าตามนั้นทันที (ไม่ให้โหมดของคนก่อนหน้าบนเครื่องเดียวกันค้างมา) — ยังไม่เคยเลือก = โหมดสว่าง
+function applyAccountTheme(user) {
+  var t = user && user.theme === 'dark' ? 'dark' : 'light';
+  setTheme(t);
+}
+// เมื่อผู้ใช้กดสลับ Dark Mode เอง: ตั้งค่าบนหน้าเว็บทันที + บันทึกลงบัญชี (ส่งแบบไม่รอผล พลาดก็ไม่กระทบการใช้งาน) และอัพเดตค่าที่แคชใน session
+function saveThemeToAccount(theme) {
+  if (!getToken()) return;
+  var s = getSession();
+  if (s) { s.theme = theme; updateCachedSessionUser(s); }
+  try { apiCall('setMyTheme', { theme: theme }).catch(function () {}); } catch (e) {}
+}
 function toggleTheme() {
   var next = getTheme() === 'dark' ? 'light' : 'dark';
   setTheme(next);
+  saveThemeToAccount(next);
   var chk = document.getElementById('themeToggleInput');
   if (chk) chk.checked = next === 'dark';
 }
@@ -515,6 +530,13 @@ function formatDateThai(isoOrDateStr) {
   if (isNaN(d.getTime())) return String(isoOrDateStr);
   var months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   return d.getDate() + ' ' + months[d.getMonth()] + ' ' + (d.getFullYear() + 543);
+}
+// ขนาดไฟล์อ่านง่าย (ตั้งแต่ 1.36.101026) — ใช้ในแท็บ "ข้อมูลระบบ"
+function formatBytes(n) {
+  if (n === null || n === undefined || isNaN(Number(n))) return '-';
+  var units = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0, v = Number(n);
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return (i === 0 ? String(Math.round(v)) : v.toFixed(v >= 100 ? 0 : (v >= 10 ? 1 : 2))) + ' ' + units[i];
 }
 function formatDateTimeThai(isoStr) {
   if (!isoStr) return '';
@@ -963,7 +985,7 @@ function mountChrome(activePage) {
     });
     var themeChk = document.getElementById('themeToggleInput');
     themeChk.checked = getTheme() === 'dark';
-    themeChk.addEventListener('change', function () { setTheme(themeChk.checked ? 'dark' : 'light'); });
+    themeChk.addEventListener('change', function () { var t = themeChk.checked ? 'dark' : 'light'; setTheme(t); saveThemeToAccount(t); });
 
     document.getElementById('ddChangeAvatar').addEventListener('click', function () {
       dropdown.classList.remove('open');
