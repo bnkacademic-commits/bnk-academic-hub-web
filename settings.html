@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.34.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.35.101026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -174,7 +174,7 @@
            ไม่ใช่สิทธิ์ใหม่แยกต่างหาก -->
       <div class="card super-admin-only">
         <div class="section-title"><i class="fas fa-building-user ui-icon" style="font-size:17px" aria-hidden="true"></i> ฝ่ายของเจ้าหน้าที่</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดรายชื่อฝ่ายที่จะต่อท้ายคำว่า "เจ้าหน้าที่" ได้ เช่น วิชาการ, บุคคล, การเงิน, กิจการนักเรียน, อาคารสถานที่ — ใช้ตั้งให้บัญชีเจ้าหน้าที่ที่แท็บ "จัดการบัญชี" และผูกกับประเภทงานที่การ์ด "ประเภทงาน" ด้านบน เพื่อให้เจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่เห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนั้น (Super Admin เห็นทุกฝ่ายเสมอ) <b>หมายเหตุ:</b> การลบ/เปลี่ยนชื่อฝ่ายในรายการนี้จะไม่ไปแก้ค่าที่ตั้งไว้แล้วในบัญชี/ประเภทงานเดิมให้อัตโนมัติ</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดรายชื่อฝ่ายที่จะต่อท้ายคำว่า "เจ้าหน้าที่" ได้ เช่น วิชาการ, บุคคล, การเงิน, กิจการนักเรียน, อาคารสถานที่ — ใช้ตั้งให้บัญชีเจ้าหน้าที่ที่แท็บ "จัดการบัญชี" และผูกกับประเภทงานที่การ์ด "ประเภทงาน" ด้านบน เพื่อให้เจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่เห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนั้น <b>หมายเหตุ:</b> การลบ/เปลี่ยนชื่อฝ่ายในรายการนี้จะไม่ไปแก้ค่าที่ตั้งไว้แล้วในบัญชี/ประเภทงานเดิมให้อัตโนมัติ</p>
         <div id="deptError" class="error-box" hidden></div>
         <div id="deptListWrap"><div class="loading">กำลังโหลด</div></div>
         <div class="field-row" style="margin-top:14px; align-items:flex-end;">
@@ -187,7 +187,7 @@
       </div>
 
       <!-- ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครูแต่ละคน (ตั้งแต่ 1.25.081026) — เติมในเนื้อหาเปิดของบันทึกข้อความอัตโนมัติเช่นกัน
-           เจ้าหน้าที่ฝ่ายวิชาการ/Super Admin เป็นผู้ตั้งค่าให้ (ครูไม่กรอกเอง) รายชื่อดึงจากรายชื่อผู้ใช้เดียวกับแท็บ "จัดการบัญชี"
+           ผู้ดูแลระบบเป็นผู้ตั้งค่าให้ (ครูไม่กรอกเอง) รายชื่อดึงจากรายชื่อผู้ใช้เดียวกับแท็บ "จัดการบัญชี"
            รวมบัญชีเจ้าหน้าที่ฝ่ายวิชาการ (ที่มีหน้าฮับ) ด้วย ไม่ใช่แค่บัญชีครู เพราะเจ้าหน้าที่ก็เป็นครูที่ส่งงานผ่านระบบเหมือนกัน -->
       <div class="card">
         <div class="section-title"><i class="fas fa-users ui-icon" style="font-size:17px" aria-hidden="true"></i> ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู/เจ้าหน้าที่</div>
@@ -232,7 +232,7 @@
            ฝ่ายวิชาการ (staff) จะเห็นเฉพาะฝ่ายของตัวเองล็อกไว้ให้เลย (ตรงกับสิทธิ์จริงฝั่ง Worker — requireDepartmentManager) -->
       <div class="card">
         <div class="section-title"><i class="fas fa-user-tie ui-icon" style="font-size:17px" aria-hidden="true"></i> ชื่อผู้ลงนามตามฝ่าย</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ชื่อ-ตำแหน่งหัวหน้าฝ่าย และรองผู้อำนวยการฝ่าย ที่จะพิมพ์ในใบ "บันทึกข้อความ" ของครู — แต่ละฝ่ายกำหนดชื่อของตัวเองได้เลย (Super Admin ตั้งให้ทุกฝ่ายได้)</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ชื่อ-ตำแหน่งหัวหน้าฝ่าย และรองผู้อำนวยการฝ่าย ที่จะพิมพ์ในใบ "บันทึกข้อความ" ของครู — แต่ละฝ่ายกำหนดชื่อของตัวเองได้เลย</p>
         <div id="deptSignersError" class="error-box" hidden></div>
         <form id="deptSignersForm">
           <div class="field" id="deptSignersDeptFieldWrap">
@@ -270,7 +270,7 @@
           <span><i class="fas fa-list-check ui-icon" style="font-size:17px" aria-hidden="true"></i> หัวเรื่องบันทึกข้อความ</span>
           <button class="btn btn-primary btn-sm" id="openCreateMemoSubjectBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มหัวเรื่อง</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">หัวเรื่องที่ครูเลือกได้ตอนกดปุ่ม "จัดทำบันทึกข้อความ" ในหน้าฮับ — ผูกกับประเภทงานที่เกี่ยวข้องไว้ รายการผลงานที่แนบได้จะถูกกรองให้เหลือเฉพาะประเภทงานที่เลือกไว้นี้เท่านั้น (เจ้าหน้าที่ฝ่ายวิชาการเห็น/จัดการได้เฉพาะหัวเรื่องของฝ่ายตัวเอง Super Admin เห็นและจัดการได้ทุกฝ่าย)</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">หัวเรื่องที่ครูเลือกได้ตอนกดปุ่ม "จัดทำบันทึกข้อความ" ในหน้าฮับ — ผูกกับประเภทงานที่เกี่ยวข้องไว้ รายการผลงานที่แนบได้จะถูกกรองให้เหลือเฉพาะประเภทงานที่เลือกไว้นี้เท่านั้น (เจ้าหน้าที่ฝ่ายวิชาการเห็น/จัดการได้เฉพาะหัวเรื่องของฝ่ายตัวเอง)</p>
         <div id="memoSubjectListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -333,7 +333,10 @@
     <!-- Log tab (ประวัติการส่งงานและลบงาน — เปลี่ยนชื่อจาก "ประวัติการลบ" และเฉพาะ Super Admin ตั้งแต่ V10.0) -->
     <div class="tab-panel super-admin-only" id="tab-log">
       <div class="card">
-        <div class="section-title"><i class="fas fa-trash ui-icon" style="font-size:17px" aria-hidden="true"></i> ประวัติการส่งงานและลบงาน</div>
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-trash ui-icon" style="font-size:17px" aria-hidden="true"></i> ประวัติการส่งงานและลบงาน</span>
+          <button class="btn btn-danger btn-sm" id="clearLogBtn" type="button"><i class="fas fa-broom ui-icon" style="font-size:15px" aria-hidden="true"></i> ล้างประวัติทั้งหมด</button>
+        </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">บันทึกการส่งงาน การลบไฟล์ และการลบบัญชีถาวรทั้งหมดในระบบ — ลบรายการประวัติออกได้ด้วยปุ่ม "ลบ" ท้ายแถว</p>
         <div id="logTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
@@ -459,7 +462,7 @@
           <div class="field">
             <label for="catDepartment">ฝ่ายที่ดูแล</label>
             <select id="catDepartment"><option value="">ทุกฝ่าย (ไม่ระบุ)</option></select>
-            <div class="hint" style="margin-top:4px;">ถ้าเลือกฝ่าย เฉพาะเจ้าหน้าที่ฝ่ายนั้น (และ Super Admin) เท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้ — ปล่อยเป็น "ทุกฝ่าย" ให้เจ้าหน้าที่ทุกฝ่ายจัดการได้เหมือนเดิม</div>
+            <div class="hint" style="margin-top:4px;">ถ้าเลือกฝ่าย เฉพาะเจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้ — ปล่อยเป็น "ทุกฝ่าย" ให้เจ้าหน้าที่ทุกฝ่ายจัดการได้เหมือนเดิม</div>
           </div>
           <div class="field">
             <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
@@ -575,7 +578,7 @@
           <div class="field">
             <label for="editCatDepartment">ฝ่ายที่ดูแล</label>
             <select id="editCatDepartment"><option value="">ทุกฝ่าย (ไม่ระบุ)</option></select>
-            <div class="hint" style="margin-top:4px;">ถ้าเลือกฝ่าย เฉพาะเจ้าหน้าที่ฝ่ายนั้น (และ Super Admin) เท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้</div>
+            <div class="hint" style="margin-top:4px;">ถ้าเลือกฝ่าย เฉพาะเจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้</div>
           </div>
           <div class="field">
             <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
@@ -722,7 +725,7 @@
   <div id="app-footer"></div>
   <div id="app-version-tag" class="app-version-tag"></div>
 
-  <script src="assets/api.js?v=1.34.101026"></script>
+  <script src="assets/api.js?v=1.35.101026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -995,7 +998,7 @@
         var myDept = session.department || '';
         if (!myDept) {
           setDeptSignersFormDisabled(true);
-          errBox.textContent = 'คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อ Super Admin เพื่อตั้งฝ่ายให้บัญชีนี้ก่อน จึงจะตั้งชื่อผู้ลงนามของฝ่ายได้';
+          errBox.textContent = 'คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อผู้ดูแลระบบ เพื่อตั้งฝ่ายให้บัญชีนี้ก่อน จึงจะตั้งชื่อผู้ลงนามของฝ่ายได้';
           errBox.hidden = false;
           return;
         }
@@ -1052,7 +1055,7 @@
       if (currentMemoSubjects.length === 0) {
         var emptyMsg = isSuperAdminSession
           ? 'ยังไม่มีหัวเรื่องบันทึกข้อความในระบบ'
-          : (session.department ? 'ฝ่ายของคุณยังไม่มีหัวเรื่องบันทึกข้อความ — กด "เพิ่มหัวเรื่อง" เพื่อสร้างได้เลย' : 'คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อ Super Admin ก่อนจึงจะสร้างหัวเรื่องได้');
+          : (session.department ? 'ฝ่ายของคุณยังไม่มีหัวเรื่องบันทึกข้อความ — กด "เพิ่มหัวเรื่อง" เพื่อสร้างได้เลย' : 'คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อผู้ดูแลระบบ ก่อนจึงจะสร้างหัวเรื่องได้');
         wrap.innerHTML = '<div class="empty-state">' + escapeHtml(emptyMsg) + '</div>';
         return;
       }
@@ -1135,7 +1138,7 @@
     }
     document.getElementById('openCreateMemoSubjectBtn').addEventListener('click', function () {
       if (!isSuperAdminSession && !session.department) {
-        showToast('คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อ Super Admin ก่อน', true);
+        showToast('คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อผู้ดูแลระบบ ก่อน', true);
         return;
       }
       openMemoSubjectModal(null);
@@ -1218,7 +1221,7 @@
           '<td>' + headRolesText(u) + '</td>' +
           '<td>' + (canEditTeacherInfo(u)
             ? '<button class="btn btn-ghost btn-sm" data-edit-teacher-info="' + u.id + '">แก้ไข</button>'
-            : '<span class="hint">จัดการได้เฉพาะ Super Admin</span>') + '</td>' +
+            : '<span class="hint">ไม่มีสิทธิ์จัดการบัญชีนี้</span>') + '</td>' +
         '</tr>';
       });
       html += '</tbody></table>';
@@ -1839,7 +1842,7 @@
               // ตั้งแต่ 1.29.091026: รวมปุ่มจัดการบัญชี (พักใช้งาน/คืนสิทธิ์/ตั้งรหัสผ่านใหม่/แก้ไขแผนก/ลบถาวร) ไว้ในป็อปอัพ "จัดการบัญชี" ที่เปิดจากปุ่มเดียว
               // แทนการวางเรียงหลายปุ่มต่อแถวจนรก — ปุ่มในป็อปอัพยังใช้ data-act เดิมทุกตัว
               ? '<button class="btn btn-secondary btn-sm" data-manage-user="' + u.id + '" data-name="' + escapeHtml(u.name) + '"><i class="fas fa-sliders ui-icon" aria-hidden="true"></i> จัดการ</button>'
-              : '<span class="hint">จัดการได้เฉพาะ Super Admin</span>') +
+              : '<span class="hint">ไม่มีสิทธิ์จัดการบัญชีนี้</span>') +
           '</td>' +
         '</tr>';
       });
@@ -2259,6 +2262,20 @@
           if (r.ok) loadSystemLog();
         });
       }
+    }
+
+    // ปุ่ม "ล้างประวัติทั้งหมด" ของแท็บ "ประวัติการส่งงานและลบงาน" (ตั้งแต่ 1.35.101026) — แท็บนี้เป็น super-admin-only อยู่แล้ว (Worker ตรวจสิทธิ์ซ้ำ)
+    // ล้างเฉพาะแถวประวัติ ไม่ลบผลงาน/ไฟล์/บัญชี
+    var clearLogBtnEl = document.getElementById('clearLogBtn');
+    if (clearLogBtnEl) {
+      clearLogBtnEl.addEventListener('click', async function () {
+        var ok = await askConfirm('ยืนยันล้างประวัติการส่งงานและลบงานทั้งหมดถาวร? (ล้างเฉพาะรายการประวัติ — ไม่ลบผลงาน ไฟล์ หรือบัญชีใดๆ) การกระทำนี้ย้อนกลับไม่ได้', 'ยืนยันการล้างประวัติทั้งหมด');
+        if (!ok) return;
+        var r = await withProgress('กำลังล้างประวัติ', function () {
+          return apiCall('adminClearDeleteLog', {});
+        }, { successLabel: 'ล้างประวัติทั้งหมดแล้ว' });
+        if (r.ok) loadLog();
+      });
     }
 
     // โหลดเฉพาะแท็บที่กำลังแสดงอยู่ตอนแรกเท่านั้น (แท็บอื่นจะโหลดทีหลังตอนผู้ใช้กดเปิดเอง)
