@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.42.111026" />
+<link rel="stylesheet" href="assets/style.css?v=1.43.111026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -163,7 +163,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.42.111026"></script>
+  <script src="assets/api.js?v=1.43.111026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -521,13 +521,20 @@
             '<div><div class="sub-item-title">' + escapeHtml(s.title) + (s.categoryName ? ' <span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' + categoryDeptBadgeHtml(s.categoryId) : '') + '</div>' +
             (s.description ? '<div class="sub-item-desc">' + escapeHtml(s.description) + '</div>' : '') +
             formatCustomFieldValuesLine(s.customFieldValues) +
-            '<div class="sub-item-meta">อัพโหลดเมื่อ ' + formatDateThai(s.uploadedAt) + ' · <a href="' + s.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></div></div>' +
+            // 1.43.111026: ปุ่ม "พรีวิว" เปิดป็อปอัพเต็มหน้าจอ (กดพื้นที่ว่างเพื่อปิด) — "เปิดไฟล์" ยังเปิดแท็บใหม่เหมือนเดิม
+            '<div class="sub-item-meta">อัพโหลดเมื่อ ' + formatDateThai(s.uploadedAt) + ' · <button type="button" class="sub-preview-btn" data-preview-url="' + escapeHtml(s.fileUrl) + '" data-preview-title="' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button> · <a href="' + escapeHtml(s.fileUrl) + '" target="_blank" rel="noopener">เปิดไฟล์</a></div></div>' +
             '<div class="sub-item-actions"><button class="btn btn-danger btn-sm" data-id="' + s.id + '" data-name="' + escapeHtml(s.title) + '">ลบ</button></div>' +
             '</div>';
         });
         html += '</div>';
       });
       el.innerHTML = html;
+      el.querySelectorAll('button[data-preview-url]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var u = btn.getAttribute('data-preview-url');
+          openFilePreview(drivePreviewUrl(u), btn.getAttribute('data-preview-title'), u);
+        });
+      });
       el.querySelectorAll('button[data-id]').forEach(function (btn) {
         btn.addEventListener('click', async function () {
           var ok = await askConfirm('ต้องการลบผลงาน "' + btn.getAttribute('data-name') + '" ใช่หรือไม่? การลบไม่สามารถกู้คืนได้', 'ยืนยันการลบผลงาน');

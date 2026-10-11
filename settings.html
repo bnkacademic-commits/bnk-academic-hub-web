@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.42.111026" />
+<link rel="stylesheet" href="assets/style.css?v=1.43.111026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -66,6 +66,26 @@
           <input type="checkbox" id="setSummerEnabled" style="width:18px; height:18px;" />
           <span>เปิดใช้งานภาคฤดูร้อนในระบบ</span>
         </label>
+      </div>
+
+      <!-- ระยะเวลาเก็บคำสั่งในคลังคำสั่ง (ตั้งแต่ 1.43.111026) — Super Admin เท่านั้น (ทั้งแท็บ "ทั่วไป" เป็น super-admin-only) -->
+      <div class="card" id="orderRetentionCard">
+        <div class="section-title"><i class="fas fa-box-archive ui-icon" style="font-size:17px" aria-hidden="true"></i> ระยะเวลาเก็บคำสั่ง (คลังคำสั่ง)</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">นับจากวันที่อัพโหลดคำสั่ง เมื่อครบกำหนด ระบบจะย้ายไฟล์ลงถังขยะของ Google Drive (กู้คืนได้ราว 30 วัน) และลบรายการออกจากคลังคำสั่งทันที — ระบบตรวจทุกครั้งที่มีคนเปิดหน้าคลังคำสั่ง</p>
+        <div id="orderRetentionError" class="error-box" hidden></div>
+        <form id="orderRetentionForm" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+          <div class="field" style="margin:0; min-width:220px;">
+            <label for="setOrderRetention">เก็บคำสั่งไว้</label>
+            <select id="setOrderRetention">
+              <option value="0">ตลอดไป (ไม่ลบอัตโนมัติ)</option>
+              <option value="1">1 ปีหลังอัพโหลด</option><option value="2">2 ปีหลังอัพโหลด</option><option value="3">3 ปีหลังอัพโหลด</option>
+              <option value="4">4 ปีหลังอัพโหลด</option><option value="5">5 ปีหลังอัพโหลด</option><option value="6">6 ปีหลังอัพโหลด</option>
+              <option value="7">7 ปีหลังอัพโหลด</option><option value="8">8 ปีหลังอัพโหลด</option><option value="9">9 ปีหลังอัพโหลด</option>
+              <option value="10">10 ปีหลังอัพโหลด</option><option value="15">15 ปีหลังอัพโหลด</option><option value="20">20 ปีหลังอัพโหลด</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" type="submit">บันทึก</button>
+        </form>
       </div>
 
       <div class="card">
@@ -201,7 +221,7 @@
 
       <!-- กลุ่มบริหารงาน (ตั้งแต่ 1.41.111026; เดิมคือการ์ด "ฝ่ายของเจ้าหน้าที่" ตั้งแต่ 1.26.081026) — Super Admin สร้างกลุ่มบริหารงานเอง (เปลี่ยนชื่อได้)
            ครู/บุคลากรทุกคนสังกัดได้คนละ 1 กลุ่ม แล้วเลือก "เจ้าหน้าที่" (ได้สิทธิ์แอดมินของกลุ่ม) จากสมาชิกในกลุ่มนั้น กี่คนก็ได้ (แนะนำ 2-3 คน)
-           ชื่อกลุ่มที่เก็บคือส่วนท้าย เช่น "วิชาการ" → หน้าเว็บแสดง "กลุ่มบริหารงานวิชาการ" · ใช้ผูกกับประเภทงาน หัวเรื่องบันทึกข้อความ ชื่อผู้ลงนาม และไฟล์คำสั่ง -->
+           ชื่อกลุ่มที่เก็บคือส่วนท้าย เช่น "วิชาการ" → หน้าเว็บแสดง "กลุ่มบริหารงานวิชาการ" · ใช้ผูกกับประเภทงาน หัวเรื่องบันทึกข้อความ ชื่อผู้ลงนาม และคลังคำสั่ง -->
       <div class="card super-admin-only" id="groupsCard">
         <div class="section-title"><i class="fas fa-building-user ui-icon" style="font-size:17px" aria-hidden="true"></i> กลุ่มบริหารงาน</div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างกลุ่มบริหารงานของโรงเรียน (เช่น วิชาการ, งบประมาณ, บุคคล, ทั่วไป) แล้วกด "จัดการสมาชิก" เพื่อเลือกครูที่สังกัดกลุ่มนั้น — จากนั้นติ๊ก "เจ้าหน้าที่" จากสมาชิกในกลุ่มได้เลย เจ้าหน้าที่จะได้สิทธิ์แอดมินดูแลงานของกลุ่ม (เลือกกี่คนก็ได้ แนะนำ 2-3 คน) ส่วนครูที่ไม่ได้ติ๊กยังเป็นสมาชิกกลุ่มตามปกติ ทำเนียบบุคลากรจะแสดงเฉพาะว่าใครสังกัดกลุ่มใด ไม่บอกว่าใครเป็นเจ้าหน้าที่</p>
@@ -849,7 +869,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.42.111026"></script>
+  <script src="assets/api.js?v=1.43.111026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -976,9 +996,30 @@
       var s = await getSiteSettings();
       document.getElementById('setSiteName').value = s.siteName || '';
       document.getElementById('setSummerEnabled').checked = s.summerEnabled !== false;
+      var retSel = document.getElementById('setOrderRetention');
+      if (retSel) {
+        var ry = String(Number(s.orderRetentionYears || 0));
+        if (!retSel.querySelector('option[value="' + ry + '"]')) { var oo = document.createElement('option'); oo.value = ry; oo.textContent = ry + ' ปีหลังอัพโหลด'; retSel.appendChild(oo); }
+        retSel.value = ry;
+      }
       renderAssetPreview('iconPreview', s.iconDataUrl);
       renderAssetPreview('logoPreview', s.logoDataUrl);
     }
+    // ระยะเวลาเก็บคำสั่ง (1.43.111026) — การ์ดอยู่ในแท็บ "ทั่วไป" ที่ถูกลบออกจาก DOM สำหรับผู้ที่ไม่ใช่ Super Admin จึงต้องกัน null
+    (function () {
+      var form = document.getElementById('orderRetentionForm');
+      if (!form) return;
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('orderRetentionError');
+        errBox.hidden = true;
+        var y = Number(document.getElementById('setOrderRetention').value);
+        var ok = await askConfirm(y ? ('ยืนยันให้เก็บคำสั่งไว้ ' + y + ' ปีหลังอัพโหลด? คำสั่งที่อัพโหลดมานานกว่านี้จะถูกย้ายลงถังขยะของ Google Drive และลบออกจากคลังคำสั่งเมื่อมีคนเปิดหน้าคลังคำสั่งครั้งถัดไป') : 'ยืนยันให้เก็บคำสั่งไว้ตลอดไป (ไม่ลบอัตโนมัติ)?', 'ยืนยันระยะเวลาเก็บคำสั่ง');
+        if (!ok) return;
+        var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { orderRetentionYears: y }); }, { successLabel: 'บันทึกระยะเวลาเก็บคำสั่งแล้ว' });
+        if (r.ok) resetSettingsCache(); else { errBox.textContent = r.error.message; errBox.hidden = false; }
+      });
+    })();
     function renderAssetPreview(elId, dataUrl) {
       var el = document.getElementById(elId);
       el.innerHTML = dataUrl ? '<img src="' + dataUrl + '" alt="" />' : '—';
@@ -1717,7 +1758,7 @@
           if (act === 'members') { openGroupMembers(dept); return; }
           if (act === 'rename') { openGroupRename(dept); return; }
           if (act === 'delete') {
-            var okD = await askConfirm('ยืนยันลบ "' + groupLabel(dept) + '" ออกจากรายการ? (ลบได้เมื่อไม่มีสมาชิก ประเภทงาน หัวเรื่องบันทึกข้อความ หรือไฟล์คำสั่งผูกอยู่แล้วเท่านั้น)', 'ยืนยันการลบ');
+            var okD = await askConfirm('ยืนยันลบ "' + groupLabel(dept) + '" ออกจากรายการ? (ลบได้เมื่อไม่มีสมาชิก ประเภทงาน หัวเรื่องบันทึกข้อความ หรือคำสั่งในคลังคำสั่งผูกอยู่แล้วเท่านั้น)', 'ยืนยันการลบ');
             if (!okD) return;
             var rD = await withProgress('กำลังลบกลุ่มบริหารงาน', function () { return apiCall('adminDeleteDepartment', { department: dept }); }, { successLabel: 'ลบกลุ่มบริหารงานแล้ว' });
             if (rD.ok) await refreshAfterGroupChange({ renamed: true }); else { errBox.textContent = rD.error.message; errBox.hidden = false; }
@@ -1818,7 +1859,7 @@
         if (!to) { errBox.textContent = 'กรุณากรอกชื่อกลุ่มบริหารงานใหม่'; errBox.hidden = false; return; }
         if (to === grpRenameFrom) { hideModalEl(grpRenameModal); return; }
         if (currentDepartments.indexOf(to) !== -1) { errBox.textContent = 'มีกลุ่มบริหารงานชื่อนี้อยู่แล้ว'; errBox.hidden = false; return; }
-        var ok = await askConfirm('ยืนยันเปลี่ยนชื่อ "' + groupLabel(grpRenameFrom) + '" เป็น "' + groupLabel(to) + '"? สมาชิก ประเภทงาน หัวเรื่องบันทึกข้อความ ไฟล์คำสั่ง และชื่อผู้ลงนามของกลุ่มจะเปลี่ยนตามให้ทั้งหมด', 'ยืนยันการเปลี่ยนชื่อ');
+        var ok = await askConfirm('ยืนยันเปลี่ยนชื่อ "' + groupLabel(grpRenameFrom) + '" เป็น "' + groupLabel(to) + '"? สมาชิก ประเภทงาน หัวเรื่องบันทึกข้อความ คำสั่งในคลังคำสั่ง และชื่อผู้ลงนามของกลุ่มจะเปลี่ยนตามให้ทั้งหมด', 'ยืนยันการเปลี่ยนชื่อ');
         if (!ok) return;
         var r = await withProgress('กำลังเปลี่ยนชื่อกลุ่ม', function () { return apiCall('adminRenameDepartment', { from: grpRenameFrom, to: to }); }, { successLabel: 'เปลี่ยนชื่อกลุ่มแล้ว' });
         if (r.ok) { hideModalEl(grpRenameModal); await refreshAfterGroupChange({ renamed: true }); }

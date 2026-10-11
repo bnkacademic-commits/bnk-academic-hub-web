@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.42.111026';
+var APP_VERSION = '1.43.111026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -962,8 +962,8 @@ function navLinksFor(session) {
   }
   // "ทำเนียบบุคลากรโรงเรียน" (ตั้งแต่ 1.32.101026): ทุกบทบาทที่ล็อกอินเห็นแท็บนี้ — mountChrome ซ่อนให้เองถ้า Super Admin ตั้งไว้ว่า "ปิด" (settings.directoryMode)
   if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
-  // "ไฟล์คำสั่ง" (ตั้งแต่ 1.41.111026): ทุกบทบาทที่ล็อกอินเปิดดู/ดาวน์โหลดได้ — เจ้าหน้าที่ของกลุ่มบริหารงานและ Super Admin เพิ่ม/แก้/ลบได้ในหน้าเดียวกัน
-  if (session) links.push({ href: 'orders.html', label: 'ไฟล์คำสั่ง', key: 'orders', icon: 'orders' });
+  // "คลังคำสั่ง" (ตั้งแต่ 1.41.111026 ชื่อเดิม "ไฟล์คำสั่ง"; เปลี่ยนชื่อใน 1.43.111026): ทุกบทบาทที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ — แก้ไข/ลบได้เฉพาะเจ้าของ
+  if (session) links.push({ href: 'orders.html', label: 'คลังคำสั่ง', key: 'orders', icon: 'orders' });
   if (isAdmin) {
     // หมายเหตุ: เมนู "จัดการ Layout" (V11.1) ถูกยกเลิกตั้งแต่ V11.5 — ทั้งรูปแบบการ์ด (V11.3) และลำดับการแสดงผล (V11.5)
     // ย้ายไปรวมอยู่ในหน้า "ตั้งค่าระบบ" (ตั้งแต่ 1.32.101026 อยู่ในแท็บ "ข้อมูลหลัก") (Super Admin เท่านั้น)
@@ -1159,6 +1159,48 @@ function mountFooter() {
       '<div class="footer-links"><a href="privacy.html">นโยบายความเป็นส่วนตัว</a> · ' +
         '<a href="mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub') + '">แจ้งปัญหาการใช้งาน</a></div>' +
     '</div>';
+}
+
+// ---------- พรีวิวไฟล์แบบป็อปอัพเต็มหน้าจอ (ตั้งแต่ 1.43.111026) ----------
+// ใช้กับคลังคำสั่ง (orders.html) และผลงานในหน้าแรกของครู (dashboard.html) — แสดงไฟล์ผ่านหน้า preview ของ Google Drive ใน iframe
+// ปิดได้ 3 ทาง: กดพื้นที่ว่างรอบไฟล์ · ปุ่ม ✕ · ปุ่ม Esc — ปุ่ม "เปิดไฟล์" (แท็บใหม่) ยังมีแยกต่างหากเหมือนเดิม
+// drivePreviewUrl: แปลงลิงก์ไฟล์ Google Drive (…/file/d/<id>/view…) เป็นลิงก์ preview ที่ฝังใน iframe ได้ — ลิงก์แบบอื่นคืนค่าเดิม
+function drivePreviewUrl(url) {
+  var m = /\/file\/d\/([A-Za-z0-9_-]+)/.exec(String(url || '')) || /[?&]id=([A-Za-z0-9_-]+)/.exec(String(url || ''));
+  return m ? 'https://drive.google.com/file/d/' + m[1] + '/preview' : String(url || '');
+}
+function openFilePreview(previewUrl, title, openUrl) {
+  var old = document.getElementById('filePreviewOverlay');
+  if (old) old.remove();
+  var ov = document.createElement('div');
+  ov.id = 'filePreviewOverlay';
+  ov.className = 'file-preview-overlay';
+  ov.setAttribute('role', 'dialog');
+  ov.setAttribute('aria-modal', 'true');
+  ov.setAttribute('aria-label', 'พรีวิวไฟล์' + (title ? ' ' + title : ''));
+  ov.innerHTML =
+    '<div class="file-preview-frame">' +
+      '<div class="file-preview-bar">' +
+        '<div class="file-preview-title">' + escapeHtml(title || 'พรีวิวไฟล์') + '</div>' +
+        (openUrl ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> เปิดไฟล์</a>' : '') +
+        '<button type="button" class="file-preview-close" aria-label="ปิดพรีวิว">✕</button>' +
+      '</div>' +
+      '<iframe class="file-preview-iframe" src="' + escapeHtml(previewUrl) + '" title="' + escapeHtml(title || 'พรีวิวไฟล์') + '" allow="autoplay" loading="eager"></iframe>' +
+    '</div>';
+  function close() {
+    document.removeEventListener('keydown', onKey);
+    ov.classList.remove('show');
+    document.body.classList.remove('file-preview-open');
+    setTimeout(function () { ov.remove(); }, 160);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  ov.addEventListener('click', function (e) { if (e.target === ov) close(); }); // กดพื้นที่ว่างรอบไฟล์ = ปิด
+  ov.querySelector('.file-preview-close').addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+  document.body.appendChild(ov);
+  document.body.classList.add('file-preview-open');
+  requestAnimationFrame(function () { ov.classList.add('show'); });
+  return close;
 }
 
 // เรียกทันทีตอนโหลดสคริปต์เพื่อกันธีมกะพริบ (เผื่อกรณี inline script หัวไฟล์ไม่ทำงาน)
