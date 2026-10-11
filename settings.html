@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.40.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.41.111026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -27,7 +27,7 @@
   <div class="container">
     <div class="page-header">
       <h1>ตั้งค่าระบบ</h1>
-      <p>ตั้งค่าทั่วไปของเว็บไซต์ ข้อมูลหลักและข้อมูลฝ่าย จัดการบัญชีผู้ใช้ และตรวจสอบประวัติการทำรายการ</p>
+      <p>ตั้งค่าทั่วไปของเว็บไซต์ ข้อมูลหลักและข้อมูลกลุ่มบริหารงาน จัดการบัญชีผู้ใช้ และตรวจสอบประวัติการทำรายการ</p>
     </div>
 
     <!-- ลำดับแท็บตั้งแต่ V10.0: จัดการบัญชี เป็น Super Admin เท่านั้น (ตัดสิทธิ์เจ้าหน้าที่ฝ่ายวิชาการออก), "ประวัติการลบ" เปลี่ยนชื่อ+จำกัดสิทธิ์เป็น Super Admin เท่านั้น,
@@ -37,7 +37,7 @@
     <div class="tabs">
       <button class="tab-btn active super-admin-only" data-tab="general">ทั่วไป</button>
       <button class="tab-btn" data-tab="website">ข้อมูลหลัก</button>
-      <button class="tab-btn" data-tab="deptinfo">ข้อมูลฝ่าย</button>
+      <button class="tab-btn" data-tab="deptinfo">ข้อมูลกลุ่มบริหารงาน</button>
       <button class="tab-btn super-admin-only" data-tab="accounts">จัดการบัญชี</button>
       <button class="tab-btn super-admin-only" data-tab="extlinks">เว็บไซต์โรงเรียน</button>
       <button class="tab-btn super-admin-only" data-tab="log">ประวัติการส่งงานและลบงาน</button>
@@ -159,7 +159,7 @@
            เจ้าหน้าที่ฝ่ายวิชาการที่ไม่ใช่ Super Admin ด้วย class "super-admin-only" เหมือนส่วนอื่นๆ ที่สงวนสิทธิ์ไว้ -->
       <div class="card super-admin-only">
         <div class="section-title"><i class="fas fa-file-lines ui-icon" style="font-size:17px" aria-hidden="true"></i> ข้อมูลสำหรับพิมพ์บันทึกข้อความ (ระดับโรงเรียน)</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ข้อมูลหัวกระดาษและชื่อ-ตำแหน่งผู้อำนวยการ ที่จะพิมพ์ซ้ำอัตโนมัติในใบ "บันทึกข้อความ" ของครูทุกคน (เปิดจากหน้าฮับครู) ตั้งค่าไว้ครั้งเดียวที่นี่ — ส่วนชื่อหัวหน้าฝ่าย/รองผู้อำนวยการฝ่าย แต่ละฝ่ายไปตั้งที่การ์ด "ชื่อผู้ลงนามตามฝ่าย" ด้านล่าง</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ข้อมูลหัวกระดาษและชื่อ-ตำแหน่งผู้อำนวยการ ที่จะพิมพ์ซ้ำอัตโนมัติในใบ "บันทึกข้อความ" ของครูทุกคน (เปิดจากหน้าฮับครู) ตั้งค่าไว้ครั้งเดียวที่นี่ — ส่วนชื่อหัวหน้า/รองผู้อำนวยการของแต่ละกลุ่มบริหารงาน ไปตั้งที่การ์ด "ชื่อผู้ลงนามตามกลุ่มบริหารงาน" ในแท็บ "ข้อมูลกลุ่มบริหารงาน"</p>
         <div id="memoSettingsError" class="error-box" hidden></div>
         <form id="memoSettingsForm">
           <div class="field">
@@ -195,26 +195,24 @@
           <span><i class="fas fa-tag ui-icon" style="font-size:17px" aria-hidden="true"></i> ประเภทงาน</span>
           <button class="btn btn-primary btn-sm" id="openCreateCatBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประเภทงาน</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ กดปุ่ม <b>"แก้ไข"</b> ที่แต่ละรายการเพื่อเปลี่ยนสี รูปแบบการ์ด (มีผลกับผลงานของ<b>ทุกครู</b>ในประเภทนี้ทันที) ฝ่ายที่ดูแล การแจ้งเตือนอย่างเดียว การซ่อนจากหน้าสาธารณะ และข้อมูลเพิ่มเติมที่ครูต้องกรอกตอนส่งงาน</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดประเภทงานให้ครู/เจ้าหน้าที่เลือกตอนส่งงาน — ระบบจะสร้างโฟลเดอร์ย่อยใน Drive ตามชื่อประเภทงานให้อัตโนมัติ กดปุ่ม <b>"แก้ไข"</b> ที่แต่ละรายการเพื่อเปลี่ยนสี รูปแบบการ์ด (มีผลกับผลงานของ<b>ทุกครู</b>ในประเภทนี้ทันที) กลุ่มบริหารงานที่ดูแล การแจ้งเตือนอย่างเดียว การซ่อนจากหน้าสาธารณะ และข้อมูลเพิ่มเติมที่ครูต้องกรอกตอนส่งงาน</p>
         <div id="catListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
 
-      <!-- รายชื่อ "ฝ่าย" ของเจ้าหน้าที่ (ตั้งแต่ 1.26.081026) — Super Admin กำหนดชื่อฝ่ายต่อท้ายคำว่า "เจ้าหน้าที่" ได้เอง
-           เช่น เจ้าหน้าที่วิชาการ, เจ้าหน้าที่บุคคล, เจ้าหน้าที่การเงิน ใช้ผูกกับบัญชีเจ้าหน้าที่ (แท็บ "จัดการบัญชี") และ
-           ประเภทงาน (การ์ด "ประเภทงาน" ด้านบน) เพื่อจำกัดการมองเห็น/จัดการปฏิทินและสรุปรวมเฉพาะฝ่ายนั้นๆ — สิทธิ์การใช้งาน
-           ของบัญชีเจ้าหน้าที่ยังเป็นแบบเดียวกันทั้งหมดเหมือนเดิม (admin + has_hub) เปลี่ยนแค่ชื่อที่แสดง/การมองเห็นงานเท่านั้น
-           ไม่ใช่สิทธิ์ใหม่แยกต่างหาก -->
-      <div class="card super-admin-only">
-        <div class="section-title"><i class="fas fa-building-user ui-icon" style="font-size:17px" aria-hidden="true"></i> ฝ่ายของเจ้าหน้าที่</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กำหนดรายชื่อฝ่ายที่จะต่อท้ายคำว่า "เจ้าหน้าที่" ได้ เช่น วิชาการ, บุคคล, การเงิน, กิจการนักเรียน, อาคารสถานที่ — ใช้ตั้งให้บัญชีเจ้าหน้าที่ที่แท็บ "จัดการบัญชี" และผูกกับประเภทงานที่การ์ด "ประเภทงาน" ด้านบน เพื่อให้เจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่เห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนั้น <b>หมายเหตุ:</b> การลบ/เปลี่ยนชื่อฝ่ายในรายการนี้จะไม่ไปแก้ค่าที่ตั้งไว้แล้วในบัญชี/ประเภทงานเดิมให้อัตโนมัติ</p>
+      <!-- กลุ่มบริหารงาน (ตั้งแต่ 1.41.111026; เดิมคือการ์ด "ฝ่ายของเจ้าหน้าที่" ตั้งแต่ 1.26.081026) — Super Admin สร้างกลุ่มบริหารงานเอง (เปลี่ยนชื่อได้)
+           ครู/บุคลากรทุกคนสังกัดได้คนละ 1 กลุ่ม แล้วเลือก "เจ้าหน้าที่" (ได้สิทธิ์แอดมินของกลุ่ม) จากสมาชิกในกลุ่มนั้น กี่คนก็ได้ (แนะนำ 2-3 คน)
+           ชื่อกลุ่มที่เก็บคือส่วนท้าย เช่น "วิชาการ" → หน้าเว็บแสดง "กลุ่มบริหารงานวิชาการ" · ใช้ผูกกับประเภทงาน หัวเรื่องบันทึกข้อความ ชื่อผู้ลงนาม และไฟล์คำสั่ง -->
+      <div class="card super-admin-only" id="groupsCard">
+        <div class="section-title"><i class="fas fa-building-user ui-icon" style="font-size:17px" aria-hidden="true"></i> กลุ่มบริหารงาน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างกลุ่มบริหารงานของโรงเรียน (เช่น วิชาการ, งบประมาณ, บุคคล, ทั่วไป) แล้วกด "จัดการสมาชิก" เพื่อเลือกครูที่สังกัดกลุ่มนั้น — จากนั้นติ๊ก "เจ้าหน้าที่" จากสมาชิกในกลุ่มได้เลย เจ้าหน้าที่จะได้สิทธิ์แอดมินดูแลงานของกลุ่ม (เลือกกี่คนก็ได้ แนะนำ 2-3 คน) ส่วนครูที่ไม่ได้ติ๊กยังเป็นสมาชิกกลุ่มตามปกติ ทำเนียบบุคลากรจะแสดงเฉพาะว่าใครสังกัดกลุ่มใด ไม่บอกว่าใครเป็นเจ้าหน้าที่</p>
         <div id="deptError" class="error-box" hidden></div>
         <div id="deptListWrap"><div class="loading">กำลังโหลด</div></div>
         <div class="field-row" style="margin-top:14px; align-items:flex-end;">
           <div class="field" style="flex:1;">
-            <label for="deptNewName">เพิ่มฝ่ายใหม่</label>
-            <input id="deptNewName" placeholder="เช่น บุคคล, การเงิน, กิจการนักเรียน" />
+            <label for="deptNewName">เพิ่มกลุ่มบริหารงานใหม่</label>
+            <div class="group-prefix-input"><span class="group-prefix">กลุ่มบริหารงาน</span><input id="deptNewName" placeholder="เช่น วิชาการ, งบประมาณ, บุคคล, ทั่วไป" maxlength="60" /></div>
           </div>
-          <button class="btn btn-primary" id="deptAddBtn" type="button">เพิ่มฝ่าย</button>
+          <button class="btn btn-primary" id="deptAddBtn" type="button">เพิ่มกลุ่มบริหารงาน</button>
         </div>
       </div>
 
@@ -223,7 +221,7 @@
            รวมบัญชีเจ้าหน้าที่ฝ่ายวิชาการ (ที่มีหน้าฮับ) ด้วย ไม่ใช่แค่บัญชีครู เพราะเจ้าหน้าที่ก็เป็นครูที่ส่งงานผ่านระบบเหมือนกัน -->
       <div class="card">
         <div class="section-title"><i class="fas fa-users ui-icon" style="font-size:17px" aria-hidden="true"></i> ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครู/เจ้าหน้าที่</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ใช้เติมในเนื้อหาเปิดของบันทึกข้อความส่งงานโดยอัตโนมัติ (ครูและเจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ) — กดแก้ไขทีละคน</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ใช้เติมในเนื้อหาเปิดของบันทึกข้อความส่งงานโดยอัตโนมัติ (ครูและเจ้าหน้าที่ที่มีหน้าฮับ) — กดแก้ไขทีละคน</p>
         <input type="search" id="teacherInfoSearch" placeholder="ค้นหาชื่อ" style="margin-bottom:10px;" />
         <div id="teacherInfoError" class="error-box" hidden></div>
         <div id="teacherInfoTableWrap"><div class="loading">กำลังโหลด</div></div>
@@ -244,7 +242,7 @@
       <!-- ทำเนียบบุคลากร (ตั้งแต่ 1.32.101026): Super Admin เลือกได้ว่าจะเปิดให้ใครดู -->
       <div class="card super-admin-only">
         <div class="section-title"><i class="fas fa-address-book ui-icon" style="font-size:17px" aria-hidden="true"></i> ทำเนียบบุคลากรโรงเรียน</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เลือกว่าจะให้ใครดูหน้า "ทำเนียบบุคลากร" ได้ — หน้านี้แสดงชื่อ ตำแหน่ง กลุ่มสาระฯ ฝ่าย และรูปโปรไฟล์ของผู้บริหารและครู/เจ้าหน้าที่ (ไม่แสดงชื่อผู้ใช้หรือข้อมูลบัญชี)</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เลือกว่าจะให้ใครดูหน้า "ทำเนียบบุคลากร" ได้ — หน้านี้แสดงชื่อ ตำแหน่ง กลุ่มสาระฯ กลุ่มบริหารงาน และรูปโปรไฟล์ของผู้บริหารและครู/บุคลากร (ไม่แสดงชื่อผู้ใช้ ข้อมูลบัญชี หรือว่าใครเป็นเจ้าหน้าที่)</p>
         <div id="directoryModeError" class="error-box" hidden></div>
         <div class="field">
           <label for="setDirectoryMode">การแสดงทำเนียบ</label>
@@ -263,32 +261,32 @@
            แต่ละฝ่ายกำหนดชื่อของฝ่ายตัวเองได้เอง (ไม่ต้องรอ Super Admin) Super Admin เลือกฝ่ายจากดรอปดาวน์ได้ทุกฝ่าย ส่วนเจ้าหน้าที่
            ฝ่ายวิชาการ (staff) จะเห็นเฉพาะฝ่ายของตัวเองล็อกไว้ให้เลย (ตรงกับสิทธิ์จริงฝั่ง Worker — requireDepartmentManager) -->
       <div class="card">
-        <div class="section-title"><i class="fas fa-user-tie ui-icon" style="font-size:17px" aria-hidden="true"></i> ชื่อผู้ลงนามตามฝ่าย</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ชื่อ-ตำแหน่งหัวหน้าฝ่าย และรองผู้อำนวยการฝ่าย ที่จะพิมพ์ในใบ "บันทึกข้อความ" ของครู — แต่ละฝ่ายกำหนดชื่อของตัวเองได้เลย</p>
+        <div class="section-title"><i class="fas fa-user-tie ui-icon" style="font-size:17px" aria-hidden="true"></i> ชื่อผู้ลงนามตามกลุ่มบริหารงาน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ชื่อ-ตำแหน่งหัวหน้ากลุ่มบริหารงาน และรองผู้อำนวยการกลุ่มบริหารงาน ที่จะพิมพ์ในใบ "บันทึกข้อความ" ของครู — เจ้าหน้าที่ของแต่ละกลุ่มกำหนดชื่อของกลุ่มตัวเองได้เลย</p>
         <div id="deptSignersError" class="error-box" hidden></div>
         <form id="deptSignersForm">
           <div class="field" id="deptSignersDeptFieldWrap">
-            <label for="deptSignersDept">ฝ่าย</label>
+            <label for="deptSignersDept">กลุ่มบริหารงาน</label>
             <select id="deptSignersDept"></select>
           </div>
           <div class="field-row">
             <div class="field">
-              <label for="setDeptHeadName">ชื่อ-สกุล หัวหน้าฝ่าย</label>
+              <label for="setDeptHeadName">ชื่อ-สกุล หัวหน้ากลุ่มบริหารงาน</label>
               <input id="setDeptHeadName" placeholder="เช่น นางสาวสมหญิง ใจดี" />
             </div>
             <div class="field">
               <label for="setDeptHeadPosition">ตำแหน่ง</label>
-              <input id="setDeptHeadPosition" placeholder="เช่น หัวหน้าฝ่ายวิชาการ" />
+              <input id="setDeptHeadPosition" placeholder="เช่น หัวหน้ากลุ่มบริหารงานวิชาการ" />
             </div>
           </div>
           <div class="field-row">
             <div class="field">
-              <label for="setDeptDeputyName">ชื่อ-สกุล รองผู้อำนวยการฝ่าย</label>
+              <label for="setDeptDeputyName">ชื่อ-สกุล รองผู้อำนวยการกลุ่มบริหารงาน</label>
               <input id="setDeptDeputyName" placeholder="เช่น นายอนุชา คำแดง" />
             </div>
             <div class="field">
               <label for="setDeptDeputyPosition">ตำแหน่ง</label>
-              <input id="setDeptDeputyPosition" placeholder="เช่น รองผู้อำนวยการฝ่ายวิชาการ" />
+              <input id="setDeptDeputyPosition" placeholder="เช่น รองผู้อำนวยการกลุ่มบริหารงานวิชาการ" />
             </div>
           </div>
           <button class="btn btn-primary" type="submit">บันทึก</button>
@@ -302,7 +300,7 @@
           <span><i class="fas fa-list-check ui-icon" style="font-size:17px" aria-hidden="true"></i> หัวเรื่องบันทึกข้อความ</span>
           <button class="btn btn-primary btn-sm" id="openCreateMemoSubjectBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มหัวเรื่อง</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">หัวเรื่องที่ครูเลือกได้ตอนกดปุ่ม "จัดทำบันทึกข้อความ" ในหน้าฮับ — ผูกกับประเภทงานที่เกี่ยวข้องไว้ รายการผลงานที่แนบได้จะถูกกรองให้เหลือเฉพาะประเภทงานที่เลือกไว้นี้เท่านั้น (เจ้าหน้าที่ฝ่ายวิชาการเห็น/จัดการได้เฉพาะหัวเรื่องของฝ่ายตัวเอง)</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">หัวเรื่องที่ครูเลือกได้ตอนกดปุ่ม "จัดทำบันทึกข้อความ" ในหน้าฮับ — ผูกกับประเภทงานที่เกี่ยวข้องไว้ รายการผลงานที่แนบได้จะถูกกรองให้เหลือเฉพาะประเภทงานที่เลือกไว้นี้เท่านั้น (เจ้าหน้าที่เห็น/จัดการได้เฉพาะหัวเรื่องของกลุ่มบริหารงานตัวเอง)</p>
         <div id="memoSubjectListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -316,7 +314,7 @@
         <form id="memoSubjectForm" style="text-align:left;">
           <input type="hidden" id="msEditId" value="" />
           <div class="field" id="msDeptFieldWrap">
-            <label for="msDepartment">ฝ่าย</label>
+            <label for="msDepartment">กลุ่มบริหารงาน</label>
             <select id="msDepartment"></select>
           </div>
           <div class="field">
@@ -388,7 +386,7 @@
       </div>
     </div>
 
-    <!-- System info tab (ข้อมูลระบบ — ตั้งแต่ 1.40.101026, Super Admin เท่านั้น): ขนาดฐานข้อมูล D1, พื้นที่ Google Drive และพื้นที่ที่แต่ละบัญชีใช้
+    <!-- System info tab (ข้อมูลระบบ — ตั้งแต่ 1.41.111026, Super Admin เท่านั้น): ขนาดฐานข้อมูล D1, พื้นที่ Google Drive และพื้นที่ที่แต่ละบัญชีใช้
          ไม่กำหนดเพดานให้ Drive (เป็นของโรงเรียน) แสดงตัวเลขจริงอย่างเดียว — ต้องใช้ Drive relay เวอร์ชัน 1.36 ขึ้นไป (มี action storageSummary/folderUsage) -->
     <div class="tab-panel super-admin-only" id="tab-sysinfo">
       <div class="card">
@@ -453,7 +451,7 @@
         </div>
         <!-- ฝ่ายของเจ้าหน้าที่ (ตั้งแต่ 1.26.081026) — แสดงเฉพาะตอนเลือก Role เป็นเจ้าหน้าที่ (admin) และไม่ได้ตั้งเป็น Super Admin เท่านั้น เลือกไม่ตั้งไว้ก็ได้ (ตั้งทีหลังได้ที่ตารางบัญชี) -->
         <div class="field" id="cuDepartmentField" hidden>
-          <label for="cuDepartment">ฝ่าย</label>
+          <label for="cuDepartment">กลุ่มบริหารงาน</label>
           <select id="cuDepartment"><option value="">ยังไม่ระบุ</option></select>
         </div>
         <div class="hint" style="margin-bottom:14px;">username จะถูกแปลงเป็นตัวพิมพ์เล็กให้อัตโนมัติ — ล็อกอินได้ทั้งตัวพิมพ์เล็กและใหญ่ ส่วนรหัสผ่านแยกตัวพิมพ์เล็ก/ใหญ่ตามที่ตั้งไว้</div>
@@ -505,9 +503,9 @@
           </div>
           <!-- ฝ่ายที่ดูแล + การแสดงผลในหน้าสาธารณะ (ตั้งแต่ 1.26.081026) -->
           <div class="field">
-            <label for="catDepartment">ฝ่ายที่ดูแล</label>
-            <select id="catDepartment"><option value="">ทุกฝ่าย (ไม่ระบุ)</option></select>
-            <div class="hint" style="margin-top:4px;">ถ้าเลือกฝ่าย เฉพาะเจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้ — ปล่อยเป็น "ทุกฝ่าย" ให้เจ้าหน้าที่ทุกฝ่ายจัดการได้เหมือนเดิม</div>
+            <label for="catDepartment">กลุ่มบริหารงานที่ดูแล</label>
+            <select id="catDepartment"><option value="">ทุกกลุ่มบริหารงาน (ไม่ระบุ)</option></select>
+            <div class="hint" style="margin-top:4px;">ถ้าเลือกกลุ่มบริหารงาน เฉพาะเจ้าหน้าที่ของกลุ่มนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้ — ปล่อยเป็น "ทุกกลุ่มบริหารงาน" ให้เจ้าหน้าที่ทุกกลุ่มจัดการได้เหมือนเดิม</div>
           </div>
           <div class="field">
             <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
@@ -621,9 +619,9 @@
             </label>
           </div>
           <div class="field">
-            <label for="editCatDepartment">ฝ่ายที่ดูแล</label>
-            <select id="editCatDepartment"><option value="">ทุกฝ่าย (ไม่ระบุ)</option></select>
-            <div class="hint" style="margin-top:4px;">ถ้าเลือกฝ่าย เฉพาะเจ้าหน้าที่ฝ่ายนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้</div>
+            <label for="editCatDepartment">กลุ่มบริหารงานที่ดูแล</label>
+            <select id="editCatDepartment"><option value="">ทุกกลุ่มบริหารงาน (ไม่ระบุ)</option></select>
+            <div class="hint" style="margin-top:4px;">ถ้าเลือกกลุ่มบริหารงาน เฉพาะเจ้าหน้าที่ของกลุ่มนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้</div>
           </div>
           <div class="field">
             <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
@@ -710,16 +708,58 @@
     </div>
   </div>
 
+  <!-- จัดการสมาชิกของกลุ่มบริหารงาน (ตั้งแต่ 1.41.111026) — Super Admin เท่านั้น (ดู adminSetDepartmentMembers) -->
+  <div class="modal-backdrop super-admin-only" id="groupMembersModal" hidden>
+    <div class="modal-box modal-box-wide">
+      <button type="button" class="modal-close-x" id="gmCloseX" aria-label="ปิด">✕</button>
+      <h3 id="gmTitle">จัดการสมาชิก</h3>
+      <p class="hint">ติ๊กคนที่สังกัดกลุ่มนี้ (1 คนสังกัดได้ 1 กลุ่ม — ถ้าติ๊กคนที่อยู่กลุ่มอื่น จะย้ายมากลุ่มนี้) แล้วกดบันทึก จากนั้นไปติ๊ก "เจ้าหน้าที่" ในการ์ดของกลุ่มได้</p>
+      <div id="gmError" class="error-box" hidden></div>
+      <div class="field-row" style="align-items:flex-end;">
+        <div class="field" style="flex:2;"><label for="gmSearch">ค้นหาชื่อ</label><input type="search" id="gmSearch" placeholder="พิมพ์ชื่อ" /></div>
+        <div class="field" style="flex:1;"><label for="gmFilter">แสดง</label>
+          <select id="gmFilter"><option value="all">ทุกคน</option><option value="none">ยังไม่สังกัดกลุ่มใด</option><option value="in">เฉพาะที่เลือกไว้</option></select>
+        </div>
+      </div>
+      <div class="hint" id="gmCount" style="margin-bottom:6px;"></div>
+      <div id="gmList" class="gm-list"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="gmSave">บันทึกสมาชิก</button>
+        <button type="button" class="btn btn-ghost" id="gmCancel">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- เปลี่ยนชื่อกลุ่มบริหารงาน (ตั้งแต่ 1.41.111026) — ระบบย้ายค่าที่อ้างชื่อเดิม (สมาชิก ประเภทงาน หัวเรื่องบันทึกข้อความ ไฟล์คำสั่ง ผู้ลงนาม) ให้ทั้งหมด -->
+  <div class="modal-backdrop super-admin-only" id="groupRenameModal" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close-x" id="grpRenameCloseX" aria-label="ปิด">✕</button>
+      <h3>เปลี่ยนชื่อกลุ่มบริหารงาน</h3>
+      <p class="hint" id="grpRenameFrom"></p>
+      <div id="grpRenameError" class="error-box" hidden></div>
+      <form id="grpRenameForm" style="text-align:left;">
+        <div class="field">
+          <label for="grpRenameInput">ชื่อใหม่</label>
+          <div class="group-prefix-input"><span class="group-prefix">กลุ่มบริหารงาน</span><input id="grpRenameInput" maxlength="60" /></div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">บันทึกชื่อใหม่</button>
+          <button type="button" class="btn btn-ghost" id="grpRenameCancel">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Edit department modal for a staff account (ตั้งแต่ 1.26.081026) — Super Admin เท่านั้น -->
   <div class="modal-backdrop" id="editDeptModal" hidden>
     <div class="modal-box">
       <button type="button" class="modal-close-x" id="editDeptModalCloseX" aria-label="ปิด">✕</button>
-      <h3>แก้ไขแผนก</h3>
+      <h3>กลุ่มบริหารงาน</h3>
       <p class="hint" id="editDeptTargetName"></p>
       <div id="editDeptError" class="error-box" hidden></div>
       <form id="editDeptForm" style="text-align:left;">
         <div class="field">
-          <label for="editDeptSelect">ฝ่าย</label>
+          <label for="editDeptSelect">กลุ่มบริหารงานที่สังกัด</label>
           <select id="editDeptSelect"><option value="">ยังไม่ระบุ</option></select>
         </div>
         <div class="modal-actions">
@@ -730,7 +770,7 @@
     </div>
   </div>
 
-  <!-- Change role modal (ตั้งแต่ 1.40.101026) — Super Admin เปลี่ยน Role ของบัญชีใดก็ได้ (ดู adminSetRole) -->
+  <!-- Change role modal (ตั้งแต่ 1.41.111026) — Super Admin เปลี่ยน Role ของบัญชีใดก็ได้ (ดู adminSetRole) -->
   <div class="modal-backdrop super-admin-only" id="changeRoleModal" hidden>
     <div class="modal-box">
       <button type="button" class="modal-close-x" id="changeRoleModalCloseX" aria-label="ปิด">✕</button>
@@ -748,7 +788,7 @@
           </select>
         </div>
         <div class="field" id="changeRoleDeptField" hidden>
-          <label for="changeRoleDept">ฝ่าย</label>
+          <label for="changeRoleDept">กลุ่มบริหารงาน</label>
           <select id="changeRoleDept"><option value="">ยังไม่ระบุ</option></select>
         </div>
         <div class="field" id="changeRolePosField" hidden>
@@ -793,7 +833,7 @@
         <div class="field" id="teacherInfoHeadDeptField" hidden>
           <label style="display:flex; align-items:center; gap:8px; font-weight:500;">
             <input type="checkbox" id="teacherInfoHeadDept" style="width:auto;" />
-            หัวหน้าฝ่าย (ฝ่ายที่เจ้าหน้าที่สังกัด)
+            หัวหน้ากลุ่มบริหารงาน (กลุ่มที่สังกัด)
           </label>
         </div>
         <div class="modal-actions">
@@ -806,7 +846,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.40.101026"></script>
+  <script src="assets/api.js?v=1.41.111026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -837,9 +877,9 @@
     // รายชื่อฝ่าย (ตั้งแต่ 1.26.081026) — ใช้ร่วมกันทั้งช่อง "ฝ่ายที่ดูแล" ของประเภทงาน และช่อง "แผนก/ฝ่าย" ตอนสร้าง/แก้ไขบัญชีเจ้าหน้าที่
     // currentDepartments มาจากการ์ด "ฝ่ายของเจ้าหน้าที่" ในแท็บ "ทั่วไป" (โหลดคู่กับ loadCategories ในแท็บเดียวกันเสมอ)
     function renderDepartmentOptions(selectEl, selectedDept, emptyLabel) {
-      var opts = '<option value="">' + (emptyLabel || 'ทุกฝ่าย (ไม่ระบุ)') + '</option>';
+      var opts = '<option value="">' + (emptyLabel || 'ทุกกลุ่มบริหารงาน (ไม่ระบุ)') + '</option>';
       (currentDepartments || []).forEach(function (d) {
-        opts += '<option value="' + escapeHtml(d) + '"' + (d === selectedDept ? ' selected' : '') + '>เจ้าหน้าที่' + escapeHtml(d) + '</option>';
+        opts += '<option value="' + escapeHtml(d) + '"' + (d === selectedDept ? ' selected' : '') + '>' + escapeHtml(groupLabel(d)) + '</option>';
       });
       selectEl.innerHTML = opts;
     }
@@ -900,7 +940,7 @@
       },
       // แท็บ "ข้อมูลฝ่าย": ชื่อผู้ลงนามตามฝ่าย + หัวเรื่องบันทึกข้อความ (ทั้ง Super Admin และเจ้าหน้าที่ฝ่าย)
       deptinfo: function () { return Promise.all([loadDeptSigners(), loadMemoSubjects()]); },
-      // 1.40.101026: โหลดรายชื่อฝ่ายด้วย — เดิมช่องเลือกฝ่าย (สร้างบัญชี/แก้ฝ่าย/เปลี่ยน Role) จะว่างถ้ายังไม่เคยเปิดแท็บ "ข้อมูลหลัก" ก่อน
+      // 1.41.111026: โหลดรายชื่อฝ่ายด้วย — เดิมช่องเลือกฝ่าย (สร้างบัญชี/แก้ฝ่าย/เปลี่ยน Role) จะว่างถ้ายังไม่เคยเปิดแท็บ "ข้อมูลหลัก" ก่อน
       accounts: function () {
         return Promise.all([ensureUsersLoaded(), getSiteSettings().then(function (st) {
           if (!currentDepartments || currentDepartments.length === 0) currentDepartments = ((st && st.departments) || []).slice();
@@ -943,7 +983,7 @@
 
     // ---------- "ระบบเว็บ" → เทอม/ปีการศึกษาปัจจุบัน (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21: ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการตั้งเองได้ ไม่ต้องเช็ค
     // isSuperAdminSession แล้ว เพราะย้ายออกมาจากบล็อก Super Admin เดิม — เซิร์ฟเวอร์ฝั่ง adminUpdateSettings ก็เปิดให้ทั้งสอง role แล้วเช่นกัน) ----------
-    // ตั้งแต่ 1.40.101026: เลือกได้ 2 โหมด — "อัตโนมัติตามวันที่" (กำหนดวันเริ่มเทอม 1 / เทอม 2 / ฤดูร้อน แบบวัน-เดือนซ้ำทุกปี) หรือ "กำหนดเอง" (กรอกปี+ภาคเรียน)
+    // ตั้งแต่ 1.41.111026: เลือกได้ 2 โหมด — "อัตโนมัติตามวันที่" (กำหนดวันเริ่มเทอม 1 / เทอม 2 / ฤดูร้อน แบบวัน-เดือนซ้ำทุกปี) หรือ "กำหนดเอง" (กรอกปี+ภาคเรียน)
     var TERM_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
     var termSummerOn = true;
     function termFillMdSelects(dayId, monthId, mmdd) {
@@ -1126,8 +1166,8 @@
         var depts = s.departments || [];
         var current = sel.value;
         sel.innerHTML = depts.length > 0
-          ? depts.map(function (d) { return '<option value="' + escapeHtml(d) + '">เจ้าหน้าที่' + escapeHtml(d) + '</option>'; }).join('')
-          : '<option value="">— ยังไม่มีฝ่ายในระบบ —</option>';
+          ? depts.map(function (d) { return '<option value="' + escapeHtml(d) + '">' + escapeHtml(groupLabel(d)) + '</option>'; }).join('')
+          : '<option value="">— ยังไม่มีกลุ่มบริหารงานในระบบ —</option>';
         if (current && depts.indexOf(current) !== -1) sel.value = current;
         setDeptSignersFormDisabled(depts.length === 0);
         fillDeptSignersFields(sel.value, s);
@@ -1136,7 +1176,7 @@
         var myDept = session.department || '';
         if (!myDept) {
           setDeptSignersFormDisabled(true);
-          errBox.textContent = 'คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อผู้ดูแลระบบ เพื่อตั้งฝ่ายให้บัญชีนี้ก่อน จึงจะตั้งชื่อผู้ลงนามของฝ่ายได้';
+          errBox.textContent = 'คุณยังไม่ได้ถูกตั้งกลุ่มบริหารงาน กรุณาติดต่อผู้ดูแลระบบ เพื่อตั้งกลุ่มบริหารงานให้บัญชีนี้ก่อน จึงจะตั้งชื่อผู้ลงนามของกลุ่มได้';
           errBox.hidden = false;
           return;
         }
@@ -1154,8 +1194,8 @@
       var errBox = document.getElementById('deptSignersError');
       errBox.hidden = true;
       var dept = isSuperAdminSession ? document.getElementById('deptSignersDept').value : (session.department || '');
-      if (!dept) { errBox.textContent = 'ไม่พบฝ่ายที่จะบันทึก'; errBox.hidden = false; return; }
-      var ok = await askConfirm('ยืนยันบันทึกชื่อผู้ลงนามของฝ่าย "เจ้าหน้าที่' + dept + '"?', 'ยืนยันการบันทึก');
+      if (!dept) { errBox.textContent = 'ไม่พบกลุ่มบริหารงานที่จะบันทึก'; errBox.hidden = false; return; }
+      var ok = await askConfirm('ยืนยันบันทึกชื่อผู้ลงนามของ "' + groupLabel(dept) + '"?', 'ยืนยันการบันทึก');
       if (!ok) return;
       var payload = {
         department: dept,
@@ -1193,7 +1233,7 @@
       if (currentMemoSubjects.length === 0) {
         var emptyMsg = isSuperAdminSession
           ? 'ยังไม่มีหัวเรื่องบันทึกข้อความในระบบ'
-          : (session.department ? 'ฝ่ายของคุณยังไม่มีหัวเรื่องบันทึกข้อความ — กด "เพิ่มหัวเรื่อง" เพื่อสร้างได้เลย' : 'คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อผู้ดูแลระบบ ก่อนจึงจะสร้างหัวเรื่องได้');
+          : (session.department ? 'กลุ่มบริหารงานของคุณยังไม่มีหัวเรื่องบันทึกข้อความ — กด "เพิ่มหัวเรื่อง" เพื่อสร้างได้เลย' : 'คุณยังไม่ได้ถูกตั้งกลุ่มบริหารงาน กรุณาติดต่อผู้ดูแลระบบ ก่อนจึงจะสร้างหัวเรื่องได้');
         wrap.innerHTML = '<div class="empty-state">' + escapeHtml(emptyMsg) + '</div>';
         return;
       }
@@ -1202,7 +1242,7 @@
         html += '<div class="event-list-item">' +
           '<div style="flex:1 1 220px; min-width:220px;">' +
             '<div class="sub-item-title">' + escapeHtml(m.subject) + '</div>' +
-            '<div class="sub-item-meta">ฝ่าย' + escapeHtml(m.department) + ' · ผูกประเภทงาน ' + m.categoryIds.length + ' รายการ</div>' +
+            '<div class="sub-item-meta">' + escapeHtml(groupLabel(m.department)) + ' · ผูกประเภทงาน ' + m.categoryIds.length + ' รายการ</div>' +
           '</div>' +
           '<button class="btn btn-ghost btn-sm" data-ms-edit="' + m.id + '">แก้ไข</button>' +
           '<button class="btn btn-danger btn-sm" data-ms-delete="' + m.id + '" data-ms-name="' + escapeHtml(m.subject) + '">ลบ</button>' +
@@ -1234,14 +1274,14 @@
       var deptVal = isSuperAdminSession ? document.getElementById('msDepartment').value : (session.department || '');
       var visible = msAllCategories.filter(function (c) { return !c.department || c.department === deptVal; });
       if (visible.length === 0) {
-        box.innerHTML = '<div class="hint">ไม่พบประเภทงานที่เลือกได้สำหรับฝ่ายนี้ — ไปเพิ่ม/ผูกฝ่ายของประเภทงานที่แท็บ "ทั่วไป" ก่อน</div>';
+        box.innerHTML = '<div class="hint">ไม่พบประเภทงานที่เลือกได้สำหรับกลุ่มบริหารงานนี้ — ไปเพิ่ม/ผูกกลุ่มบริหารงานของประเภทงานที่แท็บ "ทั่วไป" ก่อน</div>';
         return;
       }
       box.innerHTML = visible.map(function (c) {
         var checked = checkedIds && checkedIds.indexOf(c.id) !== -1 ? ' checked' : '';
         return '<label style="display:flex; align-items:center; gap:8px; font-weight:500; padding:6px 2px;">' +
           '<input type="checkbox" class="ms-cat-cb" value="' + c.id + '" style="width:auto;"' + checked + ' />' +
-          '<span>' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge">ฝ่าย' + escapeHtml(c.department) + '</span>' : '') + '</span>' +
+          '<span>' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge">' + escapeHtml(groupLabel(c.department)) + '</span>' : '') + '</span>' +
         '</label>';
       }).join('');
     }
@@ -1263,8 +1303,8 @@
         var s = await getSiteSettings();
         var depts = s.departments || [];
         deptSel.innerHTML = depts.length > 0
-          ? depts.map(function (d) { return '<option value="' + escapeHtml(d) + '">เจ้าหน้าที่' + escapeHtml(d) + '</option>'; }).join('')
-          : '<option value="">— ยังไม่มีฝ่ายในระบบ —</option>';
+          ? depts.map(function (d) { return '<option value="' + escapeHtml(d) + '">' + escapeHtml(groupLabel(d)) + '</option>'; }).join('')
+          : '<option value="">— ยังไม่มีกลุ่มบริหารงานในระบบ —</option>';
         deptSel.value = msEditTarget ? msEditTarget.department : (deptSel.options[0] ? deptSel.options[0].value : '');
         // แก้ไขหัวเรื่องเดิมแล้วเปลี่ยนฝ่ายเจ้าของไม่ได้ (เลี่ยงความสับสนเรื่องสิทธิ์จัดการที่เปลี่ยนไปกลางทาง) — จะย้ายฝ่ายต้องลบแล้วสร้างใหม่
         deptSel.disabled = !!msEditTarget;
@@ -1276,7 +1316,7 @@
     }
     document.getElementById('openCreateMemoSubjectBtn').addEventListener('click', function () {
       if (!isSuperAdminSession && !session.department) {
-        showToast('คุณยังไม่ได้ถูกตั้งฝ่าย กรุณาติดต่อผู้ดูแลระบบ ก่อน', true);
+        showToast('คุณยังไม่ได้ถูกตั้งกลุ่มบริหารงาน กรุณาติดต่อผู้ดูแลระบบ ก่อน', true);
         return;
       }
       openMemoSubjectModal(null);
@@ -1294,7 +1334,7 @@
       errBox.hidden = true;
       var subjectId = document.getElementById('msEditId').value;
       var department = isSuperAdminSession ? document.getElementById('msDepartment').value : (session.department || '');
-      if (!department) { errBox.textContent = 'ไม่พบฝ่าย'; errBox.hidden = false; return; }
+      if (!department) { errBox.textContent = 'ไม่พบกลุ่มบริหารงาน'; errBox.hidden = false; return; }
       var categoryIds = Array.from(document.querySelectorAll('.ms-cat-cb:checked')).map(function (cb) { return cb.value; });
       if (categoryIds.length === 0) { errBox.textContent = 'กรุณาเลือกประเภทงานที่เกี่ยวข้องอย่างน้อย 1 รายการ'; errBox.hidden = false; return; }
       var payload = {
@@ -1338,7 +1378,7 @@
     function headRolesText(u) {
       var hr = u.headRoles || [], out = [];
       if (hr.indexOf('subject') !== -1) out.push('หัวหน้ากลุ่มสาระฯ');
-      if (hr.indexOf('dept') !== -1) out.push('หัวหน้าฝ่าย');
+      if (hr.indexOf('dept') !== -1) out.push('หัวหน้ากลุ่มบริหารงาน');
       return out.length ? out.map(function (x) { return '<span class="badge badge-admin">' + x + '</span>'; }).join(' ') : '<span class="hint">—</span>';
     }
     var EXEC_POSITIONS = ['ผู้อำนวยการ', 'รองผู้อำนวยการ'];
@@ -1376,7 +1416,7 @@
           // ผู้บริหาร: ไม่มีกลุ่มสาระฯ/หัวหน้า | หัวหน้าฝ่าย: เฉพาะเจ้าหน้าที่ที่มีฝ่าย
           document.getElementById('teacherInfoSubjectGroupField').hidden = isExec;
           document.getElementById('teacherInfoHeadSubjectField').hidden = isExec;
-          document.getElementById('teacherInfoHeadDeptField').hidden = !(u.role === 'admin' && u.hasHub && u.department);
+          document.getElementById('teacherInfoHeadDeptField').hidden = !(u.role !== 'executive' && u.hasHub && u.department);
           document.getElementById('teacherInfoHeadSubject').checked = (u.headRoles || []).indexOf('subject') !== -1;
           document.getElementById('teacherInfoHeadDept').checked = (u.headRoles || []).indexOf('dept') !== -1;
           document.getElementById('teacherInfoModalError').hidden = true;
@@ -1495,7 +1535,7 @@
           var rowHtml = {};
           var siteS = await getSiteSettings();
           var deptOrder = (currentDepartments && currentDepartments.length ? currentDepartments : (siteS.departments || [])).slice();
-          // ตั้งแต่ 1.40.101026: ป้ายฝ่ายข้างชื่อประเภทงาน
+          // ตั้งแต่ 1.41.111026: ป้ายฝ่ายข้างชื่อประเภทงาน
           // ตั้งแต่ 1.29.091026: แถวรายการประเภทงานเหลือแค่ "สรุป + ปุ่มแก้ไข/ลบ" — ตัวเลือกแก้ไขทั้งหมด (สี/รูปแบบการ์ด/ฝ่าย/แจ้งเตือนอย่างเดียว/
           // ไม่แสดงสาธารณะ/ข้อมูลที่ต้องกรอก) ย้ายไปอยู่ในป็อปอัพ "แก้ไขประเภทงาน" (editCatModal) ที่เปิดจากปุ่ม "แก้ไข" แทน ตามที่ผู้ใช้ขอ
           // เพราะเดิมแต่ละแถวมี dropdown 2 ตัว + checkbox 2 ตัว + ปุ่ม 2 ปุ่มวางเรียงกันจนดูรก
@@ -1508,7 +1548,7 @@
             rowHtml[c.id] = '<div class="event-list-item" data-cat-row="' + c.id + '">' +
               '<span class="cat-color-swatch" style="display:inline-block; width:26px; height:26px; border-radius:7px; flex-shrink:0; background:' + escapeHtml(c.color || '#3457d5') + ';" title="สีของประเภทงาน"></span>' +
               '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(c.name) +
-                (c.department ? ' <span class="cat-dept-badge">ฝ่าย' + escapeHtml(c.department) + '</span>' : ' <span class="cat-dept-badge cat-dept-none">ยังไม่ผูกฝ่าย</span>') +
+                (c.department ? ' <span class="cat-dept-badge">' + escapeHtml(groupLabel(c.department)) + '</span>' : ' <span class="cat-dept-badge cat-dept-none">ยังไม่ผูกกลุ่มบริหารงาน</span>') +
                 (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '') +
                 (c.hideFromPortfolio ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-eye-slash ui-icon" aria-hidden="true"></i> ไม่แสดงสาธารณะ</span>' : '') +
               '</div>' +
@@ -1520,7 +1560,7 @@
                 '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button>' +
               '</div></div>';
           });
-          // จัดกลุ่มตามฝ่าย (1.40.101026): "ยังไม่ผูกฝ่าย" ขึ้นก่อนพร้อมปุ่มผูกทีเดียว ตามด้วยแต่ละฝ่ายตามลำดับที่ตั้งไว้
+          // จัดกลุ่มตามฝ่าย (1.41.111026): "ยังไม่ผูกฝ่าย" ขึ้นก่อนพร้อมปุ่มผูกทีเดียว ตามด้วยแต่ละฝ่ายตามลำดับที่ตั้งไว้
           var groups = {}; var order = [];
           rows.forEach(function (c) { var k = c.department || ''; if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(c); });
           var keys = [];
@@ -1530,29 +1570,29 @@
           keys.forEach(function (k) {
             var list = groups[k];
             if (k === '') {
-              html += '<div class="cat-group-head cat-group-head-none" data-cat-group="none"><div><b>ยังไม่ผูกฝ่าย (' + list.length + ')</b><div class="hint" style="margin:2px 0 0;">ประเภทงานเหล่านี้ยังไม่ถูกจัดให้อยู่ฝ่ายใด (มักเป็นประเภทที่สร้างไว้ก่อนมีระบบฝ่าย) — เจ้าหน้าที่ทุกฝ่ายเห็นและจัดการได้</div></div>' +
-                '<div class="cat-bulk-row"><select id="catBulkDept" aria-label="เลือกฝ่าย"></select><button type="button" class="btn btn-primary btn-sm" id="catBulkBtn">ผูกทั้งหมดเข้าฝ่ายนี้</button></div></div>';
+              html += '<div class="cat-group-head cat-group-head-none" data-cat-group="none"><div><b>ยังไม่ผูกกลุ่มบริหารงาน (' + list.length + ')</b><div class="hint" style="margin:2px 0 0;">ประเภทงานเหล่านี้ยังไม่ถูกจัดให้อยู่กลุ่มบริหารงานใด (มักเป็นประเภทที่สร้างไว้ก่อนมีระบบกลุ่มบริหารงาน) — เจ้าหน้าที่ทุกกลุ่มเห็นและจัดการได้</div></div>' +
+                '<div class="cat-bulk-row"><select id="catBulkDept" aria-label="เลือกกลุ่มบริหารงาน"></select><button type="button" class="btn btn-primary btn-sm" id="catBulkBtn">ผูกทั้งหมดเข้ากลุ่มนี้</button></div></div>';
             } else {
-              html += '<div class="cat-group-head" data-cat-group="' + escapeHtml(k) + '"><b>ฝ่าย' + escapeHtml(k) + ' (' + list.length + ')</b></div>';
+              html += '<div class="cat-group-head" data-cat-group="' + escapeHtml(k) + '"><b>' + escapeHtml(groupLabel(k)) + ' (' + list.length + ')</b></div>';
             }
             list.forEach(function (c) { html += rowHtml[c.id]; });
           });
           wrap.innerHTML = html;
           var bulkSel = document.getElementById('catBulkDept');
           if (bulkSel) {
-            bulkSel.innerHTML = '<option value="">— เลือกฝ่าย —</option>' + deptOrder.map(function (d) { return '<option value="' + escapeHtml(d) + '">ฝ่าย' + escapeHtml(d) + '</option>'; }).join('');
+            bulkSel.innerHTML = '<option value="">— เลือกกลุ่มบริหารงาน —</option>' + deptOrder.map(function (d) { return '<option value="' + escapeHtml(d) + '">' + escapeHtml(groupLabel(d)) + '</option>'; }).join('');
             document.getElementById('catBulkBtn').addEventListener('click', async function () {
               var dept = bulkSel.value;
               if (!dept) { bulkSel.focus(); bulkSel.classList.add('input-error'); return; }
               var targets = groups[''] || [];
-              var ok = await askConfirm('ผูกประเภทงานที่ยังไม่ผูกฝ่าย ' + targets.length + ' รายการ เข้ากับ "ฝ่าย' + dept + '"? หลังผูกแล้ว เฉพาะเจ้าหน้าที่ฝ่ายนี้ (และ Super Admin) จะเห็น/จัดการกำหนดการของประเภทงานเหล่านี้ได้', 'ยืนยันการผูกฝ่าย');
+              var ok = await askConfirm('ผูกประเภทงานที่ยังไม่ผูกกลุ่มบริหารงาน ' + targets.length + ' รายการ เข้ากับ "' + groupLabel(dept) + '"? หลังผูกแล้ว เฉพาะเจ้าหน้าที่ของกลุ่มนี้ (และ Super Admin) จะเห็น/จัดการกำหนดการของประเภทงานเหล่านี้ได้', 'ยืนยันการผูกกลุ่มบริหารงาน');
               if (!ok) return;
-              var r = await withProgress('กำลังผูกฝ่ายให้ประเภทงาน', async function () {
+              var r = await withProgress('กำลังผูกกลุ่มบริหารงานให้ประเภทงาน', async function () {
                 for (var i = 0; i < targets.length; i++) {
                   await apiCall('adminSetWorkCategoryDepartment', { categoryId: targets[i].id, department: dept });
                 }
                 return true;
-              }, { successLabel: 'ผูกฝ่ายแล้ว' });
+              }, { successLabel: 'ผูกกลุ่มบริหารงานแล้ว' });
               if (r.ok) loadCategories();
             });
           }
@@ -1579,65 +1619,231 @@
         }
       };
 
-      // ---------- ฝ่ายของเจ้าหน้าที่ (เฉพาะ Super Admin) — ตั้งแต่ 1.26.081026 ----------
-      // ส่ง array ทั้งชุดทุกครั้งที่เพิ่ม/ลบ (เหมือน adminReorderWorkCategories ด้านล่าง) เพราะ adminUpdateSettings รับ
-      // p.departments เป็น array แทนที่ทั้งชุดเสมอ ไม่มี endpoint เพิ่ม/ลบทีละรายการแยก
+      // ---------- กลุ่มบริหารงาน (เฉพาะ Super Admin) — ตั้งแต่ 1.41.111026 (เดิม "ฝ่ายของเจ้าหน้าที่" ตั้งแต่ 1.26.081026) ----------
+      // รายการกลุ่มเก็บใน settings.departments (ส่วนท้ายของชื่อ เช่น 'วิชาการ') · สมาชิก = users.department · เจ้าหน้าที่ = สมาชิกที่เป็น role 'admin' + hasHub
+      // การเพิ่มกลุ่มส่งทั้งชุดผ่าน adminUpdateSettings({departments}) · เปลี่ยนชื่อ/ลบ/สมาชิก/เจ้าหน้าที่ใช้ endpoint เฉพาะ (adminRenameDepartment ฯลฯ)
       var currentDepartments = [];
+      function isStaffUser(u) { return u.role === 'admin' && u.hasHub; }
+      function groupEligibleUsers() {
+        return allUsers.filter(function (u) { return u.role !== 'executive' && u.hasHub; })
+          .sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'th'); });
+      }
       loadDepartments = async function () {
         var wrap = document.getElementById('deptListWrap');
         try {
           var s = await getSiteSettings();
           currentDepartments = (s.departments || []).slice();
-          renderDepartments();
+          await ensureUsersLoaded();
+          renderGroups();
         } catch (err) {
           wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
         }
       };
-      function renderDepartments() {
-        var wrap = document.getElementById('deptListWrap');
-        if (currentDepartments.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีฝ่ายในระบบ</div>'; return; }
-        var html = '';
-        currentDepartments.forEach(function (d, idx) {
-          html += '<div class="event-list-item">' +
-            '<div style="flex:1 1 180px; min-width:180px;"><div class="sub-item-title">เจ้าหน้าที่' + escapeHtml(d) + '</div></div>' +
-            '<button class="btn btn-danger btn-sm" data-dept-remove="' + idx + '" data-dept-name="' + escapeHtml(d) + '">ลบ</button>' +
-            '</div>';
-        });
-        wrap.innerHTML = html;
-        wrap.querySelectorAll('[data-dept-remove]').forEach(function (btn) {
-          btn.addEventListener('click', async function () {
-            var idx = parseInt(btn.getAttribute('data-dept-remove'), 10);
-            var name = btn.getAttribute('data-dept-name');
-            var ok = await askConfirm('ยืนยันลบฝ่าย "เจ้าหน้าที่' + name + '" ออกจากรายชื่อ? บัญชี/ประเภทงานที่ตั้งฝ่ายนี้ไว้แล้วจะยังคงค้างชื่อฝ่ายนี้อยู่ แค่เลือกใหม่ไม่ได้อีก', 'ยืนยันการลบฝ่าย');
-            if (!ok) return;
-            await saveDepartments(currentDepartments.filter(function (_, i) { return i !== idx; }));
-          });
-        });
+      // โหลดข้อมูลใหม่หลังแก้สมาชิก/เจ้าหน้าที่/ชื่อกลุ่ม แล้ววาดทุกส่วนที่อ้างกลุ่ม/บัญชี
+      async function refreshAfterGroupChange(opts) {
+        opts = opts || {};
+        resetSettingsCache();
+        var s = await getSiteSettings();
+        currentDepartments = (s.departments || []).slice();
+        allUsers = await apiCall('adminListUsers', {});
+        renderGroups();
+        try { renderUserTable(); } catch (e) { /* ยังไม่ได้เปิดแท็บ จัดการบัญชี */ }
+        try { renderTeacherInfoTable(); } catch (e) { /* ยังไม่ได้เปิดการ์ดตำแหน่ง/กลุ่มสาระฯ */ }
+        if (opts.renamed) { _tabLoaded.deptinfo = false; try { loadCategories(); } catch (e) { /* ไม่เป็นไร */ } }
       }
+      function groupPickerHtml(u) {
+        return '<span class="gm-pos hint">' + escapeHtml(u.position || '') + '</span>' + (u.status !== 'active' ? ' <span class="badge" style="background:var(--warn-light); color:var(--warn);">ระงับ</span>' : '');
+      }
+      function renderGroups() {
+        var wrap = document.getElementById('deptListWrap');
+        if (!wrap) return;
+        if (currentDepartments.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีกลุ่มบริหารงานในระบบ — เพิ่มได้ด้านล่าง</div>'; return; }
+        var users = groupEligibleUsers();
+        var html = '';
+        currentDepartments.forEach(function (d) {
+          var members = users.filter(function (u) { return u.department === d; });
+          var staffCount = members.filter(isStaffUser).length;
+          html += '<div class="group-card" data-group="' + escapeHtml(d) + '">' +
+            '<div class="group-head"><div><div class="group-title">' + escapeHtml(groupLabel(d)) + '</div>' +
+            '<div class="hint">สมาชิก ' + members.length + ' คน · เจ้าหน้าที่ ' + staffCount + ' คน</div></div>' +
+            '<div class="group-actions">' +
+              '<button type="button" class="btn btn-secondary btn-sm" data-grp-act="members">จัดการสมาชิก</button>' +
+              '<button type="button" class="btn btn-ghost btn-sm" data-grp-act="rename">เปลี่ยนชื่อ</button>' +
+              '<button type="button" class="btn btn-danger btn-sm" data-grp-act="delete">ลบ</button>' +
+            '</div></div>';
+          if (members.length === 0) {
+            html += '<div class="hint" style="margin-top:10px;">ยังไม่มีสมาชิก — กด "จัดการสมาชิก" เพื่อเลือกครูเข้ากลุ่มนี้</div>';
+          } else {
+            html += '<div class="group-staff-title">ติ๊กคนที่เป็น <b>เจ้าหน้าที่</b> ของกลุ่ม (ได้สิทธิ์แอดมิน)</div><div class="group-staff-list">' +
+              members.map(function (u) {
+                return '<label class="group-member"><input type="checkbox" data-grp-staff="' + escapeHtml(u.id) + '"' + (isStaffUser(u) ? ' checked data-was="1"' : ' data-was="0"') + ' /> <span class="gm-name">' + escapeHtml(u.name) + '</span> ' + groupPickerHtml(u) + '</label>';
+              }).join('') + '</div>' +
+              '<div class="group-foot"><span class="group-count hint" data-grp-count></span><button type="button" class="btn btn-primary btn-sm" data-grp-act="save-staff" disabled>บันทึกเจ้าหน้าที่</button></div>';
+          }
+          html += '</div>';
+        });
+        var assigned = {}; currentDepartments.forEach(function (d) { assigned[d] = true; });
+        var un = users.filter(function (u) { return !u.department || !assigned[u.department]; });
+        html += '<div class="hint" style="margin-top:6px;">ยังไม่สังกัดกลุ่มบริหารงานใด: ' + un.length + ' คน' + (un.length ? ' — เพิ่มเข้ากลุ่มได้ที่ปุ่ม "จัดการสมาชิก"' : '') + '</div>';
+        wrap.innerHTML = html;
+        wrap.querySelectorAll('.group-card').forEach(updateGroupStaffUi);
+      }
+      function updateGroupStaffUi(card) {
+        var boxes = card.querySelectorAll('input[data-grp-staff]');
+        if (!boxes.length) return;
+        var checked = 0, changed = false;
+        boxes.forEach(function (b) { if (b.checked) checked++; if ((b.checked ? '1' : '0') !== b.getAttribute('data-was')) changed = true; });
+        var cnt = card.querySelector('[data-grp-count]');
+        cnt.textContent = 'เลือกเป็นเจ้าหน้าที่ ' + checked + ' คน' + (checked === 0 ? ' — ยังไม่มีเจ้าหน้าที่ดูแลกลุ่มนี้' : (checked > 3 ? ' — มากกว่าที่แนะนำ (2-3 คน) แต่บันทึกได้' : ' (แนะนำ 2-3 คน)'));
+        cnt.classList.toggle('warn', checked > 3);
+        card.querySelector('[data-grp-act="save-staff"]').disabled = !changed;
+      }
+      (function () {
+        var wrap = document.getElementById('deptListWrap');
+        wrap.addEventListener('change', function (e) {
+          if (e.target && e.target.matches('input[data-grp-staff]')) updateGroupStaffUi(e.target.closest('.group-card'));
+        });
+        wrap.addEventListener('click', async function (e) {
+          var btn = e.target.closest('[data-grp-act]');
+          if (!btn) return;
+          var card = btn.closest('.group-card');
+          var dept = card.getAttribute('data-group');
+          var act = btn.getAttribute('data-grp-act');
+          var errBox = document.getElementById('deptError');
+          errBox.hidden = true;
+          if (act === 'members') { openGroupMembers(dept); return; }
+          if (act === 'rename') { openGroupRename(dept); return; }
+          if (act === 'delete') {
+            var okD = await askConfirm('ยืนยันลบ "' + groupLabel(dept) + '" ออกจากรายการ? (ลบได้เมื่อไม่มีสมาชิก ประเภทงาน หัวเรื่องบันทึกข้อความ หรือไฟล์คำสั่งผูกอยู่แล้วเท่านั้น)', 'ยืนยันการลบ');
+            if (!okD) return;
+            var rD = await withProgress('กำลังลบกลุ่มบริหารงาน', function () { return apiCall('adminDeleteDepartment', { department: dept }); }, { successLabel: 'ลบกลุ่มบริหารงานแล้ว' });
+            if (rD.ok) await refreshAfterGroupChange({ renamed: true }); else { errBox.textContent = rD.error.message; errBox.hidden = false; }
+            return;
+          }
+          if (act === 'save-staff') {
+            var ids = [], names = [];
+            card.querySelectorAll('input[data-grp-staff]').forEach(function (b) { if (b.checked) { ids.push(b.getAttribute('data-grp-staff')); names.push(b.closest('label').querySelector('.gm-name').textContent); } });
+            var okS = await askConfirm('ยืนยันให้ ' + (names.length ? names.join(', ') : 'ไม่มีใคร') + ' เป็นเจ้าหน้าที่ของ "' + groupLabel(dept) + '"? เจ้าหน้าที่จะได้สิทธิ์แอดมินของกลุ่ม ส่วนคนที่ไม่ได้ติ๊กจะกลับเป็นครู (ยังเป็นสมาชิกกลุ่ม) — ผู้ที่ถูกเปลี่ยนสิทธิ์ต้องออกจากระบบแล้วเข้าใหม่เพื่อให้เมนูตรงกับสิทธิ์', 'ยืนยันเจ้าหน้าที่ของกลุ่ม');
+            if (!okS) return;
+            var rS = await withProgress('กำลังบันทึกเจ้าหน้าที่', function () { return apiCall('adminSetDepartmentStaff', { department: dept, staffIds: ids }); }, { successLabel: 'บันทึกเจ้าหน้าที่แล้ว' });
+            if (rS.ok) await refreshAfterGroupChange(); else { errBox.textContent = rS.error.message; errBox.hidden = false; }
+          }
+        });
+      })();
+
+      // ---- ป็อปอัพ "จัดการสมาชิก" ----
+      var gmModal = document.getElementById('groupMembersModal');
+      var gmDept = '', gmChecked = {}, gmInitial = {};
+      function openGroupMembers(dept) {
+        gmDept = dept; gmChecked = {}; gmInitial = {};
+        groupEligibleUsers().forEach(function (u) { if (u.department === dept) { gmChecked[u.id] = true; gmInitial[u.id] = true; } });
+        document.getElementById('gmTitle').textContent = 'จัดการสมาชิก — ' + groupLabel(dept);
+        document.getElementById('gmSearch').value = '';
+        document.getElementById('gmFilter').value = 'all';
+        document.getElementById('gmError').hidden = true;
+        renderGmList();
+        showModalEl(gmModal);
+      }
+      function renderGmList() {
+        var q = document.getElementById('gmSearch').value.trim().toLowerCase();
+        var f = document.getElementById('gmFilter').value;
+        var known = {}; currentDepartments.forEach(function (d) { known[d] = true; });
+        var rows = groupEligibleUsers().filter(function (u) {
+          if (q && String(u.name).toLowerCase().indexOf(q) === -1) return false;
+          if (f === 'none') return !u.department || !known[u.department];
+          if (f === 'in') return !!gmChecked[u.id];
+          return true;
+        });
+        var box = document.getElementById('gmList');
+        box.innerHTML = rows.length ? rows.map(function (u) {
+          var other = u.department && u.department !== gmDept && known[u.department] ? ' <span class="gm-other">อยู่ ' + escapeHtml(groupLabel(u.department)) + (isStaffUser(u) ? ' (เจ้าหน้าที่)' : '') + '</span>' : '';
+          return '<label class="group-member"><input type="checkbox" data-gm-id="' + escapeHtml(u.id) + '"' + (gmChecked[u.id] ? ' checked' : '') + ' /> <span class="gm-name">' + escapeHtml(u.name) + '</span> ' + groupPickerHtml(u) + other + '</label>';
+        }).join('') : '<div class="empty-state">ไม่พบรายชื่อ</div>';
+        var n = 0; for (var k in gmChecked) if (gmChecked[k]) n++;
+        document.getElementById('gmCount').textContent = 'เลือกไว้ ' + n + ' คน';
+      }
+      document.getElementById('gmSearch').addEventListener('input', renderGmList);
+      document.getElementById('gmFilter').addEventListener('change', renderGmList);
+      document.getElementById('gmList').addEventListener('change', function (e) {
+        var id = e.target.getAttribute && e.target.getAttribute('data-gm-id');
+        if (!id) return;
+        if (e.target.checked) gmChecked[id] = true; else delete gmChecked[id];
+        var n = 0; for (var k in gmChecked) if (gmChecked[k]) n++;
+        document.getElementById('gmCount').textContent = 'เลือกไว้ ' + n + ' คน';
+      });
+      document.getElementById('gmCancel').addEventListener('click', function () { hideModalEl(gmModal); });
+      document.getElementById('gmCloseX').addEventListener('click', function () { hideModalEl(gmModal); });
+      document.getElementById('gmSave').addEventListener('click', async function () {
+        var errBox = document.getElementById('gmError');
+        errBox.hidden = true;
+        var ids = Object.keys(gmChecked).filter(function (k) { return gmChecked[k]; });
+        var users = groupEligibleUsers();
+        var byId = {}; users.forEach(function (u) { byId[u.id] = u; });
+        var added = ids.filter(function (id) { return !gmInitial[id]; }).length;
+        var removed = Object.keys(gmInitial).filter(function (id) { return !gmChecked[id]; }).length;
+        var staffMoves = ids.filter(function (id) { return !gmInitial[id] && byId[id] && isStaffUser(byId[id]) && byId[id].department; }).length +
+          Object.keys(gmInitial).filter(function (id) { return !gmChecked[id] && byId[id] && isStaffUser(byId[id]); }).length;
+        if (added === 0 && removed === 0) { hideModalEl(gmModal); return; }
+        var msg = 'ยืนยันบันทึกสมาชิกของ "' + groupLabel(gmDept) + '"? (เพิ่ม/ย้ายเข้า ' + added + ' คน · นำออก ' + removed + ' คน)' +
+          (staffMoves ? ' — มีเจ้าหน้าที่ ' + staffMoves + ' คนที่ถูกย้ายหรือนำออก จะกลับเป็นครูธรรมดา (เจ้าหน้าที่เป็นแอดมินของกลุ่มที่สังกัดเท่านั้น)' : '');
+        var ok = await askConfirm(msg, 'ยืนยันสมาชิกกลุ่ม');
+        if (!ok) return;
+        var r = await withProgress('กำลังบันทึกสมาชิก', function () { return apiCall('adminSetDepartmentMembers', { department: gmDept, userIds: ids }); }, { successLabel: 'บันทึกสมาชิกแล้ว' });
+        if (r.ok) { hideModalEl(gmModal); await refreshAfterGroupChange(); }
+        else { errBox.textContent = r.error.message; errBox.hidden = false; }
+      });
+
+      // ---- ป็อปอัพ "เปลี่ยนชื่อ" ----
+      var grpRenameModal = document.getElementById('groupRenameModal');
+      var grpRenameFrom = '';
+      function openGroupRename(dept) {
+        grpRenameFrom = dept;
+        document.getElementById('grpRenameFrom').textContent = 'ชื่อปัจจุบัน: ' + groupLabel(dept);
+        document.getElementById('grpRenameInput').value = dept;
+        document.getElementById('grpRenameError').hidden = true;
+        showModalEl(grpRenameModal);
+      }
+      document.getElementById('grpRenameCancel').addEventListener('click', function () { hideModalEl(grpRenameModal); });
+      document.getElementById('grpRenameCloseX').addEventListener('click', function () { hideModalEl(grpRenameModal); });
+      document.getElementById('grpRenameForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('grpRenameError');
+        errBox.hidden = true;
+        var to = normalizeGroupName(document.getElementById('grpRenameInput').value);
+        if (!to) { errBox.textContent = 'กรุณากรอกชื่อกลุ่มบริหารงานใหม่'; errBox.hidden = false; return; }
+        if (to === grpRenameFrom) { hideModalEl(grpRenameModal); return; }
+        if (currentDepartments.indexOf(to) !== -1) { errBox.textContent = 'มีกลุ่มบริหารงานชื่อนี้อยู่แล้ว'; errBox.hidden = false; return; }
+        var ok = await askConfirm('ยืนยันเปลี่ยนชื่อ "' + groupLabel(grpRenameFrom) + '" เป็น "' + groupLabel(to) + '"? สมาชิก ประเภทงาน หัวเรื่องบันทึกข้อความ ไฟล์คำสั่ง และชื่อผู้ลงนามของกลุ่มจะเปลี่ยนตามให้ทั้งหมด', 'ยืนยันการเปลี่ยนชื่อ');
+        if (!ok) return;
+        var r = await withProgress('กำลังเปลี่ยนชื่อกลุ่ม', function () { return apiCall('adminRenameDepartment', { from: grpRenameFrom, to: to }); }, { successLabel: 'เปลี่ยนชื่อกลุ่มแล้ว' });
+        if (r.ok) { hideModalEl(grpRenameModal); await refreshAfterGroupChange({ renamed: true }); }
+        else { errBox.textContent = r.error.message; errBox.hidden = false; }
+      });
+
       async function saveDepartments(nextList) {
         var errBox = document.getElementById('deptError');
         errBox.hidden = true;
         var r = await withProgress('กำลังบันทึก', function () {
           return apiCall('adminUpdateSettings', { departments: nextList });
-        }, { successLabel: 'บันทึกรายชื่อฝ่ายแล้ว' });
+        }, { successLabel: 'เพิ่มกลุ่มบริหารงานแล้ว' });
         if (r.ok) {
           resetSettingsCache();
           currentDepartments = r.data.departments || [];
-          renderDepartments();
-        } else {
-          errBox.textContent = r.error.message;
-          errBox.hidden = false;
+          renderGroups();
+          return true;
         }
+        errBox.textContent = r.error.message;
+        errBox.hidden = false;
+        return false;
       }
       document.getElementById('deptAddBtn').addEventListener('click', async function () {
         var errBox = document.getElementById('deptError');
         errBox.hidden = true;
         var input = document.getElementById('deptNewName');
-        var name = input.value.trim();
-        if (!name) { errBox.textContent = 'กรุณากรอกชื่อฝ่าย'; errBox.hidden = false; return; }
-        if (currentDepartments.indexOf(name) !== -1) { errBox.textContent = 'มีฝ่ายชื่อนี้อยู่แล้ว'; errBox.hidden = false; return; }
-        await saveDepartments(currentDepartments.concat([name]));
-        input.value = '';
+        var name = normalizeGroupName(input.value);
+        if (!name) { errBox.textContent = 'กรุณากรอกชื่อกลุ่มบริหารงาน'; errBox.hidden = false; return; }
+        if (currentDepartments.indexOf(name) !== -1) { errBox.textContent = 'มีกลุ่มบริหารงานชื่อนี้อยู่แล้ว'; errBox.hidden = false; return; }
+        if (await saveDepartments(currentDepartments.concat([name]))) input.value = '';
       });
 
       // ---------- ปรับแต่งการแสดงผลงาน: จัดลำดับ "ประเภทงาน" (เฉพาะ Super Admin) — ตั้งแต่ V11.5 ----------
@@ -1667,7 +1873,7 @@
         currentCatOrder.forEach(function (c, idx) {
           html += '<div class="layout-row">' +
             '<div class="thumb" title="สีประเภทงาน" style="background:' + (c.color || '#3457d5') + ';"></div>' +
-            '<div class="info"><div class="t">' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge">ฝ่าย' + escapeHtml(c.department) + '</span>' : '') + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
+            '<div class="info"><div class="t">' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge">' + escapeHtml(groupLabel(c.department)) + '</span>' : '') + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
             '<div class="arrows">' +
               '<button type="button" class="btn btn-ghost btn-sm cat-move-up" data-idx="' + idx + '"' + (idx === 0 ? ' disabled' : '') + ' title="เลื่อนขึ้น">▲</button>' +
               '<button type="button" class="btn btn-ghost btn-sm cat-move-down" data-idx="' + idx + '"' + (idx === currentCatOrder.length - 1 ? ' disabled' : '') + ' title="เลื่อนลง">▼</button>' +
@@ -1970,7 +2176,7 @@
       function syncCuDepartmentFieldVisibility() {
         var roleVal = document.getElementById('cuRole').value;
         var isSuper = document.getElementById('cuIsSuperAdmin').checked;
-        document.getElementById('cuDepartmentField').hidden = !(roleVal === 'admin' && !isSuper);
+        document.getElementById('cuDepartmentField').hidden = !(roleVal === 'teacher' || (roleVal === 'admin' && !isSuper));
         document.getElementById('cuExecPositionField').hidden = roleVal !== 'executive';
       }
       document.getElementById('cuRole').addEventListener('change', function () {
@@ -1995,8 +2201,8 @@
     // ตั้งแต่ 1.26.081026: ป้ายชื่อเจ้าหน้าที่แสดงฝ่ายที่สังกัดต่อท้าย (ถ้าตั้งไว้) แทนชื่อ "เจ้าหน้าที่ฝ่ายวิชาการ" เดิมที่ hardcode ไว้ตัวเดียว
     function roleBadge(u) {
       if (u.role === 'executive') return '<span class="badge badge-exec">' + escapeHtml(u.position || 'ผู้บริหาร') + '</span>';
-      if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>';
-      if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่' + (u.department ? escapeHtml(u.department) : '') + '</span>';
+      if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>' + (u.department ? ' <span class="hint">' + escapeHtml(groupLabel(u.department)) + '</span>' : '');
+      if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่' + (u.department ? escapeHtml(groupLabel(u.department)) : '') + '</span>';
       return '<span class="badge badge-super">Super Admin</span>';
     }
 
@@ -2101,8 +2307,8 @@
           : '<button class="btn btn-secondary" data-act="restore">คืนสิทธิ์</button>') +
         '<button class="btn btn-ghost" data-act="resetpw">ตั้งรหัสผ่านใหม่</button>' +
         '<button class="btn btn-ghost" data-act="changerole">เปลี่ยน Role</button>' +
-        // "แก้ไขแผนก" (ตั้งแต่ 1.26.081026) — เฉพาะบัญชีเจ้าหน้าที่ที่มีหน้าฮับ (role='admin' + hasHub) ไม่ใช่บัญชีครู
-        (u.role === 'admin' && u.hasHub ? '<button class="btn btn-ghost" data-act="editdept">แก้ไขแผนก</button>' : '') +
+        // "กลุ่มบริหารงาน" (ตั้งแต่ 1.41.111026) — ตั้งได้ทั้งครูและเจ้าหน้าที่ (ผู้บริหารและ Super Admin ไม่สังกัดกลุ่ม)
+        (u.role !== 'executive' && u.hasHub ? '<button class="btn btn-ghost" data-act="editdept">กลุ่มบริหารงาน</button>' : '') +
         // ลบถาวร (ตั้งแต่ 1.30.091026): กดได้เฉพาะบัญชีที่ระงับแล้ว — ถ้ายังใช้งานอยู่ปุ่มจะปิดไว้พร้อมคำอธิบาย
         (u.status === 'active'
           ? '<button class="btn btn-danger" data-act="purge" disabled>ลบถาวร</button><div class="hint">ต้องระงับบัญชีนี้ก่อน จึงจะลบถาวรได้</div>'
@@ -2328,11 +2534,11 @@
         var errBox = document.getElementById('editDeptError');
         errBox.hidden = true;
         var deptVal = document.getElementById('editDeptSelect').value;
-        var ok = await askConfirm('ยืนยันตั้งแผนกของบัญชีนี้เป็น "' + (deptVal ? ('เจ้าหน้าที่' + deptVal) : 'ยังไม่ระบุ') + '"?', 'ยืนยันการตั้งแผนก');
+        var ok = await askConfirm('ยืนยันตั้งกลุ่มบริหารงานของบัญชีนี้เป็น "' + (deptVal ? groupLabel(deptVal) : 'ยังไม่ระบุ') + '"?' + (deptVal ? ' (ถ้าเป็นเจ้าหน้าที่ จะเป็นเจ้าหน้าที่ของกลุ่มใหม่)' : ''), 'ยืนยันการตั้งกลุ่มบริหารงาน');
         if (!ok) return;
         var r = await withProgress('กำลังบันทึก', function () {
           return apiCall('adminSetUserDepartment', { userId: editDeptUserId, department: deptVal });
-        }, { successLabel: 'ตั้งแผนกแล้ว' });
+        }, { successLabel: 'ตั้งกลุ่มบริหารงานแล้ว' });
         if (r.ok) {
           for (var i = 0; i < allUsers.length; i++) { if (allUsers[i].id === r.data.id) { allUsers[i] = r.data; break; } }
           renderUserTable();
@@ -2343,7 +2549,7 @@
         }
       });
 
-      // ---------- เปลี่ยน Role ของบัญชี (ตั้งแต่ 1.40.101026) — Super Admin เท่านั้น (ดู adminSetRole) ----------
+      // ---------- เปลี่ยน Role ของบัญชี (ตั้งแต่ 1.41.111026) — Super Admin เท่านั้น (ดู adminSetRole) ----------
       var changeRoleModal = document.getElementById('changeRoleModal');
       var changeRoleUserId = null;
       var CHANGE_ROLE_LABEL = { teacher: 'ครู', staff: 'เจ้าหน้าที่', executive: 'ผู้บริหาร', superadmin: 'Super Admin' };
@@ -2354,12 +2560,12 @@
       }
       function syncChangeRoleFields() {
         var v = document.getElementById('changeRoleSelect').value;
-        document.getElementById('changeRoleDeptField').hidden = v !== 'staff';
+        document.getElementById('changeRoleDeptField').hidden = !(v === 'staff' || v === 'teacher');
         document.getElementById('changeRolePosField').hidden = v !== 'executive';
         document.getElementById('changeRoleHint').textContent =
           v === 'executive' ? 'ผู้บริหารดูสรุป/ปฏิทิน/ประกาศได้อย่างเดียว ไม่ต้องส่งงาน — ผลงานเดิมของบัญชีนี้ยังอยู่ในระบบ แต่จะไม่แสดง' :
           v === 'superadmin' ? 'ระวัง: บัญชี Super Admin จะไม่แสดงในตารางจัดการบัญชีนี้ (เป็นความลับ) จึงเปลี่ยนกลับผ่านหน้านี้ไม่ได้ และไม่มีหน้าฮับส่วนตัว' :
-          v === 'staff' ? 'เจ้าหน้าที่ส่งงานของตนเองได้เหมือนครู และจัดการงานของฝ่ายที่เลือก' : 'ครูส่งงานและมีหน้าแสดงผลงานของตนเอง';
+          v === 'staff' ? 'เจ้าหน้าที่ส่งงานของตนเองได้เหมือนครู และจัดการงานของกลุ่มบริหารงานที่สังกัด' : 'ครูส่งงานและมีหน้าแสดงผลงานของตนเอง';
       }
       openChangeRoleModal = function (userId, name) {
         changeRoleUserId = userId;
@@ -2519,7 +2725,7 @@
       });
     }
 
-    // ---------- ข้อมูลระบบ (ตั้งแต่ 1.40.101026) ----------
+    // ---------- ข้อมูลระบบ (ตั้งแต่ 1.41.111026) ----------
     // ขนาดฐานข้อมูล D1 + พื้นที่ Google Drive (ผ่าน Drive relay) + พื้นที่รายบัญชี (หน้าเว็บเรียกทีละโฟลเดอร์ 3 งานพร้อมกัน แล้วเติมตารางไปเรื่อยๆ)
     var _sysInfoRun = 0;
     function sysBarHtml(pct, label) {
@@ -2573,7 +2779,7 @@
       var tbody = document.getElementById('sysAccountsBody');
       function nameCell(r) {
         var f = r.f;
-        if (f.matched) return escapeHtml(f.userName) + ' <span class="hint">(' + escapeHtml(f.username) + ')</span>';
+        if (f.matched) return escapeHtml(f.userName) + (f.username ? ' <span class="hint">(' + escapeHtml(f.username) + ')</span>' : '');
         return escapeHtml(f.name) + ' <span class="hint">— ไม่พบบัญชีนี้ในระบบ (อาจถูกลบถาวรแล้ว)</span>';
       }
       function paint(sorted) {

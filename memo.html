@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.40.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.41.111026" />
 <style>
   /* ---------- หน้า "บันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026) ----------
      แบ่งเป็น 2 ส่วนชัดเจน: (1) ส่วนควบคุม/แก้ไขข้อมูล (.no-print) ใช้ .card/.field ปกติของเว็บ เห็นเฉพาะตอนดูบนจอ
@@ -103,7 +103,7 @@
         <select id="memoSubjectSelect"></select>
       </div>
       <div class="field" id="memoCustomDeptWrap" hidden>
-        <label for="memoDeptSelect">ฝ่ายที่จะส่งถึง</label>
+        <label for="memoDeptSelect">กลุ่มบริหารงานที่จะส่งถึง</label>
         <select id="memoDeptSelect"></select>
       </div>
       <div class="field">
@@ -133,7 +133,7 @@
 
   <div id="app-footer" class="no-print"></div>
 
-  <script src="assets/api.js?v=1.40.101026"></script>
+  <script src="assets/api.js?v=1.41.111026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireHubAccess();
@@ -287,8 +287,8 @@
       // memoDeputyName แบบ global เดิม ยังไม่เลือกฝ่าย/ฝ่ายยังไม่ตั้งชื่อผู้ลงนาม = เว้นจุดประ + ใช้ตำแหน่งทั่วไปแทน
       var memoDept = currentMemoDepartment();
       var deptSigner = (settings.departmentSigners && settings.departmentSigners[memoDept]) || {};
-      var headTitle = 'ความเห็นของ' + (deptSigner.headPosition || (memoDept ? ('หัวหน้าฝ่าย' + memoDept) : 'หัวหน้าฝ่ายที่เกี่ยวข้อง'));
-      var deputyTitle = 'ความเห็นของ' + (deptSigner.deputyPosition || (memoDept ? ('รองผู้อำนวยการฝ่าย' + memoDept) : 'รองผู้อำนวยการฝ่ายที่เกี่ยวข้อง'));
+      var headTitle = 'ความเห็นของ' + (deptSigner.headPosition || (memoDept ? ('หัวหน้า' + groupLabel(memoDept)) : 'หัวหน้ากลุ่มบริหารงานที่เกี่ยวข้อง'));
+      var deputyTitle = 'ความเห็นของ' + (deptSigner.deputyPosition || (memoDept ? ('รองผู้อำนวยการ' + groupLabel(memoDept)) : 'รองผู้อำนวยการกลุ่มบริหารงานที่เกี่ยวข้อง'));
 
       var tableRows = items.map(function (s, i) {
         return '<tr><td class="memo-no">' + (i + 1) + '</td><td>' + escapeHtml(s.title || s.fileName) + '</td><td>' + escapeHtml(s.categoryName) + '</td><td>' + formatDateThai(s.uploadedAt) + '</td></tr>';
@@ -327,7 +327,7 @@
         '<div class="memo-sign-block">' +
           '<div class="memo-sign-line">ลงชื่อ.................................................</div>' +
           '<div class="memo-sign-line">(' + escapeHtml(deptSigner.headName || '.................................................') + ')</div>' +
-          '<div class="memo-sign-line">ตำแหน่ง ' + escapeHtml(deptSigner.headPosition || (memoDept ? ('หัวหน้าฝ่าย' + memoDept) : '.................................................')) + '</div>' +
+          '<div class="memo-sign-line">ตำแหน่ง ' + escapeHtml(deptSigner.headPosition || (memoDept ? ('หัวหน้า' + groupLabel(memoDept)) : '.................................................')) + '</div>' +
         '</div>' +
       '</div>';
 
@@ -337,7 +337,7 @@
         '<div class="memo-sign-block">' +
           '<div class="memo-sign-line">ลงชื่อ.................................................</div>' +
           '<div class="memo-sign-line">(' + escapeHtml(deptSigner.deputyName || '.................................................') + ')</div>' +
-          '<div class="memo-sign-line">ตำแหน่ง ' + escapeHtml(deptSigner.deputyPosition || (memoDept ? ('รองผู้อำนวยการฝ่าย' + memoDept) : '.................................................')) + '</div>' +
+          '<div class="memo-sign-line">ตำแหน่ง ' + escapeHtml(deptSigner.deputyPosition || (memoDept ? ('รองผู้อำนวยการ' + groupLabel(memoDept)) : '.................................................')) + '</div>' +
         '</div>' +
       '</div>';
 
@@ -384,7 +384,7 @@
       }
       var subjSel = document.getElementById('memoSubjectSelect');
       var subjOptsHtml = memoSubjectsList.map(function (m) {
-        return '<option value="' + m.id + '">' + escapeHtml(m.subject) + ' (ฝ่าย' + escapeHtml(m.department) + ')</option>';
+        return '<option value="' + m.id + '">' + escapeHtml(m.subject) + ' (' + escapeHtml(groupLabel(m.department)) + ')</option>';
       }).join('');
       subjOptsHtml += '<option value="' + CUSTOM_SUBJECT_VALUE + '">พิมพ์เอง (ระบุหัวเรื่องเอง)</option>';
       subjSel.innerHTML = subjOptsHtml;
@@ -393,8 +393,8 @@
 
       var deptSel = document.getElementById('memoDeptSelect');
       deptSel.innerHTML = memoDepartmentsList.length > 0
-        ? memoDepartmentsList.map(function (d) { return '<option value="' + escapeHtml(d) + '">ฝ่าย' + escapeHtml(d) + '</option>'; }).join('')
-        : '<option value="">— ยังไม่มีฝ่ายในระบบ —</option>';
+        ? memoDepartmentsList.map(function (d) { return '<option value="' + escapeHtml(d) + '">' + escapeHtml(groupLabel(d)) + '</option>'; }).join('')
+        : '<option value="">— ยังไม่มีกลุ่มบริหารงานในระบบ —</option>';
 
       var d = defaultSubjectAndBody();
       document.getElementById('memoSubject').value = d.subject;

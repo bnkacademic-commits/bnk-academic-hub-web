@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>ไฟล์คำสั่ง — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=1.41.111026" />
+</head>
+<body>
+  <div id="app-topbar"></div>
+  <div class="container">
+    <div class="page-header orders-header">
+      <div>
+        <h1>ไฟล์คำสั่ง</h1>
+        <p>คำสั่งของโรงเรียน แยกตามกลุ่มบริหารงาน</p>
+      </div>
+      <button type="button" class="btn btn-primary" id="ordAddBtn" hidden><i class="fa-solid fa-plus"></i> เพิ่มไฟล์คำสั่ง</button>
+    </div>
+    <div class="orders-toolbar">
+      <input type="search" id="ordSearch" placeholder="ค้นหาชื่อคำสั่ง / เลขที่" aria-label="ค้นหา" />
+      <select id="ordDept" aria-label="กรองตามกลุ่มบริหารงาน"></select>
+      <select id="ordSubject" aria-label="กรองตามกลุ่มสาระการเรียนรู้"></select>
+      <select id="ordYear" aria-label="กรองตามปี"></select>
+    </div>
+    <div id="ordRoot"><div class="loading">กำลังโหลด...</div></div>
+  </div>
+
+  <!-- เพิ่ม/แก้ไขไฟล์คำสั่ง -->
+  <div class="modal-backdrop" id="ordModal" hidden>
+    <div class="modal-box modal-box-wide">
+      <button type="button" class="modal-close-x" id="ordCloseX" aria-label="ปิด">✕</button>
+      <h3 id="ordModalTitle">เพิ่มไฟล์คำสั่ง</h3>
+      <div id="ordError" class="error-box" hidden></div>
+      <form id="ordForm" style="text-align:left;">
+        <div class="field" id="ordFileWrap">
+          <label for="ordFile">ไฟล์คำสั่ง (ไม่เกิน 25MB)</label>
+          <input id="ordFile" type="file" />
+        </div>
+        <div class="field">
+          <label for="ordTitle">ชื่อคำสั่ง</label>
+          <input id="ordTitle" maxlength="300" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="ordNo">เลขที่คำสั่ง (ถ้ามี)</label>
+            <input id="ordNo" maxlength="60" />
+          </div>
+          <div class="field">
+            <label for="ordDate">วันที่จัดทำคำสั่ง</label>
+            <input id="ordDate" type="date" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="ordActStart">กิจกรรมเริ่มวันที่ (ถ้ามี)</label>
+            <input id="ordActStart" type="date" />
+          </div>
+          <div class="field">
+            <label for="ordActEnd">ถึงวันที่ (เว้นว่าง = วันเดียว)</label>
+            <input id="ordActEnd" type="date" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="ordDeptSel">กลุ่มบริหารงาน</label>
+            <select id="ordDeptSel"></select>
+          </div>
+          <div class="field">
+            <label for="ordSubjectSel">กลุ่มสาระการเรียนรู้ (ถ้ามี)</label>
+            <select id="ordSubjectSel"></select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary" id="ordSaveBtn">บันทึก</button>
+          <button type="button" class="btn btn-ghost" id="ordCancel">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="app-footer"></div>
+  <script src="assets/api.js?v=1.41.111026"></script>
+  <script>
+    var session = requireLogin();
+    var orders = [], departments = [], manageDepartments = [], subjectGroups = [];
+    var editingId = '';
+    var collapsed = {};
+
+    function $(id) { return document.getElementById(id); }
+    function showErr(msg) { var e = $('ordError'); e.textContent = msg || ''; e.hidden = !msg; }
+
+    function activityText(o) {
+      if (!o.activityStart) return '';
+      if (!o.activityEnd) return formatDateThai(o.activityStart);
+      return formatDateThai(o.activityStart) + ' – ' + formatDateThai(o.activityEnd);
+    }
+    function yearBE(o) { return Number(String(o.orderDate).slice(0, 4)) + 543; }
+
+    function fillFilters() {
+      var d = $('ordDept'), s = $('ordSubject'), y = $('ordYear');
+      var dv = d.value, sv = s.value, yv = y.value;
+      d.innerHTML = '<option value="">ทุกกลุ่มบริหารงาน</option>' + departments.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(groupLabel(x)) + '</option>'; }).join('');
+      s.innerHTML = '<option value="">ทุกกลุ่มสาระการเรียนรู้</option><option value="__none">ขึ้นตรงกลุ่มบริหารงาน (ไม่มีกลุ่มสาระ)</option>' + subjectGroups.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
+      var years = {};
+      orders.forEach(function (o) { years[yearBE(o)] = 1; });
+      var ylist = Object.keys(years).sort(function (a, b) { return b - a; });
+      y.innerHTML = '<option value="">ทุกปี</option>' + ylist.map(function (x) { return '<option value="' + x + '">ปี ' + x + '</option>'; }).join('');
+      d.value = dv; s.value = sv; y.value = yv;
+      if (d.value !== dv) d.value = '';
+      if (s.value !== sv) s.value = '';
+      if (y.value !== yv) y.value = '';
+    }
+
+    function render() {
+      var q = $('ordSearch').value.trim().toLowerCase();
+      var fd = $('ordDept').value, fs = $('ordSubject').value, fy = $('ordYear').value;
+      var list = orders.filter(function (o) {
+        if (fd && o.department !== fd) return false;
+        if (fs === '__none') { if (o.subjectGroup) return false; } else if (fs && o.subjectGroup !== fs) return false;
+        if (fy && String(yearBE(o)) !== fy) return false;
+        if (q && (o.title + ' ' + o.orderNo).toLowerCase().indexOf(q) < 0) return false;
+        return true;
+      });
+      var root = $('ordRoot');
+      if (!orders.length) { root.innerHTML = '<div class="orders-empty">ยังไม่มีไฟล์คำสั่งในระบบ</div>'; return; }
+      if (!list.length) { root.innerHTML = '<div class="orders-empty">ไม่พบคำสั่งที่ตรงกับเงื่อนไข</div>'; return; }
+      var byDept = {};
+      list.forEach(function (o) { (byDept[o.department] = byDept[o.department] || []).push(o); });
+      var order = departments.filter(function (x) { return byDept[x]; });
+      Object.keys(byDept).forEach(function (x) { if (order.indexOf(x) < 0) order.push(x); });
+      root.innerHTML = order.map(function (dep) {
+        var rows = byDept[dep];
+        var isCol = !!collapsed[dep];
+        return '<section class="orders-group" data-dept="' + escapeHtml(dep) + '">' +
+          '<button type="button" class="orders-group-head" data-toggle="' + escapeHtml(dep) + '" aria-expanded="' + (!isCol) + '">' +
+          '<i class="fa-solid ' + (isCol ? 'fa-chevron-right' : 'fa-chevron-down') + '"></i> <span class="orders-group-name">' + escapeHtml(groupLabel(dep)) + '</span>' +
+          '<span class="orders-group-count">' + rows.length + ' รายการ</span></button>' +
+          (isCol ? '' : '<ul class="orders-list">' + rows.map(rowHtml).join('') + '</ul>') +
+          '</section>';
+      }).join('');
+    }
+
+    function rowHtml(o) {
+      var act = activityText(o);
+      var tag = o.subjectGroup ? '<span class="orders-tag">' + escapeHtml(o.subjectGroup) + '</span>' : '<span class="orders-tag orders-tag-direct">ขึ้นตรงกลุ่มบริหารงาน</span>';
+      return '<li class="orders-row" data-id="' + escapeHtml(o.id) + '">' +
+        '<div class="orders-main">' +
+          '<div class="orders-title">' + escapeHtml(o.title) + '</div>' +
+          '<div class="orders-meta">' +
+            (o.orderNo ? '<span>เลขที่ ' + escapeHtml(o.orderNo) + '</span>' : '') +
+            '<span>วันที่จัดทำ ' + escapeHtml(formatDateThai(o.orderDate)) + '</span>' +
+            (act ? '<span>กิจกรรม ' + escapeHtml(act) + '</span>' : '') +
+            tag +
+          '</div>' +
+        '</div>' +
+        '<div class="orders-actions">' +
+          (o.fileUrl ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(o.fileUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-file-lines"></i> เปิดไฟล์</a>' : '') +
+          (o.canManage ? '<button type="button" class="btn btn-ghost btn-sm" data-edit="' + escapeHtml(o.id) + '">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-del="' + escapeHtml(o.id) + '">ลบ</button>' : '') +
+        '</div></li>';
+    }
+
+    async function load() {
+      try {
+        var res = await apiCall('orderList', {});
+        orders = res.orders || []; departments = res.departments || []; manageDepartments = res.manageDepartments || []; subjectGroups = res.subjectGroups || [];
+      } catch (err) {
+        $('ordRoot').innerHTML = '<div class="error-box">' + escapeHtml(err.message || 'โหลดข้อมูลไม่สำเร็จ') + '</div>';
+        return;
+      }
+      $('ordAddBtn').hidden = !manageDepartments.length;
+      fillFilters();
+      render();
+    }
+
+    function openModal(o) {
+      editingId = o ? o.id : '';
+      showErr('');
+      $('ordModalTitle').textContent = o ? 'แก้ไขข้อมูลคำสั่ง' : 'เพิ่มไฟล์คำสั่ง';
+      $('ordFileWrap').hidden = !!o;
+      $('ordFile').value = '';
+      $('ordTitle').value = o ? o.title : '';
+      $('ordNo').value = o ? o.orderNo : '';
+      $('ordDate').value = o ? o.orderDate : '';
+      $('ordActStart').value = o ? o.activityStart : '';
+      $('ordActEnd').value = o ? o.activityEnd : '';
+      var deps = o ? (manageDepartments.indexOf(o.department) >= 0 ? manageDepartments : [o.department]) : manageDepartments;
+      $('ordDeptSel').innerHTML = deps.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(groupLabel(x)) + '</option>'; }).join('');
+      if (o) $('ordDeptSel').value = o.department;
+      $('ordSubjectSel').innerHTML = '<option value="">— ไม่ระบุ (ขึ้นตรงกลุ่มบริหารงาน) —</option>' + subjectGroups.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
+      $('ordSubjectSel').value = o ? o.subjectGroup : '';
+      showModalEl($('ordModal'));
+    }
+    function closeModal() { hideModalEl($('ordModal')); }
+
+    async function uploadToRelay(file, prep) {
+      var base64 = await fileToBase64(file);
+      var text;
+      try {
+        var r = await fetch(prep.relayUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ uploadToken: prep.uploadToken, base64: base64, filename: prep.uploadFileName || file.name, mimeType: file.type }) });
+        text = await r.text();
+      } catch (e) { throw new Error('ติดต่อระบบเก็บไฟล์ไม่สำเร็จ (เครือข่ายขัดข้อง) กรุณาลองใหม่อีกครั้ง'); }
+      var j;
+      try { j = JSON.parse(text); } catch (e) { throw new Error('ระบบเก็บไฟล์ตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง'); }
+      if (!j.ok) throw new Error(j.error || 'อัพโหลดไฟล์ไม่สำเร็จ');
+      return j.data;
+    }
+
+    async function onSubmit(ev) {
+      ev.preventDefault();
+      showErr('');
+      var fields = {
+        title: $('ordTitle').value.trim(), orderNo: $('ordNo').value.trim(), orderDate: $('ordDate').value,
+        activityStart: $('ordActStart').value, activityEnd: $('ordActEnd').value,
+        department: $('ordDeptSel').value, subjectGroup: $('ordSubjectSel').value
+      };
+      if (!fields.title) return showErr('กรุณากรอกชื่อคำสั่ง');
+      if (!fields.orderDate) return showErr('กรุณาเลือกวันที่จัดทำคำสั่ง');
+      if (!fields.department) return showErr('กรุณาเลือกกลุ่มบริหารงาน');
+      if (fields.activityEnd && !fields.activityStart) return showErr('กรุณาระบุวันที่เริ่มกิจกรรมก่อน');
+      if (fields.activityEnd && fields.activityEnd < fields.activityStart) return showErr('วันที่สิ้นสุดกิจกรรมต้องไม่ก่อนวันที่เริ่ม');
+      if (editingId) {
+        var r1 = await withProgress('กำลังบันทึก...', function () { return apiCall('orderUpdate', Object.assign({ orderId: editingId }, fields)); }, { successLabel: 'บันทึกแล้ว' });
+        if (!r1.ok) return showErr(r1.error && r1.error.message);
+      } else {
+        var file = $('ordFile').files[0];
+        if (!file) return showErr('กรุณาเลือกไฟล์คำสั่ง');
+        if (file.size > 25 * 1024 * 1024) return showErr('ไฟล์มีขนาดใหญ่เกิน 25MB');
+        var r2 = await withProgress('กำลังอัพโหลดไฟล์คำสั่ง...', async function () {
+          var prep = await apiCall('orderUploadPrepare', Object.assign({ fileName: file.name, mimeType: file.type, fileSize: file.size }, fields));
+          var up = await uploadToRelay(file, prep);
+          return apiCall('orderUploadFinalize', { orderId: prep.orderId, fileId: up.fileId, fileUrl: up.url, directUrl: up.directUrl, fileName: up.fileName || file.name, mimeType: file.type });
+        }, { successLabel: 'เพิ่มไฟล์คำสั่งแล้ว' });
+        if (!r2.ok) return showErr(r2.error && r2.error.message);
+      }
+      closeModal();
+      await load();
+    }
+
+    if (session) {
+      mountChrome('orders');
+      $('ordAddBtn').addEventListener('click', function () { openModal(null); });
+      $('ordForm').addEventListener('submit', onSubmit);
+      $('ordCancel').addEventListener('click', closeModal);
+      $('ordCloseX').addEventListener('click', closeModal);
+      ['ordSearch'].forEach(function (id) { $(id).addEventListener('input', render); });
+      ['ordDept', 'ordSubject', 'ordYear'].forEach(function (id) { $(id).addEventListener('change', render); });
+      $('ordRoot').addEventListener('click', async function (ev) {
+        var t = ev.target.closest('[data-toggle],[data-edit],[data-del]');
+        if (!t) return;
+        if (t.hasAttribute('data-toggle')) { var k = t.getAttribute('data-toggle'); collapsed[k] = !collapsed[k]; render(); return; }
+        if (t.hasAttribute('data-edit')) { var id = t.getAttribute('data-edit'); var o = orders.filter(function (x) { return x.id === id; })[0]; if (o) openModal(o); return; }
+        if (t.hasAttribute('data-del')) {
+          var did = t.getAttribute('data-del'); var od = orders.filter(function (x) { return x.id === did; })[0];
+          if (!od) return;
+          var yes = await askConfirm('ลบคำสั่ง "' + od.title + '" และไฟล์ออกจากระบบ? การลบนี้ย้อนกลับไม่ได้', 'ลบไฟล์คำสั่ง');
+          if (!yes) return;
+          var r = await withProgress('กำลังลบ...', function () { return apiCall('orderDelete', { orderId: did }); }, { successLabel: 'ลบแล้ว' });
+          if (r.ok) await load();
+        }
+      });
+      load();
+    }
+  </script>
+</body>
+</html>

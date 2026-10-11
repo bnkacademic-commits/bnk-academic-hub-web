@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.40.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.41.111026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -32,7 +32,7 @@
       <div class="ext-links-grid" id="extLinksGrid"></div>
     </div>
 
-    <!-- ตั้งแต่ 1.40.101026: การ์ด "เว็บไซต์โรงเรียน" อยู่บนสุด เหนือข้อความต้อนรับ · ปุ่ม "หน้าผลงานของฉัน" และ "จัดทำบันทึกข้อความ" อยู่ฝั่งขวาของข้อความต้อนรับ
+    <!-- ตั้งแต่ 1.41.111026: การ์ด "เว็บไซต์โรงเรียน" อยู่บนสุด เหนือข้อความต้อนรับ · ปุ่ม "หน้าผลงานของฉัน" และ "จัดทำบันทึกข้อความ" อยู่ฝั่งขวาของข้อความต้อนรับ
          · ตัดคำอธิบาย "อัพโหลด จัดการ และแชร์ผลงาน…" ออกตามที่ผู้ใช้ขอ -->
     <div class="page-header dash-welcome-row">
       <h1 id="welcomeHeading">ยินดีต้อนรับ</h1>
@@ -48,7 +48,7 @@
     </div>
 
     <div class="card" id="annCard" hidden>
-      <div class="section-title"><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> ประกาศจากฝ่ายวิชาการ</div>
+      <div class="section-title"><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> ประกาศจากกลุ่มบริหารงานวิชาการ</div>
       <div id="hubAnnList"><div class="loading">กำลังโหลด</div></div>
     </div>
 
@@ -163,7 +163,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.40.101026"></script>
+  <script src="assets/api.js?v=1.41.111026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -203,7 +203,7 @@
       }
     })();
 
-    // ---------- ประกาศจากฝ่ายวิชาการ ----------
+    // ---------- ประกาศจากกลุ่มบริหารงานวิชาการ ----------
     async function loadHubAnnouncements() {
       var card = document.getElementById('annCard');
       var wrap = document.getElementById('hubAnnList');
@@ -216,7 +216,7 @@
         wrap.innerHTML = rows.map(function (a) {
           return '<div class="event-list-item hub-ann-item"><div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
             (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
-            '<div class="sub-item-meta">จากฝ่ายวิชาการ · ' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
+            '<div class="sub-item-meta">จากกลุ่มบริหารงานวิชาการ · ' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
         }).join('');
       } catch (err) {
         card.hidden = false;
@@ -324,10 +324,10 @@
         // ตั้งแต่ V12.0: ตัดประเภทงาน "แจ้งเตือนอย่างเดียว" ออกจากตัวเลือกตอนส่งงาน — ไม่รับการส่งงานผ่านระบบอยู่แล้ว (Worker บล็อกไว้ชั้นหลังด้วย)
         var selectableCats = cats.filter(function (c) { return !c.noSubmission; });
         if (selectableCats.length === 0) {
-          sel.innerHTML = '<option value="">(ยังไม่มีประเภทงาน — ติดต่อฝ่ายวิชาการ)</option>';
+          sel.innerHTML = '<option value="">(ยังไม่มีประเภทงาน — ติดต่อกลุ่มบริหารงานวิชาการ)</option>';
           return;
         }
-        sel.innerHTML = selectableCats.map(function (c) { return '<option value="' + c.id + '">' + escapeHtml(c.name + (c.department ? ' · ฝ่าย' + c.department : '')) + '</option>'; }).join('');
+        sel.innerHTML = selectableCats.map(function (c) { return '<option value="' + c.id + '">' + escapeHtml(c.name + (c.department ? ' · ' + groupLabel(c.department) : '')) + '</option>'; }).join('');
       } catch (err) {
         sel.innerHTML = '<option value="">โหลดประเภทงานไม่สำเร็จ</option>';
       }
@@ -605,7 +605,7 @@
       });
     }
     // ตั้งแต่ V-ถัดไปหลัง V10.1: แสดงทุกภาคเรียน/ปีการศึกษา จัดเป็นหมวดใหญ่ "เทอม ปีการศึกษา" ก่อน แล้วค่อยลิสงานในเทอมนั้นลงมา (เดิมกรองแสดงแค่เทอมปัจจุบันเทอมเดียว)
-    // ตั้งแต่ 1.40.101026: เช็คลิสต์ย่อ/ขยายได้เหมือนดร็อปดาวน์ต่อ "เทอม ปีการศึกษา" — ค่าเริ่มต้นขยายเฉพาะเทอมปัจจุบัน (ตาม currentAcademicTerm()
+    // ตั้งแต่ 1.41.111026: เช็คลิสต์ย่อ/ขยายได้เหมือนดร็อปดาวน์ต่อ "เทอม ปีการศึกษา" — ค่าเริ่มต้นขยายเฉพาะเทอมปัจจุบัน (ตาม currentAcademicTerm()
     // ที่ Super Admin ตั้งไว้หรืออัตโนมัติ) · มีช่องเลือกปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · ปุ่ม ↻ = กลับไปปีปัจจุบัน + ย่อ/ขยายกลับค่าเริ่มต้น
     var checklistState = { term: null, loading: false, year: '', expanded: {} }; // expanded: { "ปี|เทอม": true/false } ที่ผู้ใช้กดเองแล้ว (ไม่มี key = ใช้ค่าเริ่มต้น)
     function renderAssignmentChecklist() {

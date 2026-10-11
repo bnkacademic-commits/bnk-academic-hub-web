@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.40.101026" />
+<link rel="stylesheet" href="assets/style.css?v=1.41.111026" />
 <style>
   .dir-section { margin-bottom: 22px; }
   .dir-section-title { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 800; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-light); color: var(--primary-dark); }
@@ -39,7 +39,18 @@
   .dir-head { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 999px; background: var(--warn-light); color: var(--warn); font-size: 0.74rem; font-weight: 700; }
   .dir-notice { text-align: center; color: var(--text-muted); padding: 40px 10px; }
   /* ---- ปุ่มสลับมุมมอง ---- */
-  .dir-toolbar { display: flex; justify-content: flex-end; margin: 0 0 14px; }
+  .dir-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px 14px; flex-wrap: wrap; margin: 0 0 14px; }
+  .dir-filters { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+  .dir-filters .dir-label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+  .dir-filters select { width: auto; min-width: 190px; max-width: 100%; padding: 7px 12px; font-size: 0.88rem; }
+  .dir-toolbar > *, .dir-filters { max-width: 100%; min-width: 0; }
+  .dir-filters select { flex: 1 1 190px; min-width: 0; }
+  @media (max-width: 560px) {
+    .dir-filters .dir-label { width: 100%; }
+    .dir-groupby { display: flex; width: 100%; }
+    .dir-groupby button { flex: 1 1 0; justify-content: center; padding: 7px 8px; font-size: 0.8rem; line-height: 1.3; }
+    .dir-filters select { flex-basis: 100%; }
+  }
   .dir-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--surface); }
   .dir-toggle button { border: 0; background: transparent; color: var(--text-muted); font: inherit; font-size: 0.85rem; font-weight: 700; padding: 7px 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
   .dir-toggle button[aria-pressed="true"] { background: var(--primary); color: #fff; }
@@ -76,7 +87,7 @@
   .tn.ex1 .tav { width: 70px; height: 70px; }
   .tav img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .tav svg { width: 55%; height: 55%; display: block; }
-  /* ชื่อ-สกุลบรรทัดเดียวเสมอ (ไม่ตัดขึ้นบรรทัดใหม่) — ชื่อยาวจะ "ย่อขนาดตัวอักษร" ให้พอดีกรอบ (fitTreeNames ใน JS ตั้งแต่ 1.40.101026) ตัดท้ายด้วย … เฉพาะกรณีย่อถึงขนาดเล็กสุดแล้วยังไม่พอ */
+  /* ชื่อ-สกุลบรรทัดเดียวเสมอ (ไม่ตัดขึ้นบรรทัดใหม่) — ชื่อยาวจะ "ย่อขนาดตัวอักษร" ให้พอดีกรอบ (fitTreeNames ใน JS ตั้งแต่ 1.41.111026) ตัดท้ายด้วย … เฉพาะกรณีย่อถึงขนาดเล็กสุดแล้วยังไม่พอ */
   .tname { font-weight: 700; font-size: 0.82rem; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tn-empty { position: relative; background: var(--surface) !important; width: 190px; box-sizing: border-box; padding: 10px 8px; border: 2px dashed var(--border); border-radius: 14px; color: var(--text-muted); font-size: 0.78rem; }
   .tpos { color: var(--text-muted); font-size: 0.76rem; margin-top: 2px; }
@@ -94,10 +105,10 @@
       <h1>ทำเนียบบุคลากรโรงเรียน</h1>
       <p id="dirSub">คณะผู้บริหารและครู/บุคลากรของโรงเรียน</p>
     </div>
-    <div class="dir-toolbar"><div class="dir-toggle" role="group" aria-label="เลือกมุมมอง"><button type="button" id="dirViewTree" data-view="tree" aria-pressed="false"><i class="fa-solid fa-sitemap"></i> ผังองค์กร</button><button type="button" id="dirViewCards" data-view="cards" aria-pressed="false"><i class="fa-solid fa-th-large"></i> การ์ด</button></div></div>
+    <div class="dir-toolbar"><div class="dir-filters"><span class="dir-label">จัดกลุ่มตาม</span><div class="dir-toggle dir-groupby" role="group" aria-label="เลือกวิธีจัดกลุ่ม"><button type="button" data-group="subject" aria-pressed="true">กลุ่มสาระการเรียนรู้</button><button type="button" data-group="dept" aria-pressed="false">กลุ่มบริหารงาน</button></div><select id="dirFilter" aria-label="กรอง"></select></div><div class="dir-toggle" role="group" aria-label="เลือกมุมมอง"><button type="button" id="dirViewTree" data-view="tree" aria-pressed="false"><i class="fa-solid fa-sitemap"></i> ผังองค์กร</button><button type="button" id="dirViewCards" data-view="cards" aria-pressed="false"><i class="fa-solid fa-th-large"></i> การ์ด</button></div></div>
     <div id="dirRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
-  <script src="assets/api.js?v=1.40.101026"></script>
+  <script src="assets/api.js?v=1.41.111026"></script>
   <script>
     var SUBJECT_GROUP_ORDER = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ'];
     var POSITION_RANK = ['ครูเชี่ยวชาญพิเศษ', 'ครูเชี่ยวชาญ', 'ครูชำนาญการพิเศษ', 'ครูชำนาญการ', 'ครู', 'ครูผู้ช่วย'];
@@ -115,19 +126,25 @@
     function rankIndex(list, v) { var i = list.indexOf(v); return i < 0 ? 999 : i; }
     function hasHead(p, k) { return (p.headRoles || []).indexOf(k) >= 0; }
     function cmpPerson(a, b) {
-      // หัวหน้ากลุ่มสาระฯ ก่อน -> ตำแหน่งสูงไปต่ำ -> ชื่อ
-      var h = (hasHead(b, 'subject') ? 1 : 0) - (hasHead(a, 'subject') ? 1 : 0);
+      // หัวหน้าของกลุ่มที่จัดอยู่ (กลุ่มสาระฯ หรือกลุ่มบริหารงาน) ก่อน -> ตำแหน่งสูงไปต่ำ -> ชื่อ
+      var key = groupBy === 'dept' ? 'dept' : 'subject';
+      var h = (hasHead(b, key) ? 1 : 0) - (hasHead(a, key) ? 1 : 0);
       if (h) return h;
       var r = rankIndex(POSITION_RANK, a.position) - rankIndex(POSITION_RANK, b.position);
       if (r) return r;
       return String(a.name).localeCompare(String(b.name), 'th');
     }
+    // ป้ายใต้ชื่อ: ตอนจัดกลุ่มตามกลุ่มสาระฯ -> ป้ายบอก "กลุ่มบริหารงาน" ที่สังกัด, ตอนจัดกลุ่มตามกลุ่มบริหารงาน -> ป้ายบอกกลุ่มสาระฯ
+    // (ทำเนียบไม่บอกว่าใครเป็นเจ้าหน้าที่/แอดมิน — บอกแค่ว่าสังกัดกลุ่มบริหารงานใด ตั้งแต่ 1.41.111026)
     function subTags(p, short) {
       var sub = [];
-      // ในผังชื่อกลุ่มสาระฯ อยู่บนหัวคอลัมน์แล้ว -> ใช้ป้ายสั้นๆ ไม่ให้ล้นกรอบ
       if (hasHead(p, 'subject')) sub.push(short ? 'หัวหน้ากลุ่มสาระฯ' : 'หัวหน้ากลุ่มสาระการเรียนรู้' + (p.subjectGroup || ''));
-      if (p.kind === 'staff') sub.push('เจ้าหน้าที่' + (p.department ? 'ฝ่าย' + String(p.department).replace(/^ฝ่าย/, '') : ''));
-      if (hasHead(p, 'dept')) sub.push('หัวหน้าฝ่าย' + String(p.department || '').replace(/^ฝ่าย/, ''));
+      if (hasHead(p, 'dept') && p.department) sub.push(short ? 'หัวหน้ากลุ่มบริหารงาน' : 'หัวหน้า' + groupLabel(p.department));
+      if (groupBy === 'dept') {
+        if (p.subjectGroup && !hasHead(p, 'subject')) sub.push((short ? 'สาระฯ' : 'กลุ่มสาระการเรียนรู้') + p.subjectGroup);
+      } else if (p.department && !hasHead(p, 'dept')) {
+        sub.push(groupLabel(p.department));
+      }
       return sub;
     }
     function linkAttrs(p) {
@@ -176,43 +193,74 @@
         .sort(function (a, b) { return rankIndex(EXEC_RANK, a.position) - rankIndex(EXEC_RANK, b.position) || String(a.name).localeCompare(String(b.name), 'th'); });
       return { execs: execs, rest: people.filter(function (p) { return p.kind !== 'executive'; }) };
     }
+    // รายการกลุ่ม (คอลัมน์/หัวข้อ) ตามที่เลือกจัดกลุ่ม: กลุ่มสาระฯ = 8 กลุ่มตายตัว · กลุ่มบริหารงาน = ตามรายการที่ตั้งไว้ในระบบ + "ยังไม่สังกัด" ท้ายสุด
+    function buildGroups(rest) {
+      var groups = [];
+      if (groupBy === 'dept') {
+        deptList.forEach(function (d) {
+          groups.push({ key: d, title: groupLabel(d), list: rest.filter(function (p) { return p.department === d; }).sort(cmpPerson) });
+        });
+        groups.push({ key: 'other', title: 'ยังไม่สังกัดกลุ่มบริหารงาน', list: rest.filter(function (p) { return !p.department || deptList.indexOf(p.department) < 0; }).sort(cmpPerson) });
+      } else {
+        SUBJECT_GROUP_ORDER.forEach(function (g) {
+          groups.push({ key: g, title: 'กลุ่มสาระการเรียนรู้' + g, list: rest.filter(function (p) { return p.subjectGroup === g; }).sort(cmpPerson) });
+        });
+        groups.push({ key: 'other', title: 'ครูและบุคลากรอื่นๆ', list: rest.filter(function (p) { return SUBJECT_GROUP_ORDER.indexOf(p.subjectGroup) < 0; }).sort(cmpPerson) });
+      }
+      return groups;
+    }
+    function visibleGroups(rest) {
+      var gs = buildGroups(rest);
+      return filterVal ? gs.filter(function (g) { return g.key === filterVal; }) : gs;
+    }
     function treeHtml(people) {
       var sp = splitPeople(people), execs = sp.execs, rest = sp.rest;
       var cols = '';
-      SUBJECT_GROUP_ORDER.forEach(function (g) {
-        cols += columnHtml('กลุ่มสาระการเรียนรู้' + g, rest.filter(function (p) { return p.subjectGroup === g; }).sort(cmpPerson), g);
-      });
-      cols += columnHtml('ครูและบุคลากรอื่นๆ', rest.filter(function (p) { return SUBJECT_GROUP_ORDER.indexOf(p.subjectGroup) < 0; }).sort(cmpPerson), 'other');
-      var h = '<div class="tree-hint" id="treeHint"><i class="fa-solid fa-arrows-left-right"></i> เลื่อนซ้าย-ขวาเพื่อดูกลุ่มสาระฯ อื่นๆ</div><div class="tree-wrap"><div class="tree" id="dirTree">';
+      visibleGroups(rest).forEach(function (g) { cols += columnHtml(g.title, g.list, g.key); });
+      var h = '<div class="tree-hint" id="treeHint"><i class="fa-solid fa-arrows-left-right"></i> เลื่อนซ้าย-ขวาเพื่อดูกลุ่มอื่นๆ</div><div class="tree-wrap"><div class="tree" id="dirTree">';
       if (execs.length) {
         h += '<ul><li>' + nodeHtml(execs[0], 'ex1');
         if (execs.length > 1) h += '<ul>' + execs.slice(1).map(function (e) { return '<li>' + nodeHtml(e, 'ex2') + '</li>'; }).join('') + '</ul>';
         h += '</li></ul>';
       }
-      // คณะผู้บริหารแสดงเมื่อมีบัญชีผู้บริหารเท่านั้น — ถ้ายังไม่มีเลย ผังเริ่มที่เส้นของกลุ่มสาระฯ
+      // คณะผู้บริหารแสดงเมื่อมีบัญชีผู้บริหารเท่านั้น — ถ้ายังไม่มีเลย ผังเริ่มที่เส้นของกลุ่ม
       h += '<div class="bus' + (execs.length ? '' : ' noroot') + '"><ul>' + cols + '</ul></div>';
       return h + '</div></div>';
     }
     function cardsHtml(people) {
       var sp = splitPeople(people), rest = sp.rest;
-      var html = sectionHtml('คณะผู้บริหาร', sp.execs, true, 'executive');
-      SUBJECT_GROUP_ORDER.forEach(function (g) {
-        html += sectionHtml('กลุ่มสาระการเรียนรู้' + g, rest.filter(function (p) { return p.subjectGroup === g; }).sort(cmpPerson), false, g);
-      });
-      html += sectionHtml('ครูและบุคลากรอื่นๆ', rest.filter(function (p) { return SUBJECT_GROUP_ORDER.indexOf(p.subjectGroup) < 0; }).sort(cmpPerson), false, 'other');
+      var html = filterVal ? '' : sectionHtml('คณะผู้บริหาร', sp.execs, true, 'executive');
+      visibleGroups(rest).forEach(function (g) { html += sectionHtml(g.title, g.list, false, g.key); });
       return html;
     }
     // ---- เลือกมุมมอง: ค่าเริ่มต้นตามความกว้างจอ (>=768px = ผังองค์กร, มือถือ = การ์ด) ผู้ใช้กดสลับเองได้และจำไว้ในเครื่องนั้น ----
     var VIEW_KEY = 'bnkah_dir_view';
     var wideMq = window.matchMedia ? window.matchMedia('(min-width: 768px)') : null;
     var allPeople = null;
+    var deptList = [];
+    var GROUP_KEY = 'bnkah_dir_group';
+    var groupBy = 'subject', filterVal = '';
+    try { var gv = localStorage.getItem(GROUP_KEY); if (gv === 'dept' || gv === 'subject') groupBy = gv; } catch (e) {}
     function storedView() { try { var v = localStorage.getItem(VIEW_KEY); return (v === 'tree' || v === 'cards') ? v : null; } catch (e) { return null; } }
     function currentView() { return storedView() || ((wideMq && wideMq.matches) ? 'tree' : 'cards'); }
+    // ตัวกรอง: เลือกดูทีละกลุ่ม (รายการเปลี่ยนตามวิธีจัดกลุ่ม)
+    function syncGroupControls() {
+      Array.prototype.forEach.call(document.querySelectorAll('.dir-groupby button'), function (b) {
+        b.setAttribute('aria-pressed', b.getAttribute('data-group') === groupBy ? 'true' : 'false');
+      });
+      var sel = document.getElementById('dirFilter');
+      var opts = [{ key: '', title: groupBy === 'dept' ? 'ทุกกลุ่มบริหารงาน' : 'ทุกกลุ่มสาระการเรียนรู้' }];
+      buildGroups([]).forEach(function (g) { opts.push({ key: g.key, title: g.title }); });
+      if (!opts.some(function (o) { return o.key === filterVal; })) filterVal = '';
+      sel.innerHTML = opts.map(function (o) { return '<option value="' + escapeHtml(o.key) + '"' + (o.key === filterVal ? ' selected' : '') + '>' + escapeHtml(o.title) + '</option>'; }).join('');
+      sel.setAttribute('aria-label', groupBy === 'dept' ? 'กรองตามกลุ่มบริหารงาน' : 'กรองตามกลุ่มสาระการเรียนรู้');
+    }
     function render(people) {
       if (people) allPeople = people;
+      syncGroupControls();
       var root = document.getElementById('dirRoot');
       var view = currentView();
-      Array.prototype.forEach.call(document.querySelectorAll('.dir-toggle button'), function (b) {
+      Array.prototype.forEach.call(document.querySelectorAll('.dir-toggle:not(.dir-groupby) button'), function (b) {
         b.setAttribute('aria-pressed', b.getAttribute('data-view') === view ? 'true' : 'false');
       });
       root.setAttribute('data-view', view);
@@ -248,7 +296,16 @@
       if (w && h) h.classList.toggle('show', w.scrollWidth > w.clientWidth + 2);
     }
     window.addEventListener('resize', updateTreeHint);
-    Array.prototype.forEach.call(document.querySelectorAll('.dir-toggle button'), function (b) {
+    Array.prototype.forEach.call(document.querySelectorAll('.dir-groupby button'), function (b) {
+      b.addEventListener('click', function () {
+        groupBy = b.getAttribute('data-group') === 'dept' ? 'dept' : 'subject';
+        filterVal = '';
+        try { localStorage.setItem(GROUP_KEY, groupBy); } catch (e) {}
+        if (allPeople) render();
+      });
+    });
+    document.getElementById('dirFilter').addEventListener('change', function () { filterVal = this.value; if (allPeople) render(); });
+    Array.prototype.forEach.call(document.querySelectorAll('.dir-toggle:not(.dir-groupby) button'), function (b) {
       b.addEventListener('click', function () {
         try { localStorage.setItem(VIEW_KEY, b.getAttribute('data-view')); } catch (e) {}
         if (allPeople) render();
@@ -262,6 +319,7 @@
       var root = document.getElementById('dirRoot');
       try {
         var res = (session && getToken()) ? await apiCall('hubListDirectory', {}) : await apiCall('publicGetDirectory', {});
+        deptList = res.departments || [];
         render(res.people || []);
       } catch (err) {
         var msg = (err && err.message) || 'โหลดไม่สำเร็จ';

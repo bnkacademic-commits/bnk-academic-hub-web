@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.40.101026';
+var APP_VERSION = '1.41.111026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -66,7 +66,7 @@ async function apiCall(action, payload) {
     // code (ตั้งแต่ V11.7): ติด err.code ไว้กับ Error ที่ throw ออกไปด้วยถ้า backend ส่งมา (เช่น 'SESSION_REPLACED')
     // เพื่อให้จุดที่เรียกใช้ตรวจจับ error เฉพาะเจาะจงได้ด้วยรหัส ไม่ต้องเทียบข้อความภาษาไทย (ดู startSessionWatch ด้านล่าง)
     var errMsg = json.error || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ';
-    // ตั้งแต่ 1.40.101026: "ไม่รู้จักคำสั่ง: xxx" = หน้าเว็บใหม่แต่ Worker บนเซิร์ฟเวอร์ยังเป็นโค้ดเก่า (ยังไม่ได้ deploy) — บอกวิธีแก้ให้ชัด
+    // ตั้งแต่ 1.41.111026: "ไม่รู้จักคำสั่ง: xxx" = หน้าเว็บใหม่แต่ Worker บนเซิร์ฟเวอร์ยังเป็นโค้ดเก่า (ยังไม่ได้ deploy) — บอกวิธีแก้ให้ชัด
     var unk = /^ไม่รู้จักคำสั่ง:\s*(\S+)/.exec(errMsg);
     if (unk) errMsg = 'เซิร์ฟเวอร์ (Worker) ยังเป็นโค้ดเก่า ไม่มีคำสั่ง "' + unk[1] + '" — ต้องอัพเดตไฟล์ Worker เป็นชุดเดียวกับหน้าเว็บ (เวอร์ชัน ' + APP_VERSION + ') แล้ว Deploy Worker ใหม่ (ดู README ขั้นตอนอัพเดต) ก่อนใช้ฟีเจอร์นี้';
     var err = new Error(errMsg);
@@ -109,7 +109,7 @@ function clearSession() {
     localStorage.removeItem(SESSION_TOKEN_KEY);
     localStorage.removeItem(SESSION_USER_KEY);
     localStorage.removeItem(SESSION_LOGIN_AT_KEY);
-    localStorage.removeItem(THEME_KEY); // 1.40.101026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
+    localStorage.removeItem(THEME_KEY); // 1.41.111026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
   } catch (e) {}
 }
 // ออกจากระบบแล้วรีเฟรชหน้าเว็บ 1 ครั้งเสมอ (นำทางไปหน้าล็อกอินแบบโหลดใหม่จริง ไม่ใช้แคชหน้าเดิม)
@@ -215,7 +215,8 @@ function roleLabel(session) {
   if (!session) return '';
   if (session.role === 'teacher') return 'ครู';
   if (session.role === 'executive') return session.position || 'ผู้บริหาร';
-  if (session.role === 'admin') return session.hasHub ? ('เจ้าหน้าที่' + (session.department || '')) : 'Super Admin';
+  // 1.41.111026: เจ้าหน้าที่ = สมาชิกกลุ่มบริหารงานที่ได้สิทธิ์แอดมิน — ป้ายแสดงชื่อกลุ่มเต็ม เช่น "เจ้าหน้าที่กลุ่มบริหารงานวิชาการ"
+  if (session.role === 'admin') return session.hasHub ? ('เจ้าหน้าที่' + groupLabel(session.department)) : 'Super Admin';
   return '';
 }
 
@@ -230,7 +231,7 @@ function setTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
   applyTheme(theme);
 }
-// Dark Mode ผูกกับบัญชี (ตั้งแต่ 1.40.101026): ตอน login Worker ส่งค่าที่บัญชีนี้เคยเลือกไว้มา (user.theme: 'dark' | 'light' | '' = ยังไม่เคยเลือก)
+// Dark Mode ผูกกับบัญชี (ตั้งแต่ 1.41.111026): ตอน login Worker ส่งค่าที่บัญชีนี้เคยเลือกไว้มา (user.theme: 'dark' | 'light' | '' = ยังไม่เคยเลือก)
 // หน้าเว็บตั้งค่าตามนั้นทันที (ไม่ให้โหมดของคนก่อนหน้าบนเครื่องเดียวกันค้างมา) — ยังไม่เคยเลือก = โหมดสว่าง
 function applyAccountTheme(user) {
   var t = user && user.theme === 'dark' ? 'dark' : 'light';
@@ -511,16 +512,29 @@ function buildCategoryColorMap(categories) {
   (categories || []).forEach(function (c) { map[c.id] = c.color || '#3457d5'; _catDeptMap[c.id] = c.department || ''; });
   return map;
 }
-// ฝ่ายของประเภทงาน (ตั้งแต่ 1.40.101026) — buildCategoryColorMap เก็บ { categoryId: ชื่อฝ่าย } ไว้ด้วยทุกครั้งที่หน้าโหลดรายการประเภทงาน
+// ฝ่ายของประเภทงาน (ตั้งแต่ 1.41.111026) — buildCategoryColorMap เก็บ { categoryId: ชื่อฝ่าย } ไว้ด้วยทุกครั้งที่หน้าโหลดรายการประเภทงาน
 // categoryDeptBadgeHtml(id) คืนป้าย "ฝ่ายวิชาการ" (ไม่ผูกฝ่าย/ไม่รู้จัก id = ไม่แสดงอะไร) ใช้ต่อท้ายชื่อประเภทงานทุกจุด
 var _catDeptMap = {};
 function categoryDeptBadgeHtml(categoryId) {
   var d = _catDeptMap[categoryId];
-  return d ? ' <span class="cat-dept-badge">ฝ่าย' + escapeHtml(d) + '</span>' : '';
+  return d ? ' <span class="cat-dept-badge">' + escapeHtml(groupLabel(d)) + '</span>' : '';
 }
 function categoryDeptSuffix(categoryId) {
   var d = _catDeptMap[categoryId];
-  return d ? ' · ฝ่าย' + d : '';
+  return d ? ' · ' + groupLabel(d) : '';
+}
+// ชื่อ "กลุ่มบริหารงาน" (ตั้งแต่ 1.41.111026) — ระบบเก็บเฉพาะส่วนท้ายของชื่อ (เช่น 'วิชาการ') แล้วต่อคำนำหน้าตอนแสดงผลเสมอ
+// (ข้อมูลที่เคยตั้งเป็น "ฝ่ายวิชาการ" เดิมจึงขึ้นเป็น "กลุ่มบริหารงานวิชาการ" ทันที) ถ้าชื่อมีคำนำหน้าอยู่แล้วไม่ต่อซ้ำ
+var GROUP_PREFIX = 'กลุ่มบริหารงาน';
+function groupLabel(name) {
+  var n = String(name || '').trim();
+  if (!n) return '';
+  return n.indexOf(GROUP_PREFIX) === 0 ? n : GROUP_PREFIX + n;
+}
+function normalizeGroupName(v) {
+  var n = String(v || '').replace(/\s+/g, ' ').trim();
+  if (n.indexOf(GROUP_PREFIX) === 0) n = n.slice(GROUP_PREFIX.length).trim();
+  return n.slice(0, 60);
 }
 
 // ---------- ชุดไอคอน Font Awesome — ตั้งแต่รอบปรับสไตล์เว็บทั้งระบบให้เหมือน bnksa-attendance (Tailwind + Font Awesome)
@@ -532,7 +546,7 @@ var ICON_FA = {
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
   sun: 'fa-sun', palette: 'fa-palette', layout: 'fa-table-cells-large', pin: 'fa-thumbtack', clock: 'fa-clock',
-  file: 'fa-file-lines', directory: 'fa-address-book'
+  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -546,7 +560,7 @@ function formatDateThai(isoOrDateStr) {
   var months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   return d.getDate() + ' ' + months[d.getMonth()] + ' ' + (d.getFullYear() + 543);
 }
-// ขนาดไฟล์อ่านง่าย (ตั้งแต่ 1.40.101026) — ใช้ในแท็บ "ข้อมูลระบบ"
+// ขนาดไฟล์อ่านง่าย (ตั้งแต่ 1.41.111026) — ใช้ในแท็บ "ข้อมูลระบบ"
 function formatBytes(n) {
   if (n === null || n === undefined || isNaN(Number(n))) return '-';
   var units = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0, v = Number(n);
@@ -562,7 +576,7 @@ function formatDateTimeThai(isoStr) {
   return formatDateThai(isoStr) + ' ' + hh + ':' + mm + ' น.';
 }
 
-// ตารางวันเริ่มภาคเรียน (ตั้งแต่ 1.40.101026) — Super Admin กำหนดเองในตั้งค่า → ทั่วไป เก็บเป็น 'MM-DD' ซ้ำทุกปี (ค่าเริ่มต้นตรงกับ Worker)
+// ตารางวันเริ่มภาคเรียน (ตั้งแต่ 1.41.111026) — Super Admin กำหนดเองในตั้งค่า → ทั่วไป เก็บเป็น 'MM-DD' ซ้ำทุกปี (ค่าเริ่มต้นตรงกับ Worker)
 //   term1Start = เริ่มภาคเรียนที่ 1 (16 พ.ค.) · term2Start = เริ่มภาคเรียนที่ 2 (15 ต.ค.) · summerStart = เริ่มภาคฤดูร้อน (1 เม.ย. — ใช้เฉพาะเมื่อเปิดภาคฤดูร้อนไว้)
 var DEFAULT_TERM_SCHEDULE = { term1Start: '05-16', term2Start: '10-15', summerStart: '04-01' };
 function termScheduleOf(settings) {
@@ -590,7 +604,7 @@ function trueCurrentAcademicTerm(settings, now) {
   if (summerOn && sch.summerStart && md >= sch.summerStart) return { year: String(beYear - 1), semester: 'summer' };
   return { year: String(beYear - 1), semester: '2' };
 }
-// "ปีการศึกษา/ภาคเรียนปัจจุบัน" ที่ใช้จริงทั่วระบบ (ค่าเริ่มต้นของตัวกรอง/ปฏิทิน/เช็คลิสต์/ป้ายเทอมในหน้าฮับ) — ตั้งแต่ 1.40.101026 มี 2 โหมดตาม settings.termMode:
+// "ปีการศึกษา/ภาคเรียนปัจจุบัน" ที่ใช้จริงทั่วระบบ (ค่าเริ่มต้นของตัวกรอง/ปฏิทิน/เช็คลิสต์/ป้ายเทอมในหน้าฮับ) — ตั้งแต่ 1.41.111026 มี 2 โหมดตาม settings.termMode:
 //   'manual' = ใช้ปี+ภาคเรียนที่ Super Admin กรอกไว้ (currentAcademicYear/currentSemester) · 'auto' = คำนวณจากวันที่ตามตารางวันเริ่มภาคเรียน
 async function currentAcademicTerm() {
   var s = await getSiteSettings();
@@ -948,6 +962,8 @@ function navLinksFor(session) {
   }
   // "ทำเนียบบุคลากรโรงเรียน" (ตั้งแต่ 1.32.101026): ทุกบทบาทที่ล็อกอินเห็นแท็บนี้ — mountChrome ซ่อนให้เองถ้า Super Admin ตั้งไว้ว่า "ปิด" (settings.directoryMode)
   if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
+  // "ไฟล์คำสั่ง" (ตั้งแต่ 1.41.111026): ทุกบทบาทที่ล็อกอินเปิดดู/ดาวน์โหลดได้ — เจ้าหน้าที่ของกลุ่มบริหารงานและ Super Admin เพิ่ม/แก้/ลบได้ในหน้าเดียวกัน
+  if (session) links.push({ href: 'orders.html', label: 'ไฟล์คำสั่ง', key: 'orders', icon: 'orders' });
   if (isAdmin) {
     // หมายเหตุ: เมนู "จัดการ Layout" (V11.1) ถูกยกเลิกตั้งแต่ V11.5 — ทั้งรูปแบบการ์ด (V11.3) และลำดับการแสดงผล (V11.5)
     // ย้ายไปรวมอยู่ในหน้า "ตั้งค่าระบบ" (ตั้งแต่ 1.32.101026 อยู่ในแท็บ "ข้อมูลหลัก") (Super Admin เท่านั้น)
@@ -957,7 +973,7 @@ function navLinksFor(session) {
 }
 
 
-// ---------- แถบเมนูด้านซ้าย (ตั้งแต่ 1.40.101026 — สไตล์ Google Keep สำหรับทุกบัญชี/ทุกหน้าที่มี topbar) ----------
+// ---------- แถบเมนูด้านซ้าย (ตั้งแต่ 1.41.111026 — สไตล์ Google Keep สำหรับทุกบัญชี/ทุกหน้าที่มี topbar) ----------
 // - ปุ่ม 3 ขีดหน้าโลโก้ (#navToggle): คอม/แท็บเล็ต = สลับ "เปิดค้างไว้ (ปักหมุด)" ↔ "ย่อเหลือแต่ไอคอน" จำค่าไว้ใน localStorage (bnkah_nav_pinned)
 //   มือถือ (< 768px) = เปิด/ปิดเป็นลิ้นชักทับหน้าจอ มีฉากดำจางๆ ด้านหลัง
 // - ตอนย่ออยู่ ถ้าเอาเมาส์ชี้ที่แถบจะกางเต็มออกมาทับเนื้อหาชั่วคราว (ไม่ดันเนื้อหา) พอเอาเมาส์ออกก็ย่อกลับ
@@ -1026,7 +1042,7 @@ function mountChrome(activePage) {
   var topbarRoot = document.getElementById('app-topbar');
   if (topbarRoot && session) {
     var links = navLinksFor(session);
-    // ตั้งแต่ 1.40.101026: เมนูทั้งหมดย้ายจากแถบบนสุดมาเป็นแถบเมนูด้านซ้าย (สไตล์ Google Keep) — ปุ่ม 3 ขีดหน้าโลโก้ = ปักหมุดเปิดค้าง/ย่อ,
+    // ตั้งแต่ 1.41.111026: เมนูทั้งหมดย้ายจากแถบบนสุดมาเป็นแถบเมนูด้านซ้าย (สไตล์ Google Keep) — ปุ่ม 3 ขีดหน้าโลโก้ = ปักหมุดเปิดค้าง/ย่อ,
     // ตอนย่อให้ชี้เมาส์เพื่อกางเต็มชั่วคราว, มือถือเป็นลิ้นชักเลื่อนออกมา (ดู mountSideNav ด้านล่าง)
     topbarRoot.innerHTML =
       '<div class="topbar">' +
