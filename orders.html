@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.46.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.47.121026" />
 </head>
 <body>
   <!-- คลังคำสั่ง (ตั้งแต่ 1.43.111026 — เดิม "ไฟล์คำสั่ง" ของ 1.41): ทุกบัญชีที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ · แก้ไข/ลบได้เฉพาะเจ้าของ · PDF เท่านั้น
@@ -18,13 +18,13 @@
     <div class="page-header orders-header">
       <div>
         <h1>คลังคำสั่ง</h1>
-        <p id="ordSubtitle">คำสั่งของโรงเรียน แยกตามกลุ่มบริหารงาน</p>
+        <p id="ordSubtitle">คลังคำสั่งของโรงเรียน</p>
       </div>
       <button type="button" class="btn btn-primary" id="ordAddBtn" hidden><i class="fa-solid fa-plus"></i> เพิ่มคำสั่ง</button>
     </div>
     <div class="orders-toolbar">
-      <input type="search" id="ordSearch" placeholder="ค้นหาชื่อคำสั่ง / เลขที่ / ผู้รับผิดชอบ" aria-label="ค้นหา" />
-      <select id="ordDept" aria-label="กรองตามกลุ่มบริหารงาน"></select>
+      <!-- 1.47.121026: ไม่มีตัวกรอง/หัวข้อแยกตามกลุ่มบริหารงานแล้ว (ค้นหาชื่อกลุ่มในช่องค้นหาได้) -->
+      <input type="search" id="ordSearch" placeholder="ค้นหาคำสั่ง (ชื่อ เลขที่ กลุ่ม ผู้รับผิดชอบ)" title="ค้นหาจากชื่อคำสั่ง เลขที่ กลุ่มบริหารงาน กลุ่มสาระฯ หรือผู้รับผิดชอบ" aria-label="ค้นหา" />
       <select id="ordSubject" aria-label="กรองตามกลุ่มสาระการเรียนรู้"></select>
       <select id="ordYear" aria-label="กรองตามปีการศึกษา"></select>
       <select id="ordMine" aria-label="กรองตามความเกี่ยวข้อง">
@@ -116,12 +116,12 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.46.121026"></script>
+  <script src="assets/api.js?v=1.47.121026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
     var editingId = '';
-    var collapsed = {};
+
     var ordSelectedFile = null; // ไฟล์ PDF ที่เลือกไว้ (1.44: เลือกผ่าน dropzone)
     var respSelected = []; // id ของผู้รับผิดชอบที่เลือกในฟอร์ม (เรียงตามลำดับที่เลือก)
 
@@ -139,31 +139,32 @@
     function yearOf(o) { return o.academicYear || String(Number(String(o.orderDate).slice(0, 4)) + 543); }
 
     function fillFilters() {
-      var d = $('ordDept'), s = $('ordSubject'), y = $('ordYear');
-      var dv = d.value, sv = s.value, yv = y.value;
-      d.innerHTML = '<option value="">ทุกกลุ่มบริหารงาน</option>' + departments.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(groupLabel(x)) + '</option>'; }).join('');
-      s.innerHTML = '<option value="">ทุกกลุ่มสาระการเรียนรู้</option><option value="__none">ขึ้นตรงกลุ่มบริหารงาน (ไม่มีกลุ่มสาระ)</option>' + subjectGroups.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
+      var s = $('ordSubject'), y = $('ordYear');
+      var sv = s.value, yv = y.value;
+      s.innerHTML = '<option value="">ทุกกลุ่มสาระการเรียนรู้</option><option value="__none">--ไม่มีกลุ่มสาระ--</option>' + subjectGroups.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
       var years = {};
       orders.forEach(function (o) { years[yearOf(o)] = 1; });
       var ylist = Object.keys(years).sort(function (a, b) { return b - a; });
       y.innerHTML = '<option value="">ทุกปีการศึกษา</option>' + ylist.map(function (x) { return '<option value="' + x + '">ปีการศึกษา ' + x + '</option>'; }).join('');
-      d.value = dv; s.value = sv; y.value = yv;
-      if (d.value !== dv) d.value = '';
+      s.value = sv; y.value = yv;
       if (s.value !== sv) s.value = '';
       if (y.value !== yv) y.value = '';
     }
 
+    // ---------- รายการแบบ "ป้ายปฏิทิน" (แบบ C ที่ผู้ใช้เลือก — 1.47.121026) ----------
+    // แบบย่อ: วันที่จัดทำ (ป้ายปฏิทิน) · ชื่อคำสั่ง (ยาวเกินตัดเป็น …) · ชิปเลขที่ + กลุ่มบริหารงาน · ปุ่มพรีวิว · ลูกศรขยาย
+    // แบบขยาย: ตารางรายละเอียดเต็ม + ปุ่มแก้ไข/ลบ (เฉพาะเจ้าของ) — เรียงตามวันที่จัดทำล่าสุดก่อน รายการเดียว ไม่แยกหัวข้อตามกลุ่ม
+    var expanded = {};
     function render() {
       var q = $('ordSearch').value.trim().toLowerCase();
-      var fd = $('ordDept').value, fs = $('ordSubject').value, fy = $('ordYear').value, fm = $('ordMine').value;
+      var fs = $('ordSubject').value, fy = $('ordYear').value, fm = $('ordMine').value;
       var list = orders.filter(function (o) {
-        if (fd && o.department !== fd) return false;
         if (fs === '__none') { if (o.subjectGroup) return false; } else if (fs && o.subjectGroup !== fs) return false;
         if (fy && yearOf(o) !== fy) return false;
         if (fm === 'mine' && !o.isOwner) return false;
         if (fm === 'resp' && !(o.responsible || []).some(function (r) { return r.id === session.id; })) return false;
         if (q) {
-          var hay = (o.title + ' ' + o.orderNo + ' ' + (o.responsible || []).map(function (r) { return r.name; }).join(' ')).toLowerCase();
+          var hay = (o.title + ' ' + o.orderNo + ' ' + groupLabel(o.department) + ' ' + (o.subjectGroup || '') + ' ' + (o.responsible || []).map(function (r) { return r.name; }).join(' ')).toLowerCase();
           if (hay.indexOf(q) < 0) return false;
         }
         return true;
@@ -171,52 +172,54 @@
       var root = $('ordRoot');
       if (!orders.length) { root.innerHTML = '<div class="orders-empty">ยังไม่มีคำสั่งในคลังคำสั่ง</div>'; return; }
       if (!list.length) { root.innerHTML = '<div class="orders-empty">ไม่พบคำสั่งที่ตรงกับเงื่อนไข</div>'; return; }
-      var byDept = {};
-      list.forEach(function (o) { (byDept[o.department] = byDept[o.department] || []).push(o); });
-      var order = departments.filter(function (x) { return byDept[x]; });
-      Object.keys(byDept).forEach(function (x) { if (order.indexOf(x) < 0) order.push(x); });
-      root.innerHTML = order.map(function (dep) {
-        var rows = byDept[dep];
-        var isCol = !!collapsed[dep];
-        return '<section class="orders-group" data-dept="' + escapeHtml(dep) + '">' +
-          '<button type="button" class="orders-group-head" data-toggle="' + escapeHtml(dep) + '" aria-expanded="' + (!isCol) + '">' +
-          '<i class="fa-solid ' + (isCol ? 'fa-chevron-right' : 'fa-chevron-down') + '"></i> <span class="orders-group-name">' + escapeHtml(groupLabel(dep)) + '</span>' +
-          '<span class="orders-group-count">' + rows.length + ' รายการ</span></button>' +
-          (isCol ? '' : '<ul class="orders-list">' + rows.map(rowHtml).join('') + '</ul>') +
-          '</section>';
-      }).join('');
+      root.innerHTML = '<div class="ordc-count hint">' + list.length + ' คำสั่ง</div><ul class="ordc-list">' + list.map(rowHtml).join('') + '</ul>';
     }
 
     function respText(o) {
       var r = o.responsible || [];
-      if (!r.length) return '';
-      var names = r.slice(0, 4).map(function (x) { return escapeHtml(x.name); }).join(', ');
-      return '<span class="orders-resp"><i class="fa-solid fa-user-check"></i> ผู้รับผิดชอบ: ' + names + (r.length > 4 ? ' และอีก ' + (r.length - 4) + ' คน' : '') + '</span>';
+      return r.length ? r.map(function (x) { return escapeHtml(x.name); }).join(', ') : '—';
     }
-
+    var TH_MONTH_ABBR = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    function dateTile(iso) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+      if (!m) return '<div class="ordc-date"><span class="m">—</span><span class="d">?</span><span class="y"></span></div>';
+      return '<div class="ordc-date" aria-hidden="true"><span class="m">' + TH_MONTH_ABBR[Number(m[2]) - 1] + '</span><span class="d">' + Number(m[3]) + '</span><span class="y">' + (Number(m[1]) + 543) + '</span></div>';
+    }
     function rowHtml(o) {
       var act = activityText(o);
-      var tag = o.subjectGroup ? '<span class="orders-tag">' + escapeHtml(o.subjectGroup) + '</span>' : '<span class="orders-tag orders-tag-direct">ขึ้นตรงกลุ่มบริหารงาน</span>';
+      var open = !!expanded[o.id];
       var preview = o.previewUrl || drivePreviewUrl(o.fileUrl);
-      return '<li class="orders-row" data-id="' + escapeHtml(o.id) + '">' +
-        '<div class="orders-main">' +
-          '<div class="orders-title">' + escapeHtml(o.title) + (o.isOwner ? ' <span class="orders-own">ของฉัน</span>' : '') + '</div>' +
-          '<div class="orders-meta">' +
-            (o.orderNo ? '<span>เลขที่ ' + escapeHtml(o.orderNo) + '</span>' : '') +
-            (o.academicYear ? '<span>' + escapeHtml(semText(o.semester)) + ' ปีการศึกษา ' + escapeHtml(o.academicYear) + '</span>' : '') +
-            '<span>วันที่จัดทำ ' + escapeHtml(formatDateThai(o.orderDate)) + '</span>' +
-            (act ? '<span>กิจกรรม ' + escapeHtml(act) + '</span>' : '') +
-            tag +
+      var rows = [
+        ['ชื่อคำสั่ง', escapeHtml(o.title)],
+        ['เลขที่คำสั่ง', o.orderNo ? escapeHtml(o.orderNo) : '—'],
+        ['วันที่จัดทำ', escapeHtml(formatDateThai(o.orderDate))],
+        ['ภาคเรียน / ปีการศึกษา', o.academicYear ? escapeHtml(semText(o.semester) + ' ปีการศึกษา ' + o.academicYear) : '—'],
+        ['กิจกรรม', act ? escapeHtml(act) : '—'],
+        ['กลุ่มบริหารงาน', escapeHtml(groupLabel(o.department))],
+        ['กลุ่มสาระการเรียนรู้', o.subjectGroup ? escapeHtml(o.subjectGroup) : '—'],
+        ['ผู้รับผิดชอบ', respText(o)],
+        ['เพิ่มโดย', o.createdByName ? escapeHtml(o.createdByName) : '—']
+      ];
+      return '<li class="ordc-item orders-row' + (open ? ' open' : '') + '" data-id="' + escapeHtml(o.id) + '">' +
+        '<div class="ordc-main" data-expand="' + escapeHtml(o.id) + '" role="button" tabindex="0" aria-expanded="' + open + '">' +
+          dateTile(o.orderDate) +
+          '<div class="ordc-body">' +
+            '<div class="ordc-title orders-title" title="' + escapeHtml(o.title) + '">' + escapeHtml(o.title) + '</div>' +
+            '<div class="ordc-chips">' +
+              (o.orderNo ? '<span class="ordc-chip no">คำสั่งที่ ' + escapeHtml(o.orderNo) + '</span>' : '<span class="ordc-chip">ไม่มีเลขที่</span>') +
+              '<span class="ordc-chip">' + escapeHtml(groupLabel(o.department)) + '</span>' +
+              (o.isOwner ? '<span class="ordc-chip own">ของฉัน</span>' : '') +
+            '</div>' +
           '</div>' +
-          '<div class="orders-meta orders-meta-2">' + respText(o) + (o.createdByName ? '<span class="orders-by">เพิ่มโดย ' + escapeHtml(o.createdByName) + '</span>' : '') + '</div>' +
+          '<div class="ordc-btns orders-actions">' +
+            (preview ? '<button type="button" class="btn btn-primary btn-sm" data-preview="' + escapeHtml(o.id) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button>' : '') +
+          '</div>' +
+          '<i class="fa-solid fa-chevron-down ordc-chev" aria-hidden="true"></i>' +
         '</div>' +
-        '<div class="orders-actions">' +
-          // 1.44.111026: ปุ่มพรีวิวอยู่ข้างปุ่มลบ (ด้านขวาสุด) — เรียง: เปิดไฟล์ · แก้ไข · พรีวิว · ลบ
-          (o.fileUrl ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(o.fileUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-file-pdf"></i> เปิดไฟล์</a>' : '') +
-          (o.canManage ? '<button type="button" class="btn btn-ghost btn-sm" data-edit="' + escapeHtml(o.id) + '">แก้ไข</button>' : '') +
-          (preview ? '<button type="button" class="btn btn-primary btn-sm" data-preview="' + escapeHtml(o.id) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button>' : '') +
-          (o.canManage ? '<button type="button" class="btn btn-danger btn-sm" data-del="' + escapeHtml(o.id) + '">ลบ</button>' : '') +
-        '</div></li>';
+        (open ? '<div class="ordc-detail"><table>' + rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>' +
+          (o.canManage ? '<div class="ordc-acts"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + escapeHtml(o.id) + '">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-del="' + escapeHtml(o.id) + '">ลบ</button></div>' : '') +
+        '</div>' : '') +
+      '</li>';
     }
 
     async function load() {
@@ -229,7 +232,7 @@
         return;
       }
       $('ordAddBtn').hidden = !departments.length;
-      $('ordSubtitle').textContent = 'คำสั่งของโรงเรียน แยกตามกลุ่มบริหารงาน (ไฟล์ PDF) — ทุกคนเพิ่มคำสั่งได้ แก้ไข/ลบได้เฉพาะผู้อัพโหลด' +
+      $('ordSubtitle').textContent = 'คลังคำสั่งของโรงเรียน (ไฟล์ PDF) — ทุกคนเพิ่มคำสั่งได้ แก้ไข/ลบได้เฉพาะผู้อัพโหลด' +
         (retentionYears ? ' · เก็บไว้ ' + retentionYears + ' ปีหลังอัพโหลด แล้วระบบจะลบอัตโนมัติ' : '');
       fillFilters();
       render();
@@ -277,7 +280,7 @@
       if (!o && !$('ordNoYear').value) $('ordNoYear').placeholder = String(new Date().getFullYear() + 543);
       $('ordDeptSel').innerHTML = departments.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(groupLabel(x)) + '</option>'; }).join('');
       $('ordDeptSel').value = o ? o.department : (departments.indexOf(myDepartment) >= 0 ? myDepartment : departments[0] || '');
-      $('ordSubjectSel').innerHTML = '<option value="">— ไม่ระบุ (ขึ้นตรงกลุ่มบริหารงาน) —</option>' + subjectGroups.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
+      $('ordSubjectSel').innerHTML = '<option value="">--ไม่มีกลุ่มสาระ--</option>' + subjectGroups.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
       $('ordSubjectSel').value = o ? o.subjectGroup : '';
       respSelected = o ? (o.responsible || []).map(function (r) { return r.id; }).filter(function (id) { return !!personName(id); }) : [];
       $('ordRespSearch').value = '';
@@ -391,11 +394,14 @@
         renderResp();
       });
       ['ordSearch'].forEach(function (id) { $(id).addEventListener('input', render); });
-      ['ordDept', 'ordSubject', 'ordYear', 'ordMine'].forEach(function (id) { $(id).addEventListener('change', render); });
+      ['ordSubject', 'ordYear', 'ordMine'].forEach(function (id) { $(id).addEventListener('change', render); });
+      $('ordRoot').addEventListener('keydown', function (ev) {
+        if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[data-expand]')) { ev.preventDefault(); ev.target.click(); }
+      });
       $('ordRoot').addEventListener('click', async function (ev) {
-        var t = ev.target.closest('[data-toggle],[data-edit],[data-del],[data-preview]');
+        var t = ev.target.closest('[data-edit],[data-del],[data-preview],[data-expand]');
         if (!t) return;
-        if (t.hasAttribute('data-toggle')) { var k = t.getAttribute('data-toggle'); collapsed[k] = !collapsed[k]; render(); return; }
+        if (t.hasAttribute('data-expand')) { var k = t.getAttribute('data-expand'); expanded[k] = !expanded[k]; render(); return; }
         if (t.hasAttribute('data-preview')) {
           var pid = t.getAttribute('data-preview'); var op = orders.filter(function (x) { return x.id === pid; })[0];
           if (op) openFilePreview(op.previewUrl || drivePreviewUrl(op.fileUrl), (op.orderNo ? 'คำสั่งที่ ' + op.orderNo + ' ' : '') + op.title, op.fileUrl);

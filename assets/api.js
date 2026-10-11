@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.46.121026';
+var APP_VERSION = '1.47.121026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1186,7 +1186,13 @@ function drivePreviewUrl(url) {
   var m = /\/file\/d\/([A-Za-z0-9_-]+)/.exec(String(url || '')) || /[?&]id=([A-Za-z0-9_-]+)/.exec(String(url || ''));
   return m ? 'https://drive.google.com/file/d/' + m[1] + '/preview' : String(url || '');
 }
-function openFilePreview(previewUrl, title, openUrl) {
+// ลิงก์ดาวน์โหลดไฟล์ Google Drive โดยตรง (1.47.121026 — ปุ่ม "ดาวน์โหลด" ในป็อปอัพพรีวิว) — ลิงก์แบบอื่นคืนค่าว่าง
+function driveDownloadUrl(url) {
+  var m = /\/file\/d\/([A-Za-z0-9_-]+)/.exec(String(url || '')) || /[?&]id=([A-Za-z0-9_-]+)/.exec(String(url || ''));
+  return m ? 'https://drive.google.com/uc?export=download&id=' + m[1] : '';
+}
+function openFilePreview(previewUrl, title, openUrl, downloadUrl) {
+  if (downloadUrl === undefined) downloadUrl = driveDownloadUrl(openUrl || previewUrl);
   var old = document.getElementById('filePreviewOverlay');
   if (old) old.remove();
   var ov = document.createElement('div');
@@ -1200,6 +1206,7 @@ function openFilePreview(previewUrl, title, openUrl) {
       '<div class="file-preview-bar">' +
         '<div class="file-preview-title">' + escapeHtml(title || 'พรีวิวไฟล์') + '</div>' +
         (openUrl ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> เปิดไฟล์</a>' : '') +
+        (downloadUrl ? '<a class="btn btn-primary btn-sm file-preview-dl" href="' + escapeHtml(downloadUrl) + '" target="_blank" rel="noopener" download><i class="fa-solid fa-download"></i> ดาวน์โหลด</a>' : '') +
         '<button type="button" class="file-preview-close" aria-label="ปิดพรีวิว">✕</button>' +
       '</div>' +
       '<iframe class="file-preview-iframe" src="' + escapeHtml(previewUrl) + '" title="' + escapeHtml(title || 'พรีวิวไฟล์') + '" allow="autoplay" loading="eager"></iframe>' +

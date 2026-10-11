@@ -1533,3 +1533,44 @@ td > .badge { white-space: nowrap; } /* 1.45: ป้ายสถานะใน�
 }
 .modal-backdrop.show .modal-box.modal-bump { animation: modalBump 0.48s cubic-bezier(.36,.07,.19,.97); }
 @media (prefers-reduced-motion: reduce) { .modal-backdrop.show .modal-box.modal-bump { animation: none; outline: 3px solid var(--primary); } }
+
+/* ---------- คลังคำสั่ง แบบ C: ป้ายปฏิทิน + ย่อ/ขยาย (1.47.121026) ---------- */
+.ordc-count { margin: -4px 0 8px; }
+.ordc-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.ordc-item { border-top: 1px solid var(--border); padding: 0; display: block; }
+.ordc-item:first-child { border-top: 0; }
+.ordc-main { display: flex; gap: 14px; align-items: center; padding: 12px 16px; cursor: pointer; transition: background-color 0.15s ease; }
+.ordc-main:hover { background: var(--surface-2); }
+.ordc-main:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--primary); }
+.ordc-date { flex: 0 0 56px; text-align: center; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); line-height: 1.25; }
+.ordc-date .m { display: block; background: var(--primary); color: #fff; font-size: 0.66rem; font-weight: 700; padding: 2px 0; }
+.ordc-date .d { display: block; font-size: 1.12rem; font-weight: 800; color: var(--text); }
+.ordc-date .y { display: block; font-size: 0.64rem; color: var(--text-muted); padding-bottom: 3px; }
+.ordc-body { flex: 1; min-width: 0; }
+.ordc-title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ordc-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.ordc-chip { font-size: 0.72rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ordc-chip.no { background: var(--primary-light); color: var(--primary); border-color: transparent; }
+.ordc-chip.own { background: color-mix(in srgb, #10b981 15%, transparent); color: #059669; border-color: transparent; }
+[data-theme="dark"] .ordc-chip.own { color: #34d399; }
+.ordc-btns { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.ordc-btns .btn { width: auto; }
+.ordc-chev { color: var(--text-muted); transition: transform 0.2s ease; flex-shrink: 0; }
+.ordc-item.open { background: color-mix(in srgb, var(--primary-light) 55%, transparent); }
+.ordc-item.open .ordc-chev { transform: rotate(180deg); color: var(--primary); }
+.ordc-detail { padding: 0 16px 14px 86px; animation: cardIn 0.2s ease both; }
+.ordc-detail table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.ordc-detail td { padding: 6px 0; border-bottom: 1px dashed var(--border); vertical-align: top; word-break: break-word; }
+.ordc-detail td:first-child { width: 180px; color: var(--text-muted); font-weight: 600; padding-right: 12px; }
+.ordc-acts { display: flex; gap: 8px; margin-top: 10px; }
+.ordc-acts .btn { width: auto; }
+@media (max-width: 640px) {
+  .ordc-main { gap: 10px; padding: 10px 12px; flex-wrap: wrap; }
+  .ordc-body { flex-basis: calc(100% - 100px); }
+  .ordc-btns { margin-left: 66px; }
+  .ordc-detail { padding: 0 12px 12px; }
+  .ordc-detail tr, .ordc-detail td { display: block; width: auto; }
+  .ordc-detail td { border-bottom: 0; padding: 0; }
+  .ordc-detail tr { padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .ordc-detail td:first-child { width: auto; font-size: 0.76rem; padding: 0 0 1px; }
+}
