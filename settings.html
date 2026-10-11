@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.41.111026" />
+<link rel="stylesheet" href="assets/style.css?v=1.42.111026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -401,7 +401,7 @@
   </div>
 
   <!-- Create user modal -->
-  <div class="modal-backdrop" id="createUserModal" hidden>
+  <div class="modal-backdrop super-admin-only" id="createUserModal" hidden>
     <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="createUserModalCloseX" aria-label="ปิด">✕</button>
       <h3>เพิ่มผู้ใช้ใหม่</h3>
@@ -427,15 +427,16 @@
             <input id="cuPasswordConfirm" required placeholder="พิมพ์ซ้ำอีกครั้ง" />
           </div>
         </div>
+        <!-- ประเภทบัญชี (ตั้งแต่ 1.42.111026 — เดิมชื่อช่อง "Role"): ครูต้องเลือกกลุ่มบริหารงาน และแต่งตั้งเป็นเจ้าหน้าที่ของกลุ่มได้ทันที -->
         <div class="field">
-          <label for="cuRole">Role</label>
+          <label for="cuRole">ประเภทบัญชี</label>
           <select id="cuRole">
-            <option value="teacher">ครู (Teacher)</option>
-            <option value="admin">เจ้าหน้าที่ (Admin)</option>
-            <option value="executive">ผู้บริหาร (Executive)</option>
+            <option value="teacher">ครู</option>
+            <option value="executive">ผู้บริหาร</option>
+            <option value="superadmin">Super Admin (ไม่มีหน้าฮับส่วนตัว)</option>
           </select>
         </div>
-        <!-- ตำแหน่งผู้บริหาร (ตั้งแต่ 1.32.101026) — แสดงเฉพาะตอนเลือก Role เป็นผู้บริหาร -->
+        <!-- ตำแหน่งผู้บริหาร (ตั้งแต่ 1.32.101026) — แสดงเฉพาะตอนเลือกประเภทบัญชีเป็นผู้บริหาร -->
         <div class="field" id="cuExecPositionField" hidden>
           <label for="cuExecPosition">ตำแหน่งผู้บริหาร</label>
           <select id="cuExecPosition">
@@ -443,16 +444,16 @@
             <option value="รองผู้อำนวยการ">รองผู้อำนวยการ</option>
           </select>
         </div>
-        <div class="field" id="cuSuperAdminField" hidden>
-          <label style="display:flex; align-items:center; gap:8px; font-weight:500;">
-            <input type="checkbox" id="cuIsSuperAdmin" style="width:auto;" />
-            ตั้งเป็น Super Admin (ไม่มีหน้าฮับส่วนตัว)
-          </label>
+        <!-- กลุ่มบริหารงาน (บังคับเลือกตั้งแต่ 1.42.111026) — ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มใดกลุ่มหนึ่ง -->
+        <div class="field" id="cuDepartmentField">
+          <label for="cuDepartment">กลุ่มบริหารงานที่สังกัด <span class="req-mark">*</span></label>
+          <select id="cuDepartment"><option value="">— เลือกกลุ่มบริหารงาน —</option></select>
         </div>
-        <!-- ฝ่ายของเจ้าหน้าที่ (ตั้งแต่ 1.26.081026) — แสดงเฉพาะตอนเลือก Role เป็นเจ้าหน้าที่ (admin) และไม่ได้ตั้งเป็น Super Admin เท่านั้น เลือกไม่ตั้งไว้ก็ได้ (ตั้งทีหลังได้ที่ตารางบัญชี) -->
-        <div class="field" id="cuDepartmentField" hidden>
-          <label for="cuDepartment">กลุ่มบริหารงาน</label>
-          <select id="cuDepartment"><option value="">ยังไม่ระบุ</option></select>
+        <div class="field" id="cuStaffField">
+          <label style="display:flex; align-items:center; gap:8px; font-weight:500;">
+            <input type="checkbox" id="cuIsStaff" style="width:auto;" />
+            แต่งตั้งเป็นเจ้าหน้าที่ของกลุ่มบริหารงานนี้ (ได้สิทธิ์แอดมินของกลุ่ม)
+          </label>
         </div>
         <div class="hint" style="margin-bottom:14px;">username จะถูกแปลงเป็นตัวพิมพ์เล็กให้อัตโนมัติ — ล็อกอินได้ทั้งตัวพิมพ์เล็กและใหญ่ ส่วนรหัสผ่านแยกตัวพิมพ์เล็ก/ใหญ่ตามที่ตั้งไว้</div>
         <div class="modal-actions">
@@ -529,32 +530,115 @@
     </div>
   </div>
 
-  <!-- จัดการบัญชี (ตั้งแต่ 1.29.091026) — รวมปุ่มจัดการบัญชีของแต่ละแถวไว้ในป็อปอัพเดียว (แสดงเฉพาะ Super Admin เหมือนตารางบัญชี) -->
-  <div class="modal-backdrop" id="manageUserModal" hidden>
-    <div class="modal-box">
+  <!-- จัดการบัญชี (ตั้งแต่ 1.29.091026) — Super Admin เท่านั้น
+       1.42.111026: แยกเป็น 3 แท็บ "ข้อมูล" (ชื่อ/รูปโปรไฟล์/ตั้งรหัสผ่าน) · "ประเภทบัญชี" (เดิม "เปลี่ยน Role" + กลุ่มบริหารงานที่ต้องสังกัด + แต่งตั้งเจ้าหน้าที่)
+       · "สถานะ" (สถานะบัญชี + ระงับ/คืนสิทธิ์ + ลบถาวร) แทนป็อปอัพย่อยเดิม (ตั้งรหัสผ่านใหม่ / เปลี่ยน Role / กลุ่มบริหารงาน) ที่เปิดซ้อนกันทีละอัน -->
+  <div class="modal-backdrop super-admin-only" id="manageUserModal" hidden>
+    <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="manageUserModalCloseX" aria-label="ปิด">✕</button>
       <h3>จัดการบัญชี</h3>
-      <div id="manageUserTarget" style="margin-bottom:14px;"></div>
-      <!-- รูปโปรไฟล์ของบัญชีนี้ (ตั้งแต่ 1.33.101026) — Super Admin อัพโหลด/เปลี่ยน/ลบให้ได้ -->
-      <div class="manage-avatar-box" id="manageAvatarBox">
-        <span class="profile-avatar" id="manageAvatarPreview"></span>
-        <div class="manage-avatar-actions">
-          <div class="hint" style="margin:0;">รูปโปรไฟล์</div>
-          <input type="file" id="manageAvatarFile" accept="image/*" hidden />
-          <button type="button" class="btn btn-secondary btn-sm" id="manageAvatarPick">เลือก/เปลี่ยนรูป</button>
-          <button type="button" class="btn btn-primary btn-sm" id="manageAvatarSave" hidden>บันทึกรูปนี้</button>
-          <button type="button" class="btn btn-ghost btn-sm" id="manageAvatarRemove" hidden>ลบรูป</button>
-          <div class="error-box" id="manageAvatarError" hidden style="margin:0;"></div>
+      <div id="manageUserTarget" class="mu-target"></div>
+      <div class="tabs mu-tabs" role="tablist">
+        <button type="button" class="ev-tab-btn active" id="muTabBtn-info" data-mu-tab="info" role="tab"><i class="fas fa-id-card ui-icon" aria-hidden="true"></i> ข้อมูล</button>
+        <button type="button" class="ev-tab-btn" id="muTabBtn-type" data-mu-tab="type" role="tab"><i class="fas fa-user-tag ui-icon" aria-hidden="true"></i> ประเภทบัญชี</button>
+        <button type="button" class="ev-tab-btn" id="muTabBtn-status" data-mu-tab="status" role="tab"><i class="fas fa-user-shield ui-icon" aria-hidden="true"></i> สถานะ</button>
+      </div>
+
+      <!-- แท็บ 1: ข้อมูล -->
+      <div class="ev-tab-panel active" id="muTab-info">
+        <form id="muNameForm" class="mu-section" style="text-align:left;">
+          <div class="mu-section-title">ชื่อ-สกุล</div>
+          <div class="mu-inline">
+            <input id="muName" maxlength="100" autocomplete="off" />
+            <button type="submit" class="btn btn-primary btn-sm" id="muNameSave">บันทึกชื่อ</button>
+          </div>
+          <div class="hint" style="margin-top:4px;">ไฟล์ผลงานเดิมใน Google Drive ยังอยู่ในโฟลเดอร์ชื่อเดิม ส่วนไฟล์ที่ส่งหลังจากนี้จะอยู่ในโฟลเดอร์ชื่อใหม่</div>
+          <div class="error-box" id="muNameError" hidden style="margin:8px 0 0;"></div>
+        </form>
+        <!-- รูปโปรไฟล์ของบัญชีนี้ (ตั้งแต่ 1.33.101026) -->
+        <div class="mu-section">
+          <div class="mu-section-title">รูปโปรไฟล์</div>
+          <div class="manage-avatar-box" id="manageAvatarBox" style="margin:0;">
+            <span class="profile-avatar" id="manageAvatarPreview"></span>
+            <div class="manage-avatar-actions">
+              <input type="file" id="manageAvatarFile" accept="image/*" hidden />
+              <button type="button" class="btn btn-secondary btn-sm" id="manageAvatarPick">เลือก/เปลี่ยนรูป</button>
+              <button type="button" class="btn btn-primary btn-sm" id="manageAvatarSave" hidden>บันทึกรูปนี้</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="manageAvatarRemove" hidden>ลบรูป</button>
+              <div class="error-box" id="manageAvatarError" hidden style="margin:0;"></div>
+            </div>
+          </div>
+        </div>
+        <form id="muPwForm" class="mu-section" style="text-align:left;">
+          <div class="mu-section-title">ตั้งรหัสผ่านใหม่</div>
+          <div class="field-row">
+            <div class="field"><label for="muPw">รหัสผ่านใหม่</label><input id="muPw" type="text" minlength="4" placeholder="อย่างน้อย 4 ตัวอักษร" autocomplete="off" /></div>
+            <div class="field"><label for="muPwConfirm">ยืนยันรหัสผ่านใหม่</label><input id="muPwConfirm" type="text" minlength="4" placeholder="พิมพ์ซ้ำอีกครั้ง" autocomplete="off" /></div>
+          </div>
+          <div class="error-box" id="muPwError" hidden style="margin:0 0 8px;"></div>
+          <button type="submit" class="btn btn-primary btn-sm" id="muPwSave">บันทึกรหัสผ่านใหม่</button>
+        </form>
+      </div>
+
+      <!-- แท็บ 2: ประเภทบัญชี -->
+      <div class="ev-tab-panel" id="muTab-type">
+        <form id="muTypeForm" style="text-align:left;">
+          <div class="hint" id="muTypeCurrent" style="margin-bottom:10px;"></div>
+          <div class="field">
+            <label for="muType">ประเภทบัญชี</label>
+            <select id="muType">
+              <option value="teacher">ครู</option>
+              <option value="executive">ผู้บริหาร</option>
+              <option value="superadmin">Super Admin</option>
+            </select>
+          </div>
+          <div id="muTeacherFields">
+            <div class="field">
+              <label for="muDept">กลุ่มบริหารงานที่สังกัด <span class="req-mark">*</span></label>
+              <select id="muDept"><option value="">— เลือกกลุ่มบริหารงาน —</option></select>
+              <div class="hint" style="margin-top:4px;">ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มบริหารงานกลุ่มใดกลุ่มหนึ่ง (1 คน 1 กลุ่ม)</div>
+            </div>
+            <div class="field mu-staff-box">
+              <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
+                <input type="checkbox" id="muStaff" style="width:auto; margin-top:3px;" />
+                <span><span style="display:block;">แต่งตั้งเป็นเจ้าหน้าที่ของกลุ่มบริหารงานนี้</span><span class="hint" style="margin:0;">เจ้าหน้าที่ได้สิทธิ์แอดมินเฉพาะงานของกลุ่มที่สังกัด (ประเภทงาน กำหนดการ สรุปรวม ไฟล์คำสั่ง) และยังส่งผลงานของตนเองได้เหมือนครู</span></span>
+              </label>
+            </div>
+          </div>
+          <div class="field" id="muPosField" hidden>
+            <label for="muPos">ตำแหน่งผู้บริหาร</label>
+            <select id="muPos">
+              <option value="ผู้อำนวยการ">ผู้อำนวยการ</option>
+              <option value="รองผู้อำนวยการ">รองผู้อำนวยการ</option>
+            </select>
+          </div>
+          <div class="hint" id="muTypeHint" style="margin-bottom:12px;"></div>
+          <div class="error-box" id="muTypeError" hidden style="margin:0 0 10px;"></div>
+          <button type="submit" class="btn btn-primary btn-sm" id="muTypeSave">บันทึกประเภทบัญชี</button>
+        </form>
+      </div>
+
+      <!-- แท็บ 3: สถานะ -->
+      <div class="ev-tab-panel" id="muTab-status">
+        <div class="mu-section">
+          <div class="mu-section-title">สถานะบัญชี</div>
+          <div class="mu-status-row"><span id="muStatusBadge"></span><span class="hint" id="muStatusText"></span></div>
+          <div style="margin-top:10px;" id="muStatusAction"></div>
+        </div>
+        <div class="mu-section mu-danger">
+          <div class="mu-section-title">ลบบัญชีถาวร</div>
+          <div class="hint" id="muPurgeHint" style="margin-bottom:8px;"></div>
+          <button type="button" class="btn btn-danger btn-sm" id="muPurgeBtn">ลบถาวร</button>
         </div>
       </div>
-      <div id="manageUserActions" style="display:flex; flex-direction:column; gap:8px;"></div>
+
       <div class="modal-actions"><button type="button" class="btn btn-ghost" id="manageUserClose">ปิด</button></div>
     </div>
   </div>
 
   <!-- ลบบัญชีถาวร (ตั้งแต่ 1.30.091026) — ลบได้เฉพาะบัญชีที่ "ระงับ" แล้ว และต้องพิมพ์ Username ยืนยัน (เซิร์ฟเวอร์ตรวจซ้ำอีกชั้น)
        หน้าเว็บเรียก adminPurgeUser ซ้ำเป็นรอบๆ จนได้ done:true (Worker แผนฟรีลบไฟล์ได้ครั้งละจำกัด) แล้วแสดงสรุปผลในป็อปอัพเดียวกันนี้ -->
-  <div class="modal-backdrop" id="purgeUserModal" hidden>
+  <div class="modal-backdrop super-admin-only" id="purgeUserModal" hidden>
     <div class="modal-box">
       <button type="button" class="modal-close-x" id="purgeUserModalCloseX" aria-label="ปิด">✕</button>
       <h3>ลบบัญชีถาวร</h3>
@@ -684,36 +768,12 @@
     </div>
   </div>
 
-  <!-- Reset password modal -->
-  <div class="modal-backdrop" id="resetPwModal" hidden>
-    <div class="modal-box">
-      <button type="button" class="modal-close-x" id="resetPwModalCloseX" aria-label="ปิด">✕</button>
-      <h3>ตั้งรหัสผ่านใหม่</h3>
-      <p class="hint" id="resetPwTargetName"></p>
-      <div id="resetPwError" class="error-box" hidden></div>
-      <form id="resetPwForm" style="text-align:left;">
-        <div class="field">
-          <label for="resetPwInput">รหัสผ่านใหม่</label>
-          <input id="resetPwInput" type="text" required minlength="4" placeholder="อย่างน้อย 4 ตัวอักษร" />
-        </div>
-        <div class="field">
-          <label for="resetPwConfirm">ยืนยันรหัสผ่านใหม่</label>
-          <input id="resetPwConfirm" type="text" required minlength="4" placeholder="พิมพ์ซ้ำอีกครั้ง" />
-        </div>
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary">บันทึก</button>
-          <button type="button" class="btn btn-ghost" id="resetPwClose">ยกเลิก</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- จัดการสมาชิกของกลุ่มบริหารงาน (ตั้งแต่ 1.41.111026) — Super Admin เท่านั้น (ดู adminSetDepartmentMembers) -->
   <div class="modal-backdrop super-admin-only" id="groupMembersModal" hidden>
     <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="gmCloseX" aria-label="ปิด">✕</button>
       <h3 id="gmTitle">จัดการสมาชิก</h3>
-      <p class="hint">ติ๊กคนที่สังกัดกลุ่มนี้ (1 คนสังกัดได้ 1 กลุ่ม — ถ้าติ๊กคนที่อยู่กลุ่มอื่น จะย้ายมากลุ่มนี้) แล้วกดบันทึก จากนั้นไปติ๊ก "เจ้าหน้าที่" ในการ์ดของกลุ่มได้</p>
+      <p class="hint">ติ๊กคนที่สังกัดกลุ่มนี้ (1 คนสังกัดได้ 1 กลุ่ม — ถ้าติ๊กคนที่อยู่กลุ่มอื่น จะย้ายมากลุ่มนี้) แล้วกดบันทึก จากนั้นไปติ๊ก "เจ้าหน้าที่" ในการ์ดของกลุ่มได้ — ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มใดกลุ่มหนึ่งเสมอ จึงเอาสมาชิกเดิมออกเฉยๆ ไม่ได้ (ถ้าจะย้าย ให้ไปติ๊กชื่อในกลุ่มใหม่)</p>
       <div id="gmError" class="error-box" hidden></div>
       <div class="field-row" style="align-items:flex-end;">
         <div class="field" style="flex:2;"><label for="gmSearch">ค้นหาชื่อ</label><input type="search" id="gmSearch" placeholder="พิมพ์ชื่อ" /></div>
@@ -745,63 +805,6 @@
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">บันทึกชื่อใหม่</button>
           <button type="button" class="btn btn-ghost" id="grpRenameCancel">ยกเลิก</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit department modal for a staff account (ตั้งแต่ 1.26.081026) — Super Admin เท่านั้น -->
-  <div class="modal-backdrop" id="editDeptModal" hidden>
-    <div class="modal-box">
-      <button type="button" class="modal-close-x" id="editDeptModalCloseX" aria-label="ปิด">✕</button>
-      <h3>กลุ่มบริหารงาน</h3>
-      <p class="hint" id="editDeptTargetName"></p>
-      <div id="editDeptError" class="error-box" hidden></div>
-      <form id="editDeptForm" style="text-align:left;">
-        <div class="field">
-          <label for="editDeptSelect">กลุ่มบริหารงานที่สังกัด</label>
-          <select id="editDeptSelect"><option value="">ยังไม่ระบุ</option></select>
-        </div>
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary">บันทึก</button>
-          <button type="button" class="btn btn-ghost" id="editDeptClose">ยกเลิก</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Change role modal (ตั้งแต่ 1.41.111026) — Super Admin เปลี่ยน Role ของบัญชีใดก็ได้ (ดู adminSetRole) -->
-  <div class="modal-backdrop super-admin-only" id="changeRoleModal" hidden>
-    <div class="modal-box">
-      <button type="button" class="modal-close-x" id="changeRoleModalCloseX" aria-label="ปิด">✕</button>
-      <h3>เปลี่ยน Role</h3>
-      <p class="hint" id="changeRoleTargetName"></p>
-      <div id="changeRoleError" class="error-box" hidden></div>
-      <form id="changeRoleForm" style="text-align:left;">
-        <div class="field">
-          <label for="changeRoleSelect">Role</label>
-          <select id="changeRoleSelect">
-            <option value="teacher">ครู</option>
-            <option value="staff">เจ้าหน้าที่</option>
-            <option value="executive">ผู้บริหาร</option>
-            <option value="superadmin">Super Admin</option>
-          </select>
-        </div>
-        <div class="field" id="changeRoleDeptField" hidden>
-          <label for="changeRoleDept">กลุ่มบริหารงาน</label>
-          <select id="changeRoleDept"><option value="">ยังไม่ระบุ</option></select>
-        </div>
-        <div class="field" id="changeRolePosField" hidden>
-          <label for="changeRolePos">ตำแหน่งผู้บริหาร</label>
-          <select id="changeRolePos">
-            <option value="ผู้อำนวยการ">ผู้อำนวยการ</option>
-            <option value="รองผู้อำนวยการ">รองผู้อำนวยการ</option>
-          </select>
-        </div>
-        <div class="hint" id="changeRoleHint" style="margin-bottom:12px;"></div>
-        <div class="modal-actions">
-          <button type="submit" class="btn btn-primary">บันทึก</button>
-          <button type="button" class="btn btn-ghost" id="changeRoleClose">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -846,7 +849,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.41.111026"></script>
+  <script src="assets/api.js?v=1.42.111026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1757,7 +1760,9 @@
         var box = document.getElementById('gmList');
         box.innerHTML = rows.length ? rows.map(function (u) {
           var other = u.department && u.department !== gmDept && known[u.department] ? ' <span class="gm-other">อยู่ ' + escapeHtml(groupLabel(u.department)) + (isStaffUser(u) ? ' (เจ้าหน้าที่)' : '') + '</span>' : '';
-          return '<label class="group-member"><input type="checkbox" data-gm-id="' + escapeHtml(u.id) + '"' + (gmChecked[u.id] ? ' checked' : '') + ' /> <span class="gm-name">' + escapeHtml(u.name) + '</span> ' + groupPickerHtml(u) + other + '</label>';
+          // 1.42.111026: สมาชิกเดิมของกลุ่มนี้เอาติ๊กออกไม่ได้ (ครู/เจ้าหน้าที่ต้องสังกัดกลุ่มเสมอ) — ย้ายกลุ่มด้วยการติ๊กชื่อในกลุ่มใหม่แทน
+          var locked = !!gmInitial[u.id];
+          return '<label class="group-member' + (locked ? ' gm-locked' : '') + '"' + (locked ? ' title="สมาชิกเดิมของกลุ่มนี้ — ถ้าจะย้าย ให้ไปติ๊กชื่อในกลุ่มใหม่"' : '') + '><input type="checkbox" data-gm-id="' + escapeHtml(u.id) + '"' + (gmChecked[u.id] ? ' checked' : '') + (locked ? ' disabled' : '') + ' /> <span class="gm-name">' + escapeHtml(u.name) + '</span> ' + groupPickerHtml(u) + other + '</label>';
         }).join('') : '<div class="empty-state">ไม่พบรายชื่อ</div>';
         var n = 0; for (var k in gmChecked) if (gmChecked[k]) n++;
         document.getElementById('gmCount').textContent = 'เลือกไว้ ' + n + ' คน';
@@ -2165,25 +2170,19 @@
     // ---------- Users ----------
     var allUsers = [];
 
-    // เจ้าหน้าที่ฝ่ายวิชาการ (staff) สร้างได้เฉพาะบัญชีครู เลือก Role เป็นเจ้าหน้าที่ไม่ได้ (ต้องให้ Super Admin สร้างให้)
-    if (!isSuperAdminSession) {
-      var adminOpt = document.querySelector('#cuRole option[value="admin"]');
-      if (adminOpt) adminOpt.remove();
-      var superAdminField = document.getElementById('cuSuperAdminField');
-      if (superAdminField) superAdminField.remove();
-    } else {
-      // แสดงช่อง "ฝ่าย" เฉพาะตอนเลือก Role เป็นเจ้าหน้าที่ (admin) และไม่ได้ตั้งเป็น Super Admin เท่านั้น (ตั้งแต่ 1.26.081026)
-      function syncCuDepartmentFieldVisibility() {
-        var roleVal = document.getElementById('cuRole').value;
-        var isSuper = document.getElementById('cuIsSuperAdmin').checked;
-        document.getElementById('cuDepartmentField').hidden = !(roleVal === 'teacher' || (roleVal === 'admin' && !isSuper));
-        document.getElementById('cuExecPositionField').hidden = roleVal !== 'executive';
-      }
-      document.getElementById('cuRole').addEventListener('change', function () {
-        document.getElementById('cuSuperAdminField').hidden = this.value !== 'admin';
-        syncCuDepartmentFieldVisibility();
-      });
-      document.getElementById('cuIsSuperAdmin').addEventListener('change', syncCuDepartmentFieldVisibility);
+    // ---------- ฟอร์มสร้างบัญชี: ช่องที่แสดงตามประเภทบัญชี (1.42.111026) ----------
+    // ครู → ต้องเลือกกลุ่มบริหารงาน + แต่งตั้งเป็นเจ้าหน้าที่ได้ · ผู้บริหาร → ตำแหน่ง · ผู้ดูแลระบบสูงสุด → ไม่มีช่องเพิ่มเติม
+    // (ฟอร์มนี้ถูกลบออกจาก DOM สำหรับผู้ที่ไม่ใช่ Super Admin — class super-admin-only)
+    function syncCuDepartmentFieldVisibility() {
+      var roleEl = document.getElementById('cuRole');
+      if (!roleEl) return;
+      var v = roleEl.value;
+      document.getElementById('cuDepartmentField').hidden = v !== 'teacher';
+      document.getElementById('cuStaffField').hidden = v !== 'teacher';
+      document.getElementById('cuExecPositionField').hidden = v !== 'executive';
+    }
+    if (isSuperAdminSession && document.getElementById('cuRole')) {
+      document.getElementById('cuRole').addEventListener('change', syncCuDepartmentFieldVisibility);
     }
 
     // หมายเหตุ (ตั้งแต่ V10.0): loadUsers() ยังถูกเรียกจากแท็บ "ปฏิทิน" ด้วย (ensureUsersLoaded — ใช้เติม dropdown ผู้รับ/ป้ายชื่อผู้รับ)
@@ -2201,8 +2200,10 @@
     // ตั้งแต่ 1.26.081026: ป้ายชื่อเจ้าหน้าที่แสดงฝ่ายที่สังกัดต่อท้าย (ถ้าตั้งไว้) แทนชื่อ "เจ้าหน้าที่ฝ่ายวิชาการ" เดิมที่ hardcode ไว้ตัวเดียว
     function roleBadge(u) {
       if (u.role === 'executive') return '<span class="badge badge-exec">' + escapeHtml(u.position || 'ผู้บริหาร') + '</span>';
-      if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>' + (u.department ? ' <span class="hint">' + escapeHtml(groupLabel(u.department)) + '</span>' : '');
-      if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่' + (u.department ? escapeHtml(groupLabel(u.department)) : '') + '</span>';
+      // 1.42.111026: ครู/เจ้าหน้าที่ที่ยังไม่สังกัดกลุ่มบริหารงาน (บัญชีเก่าก่อน 1.42) มีป้ายเตือนให้ไปเลือกกลุ่มในแท็บ "ประเภทบัญชี"
+      var noGroup = ' <span class="mu-warn">ยังไม่สังกัดกลุ่ม</span>';
+      if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>' + (u.department ? ' <span class="hint">' + escapeHtml(groupLabel(u.department)) + '</span>' : noGroup);
+      if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่' + (u.department ? escapeHtml(groupLabel(u.department)) : '') + '</span>' + (u.department ? '' : noGroup);
       return '<span class="badge badge-super">Super Admin</span>';
     }
 
@@ -2215,7 +2216,7 @@
       // ซ่อนบัญชี Super Admin ออกจากตารางจัดการบัญชีเสมอ (ทั้งมุมมอง Super Admin เองและเจ้าหน้าที่ฝ่ายวิชาการ)
       var visibleUsers = allUsers.filter(function (u) { return !(u.role === 'admin' && !u.hasHub); });
       if (visibleUsers.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีผู้ใช้งาน</div>'; return; }
-      var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>Username</th><th>Role</th><th>สถานะ</th><th></th></tr></thead><tbody>';
+      var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>Username</th><th>ประเภทบัญชี</th><th>สถานะ</th><th></th></tr></thead><tbody>';
       visibleUsers.forEach(function (u) {
         html += '<tr>' +
           '<td><div class="user-cell"><span class="profile-avatar"' + (canManageUser(u) ? ' data-manage-user="' + u.id + '" title="คลิกเพื่อจัดการบัญชี/เปลี่ยนรูป"' : '') + '>' + avatarInnerHtml(u.avatarUrl) + '</span><span>' + escapeHtml(u.name) + '</span></div></td>' +
@@ -2242,9 +2243,39 @@
       });
     }
 
-    // ---------- ป็อปอัพ "จัดการบัญชี" (ตั้งแต่ 1.29.091026) ----------
+    // ---------- ป็อปอัพ "จัดการบัญชี" (ตั้งแต่ 1.29.091026; แยกเป็น 3 แท็บตั้งแต่ 1.42.111026) ----------
+    // แท็บ "ข้อมูล" (ชื่อ/รูปโปรไฟล์/ตั้งรหัสผ่าน) · "ประเภทบัญชี" (ครู+กลุ่มบริหารงาน+แต่งตั้งเจ้าหน้าที่ / ผู้บริหาร / Super Admin) · "สถานะ" (ระงับ/คืนสิทธิ์/ลบถาวร)
+    // ป็อปอัพนี้และป็อปอัพลบถาวรเป็น super-admin-only (ถูกลบออกจาก DOM สำหรับคนอื่น) — ผูก event เฉพาะเมื่อเป็น Super Admin
+    var openManageUserModal = function () {};
+    function replaceUserInList(nu) {
+      for (var i = 0; i < allUsers.length; i++) { if (allUsers[i].id === nu.id) { allUsers[i] = nu; return nu; } }
+      return nu;
+    }
+    if (isSuperAdminSession && document.getElementById('manageUserModal')) {
     var manageUserModalEl = document.getElementById('manageUserModal');
-    // ---------- รูปโปรไฟล์ของบัญชีในป็อปอัพจัดการบัญชี (ตั้งแต่ 1.33.101026) ----------
+    var muUser = null; // บัญชีที่กำลังเปิดอยู่ (อ้างอิงจาก allUsers ล่าสุดเสมอ)
+    var MU_KIND_LABEL = { teacher: 'ครู', staff: 'เจ้าหน้าที่', executive: 'ผู้บริหาร', superadmin: 'Super Admin' };
+    function muKindOf(u) {
+      if (u.role === 'executive') return 'executive';
+      if (u.role === 'teacher') return 'teacher';
+      return u.hasHub ? 'staff' : 'superadmin';
+    }
+    function muFresh() { return muUser ? (allUsers.filter(function (x) { return x.id === muUser.id; })[0] || muUser) : null; }
+    function switchMuTab(t) {
+      ['info', 'type', 'status'].forEach(function (k) {
+        document.getElementById('muTabBtn-' + k).classList.toggle('active', k === t);
+        document.getElementById('muTab-' + k).classList.toggle('active', k === t);
+      });
+    }
+    ['info', 'type', 'status'].forEach(function (k) {
+      document.getElementById('muTabBtn-' + k).addEventListener('click', function () { switchMuTab(k); });
+    });
+    function renderMuHeader() {
+      var u = muFresh();
+      document.getElementById('manageUserTarget').innerHTML = '<span class="mu-target-name">' + escapeHtml(u.name) + '</span> <span class="hint">(' + escapeHtml(u.username) + ')</span> ' + roleBadge(u) +
+        ' <span class="badge badge-' + (u.status === 'active' ? 'active' : 'archived') + '">' + (u.status === 'active' ? 'ใช้งานอยู่' : 'ระงับ') + '</span>';
+    }
+    // ----- แท็บ "ข้อมูล" -----
     var manageAvatarTarget = null;   // บัญชีที่กำลังเปิดป็อปอัพอยู่
     var manageAvatarPending = null;  // รูปที่เลือกแล้วแต่ยังไม่บันทึก (ผลจาก resizeImageForAvatar)
     function syncManageAvatarUi() {
@@ -2295,55 +2326,150 @@
         syncManageAvatarUi();
       } else { errBox.textContent = r.error.message; errBox.hidden = false; }
     });
+    document.getElementById('muNameForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var u = muFresh(); if (!u) return;
+      var errBox = document.getElementById('muNameError');
+      errBox.hidden = true;
+      var name = document.getElementById('muName').value.replace(/\s+/g, ' ').trim();
+      if (!name) { errBox.textContent = 'กรุณากรอกชื่อ-สกุล'; errBox.hidden = false; return; }
+      if (name === u.name) { errBox.textContent = 'ชื่อยังเหมือนเดิม ไม่มีอะไรเปลี่ยน'; errBox.hidden = false; return; }
+      var ok = await askConfirm('ยืนยันแก้ชื่อ "' + u.name + '" เป็น "' + name + '"?', 'ยืนยันการแก้ชื่อ');
+      if (!ok) return;
+      var r = await withProgress('กำลังบันทึกชื่อ', function () { return apiCall('adminRenameUser', { userId: u.id, name: name }); }, { successLabel: 'บันทึกชื่อแล้ว' });
+      if (r.ok) {
+        replaceUserInList(r.data); manageAvatarTarget = r.data;
+        renderUserTable(); try { renderTeacherInfoTable(); } catch (e2) { /* ยังไม่ได้เปิดการ์ด */ }
+        renderMuHeader();
+      } else { errBox.textContent = r.error.message; errBox.hidden = false; }
+    });
+    document.getElementById('muPwForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var u = muFresh(); if (!u) return;
+      var errBox = document.getElementById('muPwError');
+      errBox.hidden = true;
+      var pw = document.getElementById('muPw').value, pw2 = document.getElementById('muPwConfirm').value;
+      if (String(pw).length < 4) { errBox.textContent = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร'; errBox.hidden = false; return; }
+      if (pw !== pw2) { errBox.textContent = 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง'; errBox.hidden = false; return; }
+      var ok = await askConfirm('ยืนยันตั้งรหัสผ่านใหม่ให้บัญชีของ "' + u.name + '"?', 'ยืนยันการตั้งรหัสผ่านใหม่');
+      if (!ok) return;
+      var r = await withProgress('กำลังตั้งรหัสผ่านใหม่', function () { return apiCall('adminResetUserPassword', { userId: u.id, newPassword: pw }); }, { successLabel: 'ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว' });
+      if (r.ok) { document.getElementById('muPw').value = ''; document.getElementById('muPwConfirm').value = ''; }
+      else { errBox.textContent = r.error.message; errBox.hidden = false; }
+    });
+    // ----- แท็บ "ประเภทบัญชี" -----
+    function syncMuTypeFields() {
+      var v = document.getElementById('muType').value;
+      var isTeacher = v === 'teacher';
+      document.getElementById('muTeacherFields').hidden = !isTeacher;
+      document.getElementById('muPosField').hidden = v !== 'executive';
+      var staff = isTeacher && document.getElementById('muStaff').checked;
+      document.getElementById('muTypeHint').textContent =
+        v === 'executive' ? 'ผู้บริหารดูสรุป/ปฏิทิน/ประกาศได้อย่างเดียว ไม่ต้องส่งงาน และไม่สังกัดกลุ่มบริหารงาน — ผลงานเดิมของบัญชีนี้ยังอยู่ในระบบ แต่จะไม่แสดง' :
+        v === 'superadmin' ? 'ระวัง: บัญชี Super Admin จะไม่แสดงในตารางจัดการบัญชีนี้ (เป็นความลับ) จึงเปลี่ยนกลับผ่านหน้านี้ไม่ได้ และไม่มีหน้าฮับส่วนตัว' :
+        staff ? 'เจ้าหน้าที่ส่งงานของตนเองได้เหมือนครู และจัดการงานของกลุ่มบริหารงานที่สังกัด' : 'ครูส่งงานและมีหน้าแสดงผลงานของตนเอง';
+    }
+    function renderMuTypeTab() {
+      var u = muFresh();
+      var kind = muKindOf(u);
+      var known = (currentDepartments || []).indexOf(u.department) !== -1;
+      document.getElementById('muTypeCurrent').innerHTML = 'ปัจจุบัน: <b>' + escapeHtml(MU_KIND_LABEL[kind]) + '</b>' +
+        ((kind === 'teacher' || kind === 'staff') ? (known ? ' · ' + escapeHtml(groupLabel(u.department)) : ' · <span class="mu-warn">ยังไม่สังกัดกลุ่มบริหารงาน — กรุณาเลือกกลุ่มแล้วบันทึก</span>') : '');
+      document.getElementById('muType').value = (kind === 'staff') ? 'teacher' : kind;
+      renderDepartmentOptions(document.getElementById('muDept'), known ? u.department : '', '— เลือกกลุ่มบริหารงาน —');
+      document.getElementById('muStaff').checked = kind === 'staff';
+      document.getElementById('muPos').value = kind === 'executive' && u.position ? u.position : 'ผู้อำนวยการ';
+      document.getElementById('muTypeError').hidden = true;
+      if (!(currentDepartments || []).length) {
+        document.getElementById('muTypeError').textContent = 'ยังไม่มีกลุ่มบริหารงานในระบบ — เพิ่มกลุ่มที่แท็บ "ข้อมูลหลัก" → กลุ่มบริหารงาน ก่อน จึงจะตั้งประเภทบัญชีเป็นครูได้';
+        document.getElementById('muTypeError').hidden = false;
+      }
+      syncMuTypeFields();
+    }
+    document.getElementById('muType').addEventListener('change', syncMuTypeFields);
+    document.getElementById('muStaff').addEventListener('change', syncMuTypeFields);
+    document.getElementById('muTypeForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var u = muFresh(); if (!u) return;
+      var errBox = document.getElementById('muTypeError');
+      errBox.hidden = true;
+      var sel = document.getElementById('muType').value;
+      var dept = document.getElementById('muDept').value;
+      var kind = sel === 'teacher' ? (document.getElementById('muStaff').checked ? 'staff' : 'teacher') : sel;
+      var pos = document.getElementById('muPos').value;
+      if (sel === 'teacher' && !dept) { errBox.textContent = 'ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มบริหารงานกลุ่มใดกลุ่มหนึ่ง กรุณาเลือกกลุ่มบริหารงาน'; errBox.hidden = false; return; }
+      var curKind = muKindOf(u);
+      var same = kind === curKind && (sel !== 'teacher' || dept === u.department) && (kind !== 'executive' || pos === u.position);
+      if (same) { errBox.textContent = 'ไม่มีอะไรเปลี่ยน — ประเภทบัญชี' + (sel === 'teacher' ? 'และกลุ่มบริหารงาน' : '') + 'ยังเหมือนเดิม'; errBox.hidden = false; return; }
+      var label = MU_KIND_LABEL[kind] + (sel === 'teacher' ? ' ' + groupLabel(dept) : (kind === 'executive' ? ' (' + pos + ')' : ''));
+      var msg = 'ยืนยันตั้งประเภทบัญชีของ "' + u.name + '" เป็น "' + label + '"?' +
+        (kind !== curKind ? ' ผู้ใช้ต้องออกจากระบบแล้วเข้าใหม่เพื่อให้เมนูตรงกับประเภทบัญชีใหม่' : '') +
+        (kind === 'superadmin' ? ' — บัญชีนี้จะไม่แสดงในตารางจัดการบัญชีอีก และเปลี่ยนกลับผ่านหน้านี้ไม่ได้' : '');
+      var ok = await askConfirm(msg, 'ยืนยันการเปลี่ยนประเภทบัญชี');
+      if (!ok) return;
+      var payload = { userId: u.id, role: kind, department: dept, position: pos };
+      var r = await withProgress('กำลังบันทึกประเภทบัญชี', function () { return apiCall('adminSetRole', payload); }, { successLabel: 'บันทึกประเภทบัญชีแล้ว' });
+      if (r.ok) {
+        replaceUserInList(r.data);
+        renderUserTable(); try { renderTeacherInfoTable(); } catch (e2) { /* ยังไม่ได้เปิดการ์ด */ }
+        try { renderGroups(); } catch (e3) { /* การ์ดกลุ่มยังไม่ได้โหลด */ }
+        if (kind === 'superadmin') { hideModalEl(manageUserModalEl); return; }
+        renderMuHeader(); renderMuTypeTab();
+      } else { errBox.textContent = r.error.message; errBox.hidden = false; }
+    });
+    // ----- แท็บ "สถานะ" -----
+    function renderMuStatusTab() {
+      var u = muFresh();
+      var active = u.status === 'active';
+      document.getElementById('muStatusBadge').innerHTML = '<span class="badge badge-' + (active ? 'active' : 'archived') + '">' + (active ? 'ใช้งานอยู่' : 'ระงับ') + '</span>';
+      document.getElementById('muStatusText').textContent = active
+        ? 'ล็อกอินได้ตามปกติ และหน้าแสดงผลงานสาธารณะเปิดอยู่'
+        : 'ล็อกอินไม่ได้ และหน้าแสดงผลงานสาธารณะถูกซ่อน — ข้อมูลและไฟล์ทั้งหมดยังอยู่ครบ';
+      document.getElementById('muStatusAction').innerHTML = active
+        ? '<button type="button" class="btn btn-secondary btn-sm" id="muArchiveBtn"><i class="fas fa-ban ui-icon" aria-hidden="true"></i> ระงับบัญชี</button>'
+        : '<button type="button" class="btn btn-primary btn-sm" id="muRestoreBtn"><i class="fas fa-rotate-left ui-icon" aria-hidden="true"></i> คืนสิทธิ์การใช้งาน</button>';
+      var purgeBtn = document.getElementById('muPurgeBtn');
+      purgeBtn.disabled = active;
+      document.getElementById('muPurgeHint').textContent = active
+        ? 'ต้องระงับบัญชีนี้ก่อน จึงจะลบถาวรได้'
+        : 'ล้างบัญชีและผลงานทั้งหมดออกจากระบบ (ย้อนกลับไม่ได้) — ต้องพิมพ์ Username ยืนยันอีกครั้ง';
+    }
+    document.getElementById('muStatusAction').addEventListener('click', async function (e) {
+      var u = muFresh(); if (!u) return;
+      if (e.target.closest('#muArchiveBtn')) {
+        var ok = await askConfirm('ระงับบัญชีของ "' + u.name + '"? จะล็อกอินไม่ได้ และหน้าแสดงผลงานสาธารณะจะถูกซ่อน แต่ข้อมูลและไฟล์ทั้งหมดยังอยู่ (คืนสิทธิ์ได้ทุกเมื่อ)', 'ยืนยันการระงับบัญชี');
+        if (!ok) return;
+        var rA = await withProgress('กำลังระงับบัญชี', function () { return apiCall('adminArchiveUser', { userId: u.id }); }, { successLabel: 'ระงับบัญชีแล้ว' });
+        if (rA.ok) { u.status = 'archived'; renderUserTable(); renderMuHeader(); renderMuStatusTab(); }
+      } else if (e.target.closest('#muRestoreBtn')) {
+        var okR = await askConfirm('คืนสิทธิ์การใช้งานบัญชีของ "' + u.name + '"? บัญชีนี้จะล็อกอินได้อีกครั้ง', 'ยืนยันการคืนสิทธิ์');
+        if (!okR) return;
+        var rR = await withProgress('กำลังคืนสิทธิ์การใช้งาน', function () { return apiCall('adminRestoreUser', { userId: u.id }); }, { successLabel: 'คืนสิทธิ์การใช้งานแล้ว' });
+        if (rR.ok) { u.status = 'active'; renderUserTable(); renderMuHeader(); renderMuStatusTab(); }
+      }
+    });
+    document.getElementById('muPurgeBtn').addEventListener('click', function () {
+      var u = muFresh(); if (!u || u.status === 'active') return;
+      hideModalEl(manageUserModalEl);
+      openPurgeUserModal(u.id, u.name);
+    });
 
-    function openManageUserModal(u) {
+    openManageUserModal = function (u, tab) {
+      muUser = u;
       manageAvatarTarget = u; manageAvatarPending = null;
       document.getElementById('manageAvatarError').hidden = true;
       syncManageAvatarUi();
-      document.getElementById('manageUserTarget').innerHTML = escapeHtml(u.name) + ' <span class="hint">(' + escapeHtml(u.username) + ')</span> ' + roleBadge(u);
-      var nm = escapeHtml(u.name);
-      var btns = (u.status === 'active'
-          ? '<button class="btn btn-secondary" data-act="archive">ระงับบัญชี</button>'
-          : '<button class="btn btn-secondary" data-act="restore">คืนสิทธิ์</button>') +
-        '<button class="btn btn-ghost" data-act="resetpw">ตั้งรหัสผ่านใหม่</button>' +
-        '<button class="btn btn-ghost" data-act="changerole">เปลี่ยน Role</button>' +
-        // "กลุ่มบริหารงาน" (ตั้งแต่ 1.41.111026) — ตั้งได้ทั้งครูและเจ้าหน้าที่ (ผู้บริหารและ Super Admin ไม่สังกัดกลุ่ม)
-        (u.role !== 'executive' && u.hasHub ? '<button class="btn btn-ghost" data-act="editdept">กลุ่มบริหารงาน</button>' : '') +
-        // ลบถาวร (ตั้งแต่ 1.30.091026): กดได้เฉพาะบัญชีที่ระงับแล้ว — ถ้ายังใช้งานอยู่ปุ่มจะปิดไว้พร้อมคำอธิบาย
-        (u.status === 'active'
-          ? '<button class="btn btn-danger" data-act="purge" disabled>ลบถาวร</button><div class="hint">ต้องระงับบัญชีนี้ก่อน จึงจะลบถาวรได้</div>'
-          : '<button class="btn btn-danger" data-act="purge">ลบถาวร</button><div class="hint">ล้างบัญชีและผลงานทั้งหมด (ย้อนกลับไม่ได้)</div>');
-      var box = document.getElementById('manageUserActions');
-      box.innerHTML = btns;
-      box.querySelectorAll('button[data-act]:not([disabled])').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          hideModalEl(manageUserModalEl);
-          runUserAction(btn.getAttribute('data-act'), u.id, u.name);
-        });
-      });
+      document.getElementById('muName').value = u.name;
+      document.getElementById('muNameError').hidden = true;
+      document.getElementById('muPw').value = ''; document.getElementById('muPwConfirm').value = '';
+      document.getElementById('muPwError').hidden = true;
+      renderMuHeader(); renderMuTypeTab(); renderMuStatusTab();
+      switchMuTab(tab || 'info');
       showModalEl(manageUserModalEl);
-    }
-    async function runUserAction(act, id, name) {
-      if (act === 'archive') {
-        var ok = await askConfirm('ระงับบัญชีของ "' + name + '"? จะล็อกอินไม่ได้ และหน้าแสดงผลงานสาธารณะจะถูกซ่อน แต่ข้อมูลและไฟล์ทั้งหมดยังอยู่ (คืนสิทธิ์ได้ทุกเมื่อ)', 'ยืนยันการระงับบัญชี');
-        if (!ok) return;
-        var rA = await withProgress('กำลังระงับบัญชี', function () { return apiCall('adminArchiveUser', { userId: id }); }, { successLabel: 'ระงับบัญชีแล้ว' });
-        if (rA.ok) loadUsers();
-      } else if (act === 'restore') {
-        var okR = await askConfirm('คืนสิทธิ์การใช้งานบัญชีของ "' + name + '"? บัญชีนี้จะล็อกอินได้อีกครั้ง', 'ยืนยันการคืนสิทธิ์');
-        if (!okR) return;
-        var rR = await withProgress('กำลังคืนสิทธิ์การใช้งาน', function () { return apiCall('adminRestoreUser', { userId: id }); }, { successLabel: 'คืนสิทธิ์การใช้งานแล้ว' });
-        if (rR.ok) loadUsers();
-      } else if (act === 'purge') {
-        openPurgeUserModal(id, name);
-      } else if (act === 'resetpw') {
-        openResetPwModal(id, name);
-      } else if (act === 'editdept') {
-        openEditDeptModal(id, name);
-      } else if (act === 'changerole') {
-        openChangeRoleModal(id, name);
-      }
-    }
+    };
+    document.getElementById('manageUserClose').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
+    document.getElementById('manageUserModalCloseX').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
+
     // ---------- ป็อปอัพ "ลบบัญชีถาวร" (ตั้งแต่ 1.30.091026) ----------
     var purgeUserModalEl = document.getElementById('purgeUserModal');
     var purgeBusy = false;
@@ -2413,27 +2539,20 @@
       doneBtn.hidden = false;
     });
 
-    document.getElementById('manageUserClose').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
-    document.getElementById('manageUserModalCloseX').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
+    } // end if (isSuperAdminSession) — ป็อปอัพจัดการบัญชี/ลบถาวร
 
-    // ---------- Create user modal / Reset password modal ----------
-    // ตั้งแต่ V10.0 แท็บ "จัดการบัญชี" (และปุ่ม/ฟอร์มทั้งหมดในนี้ รวมถึง #openCreateUserBtn ที่อยู่ในแท็บนั้น) เป็น super-admin-only
-    // ต้องครอบทั้งบล็อกด้วย if (isSuperAdminSession) กัน error ตอนเจ้าหน้าที่ฝ่ายวิชาการเปิดหน้านี้ (องค์ประกอบในแท็บถูกลบไปแล้ว หา element ไม่เจอ)
-    // openResetPwModal ต้องประกาศ var ไว้นอกบล็อกก่อน (เหมือน loadCategories ด้านบน) เพราะถูกเรียกใช้จาก renderUserTable ที่อยู่นอกบล็อกนี้
-    var openResetPwModal;
-    var openEditDeptModal;
-    var openChangeRoleModal;
-    if (isSuperAdminSession) {
+    // ---------- Create user modal ----------
+    // ตั้งแต่ V10.0 แท็บ "จัดการบัญชี" (และปุ่ม/ฟอร์มทั้งหมดในนี้) เป็น super-admin-only — ครอบด้วย if (isSuperAdminSession) กัน error ตอนคนอื่นเปิดหน้านี้
+    // 1.42.111026: ป็อปอัพย่อย "ตั้งรหัสผ่านใหม่" / "เปลี่ยน Role" / "กลุ่มบริหารงาน" ย้ายไปเป็นแท็บในป็อปอัพ "จัดการบัญชี" แล้ว
+    if (isSuperAdminSession && document.getElementById('createUserModal')) {
       var createUserModal = document.getElementById('createUserModal');
       document.getElementById('openCreateUserBtn').addEventListener('click', function () {
         document.getElementById('createUserForm').reset();
-        var cuSuperAdminFieldEl2 = document.getElementById('cuSuperAdminField');
-        if (cuSuperAdminFieldEl2) cuSuperAdminFieldEl2.hidden = true;
-        var cuDepartmentFieldEl = document.getElementById('cuDepartmentField');
-        if (cuDepartmentFieldEl) { renderDepartmentOptions(document.getElementById('cuDepartment'), '', 'ยังไม่ระบุ'); cuDepartmentFieldEl.hidden = true; }
-        var cuExecPosFieldEl = document.getElementById('cuExecPositionField');
-        if (cuExecPosFieldEl) cuExecPosFieldEl.hidden = true;
-        document.getElementById('createUserError').hidden = true;
+        renderDepartmentOptions(document.getElementById('cuDepartment'), '', '— เลือกกลุ่มบริหารงาน —');
+        syncCuDepartmentFieldVisibility();
+        var errBox0 = document.getElementById('createUserError');
+        errBox0.hidden = true;
+        if (!(currentDepartments || []).length) { errBox0.textContent = 'ยังไม่มีกลุ่มบริหารงานในระบบ — บัญชีครูต้องสังกัดกลุ่มบริหารงาน กรุณาเพิ่มกลุ่มที่แท็บ "ข้อมูลหลัก" → กลุ่มบริหารงาน ก่อน'; errBox0.hidden = false; }
         showModalEl(createUserModal);
       });
       document.getElementById('createUserClose').addEventListener('click', function () { hideModalEl(createUserModal); });
@@ -2448,159 +2567,34 @@
           errBox.hidden = false;
           return;
         }
+        var kind = document.getElementById('cuRole').value;
+        var dept = document.getElementById('cuDepartment').value;
+        if (kind === 'teacher' && !dept) {
+          errBox.textContent = 'ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มบริหารงานกลุ่มใดกลุ่มหนึ่ง กรุณาเลือกกลุ่มบริหารงาน';
+          errBox.hidden = false;
+          return;
+        }
         var cuNameVal = document.getElementById('cuName').value.trim();
         var ok = await askConfirm('ยืนยันสร้างบัญชีใหม่สำหรับ "' + cuNameVal + '"?', 'ยืนยันการสร้างบัญชี');
         if (!ok) return;
-        var cuIsSuperAdminEl = document.getElementById('cuIsSuperAdmin');
-        var cuDepartmentEl = document.getElementById('cuDepartment');
+        var isStaff = kind === 'teacher' && document.getElementById('cuIsStaff').checked;
         var cuPayload = {
-          name: document.getElementById('cuName').value.trim(),
+          name: cuNameVal,
           username: document.getElementById('cuUsername').value.trim(),
           password: document.getElementById('cuPassword').value,
-          role: document.getElementById('cuRole').value,
-          isSuperAdmin: cuIsSuperAdminEl ? cuIsSuperAdminEl.checked : false,
-          department: (cuDepartmentEl && !document.getElementById('cuDepartmentField').hidden) ? cuDepartmentEl.value : ''
+          role: kind === 'executive' ? 'executive' : (kind === 'superadmin' || isStaff ? 'admin' : 'teacher'),
+          isSuperAdmin: kind === 'superadmin',
+          department: kind === 'teacher' ? dept : ''
         };
-        if (cuPayload.role === 'executive') cuPayload.position = document.getElementById('cuExecPosition').value;
+        if (kind === 'executive') cuPayload.position = document.getElementById('cuExecPosition').value;
         var r = await withProgress('กำลังสร้างบัญชีใหม่', function () {
           return apiCall('adminCreateUser', cuPayload);
         }, { successLabel: 'สร้างบัญชีเรียบร้อยแล้ว' });
         if (r.ok) {
           document.getElementById('createUserForm').reset();
-          var cuSuperAdminFieldEl = document.getElementById('cuSuperAdminField');
-          if (cuSuperAdminFieldEl) cuSuperAdminFieldEl.hidden = true;
-          var cuDepartmentFieldEl2 = document.getElementById('cuDepartmentField');
-          if (cuDepartmentFieldEl2) cuDepartmentFieldEl2.hidden = true;
-          var cuExecPosFieldEl2 = document.getElementById('cuExecPositionField');
-          if (cuExecPosFieldEl2) cuExecPosFieldEl2.hidden = true;
+          syncCuDepartmentFieldVisibility();
           hideModalEl(createUserModal);
           loadUsers();
-        } else {
-          errBox.textContent = r.error.message;
-          errBox.hidden = false;
-        }
-      });
-
-      var resetPwModal = document.getElementById('resetPwModal');
-      var resetPwUserId = null;
-      openResetPwModal = function (userId, name) {
-        resetPwUserId = userId;
-        document.getElementById('resetPwTargetName').textContent = 'สำหรับผู้ใช้: ' + name;
-        document.getElementById('resetPwInput').value = '';
-        document.getElementById('resetPwConfirm').value = '';
-        document.getElementById('resetPwError').hidden = true;
-        showModalEl(resetPwModal);
-      };
-      document.getElementById('resetPwClose').addEventListener('click', function () { hideModalEl(resetPwModal); });
-      document.getElementById('resetPwModalCloseX').addEventListener('click', function () { hideModalEl(resetPwModal); });
-      document.getElementById('resetPwForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        var errBox = document.getElementById('resetPwError');
-        errBox.hidden = true;
-        if (document.getElementById('resetPwInput').value !== document.getElementById('resetPwConfirm').value) {
-          errBox.textContent = 'รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน กรุณาตรวจสอบอีกครั้ง';
-          errBox.hidden = false;
-          return;
-        }
-        var okPw = await askConfirm('ยืนยันตั้งรหัสผ่านใหม่ให้บัญชีนี้?', 'ยืนยันการตั้งรหัสผ่านใหม่');
-        if (!okPw) return;
-        var newPwVal = document.getElementById('resetPwInput').value;
-        var r = await withProgress('กำลังตั้งรหัสผ่านใหม่', function () {
-          return apiCall('adminResetUserPassword', { userId: resetPwUserId, newPassword: newPwVal });
-        }, { successLabel: 'ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว' });
-        if (r.ok) {
-          hideModalEl(resetPwModal);
-        } else {
-          errBox.textContent = r.error.message;
-          errBox.hidden = false;
-        }
-      });
-
-      // ---------- แก้ไขแผนกของบัญชีเจ้าหน้าที่ (ตั้งแต่ 1.26.081026) — Super Admin เท่านั้น (ดู adminSetUserDepartment) ----------
-      var editDeptModal = document.getElementById('editDeptModal');
-      var editDeptUserId = null;
-      openEditDeptModal = function (userId, name) {
-        editDeptUserId = userId;
-        var target = allUsers.filter(function (x) { return x.id === userId; })[0];
-        document.getElementById('editDeptTargetName').textContent = 'สำหรับผู้ใช้: ' + name;
-        renderDepartmentOptions(document.getElementById('editDeptSelect'), target ? (target.department || '') : '', 'ยังไม่ระบุ');
-        document.getElementById('editDeptError').hidden = true;
-        showModalEl(editDeptModal);
-      };
-      document.getElementById('editDeptClose').addEventListener('click', function () { hideModalEl(editDeptModal); });
-      document.getElementById('editDeptModalCloseX').addEventListener('click', function () { hideModalEl(editDeptModal); });
-      document.getElementById('editDeptForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        var errBox = document.getElementById('editDeptError');
-        errBox.hidden = true;
-        var deptVal = document.getElementById('editDeptSelect').value;
-        var ok = await askConfirm('ยืนยันตั้งกลุ่มบริหารงานของบัญชีนี้เป็น "' + (deptVal ? groupLabel(deptVal) : 'ยังไม่ระบุ') + '"?' + (deptVal ? ' (ถ้าเป็นเจ้าหน้าที่ จะเป็นเจ้าหน้าที่ของกลุ่มใหม่)' : ''), 'ยืนยันการตั้งกลุ่มบริหารงาน');
-        if (!ok) return;
-        var r = await withProgress('กำลังบันทึก', function () {
-          return apiCall('adminSetUserDepartment', { userId: editDeptUserId, department: deptVal });
-        }, { successLabel: 'ตั้งกลุ่มบริหารงานแล้ว' });
-        if (r.ok) {
-          for (var i = 0; i < allUsers.length; i++) { if (allUsers[i].id === r.data.id) { allUsers[i] = r.data; break; } }
-          renderUserTable();
-          hideModalEl(editDeptModal);
-        } else {
-          errBox.textContent = r.error.message;
-          errBox.hidden = false;
-        }
-      });
-
-      // ---------- เปลี่ยน Role ของบัญชี (ตั้งแต่ 1.41.111026) — Super Admin เท่านั้น (ดู adminSetRole) ----------
-      var changeRoleModal = document.getElementById('changeRoleModal');
-      var changeRoleUserId = null;
-      var CHANGE_ROLE_LABEL = { teacher: 'ครู', staff: 'เจ้าหน้าที่', executive: 'ผู้บริหาร', superadmin: 'Super Admin' };
-      function currentRoleKind(u) {
-        if (u.role === 'executive') return 'executive';
-        if (u.role === 'teacher') return 'teacher';
-        return u.hasHub ? 'staff' : 'superadmin';
-      }
-      function syncChangeRoleFields() {
-        var v = document.getElementById('changeRoleSelect').value;
-        document.getElementById('changeRoleDeptField').hidden = !(v === 'staff' || v === 'teacher');
-        document.getElementById('changeRolePosField').hidden = v !== 'executive';
-        document.getElementById('changeRoleHint').textContent =
-          v === 'executive' ? 'ผู้บริหารดูสรุป/ปฏิทิน/ประกาศได้อย่างเดียว ไม่ต้องส่งงาน — ผลงานเดิมของบัญชีนี้ยังอยู่ในระบบ แต่จะไม่แสดง' :
-          v === 'superadmin' ? 'ระวัง: บัญชี Super Admin จะไม่แสดงในตารางจัดการบัญชีนี้ (เป็นความลับ) จึงเปลี่ยนกลับผ่านหน้านี้ไม่ได้ และไม่มีหน้าฮับส่วนตัว' :
-          v === 'staff' ? 'เจ้าหน้าที่ส่งงานของตนเองได้เหมือนครู และจัดการงานของกลุ่มบริหารงานที่สังกัด' : 'ครูส่งงานและมีหน้าแสดงผลงานของตนเอง';
-      }
-      openChangeRoleModal = function (userId, name) {
-        changeRoleUserId = userId;
-        var target = allUsers.filter(function (x) { return x.id === userId; })[0];
-        if (!target) return;
-        document.getElementById('changeRoleTargetName').textContent = 'สำหรับผู้ใช้: ' + name + ' (ปัจจุบัน: ' + CHANGE_ROLE_LABEL[currentRoleKind(target)] + ')';
-        document.getElementById('changeRoleSelect').value = currentRoleKind(target);
-        renderDepartmentOptions(document.getElementById('changeRoleDept'), target.department || '', 'ยังไม่ระบุ');
-        document.getElementById('changeRolePos').value = target.role === 'executive' && target.position ? target.position : 'ผู้อำนวยการ';
-        document.getElementById('changeRoleError').hidden = true;
-        syncChangeRoleFields();
-        showModalEl(changeRoleModal);
-      };
-      document.getElementById('changeRoleSelect').addEventListener('change', syncChangeRoleFields);
-      document.getElementById('changeRoleClose').addEventListener('click', function () { hideModalEl(changeRoleModal); });
-      document.getElementById('changeRoleModalCloseX').addEventListener('click', function () { hideModalEl(changeRoleModal); });
-      document.getElementById('changeRoleForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        var errBox = document.getElementById('changeRoleError');
-        errBox.hidden = true;
-        var target = allUsers.filter(function (x) { return x.id === changeRoleUserId; })[0];
-        if (!target) return;
-        var kind = document.getElementById('changeRoleSelect').value;
-        if (kind === currentRoleKind(target) && kind !== 'staff' && kind !== 'executive') { errBox.textContent = 'บัญชีนี้เป็น ' + CHANGE_ROLE_LABEL[kind] + ' อยู่แล้ว'; errBox.hidden = false; return; }
-        var msg = 'ยืนยันเปลี่ยน Role ของ "' + target.name + '" เป็น "' + CHANGE_ROLE_LABEL[kind] + '"? ผู้ใช้ต้องออกจากระบบแล้วเข้าใหม่เพื่อให้เมนูตรงกับ Role ใหม่' +
-          (kind === 'superadmin' ? ' — บัญชีนี้จะไม่แสดงในตารางจัดการบัญชีอีก และเปลี่ยนกลับผ่านหน้านี้ไม่ได้' : '');
-        var ok = await askConfirm(msg, 'ยืนยันการเปลี่ยน Role');
-        if (!ok) return;
-        var payload = { userId: changeRoleUserId, role: kind, department: document.getElementById('changeRoleDept').value, position: document.getElementById('changeRolePos').value };
-        var r = await withProgress('กำลังเปลี่ยน Role', function () { return apiCall('adminSetRole', payload); }, { successLabel: 'เปลี่ยน Role แล้ว' });
-        if (r.ok) {
-          for (var i = 0; i < allUsers.length; i++) { if (allUsers[i].id === r.data.id) { allUsers[i] = r.data; break; } }
-          renderUserTable();
-          renderTeacherInfoTable();
-          hideModalEl(changeRoleModal);
         } else {
           errBox.textContent = r.error.message;
           errBox.hidden = false;

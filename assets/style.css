@@ -1395,3 +1395,23 @@ button.checklist-group-toggle:hover, button.checklist-group-toggle:focus-visible
 .orders-tag-direct { background: var(--surface-2); color: var(--text-muted); }
 .orders-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .orders-actions .btn { text-decoration: none; }
+
+/* ---------- ป็อปอัพจัดการบัญชีแบบ 3 แท็บ (ตั้งแต่ 1.42.111026) ---------- */
+.mu-target { margin-bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.mu-target-name { font-weight: 600; }
+.mu-tabs { margin-bottom: 14px; }
+.mu-tabs .ev-tab-btn .ui-icon { font-size: 14px; margin-right: 4px; }
+.mu-tab-left, #manageUserModal .ev-tab-panel { text-align: left; }
+.mu-section { padding: 12px 14px; margin-bottom: 12px; background: var(--surface-2); border-radius: var(--radius); }
+.mu-section-title { font-weight: 600; margin-bottom: 8px; }
+.mu-section .field-row { margin-bottom: 8px; }
+.mu-section .field { margin-bottom: 0; }
+.mu-inline { display: flex; gap: 8px; align-items: center; }
+.mu-inline input { flex: 1; min-width: 0; }
+.mu-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.mu-danger { border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent); }
+.mu-staff-box { padding: 8px 10px; border: 1px dashed var(--border); border-radius: var(--radius); }
+.mu-warn { color: var(--warn); font-size: 0.85rem; font-weight: 500; }
+.req-mark { color: var(--danger, #d33); }
+@media (max-width: 560px) { .mu-inline { flex-direction: column; align-items: stretch; } }
+.group-member.gm-locked { opacity: 0.85; cursor: not-allowed; }
