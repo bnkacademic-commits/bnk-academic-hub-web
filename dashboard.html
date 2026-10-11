@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.44.111026" />
+<link rel="stylesheet" href="assets/style.css?v=1.45.111026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -35,7 +35,11 @@
     <!-- ตั้งแต่ 1.41.111026: การ์ด "เว็บไซต์โรงเรียน" อยู่บนสุด เหนือข้อความต้อนรับ · ปุ่ม "หน้าผลงานของฉัน" และ "จัดทำบันทึกข้อความ" อยู่ฝั่งขวาของข้อความต้อนรับ
          · ตัดคำอธิบาย "อัพโหลด จัดการ และแชร์ผลงาน…" ออกตามที่ผู้ใช้ขอ -->
     <div class="page-header dash-welcome-row">
-      <h1 id="welcomeHeading">ยินดีต้อนรับ</h1>
+      <div class="dash-welcome-text">
+        <h1 id="welcomeHeading">ยินดีต้อนรับ</h1>
+        <!-- 1.45.111026: คำอธิบายระบบสั้นๆ 1 บรรทัดใต้ข้อความต้อนรับ -->
+        <p class="dash-welcome-sub">ส่งผลงาน ติดตามกำหนดการ และค้นหาคำสั่งของโรงเรียนได้ในที่เดียว</p>
+      </div>
       <div class="dash-welcome-actions">
         <!-- ตั้งแต่ V11.7: ผู้ใช้ขอสลับปุ่มเด่น (.btn-cta) กลับมาไว้ที่ปุ่มนี้แทนปุ่ม "ส่งงาน (กำหนดเอง)" ด้านล่าง (ดูคอมเมนต์ตรงนั้น) -->
         <button class="btn btn-cta dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
@@ -163,7 +167,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.44.111026"></script>
+  <script src="assets/api.js?v=1.45.111026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -710,6 +714,12 @@
         var t = await currentAcademicTerm();
         checklistState.term = t; checklistState.year = String(t.year); checklistState.expanded = {};
         renderAssignmentChecklist();
+      });
+      // 1.45.111026: ปุ่มรีเฟรชปีหมุนเมื่อกด (อย่างน้อย 1 รอบ ให้เห็นว่ากดติด)
+      document.getElementById('clReset').addEventListener('click', function () {
+        var b = this;
+        b.classList.remove('spin-once'); void b.offsetWidth; b.classList.add('spin-once');
+        setTimeout(function () { b.classList.remove('spin-once'); }, 700);
       });
     })();
 

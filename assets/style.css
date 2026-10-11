@@ -1449,3 +1449,84 @@ body.file-preview-open { overflow: hidden; }
 .orders-meta-2:empty { display: none; }
 .orders-resp .fa-solid { margin-right: 3px; }
 .orders-own { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; vertical-align: middle; background: var(--success-light, rgba(16, 185, 129, 0.14)); color: var(--success, #059669); }
+
+/* ---------- หน้าแรก (1.45.111026): ข้อความอธิบายใต้ "ยินดีต้อนรับ" + แถบเลือกปีของเช็คลิสต์ไม่ตกบรรทัดแบบแหว่ง ---------- */
+.dash-welcome-row .dash-welcome-text { flex: 1 1 0; min-width: 240px; }
+.dash-welcome-text h1 { margin-bottom: 2px; }
+.dash-welcome-sub { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
+@media (max-width: 760px) { .dash-welcome-sub { white-space: normal; } }
+.dash-checklist-title { flex-wrap: wrap; row-gap: 8px; }
+.dash-checklist-name { white-space: nowrap; }
+.dash-checklist-controls { display: flex; flex: 1 1 100%; min-width: 0; margin-left: 0; gap: 6px; }
+.dash-checklist-controls select { flex: 1 1 auto; width: 0; min-width: 0; max-width: none; text-overflow: ellipsis; height: 32px; font-size: 0.82rem; font-weight: 600; }
+.dash-checklist-controls .refresh-btn { width: 32px; height: 32px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 8px; }
+.refresh-btn.spin-once .refresh-icon { animation: spin 0.65s cubic-bezier(.45,.05,.35,1); }
+.refresh-btn:active .refresh-icon { transform: scale(0.9); }
+
+/* ---------- เช็คบ็อกซ์/ปุ่มตัวเลือกทั้งเว็บ (1.45.111026) — วาดเองให้เข้ากับธีม (สีหลัก มุมมน ใช้ได้ทั้งโหมดสว่าง/มืด) ----------
+   ใช้ !important กับขนาดเพราะหลายจุดมี style="width:auto" ค้างอยู่ในหน้า (เดิมใช้ปิดความกว้าง 100% ของ input ทั่วไป) */
+input[type="checkbox"], input[type="radio"] {
+  -webkit-appearance: none; appearance: none;
+  width: 19px !important; height: 19px !important; min-width: 19px; padding: 0 !important; margin: 0;
+  flex: 0 0 auto; display: inline-grid; place-content: center; vertical-align: middle;
+  border: 2px solid color-mix(in srgb, var(--text-muted) 55%, transparent); border-radius: 6px;
+  background: var(--surface); cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+input[type="radio"] { border-radius: 50%; }
+input[type="checkbox"]::before {
+  content: ''; width: 10px; height: 6px; margin-top: -2px;
+  border-left: 2.5px solid #fff; border-bottom: 2.5px solid #fff;
+  transform: rotate(-45deg) scale(0); transition: transform 0.15s cubic-bezier(.3,1.6,.6,1);
+}
+input[type="radio"]::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #fff; transform: scale(0); transition: transform 0.15s cubic-bezier(.3,1.6,.6,1); }
+input[type="checkbox"]:checked, input[type="radio"]:checked { background: var(--primary); border-color: var(--primary); }
+input[type="checkbox"]:checked::before { transform: rotate(-45deg) scale(1); }
+input[type="radio"]:checked::before { transform: scale(1); }
+input[type="checkbox"]:hover:not(:disabled), input[type="radio"]:hover:not(:disabled) { border-color: var(--primary); }
+input[type="checkbox"]:active:not(:disabled), input[type="radio"]:active:not(:disabled) { transform: scale(0.92); }
+input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--primary-light); }
+input[type="checkbox"]:focus:not(:focus-visible), input[type="radio"]:focus:not(:focus-visible) { box-shadow: none; }
+input[type="checkbox"]:disabled, input[type="radio"]:disabled { opacity: 0.45; cursor: not-allowed; }
+.login-card input[type="checkbox"] { width: 17px !important; height: 17px !important; min-width: 17px; }
+
+/* ---------- ปุ่มเลือก/อัพโหลดไอคอนและโลโก้เว็บ (1.45.111026) ---------- */
+.asset-picker { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 220px; }
+.asset-picker-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.asset-picker-btns .btn { width: auto; display: inline-flex; align-items: center; gap: 6px; }
+.asset-picker-btns .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.asset-picker-name { margin: 0; word-break: break-all; }
+.file-input-row .asset-preview { border-radius: 14px; }
+.user-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.user-toolbar input[type="search"] { flex: 2 1 240px; }
+.user-toolbar select { flex: 1 1 160px; width: auto; }
+.dept-picker-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.dept-picker-row label { font-weight: 600; white-space: nowrap; margin: 0; }
+.dept-picker-row select { flex: 1; min-width: 0; }
+
+/* ---------- Signature Credit (1.45.111026) ---------- */
+.credit-card { max-width: 720px; margin-left: auto; margin-right: auto; text-align: center; padding: 34px 28px; background:
+  radial-gradient(120% 80% at 50% 0%, var(--primary-light) 0%, transparent 60%), var(--surface); }
+.credit-head { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 14px; text-align: left; }
+.credit-logo { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.credit-logo img { max-width: 44px; max-height: 44px; object-fit: contain; }
+.credit-logo .fas { font-size: 24px; color: var(--primary); }
+.credit-app { font-size: 1.35rem; font-weight: 800; color: var(--primary-dark); letter-spacing: 0.2px; }
+.credit-ver { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+.credit-desc { color: var(--text-muted); max-width: 560px; margin: 0 auto 22px; }
+.credit-sign { margin: 6px auto 22px; }
+.credit-sign-label { font-size: 0.8rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+.credit-signature { font-family: 'Great Vibes', 'Brush Script MT', 'Segoe Script', 'Lucida Handwriting', cursive; font-style: italic; font-size: clamp(1.6rem, 5vw, 2.6rem); line-height: 1.3; color: var(--primary); margin: 6px 0 0; white-space: nowrap; }
+.credit-sign-line { height: 1px; margin: 2px auto 8px; width: min(420px, 80%); background: linear-gradient(90deg, transparent, var(--text-muted), transparent); opacity: 0.6; }
+.credit-sign-name { font-weight: 700; }
+.credit-sign-role { font-size: 0.88rem; color: var(--text-muted); }
+.credit-list { list-style: none; padding: 16px 0 0; margin: 0; border-top: 1px solid var(--border); display: grid; gap: 8px; font-size: 0.9rem; color: var(--text-muted); }
+.credit-list .ui-icon { color: var(--primary); width: 18px; text-align: center; margin-right: 4px; }
+@media (max-width: 560px) { .credit-signature { font-size: 2.2rem; } .credit-card { padding: 26px 16px; } }
+.sys-quota-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.sys-quota-form label { font-weight: 600; color: var(--text); margin: 0; }
+.sys-quota-form input { width: 110px; padding: 6px 10px; }
+.sys-quota-form select { width: auto; padding: 6px 28px 6px 10px; }
+.sys-quota-form .btn { width: auto; }
+.sys-warn { color: var(--warn); font-weight: 600; }
+td > .badge { white-space: nowrap; } /* 1.45: ป้ายสถานะในตารางไม่ตัดคำเป็นแนวตั้ง */

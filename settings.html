@@ -18,8 +18,8 @@
 <!-- Font Awesome ฝังไฟล์ไว้ในเว็บเอง (ไม่พึ่ง CDN ภายนอก ตามแนวทางเดิมของโปรเจกต์ เหมือนฟอนต์ Sarabun) -->
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.44.111026" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=1.45.111026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -27,7 +27,7 @@
   <div class="container">
     <div class="page-header">
       <h1>ตั้งค่าระบบ</h1>
-      <p>ตั้งค่าทั่วไปของเว็บไซต์ ข้อมูลหลักและข้อมูลกลุ่มบริหารงาน จัดการบัญชีผู้ใช้ และตรวจสอบประวัติการทำรายการ</p>
+      <p id="settingsIntro">ตั้งค่าทั่วไปของเว็บไซต์ ข้อมูลหลักและข้อมูลกลุ่มบริหารงาน จัดการบัญชีผู้ใช้ และตรวจสอบประวัติการทำรายการ</p>
     </div>
 
     <!-- ลำดับแท็บตั้งแต่ V10.0: จัดการบัญชี เป็น Super Admin เท่านั้น (ตัดสิทธิ์เจ้าหน้าที่ฝ่ายวิชาการออก), "ประวัติการลบ" เปลี่ยนชื่อ+จำกัดสิทธิ์เป็น Super Admin เท่านั้น,
@@ -43,6 +43,8 @@
       <button class="tab-btn super-admin-only" data-tab="log">ประวัติการส่งงานและลบงาน</button>
       <button class="tab-btn" data-tab="systemlog">ประวัติระบบ</button>
       <button class="tab-btn super-admin-only" data-tab="sysinfo">ข้อมูลระบบ</button>
+      <!-- Signature Credit (ตั้งแต่ 1.45.111026) — ทุกบัญชีเห็น (ครู/ผู้บริหารเข้าหน้าตั้งค่าระบบได้ แต่เห็นเฉพาะแท็บนี้) -->
+      <button class="tab-btn" data-tab="credit">Signature Credit</button>
     </div>
 
     <!-- General tab (เฉพาะ Super Admin) -->
@@ -93,8 +95,15 @@
         <div id="iconError" class="error-box" hidden></div>
         <div class="file-input-row">
           <div class="asset-preview" id="iconPreview">—</div>
-          <input type="file" id="iconFile" accept="image/*" style="flex:1; min-width:180px;" />
-          <button class="btn btn-secondary" id="iconUploadBtn">อัพโหลด</button>
+          <!-- 1.45.111026: ปุ่มเลือกไฟล์/อัพโหลดแบบเดียวกับปุ่มอื่นของเว็บ (ซ่อน input file ดั้งเดิมของเบราว์เซอร์) — เลือกแล้วเห็นตัวอย่างทันที -->
+          <div class="asset-picker">
+            <input type="file" id="iconFile" accept="image/*" hidden />
+            <div class="asset-picker-btns">
+              <button type="button" class="btn btn-secondary" id="iconPickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูปไอคอน</button>
+              <button type="button" class="btn btn-primary" id="iconUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัพโหลด</button>
+            </div>
+            <div class="asset-picker-name hint" id="iconFileName">ยังไม่ได้เลือกไฟล์</div>
+          </div>
         </div>
         <div class="hint">แนะนำไฟล์สี่เหลี่ยมจัตุรัส — เลือกไฟล์ใหญ่แค่ไหนก็ได้ ระบบจะปรับขนาดให้เล็กลงอัตโนมัติก่อนอัพโหลด</div>
       </div>
@@ -104,8 +113,15 @@
         <div id="logoError" class="error-box" hidden></div>
         <div class="file-input-row">
           <div class="asset-preview" id="logoPreview">—</div>
-          <input type="file" id="logoFile" accept="image/*" style="flex:1; min-width:180px;" />
-          <button class="btn btn-secondary" id="logoUploadBtn">อัพโหลด</button>
+          <!-- 1.45.111026: ปุ่มเลือกไฟล์/อัพโหลดแบบเดียวกับปุ่มอื่นของเว็บ (ซ่อน input file ดั้งเดิมของเบราว์เซอร์) — เลือกแล้วเห็นตัวอย่างทันที -->
+          <div class="asset-picker">
+            <input type="file" id="logoFile" accept="image/*" hidden />
+            <div class="asset-picker-btns">
+              <button type="button" class="btn btn-secondary" id="logoPickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูปโลโก้</button>
+              <button type="button" class="btn btn-primary" id="logoUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัพโหลด</button>
+            </div>
+            <div class="asset-picker-name hint" id="logoFileName">ยังไม่ได้เลือกไฟล์</div>
+          </div>
         </div>
         <div class="hint">แสดงแทนไอคอนจุดกลมด้านซ้ายบนของทุกหน้า แนะนำพื้นหลังโปร่งใส — ระบบจะปรับขนาดไฟล์ให้อัตโนมัติก่อนอัพโหลด</div>
       </div>
@@ -223,17 +239,18 @@
            ครู/บุคลากรทุกคนสังกัดได้คนละ 1 กลุ่ม แล้วเลือก "เจ้าหน้าที่" (ได้สิทธิ์แอดมินของกลุ่ม) จากสมาชิกในกลุ่มนั้น กี่คนก็ได้ (แนะนำ 2-3 คน)
            ชื่อกลุ่มที่เก็บคือส่วนท้าย เช่น "วิชาการ" → หน้าเว็บแสดง "กลุ่มบริหารงานวิชาการ" · ใช้ผูกกับประเภทงาน หัวเรื่องบันทึกข้อความ ชื่อผู้ลงนาม และคลังคำสั่ง -->
       <div class="card super-admin-only" id="groupsCard">
-        <div class="section-title"><i class="fas fa-building-user ui-icon" style="font-size:17px" aria-hidden="true"></i> กลุ่มบริหารงาน</div>
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-building-user ui-icon" style="font-size:17px" aria-hidden="true"></i> กลุ่มบริหารงาน</span>
+          <button class="btn btn-primary btn-sm" id="openDeptAddBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มกลุ่มบริหารงาน</button>
+        </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างกลุ่มบริหารงานของโรงเรียน (เช่น วิชาการ, งบประมาณ, บุคคล, ทั่วไป) แล้วกด "จัดการสมาชิก" เพื่อเลือกครูที่สังกัดกลุ่มนั้น — จากนั้นติ๊ก "เจ้าหน้าที่" จากสมาชิกในกลุ่มได้เลย เจ้าหน้าที่จะได้สิทธิ์แอดมินดูแลงานของกลุ่ม (เลือกกี่คนก็ได้ แนะนำ 2-3 คน) ส่วนครูที่ไม่ได้ติ๊กยังเป็นสมาชิกกลุ่มตามปกติ ทำเนียบบุคลากรจะแสดงเฉพาะว่าใครสังกัดกลุ่มใด ไม่บอกว่าใครเป็นเจ้าหน้าที่</p>
         <div id="deptError" class="error-box" hidden></div>
-        <div id="deptListWrap"><div class="loading">กำลังโหลด</div></div>
-        <div class="field-row" style="margin-top:14px; align-items:flex-end;">
-          <div class="field" style="flex:1;">
-            <label for="deptNewName">เพิ่มกลุ่มบริหารงานใหม่</label>
-            <div class="group-prefix-input"><span class="group-prefix">กลุ่มบริหารงาน</span><input id="deptNewName" placeholder="เช่น วิชาการ, งบประมาณ, บุคคล, ทั่วไป" maxlength="60" /></div>
-          </div>
-          <button class="btn btn-primary" id="deptAddBtn" type="button">เพิ่มกลุ่มบริหารงาน</button>
+        <!-- 1.45.111026: เลือกดูทีละกลุ่มจากดร็อปดาวน์ (เดิมแสดงการ์ดทุกกลุ่มเรียงยาวลงมา) · เพิ่มกลุ่มผ่านป็อปอัพ -->
+        <div class="dept-picker-row" id="deptPickerRow" hidden>
+          <label for="deptPick">เลือกกลุ่ม</label>
+          <select id="deptPick"></select>
         </div>
+        <div id="deptListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
 
       <!-- ตำแหน่ง/กลุ่มสาระการเรียนรู้ของครูแต่ละคน (ตั้งแต่ 1.25.081026) — เติมในเนื้อหาเปิดของบันทึกข้อความอัตโนมัติเช่นกัน
@@ -364,6 +381,22 @@
           <span><i class="fas fa-users ui-icon" style="font-size:17px" aria-hidden="true"></i> รายชื่อผู้ใช้งานทั้งหมด</span>
           <button class="btn btn-primary btn-sm" id="openCreateUserBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มผู้ใช้ใหม่</button>
         </div>
+        <!-- ค้นหา + กรองประเภทบัญชี/สถานะ (1.45.111026) -->
+        <div class="user-toolbar">
+          <input type="search" id="userSearch" placeholder="ค้นหาชื่อ หรือ Username" aria-label="ค้นหาบัญชี" />
+          <select id="userTypeFilter" aria-label="กรองตามประเภทบัญชี">
+            <option value="">ทุกประเภทบัญชี</option>
+            <option value="teacher">ครู</option>
+            <option value="staff">เจ้าหน้าที่</option>
+            <option value="executive">ผู้บริหาร</option>
+          </select>
+          <select id="userStatusFilter" aria-label="กรองตามสถานะ">
+            <option value="">ทุกสถานะ</option>
+            <option value="active">ใช้งานอยู่</option>
+            <option value="archived">ระงับ</option>
+          </select>
+        </div>
+        <div class="hint" id="userCount" style="margin:-4px 0 8px;"></div>
         <div id="userTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -403,6 +436,33 @@
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">บันทึกการปรับแต่งค่าเว็บ การแจ้งประกาศ และการกำหนดงาน/กำหนดการในปฏิทิน</p>
         <div id="systemLogTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- Signature Credit (ตั้งแต่ 1.45.111026) — เครดิตผู้พัฒนา ทุกบัญชีเห็น -->
+    <div class="tab-panel" id="tab-credit">
+      <div class="card credit-card">
+        <div class="credit-head">
+          <div class="credit-logo" id="creditLogo"><i class="fas fa-graduation-cap" aria-hidden="true"></i></div>
+          <div>
+            <div class="credit-app"><span class="js-site-name">BNKAcademicHub</span></div>
+            <div class="credit-ver">เวอร์ชัน <span id="creditVersion"></span></div>
+          </div>
+        </div>
+        <p class="credit-desc">ระบบส่งผลงานครูและคลังคำสั่งของโรงเรียนบุ่งคล้านคร</p>
+        <div class="credit-sign">
+          <div class="credit-sign-label">ออกแบบและพัฒนาโดย</div>
+          <div class="credit-signature">Jeerasak Chomphuwattana</div>
+          <div class="credit-sign-line"></div>
+          <div class="credit-sign-name">นายจีรศักดิ์ ชมภูวัฒนา</div>
+          <div class="credit-sign-role">ครู โรงเรียนบุ่งคล้านคร</div>
+        </div>
+        <ul class="credit-list">
+          <li><i class="fas fa-school ui-icon" aria-hidden="true"></i> พัฒนาเพื่อใช้งานภายในโรงเรียนบุ่งคล้านคร</li>
+          <li><i class="fas fa-wand-magic-sparkles ui-icon" aria-hidden="true"></i> Built with AI assistance</li>
+          <li><i class="fas fa-copyright ui-icon" aria-hidden="true"></i> <span id="creditCopyright"></span> โรงเรียนบุ่งคล้านคร สงวนลิขสิทธิ์ · ผลงานในระบบเป็นลิขสิทธิ์ของเจ้าของผลงาน</li>
+          <li><i class="fas fa-envelope ui-icon" aria-hidden="true"></i> แจ้งปัญหาการใช้งาน: <a id="creditMail" href="#"></a> · <a href="privacy.html">นโยบายความเป็นส่วนตัว</a></li>
+        </ul>
       </div>
     </div>
 
@@ -788,6 +848,26 @@
     </div>
   </div>
 
+  <!-- เพิ่มกลุ่มบริหารงาน (ป็อปอัพ — ตั้งแต่ 1.45.111026 เหมือนปุ่ม "เพิ่มประเภทงาน") -->
+  <div class="modal-backdrop super-admin-only" id="deptAddModal" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close-x" id="deptAddCloseX" aria-label="ปิด">✕</button>
+      <h3>เพิ่มกลุ่มบริหารงาน</h3>
+      <div id="deptAddError" class="error-box" hidden></div>
+      <form id="deptAddForm" style="text-align:left;">
+        <div class="field">
+          <label for="deptNewName">ชื่อกลุ่มบริหารงาน</label>
+          <div class="group-prefix-input"><span class="group-prefix">กลุ่มบริหารงาน</span><input id="deptNewName" placeholder="เช่น วิชาการ, งบประมาณ, บุคคล, ทั่วไป" maxlength="60" /></div>
+          <div class="hint" style="margin-top:4px;">สร้างแล้วกด "จัดการสมาชิก" เพื่อเลือกครูที่สังกัดกลุ่ม แล้วติ๊กเจ้าหน้าที่ของกลุ่มได้</div>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary" id="deptAddBtn">เพิ่มกลุ่มบริหารงาน</button>
+          <button type="button" class="btn btn-ghost" id="deptAddCancel">ยกเลิก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- จัดการสมาชิกของกลุ่มบริหารงาน (ตั้งแต่ 1.41.111026) — Super Admin เท่านั้น (ดู adminSetDepartmentMembers) -->
   <div class="modal-backdrop super-admin-only" id="groupMembersModal" hidden>
     <div class="modal-box modal-box-wide">
@@ -869,7 +949,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.44.111026"></script>
+  <script src="assets/api.js?v=1.45.111026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -920,13 +1000,30 @@
       return Array.from(document.querySelectorAll('.' + namePrefix + '-field-cb:checked')).map(function (cb) { return cb.value; });
     }
 
-    var session = requireAdminAccess();
+    // 1.45.111026: ทุกบัญชีเข้าหน้านี้ได้ (เพื่อดู Signature Credit) — ครู/ผู้บริหารเห็นเฉพาะแท็บ Signature Credit
+    var session = requireLogin();
     if (session) mountChrome('settings');
 
 
     // เฉพาะ Super Admin (role=admin, hasHub=false) เท่านั้นที่แก้ "ทั่วไป" (ชื่อเว็บ/โลโก้/ไอคอน) ได้ — เลขเวอร์ชันไม่ใช่ค่าตั้งค่าที่แก้ผ่านหน้าเว็บอีกต่อไป (ดูแถวล่างสุดของหน้านี้)
     var isSuperAdminSession = !!session && session.role === 'admin' && !session.hasHub;
-    if (!isSuperAdminSession) {
+    var isAdminSession = !!session && session.role === 'admin';
+    // Signature Credit (1.45.111026)
+    (function () {
+      document.getElementById('creditVersion').textContent = APP_VERSION;
+      document.getElementById('creditCopyright').textContent = String(new Date().getFullYear() + 543);
+      var m = document.getElementById('creditMail');
+      m.textContent = SUPPORT_EMAIL;
+      m.href = 'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub');
+      getSiteSettings().then(function (st) { if (st && st.logoDataUrl) document.getElementById('creditLogo').innerHTML = '<img src="' + st.logoDataUrl + '" alt="" />'; }).catch(function () {});
+    })();
+    if (session && !isAdminSession) {
+      // ครู/ผู้บริหาร: ซ่อนทุกแท็บ เหลือ Signature Credit (ซ่อนแทนการลบ เพราะสคริปต์ด้านล่างผูก event กับองค์ประกอบในแท็บอื่นไว้ — ข้อมูลจริงฝั่ง Worker ป้องกันสิทธิ์อยู่แล้ว)
+      document.querySelectorAll('.super-admin-only').forEach(function (el) { el.remove(); });
+      document.querySelectorAll('.tab-btn').forEach(function (b) { var keep = b.getAttribute('data-tab') === 'credit'; b.hidden = !keep; b.classList.toggle('active', keep); });
+      document.querySelectorAll('.tab-panel').forEach(function (p) { var keep = p.id === 'tab-credit'; p.hidden = !keep; p.classList.toggle('active', keep); });
+      document.getElementById('settingsIntro').textContent = 'ข้อมูลเกี่ยวกับระบบและผู้พัฒนา';
+    } else if (!isSuperAdminSession) {
       // ตั้งแต่ V10.0: "จัดการบัญชี" และ "ประวัติการส่งงานและลบงาน" เป็น super-admin-only ด้วย จึงเหลือแท็บ "ปฏิทิน" เป็นแท็บเริ่มต้นสำหรับเจ้าหน้าที่ฝ่ายวิชาการ
       document.querySelectorAll('.super-admin-only').forEach(function (el) { el.remove(); });
       // เจ้าหน้าที่ฝ่าย (ไม่ใช่ Super Admin): แท็บเริ่มต้นคือ "ข้อมูลหลัก" (ตั้งแต่ 1.32.101026 ปฏิทิน/ประกาศย้ายไปหน้า "ประกาศและปฏิทิน")
@@ -972,7 +1069,8 @@
       extlinks: function () { return loadExtLinks(); },
       log: function () { return loadLog(); },
       systemlog: function () { return loadSystemLog(); },
-      sysinfo: function () { return loadSysInfo(); }
+      sysinfo: function () { return loadSysInfo(); },
+      credit: function () { return Promise.resolve(); }
     };
     function loadTabIfNeeded(tabKey) {
       if (_tabLoaded[tabKey]) return;
@@ -1537,6 +1635,9 @@
           _settingsCache = r.data;
           renderAssetPreview(previewId, type === 'icon' ? r.data.iconDataUrl : r.data.logoDataUrl);
           applyBranding();
+          document.getElementById(fileInputId).value = '';
+          document.getElementById(type + 'UploadBtn').disabled = true;
+          document.getElementById(type + 'FileName').textContent = 'อัพโหลดแล้ว — เลือกรูปใหม่ได้ทุกเมื่อ';
         } else {
           errBox.textContent = r.error.message;
           errBox.hidden = false;
@@ -1561,6 +1662,17 @@
           cb.checked = !nextVal;
           showToast(r.error.message, true);
         }
+      });
+      // ปุ่มเลือกรูป (1.45.111026): เลือกแล้วแสดงตัวอย่างในกรอบทันที + เปิดปุ่มอัพโหลด
+      ['icon', 'logo'].forEach(function (k) {
+        var inp = document.getElementById(k + 'File');
+        document.getElementById(k + 'PickBtn').addEventListener('click', function () { inp.click(); });
+        inp.addEventListener('change', function () {
+          var f = inp.files && inp.files[0];
+          document.getElementById(k + 'UploadBtn').disabled = !f;
+          document.getElementById(k + 'FileName').textContent = f ? f.name + ' (' + Math.max(1, Math.round(f.size / 1024)) + ' KB) — กด "อัพโหลด" เพื่อใช้รูปนี้' : 'ยังไม่ได้เลือกไฟล์';
+          if (f && /^image\//.test(f.type)) { var rd = new FileReader(); rd.onload = function () { renderAssetPreview(k + 'Preview', rd.result); }; rd.readAsDataURL(f); }
+        });
       });
       document.getElementById('iconUploadBtn').addEventListener('click', function () { uploadAsset('icon', 'iconFile', 'iconError', 'iconPreview'); });
       document.getElementById('logoUploadBtn').addEventListener('click', function () { uploadAsset('logo', 'logoFile', 'logoError', 'logoPreview'); });
@@ -1667,6 +1779,8 @@
       // รายการกลุ่มเก็บใน settings.departments (ส่วนท้ายของชื่อ เช่น 'วิชาการ') · สมาชิก = users.department · เจ้าหน้าที่ = สมาชิกที่เป็น role 'admin' + hasHub
       // การเพิ่มกลุ่มส่งทั้งชุดผ่าน adminUpdateSettings({departments}) · เปลี่ยนชื่อ/ลบ/สมาชิก/เจ้าหน้าที่ใช้ endpoint เฉพาะ (adminRenameDepartment ฯลฯ)
       var currentDepartments = [];
+      var selectedDept = ''; // กลุ่มที่เลือกดูอยู่ในดร็อปดาวน์ (1.45.111026)
+      document.getElementById('deptPick').addEventListener('change', function () { selectedDept = this.value; renderGroups(); });
       function isStaffUser(u) { return u.role === 'admin' && u.hasHub; }
       function groupEligibleUsers() {
         return allUsers.filter(function (u) { return u.role !== 'executive' && u.hasHub; })
@@ -1701,10 +1815,19 @@
       function renderGroups() {
         var wrap = document.getElementById('deptListWrap');
         if (!wrap) return;
-        if (currentDepartments.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีกลุ่มบริหารงานในระบบ — เพิ่มได้ด้านล่าง</div>'; return; }
+        var pickRow = document.getElementById('deptPickerRow');
+        if (currentDepartments.length === 0) { if (pickRow) pickRow.hidden = true; wrap.innerHTML = '<div class="empty-state">ยังไม่มีกลุ่มบริหารงานในระบบ — กดปุ่ม "เพิ่มกลุ่มบริหารงาน" ด้านบน</div>'; return; }
         var users = groupEligibleUsers();
+        // ดร็อปดาวน์เลือกกลุ่ม (1.45.111026) — แสดงการ์ดของกลุ่มที่เลือกกลุ่มเดียว
+        if (currentDepartments.indexOf(selectedDept) === -1) selectedDept = currentDepartments[0];
+        var pick = document.getElementById('deptPick');
+        pick.innerHTML = currentDepartments.map(function (d) {
+          var mem = users.filter(function (u) { return u.department === d; });
+          return '<option value="' + escapeHtml(d) + '"' + (d === selectedDept ? ' selected' : '') + '>' + escapeHtml(groupLabel(d)) + ' — สมาชิก ' + mem.length + ' คน · เจ้าหน้าที่ ' + mem.filter(isStaffUser).length + ' คน</option>';
+        }).join('');
+        pickRow.hidden = false;
         var html = '';
-        currentDepartments.forEach(function (d) {
+        currentDepartments.filter(function (d) { return d === selectedDept; }).forEach(function (d) {
           var members = users.filter(function (u) { return u.department === d; });
           var staffCount = members.filter(isStaffUser).length;
           html += '<div class="group-card" data-group="' + escapeHtml(d) + '">' +
@@ -1860,7 +1983,7 @@
         var ok = await askConfirm('ยืนยันเปลี่ยนชื่อ "' + groupLabel(grpRenameFrom) + '" เป็น "' + groupLabel(to) + '"? สมาชิก ประเภทงาน หัวเรื่องบันทึกข้อความ คำสั่งในคลังคำสั่ง และชื่อผู้ลงนามของกลุ่มจะเปลี่ยนตามให้ทั้งหมด', 'ยืนยันการเปลี่ยนชื่อ');
         if (!ok) return;
         var r = await withProgress('กำลังเปลี่ยนชื่อกลุ่ม', function () { return apiCall('adminRenameDepartment', { from: grpRenameFrom, to: to }); }, { successLabel: 'เปลี่ยนชื่อกลุ่มแล้ว' });
-        if (r.ok) { hideModalEl(grpRenameModal); await refreshAfterGroupChange({ renamed: true }); }
+        if (r.ok) { selectedDept = to; hideModalEl(grpRenameModal); await refreshAfterGroupChange({ renamed: true }); }
         else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
 
@@ -1880,13 +2003,25 @@
         errBox.hidden = false;
         return false;
       }
-      document.getElementById('deptAddBtn').addEventListener('click', async function () {
-        var errBox = document.getElementById('deptError');
+      var deptAddModal = document.getElementById('deptAddModal');
+      document.getElementById('openDeptAddBtn').addEventListener('click', function () {
+        document.getElementById('deptNewName').value = '';
+        document.getElementById('deptAddError').hidden = true;
+        showModalEl(deptAddModal);
+        setTimeout(function () { document.getElementById('deptNewName').focus(); }, 60);
+      });
+      document.getElementById('deptAddCancel').addEventListener('click', function () { hideModalEl(deptAddModal); });
+      document.getElementById('deptAddCloseX').addEventListener('click', function () { hideModalEl(deptAddModal); });
+      document.getElementById('deptAddForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errBox = document.getElementById('deptAddError');
         errBox.hidden = true;
         var input = document.getElementById('deptNewName');
         var name = normalizeGroupName(input.value);
         if (!name) { errBox.textContent = 'กรุณากรอกชื่อกลุ่มบริหารงาน'; errBox.hidden = false; return; }
         if (currentDepartments.indexOf(name) !== -1) { errBox.textContent = 'มีกลุ่มบริหารงานชื่อนี้อยู่แล้ว'; errBox.hidden = false; return; }
+        hideModalEl(deptAddModal);
+        selectedDept = name; // เปิดการ์ดของกลุ่มใหม่ทันที
         if (await saveDepartments(currentDepartments.concat([name]))) input.value = '';
       });
 
@@ -2253,8 +2388,21 @@
       var wrap = document.getElementById('userTableWrap');
       if (!wrap) return; // แท็บ "จัดการบัญชี" เป็น super-admin-only ตั้งแต่ V10.0 — เจ้าหน้าที่ฝ่ายวิชาการไม่มี element นี้เลย ไม่ต้อง render
       // ซ่อนบัญชี Super Admin ออกจากตารางจัดการบัญชีเสมอ (ทั้งมุมมอง Super Admin เองและเจ้าหน้าที่ฝ่ายวิชาการ)
-      var visibleUsers = allUsers.filter(function (u) { return !(u.role === 'admin' && !u.hasHub); });
-      if (visibleUsers.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีผู้ใช้งาน</div>'; return; }
+      var allVisible = allUsers.filter(function (u) { return !(u.role === 'admin' && !u.hasHub); });
+      // ค้นหา/กรอง (1.45.111026)
+      var qEl = document.getElementById('userSearch'), tEl = document.getElementById('userTypeFilter'), stEl = document.getElementById('userStatusFilter');
+      var q = qEl ? qEl.value.trim().toLowerCase() : '', ft = tEl ? tEl.value : '', fs = stEl ? stEl.value : '';
+      var visibleUsers = allVisible.filter(function (u) {
+        var kind = u.role === 'executive' ? 'executive' : (u.role === 'teacher' ? 'teacher' : 'staff');
+        if (ft && kind !== ft) return false;
+        if (fs && u.status !== fs) return false;
+        if (q && (String(u.name) + ' ' + String(u.username)).toLowerCase().indexOf(q) < 0) return false;
+        return true;
+      });
+      var cntEl = document.getElementById('userCount');
+      if (cntEl) cntEl.textContent = (q || ft || fs) ? ('พบ ' + visibleUsers.length + ' จาก ' + allVisible.length + ' บัญชี') : ('ทั้งหมด ' + allVisible.length + ' บัญชี');
+      if (allVisible.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีผู้ใช้งาน</div>'; return; }
+      if (visibleUsers.length === 0) { wrap.innerHTML = '<div class="empty-state">ไม่พบบัญชีที่ตรงกับเงื่อนไข</div>'; return; }
       var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>Username</th><th>ประเภทบัญชี</th><th>สถานะ</th><th></th></tr></thead><tbody>';
       visibleUsers.forEach(function (u) {
         html += '<tr>' +
@@ -2282,6 +2430,13 @@
       });
     }
 
+    (function () {
+      var qEl = document.getElementById('userSearch');
+      if (!qEl) return; // แท็บจัดการบัญชีเป็น super-admin-only
+      qEl.addEventListener('input', renderUserTable);
+      document.getElementById('userTypeFilter').addEventListener('change', renderUserTable);
+      document.getElementById('userStatusFilter').addEventListener('change', renderUserTable);
+    })();
     // ---------- ป็อปอัพ "จัดการบัญชี" (ตั้งแต่ 1.29.091026; แยกเป็น 3 แท็บตั้งแต่ 1.42.111026) ----------
     // แท็บ "ข้อมูล" (ชื่อ/รูปโปรไฟล์/ตั้งรหัสผ่าน) · "ประเภทบัญชี" (ครู+กลุ่มบริหารงาน+แต่งตั้งเจ้าหน้าที่ / ผู้บริหาร / Super Admin) · "สถานะ" (ระงับ/คืนสิทธิ์/ลบถาวร)
     // ป็อปอัพนี้และป็อปอัพลบถาวรเป็น super-admin-only (ถูกลบออกจาก DOM สำหรับคนอื่น) — ผูก event เฉพาะเมื่อเป็น Super Admin
@@ -2783,12 +2938,28 @@
         d1.sizeBytes != null ? ('ใช้ไป ' + d1Pct.toFixed(d1Pct < 1 ? 2 : 1) + '% ของเกณฑ์แผนฟรี · ถ้าใช้แผนจ่ายเงินของ Cloudflare เพดานคือ 10 GB · ผู้ใช้ ' + (counts.users != null ? counts.users : '-') + ' บัญชี · ผลงาน ' + (counts.submissions != null ? counts.submissions : '-') + ' รายการ') : '');
       // Drive
       if (relay.ok) {
-        var hasLimit = relay.driveLimitBytes && relay.driveLimitBytes > 0 && relay.driveUsedBytes != null;
-        var drivePct = hasLimit ? relay.driveUsedBytes / relay.driveLimitBytes * 100 : 0;
+        // เพดาน (1.45.111026): Google Workspace for Education รายงานเพดานเป็น "พื้นที่รวมขององค์กร" (เช่น 100 TB) ไม่ใช่โควตาจริงของบัญชี
+        // ให้ Super Admin กรอกเพดานจริงเองได้ (settings.driveQuotaBytes) — ถ้ากรอกไว้ใช้ค่านั้นแทนค่าที่ Google รายงาน
+        var siteS = await getSiteSettings().catch(function () { return {}; });
+        var manualQuota = Number(siteS.driveQuotaBytes || 0);
+        var googleLimit = relay.driveLimitBytes || 0;
+        var limitBytes = manualQuota > 0 ? manualQuota : googleLimit;
+        var hasLimit = limitBytes > 0 && relay.driveUsedBytes != null;
+        var drivePct = hasLimit ? relay.driveUsedBytes / limitBytes * 100 : 0;
+        var poolSuspect = !manualQuota && googleLimit >= 10 * 1099511627776; // ≥ 10 TB มักเป็นพื้นที่รวมขององค์กร
+        var quotaNote = manualQuota
+          ? 'เพดานที่ตั้งเอง ' + formatBytes(manualQuota) + (googleLimit ? ' (Google รายงาน ' + formatBytes(googleLimit) + ')' : '')
+          : (poolSuspect ? '<span class="sys-warn">Google รายงานเพดาน ' + formatBytes(googleLimit) + ' ซึ่งมักเป็นพื้นที่รวมของทั้งองค์กร (Google Workspace for Education) ไม่ใช่โควตาจริงของบัญชีนี้ — ตั้งเพดานจริงด้านล่างได้</span>' : 'เพดานตามที่ Google รายงาน');
         html += sysStatHtml('พื้นที่ Google Drive ทั้งบัญชี',
-          relay.driveUsedBytes != null ? '<b>' + formatBytes(relay.driveUsedBytes) + '</b>' + (hasLimit ? ' <span class="hint">/ ' + formatBytes(relay.driveLimitBytes) + '</span>' : '') : '<span class="hint">อ่านโควตาไม่ได้</span>',
+          relay.driveUsedBytes != null ? '<b>' + formatBytes(relay.driveUsedBytes) + '</b>' + (hasLimit ? ' <span class="hint">/ ' + formatBytes(limitBytes) + '</span>' : '') : '<span class="hint">อ่านโควตาไม่ได้</span>',
           hasLimit ? sysBarHtml(drivePct, 'ใช้ไป ' + drivePct.toFixed(1) + '%') : '',
-          (hasLimit ? 'ใช้ไป ' + drivePct.toFixed(drivePct < 1 ? 2 : 1) + '% · ' : '') + 'ตัวเลขนี้รวมทุกอย่างในบัญชี Google ที่ติดตั้ง Drive relay (ไม่ใช่เฉพาะไฟล์ของระบบนี้)' + (relay.rootFolderUrl ? ' · <a href="' + escapeHtml(relay.rootFolderUrl) + '" target="_blank" rel="noopener">เปิดโฟลเดอร์ไฟล์ผลงาน</a>' : ''));
+          (hasLimit ? 'ใช้ไป ' + drivePct.toFixed(drivePct < 1 ? 2 : 1) + '% · ' : '') + quotaNote + ' · ตัวเลขนี้รวมทุกอย่างในบัญชี Google ที่ติดตั้ง Drive relay (ไม่ใช่เฉพาะไฟล์ของระบบนี้)' + (relay.rootFolderUrl ? ' · <a href="' + escapeHtml(relay.rootFolderUrl) + '" target="_blank" rel="noopener">เปิดโฟลเดอร์ไฟล์ผลงาน</a>' : '') +
+          '<form class="sys-quota-form" id="sysQuotaForm"><label for="sysQuotaVal">เพดานจริงของบัญชี</label>' +
+            '<input id="sysQuotaVal" type="number" min="0" step="0.01" placeholder="เช่น 1" value="' + (manualQuota ? (manualQuota >= 1099511627776 ? +(manualQuota / 1099511627776).toFixed(2) : +(manualQuota / 1073741824).toFixed(0)) : '') + '" />' +
+            '<select id="sysQuotaUnit"><option value="TB"' + (!manualQuota || manualQuota >= 1099511627776 ? ' selected' : '') + '>TB</option><option value="GB"' + (manualQuota && manualQuota < 1099511627776 ? ' selected' : '') + '>GB</option></select>' +
+            '<button type="submit" class="btn btn-primary btn-sm">บันทึก</button>' +
+            (manualQuota ? '<button type="button" class="btn btn-ghost btn-sm" id="sysQuotaClear">ใช้ค่าที่ Google รายงาน</button>' : '') +
+          '</form>');
         html += sysStatHtml('ไฟล์ของระบบนี้ใน Drive (รวมทุกบัญชี)', '<b id="sysFilesTotal">กำลังคำนวณ…</b>', '', '<span id="sysFilesTotalNote"></span>');
       } else {
         html += '<div class="sys-stat sys-stat-wide"><div class="sys-stat-title">พื้นที่ Google Drive</div><div class="error-box">' + escapeHtml(relay.error || 'อ่านข้อมูลจาก Drive relay ไม่สำเร็จ') + '</div>' +
@@ -2801,8 +2972,26 @@
           '<div class="hint" style="margin-top:8px;">นับเฉพาะไฟล์ในโฟลเดอร์ของแต่ละบัญชี (ผลงาน + รูปโปรไฟล์) · ไฟล์ที่ย้ายลงถังขยะของ Drive ไม่นับ · บัญชีที่ยังไม่เคยส่งไฟล์ไม่แสดงในตาราง' +
           (relay.looseFiles ? ' · มีไฟล์อยู่นอกโฟลเดอร์บัญชี ' + relay.looseFiles + ' ไฟล์ (' + formatBytes(relay.looseBytes) + ')' : '') + '</div>';
       }
+      if (run !== _sysInfoRun) return;
       body.innerHTML = html;
       if (!relay.ok) return;
+      // ตั้งเพดาน Drive เอง (1.45.111026)
+      var qf = document.getElementById('sysQuotaForm');
+      async function saveQuota(bytes) {
+        var r = await withProgress('กำลังบันทึกเพดานพื้นที่', function () { return apiCall('adminUpdateSettings', { driveQuotaBytes: bytes }); }, { successLabel: 'บันทึกแล้ว' });
+        if (r.ok) { resetSettingsCache(); loadSysInfo(); }
+      }
+      if (qf) {
+        qf.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var v = Number(document.getElementById('sysQuotaVal').value);
+          if (!(v > 0)) { showToast('กรุณากรอกเพดานพื้นที่ เช่น 1 (TB)', true); return; }
+          var unit = document.getElementById('sysQuotaUnit').value;
+          saveQuota(Math.round(v * (unit === 'TB' ? 1099511627776 : 1073741824)));
+        });
+        var qc = document.getElementById('sysQuotaClear');
+        if (qc) qc.addEventListener('click', function () { saveQuota(0); });
+      }
       var rows = (relay.folders || []).map(function (f) { return { f: f, bytes: null, files: null, partial: false, err: '' }; });
       var tbody = document.getElementById('sysAccountsBody');
       function nameCell(r) {
@@ -2857,7 +3046,7 @@
 
     // โหลดเฉพาะแท็บที่กำลังแสดงอยู่ตอนแรกเท่านั้น (แท็บอื่นจะโหลดทีหลังตอนผู้ใช้กดเปิดเอง)
     // ตั้งแต่ V10.0: เจ้าหน้าที่ฝ่ายวิชาการ (ไม่ใช่ Super Admin) เห็นแท็บ "ปฏิทิน" เป็นแท็บแรก (accounts ถูกจำกัดเฉพาะ Super Admin แล้ว)
-    loadTabIfNeeded(isSuperAdminSession ? 'general' : 'website');
+    loadTabIfNeeded(isSuperAdminSession ? 'general' : (isAdminSession ? 'website' : 'credit'));
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
     window.__refreshPageData = function () {
