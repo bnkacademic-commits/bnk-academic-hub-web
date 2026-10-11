@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.45.111026';
+var APP_VERSION = '1.46.121026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -218,6 +218,22 @@ function roleLabel(session) {
   // 1.41.111026: เจ้าหน้าที่ = สมาชิกกลุ่มบริหารงานที่ได้สิทธิ์แอดมิน — ป้ายแสดงชื่อกลุ่มเต็ม เช่น "เจ้าหน้าที่กลุ่มบริหารงานวิชาการ"
   if (session.role === 'admin') return session.hasHub ? ('เจ้าหน้าที่' + groupLabel(session.department)) : 'Super Admin';
   return '';
+}
+
+// ข้อมูลบัญชีในเมนูมุมขวาบน (1.46.121026 — ผู้ใช้ขอแยกเป็นบรรทัดละเรื่อง): ประเภทบัญชี / กลุ่มบริหารงาน / กลุ่มสาระการเรียนรู้
+// คืน array ของ { label, value } — แสดงเฉพาะเรื่องที่เกี่ยวกับบัญชีนั้น (ผู้บริหาร/Super Admin ไม่มีกลุ่มบริหารงาน/กลุ่มสาระ)
+function accountInfoLines(session) {
+  if (!session) return [];
+  var lines = [];
+  var isExec = session.role === 'executive';
+  var isSuper = session.role === 'admin' && !session.hasHub;
+  var type = session.role === 'teacher' ? 'ครู' : isExec ? 'ผู้บริหาร' : (isSuper ? 'Super Admin' : 'เจ้าหน้าที่');
+  lines.push({ label: 'ประเภทบัญชี', value: type + (isExec && session.position ? ' (' + session.position + ')' : '') });
+  if (!isExec && !isSuper) {
+    lines.push({ label: 'กลุ่มบริหารงาน', value: session.department ? groupLabel(session.department) : 'ไม่ระบุ' });
+    lines.push({ label: 'กลุ่มสาระฯ', value: session.subjectGroup || 'ไม่ระบุ' });
+  }
+  return lines;
 }
 
 // ---------- Theme (dark/light) ----------
@@ -1062,7 +1078,7 @@ function mountChrome(activePage) {
               '<span class="chevron">▾</span>' +
             '</button>' +
             '<div class="profile-dropdown" id="profileDropdown">' +
-              '<div class="dd-header"><div class="dd-name">' + escapeHtml(session.name) + '</div><div class="dd-role">' + escapeHtml(roleLabel(session)) + '</div></div>' +
+              '<div class="dd-header"><div class="dd-name">' + escapeHtml(session.name) + '</div>' + accountInfoLines(session).map(function (l) { return '<div class="dd-role"><span class="dd-k">' + escapeHtml(l.label) + '</span><span class="dd-v">' + escapeHtml(l.value) + '</span></div>'; }).join('') + '</div>' +
               '<div class="theme-switch-row"><span>Dark Mode</span><label class="switch"><input type="checkbox" id="themeToggleInput"><span class="slider"></span></label></div>' +
               '<div class="dd-divider"></div>' +
               '<button class="dd-item" id="ddChangeAvatar" type="button"><span class="dd-icon">' + icon('image', 16) + '</span> เปลี่ยนรูปโปรไฟล์</button>' +
@@ -1203,6 +1219,27 @@ function openFilePreview(previewUrl, title, openUrl) {
   requestAnimationFrame(function () { ov.classList.add('show'); });
   return close;
 }
+
+// ---------- ป็อปอัพทั้งเว็บ: กดพื้นที่ว่างรอบป็อปอัพ = ป็อปอัพเด้งกระพริบเตือน (ไม่ปิด) — ตั้งแต่ 1.46.121026 ----------
+// ใช้กับทุก .modal-backdrop ทุกหน้า รวมถึงป็อปอัพที่สร้างทีหลัง (ผูก event ที่ document ครั้งเดียว) — ยกเว้นพรีวิวไฟล์ (openFilePreview)
+// และกล่องเปิดหนังสือใน view.html ซึ่งกดพื้นที่ว่างแล้วปิดตามเดิม (ไม่ใช่ .modal-backdrop)
+// ต้องกดลงและปล่อยบนพื้นที่ว่างทั้งคู่ — กันกรณีลากคลุมข้อความในช่องกรอกแล้วปล่อยเมาส์นอกป็อปอัพ
+(function () {
+  var downOnBackdrop = null;
+  document.addEventListener('mousedown', function (e) {
+    downOnBackdrop = (e.target && e.target.classList && e.target.classList.contains('modal-backdrop')) ? e.target : null;
+  }, true);
+  document.addEventListener('click', function (e) {
+    var bd = e.target;
+    if (!bd || !bd.classList || !bd.classList.contains('modal-backdrop') || bd !== downOnBackdrop) return;
+    var box = bd.querySelector('.modal-box');
+    if (!box) return;
+    box.classList.remove('modal-bump');
+    void box.offsetWidth; // รีสตาร์ทแอนิเมชันเมื่อกดซ้ำเร็วๆ
+    box.classList.add('modal-bump');
+    setTimeout(function () { box.classList.remove('modal-bump'); }, 520);
+  });
+})();
 
 // เรียกทันทีตอนโหลดสคริปต์เพื่อกันธีมกะพริบ (เผื่อกรณี inline script หัวไฟล์ไม่ทำงาน)
 // ยกเว้นหน้าล็อกอิน (index.html) ที่บังคับใช้ธีมสว่างเท่านั้นเสมอ ไม่ว่าจะเคยตั้งค่าธีมมืดไว้จากหน้าอื่นในเครื่องเดียวกันหรือไม่ก็ตาม

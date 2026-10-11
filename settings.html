@@ -18,8 +18,8 @@
 <!-- Font Awesome ฝังไฟล์ไว้ในเว็บเอง (ไม่พึ่ง CDN ภายนอก ตามแนวทางเดิมของโปรเจกต์ เหมือนฟอนต์ Sarabun) -->
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.45.111026" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=1.46.121026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -42,9 +42,9 @@
       <button class="tab-btn super-admin-only" data-tab="extlinks">เว็บไซต์โรงเรียน</button>
       <button class="tab-btn super-admin-only" data-tab="log">ประวัติการส่งงานและลบงาน</button>
       <button class="tab-btn" data-tab="systemlog">ประวัติระบบ</button>
-      <button class="tab-btn super-admin-only" data-tab="sysinfo">ข้อมูลระบบ</button>
-      <!-- Signature Credit (ตั้งแต่ 1.45.111026) — ทุกบัญชีเห็น (ครู/ผู้บริหารเข้าหน้าตั้งค่าระบบได้ แต่เห็นเฉพาะแท็บนี้) -->
-      <button class="tab-btn" data-tab="credit">Signature Credit</button>
+      <!-- ข้อมูลระบบ (1.46.121026): ทุกบัญชีเห็นแท็บนี้ — ส่วนพื้นที่เก็บข้อมูลเห็นเฉพาะ Super Admin ส่วน "เครดิต" ทุกคนเห็น
+           (ครู/ผู้บริหารเข้าหน้าตั้งค่าระบบได้ แต่เห็นเฉพาะแท็บนี้) — เดิม 1.45 เป็นแท็บ Signature Credit แยก -->
+      <button class="tab-btn" data-tab="sysinfo">ข้อมูลระบบ</button>
     </div>
 
     <!-- General tab (เฉพาะ Super Admin) -->
@@ -439,43 +439,28 @@
       </div>
     </div>
 
-    <!-- Signature Credit (ตั้งแต่ 1.45.111026) — เครดิตผู้พัฒนา ทุกบัญชีเห็น -->
-    <div class="tab-panel" id="tab-credit">
-      <div class="card credit-card">
-        <div class="credit-head">
-          <div class="credit-logo" id="creditLogo"><i class="fas fa-graduation-cap" aria-hidden="true"></i></div>
-          <div>
-            <div class="credit-app"><span class="js-site-name">BNKAcademicHub</span></div>
-            <div class="credit-ver">เวอร์ชัน <span id="creditVersion"></span></div>
-          </div>
-        </div>
-        <p class="credit-desc">ระบบส่งผลงานครูและคลังคำสั่งของโรงเรียนบุ่งคล้านคร</p>
-        <div class="credit-sign">
-          <div class="credit-sign-label">ออกแบบและพัฒนาโดย</div>
-          <div class="credit-signature">Jeerasak Chomphuwattana</div>
-          <div class="credit-sign-line"></div>
-          <div class="credit-sign-name">นายจีรศักดิ์ ชมภูวัฒนา</div>
-          <div class="credit-sign-role">ครู โรงเรียนบุ่งคล้านคร</div>
-        </div>
-        <ul class="credit-list">
-          <li><i class="fas fa-school ui-icon" aria-hidden="true"></i> พัฒนาเพื่อใช้งานภายในโรงเรียนบุ่งคล้านคร</li>
-          <li><i class="fas fa-wand-magic-sparkles ui-icon" aria-hidden="true"></i> Built with AI assistance</li>
-          <li><i class="fas fa-copyright ui-icon" aria-hidden="true"></i> <span id="creditCopyright"></span> โรงเรียนบุ่งคล้านคร สงวนลิขสิทธิ์ · ผลงานในระบบเป็นลิขสิทธิ์ของเจ้าของผลงาน</li>
-          <li><i class="fas fa-envelope ui-icon" aria-hidden="true"></i> แจ้งปัญหาการใช้งาน: <a id="creditMail" href="#"></a> · <a href="privacy.html">นโยบายความเป็นส่วนตัว</a></li>
-        </ul>
-      </div>
-    </div>
-
     <!-- System info tab (ข้อมูลระบบ — ตั้งแต่ 1.41.111026, Super Admin เท่านั้น): ขนาดฐานข้อมูล D1, พื้นที่ Google Drive และพื้นที่ที่แต่ละบัญชีใช้
          ไม่กำหนดเพดานให้ Drive (เป็นของโรงเรียน) แสดงตัวเลขจริงอย่างเดียว — ต้องใช้ Drive relay เวอร์ชัน 1.36 ขึ้นไป (มี action storageSummary/folderUsage) -->
-    <div class="tab-panel super-admin-only" id="tab-sysinfo">
-      <div class="card">
+    <div class="tab-panel" id="tab-sysinfo">
+      <div class="card super-admin-only">
         <div class="section-title" style="justify-content:space-between;">
           <span><i class="fas fa-database ui-icon" style="font-size:17px" aria-hidden="true"></i> ข้อมูลระบบ</span>
           <button class="btn btn-secondary btn-sm" id="sysInfoRefreshBtn" type="button"><i class="fas fa-rotate ui-icon" style="font-size:15px" aria-hidden="true"></i> คำนวณใหม่</button>
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ดูว่าพื้นที่เก็บข้อมูลของระบบใช้ไปเท่าไรแล้ว — ฐานข้อมูล (Cloudflare D1) และไฟล์ผลงานใน Google Drive ของโรงเรียน พร้อมพื้นที่ที่แต่ละบัญชีใช้ (ไม่มีการกำหนดเพดานให้แต่ละบัญชี)</p>
         <div id="sysInfoBody"><div class="loading">กำลังโหลด</div></div>
+      </div>
+      <!-- เครดิต (1.46.121026 — เดิม "Signature Credit" ของ 1.45 ปรับเป็นเครดิตธรรมดาตามที่ผู้ใช้ขอ) ทุกบัญชีเห็น -->
+      <div class="card credit-card" id="creditCard">
+        <div class="section-title"><i class="fas fa-circle-info ui-icon" style="font-size:17px" aria-hidden="true"></i> เครดิต</div>
+        <dl class="credit-dl">
+          <dt>ระบบ</dt><dd><span class="js-site-name">BNKAcademicHub</span> — ระบบส่งผลงานครูและคลังคำสั่งของโรงเรียนบุ่งคล้านคร</dd>
+          <dt>เวอร์ชัน</dt><dd id="creditVersion"></dd>
+          <dt>ผู้พัฒนา</dt><dd>นายจีรศักดิ์ ชมภูวัฒนา (Jeerasak Chomphuwattana) ครู โรงเรียนบุ่งคล้านคร</dd>
+          <dt>เครื่องมือ</dt><dd>Built with AI assistance</dd>
+          <dt>ลิขสิทธิ์</dt><dd>© <span id="creditCopyright"></span> โรงเรียนบุ่งคล้านคร สงวนลิขสิทธิ์ · ผลงานในระบบเป็นลิขสิทธิ์ของเจ้าของผลงาน</dd>
+          <dt>ติดต่อ</dt><dd>แจ้งปัญหาการใช้งาน: <a id="creditMail" href="#"></a> · <a href="privacy.html">นโยบายความเป็นส่วนตัว</a></dd>
+        </dl>
       </div>
     </div>
   </div>
@@ -949,7 +934,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.45.111026"></script>
+  <script src="assets/api.js?v=1.46.121026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1000,7 +985,7 @@
       return Array.from(document.querySelectorAll('.' + namePrefix + '-field-cb:checked')).map(function (cb) { return cb.value; });
     }
 
-    // 1.45.111026: ทุกบัญชีเข้าหน้านี้ได้ (เพื่อดู Signature Credit) — ครู/ผู้บริหารเห็นเฉพาะแท็บ Signature Credit
+    // 1.45.111026: ทุกบัญชีเข้าหน้านี้ได้ (เพื่อดูเครดิต) — 1.46: ครู/ผู้บริหารเห็นเฉพาะแท็บ "ข้อมูลระบบ" (มีแค่การ์ดเครดิต)
     var session = requireLogin();
     if (session) mountChrome('settings');
 
@@ -1008,20 +993,19 @@
     // เฉพาะ Super Admin (role=admin, hasHub=false) เท่านั้นที่แก้ "ทั่วไป" (ชื่อเว็บ/โลโก้/ไอคอน) ได้ — เลขเวอร์ชันไม่ใช่ค่าตั้งค่าที่แก้ผ่านหน้าเว็บอีกต่อไป (ดูแถวล่างสุดของหน้านี้)
     var isSuperAdminSession = !!session && session.role === 'admin' && !session.hasHub;
     var isAdminSession = !!session && session.role === 'admin';
-    // Signature Credit (1.45.111026)
+    // เครดิต (1.46.121026 — ในแท็บข้อมูลระบบ)
     (function () {
       document.getElementById('creditVersion').textContent = APP_VERSION;
       document.getElementById('creditCopyright').textContent = String(new Date().getFullYear() + 543);
       var m = document.getElementById('creditMail');
       m.textContent = SUPPORT_EMAIL;
       m.href = 'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub');
-      getSiteSettings().then(function (st) { if (st && st.logoDataUrl) document.getElementById('creditLogo').innerHTML = '<img src="' + st.logoDataUrl + '" alt="" />'; }).catch(function () {});
     })();
     if (session && !isAdminSession) {
-      // ครู/ผู้บริหาร: ซ่อนทุกแท็บ เหลือ Signature Credit (ซ่อนแทนการลบ เพราะสคริปต์ด้านล่างผูก event กับองค์ประกอบในแท็บอื่นไว้ — ข้อมูลจริงฝั่ง Worker ป้องกันสิทธิ์อยู่แล้ว)
+      // ครู/ผู้บริหาร: ซ่อนทุกแท็บ เหลือ "ข้อมูลระบบ" (มีแค่การ์ดเครดิต — การ์ดพื้นที่เป็น super-admin-only ถูกลบไปแล้ว) (ซ่อนแทนการลบ เพราะสคริปต์ด้านล่างผูก event กับองค์ประกอบในแท็บอื่นไว้ — ข้อมูลจริงฝั่ง Worker ป้องกันสิทธิ์อยู่แล้ว)
       document.querySelectorAll('.super-admin-only').forEach(function (el) { el.remove(); });
-      document.querySelectorAll('.tab-btn').forEach(function (b) { var keep = b.getAttribute('data-tab') === 'credit'; b.hidden = !keep; b.classList.toggle('active', keep); });
-      document.querySelectorAll('.tab-panel').forEach(function (p) { var keep = p.id === 'tab-credit'; p.hidden = !keep; p.classList.toggle('active', keep); });
+      document.querySelectorAll('.tab-btn').forEach(function (b) { var keep = b.getAttribute('data-tab') === 'sysinfo'; b.hidden = !keep; b.classList.toggle('active', keep); });
+      document.querySelectorAll('.tab-panel').forEach(function (p) { var keep = p.id === 'tab-sysinfo'; p.hidden = !keep; p.classList.toggle('active', keep); });
       document.getElementById('settingsIntro').textContent = 'ข้อมูลเกี่ยวกับระบบและผู้พัฒนา';
     } else if (!isSuperAdminSession) {
       // ตั้งแต่ V10.0: "จัดการบัญชี" และ "ประวัติการส่งงานและลบงาน" เป็น super-admin-only ด้วย จึงเหลือแท็บ "ปฏิทิน" เป็นแท็บเริ่มต้นสำหรับเจ้าหน้าที่ฝ่ายวิชาการ
@@ -1069,8 +1053,7 @@
       extlinks: function () { return loadExtLinks(); },
       log: function () { return loadLog(); },
       systemlog: function () { return loadSystemLog(); },
-      sysinfo: function () { return loadSysInfo(); },
-      credit: function () { return Promise.resolve(); }
+      sysinfo: function () { return isSuperAdminSession ? loadSysInfo() : Promise.resolve(); }
     };
     function loadTabIfNeeded(tabKey) {
       if (_tabLoaded[tabKey]) return;
@@ -3046,7 +3029,7 @@
 
     // โหลดเฉพาะแท็บที่กำลังแสดงอยู่ตอนแรกเท่านั้น (แท็บอื่นจะโหลดทีหลังตอนผู้ใช้กดเปิดเอง)
     // ตั้งแต่ V10.0: เจ้าหน้าที่ฝ่ายวิชาการ (ไม่ใช่ Super Admin) เห็นแท็บ "ปฏิทิน" เป็นแท็บแรก (accounts ถูกจำกัดเฉพาะ Super Admin แล้ว)
-    loadTabIfNeeded(isSuperAdminSession ? 'general' : (isAdminSession ? 'website' : 'credit'));
+    loadTabIfNeeded(isSuperAdminSession ? 'general' : (isAdminSession ? 'website' : 'sysinfo'));
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------
     window.__refreshPageData = function () {
