@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.43.111026" />
+<link rel="stylesheet" href="assets/style.css?v=1.44.111026" />
 </head>
 <body>
   <!-- คลังคำสั่ง (ตั้งแต่ 1.43.111026 — เดิม "ไฟล์คำสั่ง" ของ 1.41): ทุกบัญชีที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ · แก้ไข/ลบได้เฉพาะเจ้าของ · PDF เท่านั้น
@@ -44,8 +44,13 @@
       <div id="ordError" class="error-box" hidden></div>
       <form id="ordForm" style="text-align:left;" novalidate>
         <div class="field" id="ordFileWrap">
-          <label for="ordFile">ไฟล์คำสั่ง (PDF เท่านั้น ไม่เกิน 25MB)</label>
-          <input id="ordFile" type="file" accept="application/pdf,.pdf" />
+          <label>ไฟล์คำสั่ง (PDF เท่านั้น ไม่เกิน 25MB)</label>
+          <!-- 1.44.111026: ช่องเลือกไฟล์แบบเดียวกับตอนครูส่งผลงาน (ลากไฟล์มาวาง หรือกดเพื่อเลือก) -->
+          <div class="dropzone" id="ordDropzone" tabindex="0">
+            <div><i class="fas fa-paperclip ui-icon" aria-hidden="true"></i> ลากไฟล์ PDF มาวางที่นี่ หรือกดเพื่อเลือกไฟล์</div>
+            <input id="ordFile" type="file" accept="application/pdf,.pdf" hidden />
+          </div>
+          <div id="ordFileChip"></div>
         </div>
         <div class="field">
           <label for="ordTitle">ชื่อคำสั่ง</label>
@@ -111,12 +116,13 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.43.111026"></script>
+  <script src="assets/api.js?v=1.44.111026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
     var editingId = '';
     var collapsed = {};
+    var ordSelectedFile = null; // ไฟล์ PDF ที่เลือกไว้ (1.44: เลือกผ่าน dropzone)
     var respSelected = []; // id ของผู้รับผิดชอบที่เลือกในฟอร์ม (เรียงตามลำดับที่เลือก)
 
     function $(id) { return document.getElementById(id); }
@@ -205,9 +211,11 @@
           '<div class="orders-meta orders-meta-2">' + respText(o) + (o.createdByName ? '<span class="orders-by">เพิ่มโดย ' + escapeHtml(o.createdByName) + '</span>' : '') + '</div>' +
         '</div>' +
         '<div class="orders-actions">' +
-          (preview ? '<button type="button" class="btn btn-primary btn-sm" data-preview="' + escapeHtml(o.id) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button>' : '') +
+          // 1.44.111026: ปุ่มพรีวิวอยู่ข้างปุ่มลบ (ด้านขวาสุด) — เรียง: เปิดไฟล์ · แก้ไข · พรีวิว · ลบ
           (o.fileUrl ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(o.fileUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-file-pdf"></i> เปิดไฟล์</a>' : '') +
-          (o.canManage ? '<button type="button" class="btn btn-ghost btn-sm" data-edit="' + escapeHtml(o.id) + '">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-del="' + escapeHtml(o.id) + '">ลบ</button>' : '') +
+          (o.canManage ? '<button type="button" class="btn btn-ghost btn-sm" data-edit="' + escapeHtml(o.id) + '">แก้ไข</button>' : '') +
+          (preview ? '<button type="button" class="btn btn-primary btn-sm" data-preview="' + escapeHtml(o.id) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button>' : '') +
+          (o.canManage ? '<button type="button" class="btn btn-danger btn-sm" data-del="' + escapeHtml(o.id) + '">ลบ</button>' : '') +
         '</div></li>';
     }
 
@@ -253,6 +261,7 @@
       $('ordModalTitle').textContent = o ? 'แก้ไขข้อมูลคำสั่ง' : 'เพิ่มคำสั่ง';
       $('ordFileWrap').hidden = !!o;
       $('ordFile').value = '';
+      ordSelectedFile = null; renderFileChip();
       $('ordTitle').value = o ? o.title : '';
       $('ordNoNum').value = o ? o.orderNoNumber : '';
       $('ordNoYear').value = o ? o.orderNoYear : '';
@@ -278,6 +287,23 @@
     }
     function closeModal() { hideModalEl($('ordModal')); }
 
+    // ---------- เลือกไฟล์ (dropzone เหมือนหน้าส่งผลงาน) ----------
+    function renderFileChip() {
+      var f = ordSelectedFile;
+      $('ordFileChip').innerHTML = f ? '<div class="file-chip"><span><i class="fa-solid fa-file-pdf"></i> ' + escapeHtml(f.name) + ' (' + (f.size / 1024 / 1024).toFixed(2) + ' MB)</span><button type="button" class="file-chip-remove" id="ordFileRemove" aria-label="เอาไฟล์ออก">&times;</button></div>' : '';
+      var rm = $('ordFileRemove');
+      if (rm) rm.addEventListener('click', function () { ordSelectedFile = null; renderFileChip(); });
+    }
+    function pickFile(fileList) {
+      var f = fileList && fileList[0];
+      if (!f) return;
+      if (!/\.pdf$/i.test(f.name) || (f.type && f.type !== 'application/pdf')) { showErr('คลังคำสั่งรับเฉพาะไฟล์ PDF เท่านั้น — "' + f.name + '" ไม่ใช่ไฟล์ PDF'); return; }
+      if (f.size > 25 * 1024 * 1024) { showErr('ไฟล์มีขนาดใหญ่เกิน 25MB'); return; }
+      showErr('');
+      ordSelectedFile = f;
+      renderFileChip();
+    }
+
     async function uploadToRelay(file, prep) {
       var base64 = await fileToBase64(file);
       var text;
@@ -302,7 +328,7 @@
         department: $('ordDeptSel').value, subjectGroup: $('ordSubjectSel').value, responsibleIds: respSelected.slice()
       };
       if (!editingId) {
-        var f0 = $('ordFile').files[0];
+        var f0 = ordSelectedFile;
         if (!f0) return showErr('กรุณาเลือกไฟล์คำสั่ง (PDF)');
         if (!/\.pdf$/i.test(f0.name) || (f0.type && f0.type !== 'application/pdf')) return showErr('คลังคำสั่งรับเฉพาะไฟล์ PDF เท่านั้น');
         if (f0.size > 25 * 1024 * 1024) return showErr('ไฟล์มีขนาดใหญ่เกิน 25MB');
@@ -321,7 +347,7 @@
         if (!r1.ok) return showErr(r1.error && r1.error.message);
         if (r1.data && r1.data.driveSynced === false) showToast('บันทึกข้อมูลแล้ว แต่ยังเปลี่ยนชื่อ/ย้ายไฟล์ใน Google Drive ไม่ได้ (ผู้ดูแลระบบต้องอัพเดต Drive relay)', true);
       } else {
-        var file = $('ordFile').files[0];
+        var file = ordSelectedFile;
         var r2 = await withProgress('กำลังอัพโหลดคำสั่ง...', async function () {
           var prep = await apiCall('orderUploadPrepare', Object.assign({ fileName: file.name, mimeType: 'application/pdf', fileSize: file.size }, fields));
           var up = await uploadToRelay(file, prep);
@@ -336,6 +362,13 @@
     if (session) {
       mountChrome('orders');
       $('ordAddBtn').addEventListener('click', function () { openModal(null); });
+      var dz = $('ordDropzone');
+      dz.addEventListener('click', function () { $('ordFile').click(); });
+      dz.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('ordFile').click(); } });
+      dz.addEventListener('dragover', function (e) { e.preventDefault(); dz.classList.add('dragover'); });
+      dz.addEventListener('dragleave', function () { dz.classList.remove('dragover'); });
+      dz.addEventListener('drop', function (e) { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer) pickFile(e.dataTransfer.files); });
+      $('ordFile').addEventListener('change', function (e) { pickFile(e.target.files); e.target.value = ''; });
       $('ordForm').addEventListener('submit', onSubmit);
       $('ordCancel').addEventListener('click', closeModal);
       $('ordCloseX').addEventListener('click', closeModal);

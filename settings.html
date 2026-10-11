@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.43.111026" />
+<link rel="stylesheet" href="assets/style.css?v=1.44.111026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -464,10 +464,10 @@
             <option value="รองผู้อำนวยการ">รองผู้อำนวยการ</option>
           </select>
         </div>
-        <!-- กลุ่มบริหารงาน (บังคับเลือกตั้งแต่ 1.42.111026) — ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มใดกลุ่มหนึ่ง -->
+        <!-- กลุ่มบริหารงาน (1.44.111026: ครูเลือก "ไม่ระบุ" ได้ — ต้องเลือกกลุ่มเฉพาะเมื่อแต่งตั้งเป็นเจ้าหน้าที่) — เดิม 1.42 บังคับเลือก — ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มใดกลุ่มหนึ่ง -->
         <div class="field" id="cuDepartmentField">
-          <label for="cuDepartment">กลุ่มบริหารงานที่สังกัด <span class="req-mark">*</span></label>
-          <select id="cuDepartment"><option value="">— เลือกกลุ่มบริหารงาน —</option></select>
+          <label for="cuDepartment">กลุ่มบริหารงานที่สังกัด</label>
+          <select id="cuDepartment"><option value="">ไม่ระบุ (ยังไม่ได้แต่งตั้งเข้ากลุ่ม)</option></select>
         </div>
         <div class="field" id="cuStaffField">
           <label style="display:flex; align-items:center; gap:8px; font-weight:500;">
@@ -614,9 +614,9 @@
           </div>
           <div id="muTeacherFields">
             <div class="field">
-              <label for="muDept">กลุ่มบริหารงานที่สังกัด <span class="req-mark">*</span></label>
-              <select id="muDept"><option value="">— เลือกกลุ่มบริหารงาน —</option></select>
-              <div class="hint" style="margin-top:4px;">ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มบริหารงานกลุ่มใดกลุ่มหนึ่ง (1 คน 1 กลุ่ม)</div>
+              <label for="muDept">กลุ่มบริหารงานที่สังกัด</label>
+              <select id="muDept"><option value="">ไม่ระบุ (ยังไม่ได้แต่งตั้งเข้ากลุ่ม)</option></select>
+              <div class="hint" style="margin-top:4px;">1 คนสังกัดได้ 1 กลุ่ม — ครูที่ยังไม่ได้รับแต่งตั้งเข้ากลุ่ม (เช่น ครูย้ายมาใหม่) เลือก "ไม่ระบุ" ไว้ก่อนได้ ส่วนเจ้าหน้าที่ต้องมีกลุ่มเสมอ</div>
             </div>
             <div class="field mu-staff-box">
               <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
@@ -793,7 +793,7 @@
     <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="gmCloseX" aria-label="ปิด">✕</button>
       <h3 id="gmTitle">จัดการสมาชิก</h3>
-      <p class="hint">ติ๊กคนที่สังกัดกลุ่มนี้ (1 คนสังกัดได้ 1 กลุ่ม — ถ้าติ๊กคนที่อยู่กลุ่มอื่น จะย้ายมากลุ่มนี้) แล้วกดบันทึก จากนั้นไปติ๊ก "เจ้าหน้าที่" ในการ์ดของกลุ่มได้ — ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มใดกลุ่มหนึ่งเสมอ จึงเอาสมาชิกเดิมออกเฉยๆ ไม่ได้ (ถ้าจะย้าย ให้ไปติ๊กชื่อในกลุ่มใหม่)</p>
+      <p class="hint">ติ๊กคนที่สังกัดกลุ่มนี้ (1 คนสังกัดได้ 1 กลุ่ม — ถ้าติ๊กคนที่อยู่กลุ่มอื่น จะย้ายมากลุ่มนี้) แล้วกดบันทึก จากนั้นไปติ๊ก "เจ้าหน้าที่" ในการ์ดของกลุ่มได้ — เอาติ๊กออก = ไม่ระบุกลุ่ม (เจ้าหน้าที่ที่ถูกนำออกจะกลับเป็นครู)</p>
       <div id="gmError" class="error-box" hidden></div>
       <div class="field-row" style="align-items:flex-end;">
         <div class="field" style="flex:2;"><label for="gmSearch">ค้นหาชื่อ</label><input type="search" id="gmSearch" placeholder="พิมพ์ชื่อ" /></div>
@@ -869,7 +869,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.43.111026"></script>
+  <script src="assets/api.js?v=1.44.111026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1801,9 +1801,7 @@
         var box = document.getElementById('gmList');
         box.innerHTML = rows.length ? rows.map(function (u) {
           var other = u.department && u.department !== gmDept && known[u.department] ? ' <span class="gm-other">อยู่ ' + escapeHtml(groupLabel(u.department)) + (isStaffUser(u) ? ' (เจ้าหน้าที่)' : '') + '</span>' : '';
-          // 1.42.111026: สมาชิกเดิมของกลุ่มนี้เอาติ๊กออกไม่ได้ (ครู/เจ้าหน้าที่ต้องสังกัดกลุ่มเสมอ) — ย้ายกลุ่มด้วยการติ๊กชื่อในกลุ่มใหม่แทน
-          var locked = !!gmInitial[u.id];
-          return '<label class="group-member' + (locked ? ' gm-locked' : '') + '"' + (locked ? ' title="สมาชิกเดิมของกลุ่มนี้ — ถ้าจะย้าย ให้ไปติ๊กชื่อในกลุ่มใหม่"' : '') + '><input type="checkbox" data-gm-id="' + escapeHtml(u.id) + '"' + (gmChecked[u.id] ? ' checked' : '') + (locked ? ' disabled' : '') + ' /> <span class="gm-name">' + escapeHtml(u.name) + '</span> ' + groupPickerHtml(u) + other + '</label>';
+          return '<label class="group-member"><input type="checkbox" data-gm-id="' + escapeHtml(u.id) + '"' + (gmChecked[u.id] ? ' checked' : '') + ' /> <span class="gm-name">' + escapeHtml(u.name) + '</span> ' + groupPickerHtml(u) + other + '</label>';
         }).join('') : '<div class="empty-state">ไม่พบรายชื่อ</div>';
         var n = 0; for (var k in gmChecked) if (gmChecked[k]) n++;
         document.getElementById('gmCount').textContent = 'เลือกไว้ ' + n + ' คน';
@@ -2241,8 +2239,8 @@
     // ตั้งแต่ 1.26.081026: ป้ายชื่อเจ้าหน้าที่แสดงฝ่ายที่สังกัดต่อท้าย (ถ้าตั้งไว้) แทนชื่อ "เจ้าหน้าที่ฝ่ายวิชาการ" เดิมที่ hardcode ไว้ตัวเดียว
     function roleBadge(u) {
       if (u.role === 'executive') return '<span class="badge badge-exec">' + escapeHtml(u.position || 'ผู้บริหาร') + '</span>';
-      // 1.42.111026: ครู/เจ้าหน้าที่ที่ยังไม่สังกัดกลุ่มบริหารงาน (บัญชีเก่าก่อน 1.42) มีป้ายเตือนให้ไปเลือกกลุ่มในแท็บ "ประเภทบัญชี"
-      var noGroup = ' <span class="mu-warn">ยังไม่สังกัดกลุ่ม</span>';
+      // ครูที่ยังไม่ระบุกลุ่มบริหารงาน (1.44.111026: ไม่บังคับแล้ว) — ป้ายบอกเฉยๆ ไม่ใช่คำเตือน
+      var noGroup = ' <span class="hint">ไม่ระบุกลุ่ม</span>';
       if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>' + (u.department ? ' <span class="hint">' + escapeHtml(groupLabel(u.department)) + '</span>' : noGroup);
       if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่' + (u.department ? escapeHtml(groupLabel(u.department)) : '') + '</span>' + (u.department ? '' : noGroup);
       return '<span class="badge badge-super">Super Admin</span>';
@@ -2415,16 +2413,12 @@
       var kind = muKindOf(u);
       var known = (currentDepartments || []).indexOf(u.department) !== -1;
       document.getElementById('muTypeCurrent').innerHTML = 'ปัจจุบัน: <b>' + escapeHtml(MU_KIND_LABEL[kind]) + '</b>' +
-        ((kind === 'teacher' || kind === 'staff') ? (known ? ' · ' + escapeHtml(groupLabel(u.department)) : ' · <span class="mu-warn">ยังไม่สังกัดกลุ่มบริหารงาน — กรุณาเลือกกลุ่มแล้วบันทึก</span>') : '');
+        ((kind === 'teacher' || kind === 'staff') ? (known ? ' · ' + escapeHtml(groupLabel(u.department)) : ' · ไม่ระบุกลุ่มบริหารงาน') : '');
       document.getElementById('muType').value = (kind === 'staff') ? 'teacher' : kind;
-      renderDepartmentOptions(document.getElementById('muDept'), known ? u.department : '', '— เลือกกลุ่มบริหารงาน —');
+      renderDepartmentOptions(document.getElementById('muDept'), known ? u.department : '', 'ไม่ระบุ (ยังไม่ได้แต่งตั้งเข้ากลุ่ม)');
       document.getElementById('muStaff').checked = kind === 'staff';
       document.getElementById('muPos').value = kind === 'executive' && u.position ? u.position : 'ผู้อำนวยการ';
       document.getElementById('muTypeError').hidden = true;
-      if (!(currentDepartments || []).length) {
-        document.getElementById('muTypeError').textContent = 'ยังไม่มีกลุ่มบริหารงานในระบบ — เพิ่มกลุ่มที่แท็บ "ข้อมูลหลัก" → กลุ่มบริหารงาน ก่อน จึงจะตั้งประเภทบัญชีเป็นครูได้';
-        document.getElementById('muTypeError').hidden = false;
-      }
       syncMuTypeFields();
     }
     document.getElementById('muType').addEventListener('change', syncMuTypeFields);
@@ -2438,11 +2432,11 @@
       var dept = document.getElementById('muDept').value;
       var kind = sel === 'teacher' ? (document.getElementById('muStaff').checked ? 'staff' : 'teacher') : sel;
       var pos = document.getElementById('muPos').value;
-      if (sel === 'teacher' && !dept) { errBox.textContent = 'ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มบริหารงานกลุ่มใดกลุ่มหนึ่ง กรุณาเลือกกลุ่มบริหารงาน'; errBox.hidden = false; return; }
+      if (kind === 'staff' && !dept) { errBox.textContent = 'เจ้าหน้าที่ต้องสังกัดกลุ่มบริหารงาน กรุณาเลือกกลุ่ม (หรือเอาติ๊ก "แต่งตั้งเป็นเจ้าหน้าที่" ออก)'; errBox.hidden = false; return; }
       var curKind = muKindOf(u);
       var same = kind === curKind && (sel !== 'teacher' || dept === u.department) && (kind !== 'executive' || pos === u.position);
       if (same) { errBox.textContent = 'ไม่มีอะไรเปลี่ยน — ประเภทบัญชี' + (sel === 'teacher' ? 'และกลุ่มบริหารงาน' : '') + 'ยังเหมือนเดิม'; errBox.hidden = false; return; }
-      var label = MU_KIND_LABEL[kind] + (sel === 'teacher' ? ' ' + groupLabel(dept) : (kind === 'executive' ? ' (' + pos + ')' : ''));
+      var label = MU_KIND_LABEL[kind] + (sel === 'teacher' ? ' ' + (dept ? groupLabel(dept) : '(ไม่ระบุกลุ่มบริหารงาน)') : (kind === 'executive' ? ' (' + pos + ')' : ''));
       var msg = 'ยืนยันตั้งประเภทบัญชีของ "' + u.name + '" เป็น "' + label + '"?' +
         (kind !== curKind ? ' ผู้ใช้ต้องออกจากระบบแล้วเข้าใหม่เพื่อให้เมนูตรงกับประเภทบัญชีใหม่' : '') +
         (kind === 'superadmin' ? ' — บัญชีนี้จะไม่แสดงในตารางจัดการบัญชีอีก และเปลี่ยนกลับผ่านหน้านี้ไม่ได้' : '');
@@ -2589,11 +2583,10 @@
       var createUserModal = document.getElementById('createUserModal');
       document.getElementById('openCreateUserBtn').addEventListener('click', function () {
         document.getElementById('createUserForm').reset();
-        renderDepartmentOptions(document.getElementById('cuDepartment'), '', '— เลือกกลุ่มบริหารงาน —');
+        renderDepartmentOptions(document.getElementById('cuDepartment'), '', 'ไม่ระบุ (ยังไม่ได้แต่งตั้งเข้ากลุ่ม)');
         syncCuDepartmentFieldVisibility();
         var errBox0 = document.getElementById('createUserError');
         errBox0.hidden = true;
-        if (!(currentDepartments || []).length) { errBox0.textContent = 'ยังไม่มีกลุ่มบริหารงานในระบบ — บัญชีครูต้องสังกัดกลุ่มบริหารงาน กรุณาเพิ่มกลุ่มที่แท็บ "ข้อมูลหลัก" → กลุ่มบริหารงาน ก่อน'; errBox0.hidden = false; }
         showModalEl(createUserModal);
       });
       document.getElementById('createUserClose').addEventListener('click', function () { hideModalEl(createUserModal); });
@@ -2610,8 +2603,8 @@
         }
         var kind = document.getElementById('cuRole').value;
         var dept = document.getElementById('cuDepartment').value;
-        if (kind === 'teacher' && !dept) {
-          errBox.textContent = 'ครูและเจ้าหน้าที่ต้องสังกัดกลุ่มบริหารงานกลุ่มใดกลุ่มหนึ่ง กรุณาเลือกกลุ่มบริหารงาน';
+        if (kind === 'teacher' && !dept && document.getElementById('cuIsStaff').checked) {
+          errBox.textContent = 'เจ้าหน้าที่ต้องสังกัดกลุ่มบริหารงาน กรุณาเลือกกลุ่ม (หรือเอาติ๊ก "แต่งตั้งเป็นเจ้าหน้าที่" ออก)';
           errBox.hidden = false;
           return;
         }
