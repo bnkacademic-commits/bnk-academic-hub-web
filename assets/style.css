@@ -1581,3 +1581,82 @@ td > .badge { white-space: nowrap; } /* 1.45: ป้ายสถานะใน�
 /* ผลงานของฉัน (หน้าแรก): ป้ายภาคเรียน/ปีการศึกษาแทนป้ายวันที่ — ใช้โครง .ordc-* เดียวกับคลังคำสั่ง */
 .ordc-date.term .m { font-size: 0.6rem; }
 .ordc-date.term .d.long { font-size: 0.74rem; padding: 4px 0 3px; line-height: 1.2; }
+
+/* ---------- 1.49.121026 ---------- */
+/* สวิตช์เลื่อน (เปิด/ปิด ภาคฤดูร้อน / จัดทำบันทึกข้อความ) — ใช้ <input type="checkbox" class="switch" role="switch"> */
+input[type="checkbox"].switch {
+  width: 46px !important; height: 26px !important; min-width: 46px; border-radius: 999px; border: 0;
+  background: color-mix(in srgb, var(--text-muted) 40%, transparent); position: relative; display: inline-block;
+  transition: background-color 0.2s ease, box-shadow 0.15s ease;
+}
+input[type="checkbox"].switch::before {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; margin: 0; border: 0; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); transform: none; transition: left 0.2s cubic-bezier(.3,1.3,.6,1);
+}
+input[type="checkbox"].switch:checked { background: var(--primary); }
+input[type="checkbox"].switch:checked::before { left: 23px; transform: none; }
+input[type="checkbox"].switch:active:not(:disabled) { transform: none; }
+input[type="checkbox"].switch:active:not(:disabled)::before { width: 24px; }
+input[type="checkbox"].switch:checked:active:not(:disabled)::before { left: 19px; }
+.switch-row { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.switch-state { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-left: auto; }
+.switch-row input:checked ~ .switch-state { color: var(--primary); }
+
+/* ผลงานของฉันแบบชุด (ประเภทงาน + เทอม) */
+.ordc-chip.cnt { background: var(--primary-light); color: var(--primary); border-color: transparent; }
+.icon-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; width: 34px; height: 32px; display: inline-flex; align-items: center; justify-content: center; color: var(--primary); cursor: pointer; transition: background-color 0.15s ease, transform 0.1s ease; padding: 0; font-size: 0.9rem; }
+.icon-btn:hover:not(:disabled) { background: var(--surface-2); }
+.icon-btn:active:not(:disabled) { transform: scale(0.94); }
+.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.icon-btn.del { color: #dc2626; }
+.icon-btn + .icon-btn { margin-left: 6px; }
+.sub-info { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.ordc-detail table.sub-files, table.sub-files { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 12px; font-size: 0.86rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+table.sub-files th { background: var(--surface-2); text-align: left; padding: 7px 10px; font-size: 0.76rem; color: var(--text-muted); font-weight: 700; border: 0; }
+.ordc-detail table.sub-files td, table.sub-files td { padding: 7px 10px; border: 0; border-top: 1px solid var(--border); vertical-align: middle; width: auto; color: var(--text); font-weight: 400; }
+table.sub-files td.n { width: 30px; color: var(--text-muted); text-align: center; }
+table.sub-files td.dt { white-space: nowrap; color: var(--text-muted); font-size: 0.8rem; }
+table.sub-files td.a { white-space: nowrap; text-align: right; width: 1%; }
+.sub-file-name { display: flex; align-items: center; gap: 10px; font-weight: 600; word-break: break-word; }
+.sub-file-ic { font-size: 1.2rem; width: 22px; text-align: center; flex-shrink: 0; }
+.sub-file-extra { font-weight: 400; font-size: 0.76rem; color: var(--text-muted); margin-top: 2px; }
+.sub-group-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.sub-group-bar .btn { width: auto; }
+.submitted-badge { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 0.72rem; font-weight: 700; color: #059669; background: color-mix(in srgb, #10b981 15%, transparent); padding: 2px 8px; border-radius: 999px; vertical-align: middle; }
+[data-theme="dark"] .submitted-badge { color: #34d399; }
+.group-modal-box { text-align: left; max-width: 860px; }
+.group-modal-box h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-right: 36px; }
+.group-modal-body { max-height: 62vh; overflow: auto; }
+@media (max-width: 640px) {
+  table.sub-files thead { display: none; }
+  table.sub-files tr { display: grid; grid-template-columns: 26px 1fr auto; grid-template-areas: "n name a" "n dt a"; border-top: 1px solid var(--border); padding: 6px 8px; }
+  table.sub-files tr:first-child { border-top: 0; }
+  .ordc-detail table.sub-files td, table.sub-files td { border: 0; padding: 2px 4px; display: block; }
+  table.sub-files td.n { grid-area: n; align-self: center; }
+  table.sub-files td:nth-child(2) { grid-area: name; }
+  table.sub-files td.dt { grid-area: dt; padding-left: 36px; }
+  table.sub-files td.a { grid-area: a; align-self: center; width: auto; }
+}
+/* พรีวิวไล่ทีละไฟล์ */
+.file-preview-nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.file-preview-nav .icon-btn + .icon-btn, .file-preview-nav .icon-btn { margin: 0; }
+.file-preview-count { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); min-width: 38px; text-align: center; }
+.file-preview-overlay.no-anim { transition: none; }
+@media (max-width: 640px) {
+  .file-preview-bar { flex-wrap: wrap; row-gap: 6px; }
+  .file-preview-title { flex-basis: calc(100% - 46px); order: -2; }
+  .file-preview-close { order: -1; }
+}
+.ordc-detail.group-modal-body { padding: 0 2px 4px; animation: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.switch-row input:not(:checked) ~ .switch-state::after { content: 'ปิด'; }
+.switch-row input:checked ~ .switch-state::after { content: 'เปิด'; }
+@media (max-width: 640px) {
+  .file-preview-bar .fp-lbl { display: none; } /* มือถือ: ปุ่มเปิดไฟล์/ดาวน์โหลดเหลือแต่ไอคอน */
+  .file-preview-bar .btn-sm { padding-left: 10px; padding-right: 10px; }
+  table.sub-files, table.sub-files tbody { display: block; width: 100%; }
+  table.sub-files tr { grid-template-columns: 22px minmax(0, 1fr) auto; }
+  .sub-file-name { gap: 8px; word-break: normal; overflow-wrap: anywhere; }
+  table.sub-files td.dt { padding-left: 34px; }
+  .group-modal-box h3 { font-size: 1.05rem; }
+}

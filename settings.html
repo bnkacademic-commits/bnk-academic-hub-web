@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.48.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.49.121026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -64,9 +64,11 @@
       <div class="card">
         <div class="section-title"><i class="fas fa-sun ui-icon" style="font-size:17px" aria-hidden="true"></i> ภาคฤดูร้อน</div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ปิดตัวเลือกนี้ได้หากโรงเรียนไม่มีภาคฤดูร้อน — เมื่อปิดแล้ว จะซ่อนตัวเลือก "ภาคฤดูร้อน" ออกจากช่องเลือกภาคเรียนทั้งหมดในระบบ (ข้อมูลเก่าที่เคยบันทึกไว้เป็นภาคฤดูร้อนจะยังแสดงผลตามปกติ)</p>
-        <label class="toggle-row" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-          <input type="checkbox" id="setSummerEnabled" style="width:18px; height:18px;" />
+        <!-- 1.49.121026: สวิตช์เลื่อนแทนเช็คบ็อกซ์ (ยังถามยืนยันก่อนบันทึกเหมือนเดิม) -->
+        <label class="toggle-row switch-row">
+          <input type="checkbox" class="switch" role="switch" id="setSummerEnabled" />
           <span>เปิดใช้งานภาคฤดูร้อนในระบบ</span>
+          <span class="switch-state" aria-hidden="true"></span>
         </label>
       </div>
 
@@ -74,9 +76,10 @@
       <div class="card" id="memoToggleCard">
         <div class="section-title"><i class="fas fa-file-lines ui-icon" style="font-size:17px" aria-hidden="true"></i> จัดทำบันทึกข้อความ</div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เมื่อปิด ระบบจะซ่อนเมนูและปุ่ม "จัดทำบันทึกข้อความ" ของทุกบัญชี รวมถึงแท็บ "ข้อมูลกลุ่มบริหารงาน" (ชื่อผู้ลงนาม/หัวเรื่องบันทึกข้อความ) และการ์ดข้อมูลสำหรับพิมพ์บันทึกข้อความในแท็บข้อมูลหลัก — ข้อมูลที่ตั้งไว้ยังเก็บอยู่ เปิดกลับมาใช้ได้ทุกเมื่อ</p>
-        <label class="toggle-row" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-          <input type="checkbox" id="setMemoEnabled" style="width:18px; height:18px;" />
+        <label class="toggle-row switch-row">
+          <input type="checkbox" class="switch" role="switch" id="setMemoEnabled" />
           <span>เปิดใช้งานจัดทำบันทึกข้อความ</span>
+          <span class="switch-state" aria-hidden="true"></span>
         </label>
       </div>
 
@@ -944,7 +947,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.48.121026"></script>
+  <script src="assets/api.js?v=1.49.121026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว

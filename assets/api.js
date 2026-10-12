@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.48.121026';
+var APP_VERSION = '1.49.121026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1203,10 +1203,12 @@ function driveDownloadUrl(url) {
   var m = /\/file\/d\/([A-Za-z0-9_-]+)/.exec(String(url || '')) || /[?&]id=([A-Za-z0-9_-]+)/.exec(String(url || ''));
   return m ? 'https://drive.google.com/uc?export=download&id=' + m[1] : '';
 }
-function openFilePreview(previewUrl, title, openUrl, downloadUrl) {
+// nav (ตั้งแต่ 1.49.121026, ไม่บังคับ): { index, total, go(i) } — พรีวิวไล่ทีละไฟล์ มีปุ่มก่อนหน้า/ถัดไป + ลูกศรซ้าย/ขวาบนคีย์บอร์ด
+function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav) {
   if (downloadUrl === undefined) downloadUrl = driveDownloadUrl(openUrl || previewUrl);
   var old = document.getElementById('filePreviewOverlay');
-  if (old) old.remove();
+  var reuse = !!old && !!nav; // เปลี่ยนไฟล์ในโหมดไล่ทีละไฟล์ — ไม่ต้องเล่นแอนิเมชันเปิดใหม่
+  if (old) { if (old.__dispose) old.__dispose(); old.remove(); }
   var ov = document.createElement('div');
   ov.id = 'filePreviewOverlay';
   ov.className = 'file-preview-overlay';
@@ -1216,9 +1218,12 @@ function openFilePreview(previewUrl, title, openUrl, downloadUrl) {
   ov.innerHTML =
     '<div class="file-preview-frame">' +
       '<div class="file-preview-bar">' +
+        (nav ? '<div class="file-preview-nav"><button type="button" class="icon-btn file-preview-prev" aria-label="ไฟล์ก่อนหน้า"' + (nav.index <= 0 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-left"></i></button>' +
+          '<span class="file-preview-count">' + (nav.index + 1) + '/' + nav.total + '</span>' +
+          '<button type="button" class="icon-btn file-preview-next" aria-label="ไฟล์ถัดไป"' + (nav.index >= nav.total - 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button></div>' : '') +
         '<div class="file-preview-title">' + escapeHtml(title || 'พรีวิวไฟล์') + '</div>' +
-        (openUrl ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> เปิดไฟล์</a>' : '') +
-        (downloadUrl ? '<a class="btn btn-primary btn-sm file-preview-dl" href="' + escapeHtml(downloadUrl) + '" target="_blank" rel="noopener" download><i class="fa-solid fa-download"></i> ดาวน์โหลด</a>' : '') +
+        (openUrl ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i><span class="fp-lbl"> เปิดไฟล์</span></a>' : '') +
+        (downloadUrl ? '<a class="btn btn-primary btn-sm file-preview-dl" href="' + escapeHtml(downloadUrl) + '" target="_blank" rel="noopener" download><i class="fa-solid fa-download"></i><span class="fp-lbl"> ดาวน์โหลด</span></a>' : '') +
         '<button type="button" class="file-preview-close" aria-label="ปิดพรีวิว">✕</button>' +
       '</div>' +
       '<iframe class="file-preview-iframe" src="' + escapeHtml(previewUrl) + '" title="' + escapeHtml(title || 'พรีวิวไฟล์') + '" allow="autoplay" loading="eager"></iframe>' +
@@ -1229,13 +1234,23 @@ function openFilePreview(previewUrl, title, openUrl, downloadUrl) {
     document.body.classList.remove('file-preview-open');
     setTimeout(function () { ov.remove(); }, 160);
   }
-  function onKey(e) { if (e.key === 'Escape') close(); }
+  function step(d) { var i = nav.index + d; if (i >= 0 && i < nav.total) nav.go(i); }
+  function onKey(e) {
+    if (e.key === 'Escape') close();
+    else if (nav && e.key === 'ArrowLeft') step(-1);
+    else if (nav && e.key === 'ArrowRight') step(1);
+  }
+  ov.__dispose = function () { document.removeEventListener('keydown', onKey); };
   ov.addEventListener('click', function (e) { if (e.target === ov) close(); }); // กดพื้นที่ว่างรอบไฟล์ = ปิด
   ov.querySelector('.file-preview-close').addEventListener('click', close);
+  if (nav) {
+    ov.querySelector('.file-preview-prev').addEventListener('click', function () { step(-1); });
+    ov.querySelector('.file-preview-next').addEventListener('click', function () { step(1); });
+  }
   document.addEventListener('keydown', onKey);
   document.body.appendChild(ov);
   document.body.classList.add('file-preview-open');
-  requestAnimationFrame(function () { ov.classList.add('show'); });
+  if (reuse) ov.classList.add('show', 'no-anim'); else requestAnimationFrame(function () { ov.classList.add('show'); });
   return close;
 }
 

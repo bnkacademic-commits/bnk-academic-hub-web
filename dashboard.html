@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.48.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.49.121026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -136,7 +136,7 @@
         </div>
         <div id="upCustomFields"></div>
         <div class="field">
-          <label>ไฟล์ผลงาน (สูงสุด 10 ไฟล์ ไม่เกิน 25MB ต่อไฟล์)</label>
+          <label>ไฟล์ผลงาน (สูงสุด 20 ไฟล์ต่อครั้ง ไม่เกิน 25MB ต่อไฟล์)</label>
           <div class="dropzone" id="dropzone" tabindex="0">
             <div><i class="fas fa-paperclip ui-icon" aria-hidden="true"></i> ลากไฟล์มาวางที่นี่ หรือกดเพื่อเลือกไฟล์</div>
             <input type="file" id="upFiles" multiple hidden />
@@ -145,6 +145,16 @@
         </div>
         <button class="btn btn-primary btn-full" type="submit" id="uploadConfirmBtn">ยืนยันส่ง</button>
       </form>
+    </div>
+  </div>
+
+  <!-- ชุดผลงาน (1.49.121026): เปิดจากปุ่ม "ส่งงานเพิ่มหรือแก้ไข" ในกำหนดส่งงาน — เนื้อหาเดียวกับตอนขยายแถวในผลงานของฉันทั้งหมด -->
+  <div class="modal-backdrop" id="groupModal" hidden>
+    <div class="modal-box modal-box-wide group-modal-box">
+      <button type="button" class="modal-close-x" id="groupModalCloseX" aria-label="ปิด">✕</button>
+      <h3 id="groupModalTitle">ผลงานที่ส่งแล้ว</h3>
+      <div id="groupModalBody" class="ordc-detail group-modal-body"></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost" id="groupModalCloseBtn">ปิด</button></div>
     </div>
   </div>
 
@@ -167,7 +177,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.48.121026"></script>
+  <script src="assets/api.js?v=1.49.121026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -276,7 +286,7 @@
     // ---------- ส่งงาน (Upload) modal ----------
     var uploadModal = document.getElementById('uploadModal');
     var selectedFiles = [];
-    var MAX_UPLOAD_FILES = 10;
+    var MAX_UPLOAD_FILES = 20; // 1.49.121026: เพิ่มจาก 10 เป็น 20 ไฟล์ต่อครั้ง (ส่งทีละไฟล์ตามลำดับ)
 
     function renderFileChips() {
       var wrap = document.getElementById('fileChipList');
@@ -297,7 +307,7 @@
       var incoming = Array.from(fileList);
       var room = MAX_UPLOAD_FILES - selectedFiles.length;
       if (incoming.length > room) {
-        showToast('เลือกไฟล์ได้สูงสุด ' + MAX_UPLOAD_FILES + ' ไฟล์ต่อครั้ง (เพิ่มได้อีก ' + Math.max(room, 0) + ' ไฟล์)', true);
+        showToast('ส่งได้สูงสุด ' + MAX_UPLOAD_FILES + ' ไฟล์ต่อครั้ง — ' + (room > 0 ? 'รับไว้ ' + room + ' ไฟล์แรก ส่วนที่เหลือส่งเพิ่มในชุดเดิมได้ภายหลัง' : 'เลือกครบแล้ว ส่งชุดนี้ก่อนแล้วค่อยเพิ่มไฟล์ในชุดเดิมได้'), true);
       }
       incoming.slice(0, room).forEach(function (f) { selectedFiles.push(f); });
       renderFileChips();
@@ -355,7 +365,9 @@
 
     // preset (ไม่บังคับ): { categoryId, academicYear, semester } — ใช้ตอนกดปุ่ม "ส่งงาน" จากรายการแจ้งเตือนกำหนดส่งในปฏิทิน (V9.5)
     // เพื่อเลือกภาคเรียน/ปีการศึกษา/ประเภทงานของกำหนดการนั้นให้อัตโนมัติ ไม่ต้องเลือกเองซ้ำ
+    var reopenGroupAfterUpload = null; // 1.49.121026: เปิดมาจากป็อปอัพชุดผลงาน -> ปิด/ส่งเสร็จแล้วกลับไปที่ชุดนั้น
     function openUploadModal(preset) {
+      reopenGroupAfterUpload = (preset && preset.reopenGroup) || null;
       selectedFiles = [];
       renderFileChips();
       document.getElementById('uploadError').hidden = true;
@@ -384,7 +396,10 @@
       showModalEl(uploadModal);
     }
     document.getElementById('openUploadBtn').addEventListener('click', function () { openUploadModal(); });
-    document.getElementById('uploadModalCloseX').addEventListener('click', function () { hideModalEl(uploadModal); });
+    document.getElementById('uploadModalCloseX').addEventListener('click', function () {
+      hideModalEl(uploadModal);
+      if (reopenGroupAfterUpload) { var k = reopenGroupAfterUpload; reopenGroupAfterUpload = null; openGroupModal(k); }
+    });
 
     document.getElementById('uploadForm').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -441,6 +456,7 @@
         selectedFiles = [];
         renderFileChips();
         document.getElementById('uploadForm').reset();
+        if (reopenGroupAfterUpload) { var rk = reopenGroupAfterUpload; reopenGroupAfterUpload = null; openGroupModal(rk); }
       } else {
         errBox.textContent = r.error.message;
         errBox.hidden = false;
@@ -508,82 +524,217 @@
         el.innerHTML = '<div class="empty-state">ไม่พบผลงานที่ตรงกับเงื่อนไขที่เลือก</div>';
         return;
       }
-      // 1.48.121026: แบบย่อ/แบบเต็มเหมือนคลังคำสั่ง — แบบย่อ = ป้ายภาคเรียน/ปีการศึกษา + ชื่อผลงาน (ยาวเกินตัด …) + ปุ่มพรีวิว
-      // กดแถวเพื่อขยายดูทุกอย่าง (ประเภทงาน กลุ่มบริหารงาน รายละเอียด ช่องข้อมูลเพิ่มเติม วันเวลาที่อัพโหลด) + ปุ่มลบ
-      subs.sort(function (x, y) {
-        var kx = x.academicYear + '|' + x.semester, ky = y.academicYear + '|' + y.semester;
-        if (kx !== ky) return kx < ky ? 1 : -1;
-        return String(y.uploadedAt || '') < String(x.uploadedAt || '') ? -1 : 1;
-      });
-      el.innerHTML = '<div class="ordc-count hint">' + subs.length + ' ผลงาน</div><ul class="ordc-list sub-list">' + subs.map(subRowHtml).join('') + '</ul>';
+      // 1.49.121026: รวมผลงานเป็น "ชุด" = ประเภทงานเดียวกัน + ปีการศึกษา/ภาคเรียนเดียวกัน (ส่งหลายไฟล์/ส่งเพิ่มทีหลังก็รวมอยู่ชุดเดียว)
+      // แถวย่อ = ป้ายภาคเรียน/ปีการศึกษา + ชื่อประเภทงาน + จำนวนไฟล์ + กลุ่มบริหารงาน · ขยาย = ข้อมูลชุด + ตารางไฟล์ (ไอคอนตามชนิดไฟล์)
+      // + ปุ่มพรีวิวทีละไฟล์ / เพิ่มไฟล์ในชุดนี้ / ลบทั้งชุด
+      var groups = buildSubGroups(subs);
+      var nFiles = subs.length;
+      el.innerHTML = '<div class="ordc-count hint">' + groups.length + ' ประเภทงาน · ' + nFiles + ' ไฟล์</div><ul class="ordc-list sub-list">' + groups.map(groupRowHtml).join('') + '</ul>';
     }
 
     var subExpanded = {};
+    var _groupIndex = {}; // key -> group (ชุดล่าสุดที่ render จากข้อมูลทั้งหมด ไม่ขึ้นกับตัวกรอง)
+    function subGroupKey(s) { return (s.categoryId || ('name:' + (s.categoryName || ''))) + '|' + s.academicYear + '|' + s.semester; }
+    function buildSubGroups(list) {
+      var map = {}, order = [];
+      list.forEach(function (s) {
+        var k = subGroupKey(s);
+        if (!map[k]) { map[k] = { key: k, categoryId: s.categoryId, categoryName: s.categoryName || '', academicYear: s.academicYear, semester: s.semester, items: [] }; order.push(k); }
+        map[k].items.push(s);
+      });
+      var groups = order.map(function (k) {
+        var g = map[k];
+        g.items.sort(function (x, y) { return String(x.uploadedAt || '') < String(y.uploadedAt || '') ? -1 : 1; }); // ลำดับตามเวลาที่ส่ง
+        g.latest = g.items[g.items.length - 1].uploadedAt || '';
+        return g;
+      });
+      groups.sort(function (x, y) {
+        var kx = x.academicYear + '|' + x.semester, ky = y.academicYear + '|' + y.semester;
+        if (kx !== ky) return kx < ky ? 1 : -1;
+        return String(y.latest) < String(x.latest) ? -1 : 1;
+      });
+      return groups;
+    }
+    function groupFromAll(key) {
+      var items = allSubmissions.filter(function (s) { return subGroupKey(s) === key; });
+      return items.length ? buildSubGroups(items)[0] : null;
+    }
     function subTermTile(s) {
       var summer = s.semester === 'summer';
       return '<div class="ordc-date term" aria-hidden="true"><span class="m">ภาคเรียน</span>' +
         '<span class="d' + (summer ? ' long' : '') + '">' + (summer ? 'ฤดูร้อน' : escapeHtml(s.semester)) + '</span>' +
         '<span class="y">' + escapeHtml(s.academicYear) + '</span></div>';
     }
-    function subRowHtml(s) {
-      var open = !!subExpanded[s.id];
-      var semText = s.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + s.semester;
+    // ไอคอนตามชนิดไฟล์ (ดูจาก mimeType / นามสกุลชื่อไฟล์)
+    function fileIconHtml(s) {
+      var n = String(s.title || s.fileName || '').toLowerCase(), m = String(s.mimeType || '').toLowerCase();
+      var ic = 'fa-file', col = 'var(--text-muted)';
+      if (/pdf/.test(m) || /\.pdf$/.test(n)) { ic = 'fa-file-pdf'; col = '#dc2626'; }
+      else if (/^image\//.test(m) || /\.(jpe?g|png|gif|webp|heic|bmp)$/.test(n)) { ic = 'fa-file-image'; col = '#16a34a'; }
+      else if (/word|document/.test(m) || /\.docx?$/.test(n)) { ic = 'fa-file-word'; col = '#2563eb'; }
+      else if (/sheet|excel/.test(m) || /\.(xlsx?|csv)$/.test(n)) { ic = 'fa-file-excel'; col = '#15803d'; }
+      else if (/presentation|powerpoint/.test(m) || /\.pptx?$/.test(n)) { ic = 'fa-file-powerpoint'; col = '#ea580c'; }
+      else if (/^video\//.test(m) || /\.(mp4|mov|avi|mkv)$/.test(n)) { ic = 'fa-file-video'; col = '#7c3aed'; }
+      else if (/^audio\//.test(m) || /\.(mp3|wav|m4a)$/.test(n)) { ic = 'fa-file-audio'; col = '#db2777'; }
+      else if (/zip|compressed/.test(m) || /\.(zip|rar|7z)$/.test(n)) { ic = 'fa-file-zipper'; col = '#a16207'; }
+      return '<i class="fa-solid ' + ic + ' sub-file-ic" style="color:' + col + '" aria-hidden="true"></i>';
+    }
+    function groupDeptChip(g) {
+      var d = g.categoryId ? _catDeptMap[g.categoryId] : '';
+      return d ? '<span class="ordc-chip">' + escapeHtml(groupLabel(d)) + '</span>' : '';
+    }
+    // ข้อมูลที่ทุกไฟล์ในชุดเหมือนกัน -> แสดงด้านบน · ข้อมูลที่ต่างกัน -> แสดงใต้ชื่อไฟล์นั้น
+    function groupExtras(g) {
+      var keys = [{ key: '__desc', label: 'รายละเอียด' }].concat(CUSTOM_FIELD_DEFS);
+      var common = [], perFile = {};
+      keys.forEach(function (d) {
+        var vals = g.items.map(function (s) { return d.key === '__desc' ? (s.description || '') : ((s.customFieldValues || {})[d.key] || ''); });
+        var uniq = vals.filter(function (v, i) { return vals.indexOf(v) === i; });
+        if (uniq.length === 1) { if (uniq[0]) common.push([d.label, uniq[0]]); }
+        else g.items.forEach(function (s, i) { if (vals[i]) (perFile[s.id] = perFile[s.id] || []).push(d.label + ': ' + vals[i]); });
+      });
+      return { common: common, perFile: perFile };
+    }
+    function groupDetailHtml(g) {
+      var semText = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + g.semester;
+      var ex = groupExtras(g);
       var rows = [
-        ['ชื่อผลงาน', escapeHtml(s.title)],
-        ['ปีการศึกษา / ภาคเรียน', escapeHtml(semText + ' ปีการศึกษา ' + s.academicYear)],
-        ['ประเภทงาน', s.categoryName ? '<span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' + categoryDeptBadgeHtml(s.categoryId) : '—']
+        ['ประเภทงาน', g.categoryName ? categoryDotHtml(categoryColorMap[g.categoryId]) + escapeHtml(g.categoryName) + escapeHtml(g.categoryId ? categoryDeptSuffix(g.categoryId) : '') : '—'],
+        ['ปีการศึกษา / ภาคเรียน', escapeHtml(semText + ' ปีการศึกษา ' + g.academicYear)]
       ];
-      if (s.description) rows.push(['รายละเอียด', escapeHtml(s.description)]);
-      var cv = s.customFieldValues || {};
-      CUSTOM_FIELD_DEFS.forEach(function (d) { if (cv[d.key]) rows.push([escapeHtml(d.label), escapeHtml(cv[d.key])]); });
-      rows.push(['อัพโหลดเมื่อ', escapeHtml(formatDateTimeThai(s.uploadedAt))]);
-      return '<li class="ordc-item sub-item-row' + (open ? ' open' : '') + '" data-sub-id="' + escapeHtml(s.id) + '">' +
-        '<div class="ordc-main" data-sub-expand="' + escapeHtml(s.id) + '" role="button" tabindex="0" aria-expanded="' + open + '">' +
-          subTermTile(s) +
-          '<div class="ordc-body"><div class="ordc-title sub-item-title" title="' + escapeHtml(s.title) + '">' + escapeHtml(s.title) + '</div></div>' +
-          '<div class="ordc-btns"><button type="button" class="btn btn-primary btn-sm" data-preview-url="' + escapeHtml(s.fileUrl) + '" data-preview-title="' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button></div>' +
+      ex.common.forEach(function (c) { rows.push([escapeHtml(c[0]), escapeHtml(c[1])]); });
+      rows.push(['ส่งล่าสุด', escapeHtml(formatDateTimeThai(g.latest))]);
+      var k = escapeHtml(g.key);
+      return '<table class="sub-info">' + rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>' +
+        '<table class="sub-files"><thead><tr><th>#</th><th>ชื่อไฟล์</th><th>วันที่ส่ง</th><th><span class="sr-only">จัดการ</span></th></tr></thead><tbody>' +
+        g.items.map(function (s, i) {
+          var extra = ex.perFile[s.id] ? '<div class="sub-file-extra">' + escapeHtml(ex.perFile[s.id].join(' · ')) + '</div>' : '';
+          return '<tr data-file-row="' + escapeHtml(s.id) + '"><td class="n">' + (i + 1) + '</td>' +
+            '<td><div class="sub-file-name">' + fileIconHtml(s) + '<div><span class="sub-file-title">' + escapeHtml(s.title) + '</span>' + extra + '</div></div></td>' +
+            '<td class="dt">' + escapeHtml(formatDateTimeThai(s.uploadedAt)) + '</td>' +
+            '<td class="a"><button type="button" class="icon-btn" data-file-preview="' + escapeHtml(s.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i></button>' +
+            '<button type="button" class="icon-btn del" data-file-del="' + escapeHtml(s.id) + '" title="ลบ" aria-label="ลบ ' + escapeHtml(s.title) + '"><i class="fa-solid fa-trash"></i></button></td></tr>';
+        }).join('') + '</tbody></table>' +
+        '<div class="sub-group-bar">' +
+          '<button type="button" class="btn btn-primary btn-sm" data-grp-step="' + k + '"><i class="fa-solid fa-images"></i> พรีวิวทีละไฟล์</button>' +
+          '<button type="button" class="btn btn-secondary btn-sm" data-grp-add="' + k + '"><i class="fa-solid fa-plus"></i> เพิ่มไฟล์ในชุดนี้</button>' +
+          '<button type="button" class="btn btn-danger btn-sm" data-grp-delall="' + k + '"><i class="fa-solid fa-trash"></i> ลบทั้งชุด</button>' +
+        '</div>';
+    }
+    function groupRowHtml(g) {
+      _groupIndex[g.key] = g;
+      var open = !!subExpanded[g.key];
+      var title = g.categoryName || 'ไม่ระบุประเภทงาน';
+      return '<li class="ordc-item sub-group-row' + (open ? ' open' : '') + '" data-group="' + escapeHtml(g.key) + '">' +
+        '<div class="ordc-main" data-grp-expand="' + escapeHtml(g.key) + '" role="button" tabindex="0" aria-expanded="' + open + '">' +
+          subTermTile(g) +
+          '<div class="ordc-body"><div class="ordc-title sub-item-title" title="' + escapeHtml(title) + '">' + (g.categoryId ? categoryDotHtml(categoryColorMap[g.categoryId]) : '') + escapeHtml(title) + '</div>' +
+            '<div class="ordc-chips"><span class="ordc-chip cnt"><i class="fa-solid fa-copy"></i> ' + g.items.length + ' ไฟล์</span>' + groupDeptChip(g) + '</div></div>' +
           '<i class="fa-solid fa-chevron-down ordc-chev" aria-hidden="true"></i>' +
         '</div>' +
-        (open ? '<div class="ordc-detail"><table>' + rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>' +
-          '<div class="ordc-acts"><button type="button" class="btn btn-danger btn-sm" data-del-id="' + escapeHtml(s.id) + '" data-name="' + escapeHtml(s.title) + '">ลบ</button></div></div>' : '') +
+        (open ? '<div class="ordc-detail">' + groupDetailHtml(g) + '</div>' : '') +
         '</li>';
     }
-    (function bindSubmissionList() {
-      var el = document.getElementById('submissionList');
-      el.addEventListener('click', async function (e) {
-        var t = e.target.closest('[data-preview-url],[data-del-id],[data-sub-expand]');
-        if (!t || !el.contains(t)) return;
-        if (t.hasAttribute('data-preview-url')) {
-          var u = t.getAttribute('data-preview-url');
-          openFilePreview(drivePreviewUrl(u), t.getAttribute('data-preview-title'), u);
-          return;
-        }
-        if (t.hasAttribute('data-del-id')) {
-          var ok = await askConfirm('ต้องการลบผลงาน "' + t.getAttribute('data-name') + '" ใช่หรือไม่? การลบไม่สามารถกู้คืนได้', 'ยืนยันการลบผลงาน');
-          if (!ok) return;
-          var subId = t.getAttribute('data-del-id');
-          var r = await withProgress('กำลังลบผลงาน', function () {
-            return apiCall('teacherDelete', { submissionId: subId });
-          }, { successLabel: 'ลบผลงานแล้ว' });
-          if (r.ok) { delete subExpanded[subId]; loadSubmissions(); }
-          return;
-        }
-        var id = t.getAttribute('data-sub-expand');
-        subExpanded[id] = !subExpanded[id];
-        renderSubmissions();
-      });
-      el.addEventListener('keydown', function (e) {
-        var t = e.target.closest && e.target.closest('[data-sub-expand]');
-        if (!t || (e.key !== 'Enter' && e.key !== ' ')) return;
-        if (e.target !== t) return;
-        e.preventDefault();
-        var id = t.getAttribute('data-sub-expand');
-        subExpanded[id] = !subExpanded[id];
-        renderSubmissions();
-        var again = el.querySelector('[data-sub-expand="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+    function findSub(id) { return allSubmissions.filter(function (s) { return s.id === id; })[0] || null; }
+    function previewGroup(g, startIdx) {
+      var list = g.items;
+      function show(i) {
+        var s = list[i];
+        openFilePreview(drivePreviewUrl(s.fileUrl), s.title, s.fileUrl, undefined,
+          list.length > 1 ? { index: i, total: list.length, go: show } : null);
+      }
+      show(Math.max(0, Math.min(startIdx || 0, list.length - 1)));
+    }
+
+    // ---------- ป็อปอัพชุดผลงาน (ปุ่ม "ส่งงานเพิ่มหรือแก้ไข" ในกำหนดส่งงาน) — ตั้งแต่ 1.49.121026 ----------
+    var groupModal = document.getElementById('groupModal');
+    var groupModalKey = null;
+    function renderGroupModal() {
+      if (!groupModalKey || groupModal.hidden) return;
+      var g = groupFromAll(groupModalKey);
+      if (!g) { hideModalEl(groupModal); groupModalKey = null; return; }
+      _groupIndex[g.key] = g;
+      document.getElementById('groupModalTitle').innerHTML = '<span>' + (g.categoryId ? categoryDotHtml(categoryColorMap[g.categoryId]) : '') + escapeHtml(g.categoryName || 'ผลงาน') + '</span>' +
+        ' <span class="ordc-chip cnt"><i class="fa-solid fa-copy"></i> ' + g.items.length + ' ไฟล์</span>';
+      document.getElementById('groupModalBody').innerHTML = groupDetailHtml(g);
+    }
+    function openGroupModal(key) {
+      groupModalKey = key;
+      showModalEl(groupModal);
+      renderGroupModal();
+    }
+    document.getElementById('groupModalCloseX').addEventListener('click', function () { hideModalEl(groupModal); groupModalKey = null; });
+    document.getElementById('groupModalCloseBtn').addEventListener('click', function () { hideModalEl(groupModal); groupModalKey = null; });
+
+    async function handleSubAction(t) {
+      if (t.hasAttribute('data-file-preview')) {
+        var s0 = findSub(t.getAttribute('data-file-preview'));
+        if (!s0) return;
+        var g0 = groupFromAll(subGroupKey(s0));
+        previewGroup(g0, g0.items.findIndex(function (x) { return x.id === s0.id; }));
+        return;
+      }
+      if (t.hasAttribute('data-grp-step')) { var gs = groupFromAll(t.getAttribute('data-grp-step')); if (gs) previewGroup(gs, 0); return; }
+      if (t.hasAttribute('data-grp-add')) {
+        var ga = groupFromAll(t.getAttribute('data-grp-add'));
+        if (!ga) return;
+        var fromModal = !groupModal.hidden;
+        if (fromModal) hideModalEl(groupModal); // ไม่ซ้อนป็อปอัพ — ส่งเสร็จ/ปิดแล้วจะกลับมาที่ชุดนี้ถ้ามาจากป็อปอัพ
+        openUploadModal({ categoryId: ga.categoryId, academicYear: ga.academicYear, semester: ga.semester, reopenGroup: fromModal ? ga.key : null });
+        return;
+      }
+      if (t.hasAttribute('data-file-del')) {
+        var sd = findSub(t.getAttribute('data-file-del'));
+        if (!sd) return;
+        var ok = await askConfirm('ต้องการลบไฟล์ "' + sd.title + '" ใช่หรือไม่? การลบไม่สามารถกู้คืนได้', 'ยืนยันการลบไฟล์');
+        if (!ok) return;
+        var r = await withProgress('กำลังลบไฟล์', function () { return apiCall('teacherDelete', { submissionId: sd.id }); }, { successLabel: 'ลบไฟล์แล้ว' });
+        if (r.ok) loadSubmissions();
+        return;
+      }
+      if (t.hasAttribute('data-grp-delall')) {
+        var gd = groupFromAll(t.getAttribute('data-grp-delall'));
+        if (!gd) return;
+        var ok2 = await askConfirm('ต้องการลบผลงาน "' + (gd.categoryName || 'ผลงาน') + '" ' + (gd.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + gd.semester) + ' ปีการศึกษา ' + gd.academicYear + ' ทั้งชุด (' + gd.items.length + ' ไฟล์) ใช่หรือไม่? การลบไม่สามารถกู้คืนได้', 'ยืนยันการลบทั้งชุด');
+        if (!ok2) return;
+        var ids = gd.items.map(function (x) { return x.id; });
+        var r2 = await withProgress('กำลังลบผลงานทั้งชุด', async function (p) {
+          var failed = [];
+          for (var i = 0; i < ids.length; i++) {
+            p.setProgress(Math.round((i / ids.length) * 100), 'กำลังลบ ' + (i + 1) + '/' + ids.length);
+            try { await apiCall('teacherDelete', { submissionId: ids[i] }); } catch (err) { failed.push(err.message); }
+          }
+          p.setProgress(100);
+          if (failed.length) throw new Error('ลบไม่สำเร็จ ' + failed.length + '/' + ids.length + ' ไฟล์ — ' + failed[0]);
+          return true;
+        }, { successLabel: 'ลบผลงานทั้งชุดแล้ว' });
+        void r2;
+        loadSubmissions();
+        return;
+      }
+    }
+    function toggleGroup(key, focusAfter) {
+      subExpanded[key] = !subExpanded[key];
+      renderSubmissions();
+      if (focusAfter) {
+        var again = document.querySelector('#submissionList [data-grp-expand="' + (window.CSS && CSS.escape ? CSS.escape(key) : key) + '"]');
         if (again) again.focus();
+      }
+    }
+    [document.getElementById('submissionList'), document.getElementById('groupModalBody')].forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        var t = e.target.closest('[data-file-preview],[data-file-del],[data-grp-step],[data-grp-add],[data-grp-delall],[data-grp-expand]');
+        if (!t || !el.contains(t)) return;
+        if (t.hasAttribute('data-grp-expand')) { toggleGroup(t.getAttribute('data-grp-expand')); return; }
+        handleSubAction(t);
       });
-    })();
+    });
+    document.getElementById('submissionList').addEventListener('keydown', function (e) {
+      var t = e.target.closest && e.target.closest('[data-grp-expand]');
+      if (!t || e.target !== t || (e.key !== 'Enter' && e.key !== ' ')) return;
+      e.preventDefault();
+      toggleGroup(t.getAttribute('data-grp-expand'), true);
+    });
 
     async function loadSubmissions() {
       var el = document.getElementById('submissionList');
@@ -591,6 +742,7 @@
         allSubmissions = await apiCall('teacherListMine', {});
         await fillSubFilters();
         renderSubmissions();
+        renderGroupModal();
         renderAssignmentChecklist();
         // renderCalendar() อ่านสถานะ "ส่งแล้วหรือยัง" ด้วย (ตั้งแต่เวอร์ชันถัดจาก V11.9.1 เพื่อตัดสินป้าย "เกินกำหนด") ซึ่งต้องใช้ allSubmissions ที่เพิ่งโหลดเสร็จ
         // ตรงนี้ — loadCalendar()/loadSubmissions() ยิงคำขอพร้อมกันตอนเปิดหน้า ลำดับเสร็จก่อนหลังไม่แน่นอน จึงเรียกซ้ำให้ชัวร์ว่าข้อมูลล่าสุดครบทั้งสองฝั่งเสมอ
@@ -831,13 +983,18 @@
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
           // ยังกดได้ตามปกติแม้เกินกำหนดแล้ว (ระบบไม่เคยบล็อกการส่งงานย้อนหลังอยู่แล้ว เพียงแต่เดิมรายการหายไปก่อนจะมีโอกาสกด)
           // ตั้งแต่ V12.0: ถ้าเป็นประเภทงาน "แจ้งเตือนอย่างเดียว" ไม่มีปุ่มส่งงานเลย ขึ้นป้ายแจ้งเตือนเฉยๆ แทน
-          var submitBtn = (e.categoryId && !e.noSubmission)
+          // 1.49.121026: ส่งแล้ว (มีผลงานประเภทนี้ในเทอม/ปีนี้) -> ปุ่มเปลี่ยนเป็น "ส่งงานเพิ่มหรือแก้ไข" เปิดป็อปอัพชุดผลงาน (ดู/พรีวิว/ลบ/เพิ่มไฟล์)
+          var isSubmitted = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
+          var submitBtn = isSubmitted
+            ? '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ส่งงานเพิ่มหรือแก้ไข</button>'
+            : (e.categoryId && !e.noSubmission)
             ? '<button class="btn ' + (isOverdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
             : (e.categoryId && e.noSubmission ? '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>' : '');
           var termLabel = e.categoryId ? (e.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(e.semester)) + ' ปีการศึกษา ' + escapeHtml(e.academicYear) : '';
           // ตั้งแต่เวอร์ชันถัดจาก V11.1 หัวข้อกำหนดการที่ผูกประเภทงานจะเป็นชื่อประเภทงานเป๊ะๆ อยู่แล้ว (กรอกเองไม่ได้อีกต่อไป) — ไม่ต้องต่อท้าย "(ชื่อประเภทงาน)" ซ้ำอีกถ้าซ้ำกับหัวข้ออยู่แล้ว (กำหนดการเก่าก่อนอัพเดตที่หัวข้อเคยพิมพ์เองไว้ต่างจากชื่อประเภทงาน ยังโชว์วงเล็บต่อท้ายตามเดิม)
           var showCategorySuffix = e.categoryName && e.categoryName !== e.title;
           var overdueBadge = isOverdue ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> เกินกำหนด</span>' : '';
+          if (isSubmitted) overdueBadge = '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>';
           return '<div class="event-list-item"><div class="event-date-chip' + (isOverdue ? ' overdue' : '') + '">' + dateChip + '</div>' +
             '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(e.title) +
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
@@ -845,6 +1002,14 @@
             (termLabel ? '<div class="sub-item-meta">' + categoryDotHtml(categoryColorMap[e.categoryId]) + escapeHtml(termLabel) + '</div>' : '') +
             (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + submitBtn + '</div>';
         }).join('') + '</div>';
+        upcomingBox.querySelectorAll('button[data-group-event]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var ev = calState.events.filter(function (x) { return x.id === btn.getAttribute('data-group-event'); })[0];
+            if (!ev) return;
+            var s0 = allSubmissions.filter(function (s) { return s.categoryId === ev.categoryId && s.academicYear === ev.academicYear && s.semester === ev.semester; })[0];
+            if (s0) openGroupModal(subGroupKey(s0)); else openUploadModal({ categoryId: ev.categoryId, academicYear: ev.academicYear, semester: ev.semester });
+          });
+        });
         upcomingBox.querySelectorAll('button[data-submit-event]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var evId = btn.getAttribute('data-submit-event');
