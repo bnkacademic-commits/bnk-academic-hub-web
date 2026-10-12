@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.47.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.48.121026" />
 </head>
 <body>
   <!-- คลังคำสั่ง (ตั้งแต่ 1.43.111026 — เดิม "ไฟล์คำสั่ง" ของ 1.41): ทุกบัญชีที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ · แก้ไข/ลบได้เฉพาะเจ้าของ · PDF เท่านั้น
@@ -116,7 +116,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.47.121026"></script>
+  <script src="assets/api.js?v=1.48.121026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -138,12 +138,16 @@
     // ปีการศึกษาของคำสั่ง (คำสั่งเก่าจาก 1.41–1.42 ไม่มีปีการศึกษา ใช้ปี พ.ศ. ของวันที่จัดทำแทนในตัวกรอง)
     function yearOf(o) { return o.academicYear || String(Number(String(o.orderDate).slice(0, 4)) + 543); }
 
+    // 1.48.121026: ตัวกรองปีการศึกษาเริ่มต้นที่ปีการศึกษาปัจจุบัน (ครั้งแรกที่เปิดหน้า) และมีตัวเลือกปีนี้เสมอแม้ยังไม่มีคำสั่ง
+    var curTerm = null, yearDefaulted = false;
     function fillFilters() {
       var s = $('ordSubject'), y = $('ordYear');
       var sv = s.value, yv = y.value;
+      if (!yearDefaulted && curTerm && curTerm.year) { yv = String(curTerm.year); yearDefaulted = true; }
       s.innerHTML = '<option value="">ทุกกลุ่มสาระการเรียนรู้</option><option value="__none">--ไม่มีกลุ่มสาระ--</option>' + subjectGroups.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
       var years = {};
       orders.forEach(function (o) { years[yearOf(o)] = 1; });
+      if (curTerm && curTerm.year) years[curTerm.year] = 1;
       var ylist = Object.keys(years).sort(function (a, b) { return b - a; });
       y.innerHTML = '<option value="">ทุกปีการศึกษา</option>' + ylist.map(function (x) { return '<option value="' + x + '">ปีการศึกษา ' + x + '</option>'; }).join('');
       s.value = sv; y.value = yv;
@@ -234,6 +238,7 @@
       $('ordAddBtn').hidden = !departments.length;
       $('ordSubtitle').textContent = 'คลังคำสั่งของโรงเรียน (ไฟล์ PDF) — ทุกคนเพิ่มคำสั่งได้ แก้ไข/ลบได้เฉพาะผู้อัพโหลด' +
         (retentionYears ? ' · เก็บไว้ ' + retentionYears + ' ปีหลังอัพโหลด แล้วระบบจะลบอัตโนมัติ' : '');
+      if (!curTerm) { try { curTerm = await currentAcademicTerm(); } catch (e) { curTerm = { year: '' }; } }
       fillFilters();
       render();
     }

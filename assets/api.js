@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.47.121026';
+var APP_VERSION = '1.48.121026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -632,6 +632,15 @@ async function currentAcademicTerm() {
 }
 // ข้อความป้ายบอก "ตอนนี้คือปีการศึกษา/ภาคเรียนอะไร" จาก currentAcademicTerm() — ใช้แสดงในปฏิทินหน้าฮับครู (ตั้งแต่ V9.8)
 // ตัดคำนำหน้า "ตอนนี้: " ออกตามที่ผู้ใช้ขอ (ตั้งแต่ V9.9) เหลือแค่ตัวข้อความภาคเรียน/ปีการศึกษาล้วนๆ — เป็น async ตั้งแต่ V12.0 (ดู currentAcademicTerm() ด้านบน)
+// ---------- เปิด/ปิด "จัดทำบันทึกข้อความ" (ตั้งแต่ 1.48.121026) ----------
+// องค์ประกอบใดที่ติด class "memo-feature" (ปุ่มในหน้าแรก แท็บข้อมูลกลุ่มบริหารงาน การ์ดข้อมูลพิมพ์บันทึกข้อความ) + เมนู memo.html
+// จะถูกซ่อนเมื่อ settings.memoEnabled === false — เรียกซ้ำได้ทุกครั้งที่ค่าตั้งค่าเปลี่ยน
+function isMemoEnabled(st) { return !(st && st.memoEnabled === false); }
+function applyMemoFeatureVisibility(st) {
+  var off = !isMemoEnabled(st);
+  document.querySelectorAll('.memo-feature, .sidenav a[href="memo.html"]').forEach(function (el) { el.classList.toggle('memo-feature-off', off); });
+}
+
 async function currentTermLabel() {
   var t = await currentAcademicTerm();
   var semText = t.semester === 'summer' ? 'ภาคฤดูร้อน' : ('ภาคเรียนที่ ' + t.semester);
@@ -1097,6 +1106,9 @@ function mountChrome(activePage) {
         var dl = document.querySelector('.sidenav a[href="directory.html"]');
         if (dl && activePage !== 'directory') dl.remove();
       }
+      // 1.48.121026: Super Admin ปิด "จัดทำบันทึกข้อความ" -> ซ่อนเมนู/ปุ่ม/แท็บที่เกี่ยวข้อง และพาออกจากหน้า memo.html
+      applyMemoFeatureVisibility(st);
+      if (st && st.memoEnabled === false && activePage === 'memo') location.replace(homePageFor(session));
     });
 
     var trigger = document.getElementById('profileTrigger');

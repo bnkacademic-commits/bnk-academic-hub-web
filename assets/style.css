@@ -1574,3 +1574,10 @@ td > .badge { white-space: nowrap; } /* 1.45: ป้ายสถานะใน�
   .ordc-detail tr { padding: 6px 0; border-bottom: 1px dashed var(--border); }
   .ordc-detail td:first-child { width: auto; font-size: 0.76rem; padding: 0 0 1px; }
 }
+
+/* ---------- 1.48.121026 ---------- */
+/* ปิด "จัดทำบันทึกข้อความ" -> ซ่อนเมนู/ปุ่ม/แท็บที่เกี่ยวข้อง (applyMemoFeatureVisibility ใน api.js) */
+.memo-feature-off { display: none !important; }
+/* ผลงานของฉัน (หน้าแรก): ป้ายภาคเรียน/ปีการศึกษาแทนป้ายวันที่ — ใช้โครง .ordc-* เดียวกับคลังคำสั่ง */
+.ordc-date.term .m { font-size: 0.6rem; }
+.ordc-date.term .d.long { font-size: 0.74rem; padding: 4px 0 3px; line-height: 1.2; }

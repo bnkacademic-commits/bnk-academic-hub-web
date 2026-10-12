@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.47.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.48.121026" />
 <style>
   .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
   .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
@@ -104,7 +104,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.47.121026"></script>
+  <script src="assets/api.js?v=1.48.121026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -149,12 +149,31 @@
       } catch (err) { /* ไม่ต้องแจ้ง error — แค่ตกไปใช้สีเริ่มต้นแทน */ }
     }
 
+    // 1.48.121026: ตัวกรองปีการศึกษา + ภาคเรียน (ทั้ง 2 แท็บ) เริ่มต้นที่เทอมปัจจุบันตอนเปิดหน้าครั้งแรก — ครั้งต่อไปคงค่าที่ผู้ใช้เลือกไว้
+    var curTerm = null;
+    var _termDefaulted = {};
+    async function ensureTerm() {
+      if (curTerm) return;
+      try { curTerm = await currentAcademicTerm(); } catch (e) { curTerm = { year: '', semester: '' }; }
+    }
+    function withCurrentYear(years) {
+      if (curTerm && curTerm.year && years.indexOf(String(curTerm.year)) === -1) { years.push(String(curTerm.year)); years.sort().reverse(); }
+      return years;
+    }
+    function applyTermDefault(key, yearSel, semSel) {
+      if (_termDefaulted[key] || !curTerm || !curTerm.year) return;
+      _termDefaulted[key] = true;
+      yearSel.value = String(curTerm.year);
+      if (Array.prototype.some.call(semSel.options, function (o) { return o.value === String(curTerm.semester); })) semSel.value = String(curTerm.semester);
+    }
+
     async function loadData() {
       var wrap = document.getElementById('subTableWrap');
       try {
         var results = await Promise.all([apiCall('adminListAllSubmissions', {}), apiCall('adminListUsers', {})]);
         allSubs = results[0];
         allUsers = results[1].filter(function (u) { return u.role === 'teacher' || u.hasHub; });
+        await ensureTerm();
         fillYearFilter();
         renderStats();
         renderTable();
@@ -164,7 +183,7 @@
     }
 
     function fillYearFilter() {
-      var years = Array.from(new Set(allSubs.map(function (s) { return s.academicYear; }))).filter(Boolean).sort().reverse();
+      var years = withCurrentYear(Array.from(new Set(allSubs.map(function (s) { return s.academicYear; }))).filter(Boolean).sort().reverse());
       var sel = document.getElementById('fYear');
       var currentVal = sel.value;
       sel.innerHTML = '<option value="">ทุกปีการศึกษา</option>'; // เคลียร์ตัวเลือกเดิมก่อน กัน option ซ้ำตอนรีเฟรชข้อมูลซ้ำ
@@ -174,6 +193,7 @@
         sel.appendChild(opt);
       });
       if (years.indexOf(currentVal) !== -1) sel.value = currentVal; // คงตัวกรองปีการศึกษาที่เลือกไว้ ไม่ให้รีเซ็ตตอนรีเฟรชข้อมูล
+      applyTermDefault('all', sel, document.getElementById('fSemester'));
     }
 
     function renderStats() {
@@ -249,7 +269,7 @@
       });
       if (allAssignments.some(function (a) { return a.eventId === curAsg; })) asgSel.value = curAsg;
 
-      var years = Array.from(new Set(allAssignments.map(function (a) { return a.academicYear; }))).filter(Boolean).sort().reverse();
+      var years = withCurrentYear(Array.from(new Set(allAssignments.map(function (a) { return a.academicYear; }))).filter(Boolean).sort().reverse());
       yearSel.innerHTML = '<option value="">ทุกปีการศึกษา</option>';
       years.forEach(function (y) {
         var opt = document.createElement('option');
@@ -257,6 +277,7 @@
         yearSel.appendChild(opt);
       });
       if (years.indexOf(curYear) !== -1) yearSel.value = curYear;
+      applyTermDefault('asg', yearSel, document.getElementById('asgFilterSemester'));
     }
 
     function renderAssignmentSummary() {
@@ -310,6 +331,7 @@
       var wrap = document.getElementById('assignmentSummaryWrap');
       try {
         allAssignments = await apiCall('adminGetAssignmentSummary', {});
+        await ensureTerm();
         fillAssignmentFilters();
         renderAssignmentSummary();
       } catch (err) {

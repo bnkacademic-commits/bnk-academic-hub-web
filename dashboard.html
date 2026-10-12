@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.47.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.48.121026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -47,7 +47,7 @@
              เพราะตอนนี้ต้องเลือก "หัวเรื่องบันทึกข้อความ" ก่อนด้วย ไม่ใช่แค่ปริ้นอย่างเดียวแล้ว — ดู memo.html) เปิดได้ทั้งครูและ
              เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ (ทั้งคู่ส่งงานผ่านระบบเหมือนกัน — requireHubAccess() ด้านบนกรองให้แล้ว)
              ตั้งแต่ 1.29.091026: ไปหน้า memo.html ในแท็บเดิม (ไม่เด้งเปิดหน้าใหม่) เหมือนกดแท็บเมนูบนสุด + ตัวอักษรเล็กลงให้พอดีปุ่ม (.dash-memo-btn) -->
-        <a class="btn btn-secondary dash-portfolio-btn dash-memo-btn" id="btnOpenMemo" href="memo.html"><i class="fas fa-file-lines ui-icon" aria-hidden="true"></i> จัดทำบันทึกข้อความ</a>
+        <a class="btn btn-secondary dash-portfolio-btn dash-memo-btn memo-feature" id="btnOpenMemo" href="memo.html"><i class="fas fa-file-lines ui-icon" aria-hidden="true"></i> จัดทำบันทึกข้อความ</a>
       </div>
     </div>
 
@@ -167,7 +167,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.47.121026"></script>
+  <script src="assets/api.js?v=1.48.121026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -508,50 +508,82 @@
         el.innerHTML = '<div class="empty-state">ไม่พบผลงานที่ตรงกับเงื่อนไขที่เลือก</div>';
         return;
       }
-      var groups = {};
-      subs.forEach(function (s) {
-        var key = s.academicYear + '|' + s.semester;
-        if (!groups[key]) groups[key] = { academicYear: s.academicYear, semester: s.semester, items: [] };
-        groups[key].items.push(s);
+      // 1.48.121026: แบบย่อ/แบบเต็มเหมือนคลังคำสั่ง — แบบย่อ = ป้ายภาคเรียน/ปีการศึกษา + ชื่อผลงาน (ยาวเกินตัด …) + ปุ่มพรีวิว
+      // กดแถวเพื่อขยายดูทุกอย่าง (ประเภทงาน กลุ่มบริหารงาน รายละเอียด ช่องข้อมูลเพิ่มเติม วันเวลาที่อัพโหลด) + ปุ่มลบ
+      subs.sort(function (x, y) {
+        var kx = x.academicYear + '|' + x.semester, ky = y.academicYear + '|' + y.semester;
+        if (kx !== ky) return kx < ky ? 1 : -1;
+        return String(y.uploadedAt || '') < String(x.uploadedAt || '') ? -1 : 1;
       });
-      var keys = Object.keys(groups).sort().reverse();
-      var html = '';
-      keys.forEach(function (k) {
-        var g = groups[k];
-        var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + g.semester;
-        html += '<div class="year-group"><div class="year-group-title">ปีการศึกษา ' + escapeHtml(g.academicYear) + ' — ' + semLabel + '</div>';
-        g.items.forEach(function (s) {
-          html += '<div class="sub-item">' +
-            '<div><div class="sub-item-title">' + escapeHtml(s.title) + (s.categoryName ? ' <span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' + categoryDeptBadgeHtml(s.categoryId) : '') + '</div>' +
-            (s.description ? '<div class="sub-item-desc">' + escapeHtml(s.description) + '</div>' : '') +
-            formatCustomFieldValuesLine(s.customFieldValues) +
-            // 1.43.111026: ปุ่ม "พรีวิว" เปิดป็อปอัพเต็มหน้าจอ (กดพื้นที่ว่างเพื่อปิด) — "เปิดไฟล์" ยังเปิดแท็บใหม่เหมือนเดิม
-            '<div class="sub-item-meta">อัพโหลดเมื่อ ' + formatDateThai(s.uploadedAt) + ' · <a href="' + escapeHtml(s.fileUrl) + '" target="_blank" rel="noopener">เปิดไฟล์</a></div></div>' +
-            // 1.44.111026: ปุ่มพรีวิวย้ายมาอยู่ข้างปุ่มลบ (ด้านขวาของแต่ละผลงาน)
-            '<div class="sub-item-actions"><button type="button" class="btn btn-primary btn-sm" data-preview-url="' + escapeHtml(s.fileUrl) + '" data-preview-title="' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button><button class="btn btn-danger btn-sm" data-id="' + s.id + '" data-name="' + escapeHtml(s.title) + '">ลบ</button></div>' +
-            '</div>';
-        });
-        html += '</div>';
-      });
-      el.innerHTML = html;
-      el.querySelectorAll('button[data-preview-url]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var u = btn.getAttribute('data-preview-url');
-          openFilePreview(drivePreviewUrl(u), btn.getAttribute('data-preview-title'), u);
-        });
-      });
-      el.querySelectorAll('button[data-id]').forEach(function (btn) {
-        btn.addEventListener('click', async function () {
-          var ok = await askConfirm('ต้องการลบผลงาน "' + btn.getAttribute('data-name') + '" ใช่หรือไม่? การลบไม่สามารถกู้คืนได้', 'ยืนยันการลบผลงาน');
+      el.innerHTML = '<div class="ordc-count hint">' + subs.length + ' ผลงาน</div><ul class="ordc-list sub-list">' + subs.map(subRowHtml).join('') + '</ul>';
+    }
+
+    var subExpanded = {};
+    function subTermTile(s) {
+      var summer = s.semester === 'summer';
+      return '<div class="ordc-date term" aria-hidden="true"><span class="m">ภาคเรียน</span>' +
+        '<span class="d' + (summer ? ' long' : '') + '">' + (summer ? 'ฤดูร้อน' : escapeHtml(s.semester)) + '</span>' +
+        '<span class="y">' + escapeHtml(s.academicYear) + '</span></div>';
+    }
+    function subRowHtml(s) {
+      var open = !!subExpanded[s.id];
+      var semText = s.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + s.semester;
+      var rows = [
+        ['ชื่อผลงาน', escapeHtml(s.title)],
+        ['ปีการศึกษา / ภาคเรียน', escapeHtml(semText + ' ปีการศึกษา ' + s.academicYear)],
+        ['ประเภทงาน', s.categoryName ? '<span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' + categoryDeptBadgeHtml(s.categoryId) : '—']
+      ];
+      if (s.description) rows.push(['รายละเอียด', escapeHtml(s.description)]);
+      var cv = s.customFieldValues || {};
+      CUSTOM_FIELD_DEFS.forEach(function (d) { if (cv[d.key]) rows.push([escapeHtml(d.label), escapeHtml(cv[d.key])]); });
+      rows.push(['อัพโหลดเมื่อ', escapeHtml(formatDateTimeThai(s.uploadedAt))]);
+      return '<li class="ordc-item sub-item-row' + (open ? ' open' : '') + '" data-sub-id="' + escapeHtml(s.id) + '">' +
+        '<div class="ordc-main" data-sub-expand="' + escapeHtml(s.id) + '" role="button" tabindex="0" aria-expanded="' + open + '">' +
+          subTermTile(s) +
+          '<div class="ordc-body"><div class="ordc-title sub-item-title" title="' + escapeHtml(s.title) + '">' + escapeHtml(s.title) + '</div></div>' +
+          '<div class="ordc-btns"><button type="button" class="btn btn-primary btn-sm" data-preview-url="' + escapeHtml(s.fileUrl) + '" data-preview-title="' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button></div>' +
+          '<i class="fa-solid fa-chevron-down ordc-chev" aria-hidden="true"></i>' +
+        '</div>' +
+        (open ? '<div class="ordc-detail"><table>' + rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>' +
+          '<div class="ordc-acts"><button type="button" class="btn btn-danger btn-sm" data-del-id="' + escapeHtml(s.id) + '" data-name="' + escapeHtml(s.title) + '">ลบ</button></div></div>' : '') +
+        '</li>';
+    }
+    (function bindSubmissionList() {
+      var el = document.getElementById('submissionList');
+      el.addEventListener('click', async function (e) {
+        var t = e.target.closest('[data-preview-url],[data-del-id],[data-sub-expand]');
+        if (!t || !el.contains(t)) return;
+        if (t.hasAttribute('data-preview-url')) {
+          var u = t.getAttribute('data-preview-url');
+          openFilePreview(drivePreviewUrl(u), t.getAttribute('data-preview-title'), u);
+          return;
+        }
+        if (t.hasAttribute('data-del-id')) {
+          var ok = await askConfirm('ต้องการลบผลงาน "' + t.getAttribute('data-name') + '" ใช่หรือไม่? การลบไม่สามารถกู้คืนได้', 'ยืนยันการลบผลงาน');
           if (!ok) return;
-          var subId = btn.getAttribute('data-id');
+          var subId = t.getAttribute('data-del-id');
           var r = await withProgress('กำลังลบผลงาน', function () {
             return apiCall('teacherDelete', { submissionId: subId });
           }, { successLabel: 'ลบผลงานแล้ว' });
-          if (r.ok) loadSubmissions();
-        });
+          if (r.ok) { delete subExpanded[subId]; loadSubmissions(); }
+          return;
+        }
+        var id = t.getAttribute('data-sub-expand');
+        subExpanded[id] = !subExpanded[id];
+        renderSubmissions();
       });
-    }
+      el.addEventListener('keydown', function (e) {
+        var t = e.target.closest && e.target.closest('[data-sub-expand]');
+        if (!t || (e.key !== 'Enter' && e.key !== ' ')) return;
+        if (e.target !== t) return;
+        e.preventDefault();
+        var id = t.getAttribute('data-sub-expand');
+        subExpanded[id] = !subExpanded[id];
+        renderSubmissions();
+        var again = el.querySelector('[data-sub-expand="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+        if (again) again.focus();
+      });
+    })();
 
     async function loadSubmissions() {
       var el = document.getElementById('submissionList');
