@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>สรุปรวมการส่งงาน — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
      ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.52.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.53.121026" />
 <style>
   .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
   .stat-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
@@ -52,7 +52,7 @@
       <div class="card">
         <div class="section-title"><i class="fas fa-chart-column ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการผลงานทั้งหมด</div>
         <div class="filter-row">
-          <input type="search" id="fSearch" placeholder="ค้นหาชื่อครู/ชื่อผลงาน" />
+          <input type="search" id="fSearch" placeholder="ค้นหาชื่อครู / ประเภทงาน / ชื่อไฟล์" />
           <select id="fYear"><option value="">ทุกปีการศึกษา</option></select>
           <select id="fSemester">
             <option value="">ทุกภาคเรียน</option>
@@ -61,7 +61,7 @@
             <option value="summer">ภาคฤดูร้อน</option>
           </select>
         </div>
-        <div id="subTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
+        <div id="subTableWrap" class="sum-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
 
@@ -118,7 +118,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.52.121026"></script>
+  <script src="assets/api.js?v=1.53.121026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -227,34 +227,127 @@
       };
     }
 
+    // ---------- รายการผลงานทั้งหมด แบบ C (1.53.121026) — จัดกลุ่มตาม "ประเภทงาน + ปีการศึกษา/ภาคเรียน" ----------
+    // แถวย่อ: ป้ายภาคเรียน/ปี + ชื่อประเภทงาน + กลุ่มบริหารงาน + "ส่ง N คน · M ไฟล์" · ขยาย: ตารางรายชื่อครูที่ส่ง (จำนวนไฟล์ / ส่งล่าสุด)
+    // กด "ดูไฟล์" ที่ชื่อครูเพื่อดูรายการไฟล์ของคนนั้น (ไอคอนตามชนิดไฟล์ + พรีวิว/ดาวน์โหลด — Word/Excel/PowerPoint ดาวน์โหลดอย่างเดียว)
+    var sumExpanded = {}, sumTeacherOpen = {}, _sumGroups = {};
+    function sumGroupKey(s) { return (s.categoryId || ('name:' + (s.categoryName || ''))) + '|' + s.academicYear + '|' + s.semester; }
+    function sumTermTile(g) {
+      var summer = g.semester === 'summer';
+      return '<div class="ordc-date term" aria-hidden="true"><span class="m">ภาคเรียน</span><span class="d' + (summer ? ' long' : '') + '">' + (summer ? 'ฤดูร้อน' : escapeHtml(g.semester)) + '</span><span class="y">' + escapeHtml(g.academicYear) + '</span></div>';
+    }
+    function sumFileIcon(s) {
+      var k = fileKindOf(s.title || s.fileName, s.mimeType), n = String(s.title || s.fileName || '').toLowerCase();
+      var ic = 'fa-file', col = 'var(--text-muted)';
+      if (k === 'pdf') { ic = 'fa-file-pdf'; col = '#dc2626'; }
+      else if (k === 'image') { ic = 'fa-file-image'; col = '#16a34a'; }
+      else if (k === 'video') { ic = 'fa-file-video'; col = '#7c3aed'; }
+      else if (k === 'office') { var l = officeKindLabel(n); ic = l === 'Excel' ? 'fa-file-excel' : l === 'PowerPoint' ? 'fa-file-powerpoint' : 'fa-file-word'; col = l === 'Excel' ? '#15803d' : l === 'PowerPoint' ? '#ea580c' : '#2563eb'; }
+      return '<i class="fa-solid ' + ic + ' sub-file-ic" style="color:' + col + '" aria-hidden="true"></i>';
+    }
+    function buildSumGroups(rows) {
+      var map = {}, order = [];
+      rows.forEach(function (s) {
+        var k = sumGroupKey(s);
+        if (!map[k]) { map[k] = { key: k, categoryId: s.categoryId, categoryName: s.categoryName || '', academicYear: s.academicYear, semester: s.semester, teachers: {}, tOrder: [], files: 0, latest: '' }; order.push(k); }
+        var g = map[k];
+        if (!g.teachers[s.teacherId]) { g.teachers[s.teacherId] = { id: s.teacherId, name: s.teacherName, items: [], latest: '' }; g.tOrder.push(s.teacherId); }
+        var t = g.teachers[s.teacherId];
+        t.items.push(s); g.files++;
+        if (String(s.uploadedAt) > t.latest) t.latest = String(s.uploadedAt);
+        if (String(s.uploadedAt) > g.latest) g.latest = String(s.uploadedAt);
+      });
+      var groups = order.map(function (k) {
+        var g = map[k];
+        g.list = g.tOrder.map(function (id) { var t = g.teachers[id]; t.items.sort(function (x, y) { return String(x.uploadedAt) < String(y.uploadedAt) ? -1 : 1; }); return t; })
+          .sort(function (x, y) { return String(x.name).localeCompare(String(y.name), 'th'); });
+        return g;
+      });
+      groups.sort(function (x, y) {
+        var kx = x.academicYear + '|' + x.semester, ky = y.academicYear + '|' + y.semester;
+        if (kx !== ky) return kx < ky ? 1 : -1;
+        return String(x.categoryName).localeCompare(String(y.categoryName), 'th');
+      });
+      return groups;
+    }
+    function sumFilesHtml(g, t) {
+      return '<tr class="sum-files-row"><td colspan="4"><table class="sub-files sum-files"><tbody>' + t.items.map(function (s, i) {
+        var office = fileKindOf(s.title || s.fileName, s.mimeType) === 'office';
+        return '<tr><td class="n">' + (i + 1) + '</td><td><div class="sub-file-name">' + sumFileIcon(s) + '<span class="sub-file-title">' + escapeHtml(s.title || s.fileName) + '</span></div></td>' +
+          '<td class="dt">' + escapeHtml(formatDateTimeThai(s.uploadedAt)) + '</td>' +
+          '<td class="a">' + (office ? '' : '<button type="button" class="icon-btn" data-sum-preview="' + escapeHtml(s.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i></button>') +
+          '<a class="icon-btn" href="' + escapeHtml(driveDownloadUrl(s.fileUrl) || s.fileUrl) + '" target="_blank" rel="noopener" download title="ดาวน์โหลด" aria-label="ดาวน์โหลด ' + escapeHtml(s.title) + '"><i class="fa-solid fa-download"></i></a></td></tr>';
+      }).join('') + '</tbody></table></td></tr>';
+    }
+    function sumGroupHtml(g) {
+      _sumGroups[g.key] = g;
+      var open = !!sumExpanded[g.key];
+      var dept = g.categoryId ? _catDeptMap[g.categoryId] : '';
+      return '<li class="ordc-item sum-group' + (open ? ' open' : '') + '" data-sum-group="' + escapeHtml(g.key) + '">' +
+        '<div class="ordc-main" data-sum-expand="' + escapeHtml(g.key) + '" role="button" tabindex="0" aria-expanded="' + open + '">' +
+          sumTermTile(g) +
+          '<div class="ordc-body"><div class="ordc-title" title="' + escapeHtml(g.categoryName || 'ไม่ระบุประเภทงาน') + '">' + (g.categoryId ? categoryDotHtml(categoryColorMap[g.categoryId]) : '') + escapeHtml(g.categoryName || 'ไม่ระบุประเภทงาน') + '</div>' +
+            '<div class="ordc-chips">' + (dept ? '<span class="ordc-chip">' + escapeHtml(groupLabel(dept)) + '</span>' : '') +
+              '<span class="ordc-chip cnt"><i class="fa-solid fa-users"></i> ส่ง ' + g.list.length + ' คน · ' + g.files + ' ไฟล์</span></div></div>' +
+          '<i class="fa-solid fa-chevron-down ordc-chev" aria-hidden="true"></i>' +
+        '</div>' +
+        (open ? '<div class="ordc-detail"><table class="sub-files sum-teachers"><thead><tr><th>ชื่อ-สกุล</th><th>จำนวน</th><th>วันที่ส่ง</th><th><span class="sr-only">ไฟล์</span></th></tr></thead><tbody>' +
+          g.list.map(function (t) {
+            var tk = g.key + '|' + t.id, to = !!sumTeacherOpen[tk];
+            return '<tr class="sum-teacher' + (to ? ' open' : '') + '"><td class="sum-name">' + escapeHtml(t.name) + '</td><td><span class="ordc-chip cnt">' + t.items.length + ' ไฟล์</span></td>' +
+              '<td class="dt">ส่งล่าสุด ' + escapeHtml(formatDateTimeThai(t.latest)) + '</td>' +
+              '<td class="a"><button type="button" class="btn btn-ghost btn-sm sum-files-btn" data-sum-teacher="' + escapeHtml(tk) + '" aria-expanded="' + to + '">' + (to ? 'ซ่อนไฟล์' : 'ดูไฟล์') + ' <i class="fa-solid fa-chevron-down"></i></button></td></tr>' +
+              (to ? sumFilesHtml(g, t) : '');
+          }).join('') + '</tbody></table></div>' : '') +
+        '</li>';
+    }
     function renderTable() {
       var f = currentFilters();
       var rows = allSubs.filter(function (s) {
         if (f.year && s.academicYear !== f.year) return false;
         if (f.semester && s.semester !== f.semester) return false;
         if (f.search) {
-          var hay = (s.teacherName + ' ' + s.title).toLowerCase();
+          var hay = (s.teacherName + ' ' + s.title + ' ' + (s.categoryName || '') + ' ' + (s.fileName || '')).toLowerCase();
           if (hay.indexOf(f.search) === -1) return false;
         }
         return true;
       });
       var wrap = document.getElementById('subTableWrap');
       if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ไม่พบรายการที่ตรงกับเงื่อนไข</div>'; return; }
-      var html = '<table><thead><tr><th>ชื่อ-สกุล</th><th>ชื่อผลงาน</th><th>ประเภทงาน</th><th>ปีการศึกษา/ภาคเรียน</th><th>วันเวลาที่ส่ง</th><th></th></tr></thead><tbody>';
-      rows.forEach(function (s) {
-        var semLabel = s.semester === 'summer' ? 'ฤดูร้อน' : 'ภาค ' + s.semester;
-        html += '<tr>' +
-          '<td>' + escapeHtml(s.teacherName) + '</td>' +
-          '<td>' + escapeHtml(s.title) + '</td>' +
-          '<td>' + (s.categoryName ? '<span class="badge badge-admin">' + categoryDotHtml(categoryColorMap[s.categoryId]) + escapeHtml(s.categoryName) + '</span>' + categoryDeptBadgeHtml(s.categoryId) : '-') + '</td>' +
-          '<td>' + escapeHtml(s.academicYear) + ' / ' + semLabel + '</td>' +
-          '<td>' + formatDateTimeThai(s.uploadedAt) + '</td>' +
-          '<td><a class="btn btn-secondary btn-sm" href="' + s.fileUrl + '" target="_blank" rel="noopener">เปิดไฟล์</a></td>' +
-        '</tr>';
-      });
-      html += '</tbody></table>';
-      wrap.innerHTML = html;
+      var groups = buildSumGroups(rows);
+      var people = {}; rows.forEach(function (s) { people[s.teacherId] = 1; });
+      wrap.innerHTML = '<div class="ordc-count hint">' + groups.length + ' ประเภทงาน · ' + rows.length + ' ไฟล์ · ' + Object.keys(people).length + ' คน</div>' +
+        '<ul class="ordc-list sum-list">' + groups.map(sumGroupHtml).join('') + '</ul>';
     }
+    (function bindSumList() {
+      var wrap = document.getElementById('subTableWrap');
+      wrap.addEventListener('click', function (e) {
+        if (e.target.closest('a[download]')) return;
+        var t = e.target.closest('[data-sum-expand],[data-sum-teacher],[data-sum-preview]');
+        if (!t || !wrap.contains(t)) return;
+        if (t.hasAttribute('data-sum-expand')) { var k = t.getAttribute('data-sum-expand'); sumExpanded[k] = !sumExpanded[k]; renderTable(); return; }
+        if (t.hasAttribute('data-sum-teacher')) { var tk = t.getAttribute('data-sum-teacher'); sumTeacherOpen[tk] = !sumTeacherOpen[tk]; renderTable(); return; }
+        var sid = t.getAttribute('data-sum-preview');
+        var s0 = allSubs.filter(function (x) { return x.id === sid; })[0];
+        if (!s0) return;
+        var g = _sumGroups[sumGroupKey(s0)], tch = g && g.teachers[s0.teacherId];
+        var list = (tch ? tch.items : [s0]);
+        var show = function (i) {
+          var s = list[i];
+          openFilePreview(drivePreviewUrl(s.fileUrl), s.teacherName + ' — ' + (s.title || s.fileName), s.fileUrl, undefined,
+            list.length > 1 ? { index: i, total: list.length, go: show } : null, fileKindOf(s.title || s.fileName, s.mimeType));
+        };
+        show(Math.max(0, list.indexOf(s0)));
+      });
+      wrap.addEventListener('keydown', function (e) {
+        var t = e.target.closest && e.target.closest('[data-sum-expand]');
+        if (!t || e.target !== t || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        var k = t.getAttribute('data-sum-expand'); sumExpanded[k] = !sumExpanded[k]; renderTable();
+        var again = wrap.querySelector('[data-sum-expand="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]');
+        if (again) again.focus();
+      });
+    })();
 
     document.getElementById('fSearch').addEventListener('input', renderTable);
     document.getElementById('fYear').addEventListener('change', renderTable);

@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>บันทึกข้อความส่งงาน — BNKAcademicHub</title>
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.52.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.53.121026" />
 <style>
   /* ---------- หน้า "บันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026) ----------
      แบ่งเป็น 2 ส่วนชัดเจน: (1) ส่วนควบคุม/แก้ไขข้อมูล (.no-print) ใช้ .card/.field ปกติของเว็บ เห็นเฉพาะตอนดูบนจอ
@@ -133,10 +133,12 @@
 
   <div id="app-footer" class="no-print"></div>
 
-  <script src="assets/api.js?v=1.52.121026"></script>
+  <script src="assets/api.js?v=1.53.121026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireHubAccess();
+    // 1.53.121026: ปิดฟังก์ชันไว้ (จำไว้ในเครื่อง) -> พากลับหน้าแรกทันทีโดยไม่แสดงหน้านี้
+    if (session && memoOffCached()) { location.replace(homePageFor(session)); session = null; }
     if (session) mountChrome('memo');
     // หน้านี้เปิดให้ทุกบัญชีที่มีหน้าฮับและส่งงานผ่านระบบได้ (ตั้งแต่ 1.25.081026 แก้ตาม): ครู (role='teacher')
     // และเจ้าหน้าที่ฝ่ายวิชาการ (role='admin' + hasHub) เพราะเจ้าหน้าที่ก็เป็นครูที่ต้องส่งงานเหมือนกัน — requireHubAccess()

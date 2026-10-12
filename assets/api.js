@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.52.121026';
+var APP_VERSION = '1.53.121026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -278,6 +278,7 @@ async function getSiteSettings() {
   if (!_settingsPromise) {
     _settingsPromise = apiCall('publicGetSettings', {}).catch(function () {
       return {
+        __fallback: true, // โหลดค่าตั้งค่าไม่สำเร็จ — ห้ามเอาไปทับค่าแบรนด์ที่จำไว้ (ดู applyBranding)
         siteName: 'BNKAcademicHub', iconDataUrl: '', logoDataUrl: '', summerEnabled: true, currentAcademicYear: '', currentSemester: '',
         schoolName: '', schoolDistrict: '', schoolProvince: '',
         memoHeadName: '', memoHeadPosition: '', memoDeputyName: '', memoDeputyPosition: '', memoDirectorName: '', memoDirectorPosition: ''
@@ -288,9 +289,42 @@ async function getSiteSettings() {
   return _settingsCache;
 }
 
+// 1.53.121026: จำค่าแบรนด์ล่าสุด (ชื่อเว็บ/โลโก้/โลโก้แบบยาว/แสดงชื่อในแถบด้านบน) ไว้ในเครื่อง แล้ววาดแถบด้านบนจากค่าที่จำไว้ทันทีตอนเปิดหน้า
+// (ไม่ต้องรอโหลดค่าตั้งค่า — โลโก้/ชื่อเว็บไม่กระพริบเปลี่ยนเวลาเปลี่ยนหน้า) แล้วค่อยอัพเดตตามค่าจริงเมื่อโหลดเสร็จ
+var BRAND_CACHE_KEY = 'bnkah_brand';
+function cachedBrand() { try { return JSON.parse(localStorage.getItem(BRAND_CACHE_KEY) || 'null'); } catch (e) { return null; } }
+function cacheBrand(s) {
+  try { localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ siteName: s.siteName || '', logoDataUrl: s.logoDataUrl || '', logoWideDataUrl: s.logoWideDataUrl || '', topbarShowName: s.topbarShowName !== false })); } catch (e) { /* เต็ม/ไม่มี localStorage — ไม่เป็นไร */ }
+}
+// วาดส่วนแบรนด์ (ไม่ต้องรอ) จาก object ค่าตั้งค่า
+function renderBrand(s) {
+  if (!s) return;
+  document.querySelectorAll('.js-site-name').forEach(function (el) { el.textContent = s.siteName || 'BNKAcademicHub'; });
+  document.querySelectorAll('.js-brand-logo').forEach(function (el) {
+    // โลโก้แบบยาว (settings.logoWideDataUrl, 1.52) แสดงแทนโลโก้เล็ก เฉพาะแถบด้านบนสุด (ปุ่ม .js-home-btn)
+    // ชื่อเว็บในแถบด้านบน แสดง/ซ่อนตามสวิตช์ settings.topbarShowName (1.53 — อัพโลโก้แบบยาวแล้วระบบปิดให้อัตโนมัติ)
+    var homeBtn = el.closest && el.closest('.js-home-btn');
+    if (homeBtn) {
+      homeBtn.classList.toggle('has-wide-logo', !!s.logoWideDataUrl);
+      homeBtn.classList.toggle('hide-site-name', s.topbarShowName === false);
+      homeBtn.setAttribute('aria-label', (s.siteName || 'BNKAcademicHub') + ' — หน้าแรก');
+      if (s.logoWideDataUrl) {
+        var cur = el.querySelector('img.brand-logo-wide');
+        if (!cur || cur.getAttribute('src') !== s.logoWideDataUrl) el.innerHTML = '<img src="' + s.logoWideDataUrl + '" class="brand-logo-wide" alt="' + escapeHtml(s.siteName || 'BNKAcademicHub') + '" />';
+        return;
+      }
+    }
+    if (s.logoDataUrl) {
+      var cur2 = el.querySelector('img.brand-logo');
+      if (!cur2 || cur2.getAttribute('src') !== s.logoDataUrl) el.innerHTML = '<img src="' + s.logoDataUrl + '" class="brand-logo" alt="โลโก้" />';
+    } else {
+      el.innerHTML = '<span class="logo-dot"></span>';
+    }
+  });
+}
 async function applyBranding() {
   var s = await getSiteSettings();
-  document.querySelectorAll('.js-site-name').forEach(function (el) { el.textContent = s.siteName || 'BNKAcademicHub'; });
+  if (!s.__fallback) { cacheBrand(s); renderBrand(s); }
   if (s.siteName && document.title) {
     document.title = document.title.replace(/BNKAcademicHub/, s.siteName);
   }
@@ -299,20 +333,6 @@ async function applyBranding() {
     if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
     link.href = s.iconDataUrl;
   }
-  document.querySelectorAll('.js-brand-logo').forEach(function (el) {
-    // 1.52.121026: โลโก้แบบยาว (settings.logoWideDataUrl) แสดงแทนโลโก้ + ชื่อเว็บ เฉพาะแถบด้านบนสุด (ปุ่ม .js-home-btn)
-    var homeBtn = el.closest && el.closest('.js-home-btn');
-    if (homeBtn) {
-      homeBtn.classList.toggle('has-wide-logo', !!s.logoWideDataUrl);
-      homeBtn.setAttribute('aria-label', (s.siteName || 'BNKAcademicHub') + ' — หน้าแรก');
-      if (s.logoWideDataUrl) { el.innerHTML = '<img src="' + s.logoWideDataUrl + '" class="brand-logo-wide" alt="' + escapeHtml(s.siteName || 'BNKAcademicHub') + '" />'; return; }
-    }
-    if (s.logoDataUrl) {
-      el.innerHTML = '<img src="' + s.logoDataUrl + '" class="brand-logo" alt="โลโก้" />';
-    } else {
-      el.innerHTML = '<span class="logo-dot"></span>';
-    }
-  });
   document.querySelectorAll('.js-brand-logo-lg').forEach(function (el) {
     if (s.logoDataUrl) el.outerHTML = '<img src="' + s.logoDataUrl + '" class="brand-logo-lg" alt="โลโก้" />';
   });
@@ -645,8 +665,13 @@ async function currentAcademicTerm() {
 // องค์ประกอบใดที่ติด class "memo-feature" (ปุ่มในหน้าแรก แท็บข้อมูลกลุ่มบริหารงาน การ์ดข้อมูลพิมพ์บันทึกข้อความ) + เมนู memo.html
 // จะถูกซ่อนเมื่อ settings.memoEnabled === false — เรียกซ้ำได้ทุกครั้งที่ค่าตั้งค่าเปลี่ยน
 function isMemoEnabled(st) { return !(st && st.memoEnabled === false); }
+// 1.53.121026: แก้เมนูกระพริบ — จำสถานะไว้ใน localStorage (bnkah_memo_off) แล้วสคริปต์ใน <head> ของทุกหน้าใส่ class "memo-off"
+// ที่ <html> ก่อนหน้าเว็บแสดงผล (CSS ซ่อนให้ตั้งแต่แรก ไม่ต้องรอโหลดค่าตั้งค่า) — ค่าตั้งค่าจริงที่โหลดมาภายหลังอัพเดต class/ค่าที่จำไว้ให้ตรงเสมอ
+function memoOffCached() { try { return localStorage.getItem('bnkah_memo_off') === '1'; } catch (e) { return false; } }
 function applyMemoFeatureVisibility(st) {
   var off = !isMemoEnabled(st);
+  try { if (off) localStorage.setItem('bnkah_memo_off', '1'); else localStorage.removeItem('bnkah_memo_off'); } catch (e) { /* ไม่มี localStorage — ใช้ class อย่างเดียว */ }
+  document.documentElement.classList.toggle('memo-off', off);
   document.querySelectorAll('.memo-feature, .sidenav a[href="memo.html"]').forEach(function (el) { el.classList.toggle('memo-feature-off', off); });
 }
 
@@ -1160,6 +1185,7 @@ function mountChrome(activePage) {
       '</div>';
 
     document.querySelector('.js-home-btn').addEventListener('click', function () { location.href = homePageFor(session); });
+    renderBrand(cachedBrand()); // 1.53: วาดแบรนด์จากค่าที่จำไว้ทันที (applyBranding อัพเดตตามค่าจริงอีกครั้ง)
     mountSideNav(links, activePage);
     // ซ่อนเมนู "ทำเนียบบุคลากร" ถ้า Super Admin ปิดทำเนียบไว้ (settings.directoryMode = 'off') — ตั้งแต่ 1.32.101026
     getSiteSettings().then(function (st) {

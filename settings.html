@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>ตั้งค่าระบบ — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
      ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.52.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.53.121026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -66,6 +66,7 @@
           <div class="wide-logo-preview" id="logoWidePreviewBar" aria-label="ตัวอย่างแถบด้านบน">
             <span class="wlp-menu"><i class="fa-solid fa-bars"></i></span>
             <div class="wlp-logo" id="logoWidePreview">—</div>
+            <span class="wlp-name js-site-name-preview" id="logoWidePreviewName">BNKAcademicHub</span>
             <span class="wlp-space"></span>
             <span class="wlp-user"><i class="fa-solid fa-circle-user"></i></span>
           </div>
@@ -78,7 +79,12 @@
             </div>
             <div class="asset-picker-name hint" id="logoWideFileName">ยังไม่ได้เลือกไฟล์</div>
           </div>
-          <div class="hint"><b>ขนาดแนะนำ 720 × 144 px</b> (อัตราส่วน 5:1) ไฟล์ PNG พื้นหลังโปร่งใส — แสดงจริงสูง 36 px (ยาวได้ไม่เกิน 260 px บนคอม / 150 px บนมือถือ) ใช้รูปขนาด 2–4 เท่าเพื่อความคมชัดบนจอความละเอียดสูง · ควรใช้ตัวอักษรสีเข้มที่อ่านได้ทั้งพื้นสว่างและพื้นมืด (โหมดกลางคืน) · เมื่อมีโลโก้แบบยาว ระบบจะซ่อนชื่อเว็บไซต์ในแถบด้านบน (ชื่อเว็บยังใช้ในชื่อแท็บและหน้าอื่นตามเดิม)</div>
+          <div class="hint"><b>ขนาดแนะนำ 960 × 160 px</b> (อัตราส่วน 6:1) ไฟล์ PNG พื้นหลังโปร่งใส — แสดงจริงสูง 40 px ยาวสุด 240 px (มือถือ 32 px / 170 px) · <b>อัพรูปขนาดไหนก็ได้</b>: ถ้าอัตราส่วนตรง 6:1 ระบบย่อให้เอง ถ้าไม่ตรงจะเปิดหน้าครอปให้เลื่อน/ซูมจัดตำแหน่งในกรอบ · ควรใช้สีที่อ่านได้ทั้งพื้นสว่างและพื้นมืด (โหมดกลางคืน) · อัพโลโก้แบบยาวแล้วระบบปิดการแสดงชื่อเว็บในแถบด้านบนให้อัตโนมัติ (เปิดกลับได้ที่สวิตช์ด้านล่าง)</div>
+          <label class="toggle-row switch-row" style="margin-top:12px;">
+            <input type="checkbox" class="switch" role="switch" id="setTopbarShowName" />
+            <span>แสดงชื่อเว็บไซต์ในแถบด้านบนสุด</span>
+            <span class="switch-state" aria-hidden="true"></span>
+          </label>
         </div>
       </div>
 
@@ -846,6 +852,31 @@
     </div>
   </div>
 
+  <!-- ครอป/ปรับขนาดโลโก้แบบยาว (1.53.121026) — กรอบ 6:1 ผลลัพธ์ PNG 960×160 พื้นหลังโปร่งใส -->
+  <div class="modal-backdrop" id="logoCropModal" hidden>
+    <div class="modal-box modal-box-wide crop-box">
+      <button type="button" class="modal-close-x" id="logoCropCloseX" aria-label="ปิด">✕</button>
+      <div class="export-head">
+        <div class="export-head-ic"><i class="fa-solid fa-crop-simple" aria-hidden="true"></i></div>
+        <div><h3>จัดโลโก้ให้พอดีกรอบ</h3><p class="hint" id="logoCropInfo">รูปไม่ใช่อัตราส่วน 6:1 — ลากรูปเพื่อเลื่อนตำแหน่ง ใช้แถบซูมปรับขนาด ส่วนที่อยู่นอกกรอบจะถูกตัดออก</p></div>
+      </div>
+      <div class="crop-stage" id="logoCropStage"><canvas id="logoCropCanvas"></canvas></div>
+      <div class="crop-controls">
+        <i class="fa-solid fa-magnifying-glass-minus" aria-hidden="true"></i>
+        <input type="range" id="logoCropZoom" min="0" max="1000" value="0" aria-label="ซูม" />
+        <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
+      </div>
+      <div class="crop-quick">
+        <button type="button" class="btn btn-ghost btn-sm" id="logoCropFit"><i class="fa-solid fa-expand"></i> พอดีกรอบ (ไม่ตัด)</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="logoCropFill"><i class="fa-solid fa-maximize"></i> เต็มกรอบ</button>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="logoCropOk"><i class="fa-solid fa-check"></i> ใช้รูปนี้</button>
+        <button type="button" class="btn btn-ghost" id="logoCropCancel">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Add/edit external link modal (เว็บไซต์โรงเรียน — ตั้งแต่ V11.9 · 1.52.121026 ออกแบบใหม่: ฟอร์มซ้าย + ตัวอย่างปุ่มจริงด้านขวา) -->
   <div class="modal-backdrop" id="extLinkModal" hidden>
     <div class="modal-box modal-box-wide extlink-box">
@@ -1003,7 +1034,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.52.121026"></script>
+  <script src="assets/api.js?v=1.53.121026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1157,6 +1188,9 @@
       renderAssetPreview('logoPreview', s.logoDataUrl);
       renderAssetPreview('logoWidePreview', s.logoWideDataUrl);
       document.getElementById('logoWideRemoveBtn').hidden = !s.logoWideDataUrl;
+      document.getElementById('setTopbarShowName').checked = s.topbarShowName !== false;
+      document.getElementById('logoWidePreviewName').hidden = s.topbarShowName === false;
+      document.getElementById('logoWidePreviewName').textContent = s.siteName || 'BNKAcademicHub';
     }
     // ระยะเวลาเก็บคำสั่ง (1.43.111026) — การ์ดอยู่ในแท็บ "ทั่วไป" ที่ถูกลบออกจาก DOM สำหรับผู้ที่ไม่ใช่ Super Admin จึงต้องกัน null
     (function () {
@@ -1683,14 +1717,14 @@
         var maxSize = type === 'icon' ? 128 : type === 'logoWide' ? 900 : 480; // ไอคอนย่อเล็กกว่าโลโก้ เพราะแสดงเป็นจุดกลมเล็กๆ · โลโก้แบบยาวด้านยาวสุด 900 px
         var r = await withProgress('กำลังอัพโหลด' + label, async function (p) {
           p.setLabel('กำลังปรับขนาดรูป...');
-          var resized = await resizeImageToBase64(file, maxSize);
+          var resized = (type === 'logoWide' && logoWidePending) ? logoWidePending : await resizeImageToBase64(file, maxSize);
           p.setLabel('กำลังอัพโหลดขึ้นเซิร์ฟเวอร์...');
           return apiCall('adminUpdateSiteAsset', { type: type, fileBase64: resized.base64, mimeType: resized.mimeType });
         }, { successLabel: 'อัพโหลดสำเร็จ (ปรับขนาดรูปให้อัตโนมัติแล้ว)' });
         if (r.ok) {
           _settingsCache = r.data;
           renderAssetPreview(previewId, type === 'icon' ? r.data.iconDataUrl : type === 'logoWide' ? r.data.logoWideDataUrl : r.data.logoDataUrl);
-          if (type === 'logoWide') document.getElementById('logoWideRemoveBtn').hidden = false;
+          if (type === 'logoWide') { document.getElementById('logoWideRemoveBtn').hidden = false; logoWidePending = null; document.getElementById('setTopbarShowName').checked = r.data.topbarShowName !== false; syncWidePreviewName(); }
           applyBranding();
           document.getElementById(fileInputId).value = '';
           document.getElementById(type + 'UploadBtn').disabled = true;
@@ -1741,7 +1775,7 @@
         }
       });
       // ปุ่มเลือกรูป (1.45.111026): เลือกแล้วแสดงตัวอย่างในกรอบทันที + เปิดปุ่มอัพโหลด
-      ['icon', 'logo', 'logoWide'].forEach(function (k) {
+      ['icon', 'logo'].forEach(function (k) {
         var inp = document.getElementById(k + 'File');
         document.getElementById(k + 'PickBtn').addEventListener('click', function () { inp.click(); });
         inp.addEventListener('change', function () {
@@ -1754,11 +1788,126 @@
       document.getElementById('iconUploadBtn').addEventListener('click', function () { uploadAsset('icon', 'iconFile', 'iconError', 'iconPreview'); });
       document.getElementById('logoUploadBtn').addEventListener('click', function () { uploadAsset('logo', 'logoFile', 'logoError', 'logoPreview'); });
       document.getElementById('logoWideUploadBtn').addEventListener('click', function () { uploadAsset('logoWide', 'logoWideFile', 'logoWideError', 'logoWidePreview'); });
+      // ---------- โลโก้แบบยาว: ย่อ/ครอปอัตโนมัติ (1.53.121026) ----------
+      // อัตราส่วนตรง 6:1 (±4%) -> ย่อเป็น 960×160 ให้เลย · ไม่ตรง -> เปิดหน้าครอป (ลากเลื่อน + ซูม) ผลลัพธ์ PNG 960×160 พื้นหลังโปร่งใส
+      var WIDE_W = 960, WIDE_H = 160;
+      var logoWidePending = null; // { base64, mimeType } ที่ครอป/ย่อแล้ว รอกดอัพโหลด
+      var crop = { img: null, scale: 1, ox: 0, oy: 0, min: 1, max: 4, name: '' };
+      function renderWideCanvas(c, w, h) {
+        var ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, w, h);
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(crop.img, crop.ox * w / WIDE_W, crop.oy * h / WIDE_H, crop.img.naturalWidth * crop.scale * w / WIDE_W, crop.img.naturalHeight * crop.scale * h / WIDE_H);
+      }
+      function drawCrop() {
+        var stage = document.getElementById('logoCropStage'), c = document.getElementById('logoCropCanvas');
+        var w = stage.clientWidth || 600, h = Math.round(w * WIDE_H / WIDE_W), dpr = window.devicePixelRatio || 1;
+        c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); c.style.width = w + 'px'; c.style.height = h + 'px';
+        renderWideCanvas(c, c.width, c.height);
+      }
+      function setCropScale(sc, keepCenter) {
+        var cx = WIDE_W / 2, cy = WIDE_H / 2;
+        var ix = (cx - crop.ox) / crop.scale, iy = (cy - crop.oy) / crop.scale; // จุดของรูปที่อยู่กลางกรอบ
+        crop.scale = Math.max(crop.min, Math.min(crop.max, sc));
+        if (keepCenter) { crop.ox = cx - ix * crop.scale; crop.oy = cy - iy * crop.scale; }
+        else { crop.ox = (WIDE_W - crop.img.naturalWidth * crop.scale) / 2; crop.oy = (WIDE_H - crop.img.naturalHeight * crop.scale) / 2; }
+        document.getElementById('logoCropZoom').value = Math.round(1000 * Math.log(crop.scale / crop.min) / Math.log(crop.max / crop.min));
+        drawCrop();
+      }
+      function exportWide() {
+        var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
+        renderWideCanvas(c, WIDE_W, WIDE_H);
+        // ตัดขอบซ้าย/ขวาที่โปร่งใสทั้งคอลัมน์ออก (เช่นโหมด "พอดีกรอบ") — โลโก้ชิดชื่อเว็บพอดี ไม่มีช่องว่างแปลกๆ ในแถบด้านบน
+        var data = c.getContext('2d').getImageData(0, 0, WIDE_W, WIDE_H).data, minX = WIDE_W, maxX = -1;
+        for (var x = 0; x < WIDE_W; x++) {
+          for (var y = 0; y < WIDE_H; y++) { if (data[(y * WIDE_W + x) * 4 + 3] > 8) { if (x < minX) minX = x; maxX = x; break; } }
+        }
+        if (maxX >= minX && (minX > 0 || maxX < WIDE_W - 1)) {
+          var t = document.createElement('canvas'); t.width = maxX - minX + 1; t.height = WIDE_H;
+          t.getContext('2d').drawImage(c, minX, 0, t.width, WIDE_H, 0, 0, t.width, WIDE_H);
+          c = t;
+        }
+        var url = c.toDataURL('image/png');
+        if (url.length > 380000) url = c.toDataURL('image/webp', 0.92); // PNG ใหญ่เกิน (รูปถ่าย) -> WebP (ยังโปร่งใสได้)
+        return { base64: url.split(',')[1], mimeType: url.slice(5, url.indexOf(';')) };
+      }
+      function useWide(res, name) {
+        logoWidePending = res;
+        renderAssetPreview('logoWidePreview', 'data:' + res.mimeType + ';base64,' + res.base64);
+        document.getElementById('logoWideUploadBtn').disabled = false;
+        document.getElementById('logoWideFileName').textContent = name + ' — ปรับเป็น ' + WIDE_W + '×' + WIDE_H + ' px แล้ว กด "อัพโหลด" เพื่อใช้รูปนี้';
+      }
+      document.getElementById('logoWidePickBtn').addEventListener('click', function () { document.getElementById('logoWideFile').click(); });
+      document.getElementById('logoWideFile').addEventListener('change', function () {
+        var f = this.files && this.files[0];
+        if (!f) return;
+        if (!/^image\//.test(f.type)) { showToast('กรุณาเลือกไฟล์รูปภาพ', true); return; }
+        var rd = new FileReader();
+        rd.onload = function () {
+          var img = new Image();
+          img.onload = function () {
+            var w = img.naturalWidth || 960, h = img.naturalHeight || 160;
+            crop.img = img; crop.name = f.name;
+            crop.min = Math.min(WIDE_W / w, WIDE_H / h); // พอดีกรอบ (เห็นทั้งรูป)
+            var fill = Math.max(WIDE_W / w, WIDE_H / h);
+            crop.max = Math.max(fill * 4, crop.min * 4);
+            var ratio = (w / h) / (WIDE_W / WIDE_H);
+            if (ratio > 0.96 && ratio < 1.04) { // อัตราส่วนตรง -> ย่อ/ขยายให้พอดีเลย ไม่ต้องครอป
+              crop.scale = fill; crop.ox = (WIDE_W - w * fill) / 2; crop.oy = (WIDE_H - h * fill) / 2;
+              useWide(exportWide(), f.name);
+              return;
+            }
+            document.getElementById('logoCropInfo').textContent = 'รูปขนาด ' + w + '×' + h + ' px (ไม่ใช่ 6:1) — ลากรูปเพื่อเลื่อนตำแหน่ง ใช้แถบซูมปรับขนาด ส่วนที่อยู่นอกกรอบจะถูกตัดออก (พื้นที่ว่างจะโปร่งใส)';
+            showModalEl(document.getElementById('logoCropModal'));
+            requestAnimationFrame(function () { setCropScale(fill, false); });
+          };
+          img.onerror = function () { showToast('เปิดรูปนี้ไม่ได้ กรุณาใช้ไฟล์ PNG/JPG/WebP', true); };
+          img.src = rd.result;
+        };
+        rd.readAsDataURL(f);
+      });
+      document.getElementById('logoCropZoom').addEventListener('input', function () {
+        var t = Number(this.value) / 1000;
+        setCropScale(crop.min * Math.pow(crop.max / crop.min, t), true);
+      });
+      document.getElementById('logoCropFit').addEventListener('click', function () { setCropScale(crop.min, false); });
+      document.getElementById('logoCropFill').addEventListener('click', function () { setCropScale(Math.max(WIDE_W / crop.img.naturalWidth, WIDE_H / crop.img.naturalHeight), false); });
+      (function () {
+        var stage = document.getElementById('logoCropStage'), drag = null;
+        stage.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, ox: crop.ox, oy: crop.oy }; stage.setPointerCapture(e.pointerId); stage.classList.add('dragging'); });
+        stage.addEventListener('pointermove', function (e) {
+          if (!drag) return;
+          var k = WIDE_W / stage.clientWidth;
+          crop.ox = drag.ox + (e.clientX - drag.x) * k; crop.oy = drag.oy + (e.clientY - drag.y) * k;
+          drawCrop();
+        });
+        var end = function () { drag = null; stage.classList.remove('dragging'); };
+        stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
+        stage.addEventListener('wheel', function (e) { e.preventDefault(); setCropScale(crop.scale * (e.deltaY < 0 ? 1.08 : 1 / 1.08), true); }, { passive: false });
+      })();
+      var closeCrop = function () { hideModalEl(document.getElementById('logoCropModal')); document.getElementById('logoWideFile').value = ''; };
+      document.getElementById('logoCropOk').addEventListener('click', function () { useWide(exportWide(), crop.name); hideModalEl(document.getElementById('logoCropModal')); });
+      document.getElementById('logoCropCancel').addEventListener('click', closeCrop);
+      document.getElementById('logoCropCloseX').addEventListener('click', closeCrop);
+      // ---------- สวิตช์แสดงชื่อเว็บในแถบด้านบน (1.53.121026) ----------
+      function syncWidePreviewName() {
+        document.getElementById('logoWidePreviewName').hidden = !document.getElementById('setTopbarShowName').checked;
+        document.getElementById('logoWidePreviewName').textContent = document.getElementById('setSiteName').value || 'BNKAcademicHub';
+      }
+      document.getElementById('setTopbarShowName').addEventListener('change', async function () {
+        var cb = this, nextVal = cb.checked;
+        var ok = await askConfirm(nextVal ? 'แสดงชื่อเว็บไซต์ในแถบด้านบนสุดของทุกหน้า?' : 'ซ่อนชื่อเว็บไซต์ในแถบด้านบนสุดของทุกหน้า? (แสดงเฉพาะโลโก้)', 'ยืนยันการเปลี่ยนแปลง');
+        if (!ok) { cb.checked = !nextVal; return; }
+        var r = await withProgress('กำลังบันทึกการตั้งค่า', function () { return apiCall('adminUpdateSettings', { topbarShowName: nextVal }); }, { successLabel: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' });
+        if (r.ok) { resetSettingsCache(); applyBranding(); } else { cb.checked = !nextVal; showToast(r.error.message, true); }
+        syncWidePreviewName();
+      });
+      document.getElementById('setSiteName').addEventListener('input', syncWidePreviewName);
       document.getElementById('logoWideRemoveBtn').addEventListener('click', async function () {
         var ok = await askConfirm('เอาโลโก้แบบยาวออก? แถบด้านบนจะกลับไปแสดงโลโก้ + ชื่อเว็บไซต์ตามเดิม', 'ยืนยัน');
         if (!ok) return;
         var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSiteAsset', { type: 'logoWide', remove: true }); }, { successLabel: 'เอาโลโก้แบบยาวออกแล้ว' });
-        if (r.ok) { _settingsCache = r.data; renderAssetPreview('logoWidePreview', ''); document.getElementById('logoWideRemoveBtn').hidden = true; applyBranding(); }
+        if (r.ok) { _settingsCache = r.data; renderAssetPreview('logoWidePreview', ''); document.getElementById('logoWideRemoveBtn').hidden = true; document.getElementById('setTopbarShowName').checked = r.data.topbarShowName !== false; syncWidePreviewName(); applyBranding(); }
       });
 
       // ---------- ประเภทงาน (เฉพาะ Super Admin) — ตั้งแต่ V-ถัดไปหลัง V10.1 เพิ่มเป็นป็อปอัพ + เลือกข้อมูลที่ต้องกรอกได้ ----------

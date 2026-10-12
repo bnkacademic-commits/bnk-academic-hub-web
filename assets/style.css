@@ -1711,15 +1711,17 @@ table.ord-files { margin-top: 12px; }
 
 /* ---------- 1.52.121026 ---------- */
 /* โลโก้แบบยาวในแถบด้านบน (แทนโลโก้ + ชื่อเว็บ) */
-.topbar .brand img.brand-logo-wide { height: 36px; width: auto; max-width: 260px; object-fit: contain; display: block; }
-.topbar .brand.has-wide-logo .js-site-name { display: none; }
-@media (max-width: 640px) { .topbar .brand img.brand-logo-wide { height: 30px; max-width: 150px; } }
+/* 1.53: สูง 40 px ยาวสุด 240 px (อัตราส่วน 6:1 — ไฟล์มาตรฐาน 960×160 ที่ระบบครอป/ย่อให้) · มือถือ 32 px / 170 px · ชื่อเว็บแสดงตามสวิตช์ (.hide-site-name) */
+.topbar .brand img.brand-logo-wide { height: 40px; width: auto; max-width: 240px; object-fit: contain; display: block; }
+.topbar .brand.hide-site-name .js-site-name { display: none; }
+@media (max-width: 640px) { .topbar .brand img.brand-logo-wide { height: 32px; max-width: 170px; } .topbar .brand.has-wide-logo:not(.hide-site-name) .js-site-name { display: none; } }
 .wide-logo-block { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--border); }
 .wide-logo-preview { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 14px; margin: 4px 0 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); max-width: 520px; }
 .wide-logo-preview .wlp-menu, .wide-logo-preview .wlp-user { color: var(--text-muted); font-size: 1.1rem; }
 .wide-logo-preview .wlp-space { flex: 1; }
-.wide-logo-preview .wlp-logo { height: 36px; display: flex; align-items: center; color: var(--text-muted); font-size: 0.85rem; }
-.wide-logo-preview .wlp-logo img { height: 36px; width: auto; max-width: 260px; object-fit: contain; }
+.wide-logo-preview .wlp-logo { height: 40px; display: flex; align-items: center; color: var(--text-muted); font-size: 0.85rem; }
+.wide-logo-preview .wlp-logo img { height: 40px; width: auto; max-width: 240px; object-fit: contain; }
+.wide-logo-preview .wlp-name { font-weight: 800; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 /* ป็อปอัพส่งออกรายงาน (หน้าสรุปรวม) */
 .export-box { max-width: 560px; text-align: left; }
 .export-head { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; padding-right: 30px; }
@@ -1776,3 +1778,42 @@ table.ord-files { margin-top: 12px; }
 @media (max-width: 720px) { .extlink-grid { grid-template-columns: minmax(0, 1fr); } }
 .log-filter input[type="search"] { flex-basis: 100%; }
 .export-summary dt i { margin-right: 4px; }
+
+/* ---------- 1.53.121026 ---------- */
+/* ปิด "จัดทำบันทึกข้อความ" — ซ่อนตั้งแต่ก่อนหน้าเว็บแสดงผล (class memo-off ใส่โดยสคริปต์ใน <head>) ไม่กระพริบ */
+html.memo-off .memo-feature, html.memo-off .sidenav a[href="memo.html"] { display: none !important; }
+/* สรุปรวมการส่งงาน → รายการผลงานทั้งหมด แบบ C (จัดกลุ่มตามประเภทงาน + เทอม) */
+table.sum-teachers td.sum-name { font-weight: 700; }
+table.sum-teachers tr.sum-teacher.open td { background: color-mix(in srgb, var(--primary-light) 45%, transparent); }
+table.sum-teachers .sum-files-btn { width: auto; white-space: nowrap; }
+table.sum-teachers .sum-files-btn i { transition: transform 0.2s ease; }
+table.sum-teachers tr.sum-teacher.open .sum-files-btn i { transform: rotate(180deg); }
+table.sum-teachers tr.sum-files-row > td { padding: 4px 10px 10px 18px; border-top: 0; background: color-mix(in srgb, var(--primary-light) 25%, transparent); }
+table.sum-files { margin-top: 0; }
+table.sum-files td.a { width: 1%; }
+@media (max-width: 640px) {
+  table.sum-teachers tr.sum-teacher { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name a" "cnt dt"; }
+  table.sum-teachers tr.sum-teacher td:nth-child(1) { grid-area: name; }
+  table.sum-teachers tr.sum-teacher td:nth-child(2) { grid-area: cnt; }
+  table.sum-teachers tr.sum-teacher td.dt { grid-area: dt; padding-left: 4px; text-align: right; }
+  table.sum-teachers tr.sum-teacher td.a { grid-area: a; }
+  table.sum-teachers tr.sum-files-row { display: block; padding: 0; }
+  table.sum-teachers tr.sum-files-row > td { display: block; padding: 4px 0 8px; }
+}
+@media (max-width: 640px) {
+  table.sum-teachers tr.sum-teacher { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "name name a" "cnt dt dt"; align-items: center; row-gap: 4px; }
+  table.sum-teachers tr.sum-teacher td.dt { min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; padding-left: 8px; font-size: 0.76rem; }
+  table.sum-teachers tr.sum-teacher td.sum-name { word-break: break-word; }
+}
+/* ครอปโลโก้แบบยาว (6:1) */
+.crop-box { max-width: 680px; text-align: left; }
+.crop-stage { width: 100%; aspect-ratio: 6 / 1; border-radius: 10px; overflow: hidden; cursor: grab; touch-action: none; user-select: none;
+  outline: 2px solid var(--primary); outline-offset: 2px; margin: 6px 0 14px;
+  background-color: #fff; background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+  background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0; }
+.crop-stage.dragging { cursor: grabbing; }
+.crop-stage canvas { display: block; }
+.crop-controls { display: flex; align-items: center; gap: 10px; color: var(--text-muted); }
+.crop-controls input[type="range"] { flex: 1; accent-color: var(--primary); }
+.crop-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.crop-quick .btn { width: auto; }
