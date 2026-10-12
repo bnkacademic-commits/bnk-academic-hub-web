@@ -1695,3 +1695,16 @@ table.sub-files td.a { white-space: nowrap; text-align: right; width: 1%; }
 .file-preview-dlpanel p { color: var(--text-muted); max-width: 460px; margin: 0; font-size: 0.9rem; }
 .file-preview-dlpanel .btn { width: auto; margin-top: 6px; }
 a.icon-btn { text-decoration: none; }
+
+/* ---------- 1.51.121026: คลังคำสั่งหลายไฟล์ ---------- */
+.ordc-btns a.btn { text-decoration: none; }
+table.ord-files { margin-top: 12px; }
+.ord-file-bar:empty { display: none; }
+.ord-file-bar + .ordc-acts { margin-top: 10px; }
+@media (max-width: 640px) {
+  table.ord-files tr { grid-template-columns: 22px minmax(0, 1fr) auto; grid-template-areas: "n name a"; }
+  .ordc-btns.orders-actions { flex-wrap: wrap; }
+}
+@media (max-width: 640px) {
+  .ordc-main .ordc-btns.orders-actions { flex: 1 1 0; min-width: 0; flex-wrap: wrap; }
+}

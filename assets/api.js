@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.50.121026';
+var APP_VERSION = '1.51.121026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1249,13 +1249,15 @@ function mountFooter() {
 // ปิดได้ 3 ทาง: กดพื้นที่ว่างรอบไฟล์ · ปุ่ม ✕ · ปุ่ม Esc — ปุ่ม "เปิดไฟล์" (แท็บใหม่) ยังมีแยกต่างหากเหมือนเดิม
 // drivePreviewUrl: แปลงลิงก์ไฟล์ Google Drive (…/file/d/<id>/view…) เป็นลิงก์ preview ที่ฝังใน iframe ได้ — ลิงก์แบบอื่นคืนค่าเดิม
 function drivePreviewUrl(url) {
-  var m = /\/file\/d\/([A-Za-z0-9_-]+)/.exec(String(url || '')) || /[?&]id=([A-Za-z0-9_-]+)/.exec(String(url || ''));
-  return m ? 'https://drive.google.com/file/d/' + m[1] + '/preview' : String(url || '');
+  var id = driveFileId(url);
+  return id ? 'https://drive.google.com/file/d/' + id + '/preview' : String(url || '');
 }
 // ลิงก์ดาวน์โหลดไฟล์ Google Drive โดยตรง (1.47.121026 — ปุ่ม "ดาวน์โหลด" ในป็อปอัพพรีวิว) — ลิงก์แบบอื่นคืนค่าว่าง
+// 1.51.121026: แก้บั๊ก — ไฟล์ Word/Excel/PowerPoint ที่ Drive คืนลิงก์เป็น docs.google.com/document|spreadsheets|presentation/d/<id>/edit
+// (ไม่ใช่ /file/d/) เดิมหา id ไม่เจอ ได้ลิงก์ว่าง กดแล้ววนกลับหน้าเดิม (dashboard.html) — ไม่ใช่เรื่องสิทธิ์ของ Google Drive
 function driveDownloadUrl(url) {
-  var m = /\/file\/d\/([A-Za-z0-9_-]+)/.exec(String(url || '')) || /[?&]id=([A-Za-z0-9_-]+)/.exec(String(url || ''));
-  return m ? 'https://drive.google.com/uc?export=download&id=' + m[1] : '';
+  var id = driveFileId(url);
+  return id ? 'https://drive.google.com/uc?export=download&id=' + id : '';
 }
 // ---------- ชนิดไฟล์สำหรับพรีวิว (1.50.121026) ----------
 // 'pdf' / 'video' = ตัวแสดงตัวอย่างของ Google Drive (iframe) · 'image' = แสดงรูปตรงจาก Drive (<img>) เพราะตัวพรีวิวของ Drive
@@ -1271,7 +1273,10 @@ function fileKindOf(name, mime) {
   return m || n ? 'other' : 'pdf';
 }
 function driveFileId(url) {
-  var m = /\/file\/d\/([A-Za-z0-9_-]+)/.exec(String(url || '')) || /[?&]id=([A-Za-z0-9_-]+)/.exec(String(url || '')) || /googleusercontent\.com\/d\/([A-Za-z0-9_-]+)/.exec(String(url || ''));
+  var u = String(url || '');
+  var m = /\/(?:file|document|spreadsheets|presentation|drawings|forms)\/(?:u\/\d+\/)?d\/([A-Za-z0-9_-]{10,})/.exec(u) ||
+    /googleusercontent\.com\/d\/([A-Za-z0-9_-]{10,})/.exec(u) || /[?&]id=([A-Za-z0-9_-]{10,})/.exec(u) ||
+    /drive\.google\.com\/.*\/d\/([A-Za-z0-9_-]{10,})/.exec(u);
   return m ? m[1] : '';
 }
 // ชื่อชนิดไฟล์สำหรับข้อความในป็อปอัพดาวน์โหลด
