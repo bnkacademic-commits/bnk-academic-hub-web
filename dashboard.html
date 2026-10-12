@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.51.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.52.121026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -177,7 +177,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.51.121026"></script>
+  <script src="assets/api.js?v=1.52.121026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -247,14 +247,9 @@
         var rows = await apiCall('hubListExternalLinks', {});
         if (rows.length === 0) { card.hidden = true; return; }
         card.hidden = false;
-        grid.innerHTML = rows.map(function (l) {
-          if (l.imageDataUrl) {
-            return '<a class="ext-link-btn ext-link-btn-image" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(l.name) + '">' +
-              '<img src="' + l.imageDataUrl + '" alt="' + escapeHtml(l.name) + '" /></a>';
-          }
-          return '<a class="ext-link-btn" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" style="background:' + (l.color || '#3457d5') + ';">' +
-            '<span>' + escapeHtml(l.name) + '</span></a>';
-        }).join('');
+        // 1.52.121026: ใช้ตัวสร้างปุ่มร่วม (api.js) — รูปจัตุรัสแสดงเป็นไอคอนขอบมน + ชื่อปุ่ม
+        grid.innerHTML = rows.map(function (l) { return extLinkButtonHtml(l); }).join('');
+        enhanceExtLinkImages(grid);
       } catch (err) {
         card.hidden = false;
         grid.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';

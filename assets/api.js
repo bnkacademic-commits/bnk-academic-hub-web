@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.51.121026';
+var APP_VERSION = '1.52.121026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -300,6 +300,13 @@ async function applyBranding() {
     link.href = s.iconDataUrl;
   }
   document.querySelectorAll('.js-brand-logo').forEach(function (el) {
+    // 1.52.121026: โลโก้แบบยาว (settings.logoWideDataUrl) แสดงแทนโลโก้ + ชื่อเว็บ เฉพาะแถบด้านบนสุด (ปุ่ม .js-home-btn)
+    var homeBtn = el.closest && el.closest('.js-home-btn');
+    if (homeBtn) {
+      homeBtn.classList.toggle('has-wide-logo', !!s.logoWideDataUrl);
+      homeBtn.setAttribute('aria-label', (s.siteName || 'BNKAcademicHub') + ' — หน้าแรก');
+      if (s.logoWideDataUrl) { el.innerHTML = '<img src="' + s.logoWideDataUrl + '" class="brand-logo-wide" alt="' + escapeHtml(s.siteName || 'BNKAcademicHub') + '" />'; return; }
+    }
     if (s.logoDataUrl) {
       el.innerHTML = '<img src="' + s.logoDataUrl + '" class="brand-logo" alt="โลโก้" />';
     } else {
@@ -1259,6 +1266,28 @@ function driveDownloadUrl(url) {
   var id = driveFileId(url);
   return id ? 'https://drive.google.com/uc?export=download&id=' + id : '';
 }
+// ---------- ปุ่มลิงก์เว็บไซต์โรงเรียน (1.52.121026: ใช้ร่วมกันระหว่างหน้าแรกและตัวอย่างในหน้าตั้งค่า) ----------
+// รูปแนวนอน (แนะนำ 320×120, 8:3) = เต็มปุ่ม 160×60 เหมือนเดิม · รูปเกือบจัตุรัส (กว้าง/สูง < 1.6) = ไอคอนตัดขอบมนอัตโนมัติ + ชื่อปุ่มข้างๆ
+function extLinkButtonHtml(l, opts) {
+  opts = opts || {};
+  var href = opts.preview ? '#' : escapeHtml(l.url || '#');
+  var attrs = opts.preview ? ' tabindex="-1" aria-hidden="true"' : ' target="_blank" rel="noopener noreferrer"';
+  if (l.imageDataUrl) {
+    return '<a class="ext-link-btn ext-link-btn-image" href="' + href + '"' + attrs + ' title="' + escapeHtml(l.name || '') + '">' +
+      '<img src="' + l.imageDataUrl + '" alt="' + escapeHtml(l.name || '') + '" /><span class="ext-link-label">' + escapeHtml(l.name || '') + '</span></a>';
+  }
+  return '<a class="ext-link-btn" href="' + href + '"' + attrs + ' style="background:' + escapeHtml(l.color || '#3457d5') + ';"><span>' + escapeHtml(l.name || 'ชื่อปุ่ม') + '</span></a>';
+}
+function enhanceExtLinkImages(root) {
+  (root || document).querySelectorAll('.ext-link-btn-image img').forEach(function (img) {
+    function apply() {
+      if (!img.naturalWidth || !img.naturalHeight) return;
+      img.parentNode.classList.toggle('is-square', img.naturalWidth / img.naturalHeight < 1.6);
+    }
+    if (img.complete) apply(); else img.addEventListener('load', apply, { once: true });
+  });
+}
+
 // ---------- ชนิดไฟล์สำหรับพรีวิว (1.50.121026) ----------
 // 'pdf' / 'video' = ตัวแสดงตัวอย่างของ Google Drive (iframe) · 'image' = แสดงรูปตรงจาก Drive (<img>) เพราะตัวพรีวิวของ Drive
 // มักขึ้น "แสดงตัวอย่างไม่ได้" กับรูป (โดยเฉพาะไฟล์ที่ส่งมาโดยไม่มี mimeType) · 'office' = Word/Excel/PowerPoint ไม่พรีวิว

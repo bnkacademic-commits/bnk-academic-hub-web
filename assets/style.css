@@ -1708,3 +1708,71 @@ table.ord-files { margin-top: 12px; }
 @media (max-width: 640px) {
   .ordc-main .ordc-btns.orders-actions { flex: 1 1 0; min-width: 0; flex-wrap: wrap; }
 }
+
+/* ---------- 1.52.121026 ---------- */
+/* โลโก้แบบยาวในแถบด้านบน (แทนโลโก้ + ชื่อเว็บ) */
+.topbar .brand img.brand-logo-wide { height: 36px; width: auto; max-width: 260px; object-fit: contain; display: block; }
+.topbar .brand.has-wide-logo .js-site-name { display: none; }
+@media (max-width: 640px) { .topbar .brand img.brand-logo-wide { height: 30px; max-width: 150px; } }
+.wide-logo-block { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--border); }
+.wide-logo-preview { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 14px; margin: 4px 0 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); max-width: 520px; }
+.wide-logo-preview .wlp-menu, .wide-logo-preview .wlp-user { color: var(--text-muted); font-size: 1.1rem; }
+.wide-logo-preview .wlp-space { flex: 1; }
+.wide-logo-preview .wlp-logo { height: 36px; display: flex; align-items: center; color: var(--text-muted); font-size: 0.85rem; }
+.wide-logo-preview .wlp-logo img { height: 36px; width: auto; max-width: 260px; object-fit: contain; }
+/* ป็อปอัพส่งออกรายงาน (หน้าสรุปรวม) */
+.export-box { max-width: 560px; text-align: left; }
+.export-head { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; padding-right: 30px; }
+.export-head h3 { margin: 0 0 2px; }
+.export-head .hint { margin: 0; }
+.export-head-ic { width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; display: grid; place-items: center; background: var(--primary-light); color: var(--primary); font-size: 1.3rem; }
+.export-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; padding: 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.export-summary dt { font-size: 0.74rem; color: var(--text-muted); font-weight: 600; }
+.export-summary dt i { width: 14px; text-align: center; color: var(--primary); }
+.export-summary dd { margin: 2px 0 0; font-weight: 700; font-size: 0.92rem; word-break: break-word; }
+.export-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.export-opt { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 16px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; transition: border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease; }
+.export-opt i { font-size: 1.9rem; margin-bottom: 4px; }
+.export-opt.pdf i { color: #dc2626; }
+.export-opt.png i { color: #16a34a; }
+.export-opt .eo-t { font-weight: 800; }
+.export-opt .eo-d { font-size: 0.8rem; color: var(--text-muted); line-height: 1.45; }
+.export-opt:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.export-opt:focus-visible { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); }
+@media (max-width: 520px) { .export-options, .export-summary { grid-template-columns: minmax(0, 1fr); } }
+/* คลังคำสั่ง: ปุ่มไอคอนในแถวย่อ */
+.orders-actions .icon-btn.ord-ic { width: 38px; height: 36px; font-size: 1rem; }
+.orders-actions .icon-btn.ord-ic + .icon-btn.ord-ic { margin-left: 0; }
+.ord-file-bar a.btn { text-decoration: none; }
+/* ตัวกรองประวัติ (ตั้งค่า → ประวัติ) */
+.log-filter { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.log-filter input[type="search"] { flex: 1 1 220px; min-width: 0; }
+.log-filter select { flex: 0 1 180px; width: auto; }
+.log-filter .log-date { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-muted); margin: 0; }
+.log-filter .log-date input { width: auto; }
+.log-filter .btn { width: auto; }
+.log-count { margin: 0 0 8px; min-height: 1em; }
+@media (max-width: 640px) { .log-filter select, .log-filter .log-date { flex: 1 1 100%; } .log-filter .log-date input { flex: 1; } }
+/* ปุ่มลิงก์เว็บไซต์โรงเรียน: รูปจัตุรัส = ไอคอนตัดขอบมนอัตโนมัติ + ชื่อปุ่ม */
+.ext-link-btn-image .ext-link-label { display: none; }
+.ext-link-btn-image.is-square { width: auto; min-width: 160px; max-width: 260px; padding: 0 16px 0 8px; gap: 10px; justify-content: flex-start; background: var(--surface); flex: 0 1 auto; }
+.ext-link-btn-image.is-square img { width: 44px; height: 44px; flex-shrink: 0; object-fit: cover; border-radius: 22%; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); }
+.ext-link-btn-image.is-square .ext-link-label { display: block; color: var(--text); font-weight: 700; font-size: 0.9rem; text-align: left; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+/* ป็อปอัพปุ่มลิงก์เว็บไซต์โรงเรียน */
+.extlink-box { max-width: 820px; text-align: left; }
+.extlink-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 20px; }
+.extlink-side { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; align-self: start; }
+.extlink-preview-label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: none; }
+.extlink-preview { min-height: 76px; align-items: center; justify-content: center; padding: 10px; border-radius: 12px; background: var(--bg); border: 1px dashed var(--border); }
+.extlink-preview .ext-link-btn { pointer-events: none; flex: 0 1 auto; }
+.extlink-specs { display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45; }
+.extlink-specs i { width: 16px; text-align: center; color: var(--primary); }
+.extlink-colors { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.extlink-colors input[type="color"] { width: 44px; height: 36px; padding: 2px; border-radius: 10px; cursor: pointer; flex-shrink: 0; }
+.extlink-swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.extlink-swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border); cursor: pointer; padding: 0; transition: transform 0.12s ease; }
+.extlink-swatch:hover { transform: scale(1.15); }
+.extlink-actions { grid-column: 1 / -1; }
+@media (max-width: 720px) { .extlink-grid { grid-template-columns: minmax(0, 1fr); } }
+.log-filter input[type="search"] { flex-basis: 100%; }
+.export-summary dt i { margin-right: 4px; }

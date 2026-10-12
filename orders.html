@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.51.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.52.121026" />
 </head>
 <body>
   <!-- คลังคำสั่ง (ตั้งแต่ 1.43.111026 — เดิม "ไฟล์คำสั่ง" ของ 1.41): ทุกบัญชีที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ · แก้ไข/ลบได้เฉพาะเจ้าของ · PDF เท่านั้น
@@ -137,7 +137,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.51.121026"></script>
+  <script src="assets/api.js?v=1.52.121026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -279,20 +279,23 @@
               (o.isOwner ? '<span class="ordc-chip own">ของฉัน</span>' : '') +
             '</div>' +
           '</div>' +
+          // 1.52.121026: แถวย่อเหลือแค่ไอคอน (พรีวิว / ดาวน์โหลด) — ปุ่มเต็มอยู่ล่างสุดตอนขยาย
           '<div class="ordc-btns orders-actions">' +
-            '<button type="button" class="btn btn-primary btn-sm" data-preview="' + escapeHtml(o.id) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button>' +
-            // 1.51.121026: ปุ่มดาวน์โหลดในแถว — ไฟล์เดียวดาวน์โหลดเลย หลายไฟล์ดาวน์โหลดทั้งหมด
+            '<button type="button" class="icon-btn ord-ic" data-preview="' + escapeHtml(o.id) + '" title="' + (fs.length > 1 ? 'พรีวิวทีละไฟล์' : 'พรีวิว') + '" aria-label="พรีวิว ' + escapeHtml(o.title) + '"><i class="fa-solid fa-eye"></i></button>' +
             (fs.length > 1
-              ? '<button type="button" class="btn btn-secondary btn-sm" data-dlall="' + escapeHtml(o.id) + '"><i class="fa-solid fa-download"></i> ดาวน์โหลด (' + fs.length + ')</button>'
-              : dlLink(fs[0], 'btn btn-secondary btn-sm ord-dl', '<i class="fa-solid fa-download"></i> ดาวน์โหลด')) +
+              ? '<button type="button" class="icon-btn ord-ic" data-dlall="' + escapeHtml(o.id) + '" title="ดาวน์โหลดทั้งหมด (' + fs.length + ' ไฟล์)" aria-label="ดาวน์โหลดทั้งหมด ' + fs.length + ' ไฟล์"><i class="fa-solid fa-download"></i></button>'
+              : dlLink(fs[0], 'icon-btn ord-ic ord-dl', '<i class="fa-solid fa-download"></i>')) +
           '</div>' +
           '<i class="fa-solid fa-chevron-down ordc-chev" aria-hidden="true"></i>' +
         '</div>' +
         (open ? '<div class="ordc-detail"><table>' + rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>' +
           filesTableHtml(o) +
           '<div class="sub-group-bar ord-file-bar">' +
-            (fs.length > 1 ? '<button type="button" class="btn btn-primary btn-sm" data-preview="' + escapeHtml(o.id) + '"><i class="fa-solid fa-images"></i> พรีวิวทีละไฟล์</button>' : '') +
-            (fs.length > 1 ? '<button type="button" class="btn btn-secondary btn-sm" data-dlall="' + escapeHtml(o.id) + '"><i class="fa-solid fa-download"></i> ดาวน์โหลดทั้งหมด</button>' : '') +
+            (fs.length > 1
+              ? '<button type="button" class="btn btn-primary btn-sm" data-preview="' + escapeHtml(o.id) + '"><i class="fa-solid fa-images"></i> พรีวิวทีละไฟล์</button>' +
+                '<button type="button" class="btn btn-secondary btn-sm" data-dlall="' + escapeHtml(o.id) + '"><i class="fa-solid fa-download"></i> ดาวน์โหลดทั้งหมด</button>'
+              : '<button type="button" class="btn btn-primary btn-sm" data-preview="' + escapeHtml(o.id) + '"><i class="fa-solid fa-eye"></i> พรีวิว</button>' +
+                dlLink(fs[0], 'btn btn-secondary btn-sm', '<i class="fa-solid fa-download"></i> ดาวน์โหลด')) +
             (canAddMore ? '<button type="button" class="btn btn-secondary btn-sm" data-addfiles="' + escapeHtml(o.id) + '"><i class="fa-solid fa-plus"></i> เพิ่มไฟล์</button>' : '') +
           '</div>' +
           (o.canManage ? '<div class="ordc-acts"><button type="button" class="btn btn-ghost btn-sm" data-edit="' + escapeHtml(o.id) + '">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-del="' + escapeHtml(o.id) + '">ลบคำสั่ง</button></div>' : '') +

@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.51.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.52.121026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -59,6 +59,27 @@
           </div>
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
+        <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม) -->
+        <div class="wide-logo-block">
+          <div class="mu-section-title">โลโก้แบบยาว (แถบด้านบนสุด)</div>
+          <div id="logoWideError" class="error-box" hidden></div>
+          <div class="wide-logo-preview" id="logoWidePreviewBar" aria-label="ตัวอย่างแถบด้านบน">
+            <span class="wlp-menu"><i class="fa-solid fa-bars"></i></span>
+            <div class="wlp-logo" id="logoWidePreview">—</div>
+            <span class="wlp-space"></span>
+            <span class="wlp-user"><i class="fa-solid fa-circle-user"></i></span>
+          </div>
+          <div class="asset-picker">
+            <input type="file" id="logoWideFile" accept="image/png,image/webp,image/svg+xml,image/jpeg" hidden />
+            <div class="asset-picker-btns">
+              <button type="button" class="btn btn-secondary" id="logoWidePickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูปโลโก้แบบยาว</button>
+              <button type="button" class="btn btn-primary" id="logoWideUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัพโหลด</button>
+              <button type="button" class="btn btn-ghost" id="logoWideRemoveBtn" hidden><i class="fas fa-trash ui-icon" aria-hidden="true"></i> เอาออก</button>
+            </div>
+            <div class="asset-picker-name hint" id="logoWideFileName">ยังไม่ได้เลือกไฟล์</div>
+          </div>
+          <div class="hint"><b>ขนาดแนะนำ 720 × 144 px</b> (อัตราส่วน 5:1) ไฟล์ PNG พื้นหลังโปร่งใส — แสดงจริงสูง 36 px (ยาวได้ไม่เกิน 260 px บนคอม / 150 px บนมือถือ) ใช้รูปขนาด 2–4 เท่าเพื่อความคมชัดบนจอความละเอียดสูง · ควรใช้ตัวอักษรสีเข้มที่อ่านได้ทั้งพื้นสว่างและพื้นมืด (โหมดกลางคืน) · เมื่อมีโลโก้แบบยาว ระบบจะซ่อนชื่อเว็บไซต์ในแถบด้านบน (ชื่อเว็บยังใช้ในชื่อแท็บและหน้าอื่นตามเดิม)</div>
+        </div>
       </div>
 
       <div class="card">
@@ -434,6 +455,15 @@
           <button class="btn btn-danger btn-sm" id="clearLogBtn" type="button"><i class="fas fa-broom ui-icon" style="font-size:15px" aria-hidden="true"></i> ล้างประวัติทั้งหมด</button>
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">บันทึกการส่งงาน การลบไฟล์ และการลบบัญชีถาวรทั้งหมดในระบบ — ลบรายการประวัติออกได้ด้วยปุ่ม "ลบ" ท้ายแถว</p>
+        <!-- 1.52.121026: ตัวกรองค้นหาประวัติ -->
+        <div class="log-filter" id="logFilter">
+          <input type="search" id="logQ" placeholder="ค้นหาชื่อไฟล์ / เจ้าของ / ผู้ทำรายการ" aria-label="ค้นหา" />
+          <select id="logType" aria-label="กรองตามประเภท"><option value="">ทุกการกระทำ</option><option value="submit">ส่งงาน</option><option value="delete">ลบไฟล์</option><option value="purge_user">ลบบัญชีถาวร</option></select>
+          <label class="log-date"><span>ตั้งแต่</span><input type="date" id="logFrom" /></label>
+          <label class="log-date"><span>ถึง</span><input type="date" id="logTo" /></label>
+          <button type="button" class="btn btn-ghost btn-sm" id="logReset"><i class="fa-solid fa-rotate-left"></i> ล้างตัวกรอง</button>
+        </div>
+        <div class="hint log-count" id="logCount"></div>
         <div id="logTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -448,6 +478,15 @@
           <button class="btn btn-danger btn-sm super-admin-only" id="clearSystemLogBtn" type="button"><i class="fas fa-broom ui-icon" style="font-size:15px" aria-hidden="true"></i> ล้างประวัติทั้งหมด</button>
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">บันทึกการปรับแต่งค่าเว็บ การแจ้งประกาศ และการกำหนดงาน/กำหนดการในปฏิทิน</p>
+        <!-- 1.52.121026: ตัวกรองค้นหาประวัติ -->
+        <div class="log-filter" id="slogFilter">
+          <input type="search" id="slogQ" placeholder="ค้นหารายละเอียด / ผู้ทำรายการ" aria-label="ค้นหา" />
+          <select id="slogType" aria-label="กรองตามประเภท"><option value="">ทุกหมวด</option><option value="settings">ปรับแต่งค่า</option><option value="announcement">ประกาศ</option><option value="event">กำหนดการ/งาน</option></select>
+          <label class="log-date"><span>ตั้งแต่</span><input type="date" id="slogFrom" /></label>
+          <label class="log-date"><span>ถึง</span><input type="date" id="slogTo" /></label>
+          <button type="button" class="btn btn-ghost btn-sm" id="slogReset"><i class="fa-solid fa-rotate-left"></i> ล้างตัวกรอง</button>
+        </div>
+        <div class="hint log-count" id="slogCount"></div>
         <div id="systemLogTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -807,38 +846,55 @@
     </div>
   </div>
 
-  <!-- Add/edit external link modal (เว็บไซต์โรงเรียน — ตั้งแต่ V11.9) -->
+  <!-- Add/edit external link modal (เว็บไซต์โรงเรียน — ตั้งแต่ V11.9 · 1.52.121026 ออกแบบใหม่: ฟอร์มซ้าย + ตัวอย่างปุ่มจริงด้านขวา) -->
   <div class="modal-backdrop" id="extLinkModal" hidden>
-    <div class="modal-box modal-box-wide">
+    <div class="modal-box modal-box-wide extlink-box">
       <button type="button" class="modal-close-x" id="extLinkModalCloseX" aria-label="ปิด">✕</button>
-      <h3 id="extLinkModalTitle">เพิ่มปุ่มลิงก์เว็บไซต์โรงเรียน</h3>
+      <div class="export-head">
+        <div class="export-head-ic"><i class="fa-solid fa-link" aria-hidden="true"></i></div>
+        <div><h3 id="extLinkModalTitle">เพิ่มปุ่มลิงก์เว็บไซต์โรงเรียน</h3><p class="hint">ปุ่มนี้จะแสดงในการ์ด "เว็บไซต์โรงเรียน" บนหน้าแรกของทุกบัญชีที่มีหน้าฮับ</p></div>
+      </div>
       <div id="createExtLinkError" class="error-box" hidden></div>
-      <form id="extLinkForm" style="text-align:left;">
+      <form id="extLinkForm" class="extlink-grid" style="text-align:left;">
         <input type="hidden" id="extLinkEditId" value="" />
-        <div class="field-row">
-          <div class="field" style="flex:1;">
+        <div class="extlink-fields">
+          <div class="field">
             <label for="extLinkName">ชื่อปุ่ม</label>
-            <input id="extLinkName" required placeholder="เช่น ระบบ SGS" />
+            <input id="extLinkName" required maxlength="60" placeholder="เช่น ระบบ SGS" />
           </div>
-          <div class="field" style="max-width:90px;">
-            <label for="extLinkColor">สีปุ่ม</label>
-            <input type="color" id="extLinkColor" value="#3457d5" title="สีปุ่ม (ใช้เมื่อไม่มีรูปภาพ)" />
+          <div class="field">
+            <label for="extLinkUrl">ลิงก์ (URL)</label>
+            <input id="extLinkUrl" type="url" required placeholder="https://..." />
+          </div>
+          <div class="field">
+            <label for="extLinkColor">สีปุ่ม <span class="hint">(ใช้เมื่อไม่มีรูปภาพ)</span></label>
+            <div class="extlink-colors">
+              <input type="color" id="extLinkColor" value="#3457d5" title="เลือกสีเอง" />
+              <div class="extlink-swatches" id="extLinkSwatches"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>รูปภาพปุ่ม <span class="hint">(ไม่บังคับ)</span></label>
+            <div class="asset-picker">
+              <input type="file" id="extLinkImageFile" accept="image/*" hidden />
+              <div class="asset-picker-btns">
+                <button type="button" class="btn btn-secondary" id="extLinkImagePickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูป</button>
+                <button class="btn btn-ghost" type="button" id="extLinkRemoveImageBtn" hidden><i class="fas fa-trash ui-icon" aria-hidden="true"></i> เอารูปออก</button>
+              </div>
+              <div class="asset-picker-name hint" id="extLinkImageName">ยังไม่ได้เลือกรูป — ใช้ปุ่มสี</div>
+            </div>
           </div>
         </div>
-        <div class="field">
-          <label for="extLinkUrl">ลิ้งก์ (URL)</label>
-          <input id="extLinkUrl" type="url" required placeholder="https://..." />
-        </div>
-        <div class="field">
-          <label>รูปภาพปุ่ม (ไม่บังคับ)</label>
-          <div class="file-input-row">
-            <div class="asset-preview" id="extLinkImagePreview">—</div>
-            <input type="file" id="extLinkImageFile" accept="image/*" style="flex:1; min-width:180px;" />
-            <button class="btn btn-secondary btn-sm" type="button" id="extLinkRemoveImageBtn" hidden>เอารูปออก</button>
+        <div class="extlink-side">
+          <div class="extlink-preview-label">ตัวอย่างบนหน้าแรก</div>
+          <div class="extlink-preview ext-links-grid" id="extLinkPreview"></div>
+          <div class="extlink-specs">
+            <div><i class="fa-solid fa-panorama"></i> <b>รูปแนวนอน</b> 320 × 120 px (8:3) — เต็มปุ่ม 160 × 60</div>
+            <div><i class="fa-solid fa-square"></i> <b>รูปจัตุรัส</b> 256 × 256 px ขึ้นไป — ระบบตัดขอบมนให้อัตโนมัติ แสดงเป็นไอคอนคู่กับชื่อปุ่ม</div>
+            <div><i class="fa-solid fa-wand-magic-sparkles"></i> ไฟล์ใหญ่แค่ไหนก็ได้ ระบบย่อขนาดให้ก่อนบันทึก</div>
           </div>
-          <div class="hint">ถ้าเลือกรูป ปุ่มนี้จะแสดงเป็นรูปภาพแทนปุ่มสี — ปุ่มแสดงผลจริงขนาด <b>160×60px</b> เป๊ะ (อัตราส่วน 8:3) สร้างรูปต้นฉบับขนาด <b>320×120px</b> พอดี (2 เท่า เพื่อความคมชัดบนจอ retina) พื้นหลังโปร่งใส จะเต็มปุ่มสนิทไม่มีขอบขาว/ถูกครอบตัด — ถ้าอัตราส่วนไม่ตรง 8:3 เป๊ะ ระบบจะครอบตัดส่วนที่ล้นออก (เหมือนโหมด "เติมเต็มกรอบ" ของโปรแกรมแต่งรูปทั่วไป) ระบบจะปรับขนาดไฟล์ให้เล็กลงอัตโนมัติก่อนบันทึก</div>
         </div>
-        <div class="modal-actions">
+        <div class="modal-actions extlink-actions">
           <button type="submit" class="btn btn-primary" id="extLinkSubmitBtn">เพิ่มปุ่ม</button>
           <button type="button" class="btn btn-ghost" id="extLinkModalClose">ยกเลิก</button>
         </div>
@@ -947,7 +1003,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.51.121026"></script>
+  <script src="assets/api.js?v=1.52.121026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1099,6 +1155,8 @@
       }
       renderAssetPreview('iconPreview', s.iconDataUrl);
       renderAssetPreview('logoPreview', s.logoDataUrl);
+      renderAssetPreview('logoWidePreview', s.logoWideDataUrl);
+      document.getElementById('logoWideRemoveBtn').hidden = !s.logoWideDataUrl;
     }
     // ระยะเวลาเก็บคำสั่ง (1.43.111026) — การ์ดอยู่ในแท็บ "ทั่วไป" ที่ถูกลบออกจาก DOM สำหรับผู้ที่ไม่ใช่ Super Admin จึงต้องกัน null
     (function () {
@@ -1619,10 +1677,11 @@
         errBox.hidden = true;
         var file = document.getElementById(fileInputId).files[0];
         if (!file) { errBox.textContent = 'กรุณาเลือกไฟล์รูปภาพก่อน'; errBox.hidden = false; return; }
-        var ok = await askConfirm('ยืนยันเปลี่ยน' + (type === 'logo' ? 'โลโก้เว็บ' : 'ไอคอนเว็บ') + 'เป็นไฟล์นี้? (ระบบจะปรับขนาดรูปให้อัตโนมัติ)', 'ยืนยันการอัพโหลด');
+        var label = { logo: 'โลโก้เว็บ', icon: 'ไอคอนเว็บ', logoWide: 'โลโก้แบบยาว' }[type];
+        var ok = await askConfirm('ยืนยันเปลี่ยน' + label + 'เป็นไฟล์นี้? (ระบบจะปรับขนาดรูปให้อัตโนมัติ)', 'ยืนยันการอัพโหลด');
         if (!ok) return;
-        var maxSize = type === 'icon' ? 128 : 480; // ไอคอนย่อเล็กกว่าโลโก้ เพราะแสดงเป็นจุดกลมเล็กๆ
-        var r = await withProgress('กำลังอัพโหลด' + (type === 'logo' ? 'โลโก้' : 'ไอคอน'), async function (p) {
+        var maxSize = type === 'icon' ? 128 : type === 'logoWide' ? 900 : 480; // ไอคอนย่อเล็กกว่าโลโก้ เพราะแสดงเป็นจุดกลมเล็กๆ · โลโก้แบบยาวด้านยาวสุด 900 px
+        var r = await withProgress('กำลังอัพโหลด' + label, async function (p) {
           p.setLabel('กำลังปรับขนาดรูป...');
           var resized = await resizeImageToBase64(file, maxSize);
           p.setLabel('กำลังอัพโหลดขึ้นเซิร์ฟเวอร์...');
@@ -1630,7 +1689,8 @@
         }, { successLabel: 'อัพโหลดสำเร็จ (ปรับขนาดรูปให้อัตโนมัติแล้ว)' });
         if (r.ok) {
           _settingsCache = r.data;
-          renderAssetPreview(previewId, type === 'icon' ? r.data.iconDataUrl : r.data.logoDataUrl);
+          renderAssetPreview(previewId, type === 'icon' ? r.data.iconDataUrl : type === 'logoWide' ? r.data.logoWideDataUrl : r.data.logoDataUrl);
+          if (type === 'logoWide') document.getElementById('logoWideRemoveBtn').hidden = false;
           applyBranding();
           document.getElementById(fileInputId).value = '';
           document.getElementById(type + 'UploadBtn').disabled = true;
@@ -1681,7 +1741,7 @@
         }
       });
       // ปุ่มเลือกรูป (1.45.111026): เลือกแล้วแสดงตัวอย่างในกรอบทันที + เปิดปุ่มอัพโหลด
-      ['icon', 'logo'].forEach(function (k) {
+      ['icon', 'logo', 'logoWide'].forEach(function (k) {
         var inp = document.getElementById(k + 'File');
         document.getElementById(k + 'PickBtn').addEventListener('click', function () { inp.click(); });
         inp.addEventListener('change', function () {
@@ -1693,6 +1753,13 @@
       });
       document.getElementById('iconUploadBtn').addEventListener('click', function () { uploadAsset('icon', 'iconFile', 'iconError', 'iconPreview'); });
       document.getElementById('logoUploadBtn').addEventListener('click', function () { uploadAsset('logo', 'logoFile', 'logoError', 'logoPreview'); });
+      document.getElementById('logoWideUploadBtn').addEventListener('click', function () { uploadAsset('logoWide', 'logoWideFile', 'logoWideError', 'logoWidePreview'); });
+      document.getElementById('logoWideRemoveBtn').addEventListener('click', async function () {
+        var ok = await askConfirm('เอาโลโก้แบบยาวออก? แถบด้านบนจะกลับไปแสดงโลโก้ + ชื่อเว็บไซต์ตามเดิม', 'ยืนยัน');
+        if (!ok) return;
+        var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSiteAsset', { type: 'logoWide', remove: true }); }, { successLabel: 'เอาโลโก้แบบยาวออกแล้ว' });
+        if (r.ok) { _settingsCache = r.data; renderAssetPreview('logoWidePreview', ''); document.getElementById('logoWideRemoveBtn').hidden = true; applyBranding(); }
+      });
 
       // ---------- ประเภทงาน (เฉพาะ Super Admin) — ตั้งแต่ V-ถัดไปหลัง V10.1 เพิ่มเป็นป็อปอัพ + เลือกข้อมูลที่ต้องกรอกได้ ----------
       var createCatModalEl = document.getElementById('createCatModal');
@@ -2235,7 +2302,7 @@
         var html = '';
         currentExtLinks.forEach(function (l, idx) {
           var thumb = l.imageDataUrl
-            ? '<img src="' + l.imageDataUrl + '" alt="" style="width:44px; height:44px; object-fit:contain; border-radius:8px;" />'
+            ? '<img src="' + l.imageDataUrl + '" alt="" style="width:44px; height:44px; object-fit:contain; border-radius:22%;" />'
             : '<div title="สีปุ่ม" style="width:44px; height:44px; border-radius:8px; background:' + (l.color || '#3457d5') + '; flex-shrink:0;"></div>';
           html += '<div class="event-list-item">' + thumb +
             '<div style="flex:1; min-width:0;"><div class="sub-item-title">' + escapeHtml(l.name) + '</div>' +
@@ -2288,11 +2355,27 @@
         extLinkImageRemoved = false;
         document.getElementById('extLinkImageFile').value = '';
       }
-      function renderExtLinkImagePreview(dataUrl) {
-        var el = document.getElementById('extLinkImagePreview');
-        el.innerHTML = dataUrl ? '<img src="' + dataUrl + '" alt="" />' : '—';
-        document.getElementById('extLinkRemoveImageBtn').hidden = !dataUrl;
+      // 1.52.121026: ตัวอย่างปุ่มจริง (ใช้ extLinkButtonHtml เดียวกับหน้าแรก) อัพเดตตามชื่อ/สี/รูปที่เลือก
+      var extLinkPreviewImage = '';
+      function renderExtLinkPreview() {
+        var box = document.getElementById('extLinkPreview');
+        box.innerHTML = extLinkButtonHtml({ name: document.getElementById('extLinkName').value.trim() || 'ชื่อปุ่ม', url: '#', color: document.getElementById('extLinkColor').value, imageDataUrl: extLinkPreviewImage }, { preview: true });
+        enhanceExtLinkImages(box);
       }
+      function renderExtLinkImagePreview(dataUrl, name) {
+        extLinkPreviewImage = dataUrl || '';
+        document.getElementById('extLinkRemoveImageBtn').hidden = !dataUrl;
+        document.getElementById('extLinkImageName').textContent = dataUrl ? (name || 'ใช้รูปที่อัพโหลดไว้') : 'ยังไม่ได้เลือกรูป — ใช้ปุ่มสี';
+        renderExtLinkPreview();
+      }
+      var EXT_SWATCHES = ['#3457d5', '#4f46e5', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#d97706', '#16a34a', '#0d9488', '#0284c7', '#475569', '#111827'];
+      document.getElementById('extLinkSwatches').innerHTML = EXT_SWATCHES.map(function (c) { return '<button type="button" class="extlink-swatch" data-color="' + c + '" style="background:' + c + '" aria-label="สี ' + c + '"></button>'; }).join('');
+      document.getElementById('extLinkSwatches').addEventListener('click', function (e) {
+        var b = e.target.closest('[data-color]'); if (!b) return;
+        document.getElementById('extLinkColor').value = b.getAttribute('data-color'); renderExtLinkPreview();
+      });
+      ['extLinkName', 'extLinkColor'].forEach(function (id) { document.getElementById(id).addEventListener('input', renderExtLinkPreview); });
+      document.getElementById('extLinkImagePickBtn').addEventListener('click', function () { document.getElementById('extLinkImageFile').click(); });
       function openExtLinkModal(linkId) {
         document.getElementById('createExtLinkError').hidden = true;
         document.getElementById('extLinkForm').reset();
@@ -2317,7 +2400,7 @@
           var resized = await resizeImageToBase64(file, 480);
           extLinkPendingImage = resized;
           extLinkImageRemoved = false;
-          renderExtLinkImagePreview('data:' + resized.mimeType + ';base64,' + resized.base64);
+          renderExtLinkImagePreview('data:' + resized.mimeType + ';base64,' + resized.base64, file.name);
         } catch (err) {
           showToast(err.message, true);
         }
@@ -2826,75 +2909,119 @@
       if (a === 'submit') return 'ส่งงาน';
       return 'ลบไฟล์';
     }
+    // 1.52.121026: โหลดครั้งเดียวแล้วกรองในหน้าเว็บ (ค้นหาข้อความ / ประเภท / ช่วงวันที่) — วันที่เทียบตามเวลาประเทศไทย
+    function localYmd(iso) { var d = new Date(iso); if (isNaN(d)) return ''; return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+    function filterLogRows(rows, pre, typeOf, textOf) {
+      var q = document.getElementById(pre + 'Q').value.trim().toLowerCase();
+      var ty = document.getElementById(pre + 'Type').value;
+      var from = document.getElementById(pre + 'From').value, to = document.getElementById(pre + 'To').value;
+      return rows.filter(function (r) {
+        if (ty && typeOf(r) !== ty) return false;
+        var d = localYmd(r.at);
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+        if (q && textOf(r).toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+    }
+    function bindLogFilter(pre, render) {
+      ['Q'].forEach(function (k) { document.getElementById(pre + k).addEventListener('input', render); });
+      ['Type', 'From', 'To'].forEach(function (k) { document.getElementById(pre + k).addEventListener('change', render); });
+      document.getElementById(pre + 'Reset').addEventListener('click', function () {
+        ['Q', 'Type', 'From', 'To'].forEach(function (k) { document.getElementById(pre + k).value = ''; });
+        render();
+      });
+    }
+    function logCountText(shown, total) { return total ? (shown === total ? 'ทั้งหมด ' + total + ' รายการ' : 'พบ ' + shown + ' จาก ' + total + ' รายการ') : ''; }
+
+    var logRows = [];
+    function logType(r) { return r.action === 'purge_user' ? 'purge_user' : r.action === 'submit' ? 'submit' : 'delete'; }
+    function renderLogTable() {
+      var wrap = document.getElementById('logTableWrap');
+      var rows = filterLogRows(logRows, 'log', logType, function (r) { return [r.fileName, r.teacherName, r.actorName, logActionLabel(r.action)].join(' '); });
+      document.getElementById('logCount').textContent = logCountText(rows.length, logRows.length);
+      if (logRows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติ</div>'; return; }
+      if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ไม่พบรายการที่ตรงกับตัวกรอง</div>'; return; }
+      var html = '<table><thead><tr><th>วันเวลา</th><th>การกระทำ</th><th>ไฟล์/บัญชี</th><th>เจ้าของ</th><th>ผู้ทำรายการ</th><th></th></tr></thead><tbody>';
+      rows.forEach(function (r) {
+        html += '<tr>' +
+          '<td>' + formatDateTimeThai(r.at) + '</td>' +
+          '<td>' + logActionLabel(r.action) + '</td>' +
+          '<td>' + escapeHtml(r.fileName || '-') + '</td>' +
+          '<td>' + escapeHtml(r.teacherName || '-') + '</td>' +
+          '<td>' + escapeHtml(r.actorName || '-') + '</td>' +
+          '<td><button class="btn btn-danger btn-sm" data-id="' + r.id + '">ลบ</button></td>' +
+        '</tr>';
+      });
+      wrap.innerHTML = html + '</tbody></table>';
+    }
     async function loadLog() {
       var wrap = document.getElementById('logTableWrap');
       try {
-        var rows = await apiCall('adminListDeleteLog', {});
-        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติ</div>'; return; }
-        var html = '<table><thead><tr><th>วันเวลา</th><th>การกระทำ</th><th>ไฟล์/บัญชี</th><th>เจ้าของ</th><th>ผู้ทำรายการ</th><th></th></tr></thead><tbody>';
-        rows.forEach(function (r) {
-          html += '<tr>' +
-            '<td>' + formatDateTimeThai(r.at) + '</td>' +
-            '<td>' + logActionLabel(r.action) + '</td>' +
-            '<td>' + escapeHtml(r.fileName || '-') + '</td>' +
-            '<td>' + escapeHtml(r.teacherName || '-') + '</td>' +
-            '<td>' + escapeHtml(r.actorName || '-') + '</td>' +
-            '<td><button class="btn btn-danger btn-sm" data-id="' + r.id + '">ลบ</button></td>' +
-          '</tr>';
-        });
-        html += '</tbody></table>';
-        wrap.innerHTML = html;
-        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
-          btn.addEventListener('click', async function () {
-            var ok = await askConfirm('ลบรายการประวัตินี้ออกจากระบบ?', 'ยืนยันการลบประวัติ');
-            if (!ok) return;
-            var logId = btn.getAttribute('data-id');
-            var r = await withProgress('กำลังลบรายการประวัติ', function () {
-              return apiCall('adminDeleteLogEntry', { logId: logId });
-            }, { successLabel: 'ลบรายการประวัติแล้ว' });
-            if (r.ok) loadLog();
-          });
-        });
+        logRows = await apiCall('adminListDeleteLog', {});
+        renderLogTable();
       } catch (err) {
         wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
     }
+    if (document.getElementById('logFilter')) {
+      bindLogFilter('log', renderLogTable);
+      document.getElementById('logTableWrap').addEventListener('click', async function (e) {
+        var btn = e.target.closest('button[data-id]');
+        if (!btn) return;
+        var ok = await askConfirm('ลบรายการประวัตินี้ออกจากระบบ?', 'ยืนยันการลบประวัติ');
+        if (!ok) return;
+        var logId = btn.getAttribute('data-id');
+        var r = await withProgress('กำลังลบรายการประวัติ', function () {
+          return apiCall('adminDeleteLogEntry', { logId: logId });
+        }, { successLabel: 'ลบรายการประวัติแล้ว' });
+        if (r.ok) loadLog();
+      });
+    }
 
     // ---------- ประวัติระบบ (ตั้งแต่ V10.0, Super Admin ลบรายการออกได้ตั้งแต่ V-ถัดไปหลัง V10.1) ----------
+    var sysLogRows = [];
+    var SYSLOG_CAT = { settings: 'ปรับแต่งค่า', announcement: 'ประกาศ', event: 'กำหนดการ/งาน' };
+    function renderSystemLogTable() {
+      var wrap = document.getElementById('systemLogTableWrap');
+      var rows = filterLogRows(sysLogRows, 'slog', function (r) { return r.category; }, function (r) { return [r.detail || r.action, r.actorName, SYSLOG_CAT[r.category] || r.category].join(' '); });
+      document.getElementById('slogCount').textContent = logCountText(rows.length, sysLogRows.length);
+      if (sysLogRows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติระบบ</div>'; return; }
+      if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ไม่พบรายการที่ตรงกับตัวกรอง</div>'; return; }
+      var html = '<table><thead><tr><th>วันเวลา</th><th>หมวด</th><th>รายละเอียด</th><th>ผู้ทำรายการ</th>' + (isSuperAdminSession ? '<th></th>' : '') + '</tr></thead><tbody>';
+      rows.forEach(function (r) {
+        html += '<tr>' +
+          '<td>' + formatDateTimeThai(r.at) + '</td>' +
+          '<td>' + (SYSLOG_CAT[r.category] || escapeHtml(r.category)) + '</td>' +
+          '<td>' + escapeHtml(r.detail || r.action) + '</td>' +
+          '<td>' + escapeHtml(r.actorName) + '</td>' +
+          (isSuperAdminSession ? '<td><button class="btn btn-danger btn-sm" data-id="' + r.id + '">ลบ</button></td>' : '') +
+        '</tr>';
+      });
+      wrap.innerHTML = html + '</tbody></table>';
+    }
     async function loadSystemLog() {
       var wrap = document.getElementById('systemLogTableWrap');
       try {
-        var rows = await apiCall('adminListSystemLog', {});
-        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประวัติระบบ</div>'; return; }
-        var catLabel = { settings: 'ปรับแต่งค่า', announcement: 'ประกาศ', event: 'กำหนดการ/งาน' };
-        var html = '<table><thead><tr><th>วันเวลา</th><th>หมวด</th><th>รายละเอียด</th><th>ผู้ทำรายการ</th>' + (isSuperAdminSession ? '<th></th>' : '') + '</tr></thead><tbody>';
-        rows.forEach(function (r) {
-          html += '<tr>' +
-            '<td>' + formatDateTimeThai(r.at) + '</td>' +
-            '<td>' + (catLabel[r.category] || escapeHtml(r.category)) + '</td>' +
-            '<td>' + escapeHtml(r.detail || r.action) + '</td>' +
-            '<td>' + escapeHtml(r.actorName) + '</td>' +
-            (isSuperAdminSession ? '<td><button class="btn btn-danger btn-sm" data-id="' + r.id + '">ลบ</button></td>' : '') +
-          '</tr>';
-        });
-        html += '</tbody></table>';
-        wrap.innerHTML = html;
-        if (isSuperAdminSession) {
-          wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
-            btn.addEventListener('click', async function () {
-              var ok = await askConfirm('ลบรายการประวัติระบบนี้ออกจากระบบ?', 'ยืนยันการลบประวัติระบบ');
-              if (!ok) return;
-              var logId = btn.getAttribute('data-id');
-              var r = await withProgress('กำลังลบรายการประวัติระบบ', function () {
-                return apiCall('adminDeleteSystemLogEntry', { logId: logId });
-              }, { successLabel: 'ลบรายการประวัติระบบแล้ว' });
-              if (r.ok) loadSystemLog();
-            });
-          });
-        }
+        sysLogRows = await apiCall('adminListSystemLog', {});
+        renderSystemLogTable();
       } catch (err) {
         wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
+    }
+    bindLogFilter('slog', renderSystemLogTable);
+    if (isSuperAdminSession) {
+      document.getElementById('systemLogTableWrap').addEventListener('click', async function (e) {
+        var btn = e.target.closest('button[data-id]');
+        if (!btn) return;
+        var ok = await askConfirm('ลบรายการประวัติระบบนี้ออกจากระบบ?', 'ยืนยันการลบประวัติระบบ');
+        if (!ok) return;
+        var logId = btn.getAttribute('data-id');
+        var r = await withProgress('กำลังลบรายการประวัติระบบ', function () {
+          return apiCall('adminDeleteSystemLogEntry', { logId: logId });
+        }, { successLabel: 'ลบรายการประวัติระบบแล้ว' });
+        if (r.ok) loadSystemLog();
+      });
     }
     // ปุ่ม "ล้างประวัติทั้งหมด" (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21 — super-admin-only ทั้ง class บน HTML และเช็ค isSuperAdminSession ซ้ำตรงนี้)
     if (isSuperAdminSession) {
