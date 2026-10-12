@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.53.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.54.121026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -59,9 +59,15 @@
           </div>
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
-        <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม) -->
+        <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
+             1.54.121026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
-          <div class="mu-section-title">โลโก้แบบยาว (แถบด้านบนสุด)</div>
+          <div class="mu-section-title">Banner เว็บไซต์</div>
+          <div class="banner-size-card">
+            <div class="bsc-box"><span>960 × 160 px</span></div>
+            <div class="bsc-text"><b>ขนาด Banner: กว้าง 960 × สูง 160 px</b> (อัตราส่วน 6:1) · แสดงในแถบด้านบนสุดของทุกหน้า สูง 44 px (มือถือ 34 px)<br />
+              รูปที่ไม่ใช่ 6:1 อัพได้เลย ระบบจะเปิดหน้าจัดรูปให้เลือก "ใช้ทั้งรูป" (ไม่ตัด — Banner จะสั้นลงตามสัดส่วนรูป) หรือ "เต็มกรอบ" (ตัดส่วนบน-ล่างออก)</div>
+          </div>
           <div id="logoWideError" class="error-box" hidden></div>
           <div class="wide-logo-preview" id="logoWidePreviewBar" aria-label="ตัวอย่างแถบด้านบน">
             <span class="wlp-menu"><i class="fa-solid fa-bars"></i></span>
@@ -73,13 +79,13 @@
           <div class="asset-picker">
             <input type="file" id="logoWideFile" accept="image/png,image/webp,image/svg+xml,image/jpeg" hidden />
             <div class="asset-picker-btns">
-              <button type="button" class="btn btn-secondary" id="logoWidePickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูปโลโก้แบบยาว</button>
+              <button type="button" class="btn btn-secondary" id="logoWidePickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูป Banner</button>
               <button type="button" class="btn btn-primary" id="logoWideUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัพโหลด</button>
               <button type="button" class="btn btn-ghost" id="logoWideRemoveBtn" hidden><i class="fas fa-trash ui-icon" aria-hidden="true"></i> เอาออก</button>
             </div>
             <div class="asset-picker-name hint" id="logoWideFileName">ยังไม่ได้เลือกไฟล์</div>
           </div>
-          <div class="hint"><b>ขนาดแนะนำ 960 × 160 px</b> (อัตราส่วน 6:1) ไฟล์ PNG พื้นหลังโปร่งใส — แสดงจริงสูง 40 px ยาวสุด 240 px (มือถือ 32 px / 170 px) · <b>อัพรูปขนาดไหนก็ได้</b>: ถ้าอัตราส่วนตรง 6:1 ระบบย่อให้เอง ถ้าไม่ตรงจะเปิดหน้าครอปให้เลื่อน/ซูมจัดตำแหน่งในกรอบ · ควรใช้สีที่อ่านได้ทั้งพื้นสว่างและพื้นมืด (โหมดกลางคืน) · อัพโลโก้แบบยาวแล้วระบบปิดการแสดงชื่อเว็บในแถบด้านบนให้อัตโนมัติ (เปิดกลับได้ที่สวิตช์ด้านล่าง)</div>
+          <div class="hint">แนะนำไฟล์ PNG พื้นหลังโปร่งใส (ถ้าพื้นหลังเป็นสีขาว ระบบทำให้โปร่งใสให้ได้ในหน้าจัดรูป — ดูดีทั้งโหมดสว่างและโหมดกลางคืน) · ตัวหนังสือใน Banner ควรใหญ่ เพราะแสดงจริงสูงแค่ 44 px · อัพ Banner แล้วระบบปิดการแสดงชื่อเว็บในแถบด้านบนให้อัตโนมัติ (เปิดกลับได้ที่สวิตช์ด้านล่าง)</div>
           <label class="toggle-row switch-row" style="margin-top:12px;">
             <input type="checkbox" class="switch" role="switch" id="setTopbarShowName" />
             <span>แสดงชื่อเว็บไซต์ในแถบด้านบนสุด</span>
@@ -858,7 +864,7 @@
       <button type="button" class="modal-close-x" id="logoCropCloseX" aria-label="ปิด">✕</button>
       <div class="export-head">
         <div class="export-head-ic"><i class="fa-solid fa-crop-simple" aria-hidden="true"></i></div>
-        <div><h3>จัดโลโก้ให้พอดีกรอบ</h3><p class="hint" id="logoCropInfo">รูปไม่ใช่อัตราส่วน 6:1 — ลากรูปเพื่อเลื่อนตำแหน่ง ใช้แถบซูมปรับขนาด ส่วนที่อยู่นอกกรอบจะถูกตัดออก</p></div>
+        <div><h3>จัด Banner ให้พอดีกรอบ</h3><p class="hint" id="logoCropInfo">รูปไม่ใช่อัตราส่วน 6:1</p></div>
       </div>
       <div class="crop-stage" id="logoCropStage"><canvas id="logoCropCanvas"></canvas></div>
       <div class="crop-controls">
@@ -867,8 +873,14 @@
         <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
       </div>
       <div class="crop-quick">
-        <button type="button" class="btn btn-ghost btn-sm" id="logoCropFit"><i class="fa-solid fa-expand"></i> พอดีกรอบ (ไม่ตัด)</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="logoCropFill"><i class="fa-solid fa-maximize"></i> เต็มกรอบ</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="logoCropFit"><i class="fa-solid fa-expand"></i> ใช้ทั้งรูป (ไม่ตัด)</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="logoCropFill"><i class="fa-solid fa-maximize"></i> เต็มกรอบ 6:1 (ตัดบน-ล่าง)</button>
+        <label class="crop-bg"><input type="checkbox" id="logoCropClearBg" /> ทำพื้นหลังสีขาวรอบรูปให้โปร่งใส</label>
+      </div>
+      <div class="crop-result">
+        <div class="crop-result-h">ตัวอย่างในแถบด้านบน (ขนาดจริง) · ไฟล์ที่ได้ <b id="logoCropOutSize">—</b></div>
+        <div class="crop-topbar light"><i class="fa-solid fa-bars"></i><img id="logoCropOutLight" alt="" /><span class="sp"></span><i class="fa-solid fa-circle-user"></i></div>
+        <div class="crop-topbar dark"><i class="fa-solid fa-bars"></i><img id="logoCropOutDark" alt="" /><span class="sp"></span><i class="fa-solid fa-circle-user"></i></div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-primary" id="logoCropOk"><i class="fa-solid fa-check"></i> ใช้รูปนี้</button>
@@ -1034,7 +1046,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.53.121026"></script>
+  <script src="assets/api.js?v=1.54.121026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1711,7 +1723,7 @@
         errBox.hidden = true;
         var file = document.getElementById(fileInputId).files[0];
         if (!file) { errBox.textContent = 'กรุณาเลือกไฟล์รูปภาพก่อน'; errBox.hidden = false; return; }
-        var label = { logo: 'โลโก้เว็บ', icon: 'ไอคอนเว็บ', logoWide: 'โลโก้แบบยาว' }[type];
+        var label = { logo: 'โลโก้เว็บ', icon: 'ไอคอนเว็บ', logoWide: 'Banner เว็บไซต์' }[type];
         var ok = await askConfirm('ยืนยันเปลี่ยน' + label + 'เป็นไฟล์นี้? (ระบบจะปรับขนาดรูปให้อัตโนมัติ)', 'ยืนยันการอัพโหลด');
         if (!ok) return;
         var maxSize = type === 'icon' ? 128 : type === 'logoWide' ? 900 : 480; // ไอคอนย่อเล็กกว่าโลโก้ เพราะแสดงเป็นจุดกลมเล็กๆ · โลโก้แบบยาวด้านยาวสุด 900 px
@@ -1813,10 +1825,41 @@
         else { crop.ox = (WIDE_W - crop.img.naturalWidth * crop.scale) / 2; crop.oy = (WIDE_H - crop.img.naturalHeight * crop.scale) / 2; }
         document.getElementById('logoCropZoom').value = Math.round(1000 * Math.log(crop.scale / crop.min) / Math.log(crop.max / crop.min));
         drawCrop();
+        scheduleCropResult();
+      }
+      // ตัวอย่างผลลัพธ์จริงในแถบด้านบน (สว่าง/มืด) + ขนาดไฟล์ที่จะได้ — อัพเดตหลังเลื่อน/ซูม/ติ๊กพื้นหลัง
+      var _cropResT = null;
+      function scheduleCropResult() {
+        clearTimeout(_cropResT);
+        _cropResT = setTimeout(function () {
+          if (!crop.img) return;
+          var res = exportWide(), url = 'data:' + res.mimeType + ';base64,' + res.base64;
+          document.getElementById('logoCropOutLight').src = url; document.getElementById('logoCropOutDark').src = url;
+          var probe = new Image(); probe.onload = function () { document.getElementById('logoCropOutSize').textContent = probe.naturalWidth + ' × ' + probe.naturalHeight + ' px'; }; probe.src = url;
+        }, 120);
+      }
+      // ทำพื้นหลังสีขาว/เกือบขาวที่ "ต่อจากขอบรูป" ให้โปร่งใส (flood fill จากขอบ — สีขาวที่อยู่ข้างในรูป เช่นตัวหนังสือสีขาว ไม่โดน)
+      function clearWhiteBg(c) {
+        var ctx = c.getContext('2d'), w = c.width, h = c.height, im = ctx.getImageData(0, 0, w, h), d = im.data;
+        var seen = new Uint8Array(w * h), stack = [];
+        var isBg = function (i) { var o = i * 4; return d[o + 3] > 0 && d[o] >= 232 && d[o + 1] >= 232 && d[o + 2] >= 232 && Math.max(d[o], d[o + 1], d[o + 2]) - Math.min(d[o], d[o + 1], d[o + 2]) < 18; };
+        for (var x = 0; x < w; x++) { stack.push(x, (h - 1) * w + x); }
+        for (var y = 0; y < h; y++) { stack.push(y * w, y * w + w - 1); }
+        while (stack.length) {
+          var i = stack.pop();
+          if (seen[i]) continue; seen[i] = 1;
+          if (!isBg(i)) continue;
+          d[i * 4 + 3] = 0;
+          var px = i % w, py = (i - px) / w;
+          if (px > 0) stack.push(i - 1); if (px < w - 1) stack.push(i + 1);
+          if (py > 0) stack.push(i - w); if (py < h - 1) stack.push(i + w);
+        }
+        ctx.putImageData(im, 0, 0);
       }
       function exportWide() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         renderWideCanvas(c, WIDE_W, WIDE_H);
+        if (document.getElementById('logoCropClearBg').checked) clearWhiteBg(c);
         // ตัดขอบซ้าย/ขวาที่โปร่งใสทั้งคอลัมน์ออก (เช่นโหมด "พอดีกรอบ") — โลโก้ชิดชื่อเว็บพอดี ไม่มีช่องว่างแปลกๆ ในแถบด้านบน
         var data = c.getContext('2d').getImageData(0, 0, WIDE_W, WIDE_H).data, minX = WIDE_W, maxX = -1;
         for (var x = 0; x < WIDE_W; x++) {
@@ -1835,7 +1878,9 @@
         logoWidePending = res;
         renderAssetPreview('logoWidePreview', 'data:' + res.mimeType + ';base64,' + res.base64);
         document.getElementById('logoWideUploadBtn').disabled = false;
-        document.getElementById('logoWideFileName').textContent = name + ' — ปรับเป็น ' + WIDE_W + '×' + WIDE_H + ' px แล้ว กด "อัพโหลด" เพื่อใช้รูปนี้';
+        var probe = new Image();
+        probe.onload = function () { document.getElementById('logoWideFileName').textContent = name + ' — ได้ Banner ขนาด ' + probe.naturalWidth + ' × ' + probe.naturalHeight + ' px แล้ว กด "อัพโหลด" เพื่อใช้รูปนี้'; };
+        probe.src = 'data:' + res.mimeType + ';base64,' + res.base64;
       }
       document.getElementById('logoWidePickBtn').addEventListener('click', function () { document.getElementById('logoWideFile').click(); });
       document.getElementById('logoWideFile').addEventListener('change', function () {
@@ -1851,15 +1896,22 @@
             crop.min = Math.min(WIDE_W / w, WIDE_H / h); // พอดีกรอบ (เห็นทั้งรูป)
             var fill = Math.max(WIDE_W / w, WIDE_H / h);
             crop.max = Math.max(fill * 4, crop.min * 4);
+            // ขอบรูปเป็นสีขาวทึบ -> ติ๊ก "ทำพื้นหลังโปร่งใส" ไว้ให้ก่อน (ดูดีในโหมดกลางคืน)
+            var pc = document.createElement('canvas'); pc.width = 40; pc.height = 40; var pctx = pc.getContext('2d'); pctx.drawImage(img, 0, 0, 40, 40);
+            var pd = pctx.getImageData(0, 0, 40, 40).data, edgeWhite = 0, edgeN = 0;
+            for (var q = 0; q < 40; q++) { [[q, 0], [q, 39], [0, q], [39, q]].forEach(function (pt) { var o = (pt[1] * 40 + pt[0]) * 4; edgeN++; if (pd[o + 3] > 250 && pd[o] > 232 && pd[o + 1] > 232 && pd[o + 2] > 232) edgeWhite++; }); }
+            document.getElementById('logoCropClearBg').checked = edgeWhite / edgeN > 0.6;
             var ratio = (w / h) / (WIDE_W / WIDE_H);
             if (ratio > 0.96 && ratio < 1.04) { // อัตราส่วนตรง -> ย่อ/ขยายให้พอดีเลย ไม่ต้องครอป
               crop.scale = fill; crop.ox = (WIDE_W - w * fill) / 2; crop.oy = (WIDE_H - h * fill) / 2;
               useWide(exportWide(), f.name);
               return;
             }
-            document.getElementById('logoCropInfo').textContent = 'รูปขนาด ' + w + '×' + h + ' px (ไม่ใช่ 6:1) — ลากรูปเพื่อเลื่อนตำแหน่ง ใช้แถบซูมปรับขนาด ส่วนที่อยู่นอกกรอบจะถูกตัดออก (พื้นที่ว่างจะโปร่งใส)';
+            var rr = w / h, rTxt = rr >= 1 ? (Math.round(rr * 10) / 10) + ':1' : '1:' + (Math.round(10 / rr) / 10);
+            document.getElementById('logoCropInfo').innerHTML = 'Banner ต้องเป็น <b>960 × 160 px (6:1)</b> — รูปของคุณ <b>' + w + ' × ' + h + ' px (' + escapeHtml(rTxt) + ')</b><br />' +
+              (rr < 6 ? 'รูปสูงกว่า 6:1 — ค่าเริ่มต้น "ใช้ทั้งรูป" (ไม่ตัด Banner จะยาว ' + Math.round(160 * rr) + ' px) หรือกด "เต็มกรอบ" แล้วลากเลือกส่วนที่ต้องการ' : 'รูปยาวกว่า 6:1 — ลากรูปเลือกส่วนที่ต้องการ หรือกด "ใช้ทั้งรูป" (ไม่ตัด จะมีพื้นที่ว่างบน-ล่าง)');
             showModalEl(document.getElementById('logoCropModal'));
-            requestAnimationFrame(function () { setCropScale(fill, false); });
+            requestAnimationFrame(function () { setCropScale(rr < 6 ? crop.min : fill, false); });
           };
           img.onerror = function () { showToast('เปิดรูปนี้ไม่ได้ กรุณาใช้ไฟล์ PNG/JPG/WebP', true); };
           img.src = rd.result;
@@ -1872,6 +1924,7 @@
       });
       document.getElementById('logoCropFit').addEventListener('click', function () { setCropScale(crop.min, false); });
       document.getElementById('logoCropFill').addEventListener('click', function () { setCropScale(Math.max(WIDE_W / crop.img.naturalWidth, WIDE_H / crop.img.naturalHeight), false); });
+      document.getElementById('logoCropClearBg').addEventListener('change', scheduleCropResult);
       (function () {
         var stage = document.getElementById('logoCropStage'), drag = null;
         stage.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, ox: crop.ox, oy: crop.oy }; stage.setPointerCapture(e.pointerId); stage.classList.add('dragging'); });
@@ -1879,7 +1932,7 @@
           if (!drag) return;
           var k = WIDE_W / stage.clientWidth;
           crop.ox = drag.ox + (e.clientX - drag.x) * k; crop.oy = drag.oy + (e.clientY - drag.y) * k;
-          drawCrop();
+          drawCrop(); scheduleCropResult();
         });
         var end = function () { drag = null; stage.classList.remove('dragging'); };
         stage.addEventListener('pointerup', end); stage.addEventListener('pointercancel', end);
@@ -1896,7 +1949,7 @@
       }
       document.getElementById('setTopbarShowName').addEventListener('change', async function () {
         var cb = this, nextVal = cb.checked;
-        var ok = await askConfirm(nextVal ? 'แสดงชื่อเว็บไซต์ในแถบด้านบนสุดของทุกหน้า?' : 'ซ่อนชื่อเว็บไซต์ในแถบด้านบนสุดของทุกหน้า? (แสดงเฉพาะโลโก้)', 'ยืนยันการเปลี่ยนแปลง');
+        var ok = await askConfirm(nextVal ? 'แสดงชื่อเว็บไซต์ในแถบด้านบนสุดของทุกหน้า?' : 'ซ่อนชื่อเว็บไซต์ในแถบด้านบนสุดของทุกหน้า? (แสดงเฉพาะโลโก้/Banner)', 'ยืนยันการเปลี่ยนแปลง');
         if (!ok) { cb.checked = !nextVal; return; }
         var r = await withProgress('กำลังบันทึกการตั้งค่า', function () { return apiCall('adminUpdateSettings', { topbarShowName: nextVal }); }, { successLabel: 'บันทึกการตั้งค่าเรียบร้อยแล้ว' });
         if (r.ok) { resetSettingsCache(); applyBranding(); } else { cb.checked = !nextVal; showToast(r.error.message, true); }
@@ -1904,9 +1957,9 @@
       });
       document.getElementById('setSiteName').addEventListener('input', syncWidePreviewName);
       document.getElementById('logoWideRemoveBtn').addEventListener('click', async function () {
-        var ok = await askConfirm('เอาโลโก้แบบยาวออก? แถบด้านบนจะกลับไปแสดงโลโก้ + ชื่อเว็บไซต์ตามเดิม', 'ยืนยัน');
+        var ok = await askConfirm('เอา Banner เว็บไซต์ออก? แถบด้านบนจะกลับไปแสดงโลโก้ + ชื่อเว็บไซต์ตามเดิม', 'ยืนยัน');
         if (!ok) return;
-        var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSiteAsset', { type: 'logoWide', remove: true }); }, { successLabel: 'เอาโลโก้แบบยาวออกแล้ว' });
+        var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSiteAsset', { type: 'logoWide', remove: true }); }, { successLabel: 'เอา Banner ออกแล้ว' });
         if (r.ok) { _settingsCache = r.data; renderAssetPreview('logoWidePreview', ''); document.getElementById('logoWideRemoveBtn').hidden = true; document.getElementById('setTopbarShowName').checked = r.data.topbarShowName !== false; syncWidePreviewName(); applyBranding(); }
       });
 

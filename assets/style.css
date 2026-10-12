@@ -1817,3 +1817,24 @@ table.sum-files td.a { width: 1%; }
 .crop-controls input[type="range"] { flex: 1; accent-color: var(--primary); }
 .crop-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .crop-quick .btn { width: auto; }
+
+/* ---------- 1.54.121026: Banner เว็บไซต์ (เดิม "โลโก้แบบยาว") ---------- */
+/* แสดงจริงในแถบด้านบน: สูง 44 px ยาวสุด 264 px (6:1) · มือถือ 34 px / 180 px */
+.topbar .brand img.brand-logo-wide { height: 44px; max-width: 264px; }
+@media (max-width: 640px) { .topbar .brand img.brand-logo-wide { height: 34px; max-width: 180px; } }
+.wide-logo-preview .wlp-logo, .wide-logo-preview .wlp-logo img { height: 44px; }
+.wide-logo-preview .wlp-logo img { max-width: 264px; }
+.banner-size-card { display: flex; gap: 14px; align-items: center; padding: 12px; margin: 4px 0 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); max-width: 720px; }
+.bsc-box { flex: 0 0 auto; width: 180px; aspect-ratio: 6 / 1; border: 2px dashed var(--primary); border-radius: 6px; display: grid; place-items: center; background: var(--primary-light); }
+.bsc-box span { font-size: 0.72rem; font-weight: 800; color: var(--primary); }
+.bsc-text { font-size: 0.84rem; color: var(--text-muted); line-height: 1.55; }
+.bsc-text b { color: var(--text); }
+@media (max-width: 640px) { .banner-size-card { flex-direction: column; align-items: flex-start; } }
+.crop-bg { display: inline-flex; align-items: center; gap: 8px; font-size: 0.86rem; margin-left: auto; cursor: pointer; }
+.crop-result { margin-top: 12px; padding: 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.crop-result-h { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px; }
+.crop-topbar { display: flex; align-items: center; gap: 12px; height: 68px; padding: 0 16px; border-radius: 10px; margin-top: 6px; border: 1px solid rgba(0, 0, 0, 0.08); }
+.crop-topbar.light { background: #ffffff; color: #64748b; }
+.crop-topbar.dark { background: #0f172a; color: #94a3b8; border-color: rgba(255, 255, 255, 0.08); }
+.crop-topbar img { height: 44px; width: auto; max-width: 264px; object-fit: contain; }
+.crop-topbar .sp { flex: 1; }
