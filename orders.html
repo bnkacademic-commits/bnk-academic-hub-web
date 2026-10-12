@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.49.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.50.121026" />
 </head>
 <body>
   <!-- คลังคำสั่ง (ตั้งแต่ 1.43.111026 — เดิม "ไฟล์คำสั่ง" ของ 1.41): ทุกบัญชีที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ · แก้ไข/ลบได้เฉพาะเจ้าของ · PDF เท่านั้น
@@ -116,7 +116,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.49.121026"></script>
+  <script src="assets/api.js?v=1.50.121026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -356,11 +356,15 @@
         if (r1.data && r1.data.driveSynced === false) showToast('บันทึกข้อมูลแล้ว แต่ยังเปลี่ยนชื่อ/ย้ายไฟล์ใน Google Drive ไม่ได้ (ผู้ดูแลระบบต้องอัพเดต Drive relay)', true);
       } else {
         var file = ordSelectedFile;
-        var r2 = await withProgress('กำลังอัพโหลดคำสั่ง...', async function () {
+        var r2 = await withProgress('กำลังอัพโหลดคำสั่ง...', async function (p) {
+          // 1.50.121026: แสดงขั้นตอน + แถบคืบหน้าแบบประมาณจากขนาดไฟล์ + ตัวจับเวลา (ดู withProgress opts.upload ใน api.js)
+          p.setProgress(3, 'กำลังเตรียมไฟล์ ' + file.name);
           var prep = await apiCall('orderUploadPrepare', Object.assign({ fileName: file.name, mimeType: 'application/pdf', fileSize: file.size }, fields));
+          p.creep(8, 90, estimateUploadMs(file.size), 'กำลังอัพโหลด ' + file.name + ' (' + formatBytes(file.size) + ') ไปที่ Google Drive');
           var up = await uploadToRelay(file, prep);
+          p.setProgress(94, 'กำลังบันทึกรายการคำสั่ง');
           return apiCall('orderUploadFinalize', { orderId: prep.orderId, fileId: up.fileId, fileUrl: up.url, directUrl: up.directUrl, fileName: prep.uploadFileName || file.name, mimeType: 'application/pdf' });
-        }, { successLabel: 'เพิ่มคำสั่งแล้ว' });
+        }, { successLabel: 'เพิ่มคำสั่งแล้ว', upload: true });
         if (!r2.ok) return showErr(r2.error && r2.error.message);
       }
       closeModal();

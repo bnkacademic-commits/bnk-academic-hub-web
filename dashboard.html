@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.49.121026" />
+<link rel="stylesheet" href="assets/style.css?v=1.50.121026" />
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -177,7 +177,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.49.121026"></script>
+  <script src="assets/api.js?v=1.50.121026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -432,13 +432,20 @@
         var failed = [];
         for (var i = 0; i < filesToUpload.length; i++) {
           var f = filesToUpload[i];
-          p.setProgress(Math.round((i / filesToUpload.length) * 100), 'กำลังส่ง ' + (i + 1) + '/' + filesToUpload.length + ': ' + f.name);
+          // 1.50.121026: แต่ละไฟล์ได้ช่วงของแถบเท่ากัน — เตรียม -> อัพโหลด (ไหลตามเวลาที่ประมาณจากขนาดไฟล์) -> บันทึกรายการ
+          var seg = 100 / filesToUpload.length, s0 = i * seg;
+          var head = 'ไฟล์ ' + (i + 1) + '/' + filesToUpload.length + ': ' + f.name;
+          p.setProgress(s0, 'กำลังเตรียม ' + head);
           try {
             await submitWorkFile(f, {
               academicYear: academicYear,
               semester: semester,
               categoryId: categoryId,
-              customFieldValues: customFieldValues
+              customFieldValues: customFieldValues,
+              onStage: function (stage) {
+                if (stage === 'upload') p.creep(s0 + seg * 0.05, s0 + seg * 0.92, estimateUploadMs(f.size), 'กำลังอัพโหลด ' + head + ' (' + formatBytes(f.size) + ')');
+                else if (stage === 'finalize') p.setProgress(s0 + seg * 0.95, 'กำลังบันทึก ' + head);
+              }
             });
           } catch (err) {
             failed.push(f.name + ': ' + err.message);
@@ -449,7 +456,7 @@
           throw new Error('ส่งไม่สำเร็จ ' + failed.length + '/' + filesToUpload.length + ' ไฟล์ — ' + failed.join('; '));
         }
         return { count: filesToUpload.length };
-      }, { successLabel: 'ส่งงานทั้งหมด ' + filesToUpload.length + ' ไฟล์เรียบร้อยแล้ว' });
+      }, { successLabel: 'ส่งงานทั้งหมด ' + filesToUpload.length + ' ไฟล์เรียบร้อยแล้ว', upload: true });
 
       if (r.ok) {
         hideModalEl(uploadModal);
@@ -612,7 +619,10 @@
           return '<tr data-file-row="' + escapeHtml(s.id) + '"><td class="n">' + (i + 1) + '</td>' +
             '<td><div class="sub-file-name">' + fileIconHtml(s) + '<div><span class="sub-file-title">' + escapeHtml(s.title) + '</span>' + extra + '</div></div></td>' +
             '<td class="dt">' + escapeHtml(formatDateTimeThai(s.uploadedAt)) + '</td>' +
-            '<td class="a"><button type="button" class="icon-btn" data-file-preview="' + escapeHtml(s.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i></button>' +
+            // 1.50.121026: Word/Excel/PowerPoint ไม่พรีวิว (รูปแบบเพี้ยน) — ปุ่มเป็น "ดาวน์โหลด" ตรงๆ แทน
+            '<td class="a">' + (fileKindOf(s.title || s.fileName, s.mimeType) === 'office'
+              ? '<a class="icon-btn" href="' + escapeHtml(driveDownloadUrl(s.fileUrl)) + '" target="_blank" rel="noopener" download title="ดาวน์โหลด" aria-label="ดาวน์โหลด ' + escapeHtml(s.title) + '"><i class="fa-solid fa-download"></i></a>'
+              : '<button type="button" class="icon-btn" data-file-preview="' + escapeHtml(s.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i></button>') +
             '<button type="button" class="icon-btn del" data-file-del="' + escapeHtml(s.id) + '" title="ลบ" aria-label="ลบ ' + escapeHtml(s.title) + '"><i class="fa-solid fa-trash"></i></button></td></tr>';
         }).join('') + '</tbody></table>' +
         '<div class="sub-group-bar">' +
@@ -641,7 +651,7 @@
       function show(i) {
         var s = list[i];
         openFilePreview(drivePreviewUrl(s.fileUrl), s.title, s.fileUrl, undefined,
-          list.length > 1 ? { index: i, total: list.length, go: show } : null);
+          list.length > 1 ? { index: i, total: list.length, go: show } : null, fileKindOf(s.title || s.fileName, s.mimeType));
       }
       show(Math.max(0, Math.min(startIdx || 0, list.length - 1)));
     }

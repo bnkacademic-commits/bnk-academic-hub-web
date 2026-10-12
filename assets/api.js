@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.49.121026';
+var APP_VERSION = '1.50.121026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -369,6 +369,7 @@ async function submitWorkFile(file, meta) {
   // teacherUploadPrepare คืนมา) แทนชื่อไฟล์เดิมจากเครื่องผู้ใช้ — เผื่อกรณี Worker เวอร์ชันเก่ายังไม่ส่งค่านี้มา จึงย้อนกลับไปใช้
   // ชื่อไฟล์เดิมได้เสมอ (fallback)
   var uploadFileName = prep.uploadFileName || file.name;
+  if (meta.onStage) meta.onStage('upload');
   var base64 = await fileToBase64(file);
   var relayText;
   try {
@@ -389,6 +390,7 @@ async function submitWorkFile(file, meta) {
   }
   if (!relayJson.ok) throw new Error(relayJson.error || 'อัพโหลดไฟล์ไม่สำเร็จ');
   var result = relayJson.data;
+  if (meta.onStage) meta.onStage('finalize');
   return apiCall('teacherUploadFinalize', {
     submissionId: prep.submissionId,
     fileId: result.fileId,
@@ -737,8 +739,11 @@ function ensureSharedModals() {
         '<button type="button" class="modal-close-x" id="sharedProgressCloseX" aria-label="ปิด" hidden>✕</button>' +
         '<h3 id="sharedProgressTitle">กำลังดำเนินการ</h3>' +
         '<div id="sharedProgressBarWrap">' +
+          '<div class="progress-anim" id="sharedProgressAnim" aria-hidden="true"><span class="progress-ring"></span><i class="fa-solid fa-gear" id="sharedProgressIcon"></i></div>' +
           '<div class="progress-track"><div class="progress-bar-fill" id="sharedProgressBar"></div></div>' +
-          '<div class="progress-label" id="sharedProgressLabel"></div>' +
+          '<div class="progress-label" id="sharedProgressLabel" aria-live="polite"></div>' +
+          '<div class="progress-meta"><span id="sharedProgressPct"></span><span id="sharedProgressTime"></span></div>' +
+          '<div class="progress-note" id="sharedProgressNote" hidden><i class="fa-solid fa-triangle-exclamation"></i> กรุณาอย่าปิดหรือรีเฟรชหน้านี้จนกว่าจะเสร็จ</div>' +
         '</div>' +
         '<div class="progress-result" id="sharedProgressResult" hidden></div>' +
         '<div class="modal-actions">' +
@@ -819,7 +824,7 @@ function ensureSharedModals() {
     avatarErrBox.hidden = true;
     var r = await withProgress('กำลังอัพโหลดรูปโปรไฟล์', function () {
       return uploadResizedAvatar(_pendingAvatar);
-    }, { successLabel: 'อัพเดทรูปโปรไฟล์แล้ว' });
+    }, { successLabel: 'อัพเดทรูปโปรไฟล์แล้ว', upload: true });
     if (r.ok) {
       _pendingAvatar = null;
       avatarSaveBtn.hidden = true;
@@ -900,8 +905,33 @@ function askConfirm(msg, title) {
 
 // ---------- ป็อปอัพ "กำลังดำเนินการ" (Progress bar) ----------
 // เปิดหลังกดยืนยัน (askConfirm) แสดงระหว่างรอ backend ตอบกลับ แล้วให้ผู้ใช้กด "ตกลง" อีกครั้งเมื่อเสร็จ/error
-function _showProgressModal(title) {
+// 1.50.121026: แอนิเมชันระหว่างรอ (ไอคอนเคลื่อนไหว + วงหมุน + ตัวจับเวลา + แถบคืบหน้าแบบประมาณการ) ให้เห็นว่าระบบยังทำงานอยู่
+// และกันปิด/รีเฟรชหน้าระหว่างอัพโหลด (beforeunload) — การอัพโหลดไป Apps Script วัดความคืบหน้าจริงเป็นไบต์ไม่ได้
+// (ถ้าฟัง xhr.upload.onprogress เบราว์เซอร์จะส่ง CORS preflight ซึ่ง Apps Script ไม่รองรับ) จึงใช้การประมาณจากขนาดไฟล์แทน (creepProgress)
+var _progressRun = { timer: null, creep: null, started: 0, upload: false };
+function _progressBeforeUnload(e) { e.preventDefault(); e.returnValue = ''; return ''; }
+function _stopProgressTimers() {
+  if (_progressRun.timer) clearInterval(_progressRun.timer);
+  if (_progressRun.creep) clearInterval(_progressRun.creep);
+  _progressRun.timer = null; _progressRun.creep = null;
+  window.removeEventListener('beforeunload', _progressBeforeUnload);
+}
+function _fmtElapsed(ms) { var sec = Math.floor(ms / 1000); return Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2); }
+function _showProgressModal(title, opts) {
+  opts = opts || {};
   ensureSharedModals();
+  _stopProgressTimers();
+  _progressRun.started = Date.now();
+  _progressRun.upload = !!opts.upload;
+  document.getElementById('sharedProgressIcon').className = 'fa-solid ' + (opts.upload ? 'fa-cloud-arrow-up is-upload' : 'fa-gear is-spin');
+  document.getElementById('sharedProgressNote').hidden = !opts.upload;
+  document.getElementById('sharedProgressPct').textContent = '';
+  document.getElementById('sharedProgressTime').textContent = '';
+  _progressRun.timer = setInterval(function () {
+    var el = document.getElementById('sharedProgressTime');
+    if (el) el.textContent = 'ผ่านไป ' + _fmtElapsed(Date.now() - _progressRun.started);
+  }, 1000);
+  if (opts.upload) window.addEventListener('beforeunload', _progressBeforeUnload);
   document.getElementById('sharedProgressTitle').textContent = title || 'กำลังดำเนินการ';
   document.getElementById('sharedProgressBarWrap').hidden = false;
   document.getElementById('sharedProgressResult').hidden = true;
@@ -911,20 +941,43 @@ function _showProgressModal(title) {
   setProgressIndeterminate('กำลังดำเนินการ...');
   showModalEl(document.getElementById('sharedProgressModal'));
 }
-function setProgress(percent, label) {
+function _setBar(percent) {
   var bar = document.getElementById('sharedProgressBar');
   if (!bar) return;
   bar.classList.remove('indeterminate');
-  bar.style.width = Math.max(0, Math.min(100, percent)) + '%';
+  var v = Math.max(0, Math.min(100, percent));
+  bar.style.width = v + '%';
+  var pct = document.getElementById('sharedProgressPct');
+  if (pct) pct.textContent = Math.round(v) + '%';
+  return v;
+}
+function setProgress(percent, label) {
+  if (_progressRun.creep) { clearInterval(_progressRun.creep); _progressRun.creep = null; }
+  _setBar(percent);
   if (label !== undefined) document.getElementById('sharedProgressLabel').textContent = label;
 }
+// แถบคืบหน้าแบบประมาณการ: ค่อยๆ ไหลจาก from ไปหา to (ไม่ถึง to จนกว่าจะเรียก setProgress ครั้งถัดไป) ตามเวลาที่คาดไว้ estMs
+function creepProgress(from, to, estMs, label) {
+  setProgress(from, label);
+  var t0 = Date.now(), tau = Math.max(800, (estMs || 4000) / 2.2);
+  _progressRun.creep = setInterval(function () {
+    var k = 1 - Math.exp(-(Date.now() - t0) / tau);
+    _setBar(from + (to - from) * 0.97 * k);
+  }, 200);
+}
+// เวลาที่คาดว่าจะใช้ส่งไฟล์ขนาด bytes ไป Drive relay (base64 + อัพโหลด + Apps Script บันทึกไฟล์)
+function estimateUploadMs(bytes) { return 2500 + (Number(bytes) || 0) * 1.37 / 900; }
 function setProgressIndeterminate(label) {
+  if (_progressRun.creep) { clearInterval(_progressRun.creep); _progressRun.creep = null; }
+  var pct = document.getElementById('sharedProgressPct');
+  if (pct) pct.textContent = '';
   var bar = document.getElementById('sharedProgressBar');
   if (!bar) return;
   bar.classList.add('indeterminate');
   if (label !== undefined) document.getElementById('sharedProgressLabel').textContent = label;
 }
 function _finishProgress(message, isError) {
+  _stopProgressTimers();
   return new Promise(function (resolve) {
     document.getElementById('sharedProgressBarWrap').hidden = true;
     var resultBox = document.getElementById('sharedProgressResult');
@@ -952,10 +1005,11 @@ function _finishProgress(message, isError) {
  */
 async function withProgress(title, workFn, opts) {
   opts = opts || {};
-  _showProgressModal(title);
+  _showProgressModal(title, { upload: !!opts.upload });
   try {
     var data = await workFn({
       setProgress: setProgress,
+      creep: creepProgress,
       setLabel: function (label) { document.getElementById('sharedProgressLabel').textContent = label; }
     });
     await _finishProgress(opts.successLabel || 'ดำเนินการสำเร็จ', false);
@@ -1203,8 +1257,34 @@ function driveDownloadUrl(url) {
   var m = /\/file\/d\/([A-Za-z0-9_-]+)/.exec(String(url || '')) || /[?&]id=([A-Za-z0-9_-]+)/.exec(String(url || ''));
   return m ? 'https://drive.google.com/uc?export=download&id=' + m[1] : '';
 }
+// ---------- ชนิดไฟล์สำหรับพรีวิว (1.50.121026) ----------
+// 'pdf' / 'video' = ตัวแสดงตัวอย่างของ Google Drive (iframe) · 'image' = แสดงรูปตรงจาก Drive (<img>) เพราะตัวพรีวิวของ Drive
+// มักขึ้น "แสดงตัวอย่างไม่ได้" กับรูป (โดยเฉพาะไฟล์ที่ส่งมาโดยไม่มี mimeType) · 'office' = Word/Excel/PowerPoint ไม่พรีวิว
+// (Google แปลงแล้วรูปแบบเพี้ยน) ให้ดาวน์โหลดไปเปิดในคอมพิวเตอร์แทน · 'other' = แสดงตัวอย่างไม่ได้ ให้ดาวน์โหลด
+function fileKindOf(name, mime) {
+  var n = String(name || '').toLowerCase(), m = String(mime || '').toLowerCase();
+  if (/pdf/.test(m) || /\.pdf$/.test(n)) return 'pdf';
+  if (/\.(docx?|dotx?|xlsx?|xlsm|xltx?|csv|pptx?|ppsx?|potx?|odt|ods|odp|rtf)$/.test(n) || /msword|wordprocessingml|ms-excel|spreadsheetml|ms-powerpoint|presentationml|opendocument|rtf/.test(m)) return 'office';
+  if (/^image\//.test(m) || /\.(jpe?g|png|gif|webp|bmp|svg|heic|heif|tiff?)$/.test(n)) return 'image';
+  if (/^video\//.test(m) || /\.(mp4|mov|m4v|webm|avi|mkv)$/.test(n)) return 'video';
+  if (/^audio\//.test(m) || /\.(mp3|wav|m4a|ogg)$/.test(n)) return 'video';
+  return m || n ? 'other' : 'pdf';
+}
+function driveFileId(url) {
+  var m = /\/file\/d\/([A-Za-z0-9_-]+)/.exec(String(url || '')) || /[?&]id=([A-Za-z0-9_-]+)/.exec(String(url || '')) || /googleusercontent\.com\/d\/([A-Za-z0-9_-]+)/.exec(String(url || ''));
+  return m ? m[1] : '';
+}
+// ชื่อชนิดไฟล์สำหรับข้อความในป็อปอัพดาวน์โหลด
+function officeKindLabel(name) {
+  var n = String(name || '').toLowerCase();
+  if (/\.(xlsx?|xlsm|xltx?|csv|ods)$/.test(n)) return 'Excel';
+  if (/\.(pptx?|ppsx?|potx?|odp)$/.test(n)) return 'PowerPoint';
+  return 'Word';
+}
+
 // nav (ตั้งแต่ 1.49.121026, ไม่บังคับ): { index, total, go(i) } — พรีวิวไล่ทีละไฟล์ มีปุ่มก่อนหน้า/ถัดไป + ลูกศรซ้าย/ขวาบนคีย์บอร์ด
-function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav) {
+// kind (ตั้งแต่ 1.50.121026, ไม่บังคับ): ผลจาก fileKindOf() — ไม่ส่ง = พรีวิวผ่าน Google Drive (iframe) เหมือนเดิม
+function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav, kind) {
   if (downloadUrl === undefined) downloadUrl = driveDownloadUrl(openUrl || previewUrl);
   var old = document.getElementById('filePreviewOverlay');
   var reuse = !!old && !!nav; // เปลี่ยนไฟล์ในโหมดไล่ทีละไฟล์ — ไม่ต้องเล่นแอนิเมชันเปิดใหม่
@@ -1222,11 +1302,11 @@ function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav) {
           '<span class="file-preview-count">' + (nav.index + 1) + '/' + nav.total + '</span>' +
           '<button type="button" class="icon-btn file-preview-next" aria-label="ไฟล์ถัดไป"' + (nav.index >= nav.total - 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button></div>' : '') +
         '<div class="file-preview-title">' + escapeHtml(title || 'พรีวิวไฟล์') + '</div>' +
-        (openUrl ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i><span class="fp-lbl"> เปิดไฟล์</span></a>' : '') +
+        (openUrl && kind !== 'office' ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i><span class="fp-lbl"> เปิดไฟล์</span></a>' : '') +
         (downloadUrl ? '<a class="btn btn-primary btn-sm file-preview-dl" href="' + escapeHtml(downloadUrl) + '" target="_blank" rel="noopener" download><i class="fa-solid fa-download"></i><span class="fp-lbl"> ดาวน์โหลด</span></a>' : '') +
         '<button type="button" class="file-preview-close" aria-label="ปิดพรีวิว">✕</button>' +
       '</div>' +
-      '<iframe class="file-preview-iframe" src="' + escapeHtml(previewUrl) + '" title="' + escapeHtml(title || 'พรีวิวไฟล์') + '" allow="autoplay" loading="eager"></iframe>' +
+      _filePreviewBodyHtml(previewUrl, title, openUrl, downloadUrl, kind) +
     '</div>';
   function close() {
     document.removeEventListener('keydown', onKey);
@@ -1241,7 +1321,18 @@ function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav) {
     else if (nav && e.key === 'ArrowRight') step(1);
   }
   ov.__dispose = function () { document.removeEventListener('keydown', onKey); };
-  ov.addEventListener('click', function (e) { if (e.target === ov) close(); }); // กดพื้นที่ว่างรอบไฟล์ = ปิด
+  ov.addEventListener('click', function (e) { if (e.target === ov || (e.target.classList && e.target.classList.contains('file-preview-imgwrap'))) close(); }); // กดพื้นที่ว่างรอบไฟล์ = ปิด
+  // รูปภาพ: ลิงก์ตรงของ Drive ไม่ได้ -> ลองภาพย่อของ Drive -> ไม่ได้อีกแสดงข้อความ + ปุ่มดาวน์โหลด
+  var img = ov.querySelector('.file-preview-img');
+  if (img) {
+    img.addEventListener('error', function () {
+      var alt = img.getAttribute('data-fallback');
+      if (alt) { img.removeAttribute('data-fallback'); img.src = alt; return; }
+      var wrap = img.parentNode;
+      wrap.outerHTML = _filePreviewDlPanel('fa-file-image', 'แสดงรูปตัวอย่างไม่ได้', 'รูปนี้อาจเป็นชนิดที่เบราว์เซอร์แสดงไม่ได้ (เช่น HEIC) หรือยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์" — ดาวน์โหลดไปเปิดในเครื่องได้เลย', downloadUrl, openUrl);
+    });
+    img.addEventListener('load', function () { img.classList.add('loaded'); });
+  }
   ov.querySelector('.file-preview-close').addEventListener('click', close);
   if (nav) {
     ov.querySelector('.file-preview-prev').addEventListener('click', function () { step(-1); });
@@ -1252,6 +1343,29 @@ function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav) {
   document.body.classList.add('file-preview-open');
   if (reuse) ov.classList.add('show', 'no-anim'); else requestAnimationFrame(function () { ov.classList.add('show'); });
   return close;
+}
+
+function _filePreviewDlPanel(icon, heading, text, downloadUrl, openUrl) {
+  return '<div class="file-preview-dlpanel"><i class="fa-solid ' + icon + '" aria-hidden="true"></i>' +
+    '<div class="fp-dl-h">' + escapeHtml(heading) + '</div><p>' + escapeHtml(text) + '</p>' +
+    (downloadUrl ? '<a class="btn btn-primary file-preview-dl-big" href="' + escapeHtml(downloadUrl) + '" target="_blank" rel="noopener" download><i class="fa-solid fa-download"></i> ดาวน์โหลดไฟล์</a>' : '') +
+    (!downloadUrl && openUrl ? '<a class="btn btn-secondary" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener">เปิดไฟล์</a>' : '') +
+    '</div>';
+}
+function _filePreviewBodyHtml(previewUrl, title, openUrl, downloadUrl, kind) {
+  var id = driveFileId(openUrl || previewUrl);
+  if (kind === 'image' && id) {
+    return '<div class="file-preview-imgwrap"><img class="file-preview-img" src="https://lh3.googleusercontent.com/d/' + id + '=w2000" data-fallback="https://drive.google.com/thumbnail?id=' + id + '&sz=w2000" alt="' + escapeHtml(title || 'รูปภาพ') + '" referrerpolicy="no-referrer" /></div>';
+  }
+  if (kind === 'office') {
+    var lbl = officeKindLabel(title);
+    var ic = lbl === 'Excel' ? 'fa-file-excel' : lbl === 'PowerPoint' ? 'fa-file-powerpoint' : 'fa-file-word';
+    return _filePreviewDlPanel(ic + ' office-' + lbl.toLowerCase(), 'ไฟล์ ' + lbl + ' — ดาวน์โหลดไปเปิดในคอมพิวเตอร์', 'ไฟล์ ' + lbl + ' แสดงตัวอย่างบนเว็บแล้วรูปแบบเอกสารจะเพี้ยน จึงให้ดาวน์โหลดไปเปิดด้วยโปรแกรม ' + lbl + ' ในเครื่องแทน', downloadUrl, openUrl);
+  }
+  if (kind === 'other') {
+    return _filePreviewDlPanel('fa-file', 'ไฟล์ชนิดนี้แสดงตัวอย่างไม่ได้', 'ดาวน์โหลดไปเปิดด้วยโปรแกรมในเครื่องได้เลย', downloadUrl, openUrl);
+  }
+  return '<iframe class="file-preview-iframe" src="' + escapeHtml(previewUrl) + '" title="' + escapeHtml(title || 'พรีวิวไฟล์') + '" allow="autoplay" loading="eager"></iframe>';
 }
 
 // ---------- ป็อปอัพทั้งเว็บ: กดพื้นที่ว่างรอบป็อปอัพ = ป็อปอัพเด้งกระพริบเตือน (ไม่ปิด) — ตั้งแต่ 1.46.121026 ----------
