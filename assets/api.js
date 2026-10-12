@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.54.121026';
+var APP_VERSION = '1.55.131026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -294,11 +294,12 @@ async function getSiteSettings() {
 var BRAND_CACHE_KEY = 'bnkah_brand';
 function cachedBrand() { try { return JSON.parse(localStorage.getItem(BRAND_CACHE_KEY) || 'null'); } catch (e) { return null; } }
 function cacheBrand(s) {
-  try { localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ siteName: s.siteName || '', logoDataUrl: s.logoDataUrl || '', logoWideDataUrl: s.logoWideDataUrl || '', topbarShowName: s.topbarShowName !== false })); } catch (e) { /* เต็ม/ไม่มี localStorage — ไม่เป็นไร */ }
+  try { localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ siteName: s.siteName || '', logoDataUrl: s.logoDataUrl || '', logoWideDataUrl: s.logoWideDataUrl || '', loginHeroDataUrl: s.loginHeroDataUrl || '', topbarShowName: s.topbarShowName !== false })); } catch (e) { /* เต็ม/ไม่มี localStorage — ไม่เป็นไร */ }
 }
 // วาดส่วนแบรนด์ (ไม่ต้องรอ) จาก object ค่าตั้งค่า
 function renderBrand(s) {
   if (!s) return;
+  renderLoginHero(s);
   document.querySelectorAll('.js-site-name').forEach(function (el) { el.textContent = s.siteName || 'BNKAcademicHub'; });
   document.querySelectorAll('.js-brand-logo').forEach(function (el) {
     // โลโก้แบบยาว (settings.logoWideDataUrl, 1.52) แสดงแทนโลโก้เล็ก เฉพาะแถบด้านบนสุด (ปุ่ม .js-home-btn)
@@ -321,6 +322,20 @@ function renderBrand(s) {
       el.innerHTML = '<span class="logo-dot"></span>';
     }
   });
+}
+// 1.55.131026: รูปหน้าเข้าสู่ระบบ (settings.loginHeroDataUrl) แสดงแทนโลโก้ + ชื่อเว็บ + คำบรรยายที่หัวการ์ด (.login-hero ใน index.html)
+// index.html มีสคริปต์สั้นๆ ใส่รูปจากค่าที่จำไว้ (bnkah_brand) ทันทีหลังหัวการ์ดถูกสร้าง — ไม่เห็นหัวสีม่วงแวบก่อนรูปขึ้น
+function renderLoginHero(s) {
+  var hero = document.querySelector('.login-hero');
+  if (!hero) return;
+  var url = s.loginHeroDataUrl || '';
+  hero.classList.toggle('has-image', !!url);
+  var im = hero.querySelector('img.login-hero-img');
+  if (url) {
+    if (!im) { im = document.createElement('img'); im.className = 'login-hero-img'; hero.appendChild(im); }
+    if (im.getAttribute('src') !== url) im.setAttribute('src', url);
+    im.alt = s.siteName || 'BNKAcademicHub';
+  } else if (im) { im.remove(); }
 }
 async function applyBranding() {
   var s = await getSiteSettings();
