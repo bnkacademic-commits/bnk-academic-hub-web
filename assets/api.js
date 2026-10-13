@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.59.131026';
+var APP_VERSION = '1.60.131026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -703,6 +703,14 @@ function termTagsHtml(semester, academicYear, opts) {
   var label = sem === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + sem;
   return '<span class="term-tag ' + cls + '">' + escapeHtml(label) + '</span>' +
     (academicYear ? '<span class="year-tag">' + (opts.short ? 'ปี ' : 'ปีการศึกษา ') + escapeHtml(String(academicYear)) + '</span>' : '');
+}
+// 1.60: เลขที่เกียรติบัตรภายใน — ตรงกับ formatCertNo ใน worker/src/handlers/certs.js ({ปีการศึกษา} {เลขที่} {ภาคเรียน})
+function formatCertNo(format, digits, year, num, semester) {
+  var d = Math.max(1, Math.min(8, Number(digits) || 4));
+  var n = String(num); while (n.length < d) n = '0' + n;
+  var f = String(format || 'บนค. {ปีการศึกษา}/{เลขที่}');
+  if (f.indexOf('{เลขที่}') === -1) f += ' {เลขที่}';
+  return f.replace(/\{ปีการศึกษา\}/g, year).replace(/\{เลขที่\}/g, n).replace(/\{ภาคเรียน\}/g, semester === 'summer' ? 'ฤดูร้อน' : String(semester || '')).replace(/\s+/g, ' ').trim();
 }
 // 1.57: จำนวนวันที่เหลือถึงวันสุดท้ายของกำหนดส่ง (นับตามวันที่ ไม่สนเวลา) — คืน { days, text, cls } หรือ null
 function daysLeftInfo(endDateStr, now) {
