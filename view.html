@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.58.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.59.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -54,6 +54,8 @@
       </div>
     </div>
     <div id="content"><div class="loading">กำลังโหลดข้อมูล</div></div>
+    <!-- 1.59: เกียรติบัตรประเภทครูจากคลังเกียรติบัตร (ครูคนนี้เป็นผู้ได้รับ) — ใช้ตัวกรองปี/ภาคเรียน/ค้นหาเดียวกัน -->
+    <div id="certsBox"></div>
   </div>
 
   <div id="app-footer"></div>
@@ -69,7 +71,7 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.58.131026"></script>
+  <script src="assets/api.js?v=1.59.131026"></script>
   <script>
     mountFooter();
     applyBranding();
@@ -192,7 +194,7 @@
     function fillViewFilters() {
       var yearSel = document.getElementById('viewFilterYear');
       var curYear = yearSel.value;
-      var years = Array.from(new Set(allGroups.map(function (g) { return g.academicYear; }))).filter(Boolean);
+      var years = Array.from(new Set(allGroups.map(function (g) { return g.academicYear; }).concat(allCerts.map(function (c) { return c.academicYear; })))).filter(Boolean); // 1.59: รวมปีของเกียรติบัตร
       years.sort().reverse();
       yearSel.innerHTML = '<option value="">ทุกปีการศึกษา</option>' + years.map(function (y) {
         return '<option value="' + escapeHtml(y) + '">ปีการศึกษา ' + escapeHtml(y) + '</option>';
@@ -215,10 +217,47 @@
       document.getElementById('viewFilterSemester').value = term.semester;
     }
 
+    // ---------- 1.59: เกียรติบัตรจากคลังเกียรติบัตร ----------
+    var allCerts = [];
+    var TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    function renderCerts() {
+      var box = document.getElementById('certsBox');
+      var yearFilter = document.getElementById('viewFilterYear').value, semFilter = document.getElementById('viewFilterSemester').value;
+      var q = document.getElementById('viewSearchInput').value.trim().toLowerCase();
+      var list = allCerts.filter(function (c) {
+        if (yearFilter && c.academicYear !== yearFilter) return false;
+        if (semFilter && c.semester !== semFilter) return false;
+        if (q && (c.activity + ' ' + c.competition + ' ' + c.award).toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+      if (!list.length) { box.innerHTML = ''; return; }
+      box.innerHTML = '<div class="card"><div class="year-group-title" style="margin-bottom:10px;"><i class="fa-solid fa-award" aria-hidden="true"></i> เกียรติบัตร (' + list.length + ')</div><ul class="ordc-list view-certs">' + list.map(function (c) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(c.certDate || '') || [];
+        return '<li class="ordc-item"><div class="ordc-main">' +
+          '<div class="ordc-date" aria-hidden="true"><span class="m">' + (m[2] ? TH_M[Number(m[2]) - 1] : '—') + '</span><span class="d">' + (m[3] ? Number(m[3]) : '?') + '</span><span class="y">' + (m[1] ? Number(m[1]) + 543 : '') + '</span></div>' +
+          '<div class="ordc-body"><div class="ordc-title">' + escapeHtml(c.activity) + (c.competition ? ' <span class="cert-comp">· ' + escapeHtml(c.competition) + '</span>' : '') + '</div>' +
+          '<div class="ordc-chips">' + termTagsHtml(c.semester, c.academicYear) +
+            (c.award ? '<span class="ordc-chip cert-award"><i class="fa-solid fa-trophy"></i> ' + escapeHtml(c.award) + '</span>' : '') +
+            '<span class="ordc-chip">' + (c.scope === 'internal' ? 'ภายในโรงเรียน' : 'ภายนอกโรงเรียน') + '</span></div></div>' +
+          ((c.files || []).length ? '<div class="ordc-btns"><button type="button" class="icon-btn ord-ic" data-cert-preview="' + escapeHtml(c.id) + '" title="ดูเกียรติบัตร" aria-label="ดูเกียรติบัตร ' + escapeHtml(c.activity) + '"><i class="fa-solid fa-eye"></i></button></div>' : '') +
+          '</div></li>';
+      }).join('') + '</ul></div>';
+    }
+    document.getElementById('certsBox').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-cert-preview]'); if (!b) return;
+      var c = allCerts.filter(function (x) { return x.id === b.getAttribute('data-cert-preview'); })[0]; if (!c) return;
+      var fs = c.files || [];
+      (function show(i) {
+        var f = fs[i];
+        openFilePreview(f.previewUrl || drivePreviewUrl(f.fileUrl), c.activity + (fs.length > 1 ? ' — ไฟล์ที่ ' + (i + 1) : ''), f.fileUrl, undefined, fs.length > 1 ? { index: i, total: fs.length, go: show } : null, fileKindOf(f.name, f.mimeType));
+      })(0);
+    });
+
     function renderFilteredContent() {
+      renderCerts();
       var content = document.getElementById('content');
       if (allGroups.length === 0) {
-        content.innerHTML = '<div class="card"><div class="empty-state">ยังไม่มีผลงานที่เผยแพร่</div></div>';
+        content.innerHTML = allCerts.length ? '' : '<div class="card"><div class="empty-state">ยังไม่มีผลงานที่เผยแพร่</div></div>';
         return;
       }
       var yearFilter = document.getElementById('viewFilterYear').value;
@@ -315,7 +354,8 @@
         note.textContent = data.status === 'archived' ? 'บัญชีนี้ถูกระงับ' : '';
 
         allGroups = data.groups || [];
-        document.getElementById('viewFilterBar').hidden = allGroups.length === 0;
+        allCerts = data.certificates || []; // 1.59
+        document.getElementById('viewFilterBar').hidden = allGroups.length === 0 && allCerts.length === 0;
         fillViewFilters();
         // ตั้งค่าเริ่มต้นตัวกรองแค่ตอนโหลดหน้าครั้งแรกเท่านั้น (ครั้งต่อไป เช่น กดรีเฟรช คงค่าตัวกรองที่เลือกไว้เอง — ปุ่มรีเฟรชจัดการ reset เอง)
         if (!_viewFiltersInitialized) {

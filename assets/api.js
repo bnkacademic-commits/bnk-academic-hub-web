@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.58.131026';
+var APP_VERSION = '1.59.131026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -298,7 +298,7 @@ async function getSiteSettings() {
 var BRAND_CACHE_KEY = 'bnkah_brand';
 function cachedBrand() { try { return JSON.parse(localStorage.getItem(BRAND_CACHE_KEY) || 'null'); } catch (e) { return null; } }
 function cacheBrand(s) {
-  try { localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ siteName: s.siteName || '', logoDataUrl: s.logoDataUrl || '', logoWideDataUrl: s.logoWideDataUrl || '', loginHeroDataUrl: s.loginHeroDataUrl || '', topbarShowName: s.topbarShowName !== false, themeMode: s.themeMode || 'system', themeColor: s.themeColor || '', departmentColors: s.departmentColors || {} })); } catch (e) { /* เต็ม/ไม่มี localStorage — ไม่เป็นไร */ }
+  try { localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ siteName: s.siteName || '', logoDataUrl: s.logoDataUrl || '', logoWideDataUrl: s.logoWideDataUrl || '', loginHeroDataUrl: s.loginHeroDataUrl || '', topbarShowName: s.topbarShowName !== false, navOrder: Array.isArray(s.navOrder) ? s.navOrder : [], themeMode: s.themeMode || 'system', themeColor: s.themeColor || '', departmentColors: s.departmentColors || {} })); } catch (e) { /* เต็ม/ไม่มี localStorage — ไม่เป็นไร */ }
 }
 // วาดส่วนแบรนด์ (ไม่ต้องรอ) จาก object ค่าตั้งค่า
 function renderBrand(s) {
@@ -413,7 +413,7 @@ function renderLoginHero(s) {
 }
 async function applyBranding() {
   var s = await getSiteSettings();
-  if (!s.__fallback) { cacheBrand(s); renderBrand(s); applyThemeColor(s); }
+  if (!s.__fallback) { cacheBrand(s); renderBrand(s); applyThemeColor(s); reorderSideNav(s.navOrder); }
   if (s.siteName && document.title) {
     document.title = document.title.replace(/BNKAcademicHub/, s.siteName);
   }
@@ -680,7 +680,7 @@ var ICON_FA = {
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
   sun: 'fa-sun', palette: 'fa-palette', layout: 'fa-table-cells-large', pin: 'fa-thumbtack', clock: 'fa-clock',
-  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature'
+  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -1171,6 +1171,44 @@ async function withProgress(title, workFn, opts) {
 }
 
 // ---------- Shared chrome: topbar + profile dropdown + footer ----------
+// ---------- ลำดับเมนูข้าง (ตั้งแต่ 1.59 — Super Admin จัดลำดับได้ที่ ตั้งค่าระบบ → ทั่วไป) ----------
+// slot = ตำแหน่งในเมนู (หน้าแรกของครู/เจ้าหน้าที่ กับของผู้บริหารเป็น slot เดียวกัน 'home') · who = บัญชีที่มองเห็น (ใช้แสดงป้ายในหน้าตั้งค่า)
+var NAV_SLOTS = [
+  { slot: 'home', label: 'หน้าแรก', icon: 'home', who: ['teacher', 'staff', 'exec'] },
+  { slot: 'memo', label: 'จัดทำบันทึกข้อความ', icon: 'memo', who: ['teacher', 'staff'] },
+  { slot: 'summary', label: 'สรุปรวมการส่งงาน', icon: 'summary', who: ['staff', 'exec', 'super'] },
+  { slot: 'announce', label: 'ประกาศและปฏิทิน', icon: 'announce', who: ['staff', 'exec', 'super'] },
+  { slot: 'directory', label: 'ทำเนียบบุคลากร', icon: 'directory', who: ['all'] },
+  { slot: 'orders', label: 'คลังคำสั่ง', icon: 'orders', who: ['all'] },
+  { slot: 'certs', label: 'คลังเกียรติบัตร', icon: 'certs', who: ['all'] },
+  { slot: 'settings', label: 'ตั้งค่าระบบ', icon: 'settings', who: ['all'] }
+];
+var NAV_DEFAULT_ORDER = NAV_SLOTS.map(function (x) { return x.slot; });
+// ลำดับที่ใช้จริง: ค่าที่บันทึกไว้ (เฉพาะ slot ที่รู้จัก) + slot ที่ขาด (เช่นเมนูใหม่ในรุ่นถัดไป) แทรกตามตำแหน่งเริ่มต้น
+function normalizeNavOrder(order) {
+  var out = [];
+  (Array.isArray(order) ? order : []).forEach(function (k) { if (NAV_DEFAULT_ORDER.indexOf(k) !== -1 && out.indexOf(k) === -1) out.push(k); });
+  NAV_DEFAULT_ORDER.forEach(function (k, i) {
+    if (out.indexOf(k) !== -1) return;
+    var prev = NAV_DEFAULT_ORDER.slice(0, i).reverse().filter(function (x) { return out.indexOf(x) !== -1; })[0];
+    out.splice(prev ? out.indexOf(prev) + 1 : 0, 0, k);
+  });
+  return out;
+}
+function currentNavOrder() {
+  var s = _settingsCache && !_settingsCache.__fallback ? _settingsCache : cachedBrand();
+  return normalizeNavOrder(s && s.navOrder);
+}
+function navSlotOf(key) { return key === 'dashboard' || key === 'executive' ? 'home' : key; }
+// เรียงเมนูในแถบข้างที่วาดไปแล้วใหม่ (ค่าตั้งค่าโหลดเสร็จทีหลัง/เพิ่งบันทึกลำดับใหม่)
+function reorderSideNav(order) {
+  var list = document.querySelector('#app-sidenav .sidenav-list');
+  if (!list) return;
+  normalizeNavOrder(order).forEach(function (slot) {
+    var a = list.querySelector('a[data-nav-slot="' + slot + '"]');
+    if (a) list.appendChild(a);
+  });
+}
 function navLinksFor(session) {
   var links = [];
   var isExec = !!session && session.role === 'executive';
@@ -1193,12 +1231,17 @@ function navLinksFor(session) {
   if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
   // "คลังคำสั่ง" (ตั้งแต่ 1.41.111026 ชื่อเดิม "ไฟล์คำสั่ง"; เปลี่ยนชื่อใน 1.43.111026): ทุกบทบาทที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ — แก้ไข/ลบได้เฉพาะเจ้าของ
   if (session) links.push({ href: 'orders.html', label: 'คลังคำสั่ง', key: 'orders', icon: 'orders' });
+  // "คลังเกียรติบัตร" (ตั้งแต่ 1.59): ทุกบัญชีที่ล็อกอินเห็น
+  if (session) links.push({ href: 'certs.html', label: 'คลังเกียรติบัตร', key: 'certs', icon: 'certs' });
   // 1.45.111026: ทุกบัญชีมีเมนู "ตั้งค่าระบบ" (ครู/ผู้บริหารเห็นเฉพาะแท็บ Signature Credit)
   if (session) {
     // หมายเหตุ: เมนู "จัดการ Layout" (V11.1) ถูกยกเลิกตั้งแต่ V11.5 — ทั้งรูปแบบการ์ด (V11.3) และลำดับการแสดงผล (V11.5)
     // ย้ายไปรวมอยู่ในหน้า "ตั้งค่าระบบ" (ตั้งแต่ 1.32.101026 อยู่ในแท็บ "ข้อมูลหลัก") (Super Admin เท่านั้น)
     links.push({ href: 'settings.html', label: 'ตั้งค่าระบบ', key: 'settings', icon: 'settings' });
   }
+  var order = currentNavOrder(); // 1.59: เรียงตามลำดับที่ Super Admin ตั้ง
+  links.forEach(function (l) { l.slot = navSlotOf(l.key); });
+  links.sort(function (a, b) { return order.indexOf(a.slot) - order.indexOf(b.slot); });
   return links;
 }
 
@@ -1224,7 +1267,7 @@ function mountSideNav(links, activePage) {
   aside.className = 'sidenav no-print';
   aside.setAttribute('aria-label', 'เมนูหลัก');
   aside.innerHTML = '<nav class="sidenav-list">' + links.map(function (l) {
-    return '<a href="' + l.href + '" class="sidenav-item' + (l.key === activePage ? ' active' : '') + '" title="' + escapeHtml(l.label) + '"' + (l.key === activePage ? ' aria-current="page"' : '') + '>' +
+    return '<a href="' + l.href + '" data-nav-slot="' + escapeHtml(l.slot || navSlotOf(l.key)) + '" class="sidenav-item' + (l.key === activePage ? ' active' : '') + '" title="' + escapeHtml(l.label) + '"' + (l.key === activePage ? ' aria-current="page"' : '') + '>' +
       '<span class="sidenav-icon">' + icon(l.icon, 19) + '</span><span class="sidenav-label">' + escapeHtml(l.label) + '</span></a>';
   }).join('') + '</nav>';
   var backdrop = document.createElement('div');

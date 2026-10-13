@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.58.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.59.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -62,10 +62,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.58.131026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.59.131026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.58.131026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.59.131026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -99,7 +99,7 @@
         </div>
       </div>
 
-      <!-- 1.58.131026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.59.131026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -138,6 +138,26 @@
         </div>
         <div id="themeRows"></div>
         <div style="margin-top:12px;"><button type="button" class="btn btn-primary" id="themeSaveBtn"><i class="fas fa-floppy-disk ui-icon" aria-hidden="true"></i> บันทึกธีมสี</button></div>
+      </div>
+
+      <!-- 1.59: ลำดับเมนูข้าง — ลาก/กดลูกศรเพื่อย้าย · ป้ายบอกบัญชีที่มองเห็น · ตัวอย่างเมนูของแต่ละบัญชี -->
+      <div class="card" id="navOrderCard">
+        <div class="section-title"><i class="fas fa-bars-staggered ui-icon" style="font-size:17px" aria-hidden="true"></i> ลำดับเมนูข้าง</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:12px;">ลากที่ <i class="fas fa-grip-vertical" aria-hidden="true"></i> หรือกดลูกศรเพื่อย้าย · ป้ายสีบอกว่าบัญชีแบบไหนมองเห็นเมนูนั้น (เมนูที่บัญชีมองไม่เห็นจะไม่แสดงในเมนูของบัญชีนั้น)</p>
+        <div class="nav-order">
+          <div class="nav-order-list" id="navOrderList"></div>
+          <div class="nav-order-preview">
+            <div class="nav-prev-tabs" id="navPrevTabs" role="tablist">
+              <button type="button" data-who="teacher" class="on">ครู</button><button type="button" data-who="staff">เจ้าหน้าที่</button><button type="button" data-who="exec">ผู้บริหาร</button><button type="button" data-who="super">ผู้ดูแลระบบ</button>
+            </div>
+            <div class="nav-prev-box" id="navPrevBox"></div>
+            <div class="hint" style="margin-top:6px;">ตัวอย่างเมนูของบัญชีที่เลือก ตามลำดับที่จัดไว้</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-primary" id="navOrderSave" disabled><i class="fas fa-floppy-disk ui-icon" aria-hidden="true"></i> บันทึกลำดับเมนู</button>
+          <button type="button" class="btn btn-ghost" id="navOrderReset"><i class="fas fa-rotate-left ui-icon" aria-hidden="true"></i> คืนค่าเริ่มต้น</button>
+        </div>
       </div>
 
       <div class="card">
@@ -1110,7 +1130,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.58.131026"></script>
+  <script src="assets/api.js?v=1.59.131026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1265,6 +1285,7 @@
       renderAssetPreview('logoWidePreview', s.logoWideDataUrl);
       renderLoginHeroPreview(s.loginHeroDataUrl || '');
       loadThemeCard(s);
+      loadNavOrderCard(s);
       document.getElementById('loginHeroRemoveBtn').hidden = !s.loginHeroDataUrl;
       document.getElementById('loginHeroPreviewName').textContent = s.siteName || 'BNKAcademicHub';
       document.getElementById('logoWideRemoveBtn').hidden = !s.logoWideDataUrl;
@@ -1287,6 +1308,81 @@
         if (r.ok) resetSettingsCache(); else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     })();
+    // ---------- 1.59: ลำดับเมนูข้าง ----------
+    var navOrderState = { order: NAV_DEFAULT_ORDER.slice(), saved: NAV_DEFAULT_ORDER.slice(), who: 'teacher' };
+    var NAV_WHO = { teacher: 'ครู', staff: 'เจ้าหน้าที่', exec: 'ผู้บริหาร', super: 'ผู้ดูแลระบบ' };
+    function navSlotInfo(k) { return NAV_SLOTS.filter(function (x) { return x.slot === k; })[0]; }
+    function navVisibleTo(info, who) { return info.who.indexOf('all') !== -1 || info.who.indexOf(who) !== -1; }
+    function renderNavOrder() {
+      var list = document.getElementById('navOrderList');
+      if (!list) return;
+      var n = navOrderState.order.length;
+      list.innerHTML = navOrderState.order.map(function (k, i) {
+        var info = navSlotInfo(k);
+        var chips = info.who.indexOf('all') !== -1 ? '<span class="nav-who all">ทุกบัญชี</span>' : info.who.map(function (w) { return '<span class="nav-who ' + w + '">' + NAV_WHO[w] + '</span>'; }).join('');
+        return '<div class="nav-order-item" draggable="true" data-slot="' + k + '">' +
+          '<span class="nav-grip" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>' +
+          '<span class="nav-ic">' + icon(info.icon, 15) + '</span>' +
+          '<b class="nav-name">' + escapeHtml(info.label) + '</b>' +
+          '<span class="nav-whos">' + chips + '</span>' +
+          '<span class="nav-ud"><button type="button" class="nav-mv" data-mv="-1" aria-label="เลื่อนขึ้น"' + (i === 0 ? ' disabled' : '') + '><i class="fas fa-chevron-up"></i></button>' +
+          '<button type="button" class="nav-mv" data-mv="1" aria-label="เลื่อนลง"' + (i === n - 1 ? ' disabled' : '') + '><i class="fas fa-chevron-down"></i></button></span></div>';
+      }).join('');
+      document.getElementById('navOrderSave').disabled = navOrderState.order.join() === navOrderState.saved.join();
+      renderNavPreview();
+    }
+    function renderNavPreview() {
+      var who = navOrderState.who;
+      Array.prototype.forEach.call(document.querySelectorAll('#navPrevTabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-who') === who); });
+      document.getElementById('navPrevBox').innerHTML = navOrderState.order.map(navSlotInfo).filter(function (info) { return navVisibleTo(info, who); }).map(function (info, i) {
+        return '<div class="nav-prev-item' + (i === 0 ? ' on' : '') + '">' + icon(info.icon, 16) + '<span>' + escapeHtml(info.label) + '</span></div>';
+      }).join('');
+    }
+    function loadNavOrderCard(s) {
+      if (!document.getElementById('navOrderCard')) return;
+      navOrderState.saved = normalizeNavOrder(s.navOrder);
+      navOrderState.order = navOrderState.saved.slice();
+      renderNavOrder();
+    }
+    if (document.getElementById('navOrderCard')) {
+      var nol = document.getElementById('navOrderList'), dragSlot = null;
+      nol.addEventListener('click', function (e) {
+        var b = e.target.closest('.nav-mv'); if (!b) return;
+        var k = b.closest('.nav-order-item').getAttribute('data-slot'), i = navOrderState.order.indexOf(k), j = i + Number(b.getAttribute('data-mv'));
+        if (j < 0 || j >= navOrderState.order.length) return;
+        navOrderState.order.splice(i, 1); navOrderState.order.splice(j, 0, k);
+        renderNavOrder();
+        var again = nol.querySelector('[data-slot="' + k + '"] .nav-mv[data-mv="' + b.getAttribute('data-mv') + '"]'); if (again && !again.disabled) again.focus();
+      });
+      nol.addEventListener('dragstart', function (e) { var it = e.target.closest('.nav-order-item'); if (!it) return; dragSlot = it.getAttribute('data-slot'); it.classList.add('dragging'); try { e.dataTransfer.setData('text/plain', dragSlot); e.dataTransfer.effectAllowed = 'move'; } catch (x) { /* ไม่เป็นไร */ } });
+      nol.addEventListener('dragend', function () { dragSlot = null; renderNavOrder(); });
+      nol.addEventListener('dragover', function (e) {
+        if (!dragSlot) return; e.preventDefault();
+        var over = e.target.closest('.nav-order-item'); if (!over || over.getAttribute('data-slot') === dragSlot) return;
+        var r = over.getBoundingClientRect(), after = e.clientY > r.top + r.height / 2;
+        var arr = navOrderState.order.filter(function (x) { return x !== dragSlot; });
+        var at = arr.indexOf(over.getAttribute('data-slot')) + (after ? 1 : 0);
+        arr.splice(at, 0, dragSlot);
+        if (arr.join() !== navOrderState.order.join()) {
+          navOrderState.order = arr;
+          var dragged = nol.querySelector('[data-slot="' + dragSlot + '"]');
+          if (after) over.after(dragged); else over.before(dragged);
+          document.getElementById('navOrderSave').disabled = navOrderState.order.join() === navOrderState.saved.join();
+          renderNavPreview();
+        }
+      });
+      nol.addEventListener('drop', function (e) { e.preventDefault(); });
+      document.getElementById('navPrevTabs').addEventListener('click', function (e) { var b = e.target.closest('button[data-who]'); if (!b) return; navOrderState.who = b.getAttribute('data-who'); renderNavPreview(); });
+      document.getElementById('navOrderReset').addEventListener('click', function () { navOrderState.order = NAV_DEFAULT_ORDER.slice(); renderNavOrder(); });
+      document.getElementById('navOrderSave').addEventListener('click', async function () {
+        var ok = await askConfirm('บันทึกลำดับเมนูข้างใหม่? ทุกบัญชีจะเห็นลำดับใหม่ตอนเปิดหน้าถัดไป', 'ยืนยันการเปลี่ยนแปลง');
+        if (!ok) return;
+        var isDefault = navOrderState.order.join() === NAV_DEFAULT_ORDER.join();
+        var r = await withProgress('กำลังบันทึกลำดับเมนู', function () { return apiCall('adminUpdateSettings', { navOrder: isDefault ? [] : navOrderState.order }); }, { successLabel: 'บันทึกลำดับเมนูแล้ว' });
+        if (r.ok) { resetSettingsCache(); var st = await applyBranding(); loadNavOrderCard(st); }
+        else showToast(r.error.message, true);
+      });
+    }
     // ---------- 1.56: ธีมสีของเว็บไซต์ (1.57: สีของแต่ละกลุ่มย้ายไปตั้งในแท็บข้อมูลหลัก → กลุ่มบริหารงาน) ----------
     var themeState = { mode: 'system', color: THEME_DEFAULT_COLOR, login: '' };
     function themeScopeStyle(el, hex) {
@@ -1362,7 +1458,7 @@
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.58.131026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.59.131026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -2023,7 +2119,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.58.131026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.59.131026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);
