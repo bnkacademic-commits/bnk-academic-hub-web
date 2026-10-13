@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.64.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.65.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -71,6 +71,8 @@
               <button class="btn btn-ghost btn-sm" id="calNext">›</button>
             </div>
           </div>
+          <!-- 1.65: ป้ายกรองตามกลุ่มบริหารงาน (สีของกลุ่ม) — กรองจุดในปฏิทิน คำอธิบายสี ป็อปอัพรายวัน กำหนดส่งงาน และเช็คลิสต์ -->
+          <div class="cal-groups" id="calGroups" role="tablist" aria-label="กรองตามกลุ่มบริหารงาน" hidden></div>
           <div class="term-badge" id="currentTermBadge">-</div>
           <div class="calendar-grid" id="calGrid"></div>
           <div class="cal-legend" id="calLegend"></div>
@@ -158,7 +160,7 @@
       <button type="button" class="modal-close-x" id="groupModalCloseX" aria-label="ปิด">✕</button>
       <h3 id="groupModalTitle">ผลงานที่ส่งแล้ว</h3>
       <div id="groupModalBody" class="ordc-detail group-modal-body"></div>
-      <div class="modal-actions"><button type="button" class="btn btn-ghost" id="groupModalCloseBtn">ปิด</button></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" id="groupModalCloseBtn">ปิด</button></div>
     </div>
   </div>
 
@@ -169,7 +171,7 @@
       <h3 id="dayModalTitle">-</h3>
       <div class="hint" id="dayModalSub"></div>
       <div id="dayModalBody" class="day-modal-body"></div>
-      <div class="modal-actions"><button type="button" class="btn btn-ghost" id="dayModalCloseBtn">ปิด</button></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" id="dayModalCloseBtn">ปิด</button></div>
     </div>
   </div>
 
@@ -185,14 +187,14 @@
       <div class="modal-actions">
         <button class="btn btn-primary" id="qrOpenBtn"><i class="fas fa-up-right-from-square ui-icon" aria-hidden="true"></i> เปิดลิงก์</button>
         <button class="btn btn-secondary" id="qrCopyBtn">คัดลอกลิงก์</button>
-        <button class="btn btn-ghost" id="qrCloseBtn">ปิด</button>
+        <button class="btn btn-ghost btn-close" id="qrCloseBtn">ปิด</button>
       </div>
     </div>
   </div>
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.64.141026"></script>
+  <script src="assets/api.js?v=1.65.141026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -799,7 +801,50 @@
       renderAssignmentChecklist();
     }
     // ครอบคลุมทั้งช่วงวันที่ (date ถึง endDate) ไม่ใช่แค่วันเริ่มต้น — เผื่อกำหนดการนี้เป็นช่วงระยะเวลาส่งงานหลายวัน
-    function eventsOnDate(dateStr) { return calState.events.filter(function (e) { return dateStr >= e.date && dateStr <= (e.endDate || e.date); }); }
+    function eventsOnDate(dateStr) { return calEvents().filter(function (e) { return dateStr >= e.date && dateStr <= (e.endDate || e.date); }); }
+    // 1.65: กรองปฏิทินตามกลุ่มบริหารงาน ('' = ทั้งหมด) — กำหนดการที่ไม่ผูกกลุ่มแสดงเฉพาะในแท็บ "ทั้งหมด" · จำค่าที่เลือกไว้ในเครื่อง
+    var CAL_GROUP_KEY = 'bnkah_cal_group';
+    var calGroup = '';
+    try { calGroup = localStorage.getItem(CAL_GROUP_KEY) || ''; } catch (e) { calGroup = ''; }
+    function evDept(e) { return e && e.categoryId ? (_catDeptMap[e.categoryId] || '') : ''; }
+    function calVisible(e) { return !calGroup || evDept(e) === calGroup; }
+    function calEvents() { return calState.events.filter(calVisible); }
+    function renderCalGroups(monthStartStr, monthEndStr) {
+      var box = document.getElementById('calGroups');
+      if (!box) return;
+      var seen = {};
+      calState.events.forEach(function (e) { var d = evDept(e); if (d) seen[d] = true; });
+      var s = (typeof _settingsCache !== 'undefined' && _settingsCache) || cachedBrand() || {};
+      var order = (s.departments || []);
+      var depts = Object.keys(seen).sort(function (a, b) {
+        var ia = order.indexOf(a), ib = order.indexOf(b);
+        if (ia === -1) ia = 9999; if (ib === -1) ib = 9999;
+        return ia - ib || a.localeCompare(b, 'th');
+      });
+      if (calGroup && !seen[calGroup] && calState.events.length && Object.keys(_catDeptMap).length) { calGroup = ''; try { localStorage.removeItem(CAL_GROUP_KEY); } catch (e) { /* ไม่เป็นไร */ } }
+      if (!depts.length) { box.hidden = true; box.innerHTML = ''; return; }
+      var inMonth = calState.events.filter(function (e) { return (e.endDate || e.date) >= monthStartStr && e.date <= monthEndStr; });
+      var chip = function (d, label, n, color) {
+        var on = calGroup === d;
+        return '<button type="button" role="tab" data-cal-group="' + escapeHtml(d) + '" class="' + (on ? 'on' : '') + '" aria-selected="' + on + '"' + (color ? ' style="--g:' + color + '"' : '') + '>' +
+          (d ? '' : '<i class="fa-solid fa-layer-group" aria-hidden="true"></i> ') + escapeHtml(label) + ' <b class="n">' + n + '</b></button>';
+      };
+      box.innerHTML = chip('', 'ทั้งหมด', inMonth.length, '') + depts.map(function (d) {
+        return chip(d, String(d).replace(/^กลุ่มบริหารงาน/, ''), inMonth.filter(function (e) { return evDept(e) === d; }).length, deptThemeColor(d) || '#64748b');
+      }).join('');
+      box.hidden = false;
+    }
+    (function wireCalGroups() {
+      var box = document.getElementById('calGroups');
+      if (!box) return;
+      box.addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-cal-group]'); if (!b) return;
+        calGroup = b.getAttribute('data-cal-group') || '';
+        try { if (calGroup) localStorage.setItem(CAL_GROUP_KEY, calGroup); else localStorage.removeItem(CAL_GROUP_KEY); } catch (e) { /* ไม่เป็นไร */ }
+        renderCalendar();
+        renderAssignmentChecklist();
+      });
+    })();
 
     // ---------- จัดเรียง "แถว" (lane) ของแถบสีกำหนดการ ให้กำหนดการเดียวกันอยู่แถวเดิมทุกวันที่มันครอบคลุม (ตั้งแต่ V10.0) ----------
     // ใช้หลักการเดียวกับ Gantt chart แบบง่าย: ไล่กำหนดการที่เกี่ยวข้องกับเดือนที่กำลังแสดงตามวันเริ่มต้น แล้วจัดลงแถวว่างแถวแรกที่ไม่ทับกับกำหนดการอื่นที่ยังไม่จบ
@@ -856,7 +901,7 @@
       }
       var yearSel = document.getElementById('clYear');
       // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ
-      var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission && !beforeMyJoin(e); });
+      var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission && !beforeMyJoin(e) && calVisible(e); });
       var years = {};
       assignments.forEach(function (e) { years[String(e.academicYear)] = true; });
       years[String(checklistState.term.year)] = true;
@@ -941,6 +986,7 @@
       var monthStartStr = calState.year + '-' + pad2(calState.month + 1) + '-01';
       var monthEndStr = calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(daysInMonth);
       var laneOf = computeEventLanes(calState.events, monthStartStr, monthEndStr);
+      renderCalGroups(monthStartStr, monthEndStr);
 
       var legendCats = {}; // 1.58: คำอธิบายสีของงานที่มีในเดือนนี้
       for (var i = 0; i < firstDay; i++) {
@@ -979,7 +1025,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
 
       var upcomingBox = document.getElementById('calEventsUpcoming');
       var now = new Date();
-      var upcoming = calState.events.filter(function (e) {
+      var upcoming = calEvents().filter(function (e) {
         var ed = new Date(e.endDate || e.date); // ใช้วันสิ้นสุดตัดสินว่ายังไม่ผ่านไป เผื่อเป็นกำหนดการช่วงหลายวัน
         var diffDays = (ed - now) / 86400000;
         if (diffDays > -1 && diffDays < 60) return true;
@@ -995,7 +1041,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       // มีไอคอนและแถบสีด้านซ้าย (.cal-upcoming-heading) แสดงทั้งตอนมีและไม่มีรายการ
       var upcomingHeadingHtml = '<div class="cal-upcoming-heading"><i class="fas fa-bell ui-icon" aria-hidden="true"></i> กำหนดส่งงาน</div>';
       if (upcoming.length === 0) {
-        upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="empty-state">ไม่มีกำหนดการในช่วงนี้</div>';
+        upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="empty-state">' + (calGroup ? 'ไม่มีกำหนดการของ' + escapeHtml(groupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกำหนดการในช่วงนี้') + '</div>';
       } else {
         // ครอบรายการด้วย .cal-upcoming-grid ให้ยาวเต็มความกว้างการ์ด (ตั้งแต่ V10.0) — เรียงลงมาเป็นแถวเดียวตามลำดับวันที่เหมือนเดิม
         // (V10.0 ตอนแรกทำเป็นกริดหลายคอลัมน์ ทำให้ลำดับดูสลับสับสน ผู้ใช้แจ้งว่าเป็นบั๊ก จึงแก้กลับมาเรียงแนวตั้งตามเดิม เหลือแค่ความกว้างที่ยังเต็มการ์ดอยู่)

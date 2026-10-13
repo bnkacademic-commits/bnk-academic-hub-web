@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.64.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.65.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -112,7 +112,7 @@
         <div class="hint ord-drive-name" id="ordDriveName"></div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary" id="ordSaveBtn">บันทึก</button>
-          <button type="button" class="btn btn-ghost" id="ordCancel">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="ordCancel">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -134,13 +134,13 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-primary" id="ordFilesSave">อัพโหลด</button>
-        <button type="button" class="btn btn-ghost" id="ordFilesCancel">ยกเลิก</button>
+        <button type="button" class="btn btn-ghost btn-close" id="ordFilesCancel">ยกเลิก</button>
       </div>
     </div>
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.64.141026"></script>
+  <script src="assets/api.js?v=1.65.141026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;

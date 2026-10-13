@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.64.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.65.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -62,10 +62,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.64.141026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.65.141026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.64.141026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.65.141026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -99,7 +99,7 @@
         </div>
       </div>
 
-      <!-- 1.64.141026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.65.141026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -501,7 +501,7 @@
           </div>
           <div class="modal-actions">
             <button class="btn btn-primary" type="submit" id="msSubmitBtn">เพิ่มหัวเรื่อง</button>
-            <button class="btn btn-ghost" type="button" id="memoSubjectModalClose">ยกเลิก</button>
+            <button class="btn btn-ghost btn-close" type="button" id="memoSubjectModalClose">ยกเลิก</button>
           </div>
         </form>
       </div>
@@ -680,7 +680,7 @@
         <div class="hint" style="margin-bottom:14px;">username จะถูกแปลงเป็นตัวพิมพ์เล็กให้อัตโนมัติ — ล็อกอินได้ทั้งตัวพิมพ์เล็กและใหญ่ ส่วนรหัสผ่านแยกตัวพิมพ์เล็ก/ใหญ่ตามที่ตั้งไว้</div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">สร้างบัญชี</button>
-          <button type="button" class="btn btn-ghost" id="createUserClose">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="createUserClose">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -708,10 +708,8 @@
               <label for="catName">ชื่อประเภทงาน</label>
               <input id="catName" required placeholder="เช่น ผลงานวิจัยในชั้นเรียน" />
             </div>
-            <div class="field" style="max-width:90px;">
-              <label for="catColor">สี</label>
-              <input type="color" id="catColor" value="#3457d5" title="เลือกสีประเภทงาน" />
-            </div>
+            <!-- 1.65: ไม่มีช่องเลือกสีแล้ว — สีประเภทงานตามสีของกลุ่มบริหารงานที่ผูกไว้ -->
+            <input type="hidden" id="catColor" value="#3457d5" />
           </div>
           <div class="field">
             <label for="catTemplate">รูปแบบการ์ดที่ใช้แสดงผลงาน</label>
@@ -746,7 +744,7 @@
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">เพิ่มประเภทงาน</button>
-          <button type="button" class="btn btn-ghost" id="createCatClose">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="createCatClose">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -865,7 +863,7 @@
         </div>
       </div>
 
-      <div class="modal-actions"><button type="button" class="btn btn-ghost" id="manageUserClose">ปิด</button></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" id="manageUserClose">ปิด</button></div>
     </div>
   </div>
 
@@ -888,14 +886,14 @@
         <label for="purgeUserConfirmInput" style="display:block; margin-bottom:6px;">พิมพ์ Username <strong id="purgeUserNeedName"></strong> เพื่อยืนยัน</label>
         <input type="text" id="purgeUserConfirmInput" autocomplete="off" autocapitalize="off" spellcheck="false" style="width:100%;">
         <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" id="purgeUserCancel">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="purgeUserCancel">ยกเลิก</button>
           <button type="button" class="btn btn-danger" id="purgeUserGo" disabled>ลบถาวร</button>
         </div>
       </div>
       <div id="purgeUserProgress" hidden>
         <p id="purgeUserStatus" style="margin:0 0 10px;"></p>
         <div id="purgeUserFailed" class="error-box" hidden></div>
-        <div class="modal-actions"><button type="button" class="btn btn-primary" id="purgeUserDone" hidden>ปิด</button></div>
+        <div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" id="purgeUserDone" hidden>ปิด</button></div>
       </div>
     </div>
   </div>
@@ -919,10 +917,7 @@
               <label>ชื่อประเภทงาน</label>
               <div id="editCatNameText" style="padding:9px 0; font-weight:600;"></div>
             </div>
-            <div class="field" style="max-width:90px;">
-              <label for="editCatColor">สี</label>
-              <input type="color" id="editCatColor" value="#3457d5" title="เลือกสีประเภทงาน" />
-            </div>
+            <input type="hidden" id="editCatColor" value="#3457d5" />
           </div>
           <div class="field">
             <label for="editCatTemplate">รูปแบบการ์ดที่ใช้แสดงผลงาน</label>
@@ -956,7 +951,7 @@
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">บันทึก</button>
-          <button type="button" class="btn btn-ghost" id="editCatClose">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="editCatClose">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -989,7 +984,7 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-primary" id="logoCropOk"><i class="fa-solid fa-check"></i> ใช้รูปนี้</button>
-        <button type="button" class="btn btn-ghost" id="logoCropCancel">ยกเลิก</button>
+        <button type="button" class="btn btn-ghost btn-close" id="logoCropCancel">ยกเลิก</button>
       </div>
     </div>
   </div>
@@ -1044,7 +1039,7 @@
         </div>
         <div class="modal-actions extlink-actions">
           <button type="submit" class="btn btn-primary" id="extLinkSubmitBtn">เพิ่มปุ่ม</button>
-          <button type="button" class="btn btn-ghost" id="extLinkModalClose">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="extLinkModalClose">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -1064,7 +1059,7 @@
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary" id="deptAddBtn">เพิ่มกลุ่มบริหารงาน</button>
-          <button type="button" class="btn btn-ghost" id="deptAddCancel">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="deptAddCancel">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -1087,7 +1082,7 @@
       <div id="gmList" class="gm-list"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-primary" id="gmSave">บันทึกสมาชิก</button>
-        <button type="button" class="btn btn-ghost" id="gmCancel">ยกเลิก</button>
+        <button type="button" class="btn btn-ghost btn-close" id="gmCancel">ยกเลิก</button>
       </div>
     </div>
   </div>
@@ -1106,7 +1101,7 @@
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">บันทึกชื่อใหม่</button>
-          <button type="button" class="btn btn-ghost" id="grpRenameCancel">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="grpRenameCancel">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -1143,7 +1138,7 @@
         </div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">บันทึก</button>
-          <button type="button" class="btn btn-ghost" id="teacherInfoCancel">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="teacherInfoCancel">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -1151,7 +1146,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.64.141026"></script>
+  <script src="assets/api.js?v=1.65.141026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1532,7 +1527,7 @@
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.64.141026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.65.141026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -2193,7 +2188,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.64.141026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.65.141026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);
@@ -2377,7 +2372,7 @@
             var tplDef = TEMPLATE_OPTIONS.filter(function (o) { return o.key === (c.displayTemplate || ''); })[0];
             var deptMeta = '';
             rowHtml[c.id] = '<div class="event-list-item" data-cat-row="' + c.id + '">' +
-              '<span class="cat-color-swatch" style="display:inline-block; width:26px; height:26px; border-radius:7px; flex-shrink:0; background:' + escapeHtml(c.color || '#3457d5') + ';" title="สีของประเภทงาน"></span>' +
+              '<span class="cat-color-swatch" style="display:inline-block; width:26px; height:26px; border-radius:7px; flex-shrink:0; background:' + escapeHtml(categoryColor(c)) + ';" title="สีของกลุ่มบริหารงาน"></span>' +
               '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(c.name) +
                 (c.department ? ' <span class="cat-dept-badge"' + deptColorAttr(c.department) + '>' + escapeHtml(groupLabel(c.department)) + '</span>' : ' <span class="cat-dept-badge cat-dept-none">ยังไม่ผูกกลุ่มบริหารงาน</span>') +
                 (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '') +
@@ -2770,7 +2765,7 @@
         var html = '<div class="card" style="padding:0; box-shadow:none; border:none;">';
         currentCatOrder.forEach(function (c, idx) {
           html += '<div class="layout-row">' +
-            '<div class="thumb" title="สีประเภทงาน" style="background:' + (c.color || '#3457d5') + ';"></div>' +
+            '<div class="thumb" title="สีของกลุ่มบริหารงาน" style="background:' + categoryColor(c) + ';"></div>' +
             '<div class="info"><div class="t">' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge"' + deptColorAttr(c.department) + '>' + escapeHtml(groupLabel(c.department)) + '</span>' : '') + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
             '<div class="arrows">' +
               '<button type="button" class="btn btn-ghost btn-sm cat-move-up" data-idx="' + idx + '"' + (idx === 0 ? ' disabled' : '') + ' title="เลื่อนขึ้น">▲</button>' +

@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.64.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.65.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -117,7 +117,7 @@
         <div class="modal-actions">
           <span class="cert-missing" id="certMissing" hidden></span>
           <button type="submit" class="btn btn-primary" id="certSaveBtn"></button>
-          <button type="button" class="btn btn-ghost" id="certCancel">ยกเลิก</button>
+          <button type="button" class="btn btn-ghost btn-close" id="certCancel">ยกเลิก</button>
         </div>
       </form>
     </div>
@@ -146,7 +146,7 @@
           <div class="hint">สำหรับติดประกาศ</div>
         </div>
       </div>
-      <div class="modal-actions"><button type="button" class="btn btn-ghost" id="certShareClose">ปิด</button></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" id="certShareClose">ปิด</button></div>
     </div>
   </div>
 
@@ -168,14 +168,14 @@
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-primary" id="certMergeSave" disabled><i class="fa-solid fa-code-merge"></i> รวมเป็นชื่อเดียว</button>
-        <button type="button" class="btn btn-ghost" id="certMergeCancel">ปิด</button>
+        <button type="button" class="btn btn-ghost btn-close" id="certMergeCancel">ปิด</button>
       </div>
     </div>
   </div>
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.64.141026"></script>
+  <script src="assets/api.js?v=1.65.141026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();

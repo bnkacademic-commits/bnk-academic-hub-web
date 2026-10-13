@@ -2384,3 +2384,53 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .cm-st.q { background: var(--warn-light); color: #b45309; }
 .cm-st.no { background: var(--danger-light); color: var(--danger); }
 @media (max-width: 600px) { .cm-row { grid-template-columns: 1fr auto; } .cm-ar { display: none; } .cm-row select { grid-column: 1 / -1; } }
+
+/* ===== 1.65 ===== */
+/* ป้ายกรองปฏิทินตามกลุ่มบริหารงาน (แบบ 2 ที่ผู้ใช้เลือก) — สีตามกลุ่ม (--g) · ที่เลือกเป็นสีทึบ */
+.cal-groups { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.cal-groups[hidden] { display: none; }
+.cal-groups button { --g: #475569; display: inline-flex; align-items: center; gap: 7px; border: 1.5px solid color-mix(in srgb, var(--g) 45%, var(--surface)); background: color-mix(in srgb, var(--g) 8%, var(--surface)); color: color-mix(in srgb, var(--g) 80%, #000); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background 0.15s ease, color 0.15s ease; }
+.cal-groups button .n { font-size: 0.72rem; font-weight: 800; opacity: 0.8; }
+.cal-groups button i { font-size: 0.8rem; }
+.cal-groups button:hover { background: color-mix(in srgb, var(--g) 16%, var(--surface)); }
+.cal-groups button.on { background: var(--g); border-color: var(--g); color: #fff; }
+.cal-groups button.on .n { opacity: 0.95; }
+:root[data-theme="dark"] .cal-groups button:not(.on) { color: var(--text); background: color-mix(in srgb, var(--g) 18%, var(--surface)); border-color: color-mix(in srgb, var(--g) 55%, var(--surface)); }
+@media (max-width: 560px) { .cal-groups { gap: 6px; } .cal-groups button { padding: 5px 11px; font-size: 0.8rem; } }
+
+/* ป็อปอัพรายวัน: กว้างขึ้น · สูงตามรายการ (เลื่อนทั้งกล่องเมื่อเกินจอแทนการเลื่อนในกรอบเล็ก) */
+.day-modal-box { max-width: 680px; }
+.day-modal-body { max-height: none; overflow: visible; }
+
+/* ปุ่มในป็อปอัพ (แบบ 3 + ปุ่ม X แบบ 1 ที่ผู้ใช้เลือก)
+   X = วงกลมแดงสดทึบ กากบาทขาวหนา · ปิด/ยกเลิก = พื้นแดงอ่อน ตัวแดง · ยืนยัน/บันทึก = เขียวมาตรฐาน · ลบ = แดงทึบ */
+.modal-close-x { top: 10px; right: 10px; width: 34px; height: 34px; background: #ef4444; color: #fff; font-size: 1.05rem; font-weight: 900; box-shadow: 0 3px 8px rgba(239, 68, 68, 0.4); z-index: 2; }
+.modal-close-x:hover { background: #dc2626; color: #fff; }
+.modal-close-x:focus-visible { outline: 3px solid #fecaca; outline-offset: 2px; }
+.modal-box .btn.btn-close, .modal-box .modal-actions .btn-ghost { background: #fef2f2; color: #dc2626; box-shadow: none; }
+.modal-box .btn.btn-close:hover, .modal-box .modal-actions .btn-ghost:hover { background: #fee2e2; color: #b91c1c; }
+:root[data-theme="dark"] .modal-box .btn.btn-close, :root[data-theme="dark"] .modal-box .modal-actions .btn-ghost { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+:root[data-theme="dark"] .modal-box .btn.btn-close:hover, :root[data-theme="dark"] .modal-box .modal-actions .btn-ghost:hover { background: rgba(239, 68, 68, 0.26); color: #fecaca; }
+.modal-box .modal-actions .btn-primary, .modal-box :is(div, footer):has(> .btn-close) > .btn-primary { background: #16a34a; color: #fff; box-shadow: 0 8px 14px -4px rgba(22, 163, 74, 0.35); }
+.modal-box .modal-actions .btn-primary:hover, .modal-box :is(div, footer):has(> .btn-close) > .btn-primary:hover { background: #15803d; }
+.modal-box .modal-actions .btn-danger, .modal-box :is(div, footer):has(> .btn-close) > .btn-danger { background: #dc2626; color: #fff; }
+.modal-box .modal-actions .btn-danger:hover, .modal-box :is(div, footer):has(> .btn-close) > .btn-danger:hover { background: #b91c1c; }
+.modal-box .btn:disabled { opacity: 0.55; }
+.modal-box > h3 { padding-right: 34px; }
+
+/* คลังเกียรติบัตร/คลังคำสั่ง — ตัวกรองแบบ C (เน้นสีธีม) ให้โหมดสว่างชัดเท่าโหมดมืด */
+.cert-tabs { gap: 6px; box-shadow: none; border-bottom: 0; margin: 4px 0 12px; }
+.cert-tabs button { border: 1.5px solid var(--ctl-border); border-radius: 12px; background: var(--surface); color: var(--ctl-text); padding: 9px 16px; }
+.cert-tabs button:hover { border-color: var(--primary); }
+.cert-tabs button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.cert-tabs .n { background: var(--ctl-soft); color: var(--text); }
+.cert-tabs button.on .n { background: rgba(255, 255, 255, 0.25); color: #fff; }
+.cert-kind-seg { background: var(--primary-light); border: 1.5px solid color-mix(in srgb, var(--primary) 35%, var(--surface)); }
+.cert-kind-seg button { color: var(--primary-dark); }
+.cert-kind-seg button.on { background: var(--primary); color: #fff; box-shadow: none; }
+.cert-toolbar input, .cert-toolbar select, .orders-toolbar input, .orders-toolbar select { border: 1.5px solid var(--ctl-border); background-color: var(--surface); color: var(--text); }
+.cert-toolbar input:focus, .cert-toolbar select:focus, .orders-toolbar input:focus, .orders-toolbar select:focus { border-color: var(--primary); }
+.cert-share-btn, .cert-merge-btn { border: 1.5px solid var(--primary); color: var(--primary-dark); background: var(--surface); }
+.cert-share-btn:hover, .cert-merge-btn:hover { background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary); }
+:root { --ctl-border: color-mix(in srgb, var(--primary) 30%, #cbd5e1); --ctl-soft: #e2e8f0; --ctl-text: #475569; }
+:root[data-theme="dark"] { --ctl-border: var(--border); --ctl-soft: var(--surface-2); --ctl-text: var(--text); }

@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.64.141026';
+var APP_VERSION = '1.65.141026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -641,9 +641,15 @@ function categoryDotHtml(color) {
 }
 // สร้าง map { categoryId: color } จากรายการประเภทงาน — ใช้เมื่อรายการที่จะแสดง (ผลงาน/กำหนดการ) มีแค่ categoryId/categoryName
 // (ไม่ได้เก็บสีติดไปด้วยตอนบันทึก) ให้ดึงสีปัจจุบันของประเภทงานนั้นมาแสดงแทนเสมอ — สีจะอัพเดตทันทีทุกจุดถ้า Super Admin เปลี่ยนสีทีหลัง
+// 1.65: สีของประเภทงาน = สีของกลุ่มบริหารงานที่ผูกไว้ (ตั้งค่าที่ "กลุ่มบริหารงาน") — ไม่มีช่องเลือกสีตอนสร้าง/แก้ไขประเภทงานแล้ว
+// ประเภทงานที่ยังไม่ผูกกลุ่ม/กลุ่มยังไม่ตั้งสี = สีที่เคยเก็บไว้ (ค่าเริ่มต้น #3457d5)
+function categoryColor(c) {
+  c = c || {};
+  return (c.department && deptThemeColor(c.department)) || c.color || '#3457d5';
+}
 function buildCategoryColorMap(categories) {
   var map = {};
-  (categories || []).forEach(function (c) { map[c.id] = c.color || '#3457d5'; _catDeptMap[c.id] = c.department || ''; });
+  (categories || []).forEach(function (c) { map[c.id] = categoryColor(c); _catDeptMap[c.id] = c.department || ''; });
   return map;
 }
 // ฝ่ายของประเภทงาน (ตั้งแต่ 1.41.111026) — buildCategoryColorMap เก็บ { categoryId: ชื่อฝ่าย } ไว้ด้วยทุกครั้งที่หน้าโหลดรายการประเภทงาน
@@ -856,7 +862,7 @@ function ensureSharedModals() {
         '<p id="sharedConfirmMsg" style="color:var(--text-muted); font-size:0.9rem;"></p>' +
         '<div class="modal-actions">' +
           '<button class="btn btn-danger" id="sharedConfirmYes">ยืนยัน</button>' +
-          '<button class="btn btn-ghost" id="sharedConfirmNo">ยกเลิก</button>' +
+          '<button class="btn btn-ghost btn-close" id="sharedConfirmNo">ยกเลิก</button>' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -871,7 +877,7 @@ function ensureSharedModals() {
           '<div class="field"><label for="sharedNewPwConfirm">ยืนยันรหัสผ่านใหม่</label><input id="sharedNewPwConfirm" type="password" required minlength="4" autocomplete="new-password" /></div>' +
           '<div class="modal-actions">' +
             '<button type="submit" class="btn btn-primary">บันทึก</button>' +
-            '<button type="button" class="btn btn-ghost" id="sharedPwClose">ยกเลิก</button>' +
+            '<button type="button" class="btn btn-ghost btn-close" id="sharedPwClose">ยกเลิก</button>' +
           '</div>' +
         '</form>' +
       '</div>' +
@@ -888,7 +894,7 @@ function ensureSharedModals() {
           '<button type="button" class="btn btn-secondary" id="sharedAvatarPickBtn">เลือกรูปภาพ</button>' +
           '<button type="button" class="btn btn-primary" id="sharedAvatarSaveBtn" hidden>บันทึก</button>' +
           '<button type="button" class="btn btn-danger" id="sharedAvatarRemoveBtn" hidden>ลบรูปโปรไฟล์</button>' +
-          '<button type="button" class="btn btn-ghost" id="sharedAvatarClose">ปิด</button>' +
+          '<button type="button" class="btn btn-ghost btn-close" id="sharedAvatarClose">ปิด</button>' +
         '</div>' +
       '</div>' +
     '</div>' +
