@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.62.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.63.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -35,6 +35,7 @@
         <option value="resp">ที่ฉันรับผิดชอบ</option>
       </select>
     </div>
+    <div class="year-scope-hint" id="ordYearHint" hidden></div>
     <div id="ordRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
 
@@ -139,7 +140,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.62.131026"></script>
+  <script src="assets/api.js?v=1.63.131026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -161,15 +162,17 @@
     function yearOf(o) { return o.academicYear || String(Number(String(o.orderDate).slice(0, 4)) + 543); }
 
     // 1.48.121026: ตัวกรองปีการศึกษาเริ่มต้นที่ปีการศึกษาปัจจุบัน (ครั้งแรกที่เปิดหน้า) และมีตัวเลือกปีนี้เสมอแม้ยังไม่มีคำสั่ง
-    var curTerm = null, yearDefaulted = false;
+    var curTerm = null, yearDefaulted = false, selYear = null, allYears = [], shownN = LIST_PAGE;
     function fillFilters() {
       var s = $('ordSubject'), y = $('ordYear');
       var sv = s.value, yv = y.value;
-      if (!yearDefaulted && curTerm && curTerm.year) { yv = String(curTerm.year); yearDefaulted = true; }
+      yv = selYear || ''; // 1.63: ปีที่โหลดอยู่
       s.innerHTML = '<option value="">ทุกกลุ่มสาระการเรียนรู้</option><option value="__none">--ไม่มีกลุ่มสาระ--</option>' + subjectGroups.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
       var years = {};
+      allYears.forEach(function (x) { years[x] = 1; });
       orders.forEach(function (o) { years[yearOf(o)] = 1; });
       if (curTerm && curTerm.year) years[curTerm.year] = 1;
+      if (selYear) years[selYear] = 1;
       var ylist = Object.keys(years).sort(function (a, b) { return b - a; });
       y.innerHTML = '<option value="">ทุกปีการศึกษา</option>' + ylist.map(function (x) { return '<option value="' + x + '">ปีการศึกษา ' + x + '</option>'; }).join('');
       s.value = sv; y.value = yv;
@@ -181,8 +184,12 @@
     // แบบย่อ: วันที่จัดทำ (ป้ายปฏิทิน) · ชื่อคำสั่ง (ยาวเกินตัดเป็น …) · ชิปเลขที่ + กลุ่มบริหารงาน · ปุ่มพรีวิว · ลูกศรขยาย
     // แบบขยาย: ตารางรายละเอียดเต็ม + ปุ่มแก้ไข/ลบ (เฉพาะเจ้าของ) — เรียงตามวันที่จัดทำล่าสุดก่อน รายการเดียว ไม่แยกหัวข้อตามกลุ่ม
     var expanded = {};
+    function rerender() { shownN = LIST_PAGE; render(); }
     function render() {
       var q = $('ordSearch').value.trim().toLowerCase();
+      var hint = $('ordYearHint');
+      hint.hidden = !(q && selYear);
+      if (!hint.hidden) hint.innerHTML = '<i class="fa-solid fa-circle-info"></i> ค้นหาเฉพาะปีการศึกษา ' + escapeHtml(selYear) + ' — <button type="button" id="ordSearchAllYears">ค้นหาทุกปีการศึกษา</button>';
       var fs = $('ordSubject').value, fy = $('ordYear').value, fm = $('ordMine').value;
       var list = orders.filter(function (o) {
         if (fs === '__none') { if (o.subjectGroup) return false; } else if (fs && o.subjectGroup !== fs) return false;
@@ -196,9 +203,9 @@
         return true;
       });
       var root = $('ordRoot');
-      if (!orders.length) { root.innerHTML = '<div class="orders-empty">ยังไม่มีคำสั่งในคลังคำสั่ง</div>'; return; }
+      if (!orders.length) { root.innerHTML = '<div class="orders-empty">' + (selYear ? 'ยังไม่มีคำสั่งในปีการศึกษา ' + escapeHtml(selYear) : 'ยังไม่มีคำสั่งในคลังคำสั่ง') + '</div>'; return; }
       if (!list.length) { root.innerHTML = '<div class="orders-empty">ไม่พบคำสั่งที่ตรงกับเงื่อนไข</div>'; return; }
-      root.innerHTML = '<div class="ordc-count hint">' + list.length + ' คำสั่ง</div><ul class="ordc-list">' + list.map(rowHtml).join('') + '</ul>';
+      root.innerHTML = '<div class="ordc-count hint">' + list.length + ' คำสั่ง</div><ul class="ordc-list">' + list.slice(0, shownN).map(rowHtml).join('') + '</ul>' + listMoreHtml(shownN, list.length);
     }
 
     function respText(o) {
@@ -305,9 +312,18 @@
       '</li>';
     }
 
-    async function load() {
+    // 1.63: โหลดทีละปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · ทุกปีการศึกษา = โหลดทั้งหมด · ปีที่โหลดแล้วจำไว้
+    var ordCache = makeYearCache(function (y) { return apiCall('orderList', { year: y }); });
+    async function load() { ordCache.clear(); await loadYear(selYear); }
+    async function loadYear(y) {
+      if (!curTerm) { try { curTerm = await currentAcademicTerm(); } catch (e) { curTerm = { year: '' }; } }
+      if (y === null || y === undefined) y = String(curTerm.year || '');
+      selYear = y;
+      if (!ordCache.has(y)) $('ordRoot').innerHTML = yearLoadingHtml(y);
       try {
-        var res = await apiCall('orderList', {});
+        var res = await ordCache.get(y);
+        if (selYear !== y) return;
+        allYears = res.years || [];
         try { await getSiteSettings(); } catch (e) { /* ไม่เป็นไร */ } // 1.56: สีป้ายกลุ่มบริหารงาน
         orders = res.orders || []; departments = res.departments || []; subjectGroups = res.subjectGroups || [];
         if (res.maxFiles) MAX_FILES = Number(res.maxFiles) || MAX_FILES;
@@ -319,9 +335,8 @@
       $('ordAddBtn').hidden = !departments.length;
       $('ordSubtitle').textContent = 'คลังคำสั่งของโรงเรียน (ไฟล์ PDF) — ทุกคนเพิ่มคำสั่งได้ แก้ไข/ลบได้เฉพาะผู้อัพโหลด' +
         (retentionYears ? ' · เก็บไว้ ' + retentionYears + ' ปีหลังอัพโหลด แล้วระบบจะลบอัตโนมัติ' : '');
-      if (!curTerm) { try { curTerm = await currentAcademicTerm(); } catch (e) { curTerm = { year: '' }; } }
       fillFilters();
-      render();
+      rerender();
     }
 
     // ---------- ผู้รับผิดชอบ (เลือกหลายคน) ----------
@@ -552,12 +567,15 @@
         if (i >= 0) respSelected.splice(i, 1);
         renderResp();
       });
-      ['ordSearch'].forEach(function (id) { $(id).addEventListener('input', render); });
-      ['ordSubject', 'ordYear', 'ordMine'].forEach(function (id) { $(id).addEventListener('change', render); });
+      ['ordSearch'].forEach(function (id) { $(id).addEventListener('input', rerender); });
+      ['ordSubject', 'ordMine'].forEach(function (id) { $(id).addEventListener('change', rerender); });
+      $('ordYear').addEventListener('change', function () { loadYear(this.value); });
+      $('ordYearHint').addEventListener('click', function (e) { if (e.target.closest('#ordSearchAllYears')) { $('ordYear').value = ''; loadYear(''); } });
       $('ordRoot').addEventListener('keydown', function (ev) {
         if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[data-expand]')) { ev.preventDefault(); ev.target.click(); }
       });
       $('ordRoot').addEventListener('click', async function (ev) {
+        if (ev.target.closest('[data-more]')) { shownN += LIST_PAGE; render(); return; }
         if (ev.target.closest('a[download]')) return; // ลิงก์ดาวน์โหลด — ไม่ต้องขยาย/ยุบแถว
         var t = ev.target.closest('[data-edit],[data-del],[data-preview],[data-expand],[data-dlall],[data-addfiles],[data-ofile-preview],[data-ofile-del]');
         if (!t) return;

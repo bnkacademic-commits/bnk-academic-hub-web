@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.62.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.63.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -54,6 +54,7 @@
         <option value="cancelled">ที่ยกเลิกแล้ว</option>
       </select>
     </div>
+    <div class="year-scope-hint" id="certYearHint" hidden></div>
     <div id="certRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
 
@@ -174,11 +175,11 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.62.131026"></script>
+  <script src="assets/api.js?v=1.63.131026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
-    var agencies = [], levels = [], certs = [], activities = [], people = [], me = null, canAdd = false, canMerge = false, schoolName = '', summerOn = true;
+    var allYears = [], pendingMine = [], selYear = null, shownN = LIST_PAGE, agencies = [], levels = [], certs = [], activities = [], people = [], me = null, canAdd = false, canMerge = false, schoolName = '', summerOn = true;
     var numbering = { format: 'บนค. {ปีการศึกษา}/{เลขที่}', digits: 4, counters: {} };
     var scope = 'internal', kindFilter = '', expanded = {}, curTerm = null, yearDefaulted = false;
     var TAB_KEY = 'bnkah_cert_tab';
@@ -238,14 +239,15 @@
     function fillFilters() {
       var a = $('certActivity'), y = $('certYear'), s = $('certSem');
       var av = a.value, yv = y.value, sv = s.value;
-      if (!yearDefaulted && curTerm && curTerm.year) { yv = String(curTerm.year); yearDefaulted = true; }
+      yv = selYear || ''; // 1.63: ปีที่โหลดอยู่
       var acts = {};
       certs.filter(function (c) { return c.scope === scope && c.status !== 'cancelled'; }).forEach(function (c) { acts[c.activity] = (acts[c.activity] || 0) + 1; });
       a.innerHTML = '<option value="">ทุกกิจกรรม</option>' + Object.keys(acts).sort(function (p, q) { return acts[q] - acts[p] || p.localeCompare(q, 'th'); })
         .map(function (k) { return '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + ' (' + acts[k] + ')</option>'; }).join('');
       var years = {};
-      certs.forEach(function (c) { years[c.academicYear] = 1; });
+      allYears.forEach(function (x) { years[x] = 1; });
       if (curTerm && curTerm.year) years[curTerm.year] = 1;
+      if (selYear) years[selYear] = 1;
       y.innerHTML = '<option value="">ทุกปีการศึกษา</option>' + Object.keys(years).filter(Boolean).sort(function (p, q) { return q - p; }).map(function (k) { return '<option value="' + k + '">ปีการศึกษา ' + k + '</option>'; }).join('');
       s.innerHTML = '<option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option>' + (summerOn ? '<option value="summer">ภาคฤดูร้อน</option>' : '');
       a.value = av; if (a.value !== av) a.value = '';
@@ -260,10 +262,10 @@
     }
     // แจ้งเตือน: เกียรติบัตรของฉันที่จองเลข/บันทึกแล้วแต่ยังอัพไฟล์ไม่ครบ
     function renderPendingAlert() {
-      var mine = certs.filter(function (c) { return c.isOwner && missingCount(c) > 0; });
+      var mine = pendingMine; // 1.63: นับจากทุกปี (Worker ส่งมาเป็นรายการเบาๆ)
       var el = $('certPendingAlert');
       if (!mine.length) { el.hidden = true; el.innerHTML = ''; return; }
-      var n = mine.reduce(function (s, c) { return s + missingCount(c); }, 0);
+      var n = mine.reduce(function (s, c) { return s + c.missing; }, 0);
       el.innerHTML = '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><div><b>มี ' + mine.length + ' รายการของคุณที่ยังอัพไฟล์ไม่ครบ</b> (ขาด ' + n + ' ไฟล์) — กดที่รายการแล้วกด "อัพไฟล์" ท้ายชื่อแต่ละคน</div>' +
         '<button type="button" class="btn btn-sm cert-alert-btn" id="certPendingShow">ดูเฉพาะรายการนี้</button>';
       el.hidden = false;
@@ -271,9 +273,13 @@
 
     // ---------- รายการ ----------
     function iReceived(c) { return c.kind === 'teacher' && activeItems(c).some(function (it) { return it.userId === session.id; }); }
+    function rerender() { shownN = LIST_PAGE; render(); }
     function render() {
       renderTabs(); renderPendingAlert();
       var q = $('certSearch').value.trim().toLowerCase();
+      var hint = $('certYearHint');
+      hint.hidden = !(q && selYear);
+      if (!hint.hidden) hint.innerHTML = '<i class="fa-solid fa-circle-info"></i> ค้นหาเฉพาะปีการศึกษา ' + escapeHtml(selYear) + ' — <button type="button" id="certSearchAllYears">ค้นหาทุกปีการศึกษา</button>';
       var fa = $('certActivity').value, fy = $('certYear').value, fsem = $('certSem').value, fm = $('certMine').value;
       var list = certs.filter(function (c) {
         if (c.scope !== scope) return false;
@@ -292,7 +298,7 @@
       var inScope = certs.filter(function (c) { return c.scope === scope && c.status !== 'cancelled'; }).length;
       if (!inScope && fm !== 'cancelled') { root.innerHTML = '<div class="orders-empty"><i class="fa-solid fa-award" aria-hidden="true"></i> ยังไม่มีเกียรติบัตร' + (scope === 'internal' ? 'ภายใน' : 'ภายนอก') + 'โรงเรียน</div>'; return; }
       if (!list.length) { root.innerHTML = '<div class="orders-empty">ไม่พบเกียรติบัตรที่ตรงกับเงื่อนไข</div>'; return; }
-      root.innerHTML = '<div class="ordc-count hint">' + list.length + ' รายการ · ' + list.reduce(function (s, c) { return s + (c.status === 'cancelled' ? (c.items || []).length : activeItems(c).length); }, 0) + ' ใบ</div><ul class="ordc-list">' + list.map(rowHtml).join('') + '</ul>';
+      root.innerHTML = '<div class="ordc-count hint">' + list.length + ' รายการ · ' + list.reduce(function (s, c) { return s + (c.status === 'cancelled' ? (c.items || []).length : activeItems(c).length); }, 0) + ' ใบ</div><ul class="ordc-list">' + list.slice(0, shownN).map(rowHtml).join('') + '</ul>' + listMoreHtml(shownN, list.length);
     }
     function dateTile(iso) {
       var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
@@ -403,10 +409,19 @@
       '</li>';
     }
 
-    async function load() {
+    // 1.63: โหลดทีละปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · เลือก "ทุกปีการศึกษา" จึงโหลดทั้งหมด · ปีที่โหลดแล้วจำไว้ (certCache)
+    var certCache = makeYearCache(function (y) { return apiCall('certList', { year: y }); });
+    async function load() { certCache.clear(); await loadYear(selYear); }
+    async function loadYear(y) {
+      if (!curTerm) { try { curTerm = await currentAcademicTerm(); } catch (e) { curTerm = { year: '' }; } }
+      if (y === null || y === undefined) y = String(curTerm.year || '');
+      selYear = y;
+      if (!certCache.has(y)) $('certRoot').innerHTML = yearLoadingHtml(y);
       try {
-        var res = await apiCall('certList', {});
+        var res = await certCache.get(y);
+        if (selYear !== y) return; // เปลี่ยนปีอีกครั้งระหว่างรอ
         certs = res.certs || []; activities = res.activities || []; agencies = res.agencies || []; levels = res.levels || []; people = res.people || []; me = res.me;
+        allYears = res.years || []; pendingMine = res.pendingMine || [];
         canAdd = !!res.canAdd; canMerge = !!res.canMergeActivities; schoolName = res.schoolName || ''; summerOn = res.summerEnabled !== false;
         if (res.numbering) numbering = res.numbering;
       } catch (err) {
@@ -417,9 +432,8 @@
       $('certMergeBtn').hidden = !canMerge || !(activities.length || agencies.length || levels.length);
       $('certSubtitle').textContent = 'เกียรติบัตรของครู นักเรียน และโรงเรียน' + (canAdd ? '' : ' (ดูได้อย่างเดียว)');
       $('certSubtitle').title = canAdd ? 'ครูและเจ้าหน้าที่เพิ่มได้ · แก้ไข/ลบได้เฉพาะผู้เพิ่มและเจ้าหน้าที่' : '';
-      if (!curTerm) { try { curTerm = await currentAcademicTerm(); } catch (e) { curTerm = { year: '' }; } }
       fillFilters();
-      render();
+      rerender();
     }
 
     // ================= ป็อปอัพ เพิ่ม/แก้ไข =================
@@ -818,15 +832,18 @@
       $('certPendingAlert').addEventListener('click', function (e) {
         if (!e.target.closest('#certPendingShow')) return;
         $('certMine').value = 'pending';
-        var first = certs.filter(function (c) { return c.isOwner && missingCount(c) > 0; })[0];
-        if (first && first.scope !== scope) { scope = first.scope; fillFilters(); }
-        $('certYear').value = ''; $('certActivity').value = ''; $('certSem').value = ''; kindFilter = '';
-        render();
+        var first = pendingMine[0];
+        if (first && first.scope !== scope) scope = first.scope;
+        var ys = pendingMine.map(function (x) { return x.academicYear; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+        $('certActivity').value = ''; $('certSem').value = ''; kindFilter = '';
+        loadYear(ys.length === 1 ? ys[0] : '');
       });
-      $('certTabs').addEventListener('click', function (e) { var b = e.target.closest('button[data-scope]'); if (!b) return; scope = b.getAttribute('data-scope'); try { localStorage.setItem(TAB_KEY, scope); } catch (x) { /* ไม่เป็นไร */ } fillFilters(); render(); });
-      $('certKindSeg').addEventListener('click', function (e) { var b = e.target.closest('button[data-kind]'); if (!b) return; kindFilter = b.getAttribute('data-kind'); render(); });
-      $('certSearch').addEventListener('input', render);
-      ['certActivity', 'certYear', 'certSem', 'certMine'].forEach(function (id) { $(id).addEventListener('change', render); });
+      $('certTabs').addEventListener('click', function (e) { var b = e.target.closest('button[data-scope]'); if (!b) return; scope = b.getAttribute('data-scope'); try { localStorage.setItem(TAB_KEY, scope); } catch (x) { /* ไม่เป็นไร */ } fillFilters(); rerender(); });
+      $('certKindSeg').addEventListener('click', function (e) { var b = e.target.closest('button[data-kind]'); if (!b) return; kindFilter = b.getAttribute('data-kind'); rerender(); });
+      $('certSearch').addEventListener('input', rerender);
+      ['certActivity', 'certSem', 'certMine'].forEach(function (id) { $(id).addEventListener('change', rerender); });
+      $('certYear').addEventListener('change', function () { loadYear(this.value); });
+      $('certYearHint').addEventListener('click', function (e) { if (e.target.closest('#certSearchAllYears')) { $('certYear').value = ''; loadYear(''); } });
       // ----- ฟอร์ม -----
       $('certForm').addEventListener('submit', onSubmit);
       $('certCancel').addEventListener('click', closeModal);
@@ -946,6 +963,7 @@
       $('certRoot').addEventListener('keydown', function (ev) { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[data-expand]')) { ev.preventDefault(); ev.target.click(); } });
       $('certRoot').addEventListener('click', async function (ev) {
         if (ev.target.closest('a[download]')) return;
+        if (ev.target.closest('[data-more]')) { shownN += LIST_PAGE; render(); return; }
         var t = ev.target.closest('[data-edit],[data-del],[data-preview],[data-expand-up],[data-expand],[data-it-view],[data-it-up],[data-share]');
         if (!t) return;
         var byId = function (attr) { var v = t.getAttribute(attr); return certs.filter(function (x) { return x.id === v; })[0]; };

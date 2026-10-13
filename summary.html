@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.62.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.63.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -120,7 +120,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.62.131026"></script>
+  <script src="assets/api.js?v=1.63.131026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -183,13 +183,23 @@
       if (Array.prototype.some.call(semSel.options, function (o) { return o.value === String(curTerm.semester); })) semSel.value = String(curTerm.semester);
     }
 
-    async function loadData() {
+    // 1.63: โหลดผลงานทีละปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · "ทุกปีการศึกษา" = โหลดทั้งหมด · ปีที่โหลดแล้วจำไว้
+    // สถิติด้านบน (จำนวนผลงานทั้งหมด / ครูที่ส่งแล้ว) ยังนับจากทุกปี — Worker ส่งมาแบบสรุป (withMeta)
+    var subCache = makeYearCache(function (y) { return apiCall('adminListAllSubmissions', { year: y, withMeta: true }); });
+    var subMeta = { total: 0, years: [], teacherIds: [] }, subYear = null;
+    async function loadData() { subCache.clear(); await loadSubYear(subYear); }
+    async function loadSubYear(y) {
+      sumShown = LIST_PAGE;
       var wrap = document.getElementById('subTableWrap');
       try {
-        var results = await Promise.all([apiCall('adminListAllSubmissions', {}), apiCall('adminListUsers', {})]);
-        allSubs = results[0];
-        allUsers = results[1].filter(function (u) { return u.role === 'teacher' || u.hasHub; });
         await ensureTerm();
+        if (y === null || y === undefined) y = String((curTerm && curTerm.year) || '');
+        subYear = y;
+        if (!subCache.has(y)) wrap.innerHTML = yearLoadingHtml(y);
+        var results = await Promise.all([subCache.get(y), allUsers.length ? Promise.resolve(null) : apiCall('adminListUsers', {})]);
+        if (subYear !== y) return;
+        allSubs = results[0].items || []; subMeta = results[0];
+        if (results[1]) allUsers = results[1].filter(function (u) { return u.role === 'teacher' || u.hasHub; });
         fillYearFilter();
         renderStats();
         renderTable();
@@ -199,7 +209,8 @@
     }
 
     function fillYearFilter() {
-      var years = withCurrentYear(Array.from(new Set(allSubs.map(function (s) { return s.academicYear; }))).filter(Boolean).sort().reverse());
+      var years = withCurrentYear((subMeta.years || []).slice());
+      if (subYear && years.indexOf(subYear) === -1) years.push(subYear);
       var sel = document.getElementById('fYear');
       var currentVal = sel.value;
       sel.innerHTML = '<option value="">ทุกปีการศึกษา</option>'; // เคลียร์ตัวเลือกเดิมก่อน กัน option ซ้ำตอนรีเฟรชข้อมูลซ้ำ
@@ -208,17 +219,17 @@
         opt.value = y; opt.textContent = 'ปีการศึกษา ' + y;
         sel.appendChild(opt);
       });
-      if (years.indexOf(currentVal) !== -1) sel.value = currentVal; // คงตัวกรองปีการศึกษาที่เลือกไว้ ไม่ให้รีเซ็ตตอนรีเฟรชข้อมูล
       applyTermDefault('all', sel, document.getElementById('fSemester'));
+      sel.value = subYear || ''; // 1.63: ปีที่โหลดอยู่
     }
 
     function renderStats() {
-      var submittedIds = new Set(allSubs.map(function (s) { return s.teacherId; }));
+      var submittedIds = new Set(subMeta.teacherIds || []); // 1.63: ทุกปี
       document.getElementById('statTotalUsers').textContent = allUsers.length;
       document.getElementById('statSubmittedUsers').textContent = Array.from(submittedIds).filter(function (id) {
         return allUsers.some(function (u) { return u.id === id; });
       }).length;
-      document.getElementById('statTotalSubs').textContent = allSubs.length;
+      document.getElementById('statTotalSubs').textContent = subMeta.total || 0;
     }
 
     function currentFilters() {
@@ -232,7 +243,7 @@
     // ---------- รายการผลงานทั้งหมด แบบ C (1.53.121026) — จัดกลุ่มตาม "ประเภทงาน + ปีการศึกษา/ภาคเรียน" ----------
     // แถวย่อ: ป้ายภาคเรียน/ปี + ชื่อประเภทงาน + กลุ่มบริหารงาน + "ส่ง N คน · M ไฟล์" · ขยาย: ตารางรายชื่อครูที่ส่ง (จำนวนไฟล์ / ส่งล่าสุด)
     // กด "ดูไฟล์" ที่ชื่อครูเพื่อดูรายการไฟล์ของคนนั้น (ไอคอนตามชนิดไฟล์ + พรีวิว/ดาวน์โหลด — Word/Excel/PowerPoint ดาวน์โหลดอย่างเดียว)
-    var sumExpanded = {}, sumTeacherOpen = {}, _sumGroups = {};
+    var sumExpanded = {}, sumTeacherOpen = {}, _sumGroups = {}, sumShown = LIST_PAGE; // 1.63: แสดงทีละ 50 ประเภทงาน
     function sumGroupKey(s) { return (s.categoryId || ('name:' + (s.categoryName || ''))) + '|' + s.academicYear + '|' + s.semester; }
     function sumTermTile(g) {
       var summer = g.semester === 'summer';
@@ -319,7 +330,7 @@
       var groups = buildSumGroups(rows);
       var people = {}; rows.forEach(function (s) { people[s.teacherId] = 1; });
       wrap.innerHTML = '<div class="ordc-count hint">' + groups.length + ' ประเภทงาน · ' + rows.length + ' ไฟล์ · ' + Object.keys(people).length + ' คน</div>' +
-        '<ul class="ordc-list sum-list">' + groups.map(sumGroupHtml).join('') + '</ul>';
+        '<ul class="ordc-list sum-list">' + groups.slice(0, sumShown).map(sumGroupHtml).join('') + '</ul>' + listMoreHtml(sumShown, groups.length);
     }
     (function bindSumList() {
       var wrap = document.getElementById('subTableWrap');
@@ -351,9 +362,10 @@
       });
     })();
 
-    document.getElementById('fSearch').addEventListener('input', renderTable);
-    document.getElementById('fYear').addEventListener('change', renderTable);
-    document.getElementById('fSemester').addEventListener('change', renderTable);
+    document.getElementById('fSearch').addEventListener('input', function () { sumShown = LIST_PAGE; renderTable(); });
+    document.getElementById('subTableWrap').addEventListener('click', function (e) { if (e.target.closest('[data-more]')) { sumShown += LIST_PAGE; renderTable(); } });
+    document.getElementById('fYear').addEventListener('change', function () { loadSubYear(this.value); });
+    document.getElementById('fSemester').addEventListener('change', function () { sumShown = LIST_PAGE; renderTable(); });
 
     // ---------- สรุปแยกแต่ละงาน ----------
     function statusBadge(status) {

@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.62.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.63.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -99,7 +99,7 @@
     </div>
   </div>
 
-<script src="assets/api.js?v=1.62.131026"></script>
+<script src="assets/api.js?v=1.63.131026"></script>
   <script>
     var session = requireViewerAccess();
     // ผู้บริหารเท่านั้นที่ใช้หน้านี้เป็นหน้าแรก (เจ้าหน้าที่/Super Admin มีหน้าแรกของตัวเองอยู่แล้ว) — ส่งกลับหน้าแรกของบทบาทนั้น
@@ -261,7 +261,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr 
       var results = await Promise.all([
         apiCall('adminListEvents', {}).catch(function () { return []; }),
         apiCall('adminGetAssignmentSummary', {}).catch(function () { return []; }),
-        apiCall('adminListAllSubmissions', {}).catch(function () { return []; }),
+        apiCall('adminListAllSubmissions', { countOnly: true }).catch(function () { return { total: 0 }; }), // 1.63: นับอย่างเดียว ไม่โหลดรายการ
         apiCall('adminListUsers', {}).catch(function () { return []; }),
         apiCall('calendarListWorkCategories', {}).catch(function () { return []; })
       ]);
@@ -270,7 +270,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr 
       categoryColorMap = buildCategoryColorMap(results[4]);
       var people = results[3].filter(function (u) { return u.status === 'active' && (u.role === 'teacher' || u.hasHub); }).length;
       renderCalendar();
-      renderSummary(results[2].length, people);
+      renderSummary(Number(results[2] && results[2].total) || 0, people);
     }
 
     document.getElementById('calPrev').addEventListener('click', function () {
