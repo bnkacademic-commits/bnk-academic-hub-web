@@ -1902,3 +1902,99 @@ table.sum-files td.a { width: 1%; }
 .theme-warn { color: var(--warn); font-size: 0.76rem; flex-basis: 100%; }
 .theme-warn[hidden] { display: none; }
 @media (max-width: 640px) { .theme-row-label { flex-basis: 100%; } .theme-preview { margin-left: 0; } }
+
+/* ---------- 1.57: สีของกลุ่มในการ์ดกลุ่มบริหารงาน · หัวข้อเช็คลิสต์ · วันที่เหลือ · ป้ายเทอม/ปีการศึกษา ---------- */
+.group-color { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 12px; }
+.group-color-label { font-weight: 700; font-size: 0.88rem; flex: 0 0 auto; }
+.group-color-label small { display: block; font-weight: 400; font-size: 0.74rem; color: var(--text-muted); }
+.group-color .theme-preview { margin-left: auto; }
+.group-color .group-color-off { flex-basis: 100%; margin: 0; }
+.group-color-chip { font-size: 0.7rem; vertical-align: middle; margin-left: 4px; }
+.theme-dept-note { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; margin-top: 6px; border-radius: 12px; background: var(--surface-2); font-size: 0.84rem; color: var(--text-muted); }
+.theme-dept-note b { color: var(--text); }
+/* หัวข้อ "เช็คลิสต์การส่งงาน" — แถบหัวข้อเด่นแบบเดียวกับ "กำหนดส่งงาน" (ย่อให้พอดีคอลัมน์แคบ) ตัวเลือกปีอยู่บรรทัดล่าง */
+.dash-checklist-title { flex-direction: column; align-items: stretch; gap: 8px; margin-bottom: 10px; color: inherit; font-size: inherit; }
+.dash-checklist-name {
+  display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  font-size: 1rem; font-weight: 800; color: var(--primary-dark);
+  background: var(--primary-light); border-left: 5px solid var(--primary); border-radius: var(--radius-sm);
+  padding: 9px 12px;
+}
+.dash-checklist-name .ui-icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 0.78rem;
+}
+.dash-checklist-controls { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; width: 100%; }
+.dash-checklist-controls select { flex: 1 1 auto; min-width: 0; }
+/* หัวกลุ่มเทอมในเช็คลิสต์: พื้นอ่อน + ป้ายเทอม/ปีแยกกัน (เดิมแถบทึบสีเดียว ต่างกันแค่ตัวเลข) */
+.checklist-group-title { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); padding: 6px 8px; gap: 6px; }
+.checklist-group-title:hover { border-color: var(--primary); }
+.checklist-group.open .checklist-group-title { border-color: var(--primary); }
+.cl-group-text { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; }
+/* ป้ายภาคเรียน / ปีการศึกษา */
+.term-tag, .year-tag { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 0.74rem; font-weight: 800; line-height: 1.45; white-space: nowrap; }
+.term-tag.t1 { background: var(--primary); color: #fff; border: 2px solid var(--primary); }
+.term-tag.t2 { background: var(--surface); color: var(--primary-dark); border: 2px solid var(--primary); }
+.term-tag.ts { background: #b45309; color: #fff; border: 2px solid #b45309; }
+.year-tag { background: var(--surface); color: var(--text); border: 1px solid var(--border); font-weight: 700; padding: 3px 9px; }
+.checklist-group-title .term-tag, .checklist-group-title .year-tag { font-size: 0.7rem; padding: 1px 7px; }
+.term-tags-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+/* (เหลือ N วัน) ในชิปวันที่ของ "กำหนดส่งงาน" */
+.event-date-chip .days-left { display: block; margin-top: 2px; font-size: 0.76rem; font-weight: 700; color: var(--primary-dark); }
+.event-date-chip .days-left.soon { color: var(--warn); }
+.event-date-chip .days-left.urgent, .event-date-chip .days-left.late { color: var(--danger); }
+.event-date-chip .days-left.done { color: var(--accent); }
+.checklist-group-toggle .cl-group-count { background: var(--danger); color: #fff; }
+.checklist-group-toggle .cl-group-allok { color: var(--accent); }
+.checklist-group-toggle .cl-group-chevron { color: var(--text-muted); }
+
+/* ---------- 1.58: วันที่เริ่มปฏิบัติงาน / ย้ายออก · ปฏิทิน (วงรอบวันนี้ + ป็อปอัพรายละเอียดวัน) ---------- */
+.badge-moved { background: var(--warn-light); color: var(--warn); }
+.join-hint { font-size: 0.72rem; margin-top: 3px; }
+.date-thai { font-weight: 600; }
+.mu-join-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mu-join-row input[type="date"] { width: auto; flex: 0 1 190px; }
+.mu-transfer-box { margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--warn); border-radius: 12px; background: var(--warn-light); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.mu-transfer-box input[type="date"] { width: auto; }
+.mu-transfer-box[hidden] { display: none; }
+/* วันนี้: วงรอบกรอบวัน + เลขวันในวงกลมสีหลัก · ทุกวันกดได้ (เปิดป็อปอัพรายละเอียดวัน) */
+.calendar-cell[data-date] { cursor: pointer; transition: box-shadow 0.15s ease; }
+.calendar-cell[data-date]:hover { box-shadow: inset 0 0 0 2px var(--border); }
+.calendar-cell[data-date]:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.calendar-cell.is-today { background: var(--surface); box-shadow: inset 0 0 0 2px var(--primary), 0 0 0 3px var(--primary-light); z-index: 1; }
+.calendar-cell.is-today:hover { box-shadow: inset 0 0 0 2px var(--primary), 0 0 0 3px var(--primary-light); }
+/* ป็อปอัพรายละเอียดวัน */
+.day-modal-box { max-width: 560px; }
+.day-modal-box h3 { margin-bottom: 2px; padding-right: 30px; }
+.day-modal-body { margin-top: 10px; max-height: 60vh; overflow-y: auto; }
+.day-ev { display: flex; gap: 12px; align-items: flex-start; padding: 12px 2px; border-top: 1px solid var(--border); }
+.day-ev:first-child { border-top: 0; }
+.day-ev-bar { flex: 0 0 5px; align-self: stretch; border-radius: 3px; }
+.day-ev-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.day-ev-title { font-weight: 800; font-size: 0.98rem; line-height: 1.35; }
+.day-ev-meta { font-size: 0.82rem; color: var(--text-muted); }
+.day-ev-meta .days-left { font-weight: 800; color: var(--primary-dark); }
+.day-ev-meta .days-left.soon { color: var(--warn); }
+.day-ev-meta .days-left.urgent, .day-ev-meta .days-left.late { color: var(--danger); }
+.day-ev-meta .days-left.done { color: var(--accent); }
+.day-ev-end { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 800; color: var(--danger); background: var(--danger-light); border-radius: 999px; padding: 2px 8px; vertical-align: middle; }
+.day-ev .event-submit-btn, .day-ev .notice-badge, .day-ev-note { flex-shrink: 0; align-self: center; }
+@media (max-width: 560px) { .day-ev { flex-wrap: wrap; } .day-ev .event-submit-btn { margin-left: 17px; } }
+.day-modal-body, .day-modal-box .hint { text-align: left; }
+.day-modal-box h3 { text-align: left; }
+.day-ev-main { align-items: flex-start; }
+/* ปฏิทินแบบจุดสี (แบบ A ที่ผู้ใช้เลือก — 1.58) */
+.calendar-cell { min-height: 64px; }
+.calendar-cell .cal-dots { position: absolute; left: 6px; right: 4px; top: 31px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; z-index: 1; }
+.cal-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.cal-dot-more { font-size: 0.66rem; font-weight: 800; color: var(--text-muted); line-height: 1; }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 0.78rem; color: var(--text-muted); }
+.cal-legend:empty { display: none; }
+.cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 560px) { .calendar-cell { min-height: 52px; } .calendar-cell .cal-dots { top: 28px; left: 4px; gap: 3px; } .cal-dot { width: 7px; height: 7px; } }
+/* เช็คลิสต์ข้างปฏิทิน: สูงเท่าปฏิทินเสมอ เลื่อนขึ้นลงในกรอบ (จอกว้าง) — จอแคบ (เรียงต่อกัน) ใช้ max-height เดิม 260px */
+@media (min-width: 721px) {
+  .dash-cal-side { position: relative; min-height: 320px; }
+  .dash-cal-side > .dash-checklist { position: absolute; inset: 0; }
+  .dash-checklist-body { overflow-y: auto; padding-right: 4px; scrollbar-width: thin; }
+}

@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.56.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.58.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -73,11 +73,12 @@
           </div>
           <div class="term-badge" id="currentTermBadge">-</div>
           <div class="calendar-grid" id="calGrid"></div>
+          <div class="cal-legend" id="calLegend"></div>
         </div>
         <div class="dash-cal-side">
           <div class="dash-checklist">
             <div class="dash-checklist-title">
-              <span class="dash-checklist-name"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> เช็คลิสต์การส่งงาน</span>
+              <span class="dash-checklist-name"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> <span>เช็คลิสต์การส่งงาน</span></span>
               <span class="dash-checklist-controls">
                 <select id="clYear" aria-label="เลือกปีการศึกษาของเช็คลิสต์"></select>
                 <button class="refresh-btn" id="clReset" type="button" title="กลับไปปีการศึกษา/เทอมปัจจุบัน" aria-label="กลับไปปีการศึกษาปัจจุบัน"><svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
@@ -160,6 +161,17 @@
     </div>
   </div>
 
+  <!-- 1.58: ป็อปอัพรายละเอียดวัน — กดวันในปฏิทินแล้วแสดงงานทั้งหมดที่ครอบคลุมวันนั้น -->
+  <div class="modal-backdrop" id="dayModal" hidden>
+    <div class="modal-box day-modal-box">
+      <button type="button" class="modal-close-x" id="dayModalCloseX" aria-label="ปิด">✕</button>
+      <h3 id="dayModalTitle">-</h3>
+      <div class="hint" id="dayModalSub"></div>
+      <div id="dayModalBody" class="day-modal-body"></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost" id="dayModalCloseBtn">ปิด</button></div>
+    </div>
+  </div>
+
   <!-- QR Modal -->
   <div class="modal-backdrop" id="qrModal" hidden>
     <div class="modal-box">
@@ -179,7 +191,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.56.131026"></script>
+  <script src="assets/api.js?v=1.58.131026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -198,6 +210,17 @@
     }
 
     var session = requireHubAccess();
+    // 1.58: งานที่สิ้นสุดก่อนวันที่เริ่มปฏิบัติงานที่โรงเรียน (ครูย้ายเข้าใหม่) ไม่ต้องส่ง — ไม่ขึ้นในเช็คลิสต์/ค้างส่ง (ยกเว้นส่งไปแล้ว)
+    function beforeMyJoin(e) {
+      var j = session && session.joinedAt;
+      if (!j) return false;
+      var end = String(e.endDate || e.date || '').slice(0, 10);
+      return !!end && end < j && !isAssignmentSubmitted(e);
+    }
+    // ดึงข้อมูลบัญชีล่าสุด (วันที่เริ่มปฏิบัติงานอาจเพิ่งถูกตั้ง) แล้ววาดเช็คลิสต์/ปฏิทินใหม่ถ้าเปลี่ยน
+    if (session) refreshSessionUser().then(function (u) {
+      if (u && (u.joinedAt || '') !== (session.joinedAt || '')) { session.joinedAt = u.joinedAt || ''; try { renderCalendar(); renderAssignmentChecklist(); } catch (e) { /* ยังไม่โหลด */ } }
+    }).catch(function () {});
     if (session) mountChrome('dashboard');
     if (session) document.getElementById('welcomeHeading').textContent = 'ยินดีต้อนรับ, ' + session.name;
     // ปุ่ม "ปริ้นบันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026): เดิมจำกัดไว้เฉพาะ role==='teacher' เท่านั้น
@@ -829,7 +852,7 @@
       var yearSel = document.getElementById('clYear');
       // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ — ไม่มีอะไรให้ "ส่งแล้ว/ยังไม่ส่ง"
       // ยังคงแสดงเป็นการ์ดแจ้งเตือนอยู่ใน "กำหนดการ" ใต้ปฏิทินตามปกติ (ดู renderCalendar ด้านล่าง)
-      var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission; });
+      var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission && !beforeMyJoin(e); });
       // รายการปีให้เลือก = ทุกปีที่มีงาน + ปีปัจจุบัน (เผื่อยังไม่มีงานในปีนี้ ก็ยังกลับมาเลือกได้)
       var years = {};
       assignments.forEach(function (e) { years[String(e.academicYear)] = true; });
@@ -876,7 +899,7 @@
         }).join('');
         return '<div class="checklist-group' + (open ? ' open' : '') + '" data-cl-key="' + escapeHtml(g.key) + '">' +
           '<button type="button" class="checklist-group-title checklist-group-toggle" aria-expanded="' + (open ? 'true' : 'false') + '" title="' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '">' +
-            '<i class="fas fa-calendar-days ui-icon" aria-hidden="true"></i><span class="cl-group-text">' + semLabel + ' ปี ' + escapeHtml(g.academicYear) + '</span>' +
+            '<span class="cl-group-text">' + termTagsHtml(g.semester, g.academicYear, { short: true }) + '</span>' + // 1.57: ป้ายเทอม/ปีแยกกันชัดเจน
             (pendingCount > 0 ? '<span class="cl-group-count" title="ยังไม่ส่ง ' + pendingCount + ' งาน">' + pendingCount + '</span>' : '<i class="fas fa-check cl-group-allok" aria-label="ส่งครบแล้ว"></i>') +
             '<i class="fas fa-chevron-down cl-group-chevron" aria-hidden="true"></i>' +
           '</button>' +
@@ -924,12 +947,13 @@
       });
       var firstDay = new Date(calState.year, calState.month, 1).getDay();
       var daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
-      var todayStr = new Date().toISOString().slice(0, 10);
+      var todayStr = todayYmd(); // 1.58: วันที่ตามเวลาเครื่อง (เดิม toISOString เป็นเวลา UTC — ช่วง 00:00-07:00 ไฮไลต์ผิดวัน)
       var pad2 = function (n) { return String(n).padStart(2, '0'); };
       var monthStartStr = calState.year + '-' + pad2(calState.month + 1) + '-01';
       var monthEndStr = calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(daysInMonth);
       var laneOf = computeEventLanes(calState.events, monthStartStr, monthEndStr);
 
+      var legendCats = {}; // 1.58: คำอธิบายสีของงานที่มีในเดือนนี้
       for (var i = 0; i < firstDay; i++) {
         var pad = document.createElement('div'); pad.className = 'calendar-cell empty'; grid.appendChild(pad);
       }
@@ -937,7 +961,10 @@
         var dateStr = calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(d);
         var isToday = dateStr === todayStr;
         var cell = document.createElement('div');
-        cell.className = 'calendar-cell';
+        cell.className = 'calendar-cell' + (isToday ? ' is-today' : '');
+        // 1.58: กดวันได้ทุกวัน -> ป็อปอัพรายละเอียดงานของวันนั้น
+        cell.setAttribute('data-date', dateStr); cell.setAttribute('role', 'button'); cell.tabIndex = 0;
+        cell.setAttribute('aria-label', d + ' ' + thaiMonths[calState.month] + (isToday ? ' (วันนี้)' : ''));
         var evs = eventsOnDate(dateStr);
         if (evs.length > 0) { cell.className += ' has-event'; cell.title = evs.map(function (e) { return e.title; }).join(', '); }
         // ตำแหน่งคอลัมน์ (0=อาทิตย์...6=เสาร์) ของวันนี้ในกริด — ใช้ตัดสินว่าต้องแสดงชื่อกำหนดการซ้ำในแถบหรือไม่ (ดูด้านล่าง)
@@ -945,20 +972,21 @@
         // แถบสีของกำหนดการ (ตั้งแต่ V10.0, ปรับสไตล์ให้เหมือนปฏิทินทั่วไปอีกครั้งตามที่ผู้ใช้ขอ): ลากยาวเต็มความกว้างช่องแบบไร้ขอบ (ชิดขอบซ้าย-ขวาของช่อง)
         // ต่อเนื่องข้ามวันตามช่วงวันที่ (date-endDate) มนหัวเฉพาะวันเริ่ม/วันจบจริงเพื่อให้ดูเป็นแท่งเดียวยาวต่อกัน และแสดง "ชื่อกำหนดการ" เป็นตัวหนังสือในแถบด้วย
         // (แสดงชื่อเฉพาะวันเริ่มต้นจริง หรือวันแรกของแถวใหม่ที่แถบยังลากต่อเนื่องมา ไม่งั้นจะซ้ำทุกวัน) ไม่ผูกประเภทงาน (กำหนดการทั่วไป) ใช้สีเทาอ่อนแทนสีประเภทงาน
-        var barsHtml = '';
-        evs.slice().sort(function (a, b) { return (laneOf[a.id] || 0) - (laneOf[b.id] || 0); }).forEach(function (e) {
-          var lane = laneOf[e.id] || 0;
-          if (lane >= MAX_CALENDAR_LANES) return;
-          var isStart = dateStr === e.date;
-          var isEnd = dateStr === (e.endDate || e.date);
-          var showLabel = isStart || colIndex === 0;
-          var barColor = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
-          var cls = 'event-bar' + (isStart ? ' bar-start' : '') + (isEnd ? ' bar-end' : '');
-          barsHtml += '<div class="' + cls + '" style="background:' + barColor + ';" title="' + escapeHtml(e.title) + '">' + (showLabel ? escapeHtml(e.title) : '') + '</div>';
-        });
-        cell.innerHTML = '<div class="day-num' + (isToday ? ' today' : '') + '">' + d + '</div>' + (barsHtml ? '<div class="event-bars">' + barsHtml + '</div>' : '');
+        // 1.58: แสดงงานเป็นจุดสี (แบบ A ที่ผู้ใช้เลือก) แทนแถบสีลากยาว — สูงสุด 4 จุด + "+N" · กดวันเพื่อดูรายละเอียด
+        var dotsHtml = evs.slice(0, 4).map(function (e) {
+          var c = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
+          return '<i class="cal-dot" style="background:' + c + ';" title="' + escapeHtml(e.title) + '"></i>';
+        }).join('') + (evs.length > 4 ? '<span class="cal-dot-more">+' + (evs.length - 4) + '</span>' : '');
+        evs.forEach(function (e) { if (e.categoryId) legendCats[e.categoryId] = e.categoryName || e.title; else legendCats['__none'] = 'กำหนดการทั่วไป'; });
+cell.innerHTML = '<div class="day-num' + (isToday ? ' today' : '') + '">' + d + '</div>' + (dotsHtml ? '<div class="cal-dots">' + dotsHtml + '</div>' : '');
         grid.appendChild(cell);
       }
+      var legend = document.getElementById('calLegend');
+      var lk = Object.keys(legendCats);
+      if (legend) legend.innerHTML = lk.slice(0, 8).map(function (k) {
+        var c = k === '__none' ? '#9aa4b8' : (categoryColorMap[k] || '#3457d5');
+        return '<span><i class="cal-dot" style="background:' + c + ';"></i>' + escapeHtml(legendCats[k]) + '</span>';
+      }).join('') + (lk.length > 8 ? '<span>และอีก ' + (lk.length - 8) + ' ประเภท (กดที่วันเพื่อดู)</span>' : ''); // แสดงสูงสุด 8 ประเภท
 
       var upcomingBox = document.getElementById('calEventsUpcoming');
       var now = new Date();
@@ -970,7 +998,7 @@
         // (ไม่มีเพดาน 60 วันเหมือนกำหนดการทั่วไป) เพื่อให้ยังกดปุ่ม "ส่งงาน" ได้จากตรงนี้เสมอ — เคยหายไปจากรายการทันทีที่เกินกำหนดเกิน 1 วัน
         // ซึ่งผู้ใช้แจ้งว่าไม่สะดวก เพราะหาไม่เจอว่าจะกดส่งงานที่ค้างได้จากไหน พองานถูกส่งแล้วจะหลุดออกจากรายการตามปกติเหมือนเดิม
         // ตั้งแต่ V12.0: ไม่ใช้กับ e.noSubmission (แจ้งเตือนอย่างเดียว ไม่มีอะไรให้ "ส่ง" จริง) ให้ตกไปใช้เพดาน 60 วันปกติเหมือนกำหนดการทั่วไปแทน
-        if (diffDays <= -1 && e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e)) return true;
+        if (diffDays <= -1 && e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && !beforeMyJoin(e)) return true;
         return false;
       }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
 
@@ -985,6 +1013,9 @@
         // เปลี่ยนชื่อหัวข้อจาก "กำหนดการ" เป็น "กำหนดส่งงาน" และรูปแบบแต่ละแถวเป็น "ชื่อ(ประเภทงาน) เทอม ปีการศึกษา" (ตั้งแต่ V-ถัดไปหลัง V10.1)
         upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="cal-upcoming-grid">' + upcoming.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
+          // 1.57: (เหลือ N วัน) นับถึงวันสุดท้ายของกำหนดส่ง · ส่งแล้วแสดงสีปกติ · เลยกำหนดแสดงเฉพาะงานที่ยังไม่ส่ง
+          var dl = daysLeftInfo(e.endDate || e.date, now), submittedNow = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
+          if (dl && (dl.days >= 0 || (e.categoryId && !e.noSubmission && !submittedNow))) dateChip += '<span class="days-left ' + (submittedNow ? 'done' : dl.cls) + '">(' + dl.text + ')</span>';
           // เกินกำหนดส่งแล้ว + ยังไม่ส่ง (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) — แสดงป้าย "เกินกำหนด" สีแดงให้เห็นชัดเจน ไม่ใช่แค่หายเงียบๆ ไปจากรายการ
           // ตั้งแต่ V12.0: ไม่มีสถานะเกินกำหนดสำหรับ e.noSubmission เพราะไม่มีอะไรให้ "ส่ง" จริง
           var isOverdue = e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && new Date(e.endDate || e.date) < now;
@@ -998,7 +1029,7 @@
             : (e.categoryId && !e.noSubmission)
             ? '<button class="btn ' + (isOverdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
             : (e.categoryId && e.noSubmission ? '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>' : '');
-          var termLabel = e.categoryId ? (e.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(e.semester)) + ' ปีการศึกษา ' + escapeHtml(e.academicYear) : '';
+          var termLabel = e.categoryId ? termTagsHtml(e.semester, e.academicYear) : ''; // 1.57: ป้ายแทนตัวหนังสือจางๆ
           // ตั้งแต่เวอร์ชันถัดจาก V11.1 หัวข้อกำหนดการที่ผูกประเภทงานจะเป็นชื่อประเภทงานเป๊ะๆ อยู่แล้ว (กรอกเองไม่ได้อีกต่อไป) — ไม่ต้องต่อท้าย "(ชื่อประเภทงาน)" ซ้ำอีกถ้าซ้ำกับหัวข้ออยู่แล้ว (กำหนดการเก่าก่อนอัพเดตที่หัวข้อเคยพิมพ์เองไว้ต่างจากชื่อประเภทงาน ยังโชว์วงเล็บต่อท้ายตามเดิม)
           var showCategorySuffix = e.categoryName && e.categoryName !== e.title;
           var overdueBadge = isOverdue ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> เกินกำหนด</span>' : '';
@@ -1007,7 +1038,7 @@
             '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(e.title) +
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
               (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + overdueBadge + '</div>' +
-            (termLabel ? '<div class="sub-item-meta">' + categoryDotHtml(categoryColorMap[e.categoryId]) + escapeHtml(termLabel) + '</div>' : '') +
+            (termLabel ? '<div class="sub-item-meta term-tags-row">' + categoryDotHtml(categoryColorMap[e.categoryId]) + termLabel + '</div>' : '') +
             (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + submitBtn + '</div>';
         }).join('') + '</div>';
         upcomingBox.querySelectorAll('button[data-group-event]').forEach(function (btn) {
@@ -1027,6 +1058,61 @@
         });
       }
     }
+
+    // ---------- 1.58: ป็อปอัพรายละเอียดวัน ----------
+    var THAI_DOW_FULL = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+    function eventActionHtml(e) {
+      if (!e.categoryId) return '';
+      if (e.noSubmission) return '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>';
+      if (beforeMyJoin(e)) return '<span class="hint day-ev-note">ก่อนเริ่มปฏิบัติงาน</span>';
+      if (isAssignmentSubmitted(e)) return '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ส่งงานเพิ่มหรือแก้ไข</button>';
+      var late = new Date(e.endDate || e.date) < new Date() && (daysLeftInfo(e.endDate || e.date) || {}).days < 0;
+      return '<button class="btn ' + (late ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>';
+    }
+    function openDayModal(dateStr) {
+      var p = dateStr.split('-'), dt = new Date(+p[0], +p[1] - 1, +p[2]);
+      document.getElementById('dayModalTitle').textContent = 'วัน' + THAI_DOW_FULL[dt.getDay()] + 'ที่ ' + dt.getDate() + ' ' + thaiMonths[dt.getMonth()] + ' ' + (dt.getFullYear() + 543) + (dateStr === todayYmd() ? ' (วันนี้)' : '');
+      var evs = eventsOnDate(dateStr).sort(function (a, b) { return String(a.endDate || a.date).localeCompare(String(b.endDate || b.date)); });
+      document.getElementById('dayModalSub').textContent = evs.length ? 'งานในวันนี้ ' + evs.length + ' รายการ' : '';
+      var body = document.getElementById('dayModalBody');
+      body.innerHTML = evs.length ? evs.map(function (e) {
+        var color = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
+        var range = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
+        var dl = daysLeftInfo(e.endDate || e.date), done = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
+        var dlHtml = dl && (dl.days >= 0 || (e.categoryId && !e.noSubmission && !done && !beforeMyJoin(e))) ? ' <span class="days-left ' + (done ? 'done' : dl.cls) + '">(' + escapeHtml(dl.text) + ')</span>' : '';
+        var isEnd = (e.endDate || e.date) === dateStr;
+        return '<div class="day-ev">' +
+          '<span class="day-ev-bar" style="background:' + color + '"></span>' +
+          '<div class="day-ev-main">' +
+            '<div class="day-ev-title">' + escapeHtml(e.title) + (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + (isEnd && e.categoryId && !e.noSubmission ? ' <span class="day-ev-end"><i class="fas fa-flag" aria-hidden="true"></i> ครบกำหนดวันนี้</span>' : '') + (done ? ' <span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>' : '') + '</div>' +
+            '<div class="day-ev-meta"><i class="fas fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(range) + dlHtml + '</div>' +
+            (e.categoryId ? '<div class="term-tags-row">' + termTagsHtml(e.semester, e.academicYear) + '</div>' : '') +
+            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') +
+          '</div>' + eventActionHtml(e) + '</div>';
+      }).join('') : '<div class="empty-state">ไม่มีงานหรือกำหนดการในวันนี้</div>';
+      showModalEl(document.getElementById('dayModal'));
+    }
+    (function wireDayModal() {
+      var grid = document.getElementById('calGrid'), modal = document.getElementById('dayModal');
+      var openFromCell = function (cell) { if (cell && cell.getAttribute('data-date')) openDayModal(cell.getAttribute('data-date')); };
+      grid.addEventListener('click', function (ev) { openFromCell(ev.target.closest('.calendar-cell[data-date]')); });
+      grid.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { var c = ev.target.closest('.calendar-cell[data-date]'); if (c) { ev.preventDefault(); openFromCell(c); } } });
+      var close = function () { hideModalEl(modal); };
+      document.getElementById('dayModalCloseX').addEventListener('click', close);
+      document.getElementById('dayModalCloseBtn').addEventListener('click', close);
+      document.getElementById('dayModalBody').addEventListener('click', function (ev) {
+        var g = ev.target.closest('button[data-group-event]'), sbt = ev.target.closest('button[data-submit-event]');
+        var id = (g || sbt) && (g || sbt).getAttribute(g ? 'data-group-event' : 'data-submit-event');
+        if (!id) return;
+        var e = calState.events.filter(function (x) { return x.id === id; })[0];
+        if (!e) return;
+        close();
+        if (g) {
+          var s0 = allSubmissions.filter(function (s) { return s.categoryId === e.categoryId && s.academicYear === e.academicYear && s.semester === e.semester; })[0];
+          if (s0) openGroupModal(subGroupKey(s0)); else openUploadModal({ categoryId: e.categoryId, academicYear: e.academicYear, semester: e.semester });
+        } else openUploadModal({ categoryId: e.categoryId, academicYear: e.academicYear, semester: e.semester });
+      });
+    })();
 
     document.getElementById('calPrev').addEventListener('click', function () {
       calState.month--; if (calState.month < 0) { calState.month = 11; calState.year--; }

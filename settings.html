@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.56.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.58.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -62,10 +62,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.56.131026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.58.131026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.56.131026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.58.131026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -99,7 +99,7 @@
         </div>
       </div>
 
-      <!-- 1.56.131026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.58.131026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -133,8 +133,8 @@
         <p class="hint" style="margin-top:-8px; margin-bottom:12px;">สีของปุ่ม ตัวหนังสือหลัก ป้าย และหัวการ์ดเข้าสู่ระบบ (โหมดกลางคืนปรับความสว่างให้อัตโนมัติ)</p>
         <div id="themeError" class="error-box" hidden></div>
         <div class="theme-mode" role="radiogroup" aria-label="รูปแบบธีมสี">
-          <label><input type="radio" name="themeMode" value="system" id="themeModeSystem" /><span><b>สีเดียวทั้งระบบ</b><small>ทุกบัญชีและหน้าเข้าสู่ระบบใช้สีเดียวกัน</small></span></label>
-          <label><input type="radio" name="themeMode" value="department" id="themeModeDept" /><span><b>แยกสีตามกลุ่มบริหารงาน</b><small>ป้ายกลุ่ม และปุ่ม/ตัวหนังสือของบัญชีในกลุ่มนั้นใช้สีของกลุ่ม · หน้าเข้าสู่ระบบตั้งสีแยก</small></span></label>
+          <label><input type="radio" name="themeMode" value="system" id="themeModeSystem" /><span><b>สีเดียวทั้งระบบ</b><small>ปุ่มและตัวหนังสือของทุกบัญชีและหน้าเข้าสู่ระบบใช้สีเดียวกัน (ป้ายกลุ่มยังแสดงสีของกลุ่ม)</small></span></label>
+          <label><input type="radio" name="themeMode" value="department" id="themeModeDept" /><span><b>ตามกลุ่มบริหารงาน</b><small>สมาชิกแต่ละกลุ่มเห็นปุ่มและตัวหนังสือเป็นสีของกลุ่มตัวเอง (สีเดียวกับป้ายกลุ่ม) · หน้าเข้าสู่ระบบตั้งสีแยก</small></span></label>
         </div>
         <div id="themeRows"></div>
         <div style="margin-top:12px;"><button type="button" class="btn btn-primary" id="themeSaveBtn"><i class="fas fa-floppy-disk ui-icon" aria-hidden="true"></i> บันทึกธีมสี</button></div>
@@ -630,6 +630,12 @@
             แต่งตั้งเป็นเจ้าหน้าที่ของกลุ่มบริหารงานนี้ (ได้สิทธิ์แอดมินของกลุ่ม)
           </label>
         </div>
+        <!-- 1.58: วันที่เริ่มปฏิบัติงานที่โรงเรียน — ครูย้ายเข้าใหม่จะไม่ถูกนับว่า "ยังไม่ส่ง" งานที่ครบกำหนดก่อนวันนี้ -->
+        <div class="field" id="cuJoinField">
+          <label for="cuJoinedAt">เริ่มปฏิบัติงานที่โรงเรียนเมื่อ <span class="hint date-thai" id="cuJoinedThai"></span></label>
+          <input type="date" id="cuJoinedAt" />
+          <div class="hint" style="margin-top:4px;">ครูย้ายเข้าใหม่: ไม่นับงานที่ครบกำหนดก่อนวันนี้ · ครูเดิมที่ต้องนับทุกงาน ให้ล้างช่องนี้ (ไม่ระบุ)</div>
+        </div>
         <div class="hint" style="margin-bottom:14px;">username จะถูกแปลงเป็นตัวพิมพ์เล็กให้อัตโนมัติ — ล็อกอินได้ทั้งตัวพิมพ์เล็กและใหญ่ ส่วนรหัสผ่านแยกตัวพิมพ์เล็ก/ใหญ่ตามที่ตั้งไว้</div>
         <div class="modal-actions">
           <button type="submit" class="btn btn-primary">สร้างบัญชี</button>
@@ -795,6 +801,17 @@
 
       <!-- แท็บ 3: สถานะ -->
       <div class="ev-tab-panel" id="muTab-status">
+        <!-- 1.58: วันที่เริ่มปฏิบัติงานที่โรงเรียน (ใช้ตัดสินว่าต้องส่งงานไหนบ้าง) -->
+        <div class="mu-section" id="muJoinSection">
+          <div class="mu-section-title">เริ่มปฏิบัติงานที่โรงเรียน</div>
+          <div class="mu-join-row">
+            <input type="date" id="muJoinedAt" aria-label="วันที่เริ่มปฏิบัติงาน" />
+            <span class="hint date-thai" id="muJoinedThai"></span>
+            <button type="button" class="btn btn-primary btn-sm" id="muJoinSave" disabled>บันทึก</button>
+          </div>
+          <div class="hint" style="margin-top:6px;">นับว่า "ต้องส่ง" เฉพาะงานที่ครบกำหนดตั้งแต่วันนี้เป็นต้นไป · ไม่ระบุ (ล้างช่อง) = นับทุกงาน</div>
+          <div class="error-box" id="muJoinError" hidden style="margin:8px 0 0;"></div>
+        </div>
         <div class="mu-section">
           <div class="mu-section-title">สถานะบัญชี</div>
           <div class="mu-status-row"><span id="muStatusBadge"></span><span class="hint" id="muStatusText"></span></div>
@@ -1093,7 +1110,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.56.131026"></script>
+  <script src="assets/api.js?v=1.58.131026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1270,83 +1287,82 @@
         if (r.ok) resetSettingsCache(); else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     })();
-    // ---------- 1.56: ธีมสีของเว็บไซต์ ----------
-    var themeState = { mode: 'system', color: THEME_DEFAULT_COLOR, login: '', depts: {} };
-    var themeDeptList = [];
+    // ---------- 1.56: ธีมสีของเว็บไซต์ (1.57: สีของแต่ละกลุ่มย้ายไปตั้งในแท็บข้อมูลหลัก → กลุ่มบริหารงาน) ----------
+    var themeState = { mode: 'system', color: THEME_DEFAULT_COLOR, login: '' };
     function themeScopeStyle(el, hex) {
       var t = themePalette(hex), dark = document.documentElement.getAttribute('data-theme') === 'dark', v = dark ? t.dark : t.light;
       el.style.setProperty('--primary', v.p); el.style.setProperty('--primary-dark', v.d); el.style.setProperty('--primary-light', v.l);
     }
-    function themeRowHtml(key, label, sub, allowNone) {
-      var sw = (allowNone ? '<button type="button" class="theme-sw none" data-k="' + escapeHtml(key) + '" data-c="" title="ใช้สีหลัก" aria-label="ใช้สีหลัก"></button>' : '') +
+    // ปุ่มสีสำเร็จรูป + "ไม่เลือก" (allowNone) + เลือกสีเอง — ใช้ทั้งการ์ดธีมสี (แท็บทั่วไป) และการ์ดกลุ่มบริหารงาน (แท็บข้อมูลหลัก)
+    function themeSwatchesHtml(key, allowNone, noneTitle) {
+      return (allowNone ? '<button type="button" class="theme-sw none" data-k="' + escapeHtml(key) + '" data-c="" title="' + escapeHtml(noneTitle || 'ใช้สีหลัก') + '" aria-label="' + escapeHtml(noneTitle || 'ใช้สีหลัก') + '"></button>' : '') +
         THEME_PRESETS.map(function (p) { return '<button type="button" class="theme-sw" data-k="' + escapeHtml(key) + '" data-c="' + p.c + '" style="background:' + p.c + '" title="' + escapeHtml(p.name) + '" aria-label="' + escapeHtml(p.name) + '"></button>'; }).join('') +
         '<label class="theme-custom" title="เลือกสีเอง"><input type="color" data-k="' + escapeHtml(key) + '" aria-label="เลือกสีเอง" /></label>';
+    }
+    function themeRowHtml(key, label, sub, allowNone) {
       return '<div class="theme-row" data-row="' + escapeHtml(key) + '"><div class="theme-row-label">' + escapeHtml(label) + (sub ? '<small>' + escapeHtml(sub) + '</small>' : '') + '</div>' +
-        '<div class="theme-swatches">' + sw + '</div>' +
+        '<div class="theme-swatches">' + themeSwatchesHtml(key, allowNone) + '</div>' +
         '<div class="theme-preview"><span class="tp-btn">ปุ่ม</span><span class="tp-tag">ป้าย</span></div>' +
         '<div class="theme-warn" hidden>สีนี้อ่อน ตัวหนังสือสีขาวบนปุ่มอาจอ่านยาก</div></div>';
     }
-    function themeGet(key) { return key === '__main' ? themeState.color : key === '__login' ? themeState.login : (themeState.depts[key] || ''); }
-    function themeSet(key, c) { if (key === '__main') themeState.color = c || THEME_DEFAULT_COLOR; else if (key === '__login') themeState.login = c; else if (c) themeState.depts[key] = c; else delete themeState.depts[key]; }
+    // ระบายสถานะของแถวสี (ปุ่มที่เลือก / ช่องเลือกสีเอง / ตัวอย่าง / คำเตือนสีอ่อน)
+    function syncSwatchRow(row, c, eff) {
+      Array.prototype.forEach.call(row.querySelectorAll('.theme-sw'), function (b) { b.setAttribute('aria-pressed', String((b.getAttribute('data-c') || '') === (c || ''))); });
+      var picker = row.querySelector('input[type="color"]'); if (picker) picker.value = eff;
+      var pv = row.querySelector('.theme-preview'); if (pv) themeScopeStyle(pv, eff);
+      var w = row.querySelector('.theme-warn'); if (w) w.hidden = themeContrastWithWhite(eff) >= 4.5;
+    }
+    function themeGet(key) { return key === '__main' ? themeState.color : themeState.login; }
+    function themeSet(key, c) { if (key === '__main') themeState.color = c || THEME_DEFAULT_COLOR; else themeState.login = c; }
     function renderThemeRows() {
       var wrap = document.getElementById('themeRows');
       if (!wrap) return;
       document.getElementById(themeState.mode === 'department' ? 'themeModeDept' : 'themeModeSystem').checked = true;
-      var html = themeState.mode === 'department'
+      wrap.innerHTML = themeState.mode === 'department'
         ? themeRowHtml('__main', 'สีหลัก', 'บัญชีที่ไม่สังกัดกลุ่ม และกลุ่มที่ไม่ได้ตั้งสี', false) +
           themeRowHtml('__login', 'หน้าเข้าสู่ระบบ', 'ไม่เลือก = ใช้สีหลัก', true) +
-          ((typeof currentDepartments !== 'undefined' && currentDepartments && currentDepartments.length) ? currentDepartments : themeDeptList).map(function (d) { return themeRowHtml(d, groupLabel(d), '', true); }).join('')
+          '<div class="theme-dept-note"><i class="fas fa-circle-info" aria-hidden="true"></i> สีของแต่ละกลุ่มตั้งได้ที่แท็บ <b>ข้อมูลหลัก → กลุ่มบริหารงาน</b> <button type="button" class="btn btn-ghost btn-sm" id="themeGoDeptBtn">ไปตั้งสีของกลุ่ม</button></div>'
         : themeRowHtml('__main', 'สีของทั้งระบบ', '', false);
-      wrap.innerHTML = html;
-      syncThemeRows();
-    }
-    function syncThemeRows() {
-      Array.prototype.forEach.call(document.querySelectorAll('#themeRows .theme-row'), function (row) {
-        var key = row.getAttribute('data-row'), c = themeGet(key), eff = c || themeState.color;
-        Array.prototype.forEach.call(row.querySelectorAll('.theme-sw'), function (b) { b.setAttribute('aria-pressed', String((b.getAttribute('data-c') || '') === (c || ''))); });
-        var picker = row.querySelector('input[type="color"]'); if (picker) picker.value = eff;
-        themeScopeStyle(row.querySelector('.theme-preview'), eff);
-        row.querySelector('.theme-warn').hidden = themeContrastWithWhite(eff) >= 4.5;
-      });
+      Array.prototype.forEach.call(wrap.querySelectorAll('.theme-row'), function (row) { var k = row.getAttribute('data-row'), c = themeGet(k); syncSwatchRow(row, c, c || themeState.color); });
+      var go = document.getElementById('themeGoDeptBtn');
+      if (go) go.addEventListener('click', function () { var tb = document.querySelector('.tab-btn[data-tab="website"]'); if (tb) { tb.click(); var gc = document.getElementById('groupsCard'); if (gc) gc.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
     }
     function loadThemeCard(s) {
       if (!document.getElementById('themeCard')) return;
-      themeDeptList = (s.departments || []).slice();
-      themeState = { mode: s.themeMode === 'department' ? 'department' : 'system', color: themeHexOk(s.themeColor) ? s.themeColor.toLowerCase() : THEME_DEFAULT_COLOR, login: themeHexOk(s.themeLoginColor) ? s.themeLoginColor.toLowerCase() : '', depts: {} };
-      Object.keys(s.departmentColors || {}).forEach(function (d) { if (themeHexOk(s.departmentColors[d])) themeState.depts[d] = s.departmentColors[d].toLowerCase(); });
+      themeState = { mode: s.themeMode === 'department' ? 'department' : 'system', color: themeHexOk(s.themeColor) ? s.themeColor.toLowerCase() : THEME_DEFAULT_COLOR, login: themeHexOk(s.themeLoginColor) ? s.themeLoginColor.toLowerCase() : '' };
       renderThemeRows();
     }
     if (document.getElementById('themeCard')) {
       document.getElementById('themeRows').addEventListener('click', function (e) {
         var b = e.target.closest('.theme-sw'); if (!b) return;
-        themeSet(b.getAttribute('data-k'), b.getAttribute('data-c') || ''); syncThemeRows();
+        themeSet(b.getAttribute('data-k'), b.getAttribute('data-c') || ''); renderThemeRows();
       });
       document.getElementById('themeRows').addEventListener('input', function (e) {
         if (e.target.type !== 'color') return;
-        themeSet(e.target.getAttribute('data-k'), e.target.value.toLowerCase()); syncThemeRows();
+        themeSet(e.target.getAttribute('data-k'), e.target.value.toLowerCase());
+        var row = e.target.closest('.theme-row'), k = row.getAttribute('data-row'), c = themeGet(k); syncSwatchRow(row, c, c || themeState.color);
       });
-      var genTabBtn = document.querySelector('.tab-btn[data-tab="general"]'); // กลุ่มบริหารงานอาจถูกเพิ่ม/เปลี่ยนชื่อในแท็บอื่น -> วาดแถวใหม่เมื่อกลับมา
-      if (genTabBtn) genTabBtn.addEventListener('click', function () { if (document.getElementById('themeRows').children.length) renderThemeRows(); });
       ['themeModeSystem', 'themeModeDept'].forEach(function (id) {
         document.getElementById(id).addEventListener('change', function () { themeState.mode = this.value; renderThemeRows(); });
       });
       document.getElementById('themeSaveBtn').addEventListener('click', async function () {
         var errBox = document.getElementById('themeError'); errBox.hidden = true;
         var ok = await askConfirm(themeState.mode === 'department'
-          ? 'บันทึกธีมสีแบบแยกตามกลุ่มบริหารงาน? ทุกบัญชีจะเห็นสีใหม่ตอนเปิดหน้าถัดไป'
+          ? 'บันทึกธีมสีแบบแยกตามกลุ่มบริหารงาน? ทุกบัญชีจะเห็นสีใหม่ตอนเปิดหน้าถัดไป (สีของแต่ละกลุ่มตั้งที่แท็บข้อมูลหลัก → กลุ่มบริหารงาน)'
           : 'บันทึกธีมสีเดียวทั้งระบบ? ทุกบัญชีจะเห็นสีใหม่ตอนเปิดหน้าถัดไป', 'ยืนยันการเปลี่ยนแปลง');
         if (!ok) return;
-        var payload = { themeMode: themeState.mode, themeColor: themeState.color, themeLoginColor: themeState.login, departmentColors: themeState.depts };
+        var payload = { themeMode: themeState.mode, themeColor: themeState.color, themeLoginColor: themeState.login };
         var r = await withProgress('กำลังบันทึกธีมสี', function () { return apiCall('adminUpdateSettings', payload); }, { successLabel: 'บันทึกธีมสีเรียบร้อยแล้ว' });
         if (r.ok) {
           resetSettingsCache();
           var st = await applyBranding(); // ใส่สีใหม่ให้หน้านี้ทันที
           loadThemeCard(st);
+          if (typeof renderGroups === 'function') { try { renderGroups(); } catch (e2) { /* ยังไม่ได้เปิดแท็บข้อมูลหลัก */ } }
           if (typeof loadCategories === 'function') { try { loadCategories(); } catch (e2) { /* ไม่เป็นไร */ } }
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.56.131026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.58.131026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -2007,7 +2023,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.56.131026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.58.131026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);
@@ -2301,6 +2317,28 @@
       function groupPickerHtml(u) {
         return '<span class="gm-pos hint">' + escapeHtml(u.position || '') + '</span>' + (u.status !== 'active' ? ' <span class="badge" style="background:var(--warn-light); color:var(--warn);">ระงับ</span>' : '');
       }
+      // ---- 1.57: สีของกลุ่มบริหารงาน (ใช้เมื่อธีมสีเป็น "แยกสีตามกลุ่มบริหารงาน") ----
+      var grpColorPending = {}; // { ชื่อกลุ่ม: '#rrggbb' หรือ '' (ไม่ตั้งสี) } ที่เลือกไว้แต่ยังไม่บันทึก
+      function grpSavedColor(d) { var dc = (_settingsCache && _settingsCache.departmentColors) || {}; return themeHexOk(dc[d]) ? dc[d].toLowerCase() : ''; }
+      function grpMainColor() { return (_settingsCache && themeHexOk(_settingsCache.themeColor)) ? _settingsCache.themeColor : THEME_DEFAULT_COLOR; }
+      function groupColorRowHtml(d) {
+        var off = !_settingsCache || _settingsCache.themeMode !== 'department';
+        return '<div class="group-color" data-grp-color-row>' +
+          '<div class="group-color-label"><i class="fas fa-palette" aria-hidden="true"></i> สีของกลุ่ม<small>' + (off ? 'สีป้ายของกลุ่มนี้ทุกหน้า' : 'สีป้ายของกลุ่ม + ปุ่ม/ตัวหนังสือของสมาชิกในกลุ่ม') + '</small></div>' +
+          '<div class="theme-swatches">' + themeSwatchesHtml('grp', true, 'ไม่ตั้งสี (ใช้สีหลัก)') + '</div>' +
+          '<div class="theme-preview"><span class="tp-btn">ปุ่ม</span><span class="tp-tag">' + escapeHtml(groupLabel(d)) + '</span></div>' +
+          '<button type="button" class="btn btn-primary btn-sm" data-grp-act="save-color" disabled>บันทึกสี</button>' +
+          '<div class="theme-warn" hidden>สีนี้อ่อน ตัวหนังสือสีขาวบนปุ่มอาจอ่านยาก</div>' +
+          (off ? '<div class="hint group-color-off"><i class="fas fa-circle-info" aria-hidden="true"></i> ธีมของระบบเป็น "สีเดียวทั้งระบบ" — สีนี้ใช้กับป้ายกลุ่มเท่านั้น (ถ้าเลือก "ตามกลุ่มบริหารงาน" ที่แท็บทั่วไป สมาชิกจะเห็นปุ่ม/ตัวหนังสือสีนี้ด้วย)</div>' : '') +
+        '</div>';
+      }
+      function syncGroupColorRow(card) {
+        var row = card && card.querySelector('[data-grp-color-row]'); if (!row) return;
+        var d = card.getAttribute('data-group');
+        var c = Object.prototype.hasOwnProperty.call(grpColorPending, d) ? grpColorPending[d] : grpSavedColor(d);
+        syncSwatchRow(row, c, c || grpMainColor());
+        row.querySelector('[data-grp-act="save-color"]').disabled = c === grpSavedColor(d);
+      }
       function renderGroups() {
         var wrap = document.getElementById('deptListWrap');
         if (!wrap) return;
@@ -2320,13 +2358,14 @@
           var members = users.filter(function (u) { return u.department === d; });
           var staffCount = members.filter(isStaffUser).length;
           html += '<div class="group-card" data-group="' + escapeHtml(d) + '">' +
-            '<div class="group-head"><div><div class="group-title">' + escapeHtml(groupLabel(d)) + '</div>' +
+            '<div class="group-head"><div><div class="group-title">' + escapeHtml(groupLabel(d)) + (grpSavedColor(d) ? ' <span class="dept-tag group-color-chip"' + deptColorAttr(d) + '>สีของกลุ่ม</span>' : '') + '</div>' +
             '<div class="hint">สมาชิก ' + members.length + ' คน · เจ้าหน้าที่ ' + staffCount + ' คน</div></div>' +
             '<div class="group-actions">' +
               '<button type="button" class="btn btn-secondary btn-sm" data-grp-act="members">จัดการสมาชิก</button>' +
               '<button type="button" class="btn btn-ghost btn-sm" data-grp-act="rename">เปลี่ยนชื่อ</button>' +
               '<button type="button" class="btn btn-danger btn-sm" data-grp-act="delete">ลบ</button>' +
             '</div></div>';
+          html += groupColorRowHtml(d); // 1.57: สีของกลุ่ม (ย้ายมาจากการ์ดธีมสีในแท็บทั่วไป)
           if (members.length === 0) {
             html += '<div class="hint" style="margin-top:10px;">ยังไม่มีสมาชิก — กด "จัดการสมาชิก" เพื่อเลือกครูเข้ากลุ่มนี้</div>';
           } else {
@@ -2342,6 +2381,7 @@
         var un = users.filter(function (u) { return !u.department || !assigned[u.department]; });
         html += '<div class="hint" style="margin-top:6px;">ยังไม่สังกัดกลุ่มบริหารงานใด: ' + un.length + ' คน' + (un.length ? ' — เพิ่มเข้ากลุ่มได้ที่ปุ่ม "จัดการสมาชิก"' : '') + '</div>';
         wrap.innerHTML = html;
+        Array.prototype.forEach.call(wrap.querySelectorAll('.group-card'), syncGroupColorRow);
         wrap.querySelectorAll('.group-card').forEach(updateGroupStaffUi);
       }
       function updateGroupStaffUi(card) {
@@ -2359,6 +2399,15 @@
         wrap.addEventListener('change', function (e) {
           if (e.target && e.target.matches('input[data-grp-staff]')) updateGroupStaffUi(e.target.closest('.group-card'));
         });
+        // 1.57: เลือกสีของกลุ่ม
+        wrap.addEventListener('input', function (e) {
+          if (!e.target || e.target.type !== 'color' || !e.target.closest('[data-grp-color-row]')) return;
+          var card = e.target.closest('.group-card'); grpColorPending[card.getAttribute('data-group')] = e.target.value.toLowerCase(); syncGroupColorRow(card);
+        });
+        wrap.addEventListener('click', function (e) {
+          var sw = e.target.closest('[data-grp-color-row] .theme-sw'); if (!sw) return;
+          var card = sw.closest('.group-card'); grpColorPending[card.getAttribute('data-group')] = sw.getAttribute('data-c') || ''; syncGroupColorRow(card);
+        });
         wrap.addEventListener('click', async function (e) {
           var btn = e.target.closest('[data-grp-act]');
           if (!btn) return;
@@ -2367,6 +2416,17 @@
           var act = btn.getAttribute('data-grp-act');
           var errBox = document.getElementById('deptError');
           errBox.hidden = true;
+          if (act === 'save-color') {
+            var cNew = Object.prototype.hasOwnProperty.call(grpColorPending, dept) ? grpColorPending[dept] : grpSavedColor(dept);
+            var okC = await askConfirm(cNew ? 'ยืนยันตั้งสีของ "' + groupLabel(dept) + '"? สมาชิกในกลุ่มจะเห็นสีใหม่ตอนเปิดหน้าถัดไป' : 'ยืนยันเอาสีของ "' + groupLabel(dept) + '" ออก? กลุ่มนี้จะใช้สีหลักแทน', 'ยืนยันการเปลี่ยนแปลง');
+            if (!okC) return;
+            var cur = await getSiteSettings(), dcs = Object.assign({}, cur.departmentColors || {});
+            if (cNew) dcs[dept] = cNew; else delete dcs[dept];
+            var rC = await withProgress('กำลังบันทึกสีของกลุ่ม', function () { return apiCall('adminUpdateSettings', { departmentColors: dcs }); }, { successLabel: 'บันทึกสีของกลุ่มแล้ว' });
+            if (rC.ok) { delete grpColorPending[dept]; resetSettingsCache(); await applyBranding(); renderGroups(); try { loadCategories(); } catch (e3) { /* ไม่เป็นไร */ } }
+            else { errBox.textContent = rC.error.message; errBox.hidden = false; }
+            return;
+          }
           if (act === 'members') { openGroupMembers(dept); return; }
           if (act === 'rename') { openGroupRename(dept); return; }
           if (act === 'delete') {
@@ -2858,6 +2918,7 @@
       var v = roleEl.value;
       document.getElementById('cuDepartmentField').hidden = v !== 'teacher';
       document.getElementById('cuStaffField').hidden = v !== 'teacher';
+      document.getElementById('cuJoinField').hidden = v !== 'teacher';
       document.getElementById('cuExecPositionField').hidden = v !== 'executive';
     }
     if (isSuperAdminSession && document.getElementById('cuRole')) {
@@ -2877,6 +2938,12 @@
     }
 
     // ตั้งแต่ 1.26.081026: ป้ายชื่อเจ้าหน้าที่แสดงฝ่ายที่สังกัดต่อท้าย (ถ้าตั้งไว้) แทนชื่อ "เจ้าหน้าที่ฝ่ายวิชาการ" เดิมที่ hardcode ไว้ตัวเดียว
+    // 1.58: ป้ายสถานะบัญชี — ระงับ + มีวันที่ย้ายออก = "ย้ายออก"
+    function statusBadgeHtml(u) {
+      if (u.status === 'active') return '<span class="badge badge-active">ใช้งานอยู่</span>';
+      if (u.leftAt) return '<span class="badge badge-moved" title="ย้ายออกเมื่อ ' + escapeHtml(formatDateThai(u.leftAt)) + '">ย้ายออก ' + escapeHtml(formatDateThai(u.leftAt)) + '</span>';
+      return '<span class="badge badge-archived">ระงับ</span>';
+    }
     function roleBadge(u) {
       if (u.role === 'executive') return '<span class="badge badge-exec">' + escapeHtml(u.position || 'ผู้บริหาร') + '</span>';
       // ครูที่ยังไม่ระบุกลุ่มบริหารงาน (1.44.111026: ไม่บังคับแล้ว) — ป้ายบอกเฉยๆ ไม่ใช่คำเตือน
@@ -2914,7 +2981,7 @@
           '<td><div class="user-cell"><span class="profile-avatar"' + (canManageUser(u) ? ' data-manage-user="' + u.id + '" title="คลิกเพื่อจัดการบัญชี/เปลี่ยนรูป"' : '') + '>' + avatarInnerHtml(u.avatarUrl) + '</span><span>' + escapeHtml(u.name) + '</span></div></td>' +
           '<td>' + escapeHtml(u.username) + '</td>' +
           '<td>' + roleBadge(u) + '</td>' +
-          '<td><span class="badge badge-' + (u.status === 'active' ? 'active' : 'archived') + '">' + (u.status === 'active' ? 'ใช้งานอยู่' : 'ระงับ') + '</span></td>' +
+          '<td>' + statusBadgeHtml(u) + (u.joinedAt && u.status === 'active' ? '<div class="hint join-hint">เริ่มงาน ' + escapeHtml(formatDateThai(u.joinedAt)) + '</div>' : '') + '</td>' +
           '<td style="white-space:nowrap;">' +
             (canManageUser(u)
               // ตั้งแต่ 1.29.091026: รวมปุ่มจัดการบัญชี (พักใช้งาน/คืนสิทธิ์/ตั้งรหัสผ่านใหม่/แก้ไขแผนก/ลบถาวร) ไว้ในป็อปอัพ "จัดการบัญชี" ที่เปิดจากปุ่มเดียว
@@ -2972,7 +3039,7 @@
     function renderMuHeader() {
       var u = muFresh();
       document.getElementById('manageUserTarget').innerHTML = '<span class="mu-target-name">' + escapeHtml(u.name) + '</span> <span class="hint">(' + escapeHtml(u.username) + ')</span> ' + roleBadge(u) +
-        ' <span class="badge badge-' + (u.status === 'active' ? 'active' : 'archived') + '">' + (u.status === 'active' ? 'ใช้งานอยู่' : 'ระงับ') + '</span>';
+        ' ' + statusBadgeHtml(u);
     }
     // ----- แท็บ "ข้อมูล" -----
     var manageAvatarTarget = null;   // บัญชีที่กำลังเปิดป็อปอัพอยู่
@@ -3116,21 +3183,62 @@
     function renderMuStatusTab() {
       var u = muFresh();
       var active = u.status === 'active';
-      document.getElementById('muStatusBadge').innerHTML = '<span class="badge badge-' + (active ? 'active' : 'archived') + '">' + (active ? 'ใช้งานอยู่' : 'ระงับ') + '</span>';
+      var hub = u.role === 'teacher' || (u.role === 'admin' && u.hasHub); // บัญชีที่ต้องส่งงาน (ไม่ใช่ผู้บริหาร/ผู้ดูแลระบบสูงสุด)
+      document.getElementById('muJoinSection').hidden = !hub;
+      document.getElementById('muJoinedAt').value = u.joinedAt || '';
+      document.getElementById('muJoinError').hidden = true;
+      syncDateThai('muJoinedAt', 'muJoinedThai');
+      document.getElementById('muJoinSave').disabled = true;
+      document.getElementById('muStatusBadge').innerHTML = statusBadgeHtml(u);
       document.getElementById('muStatusText').textContent = active
         ? 'ล็อกอินได้ตามปกติ และหน้าแสดงผลงานสาธารณะเปิดอยู่'
+        : u.leftAt
+        ? 'ย้ายออกเมื่อ ' + formatDateThai(u.leftAt) + ' — ล็อกอินไม่ได้ · ผลงานเดิมยังอยู่ในสรุปย้อนหลัง และไม่นับงานที่ครบกำหนดหลังวันนั้น'
         : 'ล็อกอินไม่ได้ และหน้าแสดงผลงานสาธารณะถูกซ่อน — ข้อมูลและไฟล์ทั้งหมดยังอยู่ครบ';
       document.getElementById('muStatusAction').innerHTML = active
-        ? '<button type="button" class="btn btn-secondary btn-sm" id="muArchiveBtn"><i class="fas fa-ban ui-icon" aria-hidden="true"></i> ระงับบัญชี</button>'
-        : '<button type="button" class="btn btn-primary btn-sm" id="muRestoreBtn"><i class="fas fa-rotate-left ui-icon" aria-hidden="true"></i> คืนสิทธิ์การใช้งาน</button>';
+        ? '<button type="button" class="btn btn-secondary btn-sm" id="muArchiveBtn"><i class="fas fa-ban ui-icon" aria-hidden="true"></i> ระงับบัญชี</button>' +
+          (hub ? ' <button type="button" class="btn btn-secondary btn-sm" id="muTransferBtn"><i class="fas fa-person-walking-arrow-right ui-icon" aria-hidden="true"></i> ย้ายออก</button>' +
+            '<div class="mu-transfer-box" id="muTransferBox" hidden><label for="muLeftAt">ย้ายออกเมื่อ</label> <input type="date" id="muLeftAt" /> <span class="hint date-thai" id="muLeftThai"></span>' +
+            '<div class="hint">ล็อกอินไม่ได้ · ผลงานเดิมยังอยู่ในสรุปย้อนหลัง · ไม่นับงานที่ครบกำหนดหลังวันนี้</div>' +
+            '<button type="button" class="btn btn-danger btn-sm" id="muTransferConfirm">ยืนยันย้ายออก</button></div>' : '')
+        : '<button type="button" class="btn btn-primary btn-sm" id="muRestoreBtn"><i class="fas fa-rotate-left ui-icon" aria-hidden="true"></i> ' + (u.leftAt ? 'ยกเลิกย้ายออก (คืนสิทธิ์การใช้งาน)' : 'คืนสิทธิ์การใช้งาน') + '</button>';
       var purgeBtn = document.getElementById('muPurgeBtn');
       purgeBtn.disabled = active;
       document.getElementById('muPurgeHint').textContent = active
         ? 'ต้องระงับบัญชีนี้ก่อน จึงจะลบถาวรได้'
         : 'ล้างบัญชีและผลงานทั้งหมดออกจากระบบ (ย้อนกลับไม่ได้) — ต้องพิมพ์ Username ยืนยันอีกครั้ง';
     }
+    document.getElementById('muStatusAction').addEventListener('input', function (e) { if (e.target.id === 'muLeftAt') syncDateThai('muLeftAt', 'muLeftThai'); });
+    document.getElementById('muJoinedAt').addEventListener('input', function () {
+      var u = muFresh(); syncDateThai('muJoinedAt', 'muJoinedThai');
+      document.getElementById('muJoinSave').disabled = !u || this.value === (u.joinedAt || '');
+    });
+    document.getElementById('muJoinSave').addEventListener('click', async function () {
+      var u = muFresh(); if (!u) return;
+      var v = document.getElementById('muJoinedAt').value;
+      var ok = await askConfirm(v ? 'ตั้งวันที่เริ่มปฏิบัติงานของ "' + u.name + '" เป็น ' + formatDateThai(v) + '? งานที่ครบกำหนดก่อนวันนี้จะไม่นับว่า "ยังไม่ส่ง"' : 'ล้างวันที่เริ่มปฏิบัติงานของ "' + u.name + '"? ระบบจะนับทุกงาน', 'ยืนยันการเปลี่ยนแปลง');
+      if (!ok) return;
+      var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminSetUserJoinDate', { userId: u.id, joinedAt: v }); }, { successLabel: 'บันทึกแล้ว' });
+      if (r.ok) { u.joinedAt = r.data.joinedAt; renderUserTable(); renderMuStatusTab(); }
+      else { var eb = document.getElementById('muJoinError'); eb.textContent = r.error.message; eb.hidden = false; }
+    });
     document.getElementById('muStatusAction').addEventListener('click', async function (e) {
       var u = muFresh(); if (!u) return;
+      if (e.target.closest('#muTransferBtn')) {
+        var box = document.getElementById('muTransferBox'); box.hidden = !box.hidden;
+        if (!box.hidden && !document.getElementById('muLeftAt').value) { document.getElementById('muLeftAt').value = todayYmd(); syncDateThai('muLeftAt', 'muLeftThai'); }
+        return;
+      }
+      if (e.target.closest('#muTransferConfirm')) {
+        var lv = document.getElementById('muLeftAt').value;
+        if (!lv) { showToast('กรุณาเลือกวันที่ย้ายออก', true); return; }
+        var okT = await askConfirm('บันทึกว่า "' + u.name + '" ย้ายออกเมื่อ ' + formatDateThai(lv) + '? บัญชีจะล็อกอินไม่ได้ ผลงานเดิมยังอยู่ในสรุปย้อนหลัง และไม่นับงานที่ครบกำหนดหลังวันนั้น (ยกเลิกได้ภายหลัง)', 'ยืนยันย้ายออก');
+        if (!okT) return;
+        var rT = await withProgress('กำลังบันทึก', function () { return apiCall('adminArchiveUser', { userId: u.id, leftAt: lv }); }, { successLabel: 'บันทึกย้ายออกแล้ว' });
+        if (rT.ok) { u.status = 'archived'; u.leftAt = rT.data.leftAt || lv; renderUserTable(); renderMuHeader(); renderMuStatusTab(); }
+        else showToast(rT.error.message, true);
+        return;
+      }
       if (e.target.closest('#muArchiveBtn')) {
         var ok = await askConfirm('ระงับบัญชีของ "' + u.name + '"? จะล็อกอินไม่ได้ และหน้าแสดงผลงานสาธารณะจะถูกซ่อน แต่ข้อมูลและไฟล์ทั้งหมดยังอยู่ (คืนสิทธิ์ได้ทุกเมื่อ)', 'ยืนยันการระงับบัญชี');
         if (!ok) return;
@@ -3140,7 +3248,7 @@
         var okR = await askConfirm('คืนสิทธิ์การใช้งานบัญชีของ "' + u.name + '"? บัญชีนี้จะล็อกอินได้อีกครั้ง', 'ยืนยันการคืนสิทธิ์');
         if (!okR) return;
         var rR = await withProgress('กำลังคืนสิทธิ์การใช้งาน', function () { return apiCall('adminRestoreUser', { userId: u.id }); }, { successLabel: 'คืนสิทธิ์การใช้งานแล้ว' });
-        if (rR.ok) { u.status = 'active'; renderUserTable(); renderMuHeader(); renderMuStatusTab(); }
+        if (rR.ok) { u.status = 'active'; u.leftAt = ''; renderUserTable(); renderMuHeader(); renderMuStatusTab(); }
       }
     });
     document.getElementById('muPurgeBtn').addEventListener('click', function () {
@@ -3243,6 +3351,7 @@
       var createUserModal = document.getElementById('createUserModal');
       document.getElementById('openCreateUserBtn').addEventListener('click', function () {
         document.getElementById('createUserForm').reset();
+        document.getElementById('cuJoinedAt').value = todayYmd(); syncDateThai('cuJoinedAt', 'cuJoinedThai'); // 1.58: ค่าเริ่มต้น = วันนี้
         renderDepartmentOptions(document.getElementById('cuDepartment'), '', 'ไม่ระบุ (ยังไม่ได้แต่งตั้งเข้ากลุ่ม)');
         syncCuDepartmentFieldVisibility();
         var errBox0 = document.getElementById('createUserError');
@@ -3250,6 +3359,7 @@
         showModalEl(createUserModal);
       });
       document.getElementById('createUserClose').addEventListener('click', function () { hideModalEl(createUserModal); });
+      document.getElementById('cuJoinedAt').addEventListener('input', function () { syncDateThai('cuJoinedAt', 'cuJoinedThai'); });
       document.getElementById('createUserModalCloseX').addEventListener('click', function () { hideModalEl(createUserModal); });
 
       document.getElementById('createUserForm').addEventListener('submit', async function (e) {
@@ -3278,7 +3388,8 @@
           password: document.getElementById('cuPassword').value,
           role: kind === 'executive' ? 'executive' : (kind === 'superadmin' || isStaff ? 'admin' : 'teacher'),
           isSuperAdmin: kind === 'superadmin',
-          department: kind === 'teacher' ? dept : ''
+          department: kind === 'teacher' ? dept : '',
+          joinedAt: kind === 'teacher' ? document.getElementById('cuJoinedAt').value : ''
         };
         if (kind === 'executive') cuPayload.position = document.getElementById('cuExecPosition').value;
         var r = await withProgress('กำลังสร้างบัญชีใหม่', function () {

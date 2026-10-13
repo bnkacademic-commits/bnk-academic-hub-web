@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.56.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.58.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -72,6 +72,7 @@
           </div>
           <div class="term-badge" id="currentTermBadge">-</div>
           <div class="calendar-grid" id="calGrid"></div>
+          <div class="cal-legend" id="calLegend"></div>
         </div>
         <div class="dash-cal-side">
           <div class="dash-checklist">
@@ -87,7 +88,18 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.56.131026"></script>
+    <!-- 1.58: ป็อปอัพรายละเอียดวัน -->
+  <div class="modal-backdrop" id="dayModal" hidden>
+    <div class="modal-box day-modal-box">
+      <button type="button" class="modal-close-x" id="dayModalCloseX" aria-label="ปิด">✕</button>
+      <h3 id="dayModalTitle">-</h3>
+      <div class="hint" id="dayModalSub"></div>
+      <div id="dayModalBody" class="day-modal-body"></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost" id="dayModalCloseBtn">ปิด</button></div>
+    </div>
+  </div>
+
+<script src="assets/api.js?v=1.58.131026"></script>
   <script>
     var session = requireViewerAccess();
     // ผู้บริหารเท่านั้นที่ใช้หน้านี้เป็นหน้าแรก (เจ้าหน้าที่/Super Admin มีหน้าแรกของตัวเองอยู่แล้ว) — ส่งกลับหน้าแรกของบทบาทนั้น
@@ -133,28 +145,34 @@
       thaiDow.forEach(function (d) { var el = document.createElement('div'); el.className = 'dow'; el.textContent = d; grid.appendChild(el); });
       var firstDay = new Date(calState.year, calState.month, 1).getDay();
       var daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
-      var todayStr = new Date().toISOString().slice(0, 10);
+      var todayStr = todayYmd(); // 1.58: วันที่ตามเวลาเครื่อง
       var pad2 = function (n) { return String(n).padStart(2, '0'); };
       var laneOf = computeEventLanes(calState.events, calState.year + '-' + pad2(calState.month + 1) + '-01', calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(daysInMonth));
+      var legendCats = {}; // 1.58: คำอธิบายสีของงานที่มีในเดือนนี้
       for (var i = 0; i < firstDay; i++) { var pad = document.createElement('div'); pad.className = 'calendar-cell empty'; grid.appendChild(pad); }
       for (var d = 1; d <= daysInMonth; d++) {
         var dateStr = calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(d);
         var cell = document.createElement('div');
-        cell.className = 'calendar-cell';
+        cell.className = 'calendar-cell' + (dateStr === todayStr ? ' is-today' : '');
+        cell.setAttribute('data-date', dateStr); cell.setAttribute('role', 'button'); cell.tabIndex = 0; // 1.58: กดดูรายละเอียดวัน
         var evs = eventsOnDate(dateStr);
         if (evs.length > 0) { cell.className += ' has-event'; cell.title = evs.map(function (e) { return e.title; }).join(', '); }
         var colIndex = (firstDay + d - 1) % 7;
-        var barsHtml = '';
-        evs.slice().sort(function (a, b) { return (laneOf[a.id] || 0) - (laneOf[b.id] || 0); }).forEach(function (e) {
-          var lane = laneOf[e.id] || 0;
-          if (lane >= MAX_CALENDAR_LANES) return;
-          var isStart = dateStr === e.date, isEnd = dateStr === (e.endDate || e.date);
-          var barColor = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
-          barsHtml += '<div class="event-bar' + (isStart ? ' bar-start' : '') + (isEnd ? ' bar-end' : '') + '" style="background:' + barColor + ';" title="' + escapeHtml(e.title) + '">' + ((isStart || colIndex === 0) ? escapeHtml(e.title) : '') + '</div>';
-        });
-        cell.innerHTML = '<div class="day-num' + (dateStr === todayStr ? ' today' : '') + '">' + d + '</div>' + (barsHtml ? '<div class="event-bars">' + barsHtml + '</div>' : '');
+        // 1.58: แสดงงานเป็นจุดสี (แบบ A ที่ผู้ใช้เลือก) แทนแถบสีลากยาว — สูงสุด 4 จุด + "+N" · กดวันเพื่อดูรายละเอียด
+        var dotsHtml = evs.slice(0, 4).map(function (e) {
+          var c = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
+          return '<i class="cal-dot" style="background:' + c + ';" title="' + escapeHtml(e.title) + '"></i>';
+        }).join('') + (evs.length > 4 ? '<span class="cal-dot-more">+' + (evs.length - 4) + '</span>' : '');
+        evs.forEach(function (e) { if (e.categoryId) legendCats[e.categoryId] = e.categoryName || e.title; else legendCats['__none'] = 'กำหนดการทั่วไป'; });
+cell.innerHTML = '<div class="day-num' + (dateStr === todayStr ? ' today' : '') + '">' + d + '</div>' + (dotsHtml ? '<div class="cal-dots">' + dotsHtml + '</div>' : '');
         grid.appendChild(cell);
       }
+      var legend = document.getElementById('calLegend');
+      var lk = Object.keys(legendCats);
+      if (legend) legend.innerHTML = lk.slice(0, 8).map(function (k) {
+        var c = k === '__none' ? '#9aa4b8' : (categoryColorMap[k] || '#3457d5');
+        return '<span><i class="cal-dot" style="background:' + c + ';"></i>' + escapeHtml(legendCats[k]) + '</span>';
+      }).join('') + (lk.length > 8 ? '<span>และอีก ' + (lk.length - 8) + ' ประเภท (กดที่วันเพื่อดู)</span>' : ''); // แสดงสูงสุด 8 ประเภท
       renderUpcoming();
     }
 
@@ -170,16 +188,47 @@
       if (list.length === 0) { box.innerHTML = headingHtml + '<div class="empty-state">ไม่มีกำหนดการในช่วงนี้</div>'; return; }
       box.innerHTML = headingHtml + '<div class="cal-upcoming-grid">' + list.map(function (e) {
         var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
+        var dl = daysLeftInfo(e.endDate || e.date, now); if (dl && dl.days >= 0) dateChip += '<span class="days-left ' + dl.cls + '">(' + dl.text + ')</span>'; // 1.58: เหมือนหน้าแรกครู
         var sm = summaryFor(e);
-        var termLabel = e.categoryId ? (e.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(e.semester)) + ' ปีการศึกษา ' + escapeHtml(e.academicYear) : '';
+        var termLabel = e.categoryId ? termTagsHtml(e.semester, e.academicYear) : '';
         var progress = sm ? '<span class="notice-badge" style="background:var(--primary-light); color:var(--primary-dark);">ส่งแล้ว ' + (sm.ok + sm.late) + '/' + sm.total + '</span>'
           : (e.categoryId && e.noSubmission ? '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>' : '');
         return '<div class="event-list-item"><div class="event-date-chip">' + dateChip + '</div>' +
           '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(e.title) + '</div>' +
-          (termLabel ? '<div class="sub-item-meta">' + categoryDotHtml(categoryColorMap[e.categoryId]) + escapeHtml(termLabel) + '</div>' : '') +
+          (termLabel ? '<div class="sub-item-meta term-tags-row">' + categoryDotHtml(categoryColorMap[e.categoryId]) + termLabel + '</div>' : '') +
           (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + progress + '</div>';
       }).join('') + '</div>';
     }
+
+    // ---------- 1.58: ป็อปอัพรายละเอียดวัน (อ่านอย่างเดียว + จำนวนผู้ส่ง) ----------
+    var THAI_DOW_FULL = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+    function openDayModal(dateStr) {
+      var p = dateStr.split('-'), dt = new Date(+p[0], +p[1] - 1, +p[2]);
+      document.getElementById('dayModalTitle').textContent = 'วัน' + THAI_DOW_FULL[dt.getDay()] + 'ที่ ' + dt.getDate() + ' ' + thaiMonths[dt.getMonth()] + ' ' + (dt.getFullYear() + 543) + (dateStr === todayYmd() ? ' (วันนี้)' : '');
+      var evs = eventsOnDate(dateStr).sort(function (a, b) { return String(a.endDate || a.date).localeCompare(String(b.endDate || b.date)); });
+      document.getElementById('dayModalSub').textContent = evs.length ? 'งานในวันนี้ ' + evs.length + ' รายการ' : '';
+      document.getElementById('dayModalBody').innerHTML = evs.length ? evs.map(function (e) {
+        var color = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
+        var range = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
+        var dl = daysLeftInfo(e.endDate || e.date), sm = summaryFor(e);
+        var isEnd = (e.endDate || e.date) === dateStr;
+        return '<div class="day-ev"><span class="day-ev-bar" style="background:' + color + '"></span><div class="day-ev-main">' +
+          '<div class="day-ev-title">' + escapeHtml(e.title) + (isEnd && e.categoryId && !e.noSubmission ? ' <span class="day-ev-end"><i class="fas fa-flag" aria-hidden="true"></i> ครบกำหนดวันนี้</span>' : '') + '</div>' +
+          '<div class="day-ev-meta"><i class="fas fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(range) + (dl && dl.days >= 0 ? ' <span class="days-left ' + dl.cls + '">(' + escapeHtml(dl.text) + ')</span>' : '') + '</div>' +
+          (e.categoryId ? '<div class="term-tags-row">' + termTagsHtml(e.semester, e.academicYear) + '</div>' : '') +
+          (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' +
+          (sm ? '<span class="notice-badge" style="background:var(--primary-light); color:var(--primary-dark);">ส่งแล้ว ' + (sm.ok + sm.late) + '/' + sm.total + '</span>' : '') + '</div>';
+      }).join('') : '<div class="empty-state">ไม่มีงานหรือกำหนดการในวันนี้</div>';
+      showModalEl(document.getElementById('dayModal'));
+    }
+    (function () {
+      var grid = document.getElementById('calGrid');
+      grid.addEventListener('click', function (ev) { var c = ev.target.closest('.calendar-cell[data-date]'); if (c) openDayModal(c.getAttribute('data-date')); });
+      grid.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { var c = ev.target.closest('.calendar-cell[data-date]'); if (c) { ev.preventDefault(); openDayModal(c.getAttribute('data-date')); } } });
+      var close = function () { hideModalEl(document.getElementById('dayModal')); };
+      document.getElementById('dayModalCloseX').addEventListener('click', close);
+      document.getElementById('dayModalCloseBtn').addEventListener('click', close);
+    })();
 
     // สรุปการส่งงานแบบย่อ (คอลัมน์ขวา) + แผ่นตัวเลขด้านบน
     function renderSummary(allSubs, people) {

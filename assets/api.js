@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.56.131026';
+var APP_VERSION = '1.58.131026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -383,11 +383,11 @@ function applyThemeColor(s) {
   setThemeCss(css);
   try { localStorage.setItem(forLogin ? THEME_CSS_LOGIN_KEY : THEME_CSS_KEY, css); } catch (e) { /* ไม่เป็นไร */ }
 }
-// ป้ายกลุ่มบริหารงานตามสีของกลุ่ม (เฉพาะโหมดแยกสีตามกลุ่ม) — ใส่ใน tag ที่ต้องการ: '<span class="x"' + deptColorAttr(dept) + '>'
+// ป้ายกลุ่มบริหารงานตามสีของกลุ่ม (1.58: แสดงสีของกลุ่มเสมอ ไม่ขึ้นกับรูปแบบธีมของระบบ) — ใส่ใน tag ที่ต้องการ: '<span class="x"' + deptColorAttr(dept) + '>'
 // ตั้งตัวแปร --dp* ให้ CSS (.dept-colored) สลับ --primary/--primary-dark/--primary-light ภายในป้ายนั้นทั้งโหมดสว่าง/มืด
 function deptThemeColor(dept, s) {
   s = s || _settingsCache || cachedBrand() || {};
-  if (s.themeMode !== 'department' || !dept || !s.departmentColors) return '';
+  if (!dept || !s.departmentColors) return '';
   var c = s.departmentColors[dept] || s.departmentColors[String(dept).replace(/^กลุ่มบริหารงาน/, '')];
   return themeHexOk(c) ? c : '';
 }
@@ -686,6 +686,35 @@ function icon(name, size) {
   var s = size || 16;
   var fa = ICON_FA[name] || 'fa-circle';
   return '<i class="fas ' + fa + ' ui-icon" style="font-size:' + s + 'px" aria-hidden="true"></i>';
+}
+// 1.58: วันที่วันนี้ ('YYYY-MM-DD' ตามเวลาเครื่อง) + แสดงวันที่แบบไทยข้างช่อง <input type="date"> (ช่องวันที่ของเบราว์เซอร์แสดง ค.ศ.)
+function todayYmd() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function syncDateThai(inputId, outId) {
+  var i = document.getElementById(inputId), o = document.getElementById(outId);
+  if (!i || !o) return;
+  o.textContent = i.value ? '(' + formatDateThai(i.value) + ')' : '(ไม่ระบุ)';
+}
+// 1.57: ป้ายภาคเรียน + ป้ายปีการศึกษา แยกกันชัดเจน — เทอม 1 = ป้ายทึบสีหลัก · เทอม 2 = ป้ายขอบสีหลัก · ภาคฤดูร้อน = ป้ายสีส้ม · ปีการศึกษา = ป้ายกลาง
+// opts.short: "ปี 2569" แทน "ปีการศึกษา 2569" (ใช้ในคอลัมน์แคบ)
+function termTagsHtml(semester, academicYear, opts) {
+  opts = opts || {};
+  var sem = String(semester || '');
+  var cls = sem === 'summer' ? 'ts' : sem === '2' ? 't2' : 't1';
+  var label = sem === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + sem;
+  return '<span class="term-tag ' + cls + '">' + escapeHtml(label) + '</span>' +
+    (academicYear ? '<span class="year-tag">' + (opts.short ? 'ปี ' : 'ปีการศึกษา ') + escapeHtml(String(academicYear)) + '</span>' : '');
+}
+// 1.57: จำนวนวันที่เหลือถึงวันสุดท้ายของกำหนดส่ง (นับตามวันที่ ไม่สนเวลา) — คืน { days, text, cls } หรือ null
+function daysLeftInfo(endDateStr, now) {
+  if (!endDateStr) return null;
+  var m = String(endDateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  var end = m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : NaN;
+  if (isNaN(end)) { var d0 = new Date(endDateStr); if (isNaN(d0.getTime())) return null; end = Date.UTC(d0.getFullYear(), d0.getMonth(), d0.getDate()); }
+  now = now || new Date();
+  var days = Math.round((end - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+  if (days > 0) return { days: days, text: 'เหลือ ' + days + ' วัน', cls: days <= 3 ? 'urgent' : days <= 7 ? 'soon' : '' };
+  if (days === 0) return { days: 0, text: 'วันนี้วันสุดท้าย', cls: 'urgent' };
+  return { days: days, text: 'เลยกำหนด ' + (-days) + ' วัน', cls: 'late' };
 }
 function formatDateThai(isoOrDateStr) {
   if (!isoOrDateStr) return '';
