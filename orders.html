@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.60.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.61.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -139,7 +139,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.60.131026"></script>
+  <script src="assets/api.js?v=1.61.131026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -263,7 +263,7 @@
         ['วันที่จัดทำ', escapeHtml(formatDateThai(o.orderDate))],
         ['ภาคเรียน / ปีการศึกษา', o.academicYear ? escapeHtml(semText(o.semester) + ' ปีการศึกษา ' + o.academicYear) : '—'],
         ['กิจกรรม', act ? escapeHtml(act) : '—'],
-        ['กลุ่มบริหารงาน', escapeHtml(groupLabel(o.department))],
+        ['กลุ่มบริหารงาน', '<span class="dept-tag"' + deptColorAttr(o.department) + '>' + escapeHtml(groupLabel(o.department)) + '</span>'],
         ['กลุ่มสาระการเรียนรู้', o.subjectGroup ? escapeHtml(o.subjectGroup) : '—'],
         ['ผู้รับผิดชอบ', respText(o)],
         ['เพิ่มโดย', o.createdByName ? escapeHtml(o.createdByName) : '—']

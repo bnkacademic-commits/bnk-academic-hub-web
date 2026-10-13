@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.60.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.61.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -120,7 +120,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.60.131026"></script>
+  <script src="assets/api.js?v=1.61.131026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -289,7 +289,7 @@
         '<div class="ordc-main" data-sum-expand="' + escapeHtml(g.key) + '" role="button" tabindex="0" aria-expanded="' + open + '">' +
           sumTermTile(g) +
           '<div class="ordc-body"><div class="ordc-title" title="' + escapeHtml(g.categoryName || 'ไม่ระบุประเภทงาน') + '">' + (g.categoryId ? categoryDotHtml(categoryColorMap[g.categoryId]) : '') + escapeHtml(g.categoryName || 'ไม่ระบุประเภทงาน') + '</div>' +
-            '<div class="ordc-chips">' + (dept ? '<span class="ordc-chip">' + escapeHtml(groupLabel(dept)) + '</span>' : '') +
+            '<div class="ordc-chips">' + (dept ? '<span class="ordc-chip dept-c"' + deptColorAttr(dept) + '>' + escapeHtml(groupLabel(dept)) + '</span>' : '') +
               '<span class="ordc-chip cnt"><i class="fa-solid fa-users"></i> ส่ง ' + g.list.length + ' คน · ' + g.files + ' ไฟล์</span></div></div>' +
           '<i class="fa-solid fa-chevron-down ordc-chev" aria-hidden="true"></i>' +
         '</div>' +

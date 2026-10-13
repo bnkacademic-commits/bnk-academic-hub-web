@@ -2249,3 +2249,75 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .modal-box.modal-box-wide.cert-modal { max-width: 860px; }
 .modal-box.modal-box-wide.cert-share-box { max-width: 720px; }
 .cert-share-main { min-width: 0; }
+
+/* ===== 1.61 ===== */
+/* เช็คลิสต์หน้าแรก: แท็บย่อยภาคเรียน (แถวเดียวกันใต้ช่องเลือกปี) */
+.cl-tabs { display: flex; gap: 4px; padding: 3px; margin: 0 0 8px; border-radius: 10px; background: var(--surface-2); flex-shrink: 0; }
+.cl-tabs:empty { display: none; }
+.cl-tabs button { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 0; background: none; border-radius: 8px; padding: 5px 6px; font: inherit; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); cursor: pointer; white-space: nowrap; }
+.cl-tabs button.on { background: var(--surface); color: var(--primary-dark); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.cl-tabs button.cur::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.cl-tab-n { min-width: 1.1rem; height: 1.1rem; line-height: 1.1rem; padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 0.68rem; font-weight: 800; text-align: center; }
+/* ป้ายกลุ่มบริหารงานของประเภทงาน — ใช้สีของกลุ่มที่ตั้งไว้ทุกจุด (หน้าแรก กำหนดส่งงาน เช็คลิสต์ ป็อปอัพวัน หน้าผู้บริหาร สรุปรวม ประกาศ) */
+.cat-dept-badge[data-dept-color] { background: var(--primary-light); color: var(--primary-dark); border-color: color-mix(in srgb, var(--primary) 30%, transparent); }
+/* 1.61: แท็บทุกแถวในเว็บไม่แสดงแถบเลื่อน (ยังเลื่อนด้วยนิ้ว/ทัชแพด/ล้อเมาส์+Shift ได้ตามเดิม) */
+.tabs, .cert-tabs, .cl-tabs, .nav-prev-tabs, .cert-kind-seg, [role="tablist"] { scrollbar-width: none; -ms-overflow-style: none; overflow-y: hidden; }
+.tabs::-webkit-scrollbar, .cert-tabs::-webkit-scrollbar, .cl-tabs::-webkit-scrollbar, .nav-prev-tabs::-webkit-scrollbar, .cert-kind-seg::-webkit-scrollbar, [role="tablist"]::-webkit-scrollbar { display: none; width: 0; height: 0; }
+/* เส้นใต้แถวแท็บวาดด้วย inset shadow แทน border + ปุ่มไม่ใช้ margin ติดลบ (สาเหตุที่เคยเกิดแถบเลื่อนแนวตั้ง) — เส้นของแท็บที่เลือกทับเส้นแถวพอดี */
+.tabs { border-bottom: 0; box-shadow: inset 0 -1px 0 var(--border); }
+.tabs .tab-btn, .tabs .ev-tab-btn { margin-bottom: 0; }
+.cert-tabs { border-bottom: 0; box-shadow: inset 0 -2px 0 var(--border); }
+.cert-tabs button { margin-bottom: 0; }
+/* คลังเกียรติบัตร: ปุ่มส่วนหัว (แบบ B) — สีตายตัว ไม่ขึ้นกับธีม: ภายนอก = เขียว · ภายใน = ส้ม */
+.cert-head-btns { align-items: center; justify-content: flex-end; }
+.cert-share-btn { background: var(--surface); color: var(--text-muted); border: 1px solid var(--border); font-weight: 700; }
+.cert-share-btn:hover { color: var(--text); border-color: var(--text-muted); }
+.cert-add-card { display: inline-flex; align-items: center; gap: 12px; min-width: 228px; padding: 9px 18px 9px 10px; border: 0; border-radius: 14px; color: #fff; text-align: left; font: inherit; cursor: pointer; transition: transform 0.12s ease, filter 0.12s ease; }
+.cert-add-card[hidden] { display: none; }
+.cert-add-card:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.cert-add-card .ic { width: 40px; height: 40px; flex: none; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; background: rgba(255, 255, 255, 0.2); }
+.cert-add-card b { display: block; font-size: 0.98rem; line-height: 1.3; }
+.cert-add-card small { display: block; font-size: 0.76rem; opacity: 0.9; }
+.cert-add-card.ext { background: #059669; box-shadow: 0 8px 18px rgba(5, 150, 105, 0.28); }
+.cert-add-card.int { background: #ea580c; box-shadow: 0 8px 18px rgba(234, 88, 12, 0.28); }
+@media (max-width: 720px) {
+  .cert-head-btns { width: 100%; }
+  .cert-add-card { flex: 1 1 100%; min-width: 0; }
+  .cert-share-btn { order: 3; flex: 1 1 100%; justify-content: center; }
+}
+/* สีของป็อปอัพตามชนิด (ตายตัวเช่นกัน) */
+.cert-modal.m-ext { --cm: #059669; --cm-d: #047857; }
+.cert-modal.m-int { --cm: #ea580c; --cm-d: #c2410c; }
+.cert-modal.m-ext, .cert-modal.m-int { border-top: 5px solid var(--cm); }
+.cert-modal.m-ext h3 i, .cert-modal.m-int h3 i { color: var(--cm); }
+.cert-modal.m-ext #certSaveBtn, .cert-modal.m-int #certSaveBtn { background: var(--cm); border-color: var(--cm); box-shadow: 0 6px 14px color-mix(in srgb, var(--cm) 30%, transparent); }
+.cert-modal.m-ext #certSaveBtn:hover, .cert-modal.m-int #certSaveBtn:hover { background: var(--cm-d); }
+/* ตัวเลือก ไม่มี/มี รายการแข่งขัน */
+.cert-comp-tg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 2px 0 12px; }
+.cert-comp-tg button { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--surface); font: inherit; text-align: left; cursor: pointer; color: var(--text); }
+.cert-comp-tg button b { display: block; font-size: 0.92rem; }
+.cert-comp-tg button small { display: block; font-size: 0.76rem; color: var(--text-muted); }
+.cert-comp-tg button.on { border-color: var(--primary); background: var(--primary-light); }
+.cert-comp-tg button.on b { color: var(--primary-dark); }
+.cert-comp-tg .rd { width: 16px; height: 16px; flex: none; margin-top: 3px; border-radius: 50%; border: 2px solid #94a3b8; box-sizing: border-box; }
+.cert-comp-tg button.on .rd { border: 5px solid var(--primary); }
+.cert-flat-award { max-width: 340px; }
+.cert-flat-lb { display: block; font-weight: 700; margin: 4px 0 6px; }
+.cert-flat-box { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.cert-flat-box .cert-plist { padding: 6px 12px 2px; }
+@media (max-width: 560px) { .cert-comp-tg { grid-template-columns: 1fr; } }
+.orders-header > div:first-child { flex: 1 1 260px; min-width: 0; }
+.cert-head-btns { flex: 0 1 auto; flex-wrap: nowrap; }
+.cert-add-card { min-width: 0; white-space: nowrap; }
+.cert-share-btn { white-space: nowrap; }
+.cert-merge-btn { flex: 0 0 auto; white-space: nowrap; }
+.cert-merge-btn[hidden] { display: none; }
+@media (max-width: 1100px) { .cert-head-btns { flex-wrap: wrap; } }
+.cert-head-btns { margin-left: auto; }
+.cl-tabs { gap: 2px; }
+.cl-tabs button { padding: 5px 3px; gap: 3px; font-size: 0.76rem; }
+.cl-tab-n { min-width: 0.95rem; height: 0.95rem; line-height: 0.95rem; padding: 0 4px; font-size: 0.62rem; }
+.cert-prow.c-n-sc { grid-template-columns: 152px 1fr 88px 160px 30px; }
+.cert-prow.c-n-s { grid-template-columns: 152px 1fr 160px 30px; }
+.cert-prow .cert-no { font-size: 0.76rem; padding: 4px 6px; }
+.cl-tabs button { flex: 1 1 auto; }

@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.60.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.61.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -84,6 +84,7 @@
                 <button class="refresh-btn" id="clReset" type="button" title="กลับไปปีการศึกษา/เทอมปัจจุบัน" aria-label="กลับไปปีการศึกษาปัจจุบัน"><svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
               </span>
             </div>
+            <div class="cl-tabs" id="clTabs" role="tablist" aria-label="ภาคเรียน"></div>
             <div class="dash-checklist-body" id="assignmentChecklistBody"><div class="loading">กำลังโหลด</div></div>
           </div>
         </div>
@@ -191,7 +192,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.60.131026"></script>
+  <script src="assets/api.js?v=1.61.131026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -608,7 +609,7 @@
     }
     function groupDeptChip(g) {
       var d = g.categoryId ? _catDeptMap[g.categoryId] : '';
-      return d ? '<span class="ordc-chip">' + escapeHtml(groupLabel(d)) + '</span>' : '';
+      return d ? '<span class="ordc-chip dept-c"' + deptColorAttr(d) + '>' + escapeHtml(groupLabel(d)) + '</span>' : '';
     }
     // ข้อมูลที่ทุกไฟล์ในชุดเหมือนกัน -> แสดงด้านบน · ข้อมูลที่ต่างกัน -> แสดงใต้ชื่อไฟล์นั้น
     function groupExtras(g) {
@@ -834,26 +835,28 @@
     // ตั้งแต่ V-ถัดไปหลัง V10.1: แสดงทุกภาคเรียน/ปีการศึกษา จัดเป็นหมวดใหญ่ "เทอม ปีการศึกษา" ก่อน แล้วค่อยลิสงานในเทอมนั้นลงมา (เดิมกรองแสดงแค่เทอมปัจจุบันเทอมเดียว)
     // ตั้งแต่ 1.41.111026: เช็คลิสต์ย่อ/ขยายได้เหมือนดร็อปดาวน์ต่อ "เทอม ปีการศึกษา" — ค่าเริ่มต้นขยายเฉพาะเทอมปัจจุบัน (ตาม currentAcademicTerm()
     // ที่ Super Admin ตั้งไว้หรืออัตโนมัติ) · มีช่องเลือกปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · ปุ่ม ↻ = กลับไปปีปัจจุบัน + ย่อ/ขยายกลับค่าเริ่มต้น
-    var checklistState = { term: null, loading: false, year: '', expanded: {} }; // expanded: { "ปี|เทอม": true/false } ที่ผู้ใช้กดเองแล้ว (ไม่มี key = ใช้ค่าเริ่มต้น)
+    // 1.61: เช็คลิสต์แยกเป็นแท็บย่อย "เทอม 1 / เทอม 2" (+ "ภาคฤดูร้อน" เมื่อเปิดใช้) อยู่แถวเดียวกันใต้ช่องเลือกปีการศึกษา — แทนการย่อ/ขยายเดิม
+    // ค่าเริ่มต้น = เทอมปัจจุบัน (ถ้าดูปีปัจจุบัน) ไม่งั้นเทอม 1 · แต่ละแท็บมีตัวเลขงานที่ยังไม่ส่ง · ปุ่ม ↻ = กลับไปปี/เทอมปัจจุบัน
+    var checklistState = { term: null, loading: false, year: '', sem: '', summerOn: true };
     function renderAssignmentChecklist() {
       var wrap = document.getElementById('assignmentChecklistBody');
       if (!wrap) return;
       if (!checklistState.term) {
-        // ต้องรู้เทอมปัจจุบันก่อนถึงจะรู้ว่าจะขยายอันไหน/เลือกปีไหนเป็นค่าเริ่มต้น
         if (!checklistState.loading) {
           checklistState.loading = true;
-          currentAcademicTerm().then(function (t) {
-            checklistState.term = t; checklistState.year = t.year; checklistState.loading = false;
+          Promise.all([currentAcademicTerm(), getSiteSettings().catch(function () { return {}; })]).then(function (r) {
+            var t = r[0];
+            checklistState.term = t; checklistState.year = String(t.year); checklistState.sem = String(t.semester || '1');
+            checklistState.summerOn = !(r[1] && r[1].summerEnabled === false);
+            checklistState.loading = false;
             renderAssignmentChecklist();
           });
         }
         return;
       }
       var yearSel = document.getElementById('clYear');
-      // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ — ไม่มีอะไรให้ "ส่งแล้ว/ยังไม่ส่ง"
-      // ยังคงแสดงเป็นการ์ดแจ้งเตือนอยู่ใน "กำหนดการ" ใต้ปฏิทินตามปกติ (ดู renderCalendar ด้านล่าง)
+      // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ
       var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission && !beforeMyJoin(e); });
-      // รายการปีให้เลือก = ทุกปีที่มีงาน + ปีปัจจุบัน (เผื่อยังไม่มีงานในปีนี้ ก็ยังกลับมาเลือกได้)
       var years = {};
       assignments.forEach(function (e) { years[String(e.academicYear)] = true; });
       years[String(checklistState.term.year)] = true;
@@ -865,76 +868,62 @@
         }).join('');
       }
       var inYear = assignments.filter(function (e) { return String(e.academicYear) === checklistState.year; });
-      if (inYear.length === 0) {
-        wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่งในปีการศึกษา ' + escapeHtml(checklistState.year) + '</div>';
+      var sems = ['1', '2'];
+      if (checklistState.summerOn || inYear.some(function (e) { return e.semester === 'summer'; })) sems.push('summer');
+      if (sems.indexOf(checklistState.sem) === -1) checklistState.sem = '1';
+      var isCurYear = checklistState.year === String(checklistState.term.year);
+      var tabs = document.getElementById('clTabs');
+      if (tabs) {
+        tabs.innerHTML = sems.map(function (sm) {
+          var pend = inYear.filter(function (e) { return e.semester === sm && !isAssignmentSubmitted(e); }).length;
+          var on = sm === checklistState.sem;
+          var cur = isCurYear && sm === String(checklistState.term.semester);
+          return '<button type="button" role="tab" data-cl-sem="' + sm + '" class="' + (on ? 'on' : '') + (cur ? ' cur' : '') + '" aria-selected="' + on + '"' + (cur ? ' title="ภาคเรียนปัจจุบัน"' : '') + '>' +
+            (sm === 'summer' ? 'ฤดูร้อน' : 'เทอม ' + sm) + (pend ? '<span class="cl-tab-n" title="ยังไม่ส่ง ' + pend + ' งาน">' + (pend > 99 ? '99+' : pend) + '</span>' : '') + '</button>';
+        }).join('');
+      }
+      var rows = inYear.filter(function (e) { return e.semester === checklistState.sem; }).map(function (e) { return { ev: e, done: isAssignmentSubmitted(e) }; });
+      if (!rows.length) {
+        wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่งใน' + (checklistState.sem === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + checklistState.sem) + ' ปีการศึกษา ' + escapeHtml(checklistState.year) + '</div>';
         return;
       }
-      var groups = {}; // key: "ปีการศึกษา|ภาคเรียน"
-      inYear.forEach(function (e) {
-        var key = e.academicYear + '|' + e.semester;
-        if (!groups[key]) groups[key] = { key: key, academicYear: e.academicYear, semester: e.semester, rows: [] };
-        groups[key].rows.push({ ev: e, done: isAssignmentSubmitted(e) });
+      rows.sort(function (a, b) {
+        if (a.done !== b.done) return a.done ? 1 : -1; // ยังไม่ส่งขึ้นก่อนเสมอ
+        return new Date(a.ev.date) - new Date(b.ev.date);
       });
-      var groupList = Object.keys(groups).map(function (k) { return groups[k]; });
-      groupList.sort(function (a, b) { return String(b.semester).localeCompare(String(a.semester)); });
-      var currentKey = String(checklistState.term.year) + '|' + String(checklistState.term.semester);
-
-      wrap.innerHTML = groupList.map(function (g) {
-        g.rows.sort(function (a, b) {
-          if (a.done !== b.done) return a.done ? 1 : -1; // ยังไม่ส่งขึ้นก่อนเสมอ (ต้องรีบทำ)
-          return new Date(a.ev.date) - new Date(b.ev.date);
-        });
-        var open = Object.prototype.hasOwnProperty.call(checklistState.expanded, g.key) ? !!checklistState.expanded[g.key] : (g.key === currentKey);
-        var semLabel = g.semester === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + escapeHtml(g.semester);
-        var pendingCount = g.rows.filter(function (r) { return !r.done; }).length;
-        var rowsHtml = g.rows.map(function (r) {
-          var dotColor = categoryColorMap[r.ev.categoryId] || '';
-          return '<div class="checklist-item">' +
-            '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
-            '<div class="checklist-text">' +
-              '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + (r.ev.categoryId ? categoryDeptBadgeHtml(r.ev.categoryId) : '') + '</div>' +
-              '<div class="checklist-status ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') + '</div>' +
-            '</div>' +
-          '</div>';
-        }).join('');
-        return '<div class="checklist-group' + (open ? ' open' : '') + '" data-cl-key="' + escapeHtml(g.key) + '">' +
-          '<button type="button" class="checklist-group-title checklist-group-toggle" aria-expanded="' + (open ? 'true' : 'false') + '" title="' + semLabel + ' ปีการศึกษา ' + escapeHtml(g.academicYear) + '">' +
-            '<span class="cl-group-text">' + termTagsHtml(g.semester, g.academicYear, { short: true }) + '</span>' + // 1.57: ป้ายเทอม/ปีแยกกันชัดเจน
-            (pendingCount > 0 ? '<span class="cl-group-count" title="ยังไม่ส่ง ' + pendingCount + ' งาน">' + pendingCount + '</span>' : '<i class="fas fa-check cl-group-allok" aria-label="ส่งครบแล้ว"></i>') +
-            '<i class="fas fa-chevron-down cl-group-chevron" aria-hidden="true"></i>' +
-          '</button>' +
-          '<div class="checklist-group-body"' + (open ? '' : ' hidden') + '>' + rowsHtml + '</div>' +
+      wrap.innerHTML = rows.map(function (r) {
+        var dotColor = categoryColorMap[r.ev.categoryId] || '';
+        return '<div class="checklist-item">' +
+          '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
+          '<div class="checklist-text">' +
+            '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + (r.ev.categoryId ? categoryDeptBadgeHtml(r.ev.categoryId) : '') + '</div>' +
+            '<div class="checklist-status ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') + '</div>' +
+          '</div>' +
         '</div>';
       }).join('');
     }
     (function wireChecklistControls() {
-      var wrap = document.getElementById('assignmentChecklistBody');
-      if (!wrap) return;
-      wrap.addEventListener('click', function (ev) {
-        var btn = ev.target.closest ? ev.target.closest('.checklist-group-toggle') : null;
-        if (!btn) return;
-        var grp = btn.parentNode;
-        var open = grp.classList.toggle('open');
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        grp.querySelector('.checklist-group-body').hidden = !open;
-        checklistState.expanded[grp.getAttribute('data-cl-key')] = open;
+      var tabs = document.getElementById('clTabs');
+      if (!tabs) return;
+      tabs.addEventListener('click', function (ev) {
+        var b = ev.target.closest('[data-cl-sem]'); if (!b) return;
+        checklistState.sem = b.getAttribute('data-cl-sem');
+        renderAssignmentChecklist();
       });
       document.getElementById('clYear').addEventListener('change', function () {
         checklistState.year = this.value;
+        // ปีปัจจุบัน -> เทอมปัจจุบัน · ปีอื่น -> เทอม 1
+        checklistState.sem = this.value === String(checklistState.term.year) ? String(checklistState.term.semester || '1') : '1';
         renderAssignmentChecklist();
       });
       document.getElementById('clReset').addEventListener('click', async function () {
-        // กลับไปปีปัจจุบัน + ย่อ/ขยายกลับค่าเริ่มต้น (อ่านเทอมปัจจุบันใหม่ เผื่อ Super Admin เพิ่งเปลี่ยนค่าตั้งต้นในระบบ)
-        resetSettingsCache();
-        var t = await currentAcademicTerm();
-        checklistState.term = t; checklistState.year = String(t.year); checklistState.expanded = {};
-        renderAssignmentChecklist();
-      });
-      // 1.45.111026: ปุ่มรีเฟรชปีหมุนเมื่อกด (อย่างน้อย 1 รอบ ให้เห็นว่ากดติด)
-      document.getElementById('clReset').addEventListener('click', function () {
         var b = this;
         b.classList.remove('spin-once'); void b.offsetWidth; b.classList.add('spin-once');
         setTimeout(function () { b.classList.remove('spin-once'); }, 700);
+        resetSettingsCache();
+        var t = await currentAcademicTerm();
+        checklistState.term = t; checklistState.year = String(t.year); checklistState.sem = String(t.semester || '1');
+        renderAssignmentChecklist();
       });
     })();
 
