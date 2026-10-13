@@ -19,7 +19,9 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.55.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.56.131026" />
+<!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
+<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -60,10 +62,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.55.131026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.56.131026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.55.131026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.56.131026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -97,7 +99,7 @@
         </div>
       </div>
 
-      <!-- 1.55.131026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.56.131026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -123,6 +125,19 @@
           </div>
           <div class="asset-picker-name hint" id="loginHeroFileName">ยังไม่ได้เลือกไฟล์</div>
         </div>
+      </div>
+
+      <!-- 1.56: ธีมสีของเว็บไซต์ — สีเดียวทั้งระบบ หรือแยกสีตามกลุ่มบริหารงาน (+ สีหน้าเข้าสู่ระบบแยก) -->
+      <div class="card" id="themeCard">
+        <div class="section-title"><i class="fas fa-palette ui-icon" style="font-size:17px" aria-hidden="true"></i> ธีมสีของเว็บไซต์</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:12px;">สีของปุ่ม ตัวหนังสือหลัก ป้าย และหัวการ์ดเข้าสู่ระบบ (โหมดกลางคืนปรับความสว่างให้อัตโนมัติ)</p>
+        <div id="themeError" class="error-box" hidden></div>
+        <div class="theme-mode" role="radiogroup" aria-label="รูปแบบธีมสี">
+          <label><input type="radio" name="themeMode" value="system" id="themeModeSystem" /><span><b>สีเดียวทั้งระบบ</b><small>ทุกบัญชีและหน้าเข้าสู่ระบบใช้สีเดียวกัน</small></span></label>
+          <label><input type="radio" name="themeMode" value="department" id="themeModeDept" /><span><b>แยกสีตามกลุ่มบริหารงาน</b><small>ป้ายกลุ่ม และปุ่ม/ตัวหนังสือของบัญชีในกลุ่มนั้นใช้สีของกลุ่ม · หน้าเข้าสู่ระบบตั้งสีแยก</small></span></label>
+        </div>
+        <div id="themeRows"></div>
+        <div style="margin-top:12px;"><button type="button" class="btn btn-primary" id="themeSaveBtn"><i class="fas fa-floppy-disk ui-icon" aria-hidden="true"></i> บันทึกธีมสี</button></div>
       </div>
 
       <div class="card">
@@ -1078,7 +1093,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.55.131026"></script>
+  <script src="assets/api.js?v=1.56.131026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1232,6 +1247,7 @@
       renderAssetPreview('logoPreview', s.logoDataUrl);
       renderAssetPreview('logoWidePreview', s.logoWideDataUrl);
       renderLoginHeroPreview(s.loginHeroDataUrl || '');
+      loadThemeCard(s);
       document.getElementById('loginHeroRemoveBtn').hidden = !s.loginHeroDataUrl;
       document.getElementById('loginHeroPreviewName').textContent = s.siteName || 'BNKAcademicHub';
       document.getElementById('logoWideRemoveBtn').hidden = !s.logoWideDataUrl;
@@ -1254,7 +1270,83 @@
         if (r.ok) resetSettingsCache(); else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     })();
-    // 1.55.131026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // ---------- 1.56: ธีมสีของเว็บไซต์ ----------
+    var themeState = { mode: 'system', color: THEME_DEFAULT_COLOR, login: '', depts: {} };
+    var themeDeptList = [];
+    function themeScopeStyle(el, hex) {
+      var t = themePalette(hex), dark = document.documentElement.getAttribute('data-theme') === 'dark', v = dark ? t.dark : t.light;
+      el.style.setProperty('--primary', v.p); el.style.setProperty('--primary-dark', v.d); el.style.setProperty('--primary-light', v.l);
+    }
+    function themeRowHtml(key, label, sub, allowNone) {
+      var sw = (allowNone ? '<button type="button" class="theme-sw none" data-k="' + escapeHtml(key) + '" data-c="" title="ใช้สีหลัก" aria-label="ใช้สีหลัก"></button>' : '') +
+        THEME_PRESETS.map(function (p) { return '<button type="button" class="theme-sw" data-k="' + escapeHtml(key) + '" data-c="' + p.c + '" style="background:' + p.c + '" title="' + escapeHtml(p.name) + '" aria-label="' + escapeHtml(p.name) + '"></button>'; }).join('') +
+        '<label class="theme-custom" title="เลือกสีเอง"><input type="color" data-k="' + escapeHtml(key) + '" aria-label="เลือกสีเอง" /></label>';
+      return '<div class="theme-row" data-row="' + escapeHtml(key) + '"><div class="theme-row-label">' + escapeHtml(label) + (sub ? '<small>' + escapeHtml(sub) + '</small>' : '') + '</div>' +
+        '<div class="theme-swatches">' + sw + '</div>' +
+        '<div class="theme-preview"><span class="tp-btn">ปุ่ม</span><span class="tp-tag">ป้าย</span></div>' +
+        '<div class="theme-warn" hidden>สีนี้อ่อน ตัวหนังสือสีขาวบนปุ่มอาจอ่านยาก</div></div>';
+    }
+    function themeGet(key) { return key === '__main' ? themeState.color : key === '__login' ? themeState.login : (themeState.depts[key] || ''); }
+    function themeSet(key, c) { if (key === '__main') themeState.color = c || THEME_DEFAULT_COLOR; else if (key === '__login') themeState.login = c; else if (c) themeState.depts[key] = c; else delete themeState.depts[key]; }
+    function renderThemeRows() {
+      var wrap = document.getElementById('themeRows');
+      if (!wrap) return;
+      document.getElementById(themeState.mode === 'department' ? 'themeModeDept' : 'themeModeSystem').checked = true;
+      var html = themeState.mode === 'department'
+        ? themeRowHtml('__main', 'สีหลัก', 'บัญชีที่ไม่สังกัดกลุ่ม และกลุ่มที่ไม่ได้ตั้งสี', false) +
+          themeRowHtml('__login', 'หน้าเข้าสู่ระบบ', 'ไม่เลือก = ใช้สีหลัก', true) +
+          ((typeof currentDepartments !== 'undefined' && currentDepartments && currentDepartments.length) ? currentDepartments : themeDeptList).map(function (d) { return themeRowHtml(d, groupLabel(d), '', true); }).join('')
+        : themeRowHtml('__main', 'สีของทั้งระบบ', '', false);
+      wrap.innerHTML = html;
+      syncThemeRows();
+    }
+    function syncThemeRows() {
+      Array.prototype.forEach.call(document.querySelectorAll('#themeRows .theme-row'), function (row) {
+        var key = row.getAttribute('data-row'), c = themeGet(key), eff = c || themeState.color;
+        Array.prototype.forEach.call(row.querySelectorAll('.theme-sw'), function (b) { b.setAttribute('aria-pressed', String((b.getAttribute('data-c') || '') === (c || ''))); });
+        var picker = row.querySelector('input[type="color"]'); if (picker) picker.value = eff;
+        themeScopeStyle(row.querySelector('.theme-preview'), eff);
+        row.querySelector('.theme-warn').hidden = themeContrastWithWhite(eff) >= 4.5;
+      });
+    }
+    function loadThemeCard(s) {
+      if (!document.getElementById('themeCard')) return;
+      themeDeptList = (s.departments || []).slice();
+      themeState = { mode: s.themeMode === 'department' ? 'department' : 'system', color: themeHexOk(s.themeColor) ? s.themeColor.toLowerCase() : THEME_DEFAULT_COLOR, login: themeHexOk(s.themeLoginColor) ? s.themeLoginColor.toLowerCase() : '', depts: {} };
+      Object.keys(s.departmentColors || {}).forEach(function (d) { if (themeHexOk(s.departmentColors[d])) themeState.depts[d] = s.departmentColors[d].toLowerCase(); });
+      renderThemeRows();
+    }
+    if (document.getElementById('themeCard')) {
+      document.getElementById('themeRows').addEventListener('click', function (e) {
+        var b = e.target.closest('.theme-sw'); if (!b) return;
+        themeSet(b.getAttribute('data-k'), b.getAttribute('data-c') || ''); syncThemeRows();
+      });
+      document.getElementById('themeRows').addEventListener('input', function (e) {
+        if (e.target.type !== 'color') return;
+        themeSet(e.target.getAttribute('data-k'), e.target.value.toLowerCase()); syncThemeRows();
+      });
+      var genTabBtn = document.querySelector('.tab-btn[data-tab="general"]'); // กลุ่มบริหารงานอาจถูกเพิ่ม/เปลี่ยนชื่อในแท็บอื่น -> วาดแถวใหม่เมื่อกลับมา
+      if (genTabBtn) genTabBtn.addEventListener('click', function () { if (document.getElementById('themeRows').children.length) renderThemeRows(); });
+      ['themeModeSystem', 'themeModeDept'].forEach(function (id) {
+        document.getElementById(id).addEventListener('change', function () { themeState.mode = this.value; renderThemeRows(); });
+      });
+      document.getElementById('themeSaveBtn').addEventListener('click', async function () {
+        var errBox = document.getElementById('themeError'); errBox.hidden = true;
+        var ok = await askConfirm(themeState.mode === 'department'
+          ? 'บันทึกธีมสีแบบแยกตามกลุ่มบริหารงาน? ทุกบัญชีจะเห็นสีใหม่ตอนเปิดหน้าถัดไป'
+          : 'บันทึกธีมสีเดียวทั้งระบบ? ทุกบัญชีจะเห็นสีใหม่ตอนเปิดหน้าถัดไป', 'ยืนยันการเปลี่ยนแปลง');
+        if (!ok) return;
+        var payload = { themeMode: themeState.mode, themeColor: themeState.color, themeLoginColor: themeState.login, departmentColors: themeState.depts };
+        var r = await withProgress('กำลังบันทึกธีมสี', function () { return apiCall('adminUpdateSettings', payload); }, { successLabel: 'บันทึกธีมสีเรียบร้อยแล้ว' });
+        if (r.ok) {
+          resetSettingsCache();
+          var st = await applyBranding(); // ใส่สีใหม่ให้หน้านี้ทันที
+          loadThemeCard(st);
+          if (typeof loadCategories === 'function') { try { loadCategories(); } catch (e2) { /* ไม่เป็นไร */ } }
+        } else { errBox.textContent = r.error.message; errBox.hidden = false; }
+      });
+    }
+    // 1.56.131026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -1567,7 +1659,7 @@
         var checked = checkedIds && checkedIds.indexOf(c.id) !== -1 ? ' checked' : '';
         return '<label style="display:flex; align-items:center; gap:8px; font-weight:500; padding:6px 2px;">' +
           '<input type="checkbox" class="ms-cat-cb" value="' + c.id + '" style="width:auto;"' + checked + ' />' +
-          '<span>' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge">' + escapeHtml(groupLabel(c.department)) + '</span>' : '') + '</span>' +
+          '<span>' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge"' + deptColorAttr(c.department) + '>' + escapeHtml(groupLabel(c.department)) + '</span>' : '') + '</span>' +
         '</label>';
       }).join('');
     }
@@ -1915,7 +2007,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.55.131026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.56.131026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);
@@ -2101,7 +2193,7 @@
             rowHtml[c.id] = '<div class="event-list-item" data-cat-row="' + c.id + '">' +
               '<span class="cat-color-swatch" style="display:inline-block; width:26px; height:26px; border-radius:7px; flex-shrink:0; background:' + escapeHtml(c.color || '#3457d5') + ';" title="สีของประเภทงาน"></span>' +
               '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(c.name) +
-                (c.department ? ' <span class="cat-dept-badge">' + escapeHtml(groupLabel(c.department)) + '</span>' : ' <span class="cat-dept-badge cat-dept-none">ยังไม่ผูกกลุ่มบริหารงาน</span>') +
+                (c.department ? ' <span class="cat-dept-badge"' + deptColorAttr(c.department) + '>' + escapeHtml(groupLabel(c.department)) + '</span>' : ' <span class="cat-dept-badge cat-dept-none">ยังไม่ผูกกลุ่มบริหารงาน</span>') +
                 (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '') +
                 (c.hideFromPortfolio ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-eye-slash ui-icon" aria-hidden="true"></i> ไม่แสดงสาธารณะ</span>' : '') +
               '</div>' +
@@ -2449,7 +2541,7 @@
         currentCatOrder.forEach(function (c, idx) {
           html += '<div class="layout-row">' +
             '<div class="thumb" title="สีประเภทงาน" style="background:' + (c.color || '#3457d5') + ';"></div>' +
-            '<div class="info"><div class="t">' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge">' + escapeHtml(groupLabel(c.department)) + '</span>' : '') + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
+            '<div class="info"><div class="t">' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge"' + deptColorAttr(c.department) + '>' + escapeHtml(groupLabel(c.department)) + '</span>' : '') + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
             '<div class="arrows">' +
               '<button type="button" class="btn btn-ghost btn-sm cat-move-up" data-idx="' + idx + '"' + (idx === 0 ? ' disabled' : '') + ' title="เลื่อนขึ้น">▲</button>' +
               '<button type="button" class="btn btn-ghost btn-sm cat-move-down" data-idx="' + idx + '"' + (idx === currentCatOrder.length - 1 ? ' disabled' : '') + ' title="เลื่อนลง">▼</button>' +
@@ -2789,8 +2881,8 @@
       if (u.role === 'executive') return '<span class="badge badge-exec">' + escapeHtml(u.position || 'ผู้บริหาร') + '</span>';
       // ครูที่ยังไม่ระบุกลุ่มบริหารงาน (1.44.111026: ไม่บังคับแล้ว) — ป้ายบอกเฉยๆ ไม่ใช่คำเตือน
       var noGroup = ' <span class="hint">ไม่ระบุกลุ่ม</span>';
-      if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>' + (u.department ? ' <span class="hint">' + escapeHtml(groupLabel(u.department)) + '</span>' : noGroup);
-      if (u.hasHub) return '<span class="badge badge-admin">เจ้าหน้าที่' + (u.department ? escapeHtml(groupLabel(u.department)) : '') + '</span>' + (u.department ? '' : noGroup);
+      if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>' + (u.department ? ' <span class="hint dept-tag"' + deptColorAttr(u.department) + '>' + escapeHtml(groupLabel(u.department)) + '</span>' : noGroup);
+      if (u.hasHub) return '<span class="badge badge-admin"' + deptColorAttr(u.department) + '>เจ้าหน้าที่' + (u.department ? escapeHtml(groupLabel(u.department)) : '') + '</span>' + (u.department ? '' : noGroup);
       return '<span class="badge badge-super">Super Admin</span>';
     }
 

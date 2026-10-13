@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.55.131026';
+var APP_VERSION = '1.56.131026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -150,8 +150,10 @@ var SESSION_WATCH_INTERVAL_MS = 10 * 1000;
 var _sessionWatchHandle = null;
 function startSessionWatch() {
   if (_sessionWatchHandle) return; // กันเรียกซ้ำ (เช่น mountChrome ถูกเรียกมากกว่า 1 ครั้งในหน้าเดียว)
-  _sessionWatchHandle = setInterval(async function () {
-    if (!getToken()) return;
+  // 1.56: ไม่ตรวจตอนแท็บถูกซ่อน (สลับไปแท็บอื่น/พับจอ) — ลดจำนวนคำขอไปยัง Worker (โควตาฟรี 100,000 ครั้ง/วัน)
+  // แล้วตรวจทันทีเมื่อกลับมาที่แท็บ จึงยังเด้งออกได้ทันเวลาเหมือนเดิม
+  var check = async function () {
+    if (!getToken() || document.hidden) return;
     try {
       await apiCall('checkSession', {});
     } catch (err) {
@@ -160,7 +162,9 @@ function startSessionWatch() {
         showSessionReplacedModal();
       }
     }
-  }, SESSION_WATCH_INTERVAL_MS);
+  };
+  _sessionWatchHandle = setInterval(check, SESSION_WATCH_INTERVAL_MS);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && _sessionWatchHandle) check(); });
 }
 function stopSessionWatch() {
   if (_sessionWatchHandle) { clearInterval(_sessionWatchHandle); _sessionWatchHandle = null; }
@@ -294,7 +298,7 @@ async function getSiteSettings() {
 var BRAND_CACHE_KEY = 'bnkah_brand';
 function cachedBrand() { try { return JSON.parse(localStorage.getItem(BRAND_CACHE_KEY) || 'null'); } catch (e) { return null; } }
 function cacheBrand(s) {
-  try { localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ siteName: s.siteName || '', logoDataUrl: s.logoDataUrl || '', logoWideDataUrl: s.logoWideDataUrl || '', loginHeroDataUrl: s.loginHeroDataUrl || '', topbarShowName: s.topbarShowName !== false })); } catch (e) { /* เต็ม/ไม่มี localStorage — ไม่เป็นไร */ }
+  try { localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ siteName: s.siteName || '', logoDataUrl: s.logoDataUrl || '', logoWideDataUrl: s.logoWideDataUrl || '', loginHeroDataUrl: s.loginHeroDataUrl || '', topbarShowName: s.topbarShowName !== false, themeMode: s.themeMode || 'system', themeColor: s.themeColor || '', departmentColors: s.departmentColors || {} })); } catch (e) { /* เต็ม/ไม่มี localStorage — ไม่เป็นไร */ }
 }
 // วาดส่วนแบรนด์ (ไม่ต้องรอ) จาก object ค่าตั้งค่า
 function renderBrand(s) {
@@ -323,6 +327,76 @@ function renderBrand(s) {
     }
   });
 }
+// ---------- ธีมสี (ตั้งแต่ 1.56) ----------
+// settings.themeMode: 'system' = สีเดียวทั้งระบบ (themeColor) · 'department' = แยกสีตามกลุ่มบริหารงาน (departmentColors[ชื่อกลุ่ม])
+// บัญชีที่ไม่สังกัดกลุ่ม/กลุ่มยังไม่ตั้งสี = themeColor · หน้าเข้าสู่ระบบ = themeLoginColor (ว่าง = themeColor)
+// จากสีเดียว คำนวณชุดสี --primary / --primary-dark / --primary-light / --primary-rgb / --grad-1..3 ทั้งโหมดสว่างและโหมดมืด
+// แล้วจำ CSS ไว้ใน localStorage — สคริปต์ใน <head> ทุกหน้าใส่สีจากที่จำไว้ทันที (ไม่เห็นสีเก่าแวบตอนเปลี่ยนหน้า)
+var THEME_DEFAULT_COLOR = '#0b6fcc';
+var THEME_CSS_KEY = 'bnkah_theme_css';
+var THEME_CSS_LOGIN_KEY = 'bnkah_theme_css_login';
+var THEME_PRESETS = [
+  { name: 'ฟ้า', c: '#0b6fcc' }, { name: 'น้ำเงิน', c: '#2563eb' }, { name: 'คราม (สีเดิม)', c: '#4f46e5' }, { name: 'ม่วง', c: '#7c3aed' },
+  { name: 'ชมพู', c: '#db2777' }, { name: 'แดง', c: '#dc2626' }, { name: 'ส้ม', c: '#c2410c' }, { name: 'เขียว', c: '#15803d' }, { name: 'เขียวอมฟ้า', c: '#0f766e' }
+];
+function themeHexOk(h) { return /^#[0-9a-f]{6}$/i.test(String(h || '')); }
+function themeRgb(h) { h = String(h).replace('#', ''); return [0, 2, 4].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+function themeMix(rgb, to, t) { return rgb.map(function (v, i) { return Math.round(v + (to[i] - v) * t); }); }
+function themeHex(rgb) { return '#' + rgb.map(function (v) { return ('0' + Math.max(0, Math.min(255, v)).toString(16)).slice(-2); }).join(''); }
+// ความต่างของสีกับตัวหนังสือสีขาว (WCAG) — ต่ำกว่า 4.5 ตัวหนังสือบนปุ่มเริ่มอ่านยาก
+function themeContrastWithWhite(h) {
+  var c = themeRgb(h).map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return 1.05 / (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] + 0.05);
+}
+function themePalette(hex) {
+  var b = themeRgb(themeHexOk(hex) ? hex : THEME_DEFAULT_COLOR), W = [255, 255, 255], K = [0, 0, 0];
+  return {
+    light: { p: themeHex(b), d: themeHex(themeMix(b, K, 0.2)), l: themeHex(themeMix(b, W, 0.9)) },
+    dark: { p: themeHex(themeMix(b, W, 0.1)), d: themeHex(themeMix(b, W, 0.42)), l: 'rgba(' + b.join(', ') + ', 0.22)' },
+    rgb: b.join(' '), g1: themeHex(themeMix(b, K, 0.14)), g2: themeHex(b), g3: themeHex(themeMix(b, W, 0.22))
+  };
+}
+function themeCss(hex) {
+  var t = themePalette(hex);
+  return ':root{--primary:' + t.light.p + ';--primary-dark:' + t.light.d + ';--primary-light:' + t.light.l + ';--primary-rgb:' + t.rgb +
+    ';--grad-1:' + t.g1 + ';--grad-2:' + t.g2 + ';--grad-3:' + t.g3 + '}' +
+    ':root[data-theme="dark"]{--primary:' + t.dark.p + ';--primary-dark:' + t.dark.d + ';--primary-light:' + t.dark.l + '}';
+}
+// สีของบัญชีที่ล็อกอินอยู่ (หรือของหน้าเข้าสู่ระบบ)
+function resolveThemeColor(s, forLogin) {
+  s = s || {};
+  var base = themeHexOk(s.themeColor) ? s.themeColor : THEME_DEFAULT_COLOR;
+  if (s.themeMode !== 'department') return base;
+  if (forLogin) return themeHexOk(s.themeLoginColor) ? s.themeLoginColor : base;
+  var u = getSession();
+  var dc = u && u.department && s.departmentColors && s.departmentColors[u.department];
+  return themeHexOk(dc) ? dc : base;
+}
+function setThemeCss(css) {
+  var st = document.getElementById('bnkahThemeVars');
+  if (!st) { st = document.createElement('style'); st.id = 'bnkahThemeVars'; document.head.appendChild(st); }
+  if (st.textContent !== css) st.textContent = css;
+}
+function applyThemeColor(s) {
+  var forLogin = document.body && document.body.classList.contains('login-page');
+  var css = themeCss(resolveThemeColor(s, forLogin));
+  setThemeCss(css);
+  try { localStorage.setItem(forLogin ? THEME_CSS_LOGIN_KEY : THEME_CSS_KEY, css); } catch (e) { /* ไม่เป็นไร */ }
+}
+// ป้ายกลุ่มบริหารงานตามสีของกลุ่ม (เฉพาะโหมดแยกสีตามกลุ่ม) — ใส่ใน tag ที่ต้องการ: '<span class="x"' + deptColorAttr(dept) + '>'
+// ตั้งตัวแปร --dp* ให้ CSS (.dept-colored) สลับ --primary/--primary-dark/--primary-light ภายในป้ายนั้นทั้งโหมดสว่าง/มืด
+function deptThemeColor(dept, s) {
+  s = s || _settingsCache || cachedBrand() || {};
+  if (s.themeMode !== 'department' || !dept || !s.departmentColors) return '';
+  var c = s.departmentColors[dept] || s.departmentColors[String(dept).replace(/^กลุ่มบริหารงาน/, '')];
+  return themeHexOk(c) ? c : '';
+}
+function deptColorAttr(dept, s) {
+  var c = deptThemeColor(dept, s);
+  if (!c) return '';
+  var t = themePalette(c);
+  return ' data-dept-color="' + c + '" style="--dp:' + t.light.p + ';--dp-d:' + t.light.d + ';--dp-l:' + t.light.l + ';--dpk:' + t.dark.p + ';--dpk-d:' + t.dark.d + ';--dpk-l:' + t.dark.l + '"';
+}
 // 1.55.131026: รูปหน้าเข้าสู่ระบบ (settings.loginHeroDataUrl) แสดงแทนโลโก้ + ชื่อเว็บ + คำบรรยายที่หัวการ์ด (.login-hero ใน index.html)
 // index.html มีสคริปต์สั้นๆ ใส่รูปจากค่าที่จำไว้ (bnkah_brand) ทันทีหลังหัวการ์ดถูกสร้าง — ไม่เห็นหัวสีม่วงแวบก่อนรูปขึ้น
 function renderLoginHero(s) {
@@ -339,7 +413,7 @@ function renderLoginHero(s) {
 }
 async function applyBranding() {
   var s = await getSiteSettings();
-  if (!s.__fallback) { cacheBrand(s); renderBrand(s); }
+  if (!s.__fallback) { cacheBrand(s); renderBrand(s); applyThemeColor(s); }
   if (s.siteName && document.title) {
     document.title = document.title.replace(/BNKAcademicHub/, s.siteName);
   }

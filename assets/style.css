@@ -149,9 +149,14 @@
   --text: #1e293b;
   --text-muted: #64748b;
   --border: #e2e8f0;
-  --primary: #4f46e5;
-  --primary-dark: #4338ca;
-  --primary-light: #eef2ff;
+  /* 1.56: ค่าเริ่มต้นเป็นสีฟ้า (#0b6fcc) — ธีมสีที่ Super Admin ตั้งจะทับค่าเหล่านี้ด้วย <style id="bnkahThemeVars"> (applyThemeColor ใน api.js) */
+  --primary: #0b6fcc;
+  --primary-dark: #0959a3;
+  --primary-light: #e7f1fa;
+  --primary-rgb: 11 111 204;
+  --grad-1: #095faf;
+  --grad-2: #0b6fcc;
+  --grad-3: #418fd7;
   --accent: #059669;
   --accent-light: #ecfdf5;
   --danger: #e11d48;
@@ -198,9 +203,9 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
      indigo-500 (#6366f1) ให้สดขึ้นใกล้เคียงโทนของโหมดสว่างมากขึ้น แล้วย้ายค่าที่อ่อนกว่าเดิม (#818cf8) ไปเป็น --primary-dark
      แทน (ใช้เป็นสี hover ที่สว่างขึ้นจากปกติ + สีตัวหนังสือบนพื้นอ่อนของ badge/แท็บที่ active — ยังคงอ่านง่ายบนพื้นเข้ม)
      พร้อมเพิ่มความทึบของพื้นหลัง badge (--primary-light/--accent-light) จาก 0.16 เป็น 0.22 ให้ badge/แท็บไม่จางจนดูกลืนกับพื้นการ์ด */
-  --primary: #6366f1;
-  --primary-dark: #818cf8;
-  --primary-light: rgba(99, 102, 241, 0.22);
+  --primary: #237dd1;
+  --primary-dark: #71abe1;
+  --primary-light: rgba(11, 111, 204, 0.22);
   --accent: #34d399;
   --accent-light: rgba(16, 185, 129, 0.22);
   --danger: #fb7185;
@@ -436,7 +441,7 @@ body.login-page .login-wrap { flex: 1 1 auto; min-height: 0; }
   margin: calc(-1 * var(--lc-pad-y)) calc(-1 * var(--lc-pad-x)) 18px;
   padding: 22px var(--lc-pad-x) 18px;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #a855f7 100%);
+  background: linear-gradient(135deg, var(--grad-1) 0%, var(--grad-2) 55%, var(--grad-3) 100%);
 }
 .login-hero .logo-dot { background: #fff; }
 .login-hero .brand-logo-lg { box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); }
@@ -652,15 +657,15 @@ input[type="color"] {
    พร้อมเงาเรืองแสงเบาๆ ที่ไล่ความเข้มขึ้นลงช้าๆ (ไม่กะพริบแรงจนรำคาญ) ให้สายตาสะดุดโดยธรรมชาติ — ปิดอนิเมชันให้อัตโนมัติถ้า
    เครื่องผู้ใช้ตั้งค่า "ลดการเคลื่อนไหว" ไว้ (prefers-reduced-motion) */
 .btn-cta {
-  background: linear-gradient(135deg, #4f46e5 0%, #d6249f 55%, #f5576c 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #d6249f 55%, #f5576c 100%);
   color: #fff;
-  box-shadow: 0 10px 20px -6px rgba(214, 36, 159, 0.45), 0 4px 10px -4px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 10px 20px -6px rgba(214, 36, 159, 0.45), 0 4px 10px -4px rgb(var(--primary-rgb) / 0.4);
   animation: btnCtaGlow 2.4s ease-in-out infinite;
 }
 .btn-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
 @keyframes btnCtaGlow {
-  0%, 100% { box-shadow: 0 10px 20px -6px rgba(214, 36, 159, 0.45), 0 4px 10px -4px rgba(79, 70, 229, 0.4); }
-  50% { box-shadow: 0 12px 26px -4px rgba(214, 36, 159, 0.7), 0 4px 14px -2px rgba(79, 70, 229, 0.6); }
+  0%, 100% { box-shadow: 0 10px 20px -6px rgba(214, 36, 159, 0.45), 0 4px 10px -4px rgb(var(--primary-rgb) / 0.4); }
+  50% { box-shadow: 0 12px 26px -4px rgba(214, 36, 159, 0.7), 0 4px 14px -2px rgb(var(--primary-rgb) / 0.6); }
 }
 @media (prefers-reduced-motion: reduce) { .btn-cta { animation: none; } }
 
@@ -1850,7 +1855,7 @@ table.sum-files td.a { width: 1%; }
 /* ตัวอย่างการ์ดเข้าสู่ระบบในหน้าตั้งค่า + ในหน้าจัดรูป */
 .login-hero-preview, .crop-login { width: 100%; max-width: 300px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow); margin: 0 0 12px; }
 .crop-login { margin: 6px auto 0; background: #ffffff; }
-.lhp-hero { aspect-ratio: 3 / 1; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #a855f7 100%); display: grid; place-items: center; }
+.lhp-hero { aspect-ratio: 3 / 1; background: linear-gradient(135deg, var(--grad-1) 0%, var(--grad-2) 55%, var(--grad-3) 100%); display: grid; place-items: center; }
 .lhp-hero.has-image { background: #ffffff; }
 .lhp-hero img, .crop-login > img { display: block; width: 100%; aspect-ratio: 3 / 1; object-fit: cover; }
 .lhp-hero.has-image img { height: 100%; }
@@ -1865,3 +1870,35 @@ table.sum-files td.a { width: 1%; }
 .crop-mode-login .crop-stage { max-width: 540px; margin-left: auto; margin-right: auto; }
 .crop-mode-login .crop-stage { aspect-ratio: 3 / 1; }
 .crop-topbar[hidden], .crop-login[hidden], .crop-bg[hidden] { display: none; }
+
+/* ---------- 1.56: ธีมสี + ป้ายกลุ่มบริหารงานตามสีของกลุ่ม ---------- */
+/* องค์ประกอบที่มี data-dept-color (ใส่ด้วย deptColorAttr ใน api.js) ใช้ชุดสีของกลุ่มนั้นแทนสีหลักของหน้า */
+[data-dept-color] { --primary: var(--dp); --primary-dark: var(--dp-d); --primary-light: var(--dp-l); }
+:root[data-theme="dark"] [data-dept-color] { --primary: var(--dpk); --primary-dark: var(--dpk-d); --primary-light: var(--dpk-l); }
+.ordc-chip.dept-c[data-dept-color] { background: var(--primary-light); color: var(--primary-dark); border-color: transparent; }
+.dept-tag[data-dept-color] { display: inline-block; padding: 0 8px; border-radius: 999px; background: var(--primary-light); color: var(--primary-dark); font-weight: 600; }
+.dir-section[data-dept-color] .dir-section-title { color: var(--primary-dark); border-bottom-color: var(--primary); }
+/* การ์ดตั้งค่าธีมสี */
+.theme-mode { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.theme-mode label { flex: 1 1 220px; display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 2px solid var(--border); border-radius: 14px; cursor: pointer; background: var(--surface); }
+.theme-mode label:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
+.theme-mode input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary); flex: 0 0 auto; }
+.theme-mode b { display: block; font-size: 0.92rem; }
+.theme-mode small { display: block; color: var(--text-muted); font-size: 0.78rem; line-height: 1.45; }
+.theme-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--border); }
+.theme-row:first-of-type { border-top: 0; }
+.theme-row-label { flex: 0 0 220px; font-weight: 600; font-size: 0.9rem; }
+.theme-row-label small { display: block; font-weight: 400; color: var(--text-muted); font-size: 0.76rem; }
+.theme-swatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.theme-sw { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--surface); box-shadow: 0 0 0 1px var(--border); cursor: pointer; padding: 0; position: relative; }
+.theme-sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--text); }
+.theme-sw[aria-pressed="true"]::after { content: "\2713"; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 800; }
+.theme-sw.none { background: repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 4px, var(--border) 4px, var(--border) 8px); }
+.theme-custom { position: relative; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px var(--border); cursor: pointer; background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); }
+.theme-custom input { position: absolute; inset: -6px; width: 42px; height: 42px; opacity: 0; cursor: pointer; padding: 0; border: 0; }
+.theme-preview { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.theme-preview .tp-btn { padding: 5px 12px; border-radius: 10px; background: var(--primary); color: #fff; font-size: 0.78rem; font-weight: 700; }
+.theme-preview .tp-tag { padding: 2px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary-dark); font-size: 0.76rem; font-weight: 700; }
+.theme-warn { color: var(--warn); font-size: 0.76rem; flex-basis: 100%; }
+.theme-warn[hidden] { display: none; }
+@media (max-width: 640px) { .theme-row-label { flex-basis: 100%; } .theme-preview { margin-left: 0; } }

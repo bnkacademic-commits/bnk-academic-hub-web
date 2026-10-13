@@ -8,7 +8,9 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.55.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.56.131026" />
+<!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
+<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
   <!-- คลังคำสั่ง (ตั้งแต่ 1.43.111026 — เดิม "ไฟล์คำสั่ง" ของ 1.41): ทุกบัญชีที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ · แก้ไข/ลบได้เฉพาะเจ้าของ · PDF เท่านั้น
@@ -137,7 +139,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.55.131026"></script>
+  <script src="assets/api.js?v=1.56.131026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -274,7 +276,7 @@
             '<div class="ordc-title orders-title" title="' + escapeHtml(o.title) + '">' + escapeHtml(o.title) + '</div>' +
             '<div class="ordc-chips">' +
               (o.orderNo ? '<span class="ordc-chip no">คำสั่งที่ ' + escapeHtml(o.orderNo) + '</span>' : '<span class="ordc-chip">ไม่มีเลขที่</span>') +
-              '<span class="ordc-chip">' + escapeHtml(groupLabel(o.department)) + '</span>' +
+              '<span class="ordc-chip dept-c"' + deptColorAttr(o.department) + '>' + escapeHtml(groupLabel(o.department)) + '</span>' +
               (fs.length > 1 ? '<span class="ordc-chip cnt"><i class="fa-solid fa-copy"></i> ' + fs.length + ' ไฟล์</span>' : '') +
               (o.isOwner ? '<span class="ordc-chip own">ของฉัน</span>' : '') +
             '</div>' +
@@ -306,6 +308,7 @@
     async function load() {
       try {
         var res = await apiCall('orderList', {});
+        try { await getSiteSettings(); } catch (e) { /* ไม่เป็นไร */ } // 1.56: สีป้ายกลุ่มบริหารงาน
         orders = res.orders || []; departments = res.departments || []; subjectGroups = res.subjectGroups || [];
         if (res.maxFiles) MAX_FILES = Number(res.maxFiles) || MAX_FILES;
         people = res.people || []; myDepartment = res.myDepartment || ''; summerOn = res.summerEnabled !== false; retentionYears = Number(res.retentionYears || 0);
