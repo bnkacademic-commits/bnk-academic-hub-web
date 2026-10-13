@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.61.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.62.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -71,7 +71,7 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.61.131026"></script>
+  <script src="assets/api.js?v=1.62.131026"></script>
   <script>
     mountFooter();
     applyBranding();
@@ -238,6 +238,7 @@
           '<div class="ordc-body"><div class="ordc-title">' + escapeHtml(c.activity) + (c.competition ? ' <span class="cert-comp">· ' + escapeHtml(c.competition) + '</span>' : '') + '</div>' +
           '<div class="ordc-chips">' + termTagsHtml(c.semester, c.academicYear) +
             (c.award ? '<span class="ordc-chip cert-award"><i class="fa-solid fa-trophy"></i> ' + escapeHtml(c.award) + '</span>' : '') +
+            (c.awardLevel ? '<span class="ordc-chip cert-level"><i class="fa-solid fa-layer-group"></i> ' + escapeHtml(c.awardLevel) + '</span>' : '') + // 1.62
             (c.certNo ? '<span class="ordc-chip cert-nochip"><i class="fa-solid fa-hashtag"></i> ' + escapeHtml(c.certNo) + '</span>' : '') + // 1.60
             '<span class="ordc-chip">' + (c.scope === 'internal' ? 'ภายในโรงเรียน' : 'ภายนอกโรงเรียน') + '</span></div></div>' +
           ((c.files || []).length ? '<div class="ordc-btns"><button type="button" class="icon-btn ord-ic" data-cert-preview="' + escapeHtml(c.id) + '" title="ดูเกียรติบัตร" aria-label="ดูเกียรติบัตร ' + escapeHtml(c.activity) + '"><i class="fa-solid fa-eye"></i></button></div>' : '') +

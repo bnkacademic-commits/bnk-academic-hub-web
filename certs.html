@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.61.131026" />
+<link rel="stylesheet" href="assets/style.css?v=1.62.131026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -43,7 +43,7 @@
     </div>
     <div class="cert-toolbar">
       <select id="certActivity" aria-label="กรองตามกิจกรรม" class="grow"></select>
-      <button type="button" class="btn btn-ghost btn-sm cert-merge-btn" id="certMergeBtn" hidden title="รวมชื่อกิจกรรมที่พิมพ์ต่างกันให้เป็นชื่อเดียว"><i class="fa-solid fa-code-merge"></i> จัดการชื่อกิจกรรม</button>
+      <button type="button" class="btn btn-ghost btn-sm cert-merge-btn" id="certMergeBtn" hidden title="รวมชื่อกิจกรรม/หน่วยงาน/ระดับรางวัลที่พิมพ์ต่างกันให้เป็นชื่อเดียว"><i class="fa-solid fa-code-merge"></i> จัดการชื่อ</button>
       <select id="certYear" aria-label="กรองตามปีการศึกษา"></select>
       <select id="certSem" aria-label="กรองตามภาคเรียน"></select>
       <select id="certMine" aria-label="กรองตามความเกี่ยวข้อง">
@@ -72,14 +72,22 @@
         </div>
         <div class="field">
           <label>ประเภทเกียรติบัตร</label>
+          <!-- 1.62: ประเภทเกียรติบัตร 2 แบบ — เปลี่ยนชื่อช่อง/ซ่อนรางวัลและรายการแข่งขันตามประเภท -->
+          <div class="cert-type-pick" id="certFType" role="radiogroup">
+            <button type="button" role="radio" data-type="training"><i class="ic fa-solid fa-chalkboard" aria-hidden="true"></i><span><b>การอบรมหรือพัฒนาตนเอง</b><small>อบรม สัมมนา ค่าย หลักสูตร</small></span></button>
+            <button type="button" role="radio" data-type="award"><i class="ic fa-solid fa-trophy" aria-hidden="true"></i><span><b>ผลงานหรือรางวัล</b><small>การแข่งขัน ประกวด รางวัลเชิดชู</small></span></button>
+          </div>
+        </div>
+        <div class="field">
+          <label>ผู้รับเกียรติบัตร</label>
           <div class="cert-kind-pick" id="certFKind" role="radiogroup">
-            <button type="button" data-kind="teacher" role="radio"><i class="fa-solid fa-chalkboard-user"></i> ครู</button>
             <button type="button" data-kind="student" role="radio"><i class="fa-solid fa-user-graduate"></i> นักเรียน</button>
+            <button type="button" data-kind="teacher" role="radio"><i class="fa-solid fa-chalkboard-user"></i> ครู</button>
             <button type="button" data-kind="school" role="radio"><i class="fa-solid fa-school"></i> โรงเรียน</button>
           </div>
         </div>
         <div class="field cert-ac-wrap">
-          <label for="certFActivity">ชื่อกิจกรรม</label>
+          <label for="certFActivity" id="certFActivityLb">ชื่อกิจกรรม/โครงการ/หลักสูตร</label>
           <input id="certFActivity" maxlength="200" placeholder="เช่น การแข่งขันศิลปหัตถกรรมนักเรียน ครั้งที่ 72" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="certActList" />
           <div class="cert-ac" id="certActList" role="listbox" hidden></div>
           <div class="cert-similar" id="certSimilar" hidden></div>
@@ -90,9 +98,19 @@
         </div>
         <div id="certGroups"></div>
         <button type="button" class="cert-add-grp" id="certAddGroup"><i class="fa-solid fa-plus"></i> เพิ่มรายการแข่งขัน</button>
+        <!-- 1.62: หน่วยงาน (พิมพ์เอง + แนะนำ — เจ้าหน้าที่รวมชื่อได้) + รูปแบบการเข้าร่วม (บังคับ ค่าเริ่มต้น On-site) -->
+        <div class="cert-meta-row">
+          <div class="field"><label for="certFAgency">หน่วยงาน</label><input id="certFAgency" list="certAgencyDL" maxlength="200" placeholder="เช่น สำนักงานเขตพื้นที่การศึกษา..." /></div>
+          <div class="field"><label>รูปแบบการเข้าร่วม</label>
+            <div class="cert-mode-seg" id="certFMode" role="radiogroup" aria-label="รูปแบบการเข้าร่วม">
+              <button type="button" role="radio" data-mode="online"><i class="fa-solid fa-laptop"></i> Online</button><button type="button" role="radio" data-mode="onsite"><i class="fa-solid fa-location-dot"></i> On-site</button><button type="button" role="radio" data-mode="hybrid"><i class="fa-solid fa-shuffle"></i> Hybrid</button>
+            </div></div>
+        </div>
         <div class="cert-note" id="certModalNote"></div>
         <datalist id="certCompDL"></datalist>
         <datalist id="certAwardDL"></datalist>
+        <datalist id="certAgencyDL"></datalist>
+        <datalist id="certLevelDL"></datalist>
         <input id="certPickFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
         <input id="certPickMulti" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden />
         <div class="modal-actions">
@@ -135,10 +153,13 @@
   <div class="modal-backdrop" id="certMergeModal" hidden>
     <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="certMergeCloseX" aria-label="ปิด">✕</button>
-      <h3><i class="fa-solid fa-code-merge" aria-hidden="true"></i> จัดการชื่อกิจกรรม</h3>
-      <p class="hint" style="margin-top:-6px;">ติ๊กชื่อกิจกรรมที่เป็นกิจกรรมเดียวกัน แล้วเลือก/พิมพ์ชื่อที่ถูกต้อง — เกียรติบัตรทุกใบที่ใช้ชื่อที่ติ๊กจะเปลี่ยนเป็นชื่อนี้ (ชื่อไฟล์ใน Google Drive คงเดิม)</p>
+      <h3><i class="fa-solid fa-code-merge" aria-hidden="true"></i> จัดการชื่อ</h3>
+      <p class="hint" style="margin-top:-6px;">ติ๊กชื่อที่เป็นอันเดียวกัน แล้วเลือก/พิมพ์ชื่อที่ถูกต้อง — เกียรติบัตรทุกใบที่ใช้ชื่อที่ติ๊กจะเปลี่ยนเป็นชื่อนี้ และรายการแนะนำตอนกรอกจะตรงกัน (ชื่อไฟล์ใน Google Drive คงเดิม)</p>
+      <div class="tabs cert-merge-tabs" role="tablist" id="certMergeTabs">
+        <button type="button" class="tab-btn active" role="tab" data-mf="activity">ชื่อกิจกรรม/ผลงาน</button><button type="button" class="tab-btn" role="tab" data-mf="agency">หน่วยงาน</button><button type="button" class="tab-btn" role="tab" data-mf="level">ระดับรางวัล</button>
+      </div>
       <div id="certMergeError" class="error-box" hidden></div>
-      <input type="search" id="certMergeSearch" placeholder="ค้นหาชื่อกิจกรรม" />
+      <input type="search" id="certMergeSearch" placeholder="ค้นหาชื่อ" />
       <div class="cert-merge-list" id="certMergeList"></div>
       <div class="field" style="margin-top:10px; text-align:left;">
         <label for="certMergeTo">รวมเป็นชื่อ</label>
@@ -153,16 +174,18 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.61.131026"></script>
+  <script src="assets/api.js?v=1.62.131026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
-    var certs = [], activities = [], people = [], me = null, canAdd = false, canMerge = false, schoolName = '', summerOn = true;
+    var agencies = [], levels = [], certs = [], activities = [], people = [], me = null, canAdd = false, canMerge = false, schoolName = '', summerOn = true;
     var numbering = { format: 'บนค. {ปีการศึกษา}/{เลขที่}', digits: 4, counters: {} };
     var scope = 'internal', kindFilter = '', expanded = {}, curTerm = null, yearDefaulted = false;
     var TAB_KEY = 'bnkah_cert_tab';
     var AWARD_SUGG = ['ชนะเลิศ', 'รองชนะเลิศอันดับ 1', 'รองชนะเลิศอันดับ 2', 'เหรียญทอง', 'เหรียญเงิน', 'เหรียญทองแดง', 'ชมเชย', 'เข้าร่วม'];
     var KIND_LABEL = { teacher: 'ครู', student: 'นักเรียน', school: 'โรงเรียน' };
+    var TYPE_LABEL = { training: 'การอบรมหรือพัฒนาตนเอง', award: 'ผลงานหรือรางวัล' };
+    var MODE_LABEL = { online: 'Online', onsite: 'On-site', hybrid: 'Hybrid' };
     var KIND_ICON = { teacher: 'fa-chalkboard-user', student: 'fa-user-graduate', school: 'fa-school' };
     var TH_MONTH_ABBR = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
     function $(id) { return document.getElementById(id); }
@@ -209,7 +232,7 @@
       });
       return gs.sort(function (a, b) { return a.grp - b.grp; });
     }
-    function itemsText(c) { return (c.items || []).map(function (it) { return it.name + ' ' + it.cls + ' ' + it.certNo + ' ' + it.competition + ' ' + it.award; }).join(' '); }
+    function itemsText(c) { return (c.items || []).map(function (it) { return it.name + ' ' + it.cls + ' ' + it.certNo + ' ' + it.competition + ' ' + it.award + ' ' + (it.awardLevel || ''); }).join(' '); }
 
     // ---------- ตัวกรอง ----------
     function fillFilters() {
@@ -262,7 +285,7 @@
         if (fm === 'mine' && !c.isOwner) return false;
         if (fm === 'recv' && !iReceived(c)) return false;
         if (fm === 'pending' && !missingCount(c)) return false;
-        if (q && (c.activity + ' ' + itemsText(c) + ' ' + KIND_LABEL[c.kind]).toLowerCase().indexOf(q) < 0) return false;
+        if (q && (c.activity + ' ' + itemsText(c) + ' ' + KIND_LABEL[c.kind] + ' ' + (c.agency || '')).toLowerCase().indexOf(q) < 0) return false;
         return true;
       });
       var root = $('certRoot');
@@ -309,8 +332,11 @@
     function itemsTableHtml(c) {
       var cancelled = c.status === 'cancelled', internal = c.scope === 'internal';
       return groupsOf(c, true).map(function (g, gi) {
-        var head = (g.competition || g.award || groupsOf(c, true).length > 1)
-          ? '<div class="cert-dgrp-h"><span class="cert-grp-num">' + (gi + 1) + '</span>' + escapeHtml(g.competition || 'ไม่ระบุรายการ') + (g.award ? ' <span class="ordc-chip cert-award"><i class="fa-solid fa-trophy"></i> ' + escapeHtml(g.award) + '</span>' : '') + '</div>' : '';
+        var multi = groupsOf(c, true).length > 1;
+        var chips = (g.award ? ' <span class="ordc-chip cert-award"><i class="fa-solid fa-trophy"></i> ' + escapeHtml(g.award) + '</span>' : '') + (g.items[0] && g.items[0].awardLevel ? ' <span class="ordc-chip cert-level"><i class="fa-solid fa-layer-group"></i> ' + escapeHtml(g.items[0].awardLevel) + '</span>' : '');
+        // 1.62: ชุดเดียวไม่มีรายการแข่งขัน = แสดงเฉพาะชิปรางวัล/ระดับ (ไม่มีเลขลำดับ)
+        var head = (g.competition || multi) ? '<div class="cert-dgrp-h"><span class="cert-grp-num">' + (gi + 1) + '</span>' + escapeHtml(g.competition || 'ไม่ระบุรายการ') + chips + '</div>'
+          : (chips ? '<div class="cert-dgrp-h">' + chips + '</div>' : '');
         return head + '<table class="sub-files cert-items"><tbody>' + g.items.map(function (it) {
           var off = it.status !== 'active';
           var act;
@@ -333,8 +359,11 @@
       var oneAward = gs.length && gs.every(function (g) { return g.award === gs[0].award; }) ? gs[0].award : '';
       var titleComp = gs.length === 1 && gs[0].competition ? gs[0].competition : '';
       var rows = [
-        ['ชื่อกิจกรรม', escapeHtml(c.activity)],
-        ['ประเภท', escapeHtml('เกียรติบัตร' + KIND_LABEL[c.kind] + ' · ' + (c.scope === 'internal' ? 'ภายในโรงเรียน' : 'ภายนอกโรงเรียน'))],
+        [c.certType === 'award' ? 'ชื่อผลงาน/รางวัล' : 'ชื่อกิจกรรม/โครงการ/หลักสูตร', escapeHtml(c.activity)],
+        ['ประเภทเกียรติบัตร', escapeHtml(TYPE_LABEL[c.certType] || TYPE_LABEL.training) + ' · ' + (c.scope === 'internal' ? 'ภายในโรงเรียน' : 'ภายนอกโรงเรียน')],
+        ['ผู้รับเกียรติบัตร', escapeHtml(KIND_LABEL[c.kind])],
+        ['หน่วยงาน', c.agency ? escapeHtml(c.agency) : '—'],
+        ['รูปแบบการเข้าร่วม', c.attendMode ? escapeHtml(MODE_LABEL[c.attendMode] || c.attendMode) : '—'],
         ['วันที่ตามเกียรติบัตร', escapeHtml(formatDateThai(c.certDate))],
         ['ภาคเรียน / ปีการศึกษา', escapeHtml(semText(c.semester) + ' ปีการศึกษา ' + c.academicYear)],
         ['เพิ่มโดย', c.createdByName ? escapeHtml(c.createdByName) : '—']
@@ -346,6 +375,7 @@
           '<div class="ordc-body">' +
             '<div class="ordc-title" title="' + escapeHtml(c.activity + (titleComp ? ' · ' + titleComp : '')) + '">' + escapeHtml(c.activity) + (titleComp ? ' <span class="cert-comp">· ' + escapeHtml(titleComp) + '</span>' : '') + '</div>' +
             '<div class="ordc-chips">' + termTagsHtml(c.semester, c.academicYear) +
+              '<span class="ordc-chip cert-type ' + (c.certType || 'training') + '"><i class="fa-solid ' + (c.certType === 'award' ? 'fa-trophy' : 'fa-chalkboard') + '"></i> ' + (c.certType === 'award' ? 'ผลงาน/รางวัล' : 'อบรม/พัฒนาตนเอง') + '</span>' +
               '<span class="ordc-chip cert-kind ' + c.kind + '"><i class="fa-solid ' + KIND_ICON[c.kind] + '"></i> ' + KIND_LABEL[c.kind] + '</span>' +
               (c.scope === 'internal' && noRange(shown) ? '<span class="ordc-chip cert-nochip"><i class="fa-solid fa-hashtag"></i> ' + escapeHtml(noRange(shown)) + '</span>' : '') +
               (gs.length > 1 ? '<span class="ordc-chip cnt"><i class="fa-solid fa-list-ol"></i> ' + gs.length + ' รายการ</span>' : '') +
@@ -376,7 +406,7 @@
     async function load() {
       try {
         var res = await apiCall('certList', {});
-        certs = res.certs || []; activities = res.activities || []; people = res.people || []; me = res.me;
+        certs = res.certs || []; activities = res.activities || []; agencies = res.agencies || []; levels = res.levels || []; people = res.people || []; me = res.me;
         canAdd = !!res.canAdd; canMerge = !!res.canMergeActivities; schoolName = res.schoolName || ''; summerOn = res.summerEnabled !== false;
         if (res.numbering) numbering = res.numbering;
       } catch (err) {
@@ -384,7 +414,7 @@
         return;
       }
       $('certAddIntBtn').hidden = !canAdd; $('certAddExtBtn').hidden = !canAdd;
-      $('certMergeBtn').hidden = !canMerge || !activities.length;
+      $('certMergeBtn').hidden = !canMerge || !(activities.length || agencies.length || levels.length);
       $('certSubtitle').textContent = 'เกียรติบัตรของครู นักเรียน และโรงเรียน' + (canAdd ? '' : ' (ดูได้อย่างเดียว)');
       $('certSubtitle').title = canAdd ? 'ครูและเจ้าหน้าที่เพิ่มได้ · แก้ไข/ลบได้เฉพาะผู้เพิ่มและเจ้าหน้าที่' : '';
       if (!curTerm) { try { curTerm = await currentAcademicTerm(); } catch (e) { curTerm = { year: '' }; } }
@@ -394,7 +424,7 @@
 
     // ================= ป็อปอัพ เพิ่ม/แก้ไข =================
     // groups = [{competition, award, people:[{id, name, cls, userId, certNo, file (ไฟล์เดิม), newFile (File ที่เลือกใหม่)}]}]
-    var hasComp = false, mScope = 'internal', mKind = 'student', editing = null, groups = [], simDecision = null, tried = false, pickTarget = null, pasteOpen = -1;
+    var mType = 'training', mMode = 'onsite', hasComp = false, mScope = 'internal', mKind = 'student', editing = null, groups = [], simDecision = null, tried = false, pickTarget = null, pasteOpen = -1;
     function newPerson() {
       if (mKind === 'teacher') return { userId: '', name: '', cls: '' };
       if (mKind === 'school') return { name: schoolName || 'โรงเรียน', cls: '' };
@@ -429,6 +459,26 @@
       if (p.file) return '<span class="cert-fslot old" title="' + escapeHtml(p.file.name) + '">' + fileIcon(p.file) + '<span>ไฟล์เดิม</span><button type="button" class="cert-fx" data-f-pick' + at + ' title="เปลี่ยนไฟล์" aria-label="เปลี่ยนไฟล์"><i class="fa-solid fa-arrow-right-arrow-left"></i></button></span>';
       var miss = tried && mScope === 'external' && personFilled(p);
       return '<button type="button" class="cert-fslot pick' + (miss ? ' miss' : '') + '" data-f-pick' + at + '>' + (miss ? '<i class="fa-solid fa-circle-exclamation"></i> ยังไม่มีไฟล์' : '<i class="fa-solid fa-upload"></i> เลือกไฟล์') + '</button>';
+    }
+    function hasLevel() { return mType === 'award' && mScope === 'external'; }
+    function renderTypeMode() {
+      Array.prototype.forEach.call(document.querySelectorAll('#certFType [data-type]'), function (b) { var on = b.getAttribute('data-type') === mType; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+      Array.prototype.forEach.call(document.querySelectorAll('#certFMode [data-mode]'), function (b) { var on = b.getAttribute('data-mode') === mMode; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+      $('certFActivityLb').textContent = mType === 'award' ? 'ชื่อผลงาน/รางวัล' : 'ชื่อกิจกรรม/โครงการ/หลักสูตร';
+      $('certFActivity').placeholder = mType === 'award' ? 'เช่น การแข่งขันศิลปหัตถกรรมนักเรียน ครั้งที่ 72' : 'เช่น ค่ายวิชาการภาษาอังกฤษ English Camp 2569';
+      $('certCompTg').hidden = mType !== 'award';
+    }
+    // เปลี่ยนประเภท — การอบรม: ไม่มีรายการแข่งขัน/รางวัล (รวมรายชื่อเป็นชุดเดียวถ้ามีหลายรายการ)
+    async function setType(t) {
+      if (t === mType) return;
+      if (t === 'training' && hasComp) {
+        var prev = mType; mType = t;
+        await setHasComp(false);
+        if (hasComp) { mType = prev; renderTypeMode(); return; } // ยกเลิก
+      }
+      mType = t;
+      if (t === 'training') groups.forEach(function (g) { g.award = ''; g.awardLevel = ''; g.competition = ''; });
+      renderTypeMode(); renderGroups();
     }
     function renderCompToggle() {
       Array.prototype.forEach.call(document.querySelectorAll('#certCompTg [data-comp]'), function (b) { var on = (b.getAttribute('data-comp') === '1') === hasComp; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
@@ -466,8 +516,9 @@
         // 1.61: ไม่มีรายการแข่งขัน = ไม่มีกรอบ — รางวัลช่องเดียว + ตารางรายชื่อเดียว
         var g0 = groups[0], n = g0.people.filter(personFilled).length;
         $('certGroups').innerHTML = '<div class="cert-flat">' +
-          '<div class="field cert-flat-award"><label>รางวัล <span class="hint-inline">(ถ้ามี)</span></label><input data-g-award="0" list="certAwardDL" maxlength="120" placeholder="เว้นว่าง = เข้าร่วม" value="' + escapeHtml(g0.award) + '" /></div>' +
-          '<label class="cert-flat-lb">ผู้ได้รับเกียรติบัตร <span class="hint-inline">· ' + n + ' ' + (mKind === 'school' ? 'แห่ง' : 'คน') + '</span></label>' +
+          (mType === 'award' ? '<div class="cert-flat-award' + (hasLevel() ? ' two' : '') + '"><div class="field"><label>รางวัล <span class="hint-inline">(ถ้ามี)</span></label><input data-g-award="0" list="certAwardDL" maxlength="120" placeholder="เว้นว่าง = เข้าร่วม" value="' + escapeHtml(g0.award) + '" /></div>' +
+            (hasLevel() ? '<div class="field"><label>ระดับรางวัล <span class="hint-inline">(ถ้ามี)</span></label><input data-g-level="0" list="certLevelDL" maxlength="120" placeholder="เช่น ระดับเขตพื้นที่การศึกษา" value="' + escapeHtml(g0.awardLevel || '') + '" /></div>' : '') + '</div>' : '') +
+          '<label class="cert-flat-lb">ผู้รับเกียรติบัตร <span class="hint-inline">· ' + n + ' ' + (mKind === 'school' ? 'แห่ง' : 'คน') + '</span></label>' +
           '<div class="cert-flat-box">' + peopleBlock(g0, 0, cols, pn, internal) + '</div></div>';
         $('certAddGroup').hidden = true;
         updateNote();
@@ -475,9 +526,10 @@
       }
       $('certGroups').innerHTML = groups.map(function (g, gi) {
         return '<div class="cert-grp" data-grp="' + gi + '">' +
-          '<div class="cert-grp-h"><span class="cert-grp-num">' + (gi + 1) + '</span>' +
+          '<div class="cert-grp-h' + (hasLevel() ? ' lv' : '') + '"><span class="cert-grp-num">' + (gi + 1) + '</span>' +
             '<div class="field"><label>รายการแข่งขัน</label><input data-g-comp="' + gi + '" list="certCompDL" maxlength="200" placeholder="เช่น A-Math ระดับชั้น ม.ต้น" value="' + escapeHtml(g.competition) + '" /></div>' +
             '<div class="field"><label>รางวัล <span class="hint-inline">(ถ้ามี)</span></label><input data-g-award="' + gi + '" list="certAwardDL" maxlength="120" placeholder="เว้นว่าง = เข้าร่วม" value="' + escapeHtml(g.award) + '" /></div>' +
+            (hasLevel() ? '<div class="field"><label>ระดับรางวัล <span class="hint-inline">(ถ้ามี)</span></label><input data-g-level="' + gi + '" list="certLevelDL" maxlength="120" placeholder="เช่น ระดับเขต" value="' + escapeHtml(g.awardLevel || '') + '" /></div>' : '') +
             (groups.length > 1 ? '<button type="button" class="icon-btn del" data-g-rm="' + gi + '" title="ลบรายการแข่งขันนี้" aria-label="ลบรายการแข่งขันที่ ' + (gi + 1) + '"><i class="fa-solid fa-trash"></i></button>' : '<span></span>') +
           '</div>' + peopleBlock(g, gi, cols, pn, internal) +
         '</div>';
@@ -498,7 +550,7 @@
         var all = [];
         groups.forEach(function (g) { g.people.forEach(function (p) { if (personFilled(p) || all.length === 0) all.push(p); }); });
         if (mKind === 'school') all = all.slice(0, 1);
-        groups = [{ competition: '', award: groups[0].award, people: all.length ? all : [newPerson()] }];
+        groups = [{ competition: '', award: groups[0].award, awardLevel: groups[0].awardLevel || '', people: all.length ? all : [newPerson()] }];
       }
       hasComp = on; pasteOpen = -1;
       renderGroups();
@@ -521,6 +573,9 @@
       ms.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ยังขาดไฟล์ ' + missing + ' คน';
     }
     function fillDatalists() {
+      var dl = function (list) { return list.map(function (x) { return '<option value="' + escapeHtml(x.name) + '"></option>'; }).join(''); };
+      $('certAgencyDL').innerHTML = dl(agencies);
+      $('certLevelDL').innerHTML = dl(levels.concat(['ระดับโรงเรียน', 'ระดับเขตพื้นที่การศึกษา', 'ระดับจังหวัด', 'ระดับภาค', 'ระดับชาติ', 'ระดับนานาชาติ'].filter(function (n) { return !levels.some(function (x) { return x.name === n; }); }).map(function (n) { return { name: n }; })));
       $('certAwardDL').innerHTML = AWARD_SUGG.map(function (a) { return '<option value="' + escapeHtml(a) + '"></option>'; }).join('');
       var act = activities.filter(function (a) { return a.name === $('certFActivity').value.replace(/\s+/g, ' ').trim(); })[0];
       $('certCompDL').innerHTML = act ? (act.competitions || []).map(function (c) { return '<option value="' + escapeHtml(c.name) + '"></option>'; }).join('') : '';
@@ -545,11 +600,15 @@
       syncCertDate();
       if (c) {
         groups = groupsOf(c, false).map(function (g) {
-          return { competition: g.competition, award: g.award, people: g.items.map(function (it) { return { id: it.id, name: it.name, cls: it.cls, userId: it.userId, certNo: it.certNo, file: it.file }; }) };
+          return { competition: g.competition, award: g.award, awardLevel: (g.items[0] && g.items[0].awardLevel) || '', people: g.items.map(function (it) { return { id: it.id, name: it.name, cls: it.cls, userId: it.userId, certNo: it.certNo, file: it.file }; }) };
         });
         mKind = c.kind;
       }
-      hasComp = !!c && (groups.length > 1 || groups.some(function (g) { return !!g.competition; }));
+      mType = c ? (c.certType || 'training') : 'training';
+      mMode = c ? (c.attendMode || 'onsite') : 'onsite';
+      $('certFAgency').value = c ? (c.agency || '') : (internal ? (schoolName || '') : '');
+      hasComp = !!c && mType === 'award' && (groups.length > 1 || groups.some(function (g) { return !!g.competition; }));
+      renderTypeMode();
       setKind(c ? c.kind : 'student');
       fillDatalists();
       $('certActList').hidden = true;
@@ -628,7 +687,7 @@
       var gs = groups.map(function (g) {
         var ps = g.people.filter(personFilled);
         ps.forEach(function (p) { flat.push(p); });
-        return { competition: g.competition.replace(/\s+/g, ' ').trim(), award: g.award.replace(/\s+/g, ' ').trim(),
+        return { competition: g.competition.replace(/\s+/g, ' ').trim(), award: g.award.replace(/\s+/g, ' ').trim(), awardLevel: String(g.awardLevel || '').replace(/\s+/g, ' ').trim(),
           people: ps.map(function (p) { return { id: p.id || '', name: (p.name || '').trim(), cls: (p.cls || '').trim(), userId: p.userId || '' }; }) };
       });
       return { groups: gs, flat: flat };
@@ -637,13 +696,15 @@
       ev.preventDefault();
       showErr(''); tried = true;
       $('certActList').hidden = true;
-      var head = { academicYear: $('certFYear').value.trim(), semester: $('certFSem').value, activity: $('certFActivity').value.replace(/\s+/g, ' ').trim(), certDate: $('certFDate').value };
+      var head = { academicYear: $('certFYear').value.trim(), semester: $('certFSem').value, activity: $('certFActivity').value.replace(/\s+/g, ' ').trim(), certDate: $('certFDate').value,
+        certType: mType, agency: $('certFAgency').value.replace(/\s+/g, ' ').trim(), attendMode: mMode };
       var pg = payloadGroups();
       renderGroups();
       if (!/^\d{4}$/.test(head.academicYear)) return showErr('กรุณากรอกปีการศึกษา (พ.ศ. 4 หลัก เช่น 2569)');
-      if (!head.activity) return showErr('กรุณากรอกชื่อกิจกรรม');
+      if (!head.activity) return showErr(mType === 'award' ? 'กรุณากรอกชื่อผลงาน/รางวัล' : 'กรุณากรอกชื่อกิจกรรม/โครงการ/หลักสูตร');
+      if (!head.agency) { $('certFAgency').focus(); return showErr('กรุณากรอกหน่วยงาน'); }
       if (!head.certDate) return showErr('กรุณาเลือกวันที่ตามเกียรติบัตร');
-      for (var gi = 0; gi < pg.groups.length; gi++) if (!pg.groups[gi].people.length) return showErr('รายการแข่งขันที่ ' + (gi + 1) + ' ยังไม่มีผู้ได้รับเกียรติบัตร' + (mKind === 'teacher' ? ' (เลือกครู)' : mKind === 'student' ? ' (กรอกชื่อนักเรียน)' : ''));
+      for (var gi = 0; gi < pg.groups.length; gi++) if (!pg.groups[gi].people.length) return showErr('รายการแข่งขันที่ ' + (gi + 1) + ' ยังไม่มีผู้รับเกียรติบัตร' + (mKind === 'teacher' ? ' (เลือกครู)' : mKind === 'student' ? ' (กรอกชื่อนักเรียน)' : ''));
       if (mScope === 'external') {
         var miss = pg.flat.filter(function (p) { return !p.newFile && !p.file; }).length;
         if (miss) return showErr('เกียรติบัตรภายนอกต้องแนบไฟล์ให้ครบทุกคน — ยังขาด ' + miss + ' คน (กด "เลือกไฟล์" ท้ายชื่อ)');
@@ -722,25 +783,28 @@
     }
 
     // ================= จัดการชื่อกิจกรรม (รวมชื่อ) =================
-    var mergePicked = {};
+    var mergePicked = {}, mergeField = 'activity';
+    var MERGE_LABEL = { activity: 'ชื่อกิจกรรม/ผลงาน', agency: 'หน่วยงาน', level: 'ระดับรางวัล' };
+    function mergeSource() { return mergeField === 'agency' ? agencies : mergeField === 'level' ? levels : activities; }
     function renderMerge() {
       var q = normName($('certMergeSearch').value);
-      $('certMergeList').innerHTML = activities.filter(function (a) { return !q || normName(a.name).indexOf(q) !== -1; }).map(function (a) {
-        return '<div class="cert-merge-item"><label><input type="checkbox" data-merge="' + escapeHtml(a.name) + '"' + (mergePicked[a.name] ? ' checked' : '') + ' /> <span>' + escapeHtml(a.name) + '</span></label><small>' + a.count + ' ใบ</small>' +
+      Array.prototype.forEach.call(document.querySelectorAll('#certMergeTabs [data-mf]'), function (b) { var on = b.getAttribute('data-mf') === mergeField; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); });
+      $('certMergeList').innerHTML = mergeSource().filter(function (a) { return !q || normName(a.name).indexOf(q) !== -1; }).map(function (a) {
+        return '<div class="cert-merge-item"><label><input type="checkbox" data-merge="' + escapeHtml(a.name) + '"' + (mergePicked[a.name] ? ' checked' : '') + ' /> <span>' + escapeHtml(a.name) + '</span></label><small>' + a.count + (mergeField === 'agency' ? ' ชุด' : ' ใบ') + '</small>' +
           '<button type="button" class="cert-add-link" data-merge-to="' + escapeHtml(a.name) + '">ใช้เป็นชื่อหลัก</button></div>';
-      }).join('') || '<div class="hint" style="padding:8px;">ไม่พบชื่อกิจกรรม</div>';
+      }).join('') || '<div class="hint" style="padding:8px;">ไม่พบ' + MERGE_LABEL[mergeField] + '</div>';
       var from = Object.keys(mergePicked).filter(function (k) { return mergePicked[k] && k !== $('certMergeTo').value.trim(); });
       $('certMergeSave').disabled = !from.length || !$('certMergeTo').value.trim();
     }
-    function openMerge() { mergePicked = {}; $('certMergeSearch').value = ''; $('certMergeTo').value = ''; $('certMergeError').hidden = true; renderMerge(); showModalEl($('certMergeModal')); }
+    function openMerge() { mergeField = 'activity'; mergePicked = {}; $('certMergeSearch').value = ''; $('certMergeTo').value = ''; $('certMergeError').hidden = true; renderMerge(); showModalEl($('certMergeModal')); }
     async function saveMerge() {
       var to = $('certMergeTo').value.replace(/\s+/g, ' ').trim();
       var from = Object.keys(mergePicked).filter(function (k) { return mergePicked[k] && k !== to; });
       if (!from.length || !to) return;
-      var n = activities.filter(function (a) { return from.indexOf(a.name) !== -1; }).reduce(function (s, a) { return s + a.count; }, 0);
-      var ok = await askConfirm('รวมชื่อกิจกรรม ' + from.length + ' ชื่อ (' + n + ' ใบ) เป็น "' + to + '"?', 'ยืนยันการรวมชื่อ');
+      var n = mergeSource().filter(function (a) { return from.indexOf(a.name) !== -1; }).reduce(function (s, a) { return s + a.count; }, 0);
+      var ok = await askConfirm('รวม' + MERGE_LABEL[mergeField] + ' ' + from.length + ' ชื่อ (' + n + ' ' + (mergeField === 'agency' ? 'ชุด' : 'ใบ') + ') เป็น "' + to + '"?', 'ยืนยันการรวมชื่อ');
       if (!ok) return;
-      var r = await withProgress('กำลังรวมชื่อกิจกรรม...', function () { return apiCall('certRenameActivity', { from: from, to: to }); }, { successLabel: 'รวมชื่อกิจกรรมแล้ว' });
+      var r = await withProgress('กำลังรวมชื่อ...', function () { return apiCall('certRenameActivity', { field: mergeField, from: from, to: to }); }, { successLabel: 'รวม' + MERGE_LABEL[mergeField] + 'แล้ว' });
       if (r.ok) { hideModalEl($('certMergeModal')); await load(); }
       else { $('certMergeError').textContent = r.error.message; $('certMergeError').hidden = false; }
     }
@@ -781,6 +845,8 @@
       $('certFYear').addEventListener('input', renderGroups);
       $('certFSem').addEventListener('change', renderGroups);
       $('certFDate').addEventListener('input', syncCertDate);
+      $('certFType').addEventListener('click', function (e) { var b = e.target.closest('[data-type]'); if (b) setType(b.getAttribute('data-type')); });
+      $('certFMode').addEventListener('click', function (e) { var b = e.target.closest('[data-mode]'); if (b) { mMode = b.getAttribute('data-mode'); renderTypeMode(); } });
       $('certCompTg').addEventListener('click', function (e) { var b = e.target.closest('[data-comp]'); if (b) setHasComp(b.getAttribute('data-comp') === '1'); });
       $('certAddGroup').addEventListener('click', function () {
         var p = newPerson(); if (mKind === 'teacher' && me) p.userId = me.id;
@@ -792,6 +858,7 @@
         var t = e.target, gi = t.getAttribute('data-g'), pi = t.getAttribute('data-p');
         if (t.hasAttribute('data-g-comp')) groups[Number(t.getAttribute('data-g-comp'))].competition = t.value;
         else if (t.hasAttribute('data-g-award')) groups[Number(t.getAttribute('data-g-award'))].award = t.value;
+        else if (t.hasAttribute('data-g-level')) groups[Number(t.getAttribute('data-g-level'))].awardLevel = t.value;
         else if (t.hasAttribute('data-p-name')) { groups[Number(gi)].people[Number(pi)].name = t.value; if (mScope === 'internal') refreshNumbers(); else updateNote(); }
         else if (t.hasAttribute('data-p-cls')) groups[Number(gi)].people[Number(pi)].cls = t.value;
       });
@@ -867,6 +934,7 @@
       ['certShareClose', 'certShareCloseX'].forEach(function (id) { $(id).addEventListener('click', function () { hideModalEl($('certShareModal')); }); });
       // ----- รวมชื่อกิจกรรม -----
       $('certMergeSearch').addEventListener('input', renderMerge);
+      $('certMergeTabs').addEventListener('click', function (e) { var b = e.target.closest('[data-mf]'); if (!b) return; mergeField = b.getAttribute('data-mf'); mergePicked = {}; $('certMergeTo').value = ''; $('certMergeSearch').value = ''; renderMerge(); });
       $('certMergeTo').addEventListener('input', renderMerge);
       $('certMergeList').addEventListener('change', function (e) { var k = e.target.getAttribute('data-merge'); if (k !== null) { mergePicked[k] = e.target.checked; renderMerge(); } });
       $('certMergeList').addEventListener('click', function (e) { var b = e.target.closest('[data-merge-to]'); if (!b) return; $('certMergeTo').value = b.getAttribute('data-merge-to'); renderMerge(); });

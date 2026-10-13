@@ -2321,3 +2321,32 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .cert-prow.c-n-s { grid-template-columns: 152px 1fr 160px 30px; }
 .cert-prow .cert-no { font-size: 0.76rem; padding: 4px 6px; }
 .cl-tabs button { flex: 1 1 auto; }
+
+/* ===== 1.62: คลังเกียรติบัตร — ประเภทเกียรติบัตร / หน่วยงาน / รูปแบบการเข้าร่วม / ระดับรางวัล ===== */
+.cert-type-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cert-type-pick button { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 2px solid var(--border); border-radius: 14px; background: var(--surface); font: inherit; text-align: left; cursor: pointer; color: var(--text); }
+.cert-type-pick .ic { width: 36px; height: 36px; flex: none; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--text-muted); font-size: 1rem; }
+.cert-type-pick b { display: block; font-size: 0.94rem; }
+.cert-type-pick small { display: block; font-size: 0.76rem; color: var(--text-muted); }
+.cert-type-pick button.on { border-color: var(--primary); background: var(--primary-light); }
+.cert-type-pick button.on .ic { background: var(--primary); color: #fff; }
+.cert-type-pick button.on b { color: var(--primary-dark); }
+.cert-comp-tg[hidden] { display: none; }
+.cert-flat-award { max-width: none; display: grid; grid-template-columns: minmax(0, 340px); gap: 12px; }
+.cert-flat-award.two { grid-template-columns: 1fr 1fr; }
+.cert-flat-award .field { margin-bottom: 8px; }
+.cert-grp-h.lv { grid-template-columns: auto 1fr 180px 180px 34px; }
+.cert-meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; align-items: end; }
+.cert-meta-row .field { margin: 0; }
+.cert-mode-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); }
+.cert-mode-seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 4px; border: 0; border-radius: 9px; background: none; font: inherit; font-weight: 700; font-size: 0.86rem; color: var(--text-muted); cursor: pointer; }
+.cert-mode-seg button.on { background: var(--surface); color: var(--primary-dark); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.ordc-chip.cert-type.training { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
+.ordc-chip.cert-type.award { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.ordc-chip.cert-level { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+:root[data-theme="dark"] .ordc-chip.cert-type, :root[data-theme="dark"] .ordc-chip.cert-level { background: var(--surface-2); border-color: var(--border); }
+.cert-merge-tabs { margin: 4px 0 10px; }
+@media (max-width: 720px) {
+  .cert-type-pick, .cert-meta-row, .cert-flat-award.two { grid-template-columns: 1fr; }
+  .cert-grp-h.lv { grid-template-columns: auto 1fr 34px; }
+}
