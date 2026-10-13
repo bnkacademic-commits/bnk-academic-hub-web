@@ -2356,3 +2356,31 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .year-scope-hint { font-size: 0.8rem; color: var(--text-muted); margin: -4px 0 8px; }
 .year-scope-hint[hidden] { display: none; }
 .year-scope-hint button { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--primary-dark); text-decoration: underline; cursor: pointer; }
+
+/* ===== 1.64: ปุ่มส่วนหัวแบบเล็ก · จองเลขโดยยังไม่ใส่ชื่อ · วางรายชื่อครูแล้วจับคู่ ===== */
+.cert-hbtn { color: #fff; border: 0; font-weight: 700; white-space: nowrap; }
+.cert-hbtn[hidden] { display: none; }
+.cert-hbtn.ext { background: #059669; box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25); }
+.cert-hbtn.int { background: #ea580c; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.25); }
+.cert-hbtn.ext:hover { background: #047857; } .cert-hbtn.int:hover { background: #c2410c; }
+@media (max-width: 720px) { .cert-hbtn { flex: 1 1 auto; justify-content: center; } }
+.cert-blank { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 8px 10px; border: 1.5px dashed #f59e0b; border-radius: 10px; background: #fffbeb; color: #b45309; font: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer; text-align: left; }
+.cert-blank span { font-weight: 500; opacity: 0.85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cert-prow.c-n-sc .cert-blank.wide, .cert-prow.c-sc .cert-blank.wide { grid-column: span 2; }
+:root[data-theme="dark"] .cert-blank { background: var(--surface-2); color: var(--warn); }
+.cert-res { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 4px 8px; border: 1.5px dashed #fdba74; border-radius: 10px; background: #fff7ed; color: #9a3412; font-size: 0.82rem; font-weight: 700; }
+.cert-res input { width: 58px; padding: 3px 6px; font-size: 0.85rem; text-align: center; min-height: 0; }
+.cert-res .btn { background: #ea580c; color: #fff; border: 0; padding: 4px 10px; }
+:root[data-theme="dark"] .cert-res { background: var(--surface-2); color: var(--warn); }
+.ordc-chip.cert-noname { background: #fff7ed; color: #c2410c; border-color: #fdba74; }
+.cert-blank-tag { display: inline-flex; align-items: center; gap: 6px; color: #b45309; font-weight: 700; }
+.cert-match .cm-sum { font-size: 0.82rem; color: var(--text-muted); }
+.cm-row { display: grid; grid-template-columns: minmax(0, 1fr) 16px auto minmax(0, 1.2fr); gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.88rem; }
+.cm-raw { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cm-ar { color: var(--text-muted); font-size: 0.8rem; }
+.cm-row select { padding: 5px 8px; font-size: 0.85rem; min-width: 0; }
+.cm-st { display: inline-flex; align-items: center; gap: 5px; border-radius: 8px; padding: 3px 8px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.cm-st.ok { background: var(--accent-light); color: var(--accent); }
+.cm-st.q { background: var(--warn-light); color: #b45309; }
+.cm-st.no { background: var(--danger-light); color: var(--danger); }
+@media (max-width: 600px) { .cm-row { grid-template-columns: 1fr auto; } .cm-ar { display: none; } .cm-row select { grid-column: 1 / -1; } }
