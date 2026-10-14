@@ -2505,3 +2505,10 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .profile-dropdown { min-width: 268px; }
 .dd-theme { font-size: 0.66rem; padding: 4px 3px; }
 .ann-gchip-row { margin-bottom: 4px; }
+.cert-kind-pick button[hidden] { display: none; }
+
+/* ===== 1.67 ===== */
+/* เลขที่เกียรติบัตร: เลือกเริ่มนับใหม่ทุกปีการศึกษา / ปีพุทธศักราช */
+.certno-mode { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--primary-light); border: 1.5px solid color-mix(in srgb, var(--primary) 35%, var(--surface)); flex-wrap: wrap; }
+.certno-mode button { display: inline-flex; align-items: center; gap: 7px; border: 0; background: none; border-radius: 9px; padding: 7px 14px; font: inherit; font-size: 0.88rem; font-weight: 700; color: var(--primary-dark); cursor: pointer; }
+.certno-mode button.on { background: var(--primary); color: #fff; }

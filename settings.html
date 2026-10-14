@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.66.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.67.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -62,10 +62,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.66.141026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.67.141026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.66.141026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.67.141026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -99,7 +99,7 @@
         </div>
       </div>
 
-      <!-- 1.66.141026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.67.141026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -163,14 +163,21 @@
       <!-- 1.60: รูปแบบเลขที่เกียรติบัตรภายใน (คลังเกียรติบัตร) — รันเลขใหม่ทุกปีการศึกษา · ตั้งเลขถัดไปได้ (ต่อจากเกียรติบัตรกระดาษที่เคยออก) -->
       <div class="card" id="certNoCard">
         <div class="section-title"><i class="fas fa-hashtag ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปแบบเลขที่เกียรติบัตรภายใน</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:12px;">ระบบรันเลขให้อัตโนมัติเมื่อเพิ่มเกียรติบัตรภายใน เริ่มนับใหม่ทุกปีการศึกษา · กดปุ่มด้านล่างช่องรูปแบบเพื่อแทรกค่า</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:12px;">ระบบรันเลขให้อัตโนมัติเมื่อเพิ่มเกียรติบัตรภายใน เริ่มนับใหม่ทุก<span id="certNoModeTxt">ปีการศึกษา</span> · กดปุ่มด้านล่างช่องรูปแบบเพื่อแทรกค่า</p>
+        <!-- 1.67: รันเลขตามปีการศึกษา หรือตามปีพุทธศักราช (ปีของวันที่ในเกียรติบัตร — เริ่มนับใหม่ทุก 1 ม.ค.) -->
+        <div class="field"><label>เริ่มนับเลขใหม่ทุก</label>
+          <div class="certno-mode" id="certNoMode" role="radiogroup" aria-label="เริ่มนับเลขใหม่ทุก">
+            <button type="button" role="radio" data-ynm="academic"><i class="fas fa-graduation-cap" aria-hidden="true"></i> ปีการศึกษา</button>
+            <button type="button" role="radio" data-ynm="be"><i class="fas fa-calendar" aria-hidden="true"></i> ปีพุทธศักราช</button>
+          </div>
+        </div>
         <div class="field"><label for="certNoFormat">รูปแบบ</label><input id="certNoFormat" maxlength="60" placeholder="บนค. {ปีการศึกษา}/{เลขที่}" /></div>
         <div class="certno-toks" id="certNoToks">
-          <button type="button" data-tok="{ปีการศึกษา}"><i class="fas fa-plus"></i> {ปีการศึกษา}</button><button type="button" data-tok="{เลขที่}"><i class="fas fa-plus"></i> {เลขที่}</button><button type="button" data-tok="{ภาคเรียน}"><i class="fas fa-plus"></i> {ภาคเรียน}</button>
+          <button type="button" data-tok="{ปีการศึกษา}"><i class="fas fa-plus"></i> {ปีการศึกษา}</button><button type="button" data-tok="{ปี พ.ศ.}"><i class="fas fa-plus"></i> {ปี พ.ศ.}</button><button type="button" data-tok="{เลขที่}"><i class="fas fa-plus"></i> {เลขที่}</button><button type="button" data-tok="{ภาคเรียน}"><i class="fas fa-plus"></i> {ภาคเรียน}</button>
         </div>
         <div class="field-row" style="margin-top:10px;">
           <div class="field"><label for="certNoDigits">จำนวนหลักของเลขที่</label><select id="certNoDigits"><option value="1">ไม่เติมศูนย์ (1)</option><option value="2">2 หลัก (01)</option><option value="3">3 หลัก (001)</option><option value="4">4 หลัก (0001)</option><option value="5">5 หลัก (00001)</option><option value="6">6 หลัก (000001)</option></select></div>
-          <div class="field"><label for="certNoYear">ปีการศึกษา</label><input id="certNoYear" maxlength="4" inputmode="numeric" /></div>
+          <div class="field"><label for="certNoYear" id="certNoYearLb">ปีการศึกษา</label><input id="certNoYear" maxlength="4" inputmode="numeric" /></div>
           <div class="field"><label for="certNoNext">เลขถัดไปของปีนี้</label><input id="certNoNext" type="number" min="1" step="1" /></div>
         </div>
         <p class="hint" id="certNoInfo" style="margin-top:-4px;"></p>
@@ -1146,7 +1153,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.66.141026"></script>
+  <script src="assets/api.js?v=1.67.141026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1401,20 +1408,31 @@
       });
     }
     // ---------- 1.60: รูปแบบเลขที่เกียรติบัตรภายใน ----------
-    var certNoState = { info: null, loadedYear: '' };
+    var certNoState = { info: null, loadedYear: '', mode: 'academic' };
+    function certNoModeLabel() { return certNoState.mode === 'be' ? 'ปี พ.ศ.' : 'ปีการศึกษา'; }
+    function certNoSyncMode() {
+      Array.prototype.forEach.call(document.querySelectorAll('#certNoMode [data-ynm]'), function (b) { var on = b.getAttribute('data-ynm') === certNoState.mode; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+      document.getElementById('certNoModeTxt').textContent = certNoState.mode === 'be' ? 'ปีพุทธศักราช (1 ม.ค.)' : 'ปีการศึกษา';
+      document.getElementById('certNoYearLb').textContent = certNoModeLabel();
+    }
+    async function certNoDefaultYear() {
+      if (certNoState.mode === 'be') return String(new Date().getFullYear() + 543);
+      try { return String((await currentAcademicTerm()).year || ''); } catch (e) { return ''; }
+    }
     function certNoPreview() {
       var y = document.getElementById('certNoYear').value.trim(), n = Number(document.getElementById('certNoNext').value) || 1;
-      document.getElementById('certNoPreview').textContent = formatCertNo(document.getElementById('certNoFormat').value || 'บนค. {ปีการศึกษา}/{เลขที่}', document.getElementById('certNoDigits').value, /^\d{4}$/.test(y) ? y : '2569', n, '1');
+      document.getElementById('certNoPreview').textContent = formatCertNo(document.getElementById('certNoFormat').value || 'บนค. {ปีการศึกษา}/{เลขที่}', document.getElementById('certNoDigits').value, /^\d{4}$/.test(y) ? y : '2569', n, '1', certNoState.mode === 'be' && /^\d{4}$/.test(y) ? y : String(new Date().getFullYear() + 543));
     }
     async function loadCertNoYear() {
-      var y = document.getElementById('certNoYear').value.trim(), info = document.getElementById('certNoInfo');
-      if (!/^\d{4}$/.test(y) || y === certNoState.loadedYear) { certNoPreview(); return; }
-      certNoState.loadedYear = y; info.textContent = 'กำลังโหลด...';
+      var y = document.getElementById('certNoYear').value.trim(), info = document.getElementById('certNoInfo'), lk = certNoState.mode + ':' + y;
+      if (!/^\d{4}$/.test(y) || lk === certNoState.loadedYear) { certNoPreview(); return; }
+      certNoState.loadedYear = lk; info.textContent = 'กำลังโหลด...';
+      var L = certNoModeLabel();
       try {
-        var r = await apiCall('certNumberingInfo', { year: y });
+        var r = await apiCall('certNumberingInfo', { year: y, mode: certNoState.mode });
         certNoState.info = r;
         document.getElementById('certNoNext').value = r.next;
-        info.textContent = r.maxIssued ? 'ปีการศึกษา ' + y + ' ออกเลขไปแล้วถึง ' + r.maxIssued + ' — เลขถัดไปต้องมากกว่า ' + r.maxIssued : 'ปีการศึกษา ' + y + ' ยังไม่ได้ออกเลข — ถ้าเคยออกเกียรติบัตรกระดาษไปแล้ว ตั้งเลขถัดไปให้ต่อจากเดิมได้';
+        info.textContent = r.maxIssued ? L + ' ' + y + ' ออกเลขไปแล้วถึง ' + r.maxIssued + ' — เลขถัดไปต้องมากกว่า ' + r.maxIssued : L + ' ' + y + ' ยังไม่ได้ออกเลข — ถ้าเคยออกเกียรติบัตรกระดาษไปแล้ว ตั้งเลขถัดไปให้ต่อจากเดิมได้';
       } catch (e) { certNoState.info = null; info.textContent = e.message; }
       certNoPreview();
     }
@@ -1422,7 +1440,10 @@
       if (!document.getElementById('certNoCard')) return;
       document.getElementById('certNoFormat').value = s.certNoFormat || 'บนค. {ปีการศึกษา}/{เลขที่}';
       document.getElementById('certNoDigits').value = String(s.certNoDigits || 4);
-      if (!document.getElementById('certNoYear').value) { try { document.getElementById('certNoYear').value = (await currentAcademicTerm()).year || ''; } catch (e) { /* ไม่เป็นไร */ } }
+      var prevMode = certNoState.mode;
+      certNoState.mode = s.certNoYearMode === 'be' ? 'be' : 'academic';
+      certNoSyncMode();
+      if (!document.getElementById('certNoYear').value || prevMode !== certNoState.mode) document.getElementById('certNoYear').value = await certNoDefaultYear();
       certNoState.loadedYear = '';
       loadCertNoYear();
     }
@@ -1435,17 +1456,27 @@
       ['certNoFormat', 'certNoNext'].forEach(function (id) { document.getElementById(id).addEventListener('input', certNoPreview); });
       document.getElementById('certNoDigits').addEventListener('change', certNoPreview);
       document.getElementById('certNoYear').addEventListener('input', loadCertNoYear);
+      // สลับโหมด: เปลี่ยนค่าในรูปแบบ {ปีการศึกษา} <-> {ปี พ.ศ.} ให้ตรงโหมด + ปีตัวอย่างเป็นปีปัจจุบันของโหมดนั้น (บันทึกเมื่อกดปุ่มบันทึก)
+      document.getElementById('certNoMode').addEventListener('click', async function (e) {
+        var b = e.target.closest('[data-ynm]'); if (!b || b.getAttribute('data-ynm') === certNoState.mode) return;
+        certNoState.mode = b.getAttribute('data-ynm');
+        var inp = document.getElementById('certNoFormat');
+        inp.value = certNoState.mode === 'be' ? inp.value.replace(/\{ปีการศึกษา\}/g, '{ปี พ.ศ.}') : inp.value.replace(/\{ปี พ\.ศ\.\}/g, '{ปีการศึกษา}');
+        certNoSyncMode();
+        document.getElementById('certNoYear').value = await certNoDefaultYear();
+        loadCertNoYear();
+      });
       document.getElementById('certNoSave').addEventListener('click', async function () {
         var f = document.getElementById('certNoFormat').value.replace(/\s+/g, ' ').trim(), d = Number(document.getElementById('certNoDigits').value);
         var y = document.getElementById('certNoYear').value.trim(), n = Math.floor(Number(document.getElementById('certNoNext').value));
         if (f.indexOf('{เลขที่}') === -1) return showToast('รูปแบบต้องมี {เลขที่} อยู่ด้วย', true);
-        var setNext = /^\d{4}$/.test(y) && certNoState.info && certNoState.info.year === y && n !== Number(certNoState.info.next);
+        var setNext = /^\d{4}$/.test(y) && certNoState.info && certNoState.info.year === y && certNoState.info.mode === certNoState.mode && n !== Number(certNoState.info.next);
         if (setNext && !(n >= 1)) return showToast('เลขถัดไปต้องเป็นตัวเลข 1 ขึ้นไป', true);
-        var ok = await askConfirm('บันทึกรูปแบบเลขที่เกียรติบัตรภายในเป็น "' + document.getElementById('certNoPreview').textContent + '"' + (setNext ? ' และตั้งเลขถัดไปของปีการศึกษา ' + y + ' เป็น ' + n : '') + '?', 'ยืนยันการเปลี่ยนแปลง');
+        var ok = await askConfirm('บันทึกรูปแบบเลขที่เกียรติบัตรภายในเป็น "' + document.getElementById('certNoPreview').textContent + '"' + ' · เริ่มนับใหม่ทุก' + (certNoState.mode === 'be' ? 'ปีพุทธศักราช' : 'ปีการศึกษา') + (setNext ? ' และตั้งเลขถัดไปของ' + certNoModeLabel() + ' ' + y + ' เป็น ' + n : '') + '?', 'ยืนยันการเปลี่ยนแปลง');
         if (!ok) return;
         var r = await withProgress('กำลังบันทึก', async function () {
-          await apiCall('adminUpdateSettings', { certNoFormat: f, certNoDigits: d });
-          if (setNext) await apiCall('certSetNextNo', { year: y, next: n });
+          await apiCall('adminUpdateSettings', { certNoFormat: f, certNoDigits: d, certNoYearMode: certNoState.mode });
+          if (setNext) await apiCall('certSetNextNo', { year: y, next: n, mode: certNoState.mode });
           return true;
         }, { successLabel: 'บันทึกรูปแบบเลขที่แล้ว' });
         if (r.ok) { resetSettingsCache(); var st = await applyBranding(); certNoState.loadedYear = ''; loadCertNoCard(st); }
@@ -1527,7 +1558,7 @@
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.66.141026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.67.141026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -2188,7 +2219,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.66.141026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.67.141026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);

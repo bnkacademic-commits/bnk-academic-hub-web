@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.66.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.67.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -175,7 +175,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.66.141026"></script>
+  <script src="assets/api.js?v=1.67.141026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -465,10 +465,13 @@
     }
     function previewNumbers() {
       // เลขที่ตัวอย่างของคนใหม่ (ภายใน) — เลขจริงออกตอนบันทึก
+      // 1.67: รันเลขตามปีการศึกษา หรือปี พ.ศ. ของวันที่ในเกียรติบัตร (ยังไม่เลือกวันที่ = ปีปัจจุบัน) · แก้ไขชุดเดิม = ตัวนับเดิมของชุด
       var out = {}, year = $('certFYear').value.trim();
       if (mScope !== 'internal' || !/^\d{4}$/.test(year)) return out;
-      var next = Number((numbering.counters || {})[year]) || 1;
-      groups.forEach(function (g, gi) { g.people.forEach(function (p, pi) { if (personFilled(p) && !p.certNo) out[gi + ':' + pi] = formatCertNo(numbering.format, numbering.digits, year, next++, $('certFSem').value); }); });
+      var dm = /^(\d{4})-/.exec($('certFDate').value || ''), be = String((dm ? Number(dm[1]) : new Date().getFullYear()) + 543);
+      var key = (editing && editing.noKey) || (numbering.yearMode === 'be' ? 'BE' + be : year);
+      var next = Number((numbering.counters || {})[key]) || 1;
+      groups.forEach(function (g, gi) { g.people.forEach(function (p, pi) { if (personFilled(p) && !p.certNo) out[gi + ':' + pi] = formatCertNo(numbering.format, numbering.digits, year, next++, $('certFSem').value, be); }); });
       return out;
     }
     function personFilled(p) { if (p.blank) return mScope === 'internal'; return mKind === 'teacher' ? !!p.userId : mKind === 'school' ? true : !!String(p.name || '').trim(); }
@@ -650,7 +653,7 @@
       $('certFSem').innerHTML = '<option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option>' + (summerOn ? '<option value="summer">ภาคฤดูร้อน</option>' : '');
       var term = curTerm || { year: '', semester: '1' };
       $('certFYear').value = c ? c.academicYear : (term.year || '');
-      $('certFYear').disabled = !!c && internal; // เลขที่ผูกกับปีการศึกษาแล้ว
+      $('certFYear').disabled = !!c && internal && !/^BE/.test(c.noKey || ''); // เลขที่ผูกกับปีการศึกษาแล้ว (โหมดปี พ.ศ. เปลี่ยนปีการศึกษาได้)
       $('certFSem').value = c ? c.semester : (term.semester || '1');
       if (!$('certFSem').value) $('certFSem').value = '1';
       $('certFActivity').value = c ? c.activity : '';
@@ -667,6 +670,8 @@
       $('certFAgency').value = c ? (c.agency || '') : (internal ? (schoolName || '') : '');
       hasComp = !!c && mType === 'award' && (groups.length > 1 || groups.some(function (g) { return !!g.competition; }));
       renderTypeMode();
+      // 1.67: เกียรติบัตรภายใน โรงเรียนเป็นผู้ออก — ไม่มีผู้รับ "โรงเรียน"
+      $('certFKind').querySelector('[data-kind="school"]').hidden = internal && !(c && c.kind === 'school');
       setKind(c ? c.kind : 'student');
       fillDatalists();
       $('certActList').hidden = true;
@@ -905,7 +910,7 @@
       });
       $('certFYear').addEventListener('input', renderGroups);
       $('certFSem').addEventListener('change', renderGroups);
-      $('certFDate').addEventListener('input', syncCertDate);
+      $('certFDate').addEventListener('input', function () { syncCertDate(); if (mScope === 'internal' && numbering.yearMode === 'be') refreshNumbers(); });
       $('certFType').addEventListener('click', function (e) { var b = e.target.closest('[data-type]'); if (b) setType(b.getAttribute('data-type')); });
       $('certFMode').addEventListener('click', function (e) { var b = e.target.closest('[data-mode]'); if (b) { mMode = b.getAttribute('data-mode'); renderTypeMode(); } });
       $('certCompTg').addEventListener('click', function (e) { var b = e.target.closest('[data-comp]'); if (b) setHasComp(b.getAttribute('data-comp') === '1'); });
