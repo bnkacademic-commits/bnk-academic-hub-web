@@ -2434,3 +2434,74 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .cert-share-btn:hover, .cert-merge-btn:hover { background: var(--primary-light); color: var(--primary-dark); border-color: var(--primary); }
 :root { --ctl-border: color-mix(in srgb, var(--primary) 30%, #cbd5e1); --ctl-soft: #e2e8f0; --ctl-text: #475569; }
 :root[data-theme="dark"] { --ctl-border: var(--border); --ctl-soft: var(--surface-2); --ctl-text: var(--text); }
+
+/* ===== 1.66 ===== */
+/* ธีมถนอมตา (ซีเปีย) — พื้นครีม ตัวหนังสือน้ำตาลเข้ม ลดแสงจ้าของพื้นขาว · ใช้กฎของโหมดสว่างทั้งหมด เปลี่ยนเฉพาะตัวแปรสีพื้น/ตัวหนังสือ/เส้นขอบ */
+:root[data-theme="sepia"] {
+  --bg: #f3ead7;
+  --surface: #fbf5e8;
+  --surface-2: #efe4cc;
+  --text: #3d3122;
+  --text-muted: #76664e;
+  --border: #ddcfb1;
+  --ctl-border: color-mix(in srgb, var(--primary) 30%, #cdbf9f);
+  --ctl-soft: #e8dcc2;
+  --ctl-text: #5a4a35;
+  --shadow: 0 1px 2px rgba(61, 49, 34, 0.05), 0 8px 24px rgba(61, 49, 34, 0.08);
+  --shadow-lg: 0 20px 25px -5px rgba(61, 49, 34, 0.14), 0 10px 10px -5px rgba(61, 49, 34, 0.05);
+  color-scheme: light;
+}
+:root[data-theme="sepia"] body { background: var(--bg); }
+
+/* ตัวเลือกธีมในเมนูโปรไฟล์ (แบบ 2 ภาพตัวอย่างย่อ) */
+.dd-theme-title { font-size: 0.72rem; font-weight: 800; color: var(--text-muted); padding: 6px 10px 2px; }
+.dd-themes { display: flex; gap: 6px; padding: 4px 6px 6px; }
+.dd-theme { flex: 1 1 0; min-width: 0; border: 2px solid var(--border); border-radius: 10px; background: none; padding: 4px; font: inherit; font-size: 0.7rem; font-weight: 700; color: var(--text); cursor: pointer; white-space: nowrap; }
+.dd-theme:hover { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); }
+.dd-theme.on { border-color: var(--primary); color: var(--primary-dark); }
+.dd-theme .mini { display: flex; flex-direction: column; gap: 4px; height: 40px; border-radius: 6px; margin-bottom: 4px; padding: 5px; }
+.dd-theme .mini i { display: block; height: 6px; border-radius: 3px; }
+.dd-theme .mini i.p { width: 45%; background: var(--primary); }
+.dd-theme.t-light .mini { background: #f8fafc; border: 1px solid #e2e8f0; } .dd-theme.t-light .mini i:not(.p) { background: #e2e8f0; }
+.dd-theme.t-sepia .mini { background: #f3ead7; border: 1px solid #ddcfb1; } .dd-theme.t-sepia .mini i:not(.p) { background: #ddcfb1; }
+.dd-theme.t-dark .mini { background: #0b1220; border: 1px solid #2d3d5a; } .dd-theme.t-dark .mini i:not(.p) { background: #2d3d5a; }
+
+/* ประกาศ (แบบ B + พื้นแบบ C): ไอคอนสีกลุ่ม · พื้นสีกลุ่มอ่อน · ไม่มีกลุ่ม = ประกาศจากโรงเรียน (สีธีมหลัก) */
+.ann-card .ann-head { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.ann-card .ann-head .section-title { margin-bottom: 0; }
+.ann-card .ann-sum { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); }
+.ann-dots { display: inline-flex; gap: 4px; }
+.ann-dot { --g: var(--primary); width: 10px; height: 10px; border-radius: 50%; background: var(--g); display: inline-block; }
+.ann-new-n, .ann-new { display: inline-flex; align-items: center; font-size: 0.7rem; font-weight: 800; color: #fff; background: var(--danger); border-radius: 999px; padding: 1px 8px; }
+.ann-chev { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--surface-2); color: var(--text-muted); transition: transform 0.2s ease; flex-shrink: 0; }
+.ann-card.collapsed .ann-chev { transform: rotate(180deg); }
+.ann-card:not(.collapsed) .ann-head { margin-bottom: 8px; }
+.ann-card.collapsed { padding-top: 14px; padding-bottom: 14px; }
+.hub-ann { --g: var(--primary); display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border-radius: 14px; margin-top: 10px; background: color-mix(in srgb, var(--g) 7%, var(--surface)); border: 1px solid color-mix(in srgb, var(--g) 28%, var(--surface)); }
+.hub-ann-ic { flex: 0 0 44px; height: 44px; border-radius: 14px; background: var(--g); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 10px color-mix(in srgb, var(--g) 35%, transparent); }
+.hub-ann-b { flex: 1 1 auto; min-width: 0; }
+.hub-ann-g { font-size: 0.76rem; font-weight: 800; color: var(--g); margin-bottom: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hub-ann-t { font-size: 1.08rem; font-weight: 800; color: var(--text); line-height: 1.35; overflow-wrap: anywhere; }
+.hub-ann-d { font-size: 0.95rem; margin-top: 4px; white-space: pre-line; overflow-wrap: anywhere; }
+.hub-ann-m { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; }
+.ann-more { margin-top: 10px; width: 100%; justify-content: center; }
+:root[data-theme="dark"] .hub-ann { background: color-mix(in srgb, var(--g) 14%, var(--surface)); border-color: color-mix(in srgb, var(--g) 40%, var(--surface)); }
+:root[data-theme="dark"] .hub-ann-g { color: color-mix(in srgb, var(--g) 55%, #fff); }
+@media (max-width: 560px) { .hub-ann { padding: 12px; gap: 10px; } .hub-ann-ic { flex-basis: 36px; height: 36px; font-size: 15px; border-radius: 11px; } .ann-card .ann-sum > span:not(.ann-dots):not(.ann-new-n) { display: none; } }
+
+/* ป็อปอัพเพิ่มประกาศ: กล่อง "ประกาศจาก" สีของกลุ่ม · ป้ายกลุ่มในรายการ · ข้อความช่วงเวลาแบบสั้น */
+.ann-from { --g: var(--primary); display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 10px 14px; margin: 0 0 14px; background: color-mix(in srgb, var(--g) 10%, var(--surface)); border: 1.5px solid color-mix(in srgb, var(--g) 40%, var(--surface)); color: var(--g); font-weight: 800; font-size: 0.92rem; }
+.ann-from[hidden] { display: none; }
+.ann-from > i { width: 30px; height: 30px; border-radius: 50%; background: var(--g); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+.ann-from small { display: block; font-weight: 600; color: var(--text-muted); font-size: 0.72rem; }
+:root[data-theme="dark"] .ann-from { color: color-mix(in srgb, var(--g) 55%, #fff); }
+.ann-gchip { --g: var(--primary); display: inline-flex; align-items: center; gap: 5px; vertical-align: middle; font-size: 0.72rem; font-weight: 800; padding: 1px 9px; border-radius: 999px; background: color-mix(in srgb, var(--g) 12%, var(--surface)); color: var(--g); border: 1px solid color-mix(in srgb, var(--g) 35%, var(--surface)); }
+:root[data-theme="dark"] .ann-gchip { color: color-mix(in srgb, var(--g) 55%, #fff); }
+.ann-time-hint { display: flex; gap: 6px; align-items: flex-start; margin: -6px 0 14px; }
+.ann-time-hint i { margin-top: 3px; }
+/* การ์ดประกาศใช้พื้นมาตรฐาน (เดิมพื้นเขียวอ่อน + แถบซ้ายเขียว) — สีเด่นอยู่ที่แต่ละประกาศตามกลุ่มแทน */
+#annCard.ann-card { border-left: 0; background: var(--surface); }
+#annCard.ann-card .section-title { border-bottom: 0; padding-bottom: 0; }
+.profile-dropdown { min-width: 268px; }
+.dd-theme { font-size: 0.66rem; padding: 4px 3px; }
+.ann-gchip-row { margin-bottom: 4px; }

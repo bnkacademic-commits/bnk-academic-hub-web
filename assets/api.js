@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.65.141026';
+var APP_VERSION = '1.66.141026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -245,7 +245,8 @@ function getTheme() {
   try { return localStorage.getItem(THEME_KEY) || 'light'; } catch (e) { return 'light'; }
 }
 function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+  // 1.66: 3 ธีม — 'light' กระดาษขาว (เริ่มต้น) · 'sepia' ถนอมตา · 'dark' กลางคืน
+  document.documentElement.setAttribute('data-theme', theme === 'dark' || theme === 'sepia' ? theme : 'light');
 }
 function setTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
@@ -254,7 +255,7 @@ function setTheme(theme) {
 // Dark Mode ผูกกับบัญชี (ตั้งแต่ 1.41.111026): ตอน login Worker ส่งค่าที่บัญชีนี้เคยเลือกไว้มา (user.theme: 'dark' | 'light' | '' = ยังไม่เคยเลือก)
 // หน้าเว็บตั้งค่าตามนั้นทันที (ไม่ให้โหมดของคนก่อนหน้าบนเครื่องเดียวกันค้างมา) — ยังไม่เคยเลือก = โหมดสว่าง
 function applyAccountTheme(user) {
-  var t = user && user.theme === 'dark' ? 'dark' : 'light';
+  var t = user && (user.theme === 'dark' || user.theme === 'sepia') ? user.theme : 'light';
   setTheme(t);
 }
 // เมื่อผู้ใช้กดสลับ Dark Mode เอง: ตั้งค่าบนหน้าเว็บทันที + บันทึกลงบัญชี (ส่งแบบไม่รอผล พลาดก็ไม่กระทบการใช้งาน) และอัพเดตค่าที่แคชใน session
@@ -268,8 +269,7 @@ function toggleTheme() {
   var next = getTheme() === 'dark' ? 'light' : 'dark';
   setTheme(next);
   saveThemeToAccount(next);
-  var chk = document.getElementById('themeToggleInput');
-  if (chk) chk.checked = next === 'dark';
+  Array.prototype.forEach.call(document.querySelectorAll('[data-theme-pick]'), function (b) { b.classList.toggle('on', b.getAttribute('data-theme-pick') === next); });
 }
 
 // ---------- Site settings (ชื่อเว็บ/โลโก้/ไอคอน) ----------
@@ -646,6 +646,10 @@ function categoryDotHtml(color) {
 function categoryColor(c) {
   c = c || {};
   return (c.department && deptThemeColor(c.department)) || c.color || '#3457d5';
+}
+// 1.66: กลุ่มของประกาศ — ป้าย/สี (ว่าง = ประกาศจากโรงเรียน ใช้สีธีมหลัก)
+function annGroupInfo(dept) {
+  return { label: dept ? groupLabel(dept) : 'โรงเรียน', color: dept ? (deptThemeColor(dept) || '') : '' };
 }
 function buildCategoryColorMap(categories) {
   var map = {};
@@ -1369,7 +1373,11 @@ function mountChrome(activePage) {
             '</button>' +
             '<div class="profile-dropdown" id="profileDropdown">' +
               '<div class="dd-header"><div class="dd-name">' + escapeHtml(session.name) + '</div>' + accountInfoLines(session).map(function (l) { return '<div class="dd-role"><span class="dd-k">' + escapeHtml(l.label) + '</span><span class="dd-v">' + escapeHtml(l.value) + '</span></div>'; }).join('') + '</div>' +
-              '<div class="theme-switch-row"><span>Dark Mode</span><label class="switch"><input type="checkbox" id="themeToggleInput"><span class="slider"></span></label></div>' +
+              // 1.66: เลือกธีม 3 แบบ (ภาพตัวอย่างย่อ) แทนสวิตช์ Dark Mode เดิม
+              '<div class="dd-theme-title">ธีม</div><div class="dd-themes" id="themePicker" role="radiogroup" aria-label="ธีม">' +
+                [['light', 'กระดาษขาว'], ['sepia', 'ถนอมตา'], ['dark', 'กลางคืน']].map(function (t) {
+                  return '<button type="button" role="radio" class="dd-theme t-' + t[0] + '" data-theme-pick="' + t[0] + '"><span class="mini"><i class="p"></i><i></i><i></i></span>' + t[1] + '</button>';
+                }).join('') + '</div>' +
               '<div class="dd-divider"></div>' +
               '<button class="dd-item" id="ddChangeAvatar" type="button"><span class="dd-icon">' + icon('image', 16) + '</span> เปลี่ยนรูปโปรไฟล์</button>' +
               '<button class="dd-item" id="ddChangePw" type="button"><span class="dd-icon">' + icon('key', 16) + '</span> เปลี่ยนรหัสผ่าน</button>' +
@@ -1406,9 +1414,17 @@ function mountChrome(activePage) {
         trigger.setAttribute('aria-expanded', 'false');
       }
     });
-    var themeChk = document.getElementById('themeToggleInput');
-    themeChk.checked = getTheme() === 'dark';
-    themeChk.addEventListener('change', function () { var t = themeChk.checked ? 'dark' : 'light'; setTheme(t); saveThemeToAccount(t); });
+    var themePicker = document.getElementById('themePicker');
+    var syncThemePicker = function () {
+      var cur = getTheme();
+      Array.prototype.forEach.call(themePicker.querySelectorAll('[data-theme-pick]'), function (b) { var on = b.getAttribute('data-theme-pick') === cur; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    };
+    syncThemePicker();
+    themePicker.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-theme-pick]'); if (!b) return;
+      var t = b.getAttribute('data-theme-pick');
+      setTheme(t); saveThemeToAccount(t); syncThemePicker();
+    });
 
     document.getElementById('ddChangeAvatar').addEventListener('click', function () {
       dropdown.classList.remove('open');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>ประกาศและปฏิทิน — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
      ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.65.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.66.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -47,7 +47,7 @@
           <span><i class="fas fa-calendar-days ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการกำหนดการทั้งหมด</span>
           <button class="btn btn-primary btn-sm" id="openCreateEventBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มกำหนดการ</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กด "แก้ไข" ที่รายการด้านล่าง เพื่อเปิดป็อปอัพนี้พร้อมข้อมูลเดิมมาแก้ไขได้ (ตั้งแต่ V10.0)</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กด "แก้ไข" ที่รายการด้านล่าง เพื่อเปิดป็อปอัพนี้พร้อมข้อมูลเดิมมาแก้ไขได้</p>
         <div id="eventListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -59,7 +59,7 @@
           <span><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการประกาศทั้งหมด</span>
           <button class="btn btn-primary btn-sm" id="openCreateAnnBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประกาศ</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ประกาศจะไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ (ครูและเจ้าหน้าที่) ทันที — กด "แก้ไข" ที่รายการด้านล่าง เพื่อเปิดป็อปอัพนี้พร้อมข้อมูลเดิมมาแก้ไขได้</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ประกาศแสดงในหน้าแรกของครูและเจ้าหน้าที่ทุกคน ในนามกลุ่มบริหารงานของผู้ประกาศ — แก้ไข/ลบได้เฉพาะประกาศของกลุ่มตัวเอง</p>
         <div id="annListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -72,6 +72,12 @@
         <div id="createAnnError" class="error-box" hidden></div>
         <form id="createAnnForm" style="text-align:left;">
           <input type="hidden" id="annEditId" value="" />
+          <!-- 1.66: ประกาศในนามกลุ่มบริหารงาน — เจ้าหน้าที่ = กลุ่มของตัวเอง (กล่องบอกเฉยๆ เปลี่ยนไม่ได้) · บัญชีผู้ดูแลสูงสุด = เลือกกลุ่มได้ -->
+          <div class="ann-from" id="annFromBox" hidden></div>
+          <div class="field" id="annDeptField" hidden>
+            <label for="annDept">ประกาศในนาม</label>
+            <select id="annDept"></select>
+          </div>
           <div class="field">
             <label for="annTitle">หัวข้อประกาศ</label>
             <input id="annTitle" required placeholder="เช่น แจ้งปิดปรับปรุงระบบชั่วคราว" />
@@ -90,7 +96,7 @@
               <input id="annShowUntil" type="datetime-local" />
             </div>
           </div>
-          <div class="hint" style="margin-top:-8px; margin-bottom:14px;">ถ้าไม่ระบุ ประกาศจะแสดงทันทีและแสดงตลอดไปจนกว่าจะลบ — ถ้าระบุ ระบบจะแสดง/ซ่อนประกาศในหน้าฮับให้อัตโนมัติตามช่วงเวลาที่ตั้งไว้ (ตั้งแต่ V10.0)</div>
+          <div class="hint ann-time-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>ไม่ระบุเวลา = แสดงทันทีจนกว่าจะลบ · ระบุเวลา = แสดง/ซ่อนอัตโนมัติตามช่วงที่ตั้ง</span></div>
           <div class="modal-actions">
             <button class="btn btn-primary" type="submit" id="annSubmitBtn">เพิ่มประกาศ</button>
             <button class="btn btn-ghost btn-close" type="button" id="annModalClose">ยกเลิก</button>
@@ -175,7 +181,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.65.141026"></script>
+  <script src="assets/api.js?v=1.66.141026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -469,12 +475,13 @@
         if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศ</div>'; return; }
         var html = '';
         rows.forEach(function (a) {
+          var gi = annGroupInfo(a.department);
           html += '<div class="event-list-item">' +
-            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
+            '<div style="flex:1 1 220px; min-width:220px;"><div class="ann-gchip-row"><span class="ann-gchip"' + (gi.color ? ' style="--g:' + gi.color + '"' : '') + '><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ' + escapeHtml(gi.label) + '</span></div><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
             (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
             '<div class="sub-item-meta">' + (a.createdByName ? 'โดย ' + escapeHtml(a.createdByName) + ' · ' : '') + formatDateTimeThai(a.createdAt) + '</div>' +
             annScheduleMeta(a) + '</div>' +
-            (canManage ? '<div style="display:flex; gap:6px; flex-shrink:0;">' +
+            (canManage && a.canEdit ? '<div style="display:flex; gap:6px; flex-shrink:0;">' +
             '<button class="btn btn-secondary btn-sm" data-edit-id="' + a.id + '">แก้ไข</button>' +
             '<button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button>' +
             '</div>' : '') +
@@ -512,9 +519,27 @@
       var pad = function (n) { return String(n).padStart(2, '0'); };
       return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     }
+    // 1.66: กลุ่มที่ประกาศในนาม
+    var annIsTop = !!session && session.role === 'admin' && !session.hasHub;
+    async function setAnnGroup(dept) {
+      var box = document.getElementById('annFromBox'), field = document.getElementById('annDeptField'), sel = document.getElementById('annDept');
+      if (annIsTop) {
+        var st = await getSiteSettings().catch(function () { return {}; });
+        var deps = (st && st.departments) || [];
+        sel.innerHTML = '<option value="">ไม่ระบุกลุ่ม (ประกาศจากโรงเรียน)</option>' + deps.map(function (d) { return '<option value="' + escapeHtml(d) + '">' + escapeHtml(groupLabel(d)) + '</option>'; }).join('');
+        sel.value = dept || '';
+        field.hidden = false; box.hidden = true;
+      } else {
+        var gi = annGroupInfo(dept);
+        box.innerHTML = '<i class="fa-solid fa-bullhorn" aria-hidden="true"></i><span><small>ประกาศจาก</small>' + escapeHtml(gi.label) + '</span>';
+        if (gi.color) box.style.setProperty('--g', gi.color); else box.style.removeProperty('--g');
+        box.hidden = false; field.hidden = true;
+      }
+    }
     function openCreateAnn() {
       document.getElementById('annEditId').value = '';
       document.getElementById('createAnnForm').reset();
+      setAnnGroup(annIsTop ? '' : (session.department || ''));
       document.getElementById('annSubmitBtn').textContent = 'เพิ่มประกาศ';
       document.getElementById('annModalTitle').textContent = 'เพิ่มประกาศ';
       document.getElementById('createAnnError').hidden = true;
@@ -526,6 +551,7 @@
       document.getElementById('annMessage').value = a.message || '';
       document.getElementById('annShowFrom').value = isoToLocalDatetimeInput(a.showFrom);
       document.getElementById('annShowUntil').value = isoToLocalDatetimeInput(a.showUntil);
+      setAnnGroup(a.department || '');
       document.getElementById('annSubmitBtn').textContent = 'บันทึกการแก้ไข';
       document.getElementById('annModalTitle').textContent = 'แก้ไขประกาศ: ' + a.title;
       document.getElementById('createAnnError').hidden = true;
@@ -565,6 +591,7 @@
         showFrom: showFromRaw ? new Date(showFromRaw).toISOString() : '',
         showUntil: showUntilRaw ? new Date(showUntilRaw).toISOString() : ''
       };
+      if (annIsTop) annPayload.department = document.getElementById('annDept').value;
       if (editId) annPayload.announcementId = editId;
       var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเผยแพร่ประกาศ', function () {
         return apiCall(editId ? 'adminUpdateAnnouncement' : 'adminCreateAnnouncement', annPayload);

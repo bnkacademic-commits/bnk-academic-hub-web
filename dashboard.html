@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>Hub ของฉัน — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
      ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.65.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.66.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -53,8 +53,13 @@
       </div>
     </div>
 
-    <div class="card" id="annCard" hidden>
-      <div class="section-title"><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> ประกาศจากกลุ่มบริหารงานวิชาการ</div>
+    <!-- 1.66: ประกาศจากทุกกลุ่มบริหารงาน (สีของกลุ่ม) · ย่อ/ขยายได้ — มีประกาศใหม่จะขยายเองเสมอ · แสดง 3 รายการล่าสุดก่อน -->
+    <div class="card ann-card" id="annCard" hidden>
+      <button type="button" class="ann-head" id="annToggle" aria-expanded="true" aria-controls="hubAnnList">
+        <span class="section-title"><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> ประกาศ</span>
+        <span class="ann-sum" id="annSum"></span>
+        <span class="ann-chev" aria-hidden="true"><i class="fa-solid fa-chevron-up"></i></span>
+      </button>
       <div id="hubAnnList"><div class="loading">กำลังโหลด</div></div>
     </div>
 
@@ -194,7 +199,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.65.141026"></script>
+  <script src="assets/api.js?v=1.66.141026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -245,7 +250,33 @@
       }
     })();
 
-    // ---------- ประกาศจากกลุ่มบริหารงานวิชาการ ----------
+    // ---------- ประกาศ (1.66: ทุกกลุ่มบริหารงาน) ----------
+    // 1.66: ประกาศแบบย่อ/ขยาย — จำสถานะย่อและประกาศที่เคยเห็นแล้วไว้ในเครื่อง (localStorage) · มีประกาศใหม่ที่ยังไม่เคยเห็น = ขยายให้เองเสมอ
+    var ANN_COLLAPSE_KEY = 'bnkah_ann_collapsed', ANN_SEEN_KEY = 'bnkah_ann_seen', ANN_SHOW = 3;
+    var annState = { rows: [], fresh: {}, collapsed: false, showAll: false };
+    function annStore(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* ไม่เป็นไร */ } }
+    function annRead(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function renderHubAnnouncements() {
+      var card = document.getElementById('annCard'), wrap = document.getElementById('hubAnnList');
+      var rows = annState.rows;
+      var newN = rows.filter(function (a) { return annState.fresh[a.id]; }).length;
+      var seenColors = {}, dots = '';
+      rows.forEach(function (a) { var gi = annGroupInfo(a.department), k = gi.color || 'primary'; if (!seenColors[k]) { seenColors[k] = true; dots += '<i class="ann-dot"' + (gi.color ? ' style="--g:' + gi.color + '"' : '') + ' title="' + escapeHtml(gi.label) + '"></i>'; } });
+      document.getElementById('annSum').innerHTML = '<span class="ann-dots">' + dots + '</span><span>' + rows.length + ' รายการ</span>' + (newN ? '<span class="ann-new-n">ใหม่ ' + newN + '</span>' : '');
+      card.classList.toggle('collapsed', annState.collapsed);
+      document.getElementById('annToggle').setAttribute('aria-expanded', String(!annState.collapsed));
+      wrap.hidden = annState.collapsed;
+      if (annState.collapsed) return;
+      var list = annState.showAll ? rows : rows.slice(0, ANN_SHOW);
+      wrap.innerHTML = list.map(function (a) {
+        var gi = annGroupInfo(a.department);
+        return '<div class="hub-ann"' + (gi.color ? ' style="--g:' + gi.color + '"' : '') + '><span class="hub-ann-ic"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i></span><div class="hub-ann-b">' +
+          '<div class="hub-ann-g">' + escapeHtml(gi.label) + (annState.fresh[a.id] ? ' <span class="ann-new">ใหม่</span>' : '') + '</div>' +
+          '<div class="hub-ann-t">' + escapeHtml(a.title) + '</div>' +
+          (a.message ? '<div class="hub-ann-d">' + escapeHtml(a.message) + '</div>' : '') +
+          '<div class="hub-ann-m">' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
+      }).join('') + (rows.length > ANN_SHOW ? '<button type="button" class="btn btn-ghost btn-sm ann-more" id="annMore">' + (annState.showAll ? '<i class="fa-solid fa-chevron-up"></i> แสดงน้อยลง' : '<i class="fa-solid fa-chevron-down"></i> ดูทั้งหมด (' + rows.length + ')') + '</button>' : '');
+    }
     async function loadHubAnnouncements() {
       var card = document.getElementById('annCard');
       var wrap = document.getElementById('hubAnnList');
@@ -254,17 +285,34 @@
         // ไม่มีประกาศ -> ซ่อนการ์ดนี้ไปเลย ไม่ต้องโชว์กล่องว่างเปล่าค้างไว้ (V9.5)
         if (rows.length === 0) { card.hidden = true; return; }
         card.hidden = false;
-        // หน้าฮับไม่บอกชื่อผู้แจ้งประกาศ บอกแค่ "จากฝ่ายวิชาการ" เสมอ (ตั้งแต่ V10.0 — ชื่อผู้แจ้งจริงยังดูได้จากหน้าตั้งค่า > แท็บประกาศ สำหรับฝ่ายวิชาการ)
-        wrap.innerHTML = rows.map(function (a) {
-          return '<div class="event-list-item hub-ann-item"><div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
-            (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
-            '<div class="sub-item-meta">จากกลุ่มบริหารงานวิชาการ · ' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
-        }).join('');
+        var seen = []; try { seen = JSON.parse(annRead(ANN_SEEN_KEY) || '[]') || []; } catch (e) { seen = []; }
+        var seenMap = {}; seen.forEach(function (id) { seenMap[id] = true; });
+        annState.rows = rows; annState.fresh = {};
+        rows.forEach(function (a) { if (!seenMap[a.id]) annState.fresh[a.id] = true; });
+        var hasNew = Object.keys(annState.fresh).length > 0;
+        annState.collapsed = !hasNew && annRead(ANN_COLLAPSE_KEY) === '1';
+        if (hasNew) annStore(ANN_COLLAPSE_KEY, null);
+        renderHubAnnouncements();
+        // จำว่าเห็นแล้ว (เก็บล่าสุดไม่เกิน 200 รายการ)
+        var ids = rows.map(function (a) { return a.id; });
+        seen.forEach(function (id) { if (ids.indexOf(id) === -1) ids.push(id); });
+        annStore(ANN_SEEN_KEY, JSON.stringify(ids.slice(0, 200)));
       } catch (err) {
         card.hidden = false;
+        wrap.hidden = false;
         wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
     }
+    document.getElementById('annToggle').addEventListener('click', function () {
+      annState.collapsed = !annState.collapsed;
+      annStore(ANN_COLLAPSE_KEY, annState.collapsed ? '1' : null);
+      renderHubAnnouncements();
+    });
+    document.getElementById('hubAnnList').addEventListener('click', function (ev) {
+      if (!ev.target.closest('#annMore')) return;
+      annState.showAll = !annState.showAll;
+      renderHubAnnouncements();
+    });
     loadHubAnnouncements();
 
     // ---------- เว็บภายนอก (ตั้งแต่ V11.9) ----------
