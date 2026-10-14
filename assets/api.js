@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.70.141026';
+var APP_VERSION = '1.71.141026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -703,6 +703,14 @@ function categoryDotHtml(color) {
 // (ไม่ได้เก็บสีติดไปด้วยตอนบันทึก) ให้ดึงสีปัจจุบันของประเภทงานนั้นมาแสดงแทนเสมอ — สีจะอัพเดตทันทีทุกจุดถ้า Super Admin เปลี่ยนสีทีหลัง
 // 1.65: สีของประเภทงาน = สีของกลุ่มบริหารงานที่ผูกไว้ (ตั้งค่าที่ "กลุ่มบริหารงาน") — ไม่มีช่องเลือกสีตอนสร้าง/แก้ไขประเภทงานแล้ว
 // ประเภทงานที่ยังไม่ผูกกลุ่ม/กลุ่มยังไม่ตั้งสี = สีที่เคยเก็บไว้ (ค่าเริ่มต้น #3457d5)
+// 1.71: รูปแบบการ์ดผลงานเหลือ 3 แบบ — แปลงค่าเดิม: book/bookInline → 'bookInline' (ไฟล์ใหญ่) · frame → 'frame' (ไฟล์ปานกลาง)
+// · ''/research/pin/compact/อื่นๆ → '' (ไฟล์เล็ก)
+function normalizeTemplate(t) {
+  t = String(t || '');
+  if (t === 'book' || t === 'bookInline') return 'bookInline';
+  if (t === 'frame') return 'frame';
+  return '';
+}
 function categoryColor(c) {
   c = c || {};
   return (c.department && deptThemeColor(c.department)) || c.color || '#3457d5';

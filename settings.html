@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.70.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.71.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -62,10 +62,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.70.141026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.71.141026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.70.141026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.71.141026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -99,7 +99,7 @@
         </div>
       </div>
 
-      <!-- 1.70.141026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.71.141026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -409,7 +409,7 @@
          มีผลกับผลงานทุกชิ้นของทุกครูโดยอัตโนมัติ (ใครส่งงานประเภทไหนไว้ ก็เรียงตามลำดับประเภทงานนี้เหมือนกันหมดทุกคน) -->
       <div class="card super-admin-only">
         <div class="section-title"><i class="fas fa-arrow-down-wide-short ui-icon" style="font-size:17px" aria-hidden="true"></i> ลำดับการแสดงผลงานตามประเภทงาน</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">จัดลำดับก่อน-หลังของ "ประเภทงาน" ด้วยปุ่ม ▲ ▼ ด้านล่าง — ผลงานของครูทุกคนจะเรียงตามลำดับประเภทงานนี้เหมือนกันหมดโดยอัตโนมัติในหน้าโชว์ผลงานสาธารณะ (ผลงานในประเภทงานเดียวกันเรียงตามวันที่ส่งล่าสุดก่อนเป็นค่ารอง) ส่วน<b>รูปแบบการ์ดพรีวิว</b>ไปตั้งที่แท็บ "ทั่วไป → ประเภทงาน"</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">จัดลำดับก่อน-หลังของ "ประเภทงาน" ด้วยปุ่ม ▲ ▼ ด้านล่าง — ผลงานของครูทุกคนจะเรียงตามลำดับประเภทงานนี้เหมือนกันหมดโดยอัตโนมัติในหน้าโชว์ผลงานสาธารณะ (ผลงานในประเภทงานเดียวกันเรียงตามวันที่ส่งล่าสุดก่อนเป็นค่ารอง) · รายการ <b>เกียรติบัตร</b> คือกล่องเกียรติบัตรที่ครูได้รับจากคลังเกียรติบัตร เลื่อนไปไว้ตำแหน่งใดก็ได้ ส่วน<b>รูปแบบการ์ดพรีวิว</b>ไปตั้งที่แท็บ "ทั่วไป → ประเภทงาน"</p>
         <div id="displayOrderWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
       <div class="super-admin-only" id="displayOrderSaveBar" style="display:flex; justify-content:flex-end; gap:10px; margin: 6px 0 30px;" hidden>
@@ -1153,7 +1153,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.70.141026"></script>
+  <script src="assets/api.js?v=1.71.141026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1167,16 +1167,14 @@
     // (คัดลอกมาจาก DISPLAY_TEMPLATES ฝั่ง Worker — worker/src/handlers/admin.js — ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา)
     // ตั้งแต่ V12.0: เพิ่ม 'bookInline' (เล่มหนังสือแสดงไฟล์ในตัวการ์ด ไม่ต้องกดเปิดป๊อปอัพ) และ 'compact' (รายการย่อ เหมาะกับ
     // ประเภทงานที่มีผลงานจำนวนมากต่อครู) รวมเป็น 7 รูปแบบ (นับมาตรฐานด้วย) — 'frame' ขยายกรอบรูปให้ใหญ่ขึ้นแล้ว (ดู style.css)
+    // 1.71: เหลือ 3 รูปแบบ (ไฟล์ใหญ่/ปานกลาง/เล็ก) — ค่าเดิมในฐานข้อมูลแปลงอัตโนมัติด้วย normalizeTemplate (api.js)
     var TEMPLATE_OPTIONS = [
-      { key: '', label: '📄 การ์ดมาตรฐาน' },
-      { key: 'book', label: '📖 เปิดเป็นเล่มหนังสือ (กดเปิดป๊อปอัพ)' },
-      { key: 'bookInline', label: '📗 เล่มหนังสือ แสดงไฟล์ในตัวการ์ดเลย' },
-      { key: 'frame', label: '🖼️ เกียรติบัตรกรอบทอง (ห้อย, ขนาดใหญ่)' },
-      { key: 'research', label: '🗂️ การ์ดวิจัย/ข้อมูล' },
-      { key: 'pin', label: '📌 พินผลงานเด่น' },
-      { key: 'compact', label: '📃 รายการย่อ (งานจำนวนมาก)' }
+      { key: 'bookInline', label: 'ไฟล์ใหญ่ — เล่มหนังสือขนาด A4 แสดงไฟล์ในกล่อง' },
+      { key: 'frame', label: 'ไฟล์ปานกลาง — กรอบทองแบบเกียรติบัตร (2 ชิ้นต่อแถว)' },
+      { key: '', label: 'ไฟล์เล็ก — รายการพร้อมปุ่มพรีวิว' }
     ];
     function renderTemplateOptions(selectEl, selectedKey) {
+      selectedKey = normalizeTemplate(selectedKey);
       selectEl.innerHTML = TEMPLATE_OPTIONS.map(function (o) {
         return '<option value="' + o.key + '"' + (o.key === selectedKey ? ' selected' : '') + '>' + o.label + '</option>';
       }).join('');
@@ -1558,7 +1556,7 @@
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.70.141026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.71.141026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -2219,7 +2217,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.70.141026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.71.141026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);
@@ -2400,7 +2398,7 @@
             var fieldsLabel = (c.customFields && c.customFields.length > 0)
               ? c.customFields.map(function (k) { var def = CUSTOM_FIELD_DEFS.filter(function (d) { return d.key === k; })[0]; return def ? def.label : k; }).join(', ')
               : 'ไม่มี';
-            var tplDef = TEMPLATE_OPTIONS.filter(function (o) { return o.key === (c.displayTemplate || ''); })[0];
+            var tplDef = TEMPLATE_OPTIONS.filter(function (o) { return o.key === normalizeTemplate(c.displayTemplate); })[0];
             var deptMeta = '';
             rowHtml[c.id] = '<div class="event-list-item" data-cat-row="' + c.id + '">' +
               '<span class="cat-color-swatch" style="display:inline-block; width:26px; height:26px; border-radius:7px; flex-shrink:0; background:' + escapeHtml(categoryColor(c)) + ';" title="สีของกลุ่มบริหารงาน"></span>' +
@@ -2411,7 +2409,7 @@
               '</div>' +
               (c.noSubmission
                 ? '<div class="sub-item-meta">ไม่ส่งผ่านระบบ — ไม่มีรูปแบบการ์ดหรือข้อมูลที่ต้องกรอก</div>'
-                : '<div class="sub-item-meta">รูปแบบการ์ด: ' + escapeHtml(tplDef ? tplDef.label : 'มาตรฐาน') + ' · ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div>') + deptMeta + '</div>' +
+                : '<div class="sub-item-meta">รูปแบบการ์ด: ' + escapeHtml(tplDef ? tplDef.label.split(' — ')[0] : 'ไฟล์เล็ก') + ' · ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div>') + deptMeta + '</div>' +
               '<div style="display:flex; gap:6px; flex-shrink:0; align-items:center;">' +
                 '<button class="btn btn-secondary btn-sm" data-cat-edit="' + c.id + '">แก้ไข</button>' +
                 '<button class="btn btn-danger btn-sm" data-id="' + c.id + '" data-name="' + escapeHtml(c.name) + '">ลบ</button>' +
@@ -2778,8 +2776,9 @@
         var wrap = document.getElementById('displayOrderWrap');
         var saveBar = document.getElementById('displayOrderSaveBar');
         try {
-          var rows = await apiCall('adminListWorkCategories', {}); // เรียงตาม display_order มาจาก Worker อยู่แล้ว
-          currentCatOrder = rows;
+          var both = await Promise.all([apiCall('adminListWorkCategories', {}), apiCall('publicGetSettings', {}).catch(function () { return {}; })]); // เรียงตาม display_order มาจาก Worker อยู่แล้ว
+          var rows = both[0];
+          currentCatOrder = withCertEntry(rows, both[1].certDisplayPos);
           if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประเภทงาน — ไปเพิ่มที่แท็บ "ข้อมูลหลัก" ก่อน</div>'; saveBar.hidden = true; return; }
           saveBar.hidden = false;
           renderDisplayOrder();
@@ -2791,13 +2790,21 @@
       // (1.32.101026) การ์ด "ลำดับการแสดงผลงาน" อยู่แท็บเดียวกับ "ประเภทงาน" แล้ว — เพิ่ม/แก้/ลบประเภทงานทุกครั้งต้องรีเฟรชรายการจัดลำดับให้ตรงกันด้วย
       var _loadCategoriesBase = loadCategories;
       loadCategories = async function () { await _loadCategoriesBase(); await loadDisplayOrder(); };
+      // 1.71: กล่อง "เกียรติบัตร" ในหน้าแสดงผลงานเป็นรายการหนึ่งในลำดับนี้ด้วย (id '__certs__' — Worker เก็บตำแหน่งที่ settings.certDisplayPos)
+      function withCertEntry(rows, pos) {
+        var list = rows.slice();
+        pos = Number(pos);
+        var at = (!isFinite(pos) || pos < 0 || pos > list.length) ? list.length : Math.trunc(pos);
+        list.splice(at, 0, { id: '__certs__', name: 'เกียรติบัตร', isCerts: true });
+        return list;
+      }
       function renderDisplayOrder() {
         var wrap = document.getElementById('displayOrderWrap');
         var html = '<div class="card" style="padding:0; box-shadow:none; border:none;">';
         currentCatOrder.forEach(function (c, idx) {
-          html += '<div class="layout-row">' +
-            '<div class="thumb" title="สีของกลุ่มบริหารงาน" style="background:' + categoryColor(c) + ';"></div>' +
-            '<div class="info"><div class="t">' + escapeHtml(c.name) + (c.department ? ' <span class="cat-dept-badge"' + deptColorAttr(c.department) + '>' + escapeHtml(groupLabel(c.department)) + '</span>' : '') + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
+          html += '<div class="layout-row' + (c.isCerts ? ' layout-row-certs' : '') + '" data-order-id="' + escapeHtml(c.id) + '">' +
+            (c.isCerts ? '<div class="thumb thumb-certs" title="เกียรติบัตรที่ครูได้รับ"><i class="fa-solid fa-award" aria-hidden="true"></i></div>' : '<div class="thumb" title="สีของกลุ่มบริหารงาน" style="background:' + categoryColor(c) + ';"></div>') +
+            '<div class="info"><div class="t">' + escapeHtml(c.name) + (c.isCerts ? ' <span class="cat-dept-badge cat-dept-none">เกียรติบัตรที่ครูได้รับ (คลังเกียรติบัตร)</span>' : '') + (c.department ? ' <span class="cat-dept-badge"' + deptColorAttr(c.department) + '>' + escapeHtml(groupLabel(c.department)) + '</span>' : '') + '</div><div class="s">ลำดับที่ ' + (idx + 1) + '</div></div>' +
             '<div class="arrows">' +
               '<button type="button" class="btn btn-ghost btn-sm cat-move-up" data-idx="' + idx + '"' + (idx === 0 ? ' disabled' : '') + ' title="เลื่อนขึ้น">▲</button>' +
               '<button type="button" class="btn btn-ghost btn-sm cat-move-down" data-idx="' + idx + '"' + (idx === currentCatOrder.length - 1 ? ' disabled' : '') + ' title="เลื่อนลง">▼</button>' +
@@ -2830,7 +2837,7 @@
         var r = await withProgress('กำลังบันทึกลำดับ', function () {
           return apiCall('adminReorderWorkCategories', { categoryIds: categoryIds });
         }, { successLabel: 'บันทึกลำดับเรียบร้อยแล้ว' });
-        if (r.ok) { currentCatOrder = r.data; renderDisplayOrder(); }
+        if (r.ok) { var ci = categoryIds.indexOf('__certs__'); currentCatOrder = withCertEntry(r.data, ci >= r.data.length ? -1 : ci); resetSettingsCache(); renderDisplayOrder(); }
       });
 
       document.getElementById('openCreateCatBtn').addEventListener('click', function () {
@@ -2883,7 +2890,7 @@
       document.getElementById('ecTabBtn-fields').addEventListener('click', function () { switchEditCatTab('fields'); });
       openEditCatModal = function (cat) {
         editCatOriginal = {
-          color: cat.color || '#3457d5', template: cat.displayTemplate || '', noSubmission: !!cat.noSubmission,
+          color: cat.color || '#3457d5', template: normalizeTemplate(cat.displayTemplate), noSubmission: !!cat.noSubmission,
           department: cat.department || '', hideFromPortfolio: !!cat.hideFromPortfolio,
           fields: (cat.customFields || []).slice().sort().join(',')
         };

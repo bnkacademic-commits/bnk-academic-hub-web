@@ -2638,3 +2638,71 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 /* รายการ: แสดง N จาก M + แสดงเพิ่ม / แสดงทั้งหมด */
 .list-more { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
 .list-more .list-count { width: 100%; text-align: center; font-size: 0.82rem; color: var(--text-muted); }
+
+/* ---------- 1.71 หน้าแสดงผลงานสาธารณะ (view.html): กล่องประเภทงาน 2 คอลัมน์ + รูปแบบ 3 ขนาด ---------- */
+.container-narrow.view-wide { max-width: 1080px; }
+.view-filter { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 14px; margin-bottom: 14px; }
+.view-filter select { flex: 1 1 150px; min-width: 130px; }
+.view-filter input[type="search"] { flex: 2 1 220px; min-width: 180px; }
+.view-term { padding: 16px; }
+.view-term-title { margin-bottom: 12px; }
+.vgrid.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.vgrid .vcol { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.vgrid.one { display: flex; flex-direction: column; gap: 14px; }
+.vbox { border: 1px solid var(--border); border-radius: 14px; padding: 12px; background: var(--surface); min-width: 0; }
+.vbox-h { display: flex; align-items: center; gap: 8px; font-weight: 800; margin-bottom: 10px; min-width: 0; }
+.vbox-dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+.vbox-ic { color: #b45309; }
+.vbox-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vbox-n { font-size: .75rem; background: var(--surface-2); border-radius: 999px; padding: 1px 9px; color: var(--text-muted); flex: none; }
+/* ไฟล์ใหญ่: เล่ม A4 */
+.vlg-a4 { width: 100%; aspect-ratio: 210 / 297; border-radius: 8px; overflow: hidden; background: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.14), 0 0 0 1px var(--border); }
+.vlg-a4 iframe { width: 100%; height: 100%; border: 0; display: block; }
+.vlg-empty { display: flex; align-items: center; justify-content: center; color: var(--text-muted); background: var(--surface-2); }
+.vlg-bar { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; }
+.vlg-txt { flex: 1; min-width: 0; }
+.vlg-t { font-weight: 800; font-size: .95rem; line-height: 1.35; overflow-wrap: anywhere; }
+.vlg-d { font-size: .85rem; color: var(--text-muted); margin-top: 2px; }
+.vlg-m { font-size: .76rem; color: var(--text-muted); margin-top: 2px; }
+.vlg-full { white-space: nowrap; flex: none; }
+.vlg-pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; font-size: .84rem; color: var(--text-muted); }
+.vlg-pg { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.vlg-pg:hover:not(:disabled) { border-color: var(--primary); color: var(--primary-dark); }
+.vlg-pg:disabled { opacity: .4; cursor: default; }
+/* ไฟล์ปานกลาง: กรอบทองแบบเกียรติบัตร (ไม่มีที่ห้อย) 2 ชิ้นต่อแถว */
+.vmf-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 12px; }
+.vmf { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.vmf-frame { background: none; border: 0; padding: 6px 6px 4px; cursor: pointer; width: 100%; display: block; font: inherit; }
+.vmf-frame:disabled { cursor: default; }
+.vmf-frame .tpl-frame { display: block; margin: 0; padding: 9px; width: 100%; transition: transform .15s ease; }
+.vmf-frame:hover:not(:disabled) .tpl-frame { transform: translateY(-2px); }
+.vmf-frame .tpl-frame-mat { display: block; width: 100%; padding: 5px; }
+.vmf-frame .tpl-frame-corner { width: 12px; height: 12px; }
+.vmf-frame .vmf-img, .vmf-frame .no-img { display: block; width: 100%; height: auto; max-width: none; max-height: none; aspect-ratio: 297 / 210; object-fit: contain; background: #fffdf5; }
+.vmf-frame .no-img { display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: #8a6416; background: linear-gradient(135deg, #fffdf5, #f1e4bd); }
+.vmf-t { font-weight: 800; font-size: .86rem; text-align: center; line-height: 1.35; overflow-wrap: anywhere; }
+.vmf-m { font-size: .74rem; color: var(--text-muted); text-align: center; }
+/* ไฟล์เล็ก: รายการ + ปุ่มดู */
+.vsl { display: flex; flex-direction: column; }
+.vsl-r { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-top: 1px solid var(--border); }
+.vsl-r:first-child { border-top: 0; }
+.vsl-ic { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex: none; background: var(--surface-2); color: var(--text-muted); }
+.vsl-ic.ic-pdf { background: #fee2e2; color: #dc2626; }
+.vsl-ic.ic-img { background: #dbeafe; color: #2563eb; }
+.vsl-ic.ic-doc { background: #dbeafe; color: #1d4ed8; }
+.vsl-ic.ic-xls { background: #dcfce7; color: #15803d; }
+.vsl-ic.ic-ppt { background: #ffedd5; color: #c2410c; }
+.vsl-ic.ic-vid { background: #ede9fe; color: #6d28d9; }
+.vsl-txt { flex: 1; min-width: 0; }
+.vsl-t { font-weight: 700; font-size: .88rem; line-height: 1.3; overflow-wrap: anywhere; }
+.vsl-m { font-size: .74rem; color: var(--text-muted); }
+.vsl-eye { margin-left: auto; width: 36px; height: 36px; border-radius: 10px; border: 1.5px solid color-mix(in srgb, var(--primary) 35%, transparent); background: var(--primary-light); color: var(--primary-dark); display: inline-flex; align-items: center; justify-content: center; flex: none; cursor: pointer; }
+.vsl-eye:hover { background: var(--primary); color: #fff; }
+.vsl-more { display: block; width: 100%; margin-top: 6px; padding: 8px; border: 0; border-top: 1px dashed var(--border); background: none; font: inherit; font-size: .82rem; font-weight: 700; color: var(--primary-dark); cursor: pointer; }
+@media (max-width: 480px) {
+  .view-term { padding: 12px 10px; }
+  .vbox { padding: 10px; }
+  .vmf-grid { gap: 10px 8px; }
+  .vmf-frame .tpl-frame { padding: 6px; }
+}
+.layout-row .thumb.thumb-certs { background: linear-gradient(135deg, #fdf3c8, #e3bb5a); color: #7c5c13; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
