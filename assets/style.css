@@ -2603,3 +2603,9 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .cal-mpick-grid button.on { background: var(--primary); color: #fff; border-color: var(--primary); }
 .cal-mpick-today { width: 100%; margin-top: 8px; border: 0; background: none; color: var(--primary-dark); font: inherit; font-size: 0.82rem; font-weight: 700; padding: 6px; border-radius: 8px; cursor: pointer; }
 .cal-mpick-today:hover { background: var(--primary-light); }
+
+/* ===== 1.69 ===== */
+/* ป็อปอัพเตือนก่อนออกจากระบบเมื่อไม่มีการใช้งาน */
+.idle-ic { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--warn-light); color: var(--warn); }
+.idle-left { font-size: 2.2rem; font-weight: 800; color: var(--warn); font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
+#sharedIdleModal { z-index: 160; }

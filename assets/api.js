@@ -17,13 +17,16 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.68.141026';
+var APP_VERSION = '1.69.141026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
 var SESSION_LOGIN_AT_KEY = 'bnkah_login_at';
 var THEME_KEY = 'bnkah_theme';
-var SESSION_TIMEOUT_MS = 60 * 60 * 1000; // เด้งออกอัตโนมัติเมื่ออยู่ในระบบครบ 1 ชั่วโมง (ฝั่งหน้าเว็บ แยกจากอายุ token ฝั่ง backend)
+// 1.69: ออกจากระบบเมื่อ "ไม่มีการใช้งาน" ครบ 60 นาที (เดิม = ครบ 1 ชั่วโมงหลังล็อกอินเสมอ) · เตือนล่วงหน้า 2 นาที
+var SESSION_TIMEOUT_MS = 60 * 60 * 1000;
+var SESSION_IDLE_WARN_MS = 2 * 60 * 1000;
+var SESSION_ACTIVE_KEY = 'bnkah_last_active'; // เด้งออกอัตโนมัติเมื่ออยู่ในระบบครบ 1 ชั่วโมง (ฝั่งหน้าเว็บ แยกจากอายุ token ฝั่ง backend)
 
 /**
  * เรียก action ไปยัง backend (Cloudflare Worker) เสมอใช้ Content-Type: text/plain เพื่อเลี่ยง CORS preflight
@@ -86,6 +89,7 @@ function setSession(token, user) {
     localStorage.setItem(SESSION_TOKEN_KEY, token);
     localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user));
     localStorage.setItem(SESSION_LOGIN_AT_KEY, String(Date.now()));
+    localStorage.setItem(SESSION_ACTIVE_KEY, String(Date.now()));
   } catch (e) { /* localStorage อาจถูกปิด */ }
 }
 // อัพเดตข้อมูลผู้ใช้ที่แคชไว้ใน localStorage ให้สดขึ้น โดย "ไม่แตะ" เวลา login (SESSION_LOGIN_AT_KEY) และ token เดิม
@@ -109,6 +113,7 @@ function clearSession() {
     localStorage.removeItem(SESSION_TOKEN_KEY);
     localStorage.removeItem(SESSION_USER_KEY);
     localStorage.removeItem(SESSION_LOGIN_AT_KEY);
+    localStorage.removeItem(SESSION_ACTIVE_KEY);
     localStorage.removeItem(THEME_KEY); // 1.41.111026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
   } catch (e) {}
 }
@@ -120,20 +125,66 @@ function logout() {
 
 // ---------- เซสชันหมดเวลาอัตโนมัติเมื่ออยู่ในระบบครบ 1 ชั่วโมง ----------
 var _sessionTimeoutHandle = null;
+// เวลาใช้งานล่าสุดเก็บใน localStorage (ใช้ร่วมกันทุกแท็บ) — ขยับเมาส์/คลิก/พิมพ์/เลื่อน/แตะ = ใช้งาน (บันทึกไม่ถี่กว่า 10 วินาทีครั้ง)
+// ระหว่างป็อปอัพความคืบหน้า (อัพโหลด/บันทึก) ทำงานอยู่ นับเป็นการใช้งาน · ตรวจทุก 15 วินาที + ตอนกลับมาที่แท็บ
+var _idleTimer = null, _idleLastWrite = 0, _progressBusy = 0, _idleWarnShown = false;
+function idleTimeoutMs() { return Number(window.__BNKAH_IDLE_MS) || SESSION_TIMEOUT_MS; }
+function idleWarnMs() { return Number(window.__BNKAH_IDLE_WARN_MS) || SESSION_IDLE_WARN_MS; }
+function lastActiveAt() {
+  try { return parseInt(localStorage.getItem(SESSION_ACTIVE_KEY) || localStorage.getItem(SESSION_LOGIN_AT_KEY) || '0', 10) || 0; } catch (e) { return 0; }
+}
+function markActive(force) {
+  var now = Date.now();
+  if (!force && now - _idleLastWrite < Math.min(10000, idleWarnMs() / 5)) return;
+  _idleLastWrite = now;
+  try { localStorage.setItem(SESSION_ACTIVE_KEY, String(now)); } catch (e) { /* ไม่เป็นไร */ }
+  if (_idleWarnShown) hideIdleWarning();
+}
+function isIdleFor(ms) { return Date.now() - lastActiveAt() >= ms; }
+function checkIdle() {
+  if (!getToken()) return;
+  if (_progressBusy > 0) { markActive(true); return; }
+  var idle = Date.now() - lastActiveAt();
+  if (idle >= idleTimeoutMs()) { hideIdleWarning(); forceSessionExpire(); return; }
+  if (idle >= idleTimeoutMs() - idleWarnMs()) showIdleWarning(); else if (_idleWarnShown) hideIdleWarning();
+}
 function scheduleSessionTimeout() {
   try {
-    if (_sessionTimeoutHandle) clearTimeout(_sessionTimeoutHandle);
-    var loginAt = parseInt(localStorage.getItem(SESSION_LOGIN_AT_KEY) || '0', 10);
-    if (!loginAt) {
-      loginAt = Date.now();
-      localStorage.setItem(SESSION_LOGIN_AT_KEY, String(loginAt));
-    }
-    var remaining = SESSION_TIMEOUT_MS - (Date.now() - loginAt);
-    if (remaining <= 0) { forceSessionExpire(); return; }
-    _sessionTimeoutHandle = setTimeout(forceSessionExpire, remaining);
+    if (_idleTimer) return;
+    if (!lastActiveAt()) markActive(true);
+    if (isIdleFor(idleTimeoutMs())) { forceSessionExpire(); return; } // กลับมาหลังพักเครื่อง/ปิดจอนานเกินกำหนด
+    ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'wheel'].forEach(function (ev) {
+      window.addEventListener(ev, function () { if (!_idleWarnShown || ev !== 'mousemove') markActive(false); }, { passive: true, capture: true });
+    });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) checkIdle(); });
+    _idleTimer = setInterval(checkIdle, Math.min(15000, Math.max(1000, Math.floor(idleWarnMs() / 4))));
   } catch (e) { /* localStorage อาจถูกปิด: ไม่ตั้งเวลาหมดอายุอัตโนมัติ */ }
 }
+// ป็อปอัพเตือนก่อนหมดเวลา (นับถอยหลัง) — กด "ใช้งานต่อ" หรือใช้งานใดๆ (ยกเว้นแค่ขยับเมาส์ผ่าน) = นับใหม่
+var _idleCountdown = null;
+function showIdleWarning() {
+  ensureSharedModals();
+  var m = document.getElementById('sharedIdleModal');
+  if (!m) return;
+  var tick = function () {
+    var left = Math.max(0, idleTimeoutMs() - (Date.now() - lastActiveAt()));
+    var sec = Math.ceil(left / 1000);
+    var el = document.getElementById('sharedIdleLeft');
+    if (el) el.textContent = Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+    if (left <= 0) checkIdle();
+  };
+  tick();
+  if (!_idleWarnShown) { _idleWarnShown = true; showModalEl(m); _idleCountdown = setInterval(tick, 1000); }
+}
+function hideIdleWarning() {
+  _idleWarnShown = false;
+  if (_idleCountdown) { clearInterval(_idleCountdown); _idleCountdown = null; }
+  var m = document.getElementById('sharedIdleModal');
+  if (m && !m.hidden) hideModalEl(m);
+}
 function forceSessionExpire() {
+  stopSessionWatch();
+  if (_idleTimer) { clearInterval(_idleTimer); _idleTimer = null; }
   clearSession();
   ensureSharedModals();
   var modal = document.getElementById('sharedExpireModal');
@@ -146,16 +197,21 @@ function forceSessionExpire() {
 // action 'checkSession' เบาๆ ทุก 10 วินาที — ถ้า backend ตอบกลับด้วย code 'SESSION_REPLACED' (ดู requireAuth ใน
 // worker/src/lib/util.js) แสดงว่ามีคนล็อกอินบัญชีนี้จากที่อื่นไปแล้ว จึงเด้งออกพร้อมป็อปอัพแจ้งเตือนทันที
 // error อื่นๆ ระหว่างตรวจ (เช่น เครือข่ายสะดุดชั่วคราว) ปล่อยผ่านเฉยๆ รอตรวจรอบถัดไป ไม่ถือเป็นการเด้งออก
-var SESSION_WATCH_INTERVAL_MS = 10 * 1000;
+// 1.69: ทุก 30 วินาที (เดิม 10) และเฉพาะตอนที่มีการใช้งานภายใน 2 นาทีที่ผ่านมา — ลดคำขอไป Worker · ใช้งานต่อหลังนิ่ง = ตรวจทันที
+// คำตอบมี token ใหม่ (ต่ออายุอัตโนมัติ) -> เก็บแทนของเดิม
+var SESSION_WATCH_INTERVAL_MS = 30 * 1000;
+var SESSION_WATCH_ACTIVE_MS = 2 * 60 * 1000;
 var _sessionWatchHandle = null;
 function startSessionWatch() {
   if (_sessionWatchHandle) return; // กันเรียกซ้ำ (เช่น mountChrome ถูกเรียกมากกว่า 1 ครั้งในหน้าเดียว)
   // 1.56: ไม่ตรวจตอนแท็บถูกซ่อน (สลับไปแท็บอื่น/พับจอ) — ลดจำนวนคำขอไปยัง Worker (โควตาฟรี 100,000 ครั้ง/วัน)
   // แล้วตรวจทันทีเมื่อกลับมาที่แท็บ จึงยังเด้งออกได้ทันเวลาเหมือนเดิม
-  var check = async function () {
+  var check = async function (force) {
     if (!getToken() || document.hidden) return;
+    if (force !== true && isIdleFor(Number(window.__BNKAH_WATCH_ACTIVE_MS) || SESSION_WATCH_ACTIVE_MS)) return;
     try {
-      await apiCall('checkSession', {});
+      var r = await apiCall('checkSession', {});
+      if (r && r.token && getToken()) { try { localStorage.setItem(SESSION_TOKEN_KEY, r.token); } catch (e) { /* ไม่เป็นไร */ } }
     } catch (err) {
       if (err && err.code === 'SESSION_REPLACED') {
         stopSessionWatch();
@@ -163,8 +219,12 @@ function startSessionWatch() {
       }
     }
   };
-  _sessionWatchHandle = setInterval(check, SESSION_WATCH_INTERVAL_MS);
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && _sessionWatchHandle) check(); });
+  _sessionWatchHandle = setInterval(check, Number(window.__BNKAH_WATCH_MS) || SESSION_WATCH_INTERVAL_MS);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && _sessionWatchHandle) check(true); });
+  // กลับมาใช้งานหลังนิ่งเกิน 2 นาที = ตรวจทันที (ไม่ต้องรอรอบถัดไป)
+  var wasIdle = false;
+  setInterval(function () { if (isIdleFor(SESSION_WATCH_ACTIVE_MS)) wasIdle = true; }, 15000);
+  ['mousedown', 'keydown', 'touchstart'].forEach(function (ev) { window.addEventListener(ev, function () { if (wasIdle && _sessionWatchHandle) { wasIdle = false; check(true); } }, { passive: true, capture: true }); });
 }
 function stopSessionWatch() {
   if (_sessionWatchHandle) { clearInterval(_sessionWatchHandle); _sessionWatchHandle = null; }
@@ -907,9 +967,22 @@ function ensureSharedModals() {
       '<div class="modal-box">' +
         '<button type="button" class="modal-close-x" id="sharedExpireCloseX" aria-label="ปิด">✕</button>' +
         '<h3>หมดเวลาการใช้งาน</h3>' +
-        '<p style="color:var(--text-muted); font-size:0.9rem;">คุณอยู่ในระบบครบ 1 ชั่วโมงแล้ว เพื่อความปลอดภัยระบบได้นำคุณออกจากระบบโดยอัตโนมัติ กรุณาเข้าสู่ระบบใหม่อีกครั้ง</p>' +
+        '<!-- 1.69: ไม่มีการใช้งานครบ 60 นาที -->' +
+        '<p style="color:var(--text-muted); font-size:0.9rem;">ไม่มีการใช้งานต่อเนื่องครบ 60 นาที เพื่อความปลอดภัยระบบได้นำคุณออกจากระบบแล้ว กรุณาเข้าสู่ระบบอีกครั้ง</p>' +
         '<div class="modal-actions">' +
           '<button type="button" class="btn btn-primary" id="sharedExpireOk">เข้าสู่ระบบอีกครั้ง</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="modal-backdrop" id="sharedIdleModal" hidden>' +
+      '<div class="modal-box">' +
+        '<div class="idle-ic"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></div>' +
+        '<h3>ยังใช้งานอยู่ไหม?</h3>' +
+        '<p style="color:var(--text-muted); font-size:0.9rem;">ไม่มีการใช้งานมาระยะหนึ่งแล้ว ระบบจะออกจากระบบให้อัตโนมัติใน</p>' +
+        '<div class="idle-left" id="sharedIdleLeft">2:00</div>' +
+        '<div class="modal-actions">' +
+          '<button type="button" class="btn btn-primary" id="sharedIdleStay"><i class="fa-solid fa-check" aria-hidden="true"></i> ใช้งานต่อ</button>' +
+          '<button type="button" class="btn btn-ghost btn-close" id="sharedIdleLogout">ออกจากระบบ</button>' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -945,6 +1018,9 @@ function ensureSharedModals() {
   document.getElementById('sharedExpireOk').addEventListener('click', goToLoginFromExpire);
   // X ของป็อปอัพหมดเวลาการใช้งานทำหน้าที่เดียวกับปุ่ม "เข้าสู่ระบบอีกครั้ง" เสมอ (ไม่ให้ปิดค้างไว้แล้วนั่งดูหน้าที่ session หมดอายุแล้วเฉยๆ)
   document.getElementById('sharedExpireCloseX').addEventListener('click', goToLoginFromExpire);
+  // 1.69: ป็อปอัพเตือนก่อนหมดเวลา
+  document.getElementById('sharedIdleStay').addEventListener('click', function () { markActive(true); hideIdleWarning(); });
+  document.getElementById('sharedIdleLogout').addEventListener('click', function () { logout(); });
 
   // ป็อปอัพ "เข้าสู่ระบบจากที่อื่น" (ตั้งแต่ V11.7) — ปุ่ม "เข้าสู่ระบบอีกครั้ง" และ X ทำหน้าที่เดียวกันเสมอ เหมือนป็อปอัพหมดเวลาการใช้งานด้านบน
   document.getElementById('sharedSessionReplacedOk').addEventListener('click', goToLoginFromExpire);
@@ -1195,6 +1271,7 @@ function _finishProgress(message, isError) {
 async function withProgress(title, workFn, opts) {
   opts = opts || {};
   _showProgressModal(title, { upload: !!opts.upload });
+  _progressBusy++; // 1.69: ระหว่างอัพโหลด/บันทึก ไม่นับเป็นเวลานิ่ง
   try {
     var data = await workFn({
       setProgress: setProgress,
@@ -1206,6 +1283,9 @@ async function withProgress(title, workFn, opts) {
   } catch (err) {
     await _finishProgress((err && err.message) || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ', true);
     return { ok: false, error: err };
+  } finally {
+    _progressBusy = Math.max(0, _progressBusy - 1);
+    markActive(true);
   }
 }
 
