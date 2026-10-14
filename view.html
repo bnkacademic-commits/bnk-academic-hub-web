@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.71.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.72.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -55,7 +55,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.71.141026"></script>
+  <script src="assets/api.js?v=1.72.141026"></script>
   <script>
     mountFooter();
     applyBranding();
@@ -97,7 +97,7 @@
     }
     function subEntry(it) {
       var id = it.fileId || driveFileId(it.fileUrl);
-      return { title: it.title || '', id: id, previewUrl: id ? 'https://drive.google.com/file/d/' + id + '/preview' : drivePreviewUrl(it.fileUrl), kind: previewKind(it.fileName), fileName: it.fileName || '' };
+      return { title: it.title || '', id: id, previewUrl: id ? 'https://drive.google.com/file/d/' + id + '/preview' : drivePreviewUrl(it.fileUrl), kind: previewKind(it.fileName, it.mimeType), fileName: it.fileName || '', mime: it.mimeType || '' };
     }
     function certEntries(c) {
       return (c.files || []).map(function (f, i, arr) {
@@ -109,8 +109,14 @@
       var e = entries[i]; if (!e) return;
       openFilePreview(e.previewUrl, e.title, '', '', entries.length > 1 ? { index: i, total: entries.length, go: function (j) { showPreview(entries, j); } } : null, e.kind);
     }
-    function fileIconOf(name) {
-      var n = String(name || '').toLowerCase();
+    function fileIconOf(name, mime) {
+      var n = String(name || '').toLowerCase(), m = String(mime || '').toLowerCase();
+      if (/pdf/.test(m)) return ['fa-file-pdf', 'pdf'];
+      if (/^image\//.test(m)) return ['fa-file-image', 'img'];
+      if (/^video\//.test(m)) return ['fa-file-video', 'vid'];
+      if (/presentation|powerpoint/.test(m)) return ['fa-file-powerpoint', 'ppt'];
+      if (/spreadsheet|excel/.test(m)) return ['fa-file-excel', 'xls'];
+      if (/wordprocessing|msword/.test(m)) return ['fa-file-word', 'doc'];
       if (/\.pdf$/.test(n)) return ['fa-file-pdf', 'pdf'];
       if (/\.(jpe?g|png|gif|webp|bmp|heic|heif|svg|tiff?)$/.test(n)) return ['fa-file-image', 'img'];
       if (/\.(docx?|odt|rtf)$/.test(n)) return ['fa-file-word', 'doc'];
@@ -129,20 +135,51 @@
     }
 
     // ---------- เนื้อหาในกล่องแต่ละแบบ ----------
+    // 1.72: สัดส่วนกรอบไฟล์ใหญ่ตามหน้าแรกของไฟล์จริง — อ่านขนาดภาพย่อของ Drive (แนวนอน/แนวตั้ง) เก็บไว้ต่อไฟล์
+    //       ระหว่างรอ/อ่านไม่ได้: เดาจากชนิดไฟล์ (PowerPoint = 16:9 แนวนอน · อื่นๆ = A4 แนวตั้ง)
+    var _ratio = {}, _ratioProbe = {};
+    function guessRatio(e) {
+      if (_ratio[e.id]) return _ratio[e.id];
+      var n = String(e.fileName || '').toLowerCase(), m = String(e.mime || '').toLowerCase();
+      return (/\.(pptx?|ppsx?|potx?|odp|key)$/.test(n) || /presentation|powerpoint/.test(m)) ? 16 / 9 : 210 / 297;
+    }
+    function probeRatio(e) {
+      if (!e.id || _ratio[e.id] || _ratioProbe[e.id]) return;
+      _ratioProbe[e.id] = 1;
+      var im = new Image();
+      im.referrerPolicy = 'no-referrer';
+      im.onload = function () {
+        if (!im.naturalWidth || !im.naturalHeight) return;
+        var r = im.naturalWidth / im.naturalHeight;
+        r = r > 1.2 ? (r > 1.6 ? 16 / 9 : 297 / 210) : r < 0.85 ? 210 / 297 : 1; // ปัดเป็นสัดส่วนมาตรฐาน กันกรอบกระโดดจากภาพย่อที่ขนาดเพี้ยนเล็กน้อย
+        _ratio[e.id] = r;
+        document.querySelectorAll('.vlg-a4[data-fid="' + e.id + '"]').forEach(function (el) { el.style.aspectRatio = String(r); el.classList.toggle('land', r > 1); });
+      };
+      im.src = 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(e.id) + '&sz=w320';
+    }
     function largeBodyHtml(box) {
       var st = _boxState[box.key] || (_boxState[box.key] = { page: 0, all: false });
       if (st.page >= box.items.length) st.page = 0;
       var it = box.items[st.page], e = box.entries[st.page];
       var meta = [formatDateThai(it.uploadedAt), customFieldsText(it.customFieldValues)].filter(Boolean).join(' · ');
-      return (e.id ? '<div class="vlg-a4"><iframe src="' + escapeHtml(e.previewUrl) + '" loading="lazy" title="' + escapeHtml(it.title) + '"></iframe></div>'
+      var r = guessRatio(e);
+      box.entries.forEach(probeRatio);
+      var html = (e.id ? '<div class="vlg-a4' + (r > 1 ? ' land' : '') + '" data-fid="' + escapeHtml(e.id) + '" style="aspect-ratio:' + r + ';"><iframe src="' + escapeHtml(e.previewUrl) + '" loading="lazy" title="' + escapeHtml(it.title) + '"></iframe></div>'
           : '<div class="vlg-a4 vlg-empty"><span><i class="fa-solid fa-book-open" aria-hidden="true"></i> ไม่มีไฟล์แนบ</span></div>') +
         '<div class="vlg-bar"><div class="vlg-txt"><div class="vlg-t">' + escapeHtml(it.title) + '</div>' +
           (it.description ? '<div class="vlg-d">' + escapeHtml(it.description) + '</div>' : '') +
           '<div class="vlg-m">' + escapeHtml(meta) + '</div></div>' +
-          (e.id ? '<button type="button" class="btn btn-secondary btn-sm vlg-full" data-full="' + st.page + '"><i class="fa-solid fa-expand" aria-hidden="true"></i> เต็มจอ</button>' : '') + '</div>' +
-        (box.items.length > 1 ? '<div class="vlg-pager"><button type="button" class="vlg-pg" data-pg="-1" aria-label="เล่มก่อนหน้า"' + (st.page <= 0 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-left"></i></button>' +
-          '<span class="vlg-pos">เล่มที่ ' + (st.page + 1) + ' จาก ' + box.items.length + '</span>' +
-          '<button type="button" class="vlg-pg" data-pg="1" aria-label="เล่มถัดไป"' + (st.page >= box.items.length - 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button></div>' : '');
+          (e.id ? '<button type="button" class="btn btn-secondary btn-sm vlg-full" data-full="' + st.page + '"><i class="fa-solid fa-expand" aria-hidden="true"></i> เต็มจอ</button>' : '') + '</div>';
+      // หลายไฟล์: รายการ 2 คอลัมน์ใต้ตัวแสดง กดเลือกไฟล์ไหนก็แสดงไฟล์นั้น
+      if (box.items.length > 1) {
+        html += '<div class="vlg-list">' + box.items.map(function (x, i) {
+          var ic = fileIconOf(x.fileName, x.mimeType), on = i === st.page;
+          return '<button type="button" class="vlg-li' + (on ? ' on' : '') + '" data-pick="' + i + '"' + (on ? ' aria-current="true"' : '') + '>' +
+            '<span class="vsl-ic ic-' + ic[1] + '"><i class="fa-solid ' + ic[0] + '" aria-hidden="true"></i></span>' +
+            '<span class="vlg-li-txt"><b>' + escapeHtml(x.title) + '</b><small>' + (on ? '<span class="vlg-now">กำลังแสดง</span> · ' : '') + escapeHtml(formatDateThai(x.uploadedAt)) + '</small></span></button>';
+        }).join('') + '</div>';
+      }
+      return html;
     }
     function mediumBodyHtml(box) {
       return '<div class="vmf-grid">' + box.items.map(function (it, i) {
@@ -164,7 +201,7 @@
       var n = box.items.length, show = st.all ? n : Math.min(n, SMALL_SHOW);
       var html = '<div class="vsl">';
       for (var i = 0; i < show; i++) {
-        var it = box.items[i], e = box.entries[i], ic = fileIconOf(it.fileName);
+        var it = box.items[i], e = box.entries[i], ic = fileIconOf(it.fileName, it.mimeType);
         html += '<div class="vsl-r"><span class="vsl-ic ic-' + ic[1] + '"><i class="fa-solid ' + ic[0] + '" aria-hidden="true"></i></span>' +
           '<div class="vsl-txt"><div class="vsl-t">' + escapeHtml(it.title) + '</div><div class="vsl-m">' + escapeHtml([formatDateThai(it.uploadedAt), customFieldsText(it.customFieldValues)].filter(Boolean).join(' · ')) + '</div></div>' +
           (e && (e.id || it.fileUrl) ? '<button type="button" class="vsl-eye" data-open="' + i + '" title="ดูไฟล์" aria-label="ดู ' + escapeHtml(it.title) + '"><i class="fa-solid fa-eye"></i></button>' : '') + '</div>';
@@ -178,7 +215,8 @@
     }
     function boxHtml(box) {
       var tierCls = box.tier === 'bookInline' ? 'vbox-large' : box.tier === 'frame' ? 'vbox-medium' : 'vbox-small';
-      return '<section class="vbox ' + tierCls + (box.isCerts ? ' vbox-certs' : '') + '" data-box="' + escapeHtml(box.key) + '">' +
+      // 1.72: พื้นกล่องสีจางตามสีกลุ่มบริหารงาน (--g) · กล่องเกียรติบัตรใช้โทนทอง
+      return '<section class="vbox ' + tierCls + (box.isCerts ? ' vbox-certs' : '') + '" data-box="' + escapeHtml(box.key) + '" style="--g:' + escapeHtml(box.isCerts ? '#d97706' : box.color) + ';">' +
         '<div class="vbox-h">' + (box.isCerts ? '<i class="fa-solid fa-award vbox-ic" aria-hidden="true"></i>' : '<span class="vbox-dot" style="background:' + escapeHtml(box.color) + ';"></span>') +
           '<span class="vbox-name">' + escapeHtml(box.name) + '</span><span class="vbox-n">' + box.items.length + '</span></div>' +
         '<div class="vbox-body">' + boxBodyHtml(box) + '</div></section>';
@@ -305,7 +343,7 @@
       var box = _boxes[sec.getAttribute('data-box')]; if (!box) return;
       var st = _boxState[box.key] || (_boxState[box.key] = { page: 0, all: false });
       var b;
-      if ((b = e.target.closest('[data-pg]'))) { st.page = Math.max(0, Math.min(box.items.length - 1, st.page + Number(b.getAttribute('data-pg')))); rerenderBox(sec); return; }
+      if ((b = e.target.closest('[data-pick]'))) { var pi = Number(b.getAttribute('data-pick')); if (pi !== st.page) { st.page = pi; rerenderBox(sec); } return; }
       if ((b = e.target.closest('[data-all]'))) { st.all = !st.all; rerenderBox(sec); return; }
       if ((b = e.target.closest('[data-full]'))) { openViewEntries(box, Number(b.getAttribute('data-full'))); return; }
       if ((b = e.target.closest('[data-open]'))) { openViewEntries(box, Number(b.getAttribute('data-open'))); return; }

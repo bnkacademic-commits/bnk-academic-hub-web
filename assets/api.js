@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.71.141026';
+var APP_VERSION = '1.72.141026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1668,7 +1668,7 @@ function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav, kind) {
           '<span class="file-preview-count">' + (nav.index + 1) + '/' + nav.total + '</span>' +
           '<button type="button" class="icon-btn file-preview-next" aria-label="ไฟล์ถัดไป"' + (nav.index >= nav.total - 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button></div>' : '') +
         '<div class="file-preview-title">' + escapeHtml(title || 'พรีวิวไฟล์') + '</div>' +
-        (openUrl && kind !== 'office' ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i><span class="fp-lbl"> เปิดไฟล์</span></a>' : '') +
+        (openUrl ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i><span class="fp-lbl"> เปิดไฟล์</span></a>' : '') +
         (downloadUrl ? '<a class="btn btn-primary btn-sm file-preview-dl" href="' + escapeHtml(downloadUrl) + '" target="_blank" rel="noopener" download><i class="fa-solid fa-download"></i><span class="fp-lbl"> ดาวน์โหลด</span></a>' : '') +
         '<button type="button" class="file-preview-close" aria-label="ปิดพรีวิว">✕</button>' +
       '</div>' +
@@ -1694,8 +1694,10 @@ function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav, kind) {
     img.addEventListener('error', function () {
       var alt = img.getAttribute('data-fallback');
       if (alt) { img.removeAttribute('data-fallback'); img.src = alt; return; }
-      var wrap = img.parentNode;
-      wrap.outerHTML = _filePreviewDlPanel('fa-file-image', 'แสดงรูปตัวอย่างไม่ได้', 'รูปนี้อาจเป็นชนิดที่เบราว์เซอร์แสดงไม่ได้ (เช่น HEIC) หรือยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์" — ดาวน์โหลดไปเปิดในเครื่องได้เลย', downloadUrl, openUrl);
+      // 1.72: ลิงก์รูปตรง + ภาพย่อไม่ได้ทั้งคู่ -> ใช้ตัวพรีวิวของ Google Drive (iframe) เป็นทางสุดท้าย
+      var wrap = img.parentNode, fid = driveFileId(openUrl || previewUrl);
+      wrap.outerHTML = fid ? '<iframe class="file-preview-iframe" src="https://drive.google.com/file/d/' + fid + '/preview" title="' + escapeHtml(title || 'พรีวิวไฟล์') + '" loading="eager"></iframe>'
+        : _filePreviewDlPanel('fa-file-image', 'แสดงรูปตัวอย่างไม่ได้', 'รูปนี้อาจเป็นชนิดที่เบราว์เซอร์แสดงไม่ได้ (เช่น HEIC) หรือยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์" — ดาวน์โหลดไปเปิดในเครื่องได้เลย', downloadUrl, openUrl);
     });
     img.addEventListener('load', function () { img.classList.add('loaded'); });
   }
@@ -1723,6 +1725,9 @@ function _filePreviewBodyHtml(previewUrl, title, openUrl, downloadUrl, kind) {
   if (kind === 'image' && id) {
     return '<div class="file-preview-imgwrap"><img class="file-preview-img" src="https://lh3.googleusercontent.com/d/' + id + '=w2000" data-fallback="https://drive.google.com/thumbnail?id=' + id + '&sz=w2000" alt="' + escapeHtml(title || 'รูปภาพ') + '" referrerpolicy="no-referrer" /></div>';
   }
+  // 1.72: Word/Excel/PowerPoint และไฟล์ชนิดอื่น พรีวิวผ่านตัวแสดงตัวอย่างของ Google Drive ทุกหน้า (เดิม 1.50 ให้ดาวน์โหลดอย่างเดียว)
+  //       แสดงข้อความให้ดาวน์โหลดเฉพาะกรณีหา id ไฟล์ Drive ไม่เจอ
+  if ((kind === 'office' || kind === 'other') && id) kind = 'pdf';
   if (kind === 'office') {
     var lbl = officeKindLabel(title);
     var ic = lbl === 'Excel' ? 'fa-file-excel' : lbl === 'PowerPoint' ? 'fa-file-powerpoint' : 'fa-file-word';
