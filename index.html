@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.73.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.74.151026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -32,7 +32,7 @@
         <div class="login-sub">ระบบรวบรวมและส่งผลงานครู</div>
       </div>
       <script>
-        // 1.73.141026: มีรูปหน้าเข้าสู่ระบบที่จำไว้ -> ใส่ทันที (ก่อนโหลดค่าตั้งค่า) ไม่เห็นหัวสีม่วงแวบ — ค่าจริงอัพเดตอีกครั้งใน applyBranding()
+        // 1.74.151026: มีรูปหน้าเข้าสู่ระบบที่จำไว้ -> ใส่ทันที (ก่อนโหลดค่าตั้งค่า) ไม่เห็นหัวสีม่วงแวบ — ค่าจริงอัพเดตอีกครั้งใน applyBranding()
         (function () { try { var b = JSON.parse(localStorage.getItem('bnkah_brand') || 'null'); if (b && b.loginHeroDataUrl) { var h = document.querySelector('.login-hero'), im = document.createElement('img'); im.className = 'login-hero-img'; im.alt = b.siteName || ''; im.src = b.loginHeroDataUrl; h.appendChild(im); h.classList.add('has-image'); } } catch (e) {} })();
       </script>
 
@@ -69,7 +69,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.73.141026"></script>
+  <script src="assets/api.js?v=1.74.151026"></script>
   <script>
     mountFooter();
     applyBranding();
