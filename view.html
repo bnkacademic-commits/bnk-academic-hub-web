@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.72.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.73.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -55,7 +55,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.72.141026"></script>
+  <script src="assets/api.js?v=1.73.141026"></script>
   <script>
     mountFooter();
     applyBranding();
@@ -144,7 +144,7 @@
       return (/\.(pptx?|ppsx?|potx?|odp|key)$/.test(n) || /presentation|powerpoint/.test(m)) ? 16 / 9 : 210 / 297;
     }
     function probeRatio(e) {
-      if (!e.id || _ratio[e.id] || _ratioProbe[e.id]) return;
+      if (!e.id || e.kind === 'image' || _ratio[e.id] || _ratioProbe[e.id]) return; // รูปภาพใช้ขนาดจริงจาก <img> (wireLargeImages)
       _ratioProbe[e.id] = 1;
       var im = new Image();
       im.referrerPolicy = 'no-referrer';
@@ -164,7 +164,11 @@
       var meta = [formatDateThai(it.uploadedAt), customFieldsText(it.customFieldValues)].filter(Boolean).join(' · ');
       var r = guessRatio(e);
       box.entries.forEach(probeRatio);
-      var html = (e.id ? '<div class="vlg-a4' + (r > 1 ? ' land' : '') + '" data-fid="' + escapeHtml(e.id) + '" style="aspect-ratio:' + r + ';"><iframe src="' + escapeHtml(e.previewUrl) + '" loading="lazy" title="' + escapeHtml(it.title) + '"></iframe></div>'
+      // 1.73: รูปภาพแสดงเป็น <img> (ลิงก์รูปตรง -> ภาพย่อ -> ตัวพรีวิวของ Drive) — ตัวพรีวิวของ Drive มักขึ้น "เกิดปัญหาในการแสดงภาพนี้" กับรูป
+      var inner = e.kind === 'image' && e.id
+        ? '<img class="vlg-image" src="https://lh3.googleusercontent.com/d/' + encodeURIComponent(e.id) + '=w1600" data-fallback="https://drive.google.com/thumbnail?id=' + encodeURIComponent(e.id) + '&sz=w1600" data-preview="' + escapeHtml(e.previewUrl) + '" alt="' + escapeHtml(it.title) + '" referrerpolicy="no-referrer" />'
+        : '<iframe src="' + escapeHtml(e.previewUrl) + '" loading="lazy" title="' + escapeHtml(it.title) + '"></iframe>';
+      var html = (e.id ? '<div class="vlg-a4' + (r > 1 ? ' land' : '') + (e.kind === 'image' ? ' vlg-photo' : '') + '" data-fid="' + escapeHtml(e.id) + '" style="aspect-ratio:' + r + ';">' + inner + '</div>'
           : '<div class="vlg-a4 vlg-empty"><span><i class="fa-solid fa-book-open" aria-hidden="true"></i> ไม่มีไฟล์แนบ</span></div>') +
         '<div class="vlg-bar"><div class="vlg-txt"><div class="vlg-t">' + escapeHtml(it.title) + '</div>' +
           (it.description ? '<div class="vlg-d">' + escapeHtml(it.description) + '</div>' : '') +
@@ -323,7 +327,30 @@
       });
       wireThumbs(content);
     }
+    // 1.73: รูปในกล่องไฟล์ใหญ่ — ได้สัดส่วนจริงของรูป (จำกัด 0.6–1.9) · โหลดไม่ได้ทั้งลิงก์ตรงและภาพย่อ = ใช้ตัวพรีวิวของ Drive
+    function wireLargeImages(root) {
+      root.querySelectorAll('img.vlg-image:not([data-wired])').forEach(function (img) {
+        img.setAttribute('data-wired', '1');
+        function fit() {
+          if (!img.naturalWidth || !img.naturalHeight) return;
+          var r = Math.max(0.6, Math.min(1.9, img.naturalWidth / img.naturalHeight)), box = img.parentNode, fid = box.getAttribute('data-fid');
+          if (fid) _ratio[fid] = r;
+          box.style.aspectRatio = String(r); box.classList.toggle('land', r > 1);
+        }
+        img.addEventListener('load', fit);
+        img.addEventListener('error', function () {
+          var alt = img.getAttribute('data-fallback');
+          if (alt) { img.removeAttribute('data-fallback'); img.src = alt; return; }
+          var ifr = document.createElement('iframe');
+          ifr.src = img.getAttribute('data-preview'); ifr.title = img.alt;
+          img.parentNode.classList.remove('vlg-photo');
+          img.replaceWith(ifr);
+        });
+        if (img.complete && img.naturalWidth) fit();
+      });
+    }
     function wireThumbs(root) {
+      wireLargeImages(root);
       root.querySelectorAll('img.vmf-img:not([data-wired])').forEach(function (img) {
         img.setAttribute('data-wired', '1');
         img.addEventListener('error', function () {

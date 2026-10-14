@@ -2731,3 +2731,6 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .vbox-h { margin: 0 0 10px; padding: 10px 12px; background: color-mix(in srgb, var(--g, #94a3b8) 16%, #fff); color: color-mix(in srgb, var(--g, #64748b) 75%, #000); }
 .vbox-body { padding: 0 12px 12px; }
 @media (max-width: 480px) { .vbox { padding: 0; } .vbox-h { padding: 9px 10px; } .vbox-body { padding: 0 10px 10px; } }
+/* 1.73: รูปภาพในกล่องไฟล์ใหญ่ */
+.vlg-a4.vlg-photo { background: #0f172a; }
+.vlg-a4 .vlg-image { width: 100%; height: 100%; object-fit: contain; display: block; }
