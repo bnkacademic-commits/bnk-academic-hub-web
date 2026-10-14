@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.69.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.70.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -23,18 +23,22 @@
         <h1><i class="fa-solid fa-award cert-h-ic" aria-hidden="true"></i> คลังเกียรติบัตร</h1>
         <p id="certSubtitle">เกียรติบัตรของครู นักเรียน และโรงเรียน</p>
       </div>
+      <!-- 1.70: ปุ่มแชร์สูงเท่าปุ่มเพิ่ม 2 ปุ่ม (ไอคอนบน) · ปุ่มเพิ่มเล็ก "+ ภายใน" / "+ ภายนอก" ซ้อนบน-ล่าง (สีส้ม/เขียวตายตัว) · ปุ่มรีเฟรชย้ายไปแถวแท็บ -->
       <div class="cert-head-btns">
-        <button type="button" class="btn page-refresh-btn" id="certRefreshBtn" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
-        <button type="button" class="btn cert-share-btn" id="certShareAllBtn"><i class="fa-solid fa-share-nodes"></i> แชร์หน้าค้นหา</button>
-        <!-- 1.61: ปุ่มเพิ่ม 2 ปุ่มเด่นเท่ากัน แยกสีตายตัว (ภายนอก = เขียว · ภายใน = ส้ม) ไม่เปลี่ยนตามธีมสีของระบบ -->
-        <button type="button" class="btn cert-hbtn ext" id="certAddExtBtn" hidden title="แนบไฟล์ให้ครบทุกคน"><i class="fa-solid fa-earth-asia"></i> เพิ่มเกียรติบัตรภายนอก</button>
-        <button type="button" class="btn cert-hbtn int" id="certAddIntBtn" hidden title="รันเลขที่ให้อัตโนมัติ · จองเลขได้ก่อน"><i class="fa-solid fa-school"></i> เพิ่มเกียรติบัตรภายใน</button>
+        <button type="button" class="btn cert-share-btn" id="certShareAllBtn"><i class="fa-solid fa-share-nodes"></i><span>แชร์หน้าค้นหา</span></button>
+        <div class="cert-add-stack">
+          <button type="button" class="btn cert-hbtn int" id="certAddIntBtn" hidden aria-label="เพิ่มเกียรติบัตรภายใน" title="เพิ่มเกียรติบัตรภายใน · รันเลขที่ให้อัตโนมัติ · จองเลขได้ก่อน"><i class="fa-solid fa-plus"></i> ภายใน</button>
+          <button type="button" class="btn cert-hbtn ext" id="certAddExtBtn" hidden aria-label="เพิ่มเกียรติบัตรภายนอก" title="เพิ่มเกียรติบัตรภายนอก · แนบไฟล์ให้ครบทุกคน"><i class="fa-solid fa-plus"></i> ภายนอก</button>
+        </div>
       </div>
     </div>
     <div class="cert-alert" id="certPendingAlert" hidden></div>
+    <div class="cert-tabs-row">
     <div class="cert-tabs" role="tablist" id="certTabs">
       <button type="button" role="tab" data-scope="internal"><i class="fa-solid fa-school"></i> ภายในโรงเรียน <b class="n" id="certCntInternal">0</b></button>
       <button type="button" role="tab" data-scope="external"><i class="fa-solid fa-earth-asia"></i> ภายนอกโรงเรียน <b class="n" id="certCntExternal">0</b></button>
+    </div>
+      <button type="button" class="btn page-refresh-btn" id="certRefreshBtn" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
     </div>
     <div class="cert-toolbar">
       <div class="cert-kind-seg" role="group" aria-label="ประเภทเกียรติบัตร" id="certKindSeg">
@@ -176,7 +180,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.69.141026"></script>
+  <script src="assets/api.js?v=1.70.141026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -1058,7 +1062,7 @@
       $('certRoot').addEventListener('keydown', function (ev) { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[data-expand]')) { ev.preventDefault(); ev.target.click(); } });
       $('certRoot').addEventListener('click', async function (ev) {
         if (ev.target.closest('a[download]')) return;
-        if (ev.target.closest('[data-more]')) { shownN += LIST_PAGE; render(); return; }
+        var mb = ev.target.closest('[data-more]'); if (mb) { shownN = mb.hasAttribute('data-more-all') ? 1e9 : shownN + LIST_PAGE; render(); return; }
         var t = ev.target.closest('[data-edit],[data-del],[data-preview],[data-expand-up],[data-expand],[data-it-view],[data-it-up],[data-share]');
         if (!t) return;
         var byId = function (attr) { var v = t.getAttribute(attr); return certs.filter(function (x) { return x.id === v; })[0]; };

@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.69.141026';
+var APP_VERSION = '1.70.141026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -785,10 +785,13 @@ function makeYearCache(fetchYear) {
 }
 // 1.63: แสดงรายการทีละ LIST_PAGE แถว + ปุ่ม "แสดงเพิ่ม" (ใช้ data-more ให้หน้าเรียกเพิ่มจำนวนเอง)
 var LIST_PAGE = 50;
+// 1.70: บอก "แสดง N จาก M รายการ" + ปุ่ม "แสดงเพิ่ม" และ "แสดงทั้งหมด" (data-more-all — หน้าที่เรียกใช้ตั้งจำนวนที่แสดง = ทั้งหมด)
 function listMoreHtml(shown, total) {
   if (shown >= total) return '';
   var left = total - shown;
-  return '<div class="list-more"><button type="button" class="btn btn-secondary btn-sm" data-more="1"><i class="fa-solid fa-chevron-down"></i> แสดงเพิ่ม ' + Math.min(LIST_PAGE, left) + ' รายการ (เหลือ ' + left + ')</button></div>';
+  return '<div class="list-more"><div class="list-count">แสดง ' + shown + ' จาก ' + total + ' รายการ</div>' +
+    '<button type="button" class="btn btn-secondary btn-sm" data-more="1"><i class="fa-solid fa-chevron-down"></i> แสดงเพิ่ม ' + Math.min(LIST_PAGE, left) + ' รายการ</button>' +
+    '<button type="button" class="btn btn-ghost btn-sm" data-more="all" data-more-all="1"><i class="fa-solid fa-angles-down"></i> แสดงทั้งหมด (' + total + ')</button></div>';
 }
 // ข้อความแจ้งระหว่างโหลดปีการศึกษาอื่น/ทุกปี
 function yearLoadingHtml(year) {

@@ -2609,3 +2609,32 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .idle-ic { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--warn-light); color: var(--warn); }
 .idle-left { font-size: 2.2rem; font-weight: 800; color: var(--warn); font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
 #sharedIdleModal { z-index: 160; }
+
+/* ===== 1.70 ===== */
+/* คลังเกียรติบัตร: ปุ่มแชร์ (ไอคอนบน) สูงเท่าปุ่มเพิ่ม 2 ปุ่มที่ซ้อนบน-ล่าง · ปุ่มรีเฟรชอยู่ขวาสุดของแถวแท็บ */
+.cert-head-btns { align-items: stretch; flex-wrap: nowrap; gap: 8px; }
+.cert-head-btns .cert-share-btn { order: 0; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 16px; border-radius: 12px; font-size: 0.86rem; line-height: 1.2; }
+.cert-head-btns .cert-share-btn i { font-size: 1.15rem; }
+.cert-add-stack { display: flex; flex-direction: column; gap: 6px; }
+.cert-add-stack:not(:has(.cert-hbtn:not([hidden]))) { display: none; }
+.cert-add-stack .cert-hbtn { padding: 6px 14px; font-size: 0.84rem; border-radius: 10px; justify-content: flex-start; min-width: 112px; flex: 0 0 auto; }
+.cert-tabs-row { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.cert-tabs-row .cert-tabs { margin: 0; flex: 1 1 auto; min-width: 0; }
+.cert-tabs-row .page-refresh-btn { flex-shrink: 0; margin-left: auto; }
+@media (max-width: 720px) {
+  .cert-head-btns { width: 100%; }
+  .cert-head-btns .cert-share-btn { flex: 1 1 auto; order: 0; }
+  .cert-add-stack { flex: 1 1 auto; }
+  .cert-add-stack .cert-hbtn { min-width: 0; justify-content: center; }
+}
+/* ปฏิทินหน้าแรก: ชื่อวันเป็นช่องสีประจำวัน (อา แดง · จ เหลือง · อ ชมพู · พ เขียว · พฤ ส้ม · ศ ฟ้า · ส ม่วง) */
+.calendar-grid .dow { --dc: #64748b; border-radius: 8px; padding: 4px 0; margin-bottom: 3px; font-weight: 800; color: color-mix(in srgb, var(--dc) 80%, #000); background: color-mix(in srgb, var(--dc) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--dc) 35%, var(--surface)); }
+.calendar-grid .dow.d0 { --dc: #ef4444; } .calendar-grid .dow.d1 { --dc: #eab308; } .calendar-grid .dow.d2 { --dc: #ec4899; } .calendar-grid .dow.d3 { --dc: #16a34a; }
+.calendar-grid .dow.d4 { --dc: #f97316; } .calendar-grid .dow.d5 { --dc: #0ea5e9; } .calendar-grid .dow.d6 { --dc: #8b5cf6; }
+.calendar-grid .dow.d1 { color: #854d0e; }
+:root[data-theme="dark"] .calendar-grid .dow { color: color-mix(in srgb, var(--dc) 55%, #fff); background: color-mix(in srgb, var(--dc) 22%, var(--surface)); }
+/* ป้าย "ทั้งหมด" ของปฏิทินเป็นสีธีมหลัก (เดิมเทา) */
+.cal-groups button[data-cal-group=""] { --g: var(--primary); }
+/* รายการ: แสดง N จาก M + แสดงเพิ่ม / แสดงทั้งหมด */
+.list-more { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.list-more .list-count { width: 100%; text-align: center; font-size: 0.82rem; color: var(--text-muted); }
