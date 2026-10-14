@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>ประกาศและปฏิทิน — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
      ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.67.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.68.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -86,6 +86,10 @@
             <label for="annMessage">รายละเอียดเพิ่มเติม (ถ้ามี)</label>
             <textarea id="annMessage" placeholder="ข้อความประกาศที่จะแสดงในหน้าฮับของทุกบัญชี"></textarea>
           </div>
+          <div class="field">
+            <label>สำหรับ</label>
+            <div id="annAudPick"></div>
+          </div>
           <div class="field-row">
             <div class="field">
               <label for="annShowFrom">เริ่มแสดง (ไม่บังคับ)</label>
@@ -136,8 +140,9 @@
             </div>
           </div>
           <div class="field">
-            <label for="evAudience">สำหรับ</label>
-            <select id="evAudience"><option value="all">ครูทุกคน</option></select>
+            <label>สำหรับ</label>
+            <!-- 1.68: ทั้งหมด / กลุ่มบริหารงาน (1 กลุ่มขึ้นไป) / รายบุคคล (1 คนขึ้นไป) -->
+            <div id="evAudPick"></div>
           </div>
           <div class="field">
             <label for="evMessage">รายละเอียดเพิ่มเติม</label>
@@ -181,7 +186,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.67.141026"></script>
+  <script src="assets/api.js?v=1.68.141026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -215,7 +220,12 @@
       return _eventCategoriesPromise;
     }
     var tabLoaders = {
-      announcements: function () { return loadAnnouncements(); },
+      // 1.68: แสดงรายการทันที แล้วค่อยเติมชื่อในป้าย "สำหรับ" เมื่อรายชื่อบุคลากรโหลดเสร็จ (เฉพาะถ้ามีประกาศแบบรายบุคคล)
+      announcements: function () {
+        var p = loadAnnouncements();
+        ensureUsersLoaded().then(function () { if (lastAnnouncements.some(function (a) { return parseAudienceStr(a.audience).type === 'people'; })) loadAnnouncements(); });
+        return p;
+      },
       calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); }
     };
     function loadTabIfNeeded(tabKey) {
@@ -289,17 +299,13 @@
     document.getElementById('evTabBtn-period').addEventListener('click', function () { switchEvTab('period'); });
     document.getElementById('evTabBtn-category').addEventListener('click', function () { switchEvTab('category'); });
 
-    function renderAudienceOptions() {
-      var sel = document.getElementById('evAudience');
-      var current = sel.value;
-      sel.innerHTML = '<option value="all">ครูทุกคน</option>';
-      allUsers.filter(function (u) { return u.role === 'teacher' || u.hasHub; }).forEach(function (u) {
-        var opt = document.createElement('option');
-        opt.value = u.id; opt.textContent = u.name;
-        sel.appendChild(opt);
-      });
-      sel.value = current || 'all';
-    }
+    // 1.68: ตัวเลือก "สำหรับ" (api.js createAudiencePicker) — รายชื่อ = ครู/เจ้าหน้าที่ที่มีหน้าฮับ · กลุ่ม = รายชื่อกลุ่มบริหารงานในตั้งค่า
+    var audDepts = [];
+    getSiteSettings().then(function (st) { audDepts = (st && st.departments) || []; if (evAud) evAud.refresh(); if (annAud) annAud.refresh(); }).catch(function () {});
+    function audUsers() { return allUsers.filter(function (u) { return (u.role === 'teacher' || u.hasHub) && u.status !== 'archived' && u.status !== 'suspended'; }); }
+    var evAud = createAudiencePicker(document.getElementById('evAudPick'), { users: audUsers, departments: function () { return audDepts; } });
+    var annAud = createAudiencePicker(document.getElementById('annAudPick'), { users: audUsers, departments: function () { return audDepts; } });
+    function renderAudienceOptions() { evAud.refresh(); annAud.refresh(); }
 
     var lastEvents = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่ V10.0)
     async function loadEvents() {
@@ -310,10 +316,7 @@
         if (events.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการ</div>'; return; }
         var html = '';
         events.forEach(function (ev) {
-          var audienceLabel = ev.audience === 'all' ? 'ครูทุกคน' : (function () {
-            var u = allUsers.filter(function (x) { return x.id === ev.audience; })[0];
-            return u ? u.name : 'ผู้ใช้เฉพาะราย';
-          })();
+          var audienceLabel = audienceLabel_(ev.audience);
           var dateChip = ev.endDate && ev.endDate !== ev.date
             ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate)
             : formatDateThai(ev.date);
@@ -368,9 +371,11 @@
     }
     // ---------- เพิ่ม/แก้ไขกำหนดการเป็นป็อปอัพ (ตั้งแต่ V11.0 — เดิมเป็นฟอร์มฝังอยู่ในหน้า) ----------
     var eventModalEl = document.getElementById('eventModal');
+    function audienceLabel_(a) { var t = audienceLabel(a, allUsers); return t === 'ทั้งหมด' ? 'ครูทุกคน' : t; }
     function openCreateEvent() {
       document.getElementById('evEditId').value = '';
       document.getElementById('createEventForm').reset();
+      evAud.set('all');
       switchEvTab('period');
       setEvCurrentTerm(); // 1.61: ปีการศึกษา/ภาคเรียนเริ่มต้น = เทอมปัจจุบันของระบบ
       loadEventCategories(); // รีเฟรชรายชื่อประเภทงานทุกครั้งที่เปิด เผื่อเพิ่ม/ลบประเภทงานที่แท็บ "ทั่วไป" มาระหว่างนี้
@@ -383,7 +388,7 @@
       document.getElementById('evEditId').value = ev.id;
       document.getElementById('evDate').value = ev.date;
       document.getElementById('evEndDate').value = (ev.endDate && ev.endDate !== ev.date) ? ev.endDate : '';
-      document.getElementById('evAudience').value = ev.audience;
+      evAud.set(ev.audience);
       document.getElementById('evMessage').value = ev.message || '';
       switchEvTab('period');
       loadEventCategories().then(function () {
@@ -429,6 +434,8 @@
         errBox.hidden = false;
         return;
       }
+      var audErr = evAud.check();
+      if (audErr) { errBox.textContent = audErr; switchEvTab('period'); errBox.hidden = false; return; }
       var editId = document.getElementById('evEditId').value;
       var okEv = await askConfirm(
         editId ? 'ยืนยันบันทึกการแก้ไขกำหนดการนี้?' : 'ยืนยันเพิ่มกำหนดการนี้ในปฏิทิน?',
@@ -438,7 +445,7 @@
       var evPayload = {
         date: evDateVal,
         endDate: evEndDateVal,
-        audience: document.getElementById('evAudience').value,
+        audience: evAud.get(),
         message: document.getElementById('evMessage').value.trim(),
         categoryId: evCategoryVal,
         academicYear: document.getElementById('evYear').value,
@@ -479,7 +486,7 @@
           html += '<div class="event-list-item">' +
             '<div style="flex:1 1 220px; min-width:220px;"><div class="ann-gchip-row"><span class="ann-gchip"' + (gi.color ? ' style="--g:' + gi.color + '"' : '') + '><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ' + escapeHtml(gi.label) + '</span></div><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
             (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
-            '<div class="sub-item-meta">' + (a.createdByName ? 'โดย ' + escapeHtml(a.createdByName) + ' · ' : '') + formatDateTimeThai(a.createdAt) + '</div>' +
+            '<div class="sub-item-meta">' + (a.createdByName ? 'โดย ' + escapeHtml(a.createdByName) + ' · ' : '') + formatDateTimeThai(a.createdAt) + ' · สำหรับ: ' + escapeHtml(audienceLabel_(a.audience)) + '</div>' +
             annScheduleMeta(a) + '</div>' +
             (canManage && a.canEdit ? '<div style="display:flex; gap:6px; flex-shrink:0;">' +
             '<button class="btn btn-secondary btn-sm" data-edit-id="' + a.id + '">แก้ไข</button>' +
@@ -540,6 +547,7 @@
       document.getElementById('annEditId').value = '';
       document.getElementById('createAnnForm').reset();
       setAnnGroup(annIsTop ? '' : (session.department || ''));
+      annAud.set('all');
       document.getElementById('annSubmitBtn').textContent = 'เพิ่มประกาศ';
       document.getElementById('annModalTitle').textContent = 'เพิ่มประกาศ';
       document.getElementById('createAnnError').hidden = true;
@@ -552,6 +560,7 @@
       document.getElementById('annShowFrom').value = isoToLocalDatetimeInput(a.showFrom);
       document.getElementById('annShowUntil').value = isoToLocalDatetimeInput(a.showUntil);
       setAnnGroup(a.department || '');
+      annAud.set(a.audience || 'all');
       document.getElementById('annSubmitBtn').textContent = 'บันทึกการแก้ไข';
       document.getElementById('annModalTitle').textContent = 'แก้ไขประกาศ: ' + a.title;
       document.getElementById('createAnnError').hidden = true;
@@ -578,6 +587,8 @@
         errBox.hidden = false;
         return;
       }
+      var annAudErr = annAud.check();
+      if (annAudErr) { errBox.textContent = annAudErr; errBox.hidden = false; return; }
       var editId = document.getElementById('annEditId').value;
       var okAnn = await askConfirm(
         editId ? 'ยืนยันบันทึกการแก้ไขประกาศนี้?' : 'ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?',
@@ -591,6 +602,7 @@
         showFrom: showFromRaw ? new Date(showFromRaw).toISOString() : '',
         showUntil: showUntilRaw ? new Date(showUntilRaw).toISOString() : ''
       };
+      annPayload.audience = annAud.get();
       if (annIsTop) annPayload.department = document.getElementById('annDept').value;
       if (editId) annPayload.announcementId = editId;
       var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเผยแพร่ประกาศ', function () {

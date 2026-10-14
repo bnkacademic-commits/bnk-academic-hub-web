@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>Hub ของฉัน — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
      ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.67.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.68.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -69,16 +69,28 @@
       <div class="dash-cal-layout">
         <div class="dash-cal-main">
           <div class="calendar-header">
-            <div class="section-title" style="margin-bottom:0;"><i class="fas fa-calendar-days ui-icon" style="font-size:17px" aria-hidden="true"></i> ปฏิทิน</div>
-            <div style="display:flex; gap:6px; align-items:center;">
-              <button class="btn btn-ghost btn-sm" id="calPrev">‹</button>
-              <span class="month-label" id="calLabel">-</span>
-              <button class="btn btn-ghost btn-sm" id="calNext">›</button>
+            <!-- 1.68: ป้ายภาคเรียน/ปีการศึกษาอยู่ข้างคำว่า "ปฏิทิน" · กดเดือน/ปีเพื่อเลือกเดือนแบบตาราง (ปีอยู่แถบบน) -->
+            <div class="cal-title-wrap">
+              <div class="section-title" style="margin-bottom:0;"><i class="fas fa-calendar-days ui-icon" style="font-size:17px" aria-hidden="true"></i> ปฏิทิน</div>
+              <div class="term-badge" id="currentTermBadge">-</div>
+            </div>
+            <div class="cal-nav">
+              <button class="btn btn-ghost btn-sm" id="calPrev" aria-label="เดือนก่อนหน้า">‹</button>
+              <button type="button" class="month-label month-pick-btn" id="calLabel" aria-haspopup="dialog" aria-expanded="false" title="เลือกเดือนและปี">-</button>
+              <button class="btn btn-ghost btn-sm" id="calNext" aria-label="เดือนถัดไป">›</button>
+              <div class="cal-mpick" id="calMonthPicker" role="dialog" aria-label="เลือกเดือนและปี" hidden>
+                <div class="cal-mpick-head">
+                  <button type="button" class="cal-mpick-arrow" data-mp-year="-1" aria-label="ปีก่อนหน้า"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+                  <span class="cal-mpick-year" id="calMpYear">-</span>
+                  <button type="button" class="cal-mpick-arrow" data-mp-year="1" aria-label="ปีถัดไป"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+                </div>
+                <div class="cal-mpick-grid" id="calMpGrid"></div>
+                <button type="button" class="cal-mpick-today" id="calMpToday"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i> เดือนนี้</button>
+              </div>
             </div>
           </div>
           <!-- 1.65: ป้ายกรองตามกลุ่มบริหารงาน (สีของกลุ่ม) — กรองจุดในปฏิทิน คำอธิบายสี ป็อปอัพรายวัน กำหนดส่งงาน และเช็คลิสต์ -->
           <div class="cal-groups" id="calGroups" role="tablist" aria-label="กรองตามกลุ่มบริหารงาน" hidden></div>
-          <div class="term-badge" id="currentTermBadge">-</div>
           <div class="calendar-grid" id="calGrid"></div>
           <div class="cal-legend" id="calLegend"></div>
         </div>
@@ -199,7 +211,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.67.141026"></script>
+  <script src="assets/api.js?v=1.68.141026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -1197,6 +1209,31 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       });
     })();
 
+    // 1.68: ตัวเลือกเดือน (กดที่ "เดือน ปี") — ปี พ.ศ. แถบบน + 12 เดือนเป็นช่อง 4×3
+    (function wireMonthPicker() {
+      var btn = document.getElementById('calLabel'), box = document.getElementById('calMonthPicker'), mpYear = 0;
+      var SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      function draw() {
+        var now = new Date();
+        document.getElementById('calMpYear').textContent = 'พ.ศ. ' + (mpYear + 543);
+        document.getElementById('calMpGrid').innerHTML = SHORT.map(function (m, i) {
+          var sel = mpYear === calState.year && i === calState.month, cur = mpYear === now.getFullYear() && i === now.getMonth();
+          return '<button type="button" data-mp-month="' + i + '" class="' + (sel ? 'on' : '') + (cur ? ' cur' : '') + '" title="' + thaiMonths[i] + ' ' + (mpYear + 543) + '">' + m + '</button>';
+        }).join('');
+      }
+      function open() { mpYear = calState.year; draw(); box.hidden = false; btn.setAttribute('aria-expanded', 'true'); var f = box.querySelector('[data-mp-month].on') || box.querySelector('[data-mp-month]'); if (f) f.focus(); }
+      function close() { box.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+      function go(y, m) { calState.year = y; calState.month = m; renderCalendar(); close(); }
+      btn.addEventListener('click', function (e) { e.stopPropagation(); if (box.hidden) open(); else close(); });
+      box.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var y = e.target.closest('[data-mp-year]'); if (y) { mpYear += Number(y.getAttribute('data-mp-year')); draw(); return; }
+        var m = e.target.closest('[data-mp-month]'); if (m) { go(mpYear, Number(m.getAttribute('data-mp-month'))); return; }
+        if (e.target.closest('#calMpToday')) { var n = new Date(); go(n.getFullYear(), n.getMonth()); }
+      });
+      document.addEventListener('click', function () { if (!box.hidden) close(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) { close(); btn.focus(); } });
+    })();
     document.getElementById('calPrev').addEventListener('click', function () {
       calState.month--; if (calState.month < 0) { calState.month = 11; calState.year--; }
       renderCalendar();

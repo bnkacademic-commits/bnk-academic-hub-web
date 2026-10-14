@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>สรุปรวมการส่งงาน — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
      ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.67.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.68.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -46,8 +46,7 @@
     <!-- All submissions tab -->
     <div class="tab-panel active" id="tab-all">
       <div class="stat-row" id="statRow">
-        <div class="stat-tile"><div class="stat-value" id="statTotalUsers">-</div><div class="stat-label">บัญชีที่มีหน้าฮับทั้งหมด</div></div>
-        <div class="stat-tile"><div class="stat-value" id="statSubmittedUsers">-</div><div class="stat-label">ส่งผลงานแล้วอย่างน้อย 1 ชิ้น</div></div>
+        <div class="stat-tile"><div class="stat-value" id="statTotalUsers">-</div><div class="stat-label">ครูในโรงเรียนทั้งหมด</div></div>
         <div class="stat-tile"><div class="stat-value" id="statTotalSubs">-</div><div class="stat-label">จำนวนผลงานทั้งหมด</div></div>
       </div>
 
@@ -76,6 +75,8 @@
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">แสดงเฉพาะกำหนดการในปฏิทินที่ผูกกับ "ประเภทงาน" ไว้ — ไปเพิ่มได้ที่หน้าตั้งค่าระบบ แท็บปฏิทิน — เลือกดร็อปดาวน์ด้านล่างเพื่อกรองดูทีละงาน</p>
         <div class="filter-row">
+          <!-- 1.68: ค้นหาชื่องาน/ประเภทงาน หรือชื่อครู -->
+          <input type="search" id="asgSearch" placeholder="ค้นหาประเภทงาน หรือชื่อครู" aria-label="ค้นหาประเภทงานหรือชื่อครู" />
           <select id="asgFilterAssignment"><option value="">ทุกงาน</option></select>
           <select id="asgFilterYear"><option value="">ทุกปีการศึกษา</option></select>
           <select id="asgFilterSemester">
@@ -102,6 +103,20 @@
         </div>
       </div>
       <dl class="export-summary" id="exportSummary"></dl>
+      <!-- 1.68: เลือกงานที่จะรายงาน (ทั้งหมด / บางงาน) + แสดง/ไม่แสดงชื่อครู -->
+      <div class="exp-sec">
+        <div class="exp-lbl">งานที่จะรายงาน</div>
+        <div class="aud-seg" id="expScope" role="radiogroup" aria-label="งานที่จะรายงาน">
+          <button type="button" role="radio" data-xs="all" class="on"><i class="fa-solid fa-list-check" aria-hidden="true"></i> <span id="expAllLbl">ทั้งหมด</span></button>
+          <button type="button" role="radio" data-xs="pick"><i class="fa-solid fa-hand-pointer" aria-hidden="true"></i> เลือกบางงาน</button>
+        </div>
+        <div class="exp-pick" id="expPick" hidden></div>
+      </div>
+      <label class="toggle-row switch-row exp-names">
+        <input type="checkbox" class="switch" role="switch" id="expShowNames" checked />
+        <span>แสดงชื่อครูในรายงาน</span>
+        <span class="switch-state" aria-hidden="true"></span>
+      </label>
       <div class="export-options" role="group" aria-label="เลือกรูปแบบไฟล์">
         <button type="button" class="export-opt pdf" id="exportAsPdfBtn">
           <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
@@ -110,8 +125,8 @@
         </button>
         <button type="button" class="export-opt png" id="exportAsImageBtn">
           <i class="fa-solid fa-file-image" aria-hidden="true"></i>
-          <span class="eo-t">รูปภาพ (PNG)</span>
-          <span class="eo-d">ภาพเดียวทั้งรายงาน เหมาะส่งต่อในไลน์หรือแชท</span>
+          <span class="eo-t">รูปภาพ Infographic (PNG)</span>
+          <span class="eo-d">สรุปแบบ Infographic ภาพเดียว เหมาะส่งต่อในไลน์หรือแชท</span>
         </button>
       </div>
       <div class="modal-actions"><button class="btn btn-ghost btn-close" id="exportReportCancelBtn" type="button">ยกเลิก</button></div>
@@ -120,7 +135,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.67.141026"></script>
+  <script src="assets/api.js?v=1.68.141026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -226,7 +241,7 @@
     function renderStats() {
       var submittedIds = new Set(subMeta.teacherIds || []); // 1.63: ทุกปี
       document.getElementById('statTotalUsers').textContent = allUsers.length;
-      document.getElementById('statSubmittedUsers').textContent = Array.from(submittedIds).filter(function (id) {
+      if (document.getElementById('statSubmittedUsers')) document.getElementById('statSubmittedUsers').textContent = Array.from(submittedIds).filter(function (id) {
         return allUsers.some(function (u) { return u.id === id; });
       }).length;
       document.getElementById('statTotalSubs').textContent = subMeta.total || 0;
@@ -370,7 +385,7 @@
     // ---------- สรุปแยกแต่ละงาน ----------
     function statusBadge(status) {
       if (status === 'onTime') return '<span class="badge badge-ontime">ส่งตามกำหนด</span>';
-      if (status === 'late') return '<span class="badge badge-late">ส่งเกินกำหนด</span>';
+      if (status === 'late') return '<span class="badge badge-late">ส่งหลังกำหนด</span>';
       return '<span class="badge badge-missing">ยังไม่ส่ง</span>';
     }
 
@@ -401,26 +416,39 @@
       applyTermDefault('asg', yearSel, document.getElementById('asgFilterSemester'));
     }
 
+    // 1.68: รายการตามตัวกรอง + ช่องค้นหา (ตรงชื่องาน/ประเภทงาน = ทั้งงาน · ตรงชื่อครู = เฉพาะแถวของครูคนนั้น)
+    function filteredAssignments() {
+      var fAsg = document.getElementById('asgFilterAssignment').value;
+      var fYear = document.getElementById('asgFilterYear').value;
+      var fSem = document.getElementById('asgFilterSemester').value;
+      var q = document.getElementById('asgSearch').value.replace(/\s+/g, '').toLowerCase();
+      var norm = function (v) { return String(v || '').replace(/\s+/g, '').toLowerCase(); };
+      var out = [];
+      allAssignments.forEach(function (a) {
+        if (fAsg && a.eventId !== fAsg) return;
+        if (fYear && a.academicYear !== fYear) return;
+        if (fSem && a.semester !== fSem) return;
+        if (!q || norm(a.title).indexOf(q) !== -1 || norm(a.categoryName).indexOf(q) !== -1) { out.push(a); return; }
+        var rows = a.rows.filter(function (r) { return norm(r.userName).indexOf(q) !== -1; });
+        if (rows.length) out.push(Object.assign({}, a, { rows: rows }));
+      });
+      return out;
+    }
     function renderAssignmentSummary() {
       var wrap = document.getElementById('assignmentSummaryWrap');
       if (allAssignments.length === 0) {
         wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการในปฏิทินที่ผูกกับประเภทงานไว้</div>';
         return;
       }
-      var fAsg = document.getElementById('asgFilterAssignment').value;
-      var fYear = document.getElementById('asgFilterYear').value;
-      var fSem = document.getElementById('asgFilterSemester').value;
-      var filtered = allAssignments.filter(function (a) {
-        if (fAsg && a.eventId !== fAsg) return false;
-        if (fYear && a.academicYear !== fYear) return false;
-        if (fSem && a.semester !== fSem) return false;
-        return true;
-      });
+      var filtered = filteredAssignments();
       if (filtered.length === 0) {
         wrap.innerHTML = '<div class="empty-state">ไม่พบงานที่ตรงกับตัวกรองที่เลือก</div>';
         return;
       }
-      var html = '';
+      // 1.68: แสดงทีละ 10 งาน + "แสดงเพิ่ม" (งานละหลายสิบแถว — แสดงพร้อมกันทั้งหมดหน้าเว็บช้ามาก) · รายงานยังรวมทุกงานตามตัวกรอง
+      var html = '<div class="ordc-count hint">' + filtered.length + ' งาน</div>';
+      var total = filtered.length;
+      filtered = filtered.slice(0, asgShown);
       filtered.forEach(function (a) {
         var dateRange = a.endDate && a.endDate !== a.date ? formatDateThai(a.date) + ' – ' + formatDateThai(a.endDate) : formatDateThai(a.date);
         var semLabel = a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester;
@@ -433,7 +461,7 @@
             '<span class="hint" style="margin:0;">กำหนดส่ง: ' + dateRange + '</span>' +
           '</div>' +
           '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.categoryName) + '</b>' + categoryDeptBadgeHtml(a.categoryId) + ' · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
-            ' · <span class="badge badge-ontime">ตามกำหนด ' + onTimeCount + '</span> <span class="badge badge-late">เกินกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
+            ' · <span class="badge badge-ontime">ตามกำหนด ' + onTimeCount + '</span> <span class="badge badge-late">หลังกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
           '</div>' +
           '<div class="table-wrap"><table><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th></tr></thead><tbody>';
         a.rows.forEach(function (r) {
@@ -445,8 +473,12 @@
         });
         html += '</tbody></table></div></div>';
       });
-      wrap.innerHTML = html;
+      var left = total - filtered.length;
+      wrap.innerHTML = html + (left > 0 ? '<div class="list-more"><button type="button" class="btn btn-secondary btn-sm" data-more="1"><i class="fa-solid fa-chevron-down"></i> แสดงเพิ่ม ' + Math.min(ASG_PAGE, left) + ' งาน (เหลือ ' + left + ')</button></div>' : '');
     }
+    var ASG_PAGE = 10, asgShown = ASG_PAGE;
+    function rerenderAsg() { asgShown = ASG_PAGE; renderAssignmentSummary(); }
+    document.getElementById('assignmentSummaryWrap').addEventListener('click', function (e) { if (e.target.closest('[data-more]')) { asgShown += ASG_PAGE; renderAssignmentSummary(); } });
 
     async function loadAssignmentSummary() {
       var wrap = document.getElementById('assignmentSummaryWrap');
@@ -460,16 +492,17 @@
       }
     }
 
-    document.getElementById('asgFilterAssignment').addEventListener('change', renderAssignmentSummary);
-    document.getElementById('asgFilterYear').addEventListener('change', renderAssignmentSummary);
-    document.getElementById('asgFilterSemester').addEventListener('change', renderAssignmentSummary);
+    document.getElementById('asgFilterAssignment').addEventListener('change', rerenderAsg);
+    document.getElementById('asgSearch').addEventListener('input', rerenderAsg);
+    document.getElementById('asgFilterYear').addEventListener('change', rerenderAsg);
+    document.getElementById('asgFilterSemester').addEventListener('change', rerenderAsg);
 
     // ---------- ออกรายงาน (PDF / รูปภาพ) ของรายการที่กำลังแสดงอยู่ในแท็บ "สรุปแยกแต่ละงาน" ----------
     var exportReportModal = document.getElementById('exportReportModal');
     document.getElementById('btnExportReport').addEventListener('click', function () {
-      var wrap = document.getElementById('assignmentSummaryWrap');
-      if (!wrap.querySelector('.card')) { showToast('ไม่มีข้อมูลให้ออกรายงานในตอนนี้', true); return; }
-      fillExportSummary();
+      if (!filteredAssignments().length) { showToast('ไม่มีข้อมูลให้ออกรายงานในตอนนี้', true); return; }
+      expState.scope = 'all'; expState.picked = {};
+      fillExportSummary(); renderExpPick();
       showModalEl(exportReportModal);
     });
     document.getElementById('exportReportCancelBtn').addEventListener('click', function () { hideModalEl(exportReportModal); });
@@ -479,7 +512,7 @@
     // #assignmentSummaryWrap ชั่วคราวแค่ตอน capture แล้วลบออกทันทีหลัง capture เสร็จ ไม่กระทบหน้าจอจริงที่ผู้ใช้เห็น
     function fillExportSummary() {
       var asgSel = document.getElementById('asgFilterAssignment'), yearSel = document.getElementById('asgFilterYear'), semSel = document.getElementById('asgFilterSemester');
-      var cards = document.querySelectorAll('#assignmentSummaryWrap > .card').length;
+      var cards = filteredAssignments().length;
       var items = [
         ['fa-list-check', 'งาน', asgSel.value ? asgSel.options[asgSel.selectedIndex].textContent : 'ทุกงาน'],
         ['fa-calendar', 'ปีการศึกษา', yearSel.value || 'ทุกปีการศึกษา'],
@@ -491,11 +524,78 @@
       }).join('');
     }
 
+    var expState = { scope: 'all', picked: {} };
+    function renderExpPick() {
+      var list = filteredAssignments();
+      document.getElementById('expAllLbl').textContent = 'ทั้งหมด (' + list.length + ' งาน)';
+      Array.prototype.forEach.call(document.querySelectorAll('#expScope [data-xs]'), function (b) { var on = b.getAttribute('data-xs') === expState.scope; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+      var box = document.getElementById('expPick');
+      box.hidden = expState.scope !== 'pick';
+      box.innerHTML = list.map(function (a) {
+        var sem = a.semester === 'summer' ? 'ฤดูร้อน' : 'เทอม ' + a.semester;
+        return '<label class="aud-p"><input type="checkbox" data-xp="' + escapeHtml(a.eventId) + '"' + (expState.picked[a.eventId] ? ' checked' : '') + ' /><span>' + escapeHtml(a.title) + '</span><small>' + escapeHtml(sem + ' / ' + a.academicYear) + '</small></label>';
+      }).join('');
+    }
+    document.getElementById('expScope').addEventListener('click', function (e) { var b = e.target.closest('[data-xs]'); if (!b) return; expState.scope = b.getAttribute('data-xs'); renderExpPick(); });
+    document.getElementById('expPick').addEventListener('change', function (e) { var c = e.target.closest('[data-xp]'); if (!c) return; if (c.checked) expState.picked[c.getAttribute('data-xp')] = true; else delete expState.picked[c.getAttribute('data-xp')]; });
+    function reportAssignments() {
+      var list = filteredAssignments();
+      return expState.scope === 'pick' ? list.filter(function (a) { return expState.picked[a.eventId]; }) : list;
+    }
+    function reportTermLabel() {
+      var yearSel = document.getElementById('asgFilterYear'), semSel = document.getElementById('asgFilterSemester');
+      return (semSel.value === 'summer' ? 'ภาคฤดูร้อน' : semSel.value ? 'ภาคเรียนที่ ' + semSel.value : 'ทุกภาคเรียน') + ' ' + (yearSel.value ? 'ปีการศึกษา ' + yearSel.value : 'ทุกปีการศึกษา');
+    }
+    function cnt(a, st) { return a.rows.filter(function (r) { return r.status === st; }).length; }
+    // PDF (A4): ตารางรายงานแบบเดิม · ไม่แสดงชื่อ = เหลือตัวเลขสรุปของแต่ละงาน
+    function reportPdfHtml(list, showNames) {
+      return list.map(function (a) {
+        var dateRange = a.endDate && a.endDate !== a.date ? formatDateThai(a.date) + ' – ' + formatDateThai(a.endDate) : formatDateThai(a.date);
+        var semLabel = a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester;
+        var h = '<div class="rep-card"><div class="rep-t"><b>' + escapeHtml(a.title) + '</b><span>กำหนดส่ง: ' + dateRange + '</span></div>' +
+          '<div class="rep-m">' + escapeHtml(semLabel + ' · ปีการศึกษา ' + a.academicYear) + ' · <span class="badge badge-ontime">ตามกำหนด ' + cnt(a, 'onTime') + '</span> <span class="badge badge-late">หลังกำหนด ' + cnt(a, 'late') + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + cnt(a, 'missing') + '</span> · ทั้งหมด ' + a.rows.length + ' คน</div>';
+        if (showNames) {
+          h += '<table class="rep-tb"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th></tr></thead><tbody>' +
+            a.rows.map(function (r) { return '<tr><td>' + escapeHtml(r.userName) + '</td><td>' + statusBadge(r.status) + '</td><td>' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '-') + '</td></tr>'; }).join('') + '</tbody></table>';
+        }
+        return h + '</div>';
+      }).join('');
+    }
+    // รูปภาพ: Infographic แบบ A (แถบความคืบหน้า) — ตรงเวลา / หลังกำหนด / ยังไม่ส่ง
+    function reportInfographicHtml(list, showNames) {
+      var on = 0, lt = 0, ms = 0, users = {};
+      list.forEach(function (a) { on += cnt(a, 'onTime'); lt += cnt(a, 'late'); ms += cnt(a, 'missing'); a.rows.forEach(function (r) { users[r.userId] = 1; }); });
+      var tt = on + lt + ms || 1, pct = Math.round((on + lt) * 100 / tt);
+      var st = _settingsCache || cachedBrand() || {};
+      var logo = st.logoDataUrl ? '<img src="' + st.logoDataUrl + '" alt="" />' : '<i class="fa-solid fa-chart-pie"></i>';
+      var r = 26, c = 2 * Math.PI * r, off = 0, ring = '';
+      [[on, '#16a34a'], [lt, '#f59e0b'], [ms, '#ef4444']].forEach(function (x) { var l = c * x[0] / tt; ring += '<circle cx="32" cy="32" r="' + r + '" fill="none" stroke="' + x[1] + '" stroke-width="10" stroke-dasharray="' + l.toFixed(2) + ' ' + (c - l).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 32 32)"/>'; off += l; });
+      var h = '<div class="ig-hd"><div class="ig-logo">' + logo + '</div><div><h1>รายงานสรุปการส่งงาน</h1><p>' + escapeHtml((st.schoolName || st.siteName || '') ? (st.schoolName || st.siteName) + ' · ' : '') + escapeHtml(reportTermLabel()) + ' · ครู ' + Object.keys(users).length + ' คน</p></div></div>' +
+        '<div class="ig-leg"><span><i style="background:#16a34a"></i>ส่งตรงเวลา</span><span><i style="background:#f59e0b"></i>ส่งหลังกำหนด</span><span><i style="background:#ef4444"></i>ยังไม่ส่ง</span></div>' +
+        '<div class="ig-kpis"><div class="ig-kpi big"><svg width="64" height="64" viewBox="0 0 64 64">' + ring + '</svg><div><b>' + pct + '%</b><span>ส่งแล้วภาพรวม</span></div></div>' +
+        '<div class="ig-kpi"><b style="color:#16a34a">' + on + '</b><span>ส่งตรงเวลา</span></div><div class="ig-kpi"><b style="color:#d97706">' + lt + '</b><span>ส่งหลังกำหนด</span></div><div class="ig-kpi"><b style="color:#dc2626">' + ms + '</b><span>ยังไม่ส่ง</span></div></div>';
+      list.forEach(function (a) {
+        var o = cnt(a, 'onTime'), l = cnt(a, 'late'), m = cnt(a, 'missing'), t = a.rows.length || 1;
+        var dept = _catDeptMap[a.categoryId] || '', col = dept ? (deptThemeColor(dept) || '#475569') : '#475569';
+        var dr = a.endDate && a.endDate !== a.date ? formatDateThai(a.date) + ' – ' + formatDateThai(a.endDate) : formatDateThai(a.date);
+        var seg = function (n, bg) { return n ? '<i style="width:' + (n * 100 / t).toFixed(2) + '%;background:' + bg + '">' + (n * 100 / t >= 5 ? n : '') + '</i>' : ''; };
+        h += '<div class="ig-row"><div class="ig-rt"><span class="ig-name">' + escapeHtml(a.title) + '</span>' + (dept ? '<span class="ig-gb" style="background:' + col + '">' + escapeHtml(String(dept).replace(/^กลุ่มบริหารงาน/, '')) + '</span>' : '') + '<span class="ig-d">' + escapeHtml(dr) + ' · ส่งแล้ว ' + (o + l) + '/' + a.rows.length + '</span></div>' +
+          '<div class="ig-bar">' + seg(o, '#16a34a') + seg(l, '#f59e0b') + seg(m, '#ef4444') + '</div>';
+        if (showNames && m) {
+          var names = a.rows.filter(function (r) { return r.status === 'missing'; }).map(function (r) { return r.userName; });
+          h += '<div class="ig-pn"><b>ยังไม่ส่ง:</b> ' + escapeHtml(names.slice(0, 30).join(' · ')) + (names.length > 30 ? ' และอีก ' + (names.length - 30) + ' คน' : '') + '</div>';
+        }
+        h += '</div>';
+      });
+      var now = new Date();
+      return h + '<div class="ig-foot"><span>ออกรายงานวันที่ ' + escapeHtml(formatDateThai(now.toISOString())) + ' เวลา ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' น.</span><span>' + escapeHtml(st.siteName || 'BNKAcademicHub') + '</span></div>';
+    }
     function buildReportHeadingEl() {
       var asgSel = document.getElementById('asgFilterAssignment');
       var yearSel = document.getElementById('asgFilterYear');
       var semSel = document.getElementById('asgFilterSemester');
       var asgLabel = asgSel.value ? asgSel.options[asgSel.selectedIndex].textContent : 'ทุกงาน';
+      if (expState.scope === 'pick') { var pl = reportAssignments().map(function (x) { return x.title; }); asgLabel = pl.length > 3 ? pl.slice(0, 3).join(', ') + ' และอีก ' + (pl.length - 3) + ' งาน' : pl.join(', '); }
       var yearLabel = yearSel.value ? ('ปีการศึกษา ' + yearSel.value) : 'ทุกปีการศึกษา';
       var semLabel = semSel.value === 'summer' ? 'ภาคฤดูร้อน' : semSel.value ? ('ภาคเรียนที่ ' + semSel.value) : 'ทุกภาคเรียน';
       var el = document.createElement('div');
@@ -513,15 +613,21 @@
     }
 
     async function exportReport(kind) {
+      var list = reportAssignments(), showNames = document.getElementById('expShowNames').checked;
+      if (!list.length) { showToast('กรุณาเลือกงานที่จะรายงานอย่างน้อย 1 งาน', true); return; }
       hideModalEl(exportReportModal);
-      var target = document.getElementById('assignmentSummaryWrap');
+      // 1.68: สร้างหน้ารายงานแยก (นอกจอ) ตามงานที่เลือก — PDF = ตาราง A4 · รูปภาพ = Infographic
+      var target = document.createElement('div');
+      target.className = kind === 'image' ? 'rep-ig' : 'rep-pdf';
+      target.innerHTML = kind === 'image' ? reportInfographicHtml(list, showNames) : reportPdfHtml(list, showNames);
+      document.body.appendChild(target);
       // บังคับออกรายงานเป็นโหมดสว่างเสมอ ไม่ว่าผู้ใช้จะเปิดใช้งาน Dark Mode อยู่หรือไม่ (ตั้งแต่ V9.9)
       // สลับ data-theme ของทั้งหน้าเป็น "light" ชั่วคราวก่อน capture แล้วค่อยคืนค่าเดิมกลับหลัง capture เสร็จ (ไม่แตะ localStorage จึงไม่กระทบธีมที่ผู้ใช้ตั้งไว้)
       var prevTheme = document.documentElement.getAttribute('data-theme');
       var headingEl = buildReportHeadingEl();
       var r = await withProgress('กำลังสร้างไฟล์รายงาน', async function () {
         document.documentElement.setAttribute('data-theme', 'light');
-        target.insertBefore(headingEl, target.firstChild);
+        if (kind !== 'image') target.insertBefore(headingEl, target.firstChild);
         // รอ 2 เฟรมให้เบราว์เซอร์ apply ตัวแปรสี CSS ของโหมดสว่างให้เสร็จก่อนเริ่ม capture + รอให้ไอคอน Font Awesome (เว็บฟอนต์)
         // โหลด/พร้อมเต็มที่ก่อน (document.fonts.ready) กัน html2canvas แคปเจอร์ไปตอนไอคอนยังไม่ขึ้นสมบูรณ์ จะเห็นเป็นสี่เหลี่ยม/จางผิดสี
         await new Promise(function (resolve) { requestAnimationFrame(function () { requestAnimationFrame(resolve); }); });
@@ -590,6 +696,7 @@
           return { ok: true };
         } finally {
           headingEl.remove();
+          target.remove();
           if (prevTheme) document.documentElement.setAttribute('data-theme', prevTheme);
           else document.documentElement.removeAttribute('data-theme');
         }

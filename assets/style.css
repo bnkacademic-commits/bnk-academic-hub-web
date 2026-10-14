@@ -2512,3 +2512,94 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .certno-mode { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--primary-light); border: 1.5px solid color-mix(in srgb, var(--primary) 35%, var(--surface)); flex-wrap: wrap; }
 .certno-mode button { display: inline-flex; align-items: center; gap: 7px; border: 0; background: none; border-radius: 9px; padding: 7px 14px; font: inherit; font-size: 0.88rem; font-weight: 700; color: var(--primary-dark); cursor: pointer; }
 .certno-mode button.on { background: var(--primary); color: #fff; }
+
+/* ===== 1.68 ===== */
+/* แถบเมนูข้าง: ตอนเปิดหน้าใหม่ไม่เล่นอนิเมชั่นกาง/หุบ (จัดตามสถานะที่จำไว้ทันที) */
+.nav-noanim .sidenav, .nav-noanim .sidenav-label, .nav-noanim body.has-sidenav > .container, .nav-noanim body.has-sidenav > #app-footer { transition: none !important; }
+/* ปุ่มรีเฟรช (ไอคอนอย่างเดียว) หน้าคลังเกียรติบัตร/คลังคำสั่ง */
+.page-refresh-btn { width: 42px; min-width: 42px; height: 42px; padding: 0; justify-content: center; border: 1.5px solid var(--ctl-border); background: var(--surface); color: var(--primary-dark); border-radius: 12px; }
+.page-refresh-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+.page-refresh-btn.spinning i { animation: pageRefreshSpin 0.8s linear infinite; }
+@keyframes pageRefreshSpin { to { transform: rotate(360deg); } }
+.ord-head-btns { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+.cert-head-btns .page-refresh-btn { height: auto; align-self: stretch; }
+/* ตัวเลือก "สำหรับ" (ทั้งหมด / กลุ่มบริหารงาน / รายบุคคล) ในป็อปอัพกำหนดการ/ประกาศ */
+.aud-pick { display: flex; flex-direction: column; gap: 8px; }
+.aud-seg { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1.5px solid var(--ctl-border); flex-wrap: wrap; }
+.aud-seg button { flex: 1 1 0; min-width: max-content; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; background: none; border-radius: 9px; padding: 7px 10px; font: inherit; font-size: 0.86rem; font-weight: 700; color: var(--ctl-text); cursor: pointer; }
+.aud-seg button.on { background: var(--primary); color: #fff; }
+.aud-groups { display: flex; flex-wrap: wrap; gap: 8px; }
+.aud-groups[hidden], .aud-people[hidden] { display: none; }
+.aud-g { --g: var(--primary); display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; border: 1.5px solid color-mix(in srgb, var(--g) 40%, var(--surface)); background: color-mix(in srgb, var(--g) 7%, var(--surface)); font-size: 0.86rem; font-weight: 700; cursor: pointer; }
+.aud-g.on { background: var(--g); border-color: var(--g); color: #fff; }
+.aud-g input { margin: 0; }
+.aud-people { border: 1.5px solid var(--ctl-border); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.aud-sel { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.aud-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--primary-light); color: var(--primary-dark); border-radius: 999px; padding: 2px 4px 2px 10px; font-size: 0.8rem; font-weight: 700; }
+.aud-chip button { border: 0; background: none; color: inherit; cursor: pointer; font-size: 0.75rem; padding: 2px 5px; border-radius: 50%; }
+.aud-count { font-size: 0.78rem; color: var(--text-muted); margin-left: 4px; }
+.aud-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; }
+.aud-p { display: flex; align-items: center; gap: 8px; padding: 6px 6px; border-radius: 8px; font-size: 0.88rem; cursor: pointer; }
+.aud-p:hover { background: var(--surface-2); }
+.aud-p input { margin: 0; }
+.aud-p small { margin-left: auto; color: var(--text-muted); font-size: 0.72rem; }
+/* หน้าสรุปรวม: ตัวเลือกในป็อปอัพส่งออกรายงาน */
+.exp-sec { margin: 0 0 12px; text-align: left; }
+.exp-lbl { font-size: 0.82rem; font-weight: 800; margin-bottom: 6px; }
+.exp-pick { margin-top: 8px; max-height: 220px; overflow-y: auto; border: 1.5px solid var(--ctl-border); border-radius: 12px; padding: 6px; }
+.exp-pick[hidden] { display: none; }
+.exp-names { margin: 0 0 14px; }
+/* หน้ารายงานที่สร้างไว้จับภาพ (อยู่หลังป็อปอัพระหว่างสร้าง แล้วลบทิ้ง) — สีโหมดสว่างเสมอ */
+.rep-pdf, .rep-ig { position: absolute; left: 0; top: 0; z-index: -1; background: #fff; color: #1e293b; box-sizing: border-box; }
+.rep-pdf { width: 1000px; padding: 24px; }
+.rep-card { border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+.rep-t { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 1.05rem; }
+.rep-t span { font-size: 0.85rem; color: #64748b; }
+.rep-m { font-size: 0.85rem; color: #475569; margin: 6px 0 10px; }
+.rep-tb { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.rep-tb th, .rep-tb td { border-bottom: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; }
+.rep-ig { width: 820px; padding: 34px 36px 28px; font-size: 16px; }
+.rep-ig .ig-hd { display: flex; align-items: center; gap: 14px; }
+.rep-ig .ig-logo { width: 54px; height: 54px; border-radius: 50%; background: #0b6fcc; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; overflow: hidden; flex-shrink: 0; }
+.rep-ig .ig-logo img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
+.rep-ig h1 { margin: 0; font-size: 26px; line-height: 1.25; }
+.rep-ig .ig-hd p { margin: 2px 0 0; color: #64748b; font-size: 14px; }
+.rep-ig .ig-leg { display: flex; gap: 16px; font-size: 13px; color: #475569; margin: 14px 0 0; }
+.rep-ig .ig-leg i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.rep-ig .ig-kpis { display: grid; grid-template-columns: 1.25fr 1fr 1fr 1fr; gap: 12px; margin: 20px 0 22px; }
+.rep-ig .ig-kpi { border-radius: 16px; padding: 14px 16px; background: #f1f5f9; }
+.rep-ig .ig-kpi b { display: block; font-size: 30px; line-height: 1.1; }
+.rep-ig .ig-kpi span { font-size: 13px; color: #475569; }
+.rep-ig .ig-kpi.big { background: linear-gradient(135deg, var(--grad-1), var(--grad-3)); color: #fff; display: flex; align-items: center; gap: 12px; }
+.rep-ig .ig-kpi.big span { color: rgba(255, 255, 255, 0.85); }
+.rep-ig .ig-row { margin: 0 0 16px; }
+.rep-ig .ig-rt { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; }
+.rep-ig .ig-name { min-width: 0; overflow-wrap: anywhere; }
+.rep-ig .ig-gb { font-size: 11px; font-weight: 800; color: #fff; border-radius: 999px; padding: 2px 9px; flex-shrink: 0; }
+.rep-ig .ig-d { margin-left: auto; font-weight: 600; font-size: 12px; color: #64748b; flex-shrink: 0; }
+.rep-ig .ig-bar { display: flex; height: 22px; border-radius: 999px; overflow: hidden; margin-top: 6px; background: #e2e8f0; }
+.rep-ig .ig-bar i { height: 100%; color: #fff; font-size: 11px; font-weight: 800; font-style: normal; display: flex; align-items: center; justify-content: center; }
+.rep-ig .ig-pn { font-size: 12.5px; color: #475569; margin-top: 6px; line-height: 1.7; }
+.rep-ig .ig-pn b { color: #dc2626; }
+.rep-ig .ig-foot { margin-top: 22px; padding-top: 12px; border-top: 1px dashed #cbd5e1; font-size: 12px; color: #94a3b8; display: flex; justify-content: space-between; }
+/* หน้าแรก: หัวปฏิทิน — ป้ายภาคเรียนข้างคำว่า "ปฏิทิน" · ตัวเลือกเดือนแบบตาราง (ปีแถบบน) */
+.cal-title-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+.cal-title-wrap .term-badge { margin: 0; padding: 4px 11px; font-size: 0.8rem; }
+.calendar-header { gap: 10px; flex-wrap: wrap; }
+.cal-nav { display: flex; gap: 6px; align-items: center; position: relative; }
+.month-pick-btn { border: 1.5px solid transparent; background: none; font: inherit; font-weight: 700; color: var(--text); border-radius: 10px; padding: 4px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.month-pick-btn::after { content: ''; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid currentColor; opacity: 0.6; }
+.month-pick-btn:hover, .month-pick-btn[aria-expanded="true"] { border-color: var(--ctl-border); background: var(--surface-2); }
+.cal-mpick { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; width: 280px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-lg); padding: 10px; }
+.cal-mpick[hidden] { display: none; }
+.cal-mpick-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.cal-mpick-year { font-weight: 800; font-size: 1rem; }
+.cal-mpick-arrow { width: 34px; height: 34px; border: 0; border-radius: 9px; background: var(--surface-2); color: var(--text); cursor: pointer; }
+.cal-mpick-arrow:hover { background: var(--primary-light); color: var(--primary-dark); }
+.cal-mpick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.cal-mpick-grid button { border: 1.5px solid transparent; background: var(--surface-2); border-radius: 10px; padding: 12px 0; font: inherit; font-size: 0.86rem; font-weight: 700; color: var(--text); cursor: pointer; }
+.cal-mpick-grid button:hover { border-color: var(--primary); }
+.cal-mpick-grid button.cur { border-color: var(--primary); color: var(--primary-dark); }
+.cal-mpick-grid button.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+.cal-mpick-today { width: 100%; margin-top: 8px; border: 0; background: none; color: var(--primary-dark); font: inherit; font-size: 0.82rem; font-weight: 700; padding: 6px; border-radius: 8px; cursor: pointer; }
+.cal-mpick-today:hover { background: var(--primary-light); }

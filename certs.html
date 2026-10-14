@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>คลังเกียรติบัตร — BNKAcademicHub</title>
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.67.141026" />
+<link rel="stylesheet" href="assets/style.css?v=1.68.141026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -24,6 +24,7 @@
         <p id="certSubtitle">เกียรติบัตรของครู นักเรียน และโรงเรียน</p>
       </div>
       <div class="cert-head-btns">
+        <button type="button" class="btn page-refresh-btn" id="certRefreshBtn" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
         <button type="button" class="btn cert-share-btn" id="certShareAllBtn"><i class="fa-solid fa-share-nodes"></i> แชร์หน้าค้นหา</button>
         <!-- 1.61: ปุ่มเพิ่ม 2 ปุ่มเด่นเท่ากัน แยกสีตายตัว (ภายนอก = เขียว · ภายใน = ส้ม) ไม่เปลี่ยนตามธีมสีของระบบ -->
         <button type="button" class="btn cert-hbtn ext" id="certAddExtBtn" hidden title="แนบไฟล์ให้ครบทุกคน"><i class="fa-solid fa-earth-asia"></i> เพิ่มเกียรติบัตรภายนอก</button>
@@ -175,7 +176,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.67.141026"></script>
+  <script src="assets/api.js?v=1.68.141026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -416,29 +417,42 @@
 
     // 1.63: โหลดทีละปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · เลือก "ทุกปีการศึกษา" จึงโหลดทั้งหมด · ปีที่โหลดแล้วจำไว้ (certCache)
     var certCache = makeYearCache(function (y) { return apiCall('certList', { year: y }); });
-    async function load() { certCache.clear(); await loadYear(selYear); }
-    async function loadYear(y) {
-      if (!curTerm) { try { curTerm = await currentAcademicTerm(); } catch (e) { curTerm = { year: '' }; } }
-      if (y === null || y === undefined) y = String(curTerm.year || '');
-      selYear = y;
-      if (!certCache.has(y)) $('certRoot').innerHTML = yearLoadingHtml(y);
-      try {
-        var res = await certCache.get(y);
-        if (selYear !== y) return; // เปลี่ยนปีอีกครั้งระหว่างรอ
-        certs = res.certs || []; activities = res.activities || []; agencies = res.agencies || []; levels = res.levels || []; people = res.people || []; me = res.me;
-        allYears = res.years || []; pendingMine = res.pendingMine || [];
-        canAdd = !!res.canAdd; canMerge = !!res.canMergeActivities; schoolName = res.schoolName || ''; summerOn = res.summerEnabled !== false;
-        if (res.numbering) numbering = res.numbering;
-      } catch (err) {
-        $('certRoot').innerHTML = '<div class="error-box">' + escapeHtml(err.message || 'โหลดข้อมูลไม่สำเร็จ') + '</div>';
-        return;
-      }
+    async function load() { certCache.clear(); await loadYear(selYear, true); }
+    // 1.68: จำรายการล่าสุดของแต่ละปีไว้ในแท็บเบราว์เซอร์นี้ (sessionStorage — ปิดเบราว์เซอร์แล้วหาย) เปิดหน้าครั้งถัดไปแสดงทันที แล้วค่อยอัพเดตเป็นข้อมูลล่าสุด
+    function certSnapKey(y) { return 'bnkah_certs_snap_' + ((session && (session.id || session.username)) || '') + '_' + y; }
+    function readCertSnap(y) { try { var v = sessionStorage.getItem(certSnapKey(y)); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+    function writeCertSnap(y, res) { try { var t = JSON.stringify(res); if (t.length < 1500000) sessionStorage.setItem(certSnapKey(y), t); } catch (e) { /* เต็ม/ปิดไว้ — ไม่เป็นไร */ } }
+    function applyCertRes(res) {
+      certs = res.certs || []; activities = res.activities || []; agencies = res.agencies || []; levels = res.levels || []; people = res.people || []; me = res.me;
+      allYears = res.years || []; pendingMine = res.pendingMine || [];
+      canAdd = !!res.canAdd; canMerge = !!res.canMergeActivities; schoolName = res.schoolName || ''; summerOn = res.summerEnabled !== false;
+      if (res.numbering) numbering = res.numbering;
       $('certAddIntBtn').hidden = !canAdd; $('certAddExtBtn').hidden = !canAdd;
       $('certMergeBtn').hidden = !canMerge || !(activities.length || agencies.length || levels.length);
       $('certSubtitle').textContent = 'เกียรติบัตรของครู นักเรียน และโรงเรียน' + (canAdd ? '' : ' (ดูได้อย่างเดียว)');
       $('certSubtitle').title = canAdd ? 'ครูและเจ้าหน้าที่เพิ่มได้ · แก้ไข/ลบได้เฉพาะผู้เพิ่มและเจ้าหน้าที่' : '';
       fillFilters();
       rerender();
+    }
+    async function loadYear(y, force) {
+      if (!curTerm) { try { curTerm = await currentAcademicTerm(); } catch (e) { curTerm = { year: '' }; } }
+      if (y === null || y === undefined) y = String(curTerm.year || '');
+      selYear = y;
+      var snap = null;
+      if (!certCache.has(y)) {
+        snap = force ? null : readCertSnap(y);
+        if (snap) applyCertRes(snap); else $('certRoot').innerHTML = yearLoadingHtml(y);
+      }
+      var res;
+      try {
+        res = await certCache.get(y);
+        if (selYear !== y) return; // เปลี่ยนปีอีกครั้งระหว่างรอ
+        writeCertSnap(y, res);
+      } catch (err) {
+        if (!snap) $('certRoot').innerHTML = '<div class="error-box">' + escapeHtml(err.message || 'โหลดข้อมูลไม่สำเร็จ') + '</div>';
+        return;
+      }
+      applyCertRes(res);
     }
 
     // ================= ป็อปอัพ เพิ่ม/แก้ไข =================
@@ -1070,7 +1084,13 @@
           if (r.ok) await load();
         }
       });
-      load();
+      // 1.68: ปุ่มเพิ่มขึ้นทันทีตามประเภทบัญชี (ครู/เจ้าหน้าที่) ไม่ต้องรอรายการโหลดเสร็จ — Worker ยังตรวจสิทธิ์ตอนบันทึกเหมือนเดิม
+      if (session && (session.role === 'teacher' || session.role === 'admin')) { $('certAddIntBtn').hidden = false; $('certAddExtBtn').hidden = false; }
+      $('certRefreshBtn').addEventListener('click', async function () {
+        var b = this; b.classList.add('spinning'); b.disabled = true;
+        try { await load(); } finally { b.classList.remove('spinning'); b.disabled = false; }
+      });
+      loadYear(); // เปิดหน้า = แสดงรายการที่จำไว้ก่อน (ถ้ามี) แล้วอัพเดต · load() = โหลดใหม่ทั้งหมด (หลังบันทึก/รีเฟรช)
     }
   </script>
 </body>

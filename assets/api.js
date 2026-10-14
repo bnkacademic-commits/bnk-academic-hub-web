@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.67.141026';
+var APP_VERSION = '1.68.141026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1294,7 +1294,7 @@ var NAV_PIN_KEY = 'bnkah_nav_pinned';
 function _navIsMobile() { return window.matchMedia('(max-width: 767px)').matches; }
 function _navGetPinned() {
   try { var v = localStorage.getItem(NAV_PIN_KEY); if (v === '1') return true; if (v === '0') return false; } catch (e) { /* ใช้ค่าเริ่มต้น */ }
-  return window.innerWidth >= 1280;
+  return false; // 1.68: ค่าเริ่มต้น = ย่อ (เดิมจอกว้าง ≥1280px เริ่มแบบขยาย)
 }
 function mountSideNav(links, activePage) {
   var old = document.getElementById('app-sidenav');
@@ -1346,7 +1346,10 @@ function mountSideNav(links, activePage) {
   window.addEventListener('resize', function () { if (!_navIsMobile()) mobileOpen = false; syncTopbarHeight(); render(); });
   syncTopbarHeight();
   if (window.ResizeObserver) { var tbEl = document.querySelector('.topbar'); if (tbEl) new ResizeObserver(syncTopbarHeight).observe(tbEl); }
+  // 1.68: เปิดหน้าใหม่ = จัดสถานะย่อ/ขยายทันทีโดยไม่มีอนิเมชั่น (สคริปต์บนหัวหน้าใส่ .nav-noanim ไว้) — อนิเมชั่นเหลือเฉพาะตอนกดปุ่มเอง
+  document.documentElement.classList.add('nav-noanim');
   render();
+  requestAnimationFrame(function () { requestAnimationFrame(function () { document.documentElement.classList.remove('nav-noanim'); }); });
 }
 
 function mountChrome(activePage) {
@@ -1673,3 +1676,84 @@ function _isForcedLightPage() {
   return _isLoginPage() || /\/view\.html$/.test(location.pathname);
 }
 applyTheme(_isForcedLightPage() ? 'light' : getTheme());
+
+// ---------- 1.68: ตัวเลือกกลุ่มเป้าหมาย (สำหรับ) ของกำหนดการ/ประกาศ ----------
+// ค่าที่เก็บ: 'all' | 'g:กลุ่ม|กลุ่ม' | 'u:id|id' (ค่าเดิม = userId คนเดียว) — Worker ตรวจ/กรองด้วยรูปแบบเดียวกัน (lib/util.js)
+function parseAudienceStr(a) {
+  var s = String(a || 'all');
+  if (s === 'all') return { type: 'all', ids: [] };
+  if (s.indexOf('g:') === 0) return { type: 'groups', ids: s.slice(2).split('|').filter(Boolean) };
+  if (s.indexOf('u:') === 0) return { type: 'people', ids: s.slice(2).split('|').filter(Boolean) };
+  return { type: 'people', ids: [s] };
+}
+function audienceLabel(a, users) {
+  var p = parseAudienceStr(a);
+  if (p.type === 'all') return 'ทั้งหมด';
+  if (p.type === 'groups') return p.ids.map(function (d) { return groupLabel(d); }).join(', ');
+  var names = p.ids.map(function (id) { var u = (users || []).filter(function (x) { return x.id === id; })[0]; return u ? u.name : ''; }).filter(Boolean);
+  if (!names.length) return 'รายบุคคล ' + p.ids.length + ' คน';
+  return names.length > 3 ? names.slice(0, 3).join(', ') + ' และอีก ' + (names.length - 3) + ' คน' : names.join(', ');
+}
+// สร้างตัวเลือกใน el (div ว่าง) — opts: { departments: [...], users: [{id,name,department}] } · คืน { get(), set(a), check() }
+function createAudiencePicker(el, opts) {
+  opts = opts || {};
+  var state = { type: 'all', groups: {}, people: {} };
+  var q = '';
+  el.classList.add('aud-pick');
+  el.innerHTML =
+    '<div class="aud-seg" role="radiogroup" aria-label="สำหรับ">' +
+      '<button type="button" role="radio" data-aud="all"><i class="fa-solid fa-users" aria-hidden="true"></i> ทั้งหมด</button>' +
+      '<button type="button" role="radio" data-aud="groups"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> กลุ่มบริหารงาน</button>' +
+      '<button type="button" role="radio" data-aud="people"><i class="fa-solid fa-user-check" aria-hidden="true"></i> รายบุคคล</button>' +
+    '</div>' +
+    '<div class="aud-groups" hidden></div>' +
+    '<div class="aud-people" hidden><div class="aud-sel"></div><input type="search" class="aud-q" placeholder="ค้นหาชื่อ…" aria-label="ค้นหาชื่อ" /><div class="aud-list"></div></div>';
+  var seg = el.querySelector('.aud-seg'), gBox = el.querySelector('.aud-groups'), pBox = el.querySelector('.aud-people');
+  function users() { return (typeof opts.users === 'function' ? opts.users() : opts.users) || []; }
+  function depts() { return (typeof opts.departments === 'function' ? opts.departments() : opts.departments) || []; }
+  function render() {
+    Array.prototype.forEach.call(seg.querySelectorAll('[data-aud]'), function (b) { var on = b.getAttribute('data-aud') === state.type; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    gBox.hidden = state.type !== 'groups'; pBox.hidden = state.type !== 'people';
+    if (state.type === 'groups') {
+      gBox.innerHTML = depts().map(function (d) {
+        var c = deptThemeColor(d), on = !!state.groups[d];
+        return '<label class="aud-g' + (on ? ' on' : '') + '"' + (c ? ' style="--g:' + c + '"' : '') + '><input type="checkbox" data-g="' + escapeHtml(d) + '"' + (on ? ' checked' : '') + ' /><span>' + escapeHtml(groupLabel(d)) + '</span></label>';
+      }).join('') || '<div class="hint">ยังไม่มีกลุ่มบริหารงาน</div>';
+    }
+    if (state.type === 'people') {
+      var us = users(), sel = us.filter(function (u) { return state.people[u.id]; });
+      pBox.querySelector('.aud-sel').innerHTML = sel.length ? sel.map(function (u) { return '<span class="aud-chip">' + escapeHtml(u.name) + '<button type="button" data-unp="' + escapeHtml(u.id) + '" aria-label="เอาออก">✕</button></span>'; }).join('') + '<span class="aud-count">เลือก ' + sel.length + ' คน</span>' : '<span class="hint">ยังไม่ได้เลือก — ติ๊กชื่อด้านล่าง</span>';
+      var nq = q.replace(/\s+/g, '').toLowerCase();
+      var list = us.filter(function (u) { return !nq || String(u.name).replace(/\s+/g, '').toLowerCase().indexOf(nq) !== -1 || String(u.department || '').indexOf(q.trim()) !== -1; });
+      pBox.querySelector('.aud-list').innerHTML = list.map(function (u) {
+        return '<label class="aud-p"><input type="checkbox" data-p="' + escapeHtml(u.id) + '"' + (state.people[u.id] ? ' checked' : '') + ' /><span>' + escapeHtml(u.name) + '</span>' + (u.department ? '<small>' + escapeHtml(groupLabel(u.department)) + '</small>' : '') + '</label>';
+      }).join('') || '<div class="hint" style="padding:8px">ไม่พบชื่อ</div>';
+    }
+  }
+  seg.addEventListener('click', function (e) { var b = e.target.closest('[data-aud]'); if (!b) return; state.type = b.getAttribute('data-aud'); render(); });
+  gBox.addEventListener('change', function (e) { var c = e.target.closest('[data-g]'); if (!c) return; if (c.checked) state.groups[c.getAttribute('data-g')] = true; else delete state.groups[c.getAttribute('data-g')]; render(); });
+  pBox.addEventListener('change', function (e) { var c = e.target.closest('[data-p]'); if (!c) return; if (c.checked) state.people[c.getAttribute('data-p')] = true; else delete state.people[c.getAttribute('data-p')]; render(); });
+  pBox.addEventListener('click', function (e) { var b = e.target.closest('[data-unp]'); if (!b) return; delete state.people[b.getAttribute('data-unp')]; render(); });
+  pBox.querySelector('.aud-q').addEventListener('input', function () { q = this.value; render(); });
+  var api = {
+    get: function () {
+      if (state.type === 'groups') return 'g:' + Object.keys(state.groups).join('|');
+      if (state.type === 'people') return 'u:' + Object.keys(state.people).join('|');
+      return 'all';
+    },
+    set: function (a) {
+      var p = parseAudienceStr(a); state = { type: p.type, groups: {}, people: {} }; q = ''; pBox.querySelector('.aud-q').value = '';
+      p.ids.forEach(function (id) { if (p.type === 'groups') state.groups[id] = true; else state.people[id] = true; });
+      render();
+    },
+    // คืนข้อความผิดพลาด หรือ '' ถ้าใช้ได้
+    check: function () {
+      if (state.type === 'groups' && !Object.keys(state.groups).length) return 'กรุณาเลือกกลุ่มบริหารงานอย่างน้อย 1 กลุ่ม';
+      if (state.type === 'people' && !Object.keys(state.people).length) return 'กรุณาเลือกบุคคลอย่างน้อย 1 คน';
+      return '';
+    },
+    refresh: render
+  };
+  render();
+  return api;
+}
