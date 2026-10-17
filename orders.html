@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.78.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.79.171026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -27,18 +27,22 @@
         <button type="button" class="btn btn-primary" id="ordAddBtn" hidden><i class="fa-solid fa-plus"></i> เพิ่มคำสั่ง</button>
       </div>
     </div>
-    <div class="orders-toolbar">
-      <!-- 1.47.121026: ไม่มีตัวกรอง/หัวข้อแยกตามกลุ่มบริหารงานแล้ว (ค้นหาชื่อกลุ่มในช่องค้นหาได้) -->
-      <input type="search" id="ordSearch" placeholder="ค้นหาคำสั่ง (ชื่อ เลขที่ กลุ่ม ผู้รับผิดชอบ)" title="ค้นหาจากชื่อคำสั่ง เลขที่ กลุ่มบริหารงาน กลุ่มสาระฯ หรือผู้รับผิดชอบ" aria-label="ค้นหา" />
-      <select id="ordSubject" aria-label="กรองตามกลุ่มสาระการเรียนรู้"></select>
-      <select id="ordYear" aria-label="กรองตามปีการศึกษา"></select>
-      <select id="ordMine" aria-label="กรองตามความเกี่ยวข้อง">
-        <option value="">ทุกคำสั่ง</option>
-        <option value="mine">ที่ฉันอัพโหลด</option>
-        <option value="resp">ที่ฉันรับผิดชอบ</option>
-      </select>
+    <!-- 1.79: แถบตัวกรองมาตรฐาน (ค้นหา → ปีการศึกษา → ภาคเรียน → กลุ่ม → ทั้งหมด/ของฉัน) -->
+    <div class="flt" id="ordFlt">
+      <input type="search" class="flt-q" id="ordSearch" placeholder="ค้นหาคำสั่ง (ชื่อ เลขที่ ผู้รับผิดชอบ)" aria-label="ค้นหา" />
+      <button type="button" class="flt-toggle" aria-haspopup="dialog"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง <span class="flt-n" hidden></span></button>
+      <div class="flt-backdrop"></div>
+      <div class="flt-panel" role="group" aria-label="ตัวกรอง">
+        <div class="flt-head"><span><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง</span><button type="button" class="modal-close-x flt-x" aria-label="ปิด">✕</button></div>
+        <label class="flt-f"><span>ปีการศึกษา</span><select id="ordYear" aria-label="ปีการศึกษา"></select></label>
+        <label class="flt-f"><span>ภาคเรียน</span><select id="ordSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select></label>
+        <label class="flt-f"><span>กลุ่ม</span><select id="ordSubject" aria-label="กลุ่มบริหารงาน / กลุ่มสาระการเรียนรู้"></select></label>
+        <label class="flt-f"><span>แสดง</span><select id="ordMine" aria-label="แสดง"><option value="">ทั้งหมด</option><option value="mine">ที่ฉันเพิ่ม</option><option value="resp">ที่ฉันรับผิดชอบ</option></select></label>
+        <div class="flt-acts"><button type="button" class="btn btn-close flt-clear" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i> ล้างตัวกรอง</button><button type="button" class="btn btn-success flt-done">แสดงผล</button></div>
+      </div>
     </div>
-    <div class="year-scope-hint" id="ordYearHint" hidden></div>
+    <div class="flt-chips" id="ordFltChips"></div>
+    <div class="flt-meta"><span class="flt-count" id="ordFltCount"></span><span class="year-scope-hint" id="ordYearHint" hidden></span></div>
     <div id="ordRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
 
@@ -143,7 +147,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.78.171026"></script>
+  <script src="assets/api.js?v=1.79.171026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -165,12 +169,14 @@
     function yearOf(o) { return o.academicYear || String(Number(String(o.orderDate).slice(0, 4)) + 543); }
 
     // 1.48.121026: ตัวกรองปีการศึกษาเริ่มต้นที่ปีการศึกษาปัจจุบัน (ครั้งแรกที่เปิดหน้า) และมีตัวเลือกปีนี้เสมอแม้ยังไม่มีคำสั่ง
+    var fltBar = initFilterBar('ordFlt', { unit: 'คำสั่ง', defaults: function () { return { ordYear: curTerm ? String(curTerm.year || '') : '', ordSem: '', ordSubject: '', ordMine: '' }; } });
     var curTerm = null, yearDefaulted = false, selYear = null, allYears = [], shownN = LIST_PAGE;
     function fillFilters() {
       var s = $('ordSubject'), y = $('ordYear');
       var sv = s.value, yv = y.value;
       yv = selYear || ''; // 1.63: ปีที่โหลดอยู่
-      s.innerHTML = '<option value="">ทุกกลุ่มสาระการเรียนรู้</option><option value="__none">--ไม่มีกลุ่มสาระ--</option>' + subjectGroups.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
+      s.innerHTML = groupFilterOptions(departments, subjectGroups, true); // 1.79: กลุ่มบริหารงาน + กลุ่มสาระฯ ในช่องเดียว
+      if (!summerOn) { var so = $('ordSem').querySelector('[value="summer"]'); if (so) so.remove(); }
       var years = {};
       allYears.forEach(function (x) { years[x] = 1; });
       orders.forEach(function (o) { years[yearOf(o)] = 1; });
@@ -193,10 +199,11 @@
       var hint = $('ordYearHint');
       hint.hidden = !(q && selYear);
       if (!hint.hidden) hint.innerHTML = '<i class="fa-solid fa-circle-info"></i> ค้นหาเฉพาะปีการศึกษา ' + escapeHtml(selYear) + ' — <button type="button" id="ordSearchAllYears">ค้นหาทุกปีการศึกษา</button>';
-      var fs = $('ordSubject').value, fy = $('ordYear').value, fm = $('ordMine').value;
+      var fs = $('ordSubject').value, fy = $('ordYear').value, fsem = $('ordSem').value, fm = $('ordMine').value;
       var list = orders.filter(function (o) {
-        if (fs === '__none') { if (o.subjectGroup) return false; } else if (fs && o.subjectGroup !== fs) return false;
+        if (!groupFilterMatch(fs, o.department, o.subjectGroup)) return false;
         if (fy && yearOf(o) !== fy) return false;
+        if (fsem && o.semester !== fsem) return false;
         if (fm === 'mine' && !o.isOwner) return false;
         if (fm === 'resp' && !(o.responsible || []).some(function (r) { return r.id === session.id; })) return false;
         if (q) {
@@ -206,9 +213,10 @@
         return true;
       });
       var root = $('ordRoot');
+      fltBar.update(list.length);
       if (!orders.length) { root.innerHTML = '<div class="orders-empty">' + (selYear ? 'ยังไม่มีคำสั่งในปีการศึกษา ' + escapeHtml(selYear) : 'ยังไม่มีคำสั่งในคลังคำสั่ง') + '</div>'; return; }
       if (!list.length) { root.innerHTML = '<div class="orders-empty">ไม่พบคำสั่งที่ตรงกับเงื่อนไข</div>'; return; }
-      root.innerHTML = '<div class="ordc-count hint">' + list.length + ' คำสั่ง</div><ul class="ordc-list">' + list.slice(0, shownN).map(rowHtml).join('') + '</ul>' + listMoreHtml(shownN, list.length);
+      root.innerHTML = '<ul class="ordc-list">' + list.slice(0, shownN).map(rowHtml).join('') + '</ul>' + listMoreHtml(shownN, list.length);
     }
 
     function respText(o) {
@@ -571,7 +579,7 @@
         renderResp();
       });
       ['ordSearch'].forEach(function (id) { $(id).addEventListener('input', rerender); });
-      ['ordSubject', 'ordMine'].forEach(function (id) { $(id).addEventListener('change', rerender); });
+      ['ordSubject', 'ordSem', 'ordMine'].forEach(function (id) { $(id).addEventListener('change', rerender); });
       $('ordYear').addEventListener('change', function () { loadYear(this.value); });
       $('ordYearHint').addEventListener('click', function (e) { if (e.target.closest('#ordSearchAllYears')) { $('ordYear').value = ''; loadYear(''); } });
       $('ordRoot').addEventListener('keydown', function (ev) {

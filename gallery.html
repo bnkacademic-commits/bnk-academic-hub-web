@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.78.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.79.171026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -28,13 +28,22 @@
         <button type="button" class="btn btn-primary" id="galAddBtn"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มอัลบั้ม</button>
       </div>
     </div>
-    <div class="orders-toolbar">
-      <input type="search" id="galSearch" placeholder="ค้นหาชื่อกิจกรรม" />
-      <select id="galYear" aria-label="ปีการศึกษา"></select>
-      <select id="galSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select>
-      <select id="galDept" aria-label="กลุ่มบริหารงาน"></select>
-      <select id="galMine" aria-label="ของฉัน"><option value="">ทุกอัลบั้ม</option><option value="mine">ที่ฉันเพิ่ม</option></select>
+    <!-- 1.79: แถบตัวกรองมาตรฐาน -->
+    <div class="flt" id="galFlt">
+      <input type="search" class="flt-q" id="galSearch" placeholder="ค้นหาชื่อกิจกรรม" aria-label="ค้นหา" />
+      <button type="button" class="flt-toggle" aria-haspopup="dialog"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง <span class="flt-n" hidden></span></button>
+      <div class="flt-backdrop"></div>
+      <div class="flt-panel" role="group" aria-label="ตัวกรอง">
+        <div class="flt-head"><span><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง</span><button type="button" class="modal-close-x flt-x" aria-label="ปิด">✕</button></div>
+        <label class="flt-f"><span>ปีการศึกษา</span><select id="galYear" aria-label="ปีการศึกษา"></select></label>
+        <label class="flt-f"><span>ภาคเรียน</span><select id="galSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select></label>
+        <label class="flt-f"><span>กลุ่ม</span><select id="galGroup" aria-label="กลุ่มบริหารงาน / กลุ่มสาระการเรียนรู้"></select></label>
+        <label class="flt-f"><span>แสดง</span><select id="galMine" aria-label="แสดง"><option value="">ทั้งหมด</option><option value="mine">ที่ฉันเพิ่ม</option></select></label>
+        <div class="flt-acts"><button type="button" class="btn btn-close flt-clear" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i> ล้างตัวกรอง</button><button type="button" class="btn btn-success flt-done">แสดงผล</button></div>
+      </div>
     </div>
+    <div class="flt-chips" id="galFltChips"></div>
+    <div class="flt-meta"><span class="flt-count" id="galFltCount"></span><span class="year-scope-hint" id="galYearHint" hidden></span></div>
     <div id="galRoot"><div class="loading">กำลังโหลด</div></div>
   </div>
   <div id="app-footer"></div>
@@ -84,14 +93,20 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.78.171026"></script>
-  <script src="assets/gallery.js?v=1.78.171026"></script>
+  <script src="assets/api.js?v=1.79.171026"></script>
+  <script src="assets/gallery.js?v=1.79.171026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
     var $ = function (id) { return document.getElementById(id); };
     var albums = [], years = [], subjectGroups = [], shown = GALLERY_PAGE, editId = '', settingsCache = null;
-    var YEAR_KEY = 'bnkah_gal_year';
+    var curTerm = null;
+    var fltBar = initFilterBar('galFlt', { unit: 'อัลบั้ม', defaults: function () { return { galYear: curTerm ? String(curTerm.year) : '', galSem: '', galGroup: '', galMine: '' }; } });
+    function fillGroupFilter() {
+      var g = $('galGroup'), v = g.value;
+      g.innerHTML = groupFilterOptions((settingsCache && settingsCache.departments) || [], subjectGroups, false);
+      g.value = v; if (g.value !== v) g.value = '';
+    }
 
     function deptOptions(sel, emptyLabel, value) {
       sel.innerHTML = '<option value="">' + emptyLabel + '</option>' + ((settingsCache && settingsCache.departments) || []).map(function (d) {
@@ -111,21 +126,27 @@
       try {
         var r = await apiCall('albumList', { year: $('galYear').value || '' });
         albums = r.items || []; years = r.years || []; if (r.subjectGroups) subjectGroups = r.subjectGroups;
+        fillGroupFilter();
       } catch (e) { root.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; return; }
       var cur = $('galYear').value; yearOptions($('galYear'), cur, true);
       render();
     }
     function render() {
-      var list = filterAlbums(albums, { q: $('galSearch').value, semester: $('galSem').value, dept: $('galDept').value, mine: $('galMine').value === 'mine' });
+      var list = filterAlbums(albums, { q: $('galSearch').value, semester: $('galSem').value, group: $('galGroup').value, mine: $('galMine').value === 'mine' });
       var root = $('galRoot');
+      var q = $('galSearch').value.trim(), hint = $('galYearHint');
+      hint.hidden = !(q && $('galYear').value);
+      if (!hint.hidden) hint.innerHTML = '<i class="fa-solid fa-circle-info"></i> ค้นหาเฉพาะปีการศึกษา ' + escapeHtml($('galYear').value) + ' — <button type="button" id="galSearchAllYears">ค้นหาทุกปีการศึกษา</button>';
+      fltBar.update(list.length);
       if (!list.length) { root.innerHTML = '<div class="card"><div class="empty-state">' + (albums.length ? 'ไม่พบอัลบั้มที่ตรงกับตัวกรอง' : 'ยังไม่มีอัลบั้มรูปภาพ — กด "เพิ่มอัลบั้ม" เพื่อเพิ่มอัลบั้มแรก') + '</div></div>'; return; }
-      root.innerHTML = '<div class="list-count">ทั้งหมด ' + list.length + ' อัลบั้ม</div><div class="alb-grid">' + list.slice(0, shown).map(function (a) { return albumCardHtml(a, { inSystem: true, showOwner: true }); }).join('') + '</div>' +
+      root.innerHTML = '<div class="alb-grid">' + list.slice(0, shown).map(function (a) { return albumCardHtml(a, { inSystem: true, showOwner: true }); }).join('') + '</div>' +
         (list.length > shown ? '<div class="list-more"><button type="button" class="btn btn-secondary btn-sm" id="galMore">แสดงเพิ่ม (' + (list.length - shown) + ')</button></div>' : '');
       wireAlbumCovers(root);
     }
     ['galSearch'].forEach(function (id) { $(id).addEventListener('input', function () { shown = GALLERY_PAGE; render(); }); });
-    ['galSem', 'galDept', 'galMine'].forEach(function (id) { $(id).addEventListener('change', function () { shown = GALLERY_PAGE; render(); }); });
-    $('galYear').addEventListener('change', function () { try { localStorage.setItem(YEAR_KEY, $('galYear').value); } catch (e) {} shown = GALLERY_PAGE; load(true); });
+    ['galSem', 'galGroup', 'galMine'].forEach(function (id) { $(id).addEventListener('change', function () { shown = GALLERY_PAGE; render(); }); });
+    $('galYear').addEventListener('change', function () { shown = GALLERY_PAGE; load(true); });
+    $('galYearHint').addEventListener('click', function (e) { if (e.target.closest('#galSearchAllYears')) { $('galYear').value = ''; shown = GALLERY_PAGE; load(true); } });
     $('galRoot').addEventListener('click', async function (e) {
       if (e.target.closest('#galMore')) { shown += GALLERY_PAGE; render(); return; }
       var card = e.target.closest('[data-alb]'); if (!card) return;
@@ -216,12 +237,10 @@
         try {
           settingsCache = await getSiteSettings();
           if (settingsCache && settingsCache.summerEnabled === false) ['galSem', 'galSemIn'].forEach(function (id) { var o = $(id).querySelector('[value="summer"]'); if (o) o.remove(); });
-          deptOptions($('galDept'), 'ทุกกลุ่มบริหารงาน', '');
-          // 1.78: ค่าเริ่มต้นตัวกรอง = ปีการศึกษา + ภาคเรียนปัจจุบัน (โหลดเฉพาะปีนั้น ไม่หน่วง) — เลือก "ทุกปีการศึกษา" เองได้
-          var term = await currentAcademicTerm();
-          yearOptions($('galYear'), term.year, true);
-          $('galYear').value = term.year;
-          if ($('galSem').querySelector('[value="' + term.semester + '"]')) $('galSem').value = term.semester;
+          // 1.79: ค่าเริ่มต้นตัวกรอง = ปีการศึกษาปัจจุบัน + ทุกภาคเรียน (เหมือนคลังคำสั่ง/คลังเกียรติบัตร)
+          curTerm = await currentAcademicTerm();
+          yearOptions($('galYear'), curTerm.year, true);
+          $('galYear').value = curTerm.year;
         } catch (e) { /* ใช้ค่าเริ่มต้นของตัวกรอง */ }
         load(true);
       })();

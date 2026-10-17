@@ -78,7 +78,7 @@ function filterAlbums(list, f) {
   var q = String(f.q || '').trim().toLowerCase();
   return list.filter(function (a) {
     if (f.semester && a.semester !== f.semester) return false;
-    if (f.dept && a.department !== f.dept) return false;
+    if (f.group && !groupFilterMatch(f.group, a.department, a.subjectGroup)) return false; // 1.79: กลุ่มบริหารงาน ('d:…') หรือกลุ่มสาระฯ
     if (f.mine && !a.mine) return false;
     if (q && (a.title + ' ' + (a.department || '') + ' ' + (a.subjectGroup || '') + ' ' + (a.createdByName || '')).toLowerCase().indexOf(q) === -1) return false;
     return true;

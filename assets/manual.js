@@ -2,11 +2,6 @@
 // ภาพประกอบอยู่ที่ assets/manual/*.jpg — ถ่ายจากระบบจริงด้วยข้อมูลตัวอย่าง กรอบแดง/หมายเลขวาดจากตำแหน่งจริงของปุ่มในหน้าเว็บ
 // หมายเลขในรายการ "ขั้นตอน" ตรงกับหมายเลขสีแดงในภาพเดียวกัน
 // บทบาท: t = ครู · s = เจ้าหน้าที่ · e = ผู้บริหาร · a = Super Admin (เห็นหัวข้อทั่วไป + เจ้าหน้าที่ — ไม่มีหัวข้อเฉพาะ Super Admin)
-var MANUAL_GROUPS = [
-  { key: 'common', label: 'การใช้งานทั่วไป' },
-  { key: 'exec', label: 'สำหรับผู้บริหาร' },
-  { key: 'staff', label: 'สำหรับเจ้าหน้าที่' }
-];
 var MANUAL_TOPICS = [
   {
     id: 'start', group: 'common', title: 'เริ่มต้นใช้งาน', icon: 'fa-door-open', roles: 'tsea',
@@ -46,7 +41,7 @@ var MANUAL_TOPICS = [
     id: 'certs', group: 'common', title: 'คลังเกียรติบัตร', icon: 'fa-award', roles: 'tsea',
     lead: 'รวมเกียรติบัตรของครู นักเรียน และโรงเรียน ทั้งที่โรงเรียนออกให้ (ภายใน) และจากหน่วยงานอื่น (ภายนอก)',
     figs: [
-      { img: 'certs-1', cap: 'ค้นหาและดูเกียรติบัตร', steps: ['เลือก "ภายในโรงเรียน" หรือ "ภายนอกโรงเรียน"', 'กรองตามผู้ได้รับ: ครู นักเรียน หรือโรงเรียน', 'ค้นหาจากชื่อกิจกรรม รายการแข่งขัน ชื่อผู้ได้รับ เลขที่ หรือรางวัล', 'กรองตามกิจกรรม ปีการศึกษา ภาคเรียน หรือเฉพาะที่ฉันเพิ่ม', 'ดูเกียรติบัตร — กดลูกศรด้านขวาเพื่อดูรายชื่อทั้งหมดในรายการ'] },
+      { img: 'certs-1', cap: 'ค้นหาและดูเกียรติบัตร', steps: ['เลือก "ภายในโรงเรียน" หรือ "ภายนอกโรงเรียน"', 'กรองตามผู้ได้รับ: ครู นักเรียน หรือโรงเรียน', 'ค้นหาจากชื่อกิจกรรม ชื่อผู้ได้รับ เลขที่ หรือรางวัล แล้วกรองตามปีการศึกษา ภาคเรียน กิจกรรม หรือเฉพาะที่ฉันเพิ่ม/ได้รับ — ปุ่ม "ล้างตัวกรอง" ขึ้นเมื่อกรองอยู่', 'ดูเกียรติบัตร — กดลูกศรด้านขวาเพื่อดูรายชื่อทั้งหมดในรายการ'] },
       { img: 'staff-certs-1', cap: 'เพิ่มเกียรติบัตร', steps: ['"ภายใน" — เกียรติบัตรที่โรงเรียนออกให้ ระบบจองเลขที่ให้อัตโนมัติ แล้วอัพโหลดไฟล์ทีหลังได้', '"ภายนอก" — เกียรติบัตรที่ได้รับจากหน่วยงานอื่น'] }
     ],
     tips: ['ครูที่มีชื่ออยู่ในเกียรติบัตรภายในจะได้รับแจ้งเตือนเมื่อจองเลขและเมื่ออัพโหลดไฟล์แล้ว', 'ปุ่ม "แชร์หน้าค้นหา" ให้คนนอกระบบค้นหาเกียรติบัตรได้โดยไม่ต้องเข้าสู่ระบบ']
@@ -55,7 +50,7 @@ var MANUAL_TOPICS = [
     id: 'orders', group: 'common', title: 'คลังคำสั่ง', icon: 'fa-file-signature', roles: 'tsea',
     lead: 'ค้นหาและเปิดดูคำสั่งของโรงเรียน (ไฟล์ PDF) — ทุกคนเพิ่มคำสั่งได้ แก้ไข/ลบได้เฉพาะผู้อัพโหลด',
     figs: [
-      { img: 'orders-1', cap: 'คลังคำสั่ง', steps: ['ค้นหาจากชื่อ เลขที่ กลุ่มบริหารงาน หรือผู้รับผิดชอบ และกรองตามกลุ่มสาระ ปีการศึกษา หรือที่ฉันอัพโหลด', 'ดูคำสั่งในระบบ', 'ดาวน์โหลดไฟล์คำสั่ง', 'เพิ่มคำสั่งใหม่'] }
+      { img: 'orders-1', cap: 'คลังคำสั่ง', steps: ['ค้นหาจากชื่อ เลขที่ หรือผู้รับผิดชอบ แล้วกรองตามปีการศึกษา ภาคเรียน กลุ่ม (กลุ่มบริหารงาน/กลุ่มสาระฯ) หรือที่ฉันเพิ่ม/รับผิดชอบ', 'ดูคำสั่งในระบบ', 'ดาวน์โหลดไฟล์คำสั่ง', 'เพิ่มคำสั่งใหม่'] }
     ],
     tips: ['เมื่อมีคำสั่งใหม่ ทุกคนจะได้รับแจ้งเตือนที่กระดิ่ง']
   },
@@ -63,7 +58,7 @@ var MANUAL_TOPICS = [
     id: 'gallery', group: 'common', title: 'คลังรูปภาพ', icon: 'fa-images', roles: 'tsea',
     lead: 'รวมลิงก์อัลบั้มภาพกิจกรรมจาก Google Drive ของครูทุกคน — ครูทุกคนเพิ่มอัลบั้มได้',
     figs: [
-      { img: 'gallery-1', cap: 'หน้าคลังรูปภาพ', steps: ['เพิ่มอัลบั้มใหม่', 'แชร์หน้าสาธารณะ — ลิงก์และ QR Code ให้คนนอกระบบดูอัลบั้มที่เปิดสาธารณะ', 'ค้นหา และกรองตามปีการศึกษา ภาคเรียน กลุ่มบริหารงาน หรือที่ฉันเพิ่ม — เริ่มต้นแสดงปีการศึกษาและภาคเรียนปัจจุบัน เลือก "ทุกปีการศึกษา" เพื่อดูย้อนหลัง', 'คัดลอกข้อความ (ชื่อกิจกรรม วันที่ ลิงก์) ไปวางในกลุ่มโรงเรียน — มีเฉพาะในอัลบั้มที่คุณเพิ่มเอง บนมือถือจะเปิดหน้าต่างแชร์ให้เลือกแอปได้เลย', 'เปิดอัลบั้มใน Google Drive (กดที่รูปปกก็ได้)'] },
+      { img: 'gallery-1', cap: 'หน้าคลังรูปภาพ', steps: ['เพิ่มอัลบั้มใหม่', 'แชร์หน้าสาธารณะ — ลิงก์และ QR Code ให้คนนอกระบบดูอัลบั้มที่เปิดสาธารณะ', 'ค้นหา แล้วกรองตามปีการศึกษา ภาคเรียน กลุ่ม (กลุ่มบริหารงาน/กลุ่มสาระฯ) หรือที่ฉันเพิ่ม — เริ่มต้นแสดงปีการศึกษาปัจจุบันทุกภาคเรียน เลือก "ทุกปีการศึกษา" เพื่อดูย้อนหลัง', 'คัดลอกข้อความ (ชื่อกิจกรรม วันที่ ลิงก์) ไปวางในกลุ่มโรงเรียน — มีเฉพาะในอัลบั้มที่คุณเพิ่มเอง บนมือถือจะเปิดหน้าต่างแชร์ให้เลือกแอปได้เลย', 'เปิดอัลบั้มใน Google Drive (กดที่รูปปกก็ได้)'] },
       { img: 'gallery-2', cap: 'เพิ่มอัลบั้ม', steps: ['ชื่อกิจกรรม', 'วันที่จัดกิจกรรม (วันเริ่ม)', 'ถึงวันที่ — ใส่เฉพาะกิจกรรมหลายวัน จัดวันเดียวเว้นว่างไว้', 'กลุ่มสาระการเรียนรู้ (ไม่บังคับ — เลือก "ไม่มี" ได้) และเลือกกลุ่มบริหารงาน ภาคเรียน ปีการศึกษา ในช่องข้างเคียง', 'ลิงก์โฟลเดอร์ Google Drive หรือ Google Photos — โฟลเดอร์ต้องแชร์แบบ "ทุกคนที่มีลิงก์"', 'ลิงก์รูปหน้าปก (ไม่บังคับ) — ไม่ใส่ ระบบดึงรูปแรกในโฟลเดอร์ให้เอง', 'แสดงในหน้าสาธารณะ — ค่าเริ่มต้นปิด เปิดเฉพาะอัลบั้มที่เผยแพร่ภาพนักเรียนได้', 'บันทึก — ทุกคนในระบบได้รับแจ้งเตือนอัลบั้มใหม่'] },
       { img: 'gallery-3', cap: 'จัดการอัลบั้มของฉัน', steps: ['เลือก "ที่ฉันเพิ่ม" เพื่อดูเฉพาะอัลบั้มของตัวเอง', 'กดป้าย "สาธารณะ / เฉพาะในระบบ" เพื่อสลับการแสดงในหน้าสาธารณะ', 'แก้ไขรายละเอียด', 'ลบอัลบั้ม (ไม่ลบรูปใน Google Drive)'] },
       { img: 'gallery-4', cap: 'แชร์หน้าสาธารณะ', steps: [] }
@@ -112,6 +107,13 @@ var MANUAL_TOPICS = [
     tips: ['เรื่องที่เสร็จแล้วเก็บไว้ 1 ปีแล้วลบอัตโนมัติ']
   },
   {
+    id: 'directory', group: 'common', title: 'ทำเนียบบุคลากร', icon: 'fa-address-book', roles: 'tsea', needDirectory: true,
+    lead: 'รายชื่อผู้บริหาร ครู และบุคลากรของโรงเรียน ดูได้ทั้งแบบผังองค์กรและแบบการ์ด',
+    figs: [
+      { img: 'directory-1', cap: 'ทำเนียบบุคลากร (แบบการ์ด)', steps: ['จัดกลุ่มตามกลุ่มสาระการเรียนรู้ หรือกลุ่มบริหารงาน', 'เลือกดูเฉพาะกลุ่มที่ต้องการ', 'สลับมุมมอง ผังองค์กร / การ์ด', 'กดที่การ์ดเพื่อเปิดหน้าแสดงผลงานของคนนั้น'] }
+    ]
+  },
+  {
     id: 'bell', group: 'common', title: 'กระดิ่งแจ้งเตือน', icon: 'fa-bell', roles: 'tsea',
     lead: 'แจ้งเรื่องใหม่ที่เกี่ยวกับคุณ: เกียรติบัตรที่มีชื่อคุณ คำสั่งใหม่ อัลบั้มรูปภาพใหม่ และความคืบหน้าของเรื่องที่แจ้ง',
     figs: [
@@ -137,7 +139,7 @@ var MANUAL_TOPICS = [
       { img: 'tips-theme', cap: 'ธีมและบัญชี (เมนูบัญชี)', steps: ['เลือกธีม กระดาษขาว / ถนอมตา / กลางคืน', 'เปลี่ยนรหัสผ่าน'] },
       { img: 'tips-version', cap: 'เลขเวอร์ชันท้ายหน้า', steps: ['กดเลขเวอร์ชันท้ายหน้า แล้วเลือก "โหลดหน้าใหม่" หรือ "ล้างแคชแล้วโหลดใหม่" เมื่อหน้าเว็บค้างหรือไม่อัพเดต'] }
     ],
-    tips: ['ข้อมูลไม่ตรงกับที่เพิ่งแก้จากอีกเครื่อง กดปุ่มรีเฟรช (ลูกศรวน) ที่แถบด้านบน', 'บนมือถือ เพิ่มหน้าเว็บไว้ที่หน้าจอหลักเพื่อเปิดได้เร็วเหมือนแอป']
+    tips: ['คลังคำสั่ง คลังเกียรติบัตร และคลังรูปภาพ ใช้ตัวกรองแบบเดียวกัน — บนมือถือกดปุ่ม "ตัวกรอง" ข้างช่องค้นหา', 'ข้อมูลไม่ตรงกับที่เพิ่งแก้จากอีกเครื่อง กดปุ่มรีเฟรช (ลูกศรวน) ที่แถบด้านบน', 'บนมือถือ เพิ่มหน้าเว็บไว้ที่หน้าจอหลักเพื่อเปิดได้เร็วเหมือนแอป']
   }
 ];
 
@@ -147,14 +149,18 @@ function manualRoleOf(s) {
   if (s.role === 'admin') return s.hasHub ? 's' : 'a';
   return 't';
 }
+// 1.79: สารบัญเรียงตามลำดับเมนูข้างที่ตั้งไว้จริง (ตั้งค่าระบบ → ลำดับเมนู) — หัวข้อที่ไม่มีในเมนูอยู่ต้น (_first) หรือท้าย (_last)
+var MANUAL_SLOT = { start: '_first', home: 'home', submit: 'home', portfolio: 'home', exec: 'home', memo: 'memo', summary: 'summary', announce: 'announce', reports: 'announce',
+  directory: 'directory', orders: 'orders', certs: 'certs', gallery: 'gallery', bell: '_last', report: '_last', tips: '_last' };
 function manualTopicsFor(s) {
   var r = manualRoleOf(s);
-  var memoOn = typeof isMemoEnabled === 'function' ? isMemoEnabled(typeof _settingsCache !== 'undefined' && _settingsCache ? _settingsCache : (typeof cachedBrand === 'function' ? cachedBrand() : null)) : true;
-  return MANUAL_TOPICS.filter(function (t) { return t.roles.indexOf(r) !== -1 && (!t.needMemo || memoOn); }).map(function (t) {
-    // ผู้บริหาร: หัวข้อที่ใช้ร่วมกับเจ้าหน้าที่ (สรุปรวมการส่งงาน) อยู่ในกลุ่ม "สำหรับผู้บริหาร"
-    if (r === 'e' && t.group === 'staff') { var c = {}; Object.keys(t).forEach(function (k) { c[k] = t[k]; }); c.group = 'exec'; return c; }
-    return t;
-  });
+  var st = (typeof _settingsCache !== 'undefined' && _settingsCache) ? _settingsCache : (typeof cachedBrand === 'function' ? cachedBrand() : null);
+  var memoOn = typeof isMemoEnabled === 'function' ? isMemoEnabled(st) : true;
+  var dirOn = !(st && st.directoryMode === 'off');
+  var list = MANUAL_TOPICS.filter(function (t) { return t.roles.indexOf(r) !== -1 && (!t.needMemo || memoOn) && (!t.needDirectory || dirOn); });
+  var nav = typeof currentNavOrder === 'function' ? currentNavOrder() : [];
+  var rank = function (t) { var sl = MANUAL_SLOT[t.id] || '_last'; if (sl === '_first') return -1; if (sl === '_last') return 1000; var i = nav.indexOf(sl); return i === -1 ? 999 : i; };
+  return list.map(function (t, i) { return { t: t, i: i }; }).sort(function (a, b) { return rank(a.t) - rank(b.t) || a.i - b.i; }).map(function (x) { return x.t; });
 }
 var _manual = null;
 var MANUAL_KEY = 'bnkah_manual_topic';
@@ -191,17 +197,12 @@ function manualOpen(topicId) {
     });
   }
   _manual.topics = topics;
-  var order = manualRoleOf(s) === 'e' ? ['exec', 'common'] : ['common', 'staff'];
-  var groups = order.map(function (k) { return MANUAL_GROUPS.filter(function (g) { return g.key === k; })[0]; }).map(function (g) { return { g: g, items: topics.filter(function (t) { return t.group === g.key; }) }; }).filter(function (x) { return x.items.length; });
-  _manual.el.querySelector('#manualToc').innerHTML = groups.map(function (x) {
-    return '<div class="mn-group">' + escapeHtml(x.g.label) + '</div>' + x.items.map(function (t) {
-      return '<button type="button" class="mn-link" data-mn="' + t.id + '"><i class="fa-solid ' + t.icon + '" aria-hidden="true"></i><span>' + escapeHtml(t.title) + '</span></button>';
-    }).join('');
+  // 1.79: รายการเดียว ไม่แบ่งกลุ่ม — ลำดับตามเมนูจริง
+  _manual.el.querySelector('#manualToc').innerHTML = topics.map(function (t) {
+    return '<button type="button" class="mn-link" data-mn="' + t.id + '"><i class="fa-solid ' + t.icon + '" aria-hidden="true"></i><span>' + escapeHtml(t.title) + '</span></button>';
   }).join('');
-  _manual.el.querySelector('#manualSelect').innerHTML = groups.map(function (x) {
-    return '<optgroup label="' + escapeHtml(x.g.label) + '">' + x.items.map(function (t) { return '<option value="' + t.id + '">' + escapeHtml(t.title) + '</option>'; }).join('') + '</optgroup>';
-  }).join('');
-  _manual.topics = groups.reduce(function (a, x) { return a.concat(x.items); }, []); // ลำดับเดียวกับสารบัญ (ปุ่มก่อนหน้า/ถัดไป)
+  _manual.el.querySelector('#manualSelect').innerHTML = topics.map(function (t) { return '<option value="' + t.id + '">' + escapeHtml(t.title) + '</option>'; }).join('');
+  _manual.topics = topics;
   topics = _manual.topics;
   var last = '';
   try { last = localStorage.getItem(MANUAL_KEY) || ''; } catch (e) { /* ไม่เป็นไร */ }

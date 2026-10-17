@@ -17,7 +17,9 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.78.171026';
+// 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
+var WORKER_MIN_VERSION = '1.79';
+var APP_VERSION = '1.79.171026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -244,7 +246,8 @@ function homePageFor(session) {
   if (session.role === 'teacher') return 'dashboard.html';
   if (session.role === 'executive') return 'executive.html'; // ผู้บริหาร (ตั้งแต่ 1.32.101026): หน้าแรก = ปฏิทิน + สรุปภาพรวมการส่งงาน (อ่านอย่างเดียว)
   if (session.role === 'admin' && session.hasHub) return 'dashboard.html';
-  return 'summary.html'; // เจ้าหน้าที่ระดับ Super Admin (ไม่มีหน้าฮับ)
+  if (session.devHome) return session.devHome; // เฉพาะเครื่องทดสอบ (Worker ตั้ง DEV_SA_HOME)
+  return 'overview.html'; // Super Admin (ไม่มีหน้าฮับ) — 1.79: หน้าภาพรวมระบบ (เดิม summary.html)
 }
 
 function requireLogin() {
@@ -784,6 +787,88 @@ function termTagsHtml(semester, academicYear, opts) {
     (academicYear ? '<span class="year-tag">' + (opts.short ? 'ปี ' : 'ปีการศึกษา ') + escapeHtml(String(academicYear)) + '</span>' : '');
 }
 // 1.63: โหลดข้อมูลทีละปีการศึกษา + จำผลไว้ (เปลี่ยนกลับมาปีเดิมไม่ต้องโหลดซ้ำ) — fetchYear(year) คืน Promise ('' = ทุกปี)
+// ---------- 1.79: แถบตัวกรองมาตรฐานของคลังคำสั่ง/คลังเกียรติบัตร/คลังรูปภาพ/หน้าสาธารณะ ----------
+// โครง: .flt > input.flt-q + button.flt-toggle + .flt-panel (select ทั้งหมด + .flt-clear) · ตามด้วย .flt-chips และ .flt-meta (.flt-count + hint)
+// จอใหญ่ = แถวเดียว · มือถือ = ช่องค้นหา + ปุ่ม "ตัวกรอง" (ตัวเลข = กรองอยู่กี่อย่าง) กดแล้วแผงเลื่อนขึ้นจากด้านล่าง
+// opts.defaults(): { selectId: ค่าเริ่มต้น } (คำนวณใหม่ทุกครั้ง เช่น ปีการศึกษาปัจจุบัน) · opts.unit: 'รายการ'
+function filterBarHtml(o) {
+  // o: { id, search: {id, placeholder}, fields: [{id, label, html}], countId, hintId }
+  return '<div class="flt" id="' + o.id + '">' +
+    '<input type="search" class="flt-q" id="' + o.search.id + '" placeholder="' + escapeHtml(o.search.placeholder) + '" aria-label="ค้นหา" />' +
+    '<button type="button" class="flt-toggle" aria-haspopup="dialog"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง <span class="flt-n" hidden></span></button>' +
+    '<div class="flt-backdrop"></div>' +
+    '<div class="flt-panel" role="group" aria-label="ตัวกรอง">' +
+      '<div class="flt-head"><span><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง</span><button type="button" class="modal-close-x flt-x" aria-label="ปิด">✕</button></div>' +
+      o.fields.map(function (f) { return '<label class="flt-f"><span>' + escapeHtml(f.label) + '</span>' + f.html + '</label>'; }).join('') +
+      '<div class="flt-acts"><button type="button" class="btn btn-close flt-clear" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i> ล้างตัวกรอง</button><button type="button" class="btn btn-success flt-done">แสดงผล</button></div>' +
+    '</div></div>' +
+    '<div class="flt-chips" id="' + o.id + 'Chips"></div>' +
+    '<div class="flt-meta"><span class="flt-count" id="' + (o.countId || o.id + 'Count') + '"></span>' + (o.hintId ? '<span class="year-scope-hint" id="' + o.hintId + '" hidden></span>' : '') + '</div>';
+}
+function initFilterBar(el, opts) {
+  if (typeof el === 'string') el = document.getElementById(el);
+  opts = opts || {};
+  var panel = el.querySelector('.flt-panel'), chips = document.getElementById(el.id + 'Chips');
+  var last = { n: 0 };
+  function defs() { return (opts.defaults && opts.defaults()) || {}; }
+  function selects() { return Array.from(panel.querySelectorAll('select')); }
+  function active() { var d = defs(); return selects().filter(function (s) { return (d[s.id] !== undefined ? String(d[s.id]) : '') !== s.value; }); }
+  function setVal(s, v) { if (s.value === v) return; s.value = v; s.dispatchEvent(new Event('change', { bubbles: true })); }
+  function open(on) {
+    el.classList.toggle('open', !!on);
+    document.documentElement.classList.toggle('flt-lock', !!on);
+  }
+  el.querySelector('.flt-toggle').addEventListener('click', function () { open(!el.classList.contains('open')); });
+  el.querySelector('.flt-x').addEventListener('click', function () { open(false); });
+  el.querySelector('.flt-done').addEventListener('click', function () { open(false); });
+  el.querySelector('.flt-backdrop').addEventListener('click', function () { open(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && el.classList.contains('open')) open(false); });
+  el.querySelector('.flt-clear').addEventListener('click', function () {
+    var d = defs();
+    selects().forEach(function (s) { setVal(s, d[s.id] !== undefined ? String(d[s.id]) : ''); });
+    var q = el.querySelector('.flt-q'); if (q.value) { q.value = ''; q.dispatchEvent(new Event('input', { bubbles: true })); }
+  });
+  if (chips) chips.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-flt-reset]'); if (!b) return;
+    var s = document.getElementById(b.getAttribute('data-flt-reset')); var d = defs();
+    if (s) setVal(s, d[s.id] !== undefined ? String(d[s.id]) : '');
+  });
+  function sync() {
+    var act = active(), n = act.length;
+    var badge = el.querySelector('.flt-n'); badge.hidden = !n; badge.textContent = n;
+    el.querySelector('.flt-clear').hidden = !n && !el.querySelector('.flt-q').value;
+    if (chips) chips.innerHTML = act.map(function (s) {
+      var t = s.selectedOptions[0] ? s.selectedOptions[0].textContent : s.value;
+      return '<button type="button" data-flt-reset="' + s.id + '">' + escapeHtml(t) + ' <i class="fa-solid fa-xmark" aria-hidden="true"></i></button>';
+    }).join('');
+  }
+  el.addEventListener('change', sync);
+  el.addEventListener('input', sync);
+  return {
+    // n = จำนวนที่พบ · extra = ข้อความต่อท้าย (เช่น "· 12 ใบ") — ขอบเขตปี/ภาคเรียนเติมให้เอง
+    update: function (n, extra) {
+      last.n = n; sync();
+      var c = document.getElementById(el.id + 'Count') || el.parentNode.querySelector('.flt-count');
+      var scope = selects().filter(function (s) { return /Year$|Sem$/.test(s.id) && s.value; }).map(function (s) { return s.selectedOptions[0] ? s.selectedOptions[0].textContent : ''; }).filter(Boolean);
+      if (c) c.innerHTML = n == null ? '' : 'พบ <b>' + Number(n).toLocaleString('th-TH') + '</b> ' + escapeHtml(opts.unit || 'รายการ') + (extra ? ' ' + escapeHtml(extra) : '') + (scope.length ? ' · ' + escapeHtml(scope.join(' · ')) : '');
+      el.querySelector('.flt-done').textContent = n == null ? 'แสดงผล' : 'แสดง ' + n + ' ' + (opts.unit || 'รายการ');
+    },
+    sync: sync,
+    close: function () { open(false); }
+  };
+}
+// ตัวเลือก "ทุกกลุ่ม" แบบ 2 หมวด: กลุ่มบริหารงาน (ค่า 'd:<ชื่อ>') + กลุ่มสาระการเรียนรู้ (ค่า = ชื่อกลุ่มสาระ · '__none' = ไม่มีกลุ่มสาระ)
+function groupFilterOptions(departments, subjects, withNone) {
+  return '<option value="">ทุกกลุ่ม</option>' +
+    ((departments || []).length ? '<optgroup label="กลุ่มบริหารงาน">' + departments.map(function (d) { return '<option value="d:' + escapeHtml(d) + '">' + escapeHtml(groupLabel(d)) + '</option>'; }).join('') + '</optgroup>' : '') +
+    ((subjects || []).length || withNone ? '<optgroup label="กลุ่มสาระการเรียนรู้">' + (subjects || []).map(function (g) { return '<option value="' + escapeHtml(g) + '">กลุ่มสาระฯ ' + escapeHtml(g) + '</option>'; }).join('') + (withNone ? '<option value="__none">ไม่มีกลุ่มสาระฯ</option>' : '') + '</optgroup>' : '');
+}
+function groupFilterMatch(v, department, subject) {
+  if (!v) return true;
+  if (v.indexOf('d:') === 0) return department === v.slice(2);
+  if (v === '__none') return !subject;
+  return subject === v;
+}
 function makeYearCache(fetchYear) {
   var cache = {};
   return {
@@ -1305,7 +1390,7 @@ async function withProgress(title, workFn, opts) {
 // ---------- ลำดับเมนูข้าง (ตั้งแต่ 1.59 — Super Admin จัดลำดับได้ที่ ตั้งค่าระบบ → ทั่วไป) ----------
 // slot = ตำแหน่งในเมนู (หน้าแรกของครู/เจ้าหน้าที่ กับของผู้บริหารเป็น slot เดียวกัน 'home') · who = บัญชีที่มองเห็น (ใช้แสดงป้ายในหน้าตั้งค่า)
 var NAV_SLOTS = [
-  { slot: 'home', label: 'หน้าแรก', icon: 'home', who: ['teacher', 'staff', 'exec'] },
+  { slot: 'home', label: 'หน้าแรก', icon: 'home', who: ['teacher', 'staff', 'exec', 'super'] },
   { slot: 'memo', label: 'จัดทำบันทึกข้อความ', icon: 'memo', who: ['teacher', 'staff'] },
   { slot: 'summary', label: 'สรุปรวมการส่งงาน', icon: 'summary', who: ['staff', 'exec', 'super'] },
   { slot: 'announce', label: 'ประกาศและปฏิทิน', icon: 'announce', who: ['staff', 'exec', 'super'] },
@@ -1331,7 +1416,7 @@ function currentNavOrder() {
   var s = _settingsCache && !_settingsCache.__fallback ? _settingsCache : cachedBrand();
   return normalizeNavOrder(s && s.navOrder);
 }
-function navSlotOf(key) { return key === 'dashboard' || key === 'executive' ? 'home' : key; }
+function navSlotOf(key) { return key === 'dashboard' || key === 'executive' || key === 'overview' ? 'home' : key; }
 // เรียงเมนูในแถบข้างที่วาดไปแล้วใหม่ (ค่าตั้งค่าโหลดเสร็จทีหลัง/เพิ่งบันทึกลำดับใหม่)
 function reorderSideNav(order) {
   var list = document.querySelector('#app-sidenav .sidenav-list');
@@ -1353,6 +1438,8 @@ function navLinksFor(session) {
   }
   // ผู้บริหาร (ตั้งแต่ 1.32.101026): หน้าแรกของตัวเอง = ปฏิทิน + สรุปภาพรวม (executive.html) — ไม่มีหน้าฮับ ไม่ส่งงาน
   if (isExec) links.push({ href: 'executive.html', label: 'หน้าแรก', key: 'executive', icon: 'home' });
+  // 1.79: Super Admin มีหน้าแรกของตัวเอง = ภาพรวมระบบ (overview.html)
+  if (isAdmin && !session.hasHub) links.push({ href: 'overview.html', label: 'หน้าแรก', key: 'overview', icon: 'home' });
   if (isAdmin || isExec) {
     links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary', icon: 'summary' });
     // "ประกาศและปฏิทิน" (ตั้งแต่ 1.32.101026): ย้ายแท็บ "ปฏิทิน" และ "ประกาศ" ออกจากหน้าตั้งค่ามารวมกันเป็นแท็บบนสุดนี้ — เจ้าหน้าที่/Super Admin จัดการได้
@@ -1909,6 +1996,7 @@ var NOTIF_KIND = {
 };
 function applyTopBadges(r) {
   if (!r) return;
+  if (r.welcome) openWelcome(); // 1.79: ป็อปอัพต้อนรับครั้งแรกของบัญชี
   var b = document.getElementById('notifBadge');
   if (b && typeof r.notifUnread === 'number') {
     b.textContent = r.notifUnread > 99 ? '99+' : String(r.notifUnread);
@@ -2064,6 +2152,42 @@ function reportClientInfo() {
   return { page: String(page).trim().slice(0, 100), ua: b + ' · ' + o + ' · จอ ' + screen.width + '×' + screen.height };
 }
 var _reportModal = null;
+// ---------- 1.79: ป็อปอัพต้อนรับ (ครั้งแรกของบัญชี — จำในฐานข้อมูล users.welcomed_at) ----------
+var _welcomeOpen = false;
+var WELCOME_ITEMS = {
+  t: [['fa-paper-plane', '#0b6fcc', 'ส่งผลงาน', 'กดปุ่ม "ส่งงาน" ในหน้าแรก ตามรายการกำหนดส่ง'], ['fa-bell', '#f59e0b', 'กระดิ่งแจ้งเตือน', 'เกียรติบัตรที่มีชื่อคุณ คำสั่งและอัลบั้มใหม่'], ['fa-book-open', '#7c3aed', 'คู่มือการใช้งาน', 'ปุ่มรูปหนังสือ มุมขวาบน มีภาพประกอบทุกขั้นตอน'], ['fa-headset', '#ef4444', 'แจ้งปัญหา', 'กดชื่อของคุณมุมขวาบน แล้วเลือก "แจ้งปัญหา"']],
+  s: [['fa-bullhorn', '#0b6fcc', 'ประกาศและปฏิทิน', 'เพิ่มประกาศและกำหนดส่งงาน แสดงในหน้าแรกของครู'], ['fa-inbox', '#ef4444', 'เรื่องที่แจ้ง', 'เรื่องที่ครูแจ้งถึงกลุ่มคุณ อยู่ในหน้าประกาศและปฏิทิน'], ['fa-bell', '#f59e0b', 'กระดิ่งแจ้งเตือน', 'เรื่องที่แจ้งใหม่ เกียรติบัตร คำสั่งและอัลบั้มใหม่'], ['fa-book-open', '#7c3aed', 'คู่มือการใช้งาน', 'ปุ่มรูปหนังสือ มุมขวาบน มีภาพประกอบทุกขั้นตอน']],
+  e: [['fa-chart-pie', '#0b6fcc', 'หน้าแรกผู้บริหาร', 'ปฏิทินและภาพรวมการส่งงานของบุคลากร'], ['fa-chart-column', '#16a34a', 'สรุปรวมการส่งงาน', 'ดูว่าใครส่งงานอะไรแล้วบ้าง แยกตามงาน'], ['fa-bell', '#f59e0b', 'กระดิ่งแจ้งเตือน', 'คำสั่งและอัลบั้มรูปภาพใหม่'], ['fa-book-open', '#7c3aed', 'คู่มือการใช้งาน', 'ปุ่มรูปหนังสือ มุมขวาบน มีภาพประกอบทุกขั้นตอน']]
+};
+function openWelcome() {
+  if (_welcomeOpen || document.getElementById('welcomeModal')) return;
+  var s = getSession(); if (!s) return;
+  var role = s.role === 'executive' ? 'e' : (s.role === 'admin' && s.hasHub ? 's' : 't');
+  if (s.role === 'admin' && !s.hasHub) return;
+  _welcomeOpen = true;
+  var site = (cachedBrand() && cachedBrand().siteName) || 'BNKAcademicHub';
+  var el = document.createElement('div');
+  el.className = 'modal-backdrop'; el.id = 'welcomeModal'; el.hidden = true;
+  el.innerHTML = '<div class="modal-box wl-box" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">' +
+    '<button type="button" class="modal-close-x" id="welcomeX" aria-label="ปิด">✕</button>' +
+    '<div class="wl-hd"><h3 id="welcomeTitle">ยินดีต้อนรับ, ' + escapeHtml(s.name || '') + '</h3><p>' + escapeHtml(site) + ' — รู้ 4 อย่างนี้ก็ใช้งานได้เลย</p></div>' +
+    '<div class="wl-bd">' + WELCOME_ITEMS[role].map(function (x) {
+      return '<div class="wl-it"><span class="wl-ic" style="background:' + x[1] + '"><i class="fa-solid ' + x[0] + '" aria-hidden="true"></i></span><span><b>' + escapeHtml(x[2]) + '</b><small>' + escapeHtml(x[3]) + '</small></span></div>';
+    }).join('') + '</div>' +
+    '<div class="wl-ft"><small>แสดงครั้งเดียว · เปิดดูอีกได้ในคู่มือ</small><span class="wl-btns"><button type="button" class="btn btn-secondary" id="welcomeManual"><i class="fa-solid fa-book-open" aria-hidden="true"></i> เปิดคู่มือ</button><button type="button" class="btn btn-success" id="welcomeGo">เริ่มใช้งาน</button></span></div></div>';
+  document.body.appendChild(el);
+  function done(thenManual) {
+    hideModalEl(el);
+    setTimeout(function () { el.remove(); _welcomeOpen = false; }, 250);
+    apiCall('welcomeSeen', {}).catch(function () { /* ครั้งหน้าแสดงอีก */ });
+    if (thenManual) openManual('start');
+  }
+  el.querySelector('#welcomeX').addEventListener('click', function () { done(false); });
+  el.querySelector('#welcomeGo').addEventListener('click', function () { done(false); });
+  el.querySelector('#welcomeManual').addEventListener('click', function () { done(true); });
+  showModalEl(el);
+}
+
 // ---------- คู่มือการใช้งาน (1.76) — โหลด assets/manual.js เมื่อกดปุ่มครั้งแรก ----------
 var _manualLoading = null;
 function openManual(topicId) {

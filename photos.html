@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.78.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.79.171026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login')||localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body class="pubc-body">
@@ -24,22 +24,31 @@
     <p id="phSub">ภาพกิจกรรมของโรงเรียน</p>
   </header>
   <main class="container" style="max-width:1280px; padding-top:20px;">
-    <div class="orders-toolbar">
-      <input type="search" id="phSearch" placeholder="ค้นหาชื่อกิจกรรม" />
-      <select id="phYear" aria-label="ปีการศึกษา"><option value="">ทุกปีการศึกษา</option></select>
-      <select id="phSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select>
-      <select id="phDept" aria-label="กลุ่มบริหารงาน"><option value="">ทุกกลุ่มบริหารงาน</option></select>
+    <div class="flt" id="phFlt">
+      <input type="search" class="flt-q" id="phSearch" placeholder="ค้นหาชื่อกิจกรรม" aria-label="ค้นหา" />
+      <button type="button" class="flt-toggle" aria-haspopup="dialog"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง <span class="flt-n" hidden></span></button>
+      <div class="flt-backdrop"></div>
+      <div class="flt-panel" role="group" aria-label="ตัวกรอง">
+        <div class="flt-head"><span><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง</span><button type="button" class="modal-close-x flt-x" aria-label="ปิด">✕</button></div>
+        <label class="flt-f"><span>ปีการศึกษา</span><select id="phYear" aria-label="ปีการศึกษา"><option value="">ทุกปีการศึกษา</option></select></label>
+        <label class="flt-f"><span>ภาคเรียน</span><select id="phSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select></label>
+        <label class="flt-f"><span>กลุ่ม</span><select id="phGroup" aria-label="กลุ่มบริหารงาน / กลุ่มสาระการเรียนรู้"><option value="">ทุกกลุ่ม</option></select></label>
+        <div class="flt-acts"><button type="button" class="btn btn-close flt-clear" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i> ล้างตัวกรอง</button><button type="button" class="btn btn-success flt-done">แสดงผล</button></div>
+      </div>
     </div>
+    <div class="flt-chips" id="phFltChips"></div>
+    <div class="flt-meta"><span class="flt-count" id="phFltCount"></span><span class="year-scope-hint" id="phYearHint" hidden></span></div>
     <div id="phRoot"><div class="loading">กำลังโหลด</div></div>
   </main>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.78.171026"></script>
-  <script src="assets/gallery.js?v=1.78.171026"></script>
+  <script src="assets/api.js?v=1.79.171026"></script>
+  <script src="assets/gallery.js?v=1.79.171026"></script>
   <script>
     mountFooter();
     applyBranding();
     var $ = function (id) { return document.getElementById(id); };
-    var albums = [], shown = GALLERY_PAGE, initYear = '';
+    var albums = [], shown = GALLERY_PAGE, initYear = '', curYear = '';
+    var fltBar = initFilterBar('phFlt', { unit: 'อัลบั้ม', defaults: function () { return { phYear: curYear, phSem: '', phGroup: '' }; } });
     async function load() {
       try {
         var cur = initYear || $('phYear').value; initYear = '';
@@ -48,22 +57,28 @@
         var ys = (r.years || []).slice(); if (cur && ys.indexOf(cur) === -1) { ys.push(cur); ys.sort().reverse(); }
         $('phYear').innerHTML = '<option value="">ทุกปีการศึกษา</option>' + ys.map(function (y) { return '<option value="' + y + '"' + (y === cur ? ' selected' : '') + '>ปีการศึกษา ' + y + '</option>'; }).join('');
         var depts = Array.from(new Set(albums.map(function (a) { return a.department; }).filter(Boolean)));
-        var cd = $('phDept').value;
-        $('phDept').innerHTML = '<option value="">ทุกกลุ่มบริหารงาน</option>' + depts.map(function (d) { return '<option value="' + escapeHtml(d) + '"' + (d === cd ? ' selected' : '') + '>' + escapeHtml(groupLabel(d)) + '</option>'; }).join('');
+        var subs = Array.from(new Set(albums.map(function (a) { return a.subjectGroup; }).filter(Boolean)));
+        var cg = $('phGroup').value;
+        $('phGroup').innerHTML = groupFilterOptions(depts, subs, false);
+        $('phGroup').value = cg; if ($('phGroup').value !== cg) $('phGroup').value = '';
         if (r.schoolName) $('phSub').textContent = 'ภาพกิจกรรมของ' + r.schoolName;
       } catch (e) { $('phRoot').innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; return; }
       render();
     }
     function render() {
-      var list = filterAlbums(albums, { q: $('phSearch').value, semester: $('phSem').value, dept: $('phDept').value });
+      var list = filterAlbums(albums, { q: $('phSearch').value, semester: $('phSem').value, group: $('phGroup').value });
       var root = $('phRoot');
+      var hint = $('phYearHint'); hint.hidden = !($('phSearch').value.trim() && $('phYear').value);
+      if (!hint.hidden) hint.innerHTML = '<i class="fa-solid fa-circle-info"></i> ค้นหาเฉพาะปีการศึกษา ' + escapeHtml($('phYear').value) + ' — <button type="button" id="phSearchAllYears">ค้นหาทุกปีการศึกษา</button>';
+      fltBar.update(list.length);
       if (!list.length) { root.innerHTML = '<div class="card"><div class="empty-state">' + (albums.length ? 'ไม่พบอัลบั้มที่ตรงกับตัวกรอง' : 'ยังไม่มีอัลบั้มที่เผยแพร่') + '</div></div>'; return; }
-      root.innerHTML = '<div class="list-count">ทั้งหมด ' + list.length + ' อัลบั้ม</div><div class="alb-grid">' + list.slice(0, shown).map(function (a) { return albumCardHtml(a, {}); }).join('') + '</div>' +
+      root.innerHTML = '<div class="alb-grid">' + list.slice(0, shown).map(function (a) { return albumCardHtml(a, {}); }).join('') + '</div>' +
         (list.length > shown ? '<div class="list-more"><button type="button" class="btn btn-secondary btn-sm" id="phMore">แสดงเพิ่ม (' + (list.length - shown) + ')</button></div>' : '');
       wireAlbumCovers(root);
     }
     $('phSearch').addEventListener('input', function () { shown = GALLERY_PAGE; render(); });
-    ['phSem', 'phDept'].forEach(function (id) { $(id).addEventListener('change', function () { shown = GALLERY_PAGE; render(); }); });
+    $('phYearHint').addEventListener('click', function (e) { if (e.target.closest('#phSearchAllYears')) { $('phYear').value = ''; shown = GALLERY_PAGE; load(); } });
+    ['phSem', 'phGroup'].forEach(function (id) { $(id).addEventListener('change', function () { shown = GALLERY_PAGE; render(); }); });
     $('phYear').addEventListener('change', function () { shown = GALLERY_PAGE; load(); });
     $('phRoot').addEventListener('click', function (e) {
       if (e.target.closest('#phMore')) { shown += GALLERY_PAGE; render(); return; }
@@ -71,9 +86,9 @@
       var a = albums.filter(function (x) { return x.id === card.getAttribute('data-alb'); })[0];
       if (a) copyAlbumText(a);
     });
-    // 1.78: ค่าเริ่มต้น = ปีการศึกษา + ภาคเรียนปัจจุบัน
+    // ค่าเริ่มต้น = ปีการศึกษาปัจจุบัน
     (async function () {
-      try { var term = await currentAcademicTerm(); initYear = term.year; if ($('phSem').querySelector('[value="' + term.semester + '"]')) $('phSem').value = term.semester; } catch (e) { /* ทุกปี */ }
+      try { var term = await currentAcademicTerm(); initYear = curYear = String(term.year); } catch (e) { /* ทุกปี */ } // 1.79: ปีการศึกษาปัจจุบัน + ทุกภาคเรียน
       load();
     })();
   </script>

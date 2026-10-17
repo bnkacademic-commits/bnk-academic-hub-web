@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.78.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.79.171026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -44,22 +44,24 @@
       <div class="cert-kind-seg" role="group" aria-label="ประเภทเกียรติบัตร" id="certKindSeg">
         <button type="button" data-kind="" class="on">ทั้งหมด</button><button type="button" data-kind="teacher">ครู</button><button type="button" data-kind="student">นักเรียน</button><button type="button" data-kind="school">โรงเรียน</button>
       </div>
-      <input type="search" id="certSearch" placeholder="ค้นหาชื่อกิจกรรม / รายการแข่งขัน / ชื่อผู้ได้รับ / เลขที่ / รางวัล" />
-    </div>
-    <div class="cert-toolbar">
-      <select id="certActivity" aria-label="กรองตามกิจกรรม" class="grow"></select>
       <button type="button" class="btn btn-ghost btn-sm cert-merge-btn" id="certMergeBtn" hidden title="รวมชื่อกิจกรรม/หน่วยงาน/ระดับรางวัลที่พิมพ์ต่างกันให้เป็นชื่อเดียว"><i class="fa-solid fa-code-merge"></i> จัดการชื่อ</button>
-      <select id="certYear" aria-label="กรองตามปีการศึกษา"></select>
-      <select id="certSem" aria-label="กรองตามภาคเรียน"></select>
-      <select id="certMine" aria-label="กรองตามความเกี่ยวข้อง">
-        <option value="">ทุกเกียรติบัตร</option>
-        <option value="mine">ที่ฉันเพิ่ม</option>
-        <option value="recv">ที่ฉันได้รับ</option>
-        <option value="pending">ยังไม่ครบ (ไฟล์/ชื่อ)</option>
-        <option value="cancelled">ที่ยกเลิกแล้ว</option>
-      </select>
     </div>
-    <div class="year-scope-hint" id="certYearHint" hidden></div>
+    <!-- 1.79: แถบตัวกรองมาตรฐาน (ค้นหา → ปีการศึกษา → ภาคเรียน → กิจกรรม → ทั้งหมด/ของฉัน) -->
+    <div class="flt" id="certFlt">
+      <input type="search" class="flt-q" id="certSearch" placeholder="ค้นหาชื่อกิจกรรม / ผู้ได้รับ / เลขที่ / รางวัล" aria-label="ค้นหา" />
+      <button type="button" class="flt-toggle" aria-haspopup="dialog"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง <span class="flt-n" hidden></span></button>
+      <div class="flt-backdrop"></div>
+      <div class="flt-panel" role="group" aria-label="ตัวกรอง">
+        <div class="flt-head"><span><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรอง</span><button type="button" class="modal-close-x flt-x" aria-label="ปิด">✕</button></div>
+        <label class="flt-f"><span>ปีการศึกษา</span><select id="certYear" aria-label="ปีการศึกษา"></select></label>
+        <label class="flt-f"><span>ภาคเรียน</span><select id="certSem" aria-label="ภาคเรียน"></select></label>
+        <label class="flt-f"><span>กิจกรรม</span><select id="certActivity" aria-label="กิจกรรม"></select></label>
+        <label class="flt-f"><span>แสดง</span><select id="certMine" aria-label="แสดง"><option value="">ทั้งหมด</option><option value="mine">ที่ฉันเพิ่ม</option><option value="recv">ที่ฉันได้รับ</option><option value="pending">ยังไม่ครบ (ไฟล์/ชื่อ)</option><option value="cancelled">ที่ยกเลิกแล้ว</option></select></label>
+        <div class="flt-acts"><button type="button" class="btn btn-close flt-clear" hidden><i class="fa-solid fa-xmark" aria-hidden="true"></i> ล้างตัวกรอง</button><button type="button" class="btn btn-success flt-done">แสดงผล</button></div>
+      </div>
+    </div>
+    <div class="flt-chips" id="certFltChips"></div>
+    <div class="flt-meta"><span class="flt-count" id="certFltCount"></span><span class="year-scope-hint" id="certYearHint" hidden></span></div>
     <div id="certRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
 
@@ -180,13 +182,14 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.78.171026"></script>
+  <script src="assets/api.js?v=1.79.171026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
     var allYears = [], pendingMine = [], selYear = null, shownN = LIST_PAGE, agencies = [], levels = [], certs = [], activities = [], people = [], me = null, canAdd = false, canMerge = false, schoolName = '', summerOn = true;
     var numbering = { format: 'บนค. {ปีการศึกษา}/{เลขที่}', digits: 4, counters: {} };
     var scope = 'internal', kindFilter = '', expanded = {}, curTerm = null, yearDefaulted = false;
+    var fltBar = initFilterBar('certFlt', { unit: 'รายการ', defaults: function () { return { certYear: curTerm ? String(curTerm.year || '') : '', certSem: '', certActivity: '', certMine: '' }; } });
     var TAB_KEY = 'bnkah_cert_tab';
     var AWARD_SUGG = ['ชนะเลิศ', 'รองชนะเลิศอันดับ 1', 'รองชนะเลิศอันดับ 2', 'เหรียญทอง', 'เหรียญเงิน', 'เหรียญทองแดง', 'ชมเชย', 'เข้าร่วม'];
     var KIND_LABEL = { teacher: 'ครู', student: 'นักเรียน', school: 'โรงเรียน' };
@@ -301,9 +304,10 @@
       });
       var root = $('certRoot');
       var inScope = certs.filter(function (c) { return c.scope === scope && c.status !== 'cancelled'; }).length;
+      fltBar.update(list.length, '· ' + list.reduce(function (s, c) { return s + (c.status === 'cancelled' ? (c.items || []).length : activeItems(c).length); }, 0).toLocaleString('th-TH') + ' ใบ');
       if (!inScope && fm !== 'cancelled') { root.innerHTML = '<div class="orders-empty"><i class="fa-solid fa-award" aria-hidden="true"></i> ยังไม่มีเกียรติบัตร' + (scope === 'internal' ? 'ภายใน' : 'ภายนอก') + 'โรงเรียน</div>'; return; }
       if (!list.length) { root.innerHTML = '<div class="orders-empty">ไม่พบเกียรติบัตรที่ตรงกับเงื่อนไข</div>'; return; }
-      root.innerHTML = '<div class="ordc-count hint">' + list.length + ' รายการ · ' + list.reduce(function (s, c) { return s + (c.status === 'cancelled' ? (c.items || []).length : activeItems(c).length); }, 0) + ' ใบ</div><ul class="ordc-list">' + list.slice(0, shownN).map(rowHtml).join('') + '</ul>' + listMoreHtml(shownN, list.length);
+      root.innerHTML = '<ul class="ordc-list">' + list.slice(0, shownN).map(rowHtml).join('') + '</ul>' + listMoreHtml(shownN, list.length);
     }
     function dateTile(iso) {
       var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
