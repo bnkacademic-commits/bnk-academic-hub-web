@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.74.151026" />
+<link rel="stylesheet" href="assets/style.css?v=1.75.171026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -38,6 +38,19 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="announcements">ประกาศ</button>
       <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
+      <!-- 1.75: เรื่องที่แจ้ง (เจ้าหน้าที่ = กลุ่มตัวเอง · Super Admin = ทุกเรื่อง) — ผู้บริหารไม่เห็นแท็บนี้ -->
+      <button class="tab-btn" data-tab="reports" id="reportsTabBtn" hidden>เรื่องที่แจ้ง<span class="rpm-tabcount" id="reportsTabCount" hidden></span></button>
+    </div>
+
+    <div class="tab-panel" id="tab-reports">
+      <div class="card">
+        <div class="section-title"><span><i class="fa-solid fa-inbox ui-icon" style="font-size:17px" aria-hidden="true"></i> เรื่องที่แจ้ง</span></div>
+        <div class="rpm-top">
+          <div class="rpm-chips" id="rpmChips"></div>
+          <select id="rpmScope" hidden aria-label="กลุ่ม"></select>
+        </div>
+        <div id="rpmWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
     </div>
 
     <!-- Calendar tab -->
@@ -186,7 +199,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.74.151026"></script>
+  <script src="assets/api.js?v=1.75.171026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -226,7 +239,8 @@
         ensureUsersLoaded().then(function () { if (lastAnnouncements.some(function (a) { return parseAudienceStr(a.audience).type === 'people'; })) loadAnnouncements(); });
         return p;
       },
-      calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); }
+      calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); },
+      reports: function () { return loadReportsManage(); }
     };
     function loadTabIfNeeded(tabKey) {
       if (_tabLoaded[tabKey]) return;
@@ -618,7 +632,89 @@
     });
 
 
+    // ---------- 1.75: เรื่องที่แจ้ง ----------
+    var rpm = { items: [], filter: 'all', scope: '', sel: '', data: null };
+    if (session && session.role === 'admin') document.getElementById('reportsTabBtn').hidden = false;
+    function setReportsTabCount(n) { var c = document.getElementById('reportsTabCount'); c.textContent = n; c.hidden = !n; }
+    window.__onReportOpenCount = setReportsTabCount;
+    if (typeof window.__reportOpenCount === 'number') setReportsTabCount(window.__reportOpenCount);
+    async function loadReportsManage() {
+      var wrap = document.getElementById('rpmWrap');
+      try { rpm.data = await apiCall('reportListManage', { scope: rpm.scope }); }
+      catch (e) { wrap.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; return; }
+      rpm.items = rpm.data.items || [];
+      setReportsTabCount(rpm.items.filter(function (r) { return r.status !== 'done'; }).length);
+      var sc = document.getElementById('rpmScope');
+      if (rpm.data.isSuper && !sc.options.length) {
+        sc.innerHTML = '<option value="">ทุกเรื่อง</option><option value="system">การใช้งานระบบ</option>' + (rpm.data.departments || []).map(function (d) { return '<option value="' + escapeHtml(d) + '">' + escapeHtml(groupLabel(d)) + '</option>'; }).join('');
+        sc.hidden = false;
+      }
+      renderReportsManage();
+    }
+    function renderReportsManage() {
+      var counts = { all: rpm.items.length, open: 0, progress: 0, done: 0 };
+      rpm.items.forEach(function (r) { counts[r.status] = (counts[r.status] || 0) + 1; });
+      document.getElementById('rpmChips').innerHTML = [['all', 'ทั้งหมด'], ['open', 'รอรับเรื่อง'], ['progress', 'กำลังดำเนินการ'], ['done', 'เสร็จแล้ว']].map(function (c) {
+        return '<button type="button" data-rpm-f="' + c[0] + '" class="' + (rpm.filter === c[0] ? 'on' : '') + '">' + c[1] + ' ' + (counts[c[0]] || 0) + '</button>';
+      }).join('');
+      var list = rpm.items.filter(function (r) { return rpm.filter === 'all' || r.status === rpm.filter; });
+      var wrap = document.getElementById('rpmWrap');
+      if (!list.length) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีเรื่องที่แจ้ง' + (rpm.filter !== 'all' ? 'ในสถานะนี้' : '') + '</div>'; return; }
+      if (!list.some(function (r) { return r.id === rpm.sel; })) rpm.sel = list[0].id;
+      var sel = list.filter(function (r) { return r.id === rpm.sel; })[0];
+      wrap.innerHTML = '<div class="rpm-grid"><div class="rpm-list">' + list.map(function (r) {
+        return '<button type="button" class="rpm-row' + (r.id === rpm.sel ? ' on' : '') + '" data-rpm-id="' + escapeHtml(r.id) + '"><div class="h"><b>' + escapeHtml(r.subject) + '</b>' + reportStatusChip(r.status) + '</div>' +
+          '<div class="m">' + escapeHtml(r.createdByName) + ' · ' + escapeHtml(formatDateTimeThai(r.createdAt)) + (rpm.data.isSuper ? ' · ' + escapeHtml(r.targetLabel) : '') + '</div></button>';
+      }).join('') + '</div>' + reportDetailHtml(sel) + '</div>';
+    }
+    function reportDetailHtml(r) {
+      var deps = (rpm.data.departments || []);
+      var fwd = '<option value="">ส่งต่อ…</option>' + (r.target !== 'system' ? '<option value="system">ผู้ดูแลระบบ (การใช้งานระบบ)</option>' : '') +
+        deps.filter(function (d) { return !(r.target === 'dept' && r.department === d); }).map(function (d) { return '<option value="dept:' + escapeHtml(d) + '">' + escapeHtml(groupLabel(d)) + '</option>'; }).join('');
+      return '<div class="rpm-det" data-rpm-det="' + escapeHtml(r.id) + '"><div>' + reportStatusChip(r.status) + ' ' + reportTargetChip(r) + '</div>' +
+        '<h3>' + escapeHtml(r.subject) + '</h3>' +
+        '<div class="rpm-meta">' + escapeHtml(r.createdByName) + ' · ' + escapeHtml(formatDateTimeThai(r.createdAt)) + (r.page ? ' · หน้า ' + escapeHtml(r.page) : '') + (r.ua ? ' · ' + escapeHtml(r.ua) : '') + '</div>' +
+        reportFilesHtml(r.files) + '<div class="rp-thread" style="border-top:0;padding-top:0;margin-top:0">' + reportThreadHtml(r.messages) + '</div>' +
+        (r.canManage ? '<textarea id="rpmReply" rows="3" maxlength="3000" placeholder="พิมพ์ตอบกลับผู้แจ้ง..."></textarea>' +
+          '<div class="rpm-acts"><select id="rpmStatus" aria-label="สถานะ">' + ['open', 'progress', 'done'].map(function (s) { return '<option value="' + s + '"' + (r.status === s ? ' selected' : '') + '>สถานะ: ' + REPORT_STATUS[s][0] + '</option>'; }).join('') + '</select>' +
+          '<select id="rpmForward" aria-label="ส่งต่อ">' + fwd + '</select><span class="grow"></span>' +
+          '<button type="button" class="btn btn-success btn-sm rpm-send" id="rpmSend"><i class="fa-solid fa-reply" aria-hidden="true"></i> ส่งคำตอบ</button></div>' : '') +
+        '</div>';
+    }
+    document.getElementById('rpmScope').addEventListener('change', function (e) { rpm.scope = e.target.value; rpm.sel = ''; document.getElementById('rpmWrap').innerHTML = '<div class="loading">กำลังโหลด</div>'; loadReportsManage(); });
+    document.getElementById('tab-reports').addEventListener('click', async function (e) {
+      var b;
+      if ((b = e.target.closest('[data-rpm-f]'))) { rpm.filter = b.getAttribute('data-rpm-f'); renderReportsManage(); return; }
+      if ((b = e.target.closest('[data-rpm-id]'))) { rpm.sel = b.getAttribute('data-rpm-id'); renderReportsManage(); return; }
+      if ((b = e.target.closest('[data-rp-img]'))) { var r0 = rpm.items.filter(function (x) { return x.id === rpm.sel; })[0]; if (r0) openReportImages(r0.files, Number(b.getAttribute('data-rp-img'))); return; }
+      if (e.target.closest('#rpmSend')) {
+        var t = document.getElementById('rpmReply'); if (!t.value.trim()) { t.focus(); return; }
+        var r = await withProgress('กำลังส่งคำตอบ', function () { return apiCall('reportReply', { id: rpm.sel, body: t.value }); }, { successLabel: 'ส่งคำตอบแล้ว' });
+        if (r.ok) loadReportsManage();
+      }
+    });
+    document.getElementById('tab-reports').addEventListener('change', async function (e) {
+      if (e.target.id === 'rpmStatus') {
+        var r = await withProgress('กำลังเปลี่ยนสถานะ', function () { return apiCall('reportSetStatus', { id: rpm.sel, status: e.target.value }); }, { successLabel: 'เปลี่ยนสถานะแล้ว' });
+        loadReportsManage();
+      } else if (e.target.id === 'rpmForward' && e.target.value) {
+        var v = e.target.value, label = e.target.options[e.target.selectedIndex].textContent;
+        var ok = await askConfirm('ส่งต่อเรื่องนี้ถึง <b>' + escapeHtml(label) + '</b>? ผู้รับใหม่จะได้รับแจ้งเตือน', 'ยืนยันการส่งต่อ');
+        if (!ok) { e.target.value = ''; return; }
+        var r2 = await withProgress('กำลังส่งต่อ', function () { return apiCall('reportForward', { id: rpm.sel, target: v === 'system' ? 'system' : 'dept', department: v === 'system' ? '' : v.slice(5) }); }, { successLabel: 'ส่งต่อเรื่องแล้ว' });
+        loadReportsManage();
+      }
+    });
+    // เปิดแท็บตาม #hash (เช่น กดแจ้งเตือน "เรื่องใหม่" -> announce.html#reports)
+    function openTabFromHash() {
+      var key = (location.hash || '').replace('#', '');
+      var btn = key && document.querySelector('.tab-btn[data-tab="' + key + '"]:not([hidden])');
+      if (btn) { if (key === 'reports') _tabLoaded.reports = false; btn.click(); }
+    }
+    window.__onHashTab = openTabFromHash;
+
     loadTabIfNeeded('announcements');
+    openTabFromHash();
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแถบเมนู) ----------
     window.__refreshPageData = function () {
