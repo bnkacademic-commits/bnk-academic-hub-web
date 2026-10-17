@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.75.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.76.171026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -39,6 +39,8 @@
   .exec-sum-nums { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.74rem; font-weight: 700; margin-top: 4px; }
   .exec-sum-nums .ok { color: var(--accent); } .exec-sum-nums .late { color: #b45309; } .exec-sum-nums .miss { color: var(--danger); }
   .exec-full-btn { margin-top: 10px; width: 100%; }
+  /* 1.76: เช็คลิสต์เป็น absolute เต็มกรอบ (จอกว้าง) -> ปุ่มทับหัวข้อ — วางปุ่มไว้ล่างสุดและเว้นที่ให้ */
+  @media (min-width: 721px) { .dash-cal-side > .dash-checklist { bottom: 54px; } .exec-full-btn { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; } }
 </style>
 </head>
 <body>
@@ -79,7 +81,7 @@
             <div class="dash-checklist-title"><i class="fas fa-chart-column ui-icon" aria-hidden="true"></i> สรุปการส่งงาน</div>
             <div class="dash-checklist-body" id="execSummaryBody"><div class="loading">กำลังโหลด</div></div>
           </div>
-          <a class="btn btn-secondary exec-full-btn" href="summary.html"><i class="fas fa-chart-column ui-icon" aria-hidden="true"></i> ดูสรุปรวมการส่งงานฉบับเต็ม</a>
+          <a class="btn btn-secondary btn-sm exec-full-btn" href="summary.html"><i class="fas fa-chart-column ui-icon" aria-hidden="true"></i> ดูสรุปรวมฉบับเต็ม</a>
         </div>
       </div>
       <div id="calEventsUpcoming" style="margin-top:18px;"></div>
@@ -99,7 +101,7 @@
     </div>
   </div>
 
-<script src="assets/api.js?v=1.75.171026"></script>
+<script src="assets/api.js?v=1.76.171026"></script>
   <script>
     var session = requireViewerAccess();
     // ผู้บริหารเท่านั้นที่ใช้หน้านี้เป็นหน้าแรก (เจ้าหน้าที่/Super Admin มีหน้าแรกของตัวเองอยู่แล้ว) — ส่งกลับหน้าแรกของบทบาทนั้น

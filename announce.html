@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.75.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.76.171026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -199,7 +199,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.75.171026"></script>
+  <script src="assets/api.js?v=1.76.171026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -370,7 +370,7 @@
       }
     }
 
-    // 1.61: ค่าเริ่มต้นปีการศึกษา/ภาคเรียนของกำหนดการใหม่ = เทอมปัจจุบัน (currentAcademicTerm — ตั้งเองหรืออัตโนมัติตามที่ Super Admin กำหนด)
+    // 1.61: ค่าเริ่มต้นปีการศึกษา/ภาคเรียนของกำหนดการใหม่ = ภาคเรียนปัจจุบัน (currentAcademicTerm — ตั้งเองหรืออัตโนมัติตามที่ Super Admin กำหนด)
     async function setEvCurrentTerm() {
       try {
         var t = await currentAcademicTerm();
@@ -391,7 +391,7 @@
       document.getElementById('createEventForm').reset();
       evAud.set('all');
       switchEvTab('period');
-      setEvCurrentTerm(); // 1.61: ปีการศึกษา/ภาคเรียนเริ่มต้น = เทอมปัจจุบันของระบบ
+      setEvCurrentTerm(); // 1.61: ปีการศึกษา/ภาคเรียนเริ่มต้น = ภาคเรียนปัจจุบันของระบบ
       loadEventCategories(); // รีเฟรชรายชื่อประเภทงานทุกครั้งที่เปิด เผื่อเพิ่ม/ลบประเภทงานที่แท็บ "ทั่วไป" มาระหว่างนี้
       document.getElementById('evSubmitBtn').textContent = 'เพิ่มกำหนดการ';
       document.getElementById('eventModalTitle').textContent = 'เพิ่มกำหนดการ';

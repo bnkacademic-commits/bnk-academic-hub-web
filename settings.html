@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.75.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.76.171026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -35,7 +35,7 @@
     <!-- ลำดับแท็บตั้งแต่ V10.0: จัดการบัญชี เป็น Super Admin เท่านั้น (ตัดสิทธิ์เจ้าหน้าที่ฝ่ายวิชาการออก), "ประวัติการลบ" เปลี่ยนชื่อ+จำกัดสิทธิ์เป็น Super Admin เท่านั้น,
          "Log ประกาศ" ถูกลบออก (ข้อมูลผู้แจ้งประกาศย้ายไปแสดงในแท็บ "ประกาศ" อยู่แล้ว) แทนที่ด้วย "ประวัติระบบ" ท้ายสุด ครอบคลุมทั้งค่าตั้งค่า/ประกาศ/กำหนดการ
          "ระบบเว็บ" (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21): แยกออกจาก "ทั่วไป" มาเป็นแท็บของตัวเอง ไม่ใช่ super-admin-only เพราะให้เจ้าหน้าที่ฝ่ายวิชาการจัดการ
-         "เทอม/ปีการศึกษาปัจจุบัน" ได้ด้วยตามที่ผู้ใช้ขอ (ส่วนอื่นของ "ทั่วไป" เช่น ชื่อเว็บ/โลโก้/ไอคอน ยังเป็น Super Admin เท่านั้นเหมือนเดิม) -->
+         "ภาคเรียน/ปีการศึกษาปัจจุบัน" ได้ด้วยตามที่ผู้ใช้ขอ (ส่วนอื่นของ "ทั่วไป" เช่น ชื่อเว็บ/โลโก้/ไอคอน ยังเป็น Super Admin เท่านั้นเหมือนเดิม) -->
     <div class="tabs">
       <button class="tab-btn active super-admin-only" data-tab="general">ทั่วไป</button>
       <button class="tab-btn" data-tab="website">ข้อมูลหลัก</button>
@@ -62,10 +62,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.75.171026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.76.171026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.75.171026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.76.171026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -99,7 +99,7 @@
         </div>
       </div>
 
-      <!-- 1.75.171026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.76.171026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -267,14 +267,14 @@
       </div>
 
       <div class="card" id="curTermCard">
-        <div class="section-title"><i class="fas fa-calendar-day ui-icon" style="font-size:17px" aria-hidden="true"></i> เทอม/ปีการศึกษาปัจจุบัน</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ค่านี้ใช้เป็น "เทอม/ปีการศึกษาปัจจุบัน" เริ่มต้นทั่วทั้งระบบ (ปฏิทิน เช็คลิสต์การส่งงาน ตัวกรองต่างๆ ในหน้าฮับครู และหน้าแสดงผลงานสาธารณะ) — เลือกได้ 2 วิธี</p>
+        <div class="section-title"><i class="fas fa-calendar-day ui-icon" style="font-size:17px" aria-hidden="true"></i> ภาคเรียน/ปีการศึกษาปัจจุบัน</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ค่านี้ใช้เป็น "ภาคเรียน/ปีการศึกษาปัจจุบัน" เริ่มต้นทั่วทั้งระบบ (ปฏิทิน เช็คลิสต์การส่งงาน ตัวกรองต่างๆ ในหน้าฮับครู และหน้าแสดงผลงานสาธารณะ) — เลือกได้ 2 วิธี</p>
         <div id="curTermError" class="error-box" hidden></div>
         <form id="curTermForm">
-          <div class="term-mode-options" role="radiogroup" aria-label="วิธีกำหนดเทอม/ปีการศึกษาปัจจุบัน">
+          <div class="term-mode-options" role="radiogroup" aria-label="วิธีกำหนดภาคเรียน/ปีการศึกษาปัจจุบัน">
             <label class="term-mode-opt">
               <input type="radio" name="termMode" id="termModeAuto" value="auto" />
-              <span><b>เปลี่ยนอัตโนมัติตามวันที่</b><span class="hint" style="display:block; margin:2px 0 0;">กำหนดวันเริ่มภาคเรียนไว้ครั้งเดียว (วัน/เดือน ซ้ำทุกปี) ระบบจะเปลี่ยนเทอมและปีการศึกษาให้เอง ไม่ต้องกลับมาแก้ทุกเทอม</span></span>
+              <span><b>เปลี่ยนอัตโนมัติตามวันที่</b><span class="hint" style="display:block; margin:2px 0 0;">กำหนดวันเริ่มภาคเรียนไว้ครั้งเดียว (วัน/เดือน ซ้ำทุกปี) ระบบจะเปลี่ยนภาคเรียนและปีการศึกษาให้เอง ไม่ต้องกลับมาแก้ทุกภาคเรียน</span></span>
             </label>
             <label class="term-mode-opt">
               <input type="radio" name="termMode" id="termModeManual" value="manual" />
@@ -325,7 +325,7 @@
     </div>
 
     <!-- "ระบบเว็บ" tab (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21) — แยกออกมาจาก "ทั่วไป" ไม่ใช่ super-admin-only: ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการจัดการได้
-         เทอม/ปีการศึกษาปัจจุบัน (ตั้งแต่ V12.0) — เดิมคำนวณจากวันที่จริงอัตโนมัติเสมอ ตั้งเองได้ มีผลเป็นค่าเริ่มต้นของตัวกรองเทอมปัจจุบันทั่วทั้งระบบ
+         ภาคเรียน/ปีการศึกษาปัจจุบัน (ตั้งแต่ V12.0) — เดิมคำนวณจากวันที่จริงอัตโนมัติเสมอ ตั้งเองได้ มีผลเป็นค่าเริ่มต้นของตัวกรองภาคเรียนปัจจุบันทั่วทั้งระบบ
          (ปฏิทิน/เช็คลิสต์/ตัวกรองหน้าฮับครู/หน้าแสดงผลงานสาธารณะ) ปล่อยว่างทั้งคู่ = กลับไปอัตโนมัติ -->
     <div class="tab-panel" id="tab-website">
 
@@ -1153,7 +1153,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.75.171026"></script>
+  <script src="assets/api.js?v=1.76.171026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1556,7 +1556,7 @@
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.75.171026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.76.171026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -1569,9 +1569,9 @@
       el.innerHTML = dataUrl ? '<img src="' + dataUrl + '" alt="" />' : '—';
     }
 
-    // ---------- "ระบบเว็บ" → เทอม/ปีการศึกษาปัจจุบัน (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21: ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการตั้งเองได้ ไม่ต้องเช็ค
+    // ---------- "ระบบเว็บ" → ภาคเรียน/ปีการศึกษาปัจจุบัน (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21: ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการตั้งเองได้ ไม่ต้องเช็ค
     // isSuperAdminSession แล้ว เพราะย้ายออกมาจากบล็อก Super Admin เดิม — เซิร์ฟเวอร์ฝั่ง adminUpdateSettings ก็เปิดให้ทั้งสอง role แล้วเช่นกัน) ----------
-    // ตั้งแต่ 1.41.111026: เลือกได้ 2 โหมด — "อัตโนมัติตามวันที่" (กำหนดวันเริ่มเทอม 1 / เทอม 2 / ฤดูร้อน แบบวัน-เดือนซ้ำทุกปี) หรือ "กำหนดเอง" (กรอกปี+ภาคเรียน)
+    // ตั้งแต่ 1.41.111026: เลือกได้ 2 โหมด — "อัตโนมัติตามวันที่" (กำหนดวันเริ่มภาคเรียนที่ 1 / ภาคเรียนที่ 2 / ฤดูร้อน แบบวัน-เดือนซ้ำทุกปี) หรือ "กำหนดเอง" (กรอกปี+ภาคเรียน)
     var TERM_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
     var termSummerOn = true;
     function termFillMdSelects(dayId, monthId, mmdd) {
@@ -1613,7 +1613,7 @@
         if (!(sch.term1Start < sch.term2Start)) { prev.textContent = 'วันเริ่มภาคเรียนที่ 2 ต้องอยู่หลังวันเริ่มภาคเรียนที่ 1'; return; }
         if (termSummerOn && !(sch.summerStart < sch.term1Start)) { prev.textContent = 'วันเริ่มภาคฤดูร้อนต้องอยู่ก่อนวันเริ่มภาคเรียนที่ 1'; return; }
         var now = trueCurrentAcademicTerm({ summerEnabled: termSummerOn, termSchedule: sch });
-        prev.textContent = 'ถ้าใช้ตารางนี้ วันนี้จะได้: ' + termSemLabel(now) + ' · เทอม 1 เริ่ม ' + termMdLabel(sch.term1Start) + ', เทอม 2 เริ่ม ' + termMdLabel(sch.term2Start) + (termSummerOn ? ', ฤดูร้อนเริ่ม ' + termMdLabel(sch.summerStart) : '');
+        prev.textContent = 'ถ้าใช้ตารางนี้ วันนี้จะได้: ' + termSemLabel(now) + ' · ภาคเรียนที่ 1 เริ่ม ' + termMdLabel(sch.term1Start) + ', ภาคเรียนที่ 2 เริ่ม ' + termMdLabel(sch.term2Start) + (termSummerOn ? ', ฤดูร้อนเริ่ม ' + termMdLabel(sch.summerStart) : '');
       }
     }
     async function loadCurTermSettings() {
@@ -1627,7 +1627,7 @@
       termFillMdSelects('t1Day', 't1Month', sch.term1Start);
       termFillMdSelects('t2Day', 't2Month', sch.term2Start);
       termFillMdSelects('tsDay', 'tsMonth', sch.summerStart || DEFAULT_TERM_SCHEDULE.summerStart);
-      // ช่องกำหนดเอง: ถ้ายังไม่เคยตั้ง ให้เติมค่าตามเทอมที่ระบบคำนวณได้ตอนนี้ไว้ให้แก้ต่อได้เลย
+      // ช่องกำหนดเอง: ถ้ายังไม่เคยตั้ง ให้เติมค่าตามภาคเรียนที่ระบบคำนวณได้ตอนนี้ไว้ให้แก้ต่อได้เลย
       var seed = (s.currentAcademicYear && s.currentSemester) ? { year: s.currentAcademicYear, semester: s.currentSemester } : trueCurrentAcademicTerm(s);
       document.getElementById('setCurYear').value = seed.year;
       document.getElementById('setCurSemester').value = (seed.semester === 'summer' && !termSummerOn) ? '2' : seed.semester;
@@ -1646,16 +1646,16 @@
           var semesterVal = document.getElementById('setCurSemester').value;
           if (!/^\d{4}$/.test(yearVal) || !semesterVal) { errBox.textContent = 'กรุณากรอกปีการศึกษา (ตัวเลข 4 หลัก เช่น 2569) และเลือกภาคเรียน'; errBox.hidden = false; return; }
           payload = { termMode: 'manual', currentAcademicYear: yearVal, currentSemester: semesterVal };
-          msg = 'ยืนยันตั้งเทอม/ปีการศึกษาปัจจุบันเองเป็น "' + (semesterVal === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + semesterVal) + ' ปีการศึกษา ' + yearVal + '"? มีผลทั้งระบบทันที และจะไม่เปลี่ยนเองจนกว่าจะแก้ไขหรือสลับไปโหมดอัตโนมัติ';
-          okLabel = 'ตั้งเทอม/ปีการศึกษาปัจจุบันแล้ว';
+          msg = 'ยืนยันตั้งภาคเรียน/ปีการศึกษาปัจจุบันเองเป็น "' + (semesterVal === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + semesterVal) + ' ปีการศึกษา ' + yearVal + '"? มีผลทั้งระบบทันที และจะไม่เปลี่ยนเองจนกว่าจะแก้ไขหรือสลับไปโหมดอัตโนมัติ';
+          okLabel = 'ตั้งภาคเรียน/ปีการศึกษาปัจจุบันแล้ว';
         } else {
           var sch = termReadSchedule();
           if (!termMdValid(sch.term1Start) || !termMdValid(sch.term2Start) || (termSummerOn && !termMdValid(sch.summerStart))) { errBox.textContent = 'วันที่ที่เลือกไม่มีอยู่จริงในเดือนนั้น'; errBox.hidden = false; return; }
           if (!(sch.term1Start < sch.term2Start)) { errBox.textContent = 'วันเริ่มภาคเรียนที่ 2 ต้องอยู่หลังวันเริ่มภาคเรียนที่ 1'; errBox.hidden = false; return; }
           if (termSummerOn && !(sch.summerStart < sch.term1Start)) { errBox.textContent = 'วันเริ่มภาคฤดูร้อนต้องอยู่ก่อนวันเริ่มภาคเรียนที่ 1'; errBox.hidden = false; return; }
           payload = { termMode: 'auto', termSchedule: sch };
-          msg = 'ยืนยันให้ระบบเปลี่ยนเทอม/ปีการศึกษาอัตโนมัติตามวันที่? (เทอม 1 เริ่ม ' + termMdLabel(sch.term1Start) + ', เทอม 2 เริ่ม ' + termMdLabel(sch.term2Start) + (termSummerOn ? ', ฤดูร้อนเริ่ม ' + termMdLabel(sch.summerStart) : '') + ') — วันนี้จะได้ ' + termSemLabel(trueCurrentAcademicTerm({ summerEnabled: termSummerOn, termSchedule: sch }));
-          okLabel = 'ตั้งให้เปลี่ยนเทอมอัตโนมัติแล้ว';
+          msg = 'ยืนยันให้ระบบเปลี่ยนภาคเรียน/ปีการศึกษาอัตโนมัติตามวันที่? (ภาคเรียนที่ 1 เริ่ม ' + termMdLabel(sch.term1Start) + ', ภาคเรียนที่ 2 เริ่ม ' + termMdLabel(sch.term2Start) + (termSummerOn ? ', ฤดูร้อนเริ่ม ' + termMdLabel(sch.summerStart) : '') + ') — วันนี้จะได้ ' + termSemLabel(trueCurrentAcademicTerm({ summerEnabled: termSummerOn, termSchedule: sch }));
+          okLabel = 'ตั้งให้เปลี่ยนภาคเรียนอัตโนมัติแล้ว';
         }
         var ok = await askConfirm(msg, 'ยืนยันการบันทึก');
         if (!ok) return;
@@ -2125,7 +2125,7 @@
         if (r.ok) {
           resetSettingsCache();
           applyBranding();
-          loadCurTermSettings(); // ช่องวันเริ่มภาคฤดูร้อน/ตัวเลือกภาคฤดูร้อนในการ์ดเทอมปัจจุบัน ขึ้นหรือซ่อนตามที่เพิ่งเปลี่ยน
+          loadCurTermSettings(); // ช่องวันเริ่มภาคฤดูร้อน/ตัวเลือกภาคฤดูร้อนในการ์ดภาคเรียนปัจจุบัน ขึ้นหรือซ่อนตามที่เพิ่งเปลี่ยน
         } else {
           cb.checked = !nextVal;
           showToast(r.error.message, true);
@@ -2217,7 +2217,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.75.171026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.76.171026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);

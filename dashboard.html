@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.75.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.76.171026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -100,7 +100,7 @@
               <span class="dash-checklist-name"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> <span>เช็คลิสต์การส่งงาน</span></span>
               <span class="dash-checklist-controls">
                 <select id="clYear" aria-label="เลือกปีการศึกษาของเช็คลิสต์"></select>
-                <button class="refresh-btn" id="clReset" type="button" title="กลับไปปีการศึกษา/เทอมปัจจุบัน" aria-label="กลับไปปีการศึกษาปัจจุบัน"><svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+                <button class="refresh-btn" id="clReset" type="button" title="กลับไปปีการศึกษา/ภาคเรียนปัจจุบัน" aria-label="กลับไปปีการศึกษาปัจจุบัน"><svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
               </span>
             </div>
             <div class="cl-tabs" id="clTabs" role="tablist" aria-label="ภาคเรียน"></div>
@@ -211,7 +211,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.75.171026"></script>
+  <script src="assets/api.js?v=1.76.171026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -554,7 +554,7 @@
       loadSubmissions();
     });
 
-    // ---------- Submissions list (ค้นหา + กรองปีการศึกษา/ภาคเรียน — ค่าเริ่มต้นคือเทอมปัจจุบันตามเวลาจริง) ----------
+    // ---------- Submissions list (ค้นหา + กรองปีการศึกษา/ภาคเรียน — ค่าเริ่มต้นคือภาคเรียนปัจจุบันตามเวลาจริง) ----------
     var allSubmissions = [];
     var _subFiltersInitialized = false;
     // { categoryId: color } — ใช้แสดงจุดสีหน้าชื่อประเภทงานในรายการผลงาน/ปฏิทิน (ตั้งแต่ V9.7)
@@ -583,7 +583,7 @@
         yearSel.appendChild(opt);
       });
       if (!_subFiltersInitialized) {
-        // ตั้งค่าเริ่มต้นเป็นเทอมปัจจุบันตามเวลาจริงแค่ตอนโหลดหน้าครั้งแรกเท่านั้น (ครั้งต่อไปคงค่าที่ผู้ใช้เลือกไว้เอง)
+        // ตั้งค่าเริ่มต้นเป็นภาคเรียนปัจจุบันตามเวลาจริงแค่ตอนโหลดหน้าครั้งแรกเท่านั้น (ครั้งต่อไปคงค่าที่ผู้ใช้เลือกไว้เอง)
         yearSel.value = term.year;
         document.getElementById('subFilterSemester').value = term.semester;
         _subFiltersInitialized = true;
@@ -927,7 +927,7 @@
     var MAX_CALENDAR_LANES = 2; // ช่องปฏิทินเล็ก แสดงแถบสีซ้อนกันได้สูงสุด 2 แถวต่อวัน
 
     // ---------- เช็คลิสต์สถานะการส่งงาน (ข้างปฏิทิน, ตั้งแต่ V9.9) ----------
-    // เทียบกำหนดการในปฏิทินที่ผูกประเภทงานไว้ กับผลงานที่เคยส่งแล้ว (categoryId+ปี+เทอมตรงกัน = นับว่าส่งแล้ว
+    // เทียบกำหนดการในปฏิทินที่ผูกประเภทงานไว้ กับผลงานที่เคยส่งแล้ว (categoryId+ปี+ภาคเรียนตรงกัน = นับว่าส่งแล้ว
     // เป็นเกณฑ์แบบเดียวกับที่หน้าสรุปรวม "สรุปแยกแต่ละงาน" ใช้ — ไม่ได้ผูกกับ eventId เจาะจง เพราะระบบไม่มีฟิลด์นั้นในตาราง submissions)
     // ย้ายออกมาเป็นฟังก์ชันกลาง (เดิมประกาศซ้อนอยู่ในตัว renderAssignmentChecklist เท่านั้น) เพราะ renderCalendar() ด้านล่าง
     // ก็ต้องใช้เกณฑ์เดียวกันนี้ด้วย เพื่อตัดสินว่ากำหนดการที่เกินกำหนดแล้วควรยังค้างอยู่ใน "กำหนดการ" ใต้ปฏิทินหรือไม่
@@ -936,11 +936,11 @@
         return s.categoryId === e.categoryId && s.academicYear === e.academicYear && s.semester === e.semester;
       });
     }
-    // ตั้งแต่ V-ถัดไปหลัง V10.1: แสดงทุกภาคเรียน/ปีการศึกษา จัดเป็นหมวดใหญ่ "เทอม ปีการศึกษา" ก่อน แล้วค่อยลิสงานในเทอมนั้นลงมา (เดิมกรองแสดงแค่เทอมปัจจุบันเทอมเดียว)
-    // ตั้งแต่ 1.41.111026: เช็คลิสต์ย่อ/ขยายได้เหมือนดร็อปดาวน์ต่อ "เทอม ปีการศึกษา" — ค่าเริ่มต้นขยายเฉพาะเทอมปัจจุบัน (ตาม currentAcademicTerm()
+    // ตั้งแต่ V-ถัดไปหลัง V10.1: แสดงทุกภาคเรียน/ปีการศึกษา จัดเป็นหมวดใหญ่ "ภาคเรียน ปีการศึกษา" ก่อน แล้วค่อยลิสงานในภาคเรียนนั้นลงมา (เดิมกรองแสดงแค่ภาคเรียนปัจจุบันภาคเรียนเดียว)
+    // ตั้งแต่ 1.41.111026: เช็คลิสต์ย่อ/ขยายได้เหมือนดร็อปดาวน์ต่อ "ภาคเรียน ปีการศึกษา" — ค่าเริ่มต้นขยายเฉพาะภาคเรียนปัจจุบัน (ตาม currentAcademicTerm()
     // ที่ Super Admin ตั้งไว้หรืออัตโนมัติ) · มีช่องเลือกปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · ปุ่ม ↻ = กลับไปปีปัจจุบัน + ย่อ/ขยายกลับค่าเริ่มต้น
-    // 1.61: เช็คลิสต์แยกเป็นแท็บย่อย "เทอม 1 / เทอม 2" (+ "ภาคฤดูร้อน" เมื่อเปิดใช้) อยู่แถวเดียวกันใต้ช่องเลือกปีการศึกษา — แทนการย่อ/ขยายเดิม
-    // ค่าเริ่มต้น = เทอมปัจจุบัน (ถ้าดูปีปัจจุบัน) ไม่งั้นเทอม 1 · แต่ละแท็บมีตัวเลขงานที่ยังไม่ส่ง · ปุ่ม ↻ = กลับไปปี/เทอมปัจจุบัน
+    // 1.61: เช็คลิสต์แยกเป็นแท็บย่อย "ภาคเรียนที่ 1 / ภาคเรียนที่ 2" (+ "ภาคฤดูร้อน" เมื่อเปิดใช้) อยู่แถวเดียวกันใต้ช่องเลือกปีการศึกษา — แทนการย่อ/ขยายเดิม
+    // ค่าเริ่มต้น = ภาคเรียนปัจจุบัน (ถ้าดูปีปัจจุบัน) ไม่งั้นภาคเรียนที่ 1 · แต่ละแท็บมีตัวเลขงานที่ยังไม่ส่ง · ปุ่ม ↻ = กลับไปปี/ภาคเรียนปัจจุบัน
     var checklistState = { term: null, loading: false, year: '', sem: '', summerOn: true };
     function renderAssignmentChecklist() {
       var wrap = document.getElementById('assignmentChecklistBody');
@@ -983,12 +983,12 @@
           var on = sm === checklistState.sem;
           var cur = isCurYear && sm === String(checklistState.term.semester);
           return '<button type="button" role="tab" data-cl-sem="' + sm + '" class="' + (on ? 'on' : '') + (cur ? ' cur' : '') + '" aria-selected="' + on + '"' + (cur ? ' title="ภาคเรียนปัจจุบัน"' : '') + '>' +
-            (sm === 'summer' ? 'ฤดูร้อน' : 'เทอม ' + sm) + (pend ? '<span class="cl-tab-n" title="ยังไม่ส่ง ' + pend + ' งาน">' + (pend > 99 ? '99+' : pend) + '</span>' : '') + '</button>';
+            (sm === 'summer' ? 'ฤดูร้อน' : 'ภาคเรียน ' + sm) + (pend ? '<span class="cl-tab-n" title="ยังไม่ส่ง ' + pend + ' งาน">' + (pend > 99 ? '99+' : pend) + '</span>' : '') + '</button>';
         }).join('');
       }
       var rows = inYear.filter(function (e) { return e.semester === checklistState.sem; }).map(function (e) { return { ev: e, done: isAssignmentSubmitted(e) }; });
       if (!rows.length) {
-        wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่งใน' + (checklistState.sem === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + checklistState.sem) + ' ปีการศึกษา ' + escapeHtml(checklistState.year) + '</div>';
+        wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่งใน' + (checklistState.sem === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + checklistState.sem) + ' ปีการศึกษา ' + escapeHtml(checklistState.year) + '</div>';
         return;
       }
       rows.sort(function (a, b) {
@@ -1016,7 +1016,7 @@
       });
       document.getElementById('clYear').addEventListener('change', function () {
         checklistState.year = this.value;
-        // ปีปัจจุบัน -> เทอมปัจจุบัน · ปีอื่น -> เทอม 1
+        // ปีปัจจุบัน -> ภาคเรียนปัจจุบัน · ปีอื่น -> ภาคเรียนที่ 1
         checklistState.sem = this.value === String(checklistState.term.year) ? String(checklistState.term.semester || '1') : '1';
         renderAssignmentChecklist();
       });
@@ -1104,7 +1104,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       } else {
         // ครอบรายการด้วย .cal-upcoming-grid ให้ยาวเต็มความกว้างการ์ด (ตั้งแต่ V10.0) — เรียงลงมาเป็นแถวเดียวตามลำดับวันที่เหมือนเดิม
         // (V10.0 ตอนแรกทำเป็นกริดหลายคอลัมน์ ทำให้ลำดับดูสลับสับสน ผู้ใช้แจ้งว่าเป็นบั๊ก จึงแก้กลับมาเรียงแนวตั้งตามเดิม เหลือแค่ความกว้างที่ยังเต็มการ์ดอยู่)
-        // เปลี่ยนชื่อหัวข้อจาก "กำหนดการ" เป็น "กำหนดส่งงาน" และรูปแบบแต่ละแถวเป็น "ชื่อ(ประเภทงาน) เทอม ปีการศึกษา" (ตั้งแต่ V-ถัดไปหลัง V10.1)
+        // เปลี่ยนชื่อหัวข้อจาก "กำหนดการ" เป็น "กำหนดส่งงาน" และรูปแบบแต่ละแถวเป็น "ชื่อ(ประเภทงาน) ภาคเรียน ปีการศึกษา" (ตั้งแต่ V-ถัดไปหลัง V10.1)
         upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="cal-upcoming-grid">' + upcoming.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // 1.57: (เหลือ N วัน) นับถึงวันสุดท้ายของกำหนดส่ง · ส่งแล้วแสดงสีปกติ · เลยกำหนดแสดงเฉพาะงานที่ยังไม่ส่ง
@@ -1113,10 +1113,10 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           // เกินกำหนดส่งแล้ว + ยังไม่ส่ง (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) — แสดงป้าย "เกินกำหนด" สีแดงให้เห็นชัดเจน ไม่ใช่แค่หายเงียบๆ ไปจากรายการ
           // ตั้งแต่ V12.0: ไม่มีสถานะเกินกำหนดสำหรับ e.noSubmission เพราะไม่มีอะไรให้ "ส่ง" จริง
           var isOverdue = e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && new Date(e.endDate || e.date) < now;
-          // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/เทอม/ประเภทงานให้อัตโนมัติ
+          // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/ภาคเรียน/ประเภทงานให้อัตโนมัติ
           // ยังกดได้ตามปกติแม้เกินกำหนดแล้ว (ระบบไม่เคยบล็อกการส่งงานย้อนหลังอยู่แล้ว เพียงแต่เดิมรายการหายไปก่อนจะมีโอกาสกด)
           // ตั้งแต่ V12.0: ถ้าเป็นประเภทงาน "แจ้งเตือนอย่างเดียว" ไม่มีปุ่มส่งงานเลย ขึ้นป้ายแจ้งเตือนเฉยๆ แทน
-          // 1.49.121026: ส่งแล้ว (มีผลงานประเภทนี้ในเทอม/ปีนี้) -> ปุ่มเปลี่ยนเป็น "ส่งงานเพิ่มหรือแก้ไข" เปิดป็อปอัพชุดผลงาน (ดู/พรีวิว/ลบ/เพิ่มไฟล์)
+          // 1.49.121026: ส่งแล้ว (มีผลงานประเภทนี้ในภาคเรียน/ปีนี้) -> ปุ่มเปลี่ยนเป็น "ส่งงานเพิ่มหรือแก้ไข" เปิดป็อปอัพชุดผลงาน (ดู/พรีวิว/ลบ/เพิ่มไฟล์)
           var isSubmitted = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
           var submitBtn = isSubmitted
             ? '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ส่งงานเพิ่มหรือแก้ไข</button>'

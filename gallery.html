@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<title>คลังรูปภาพ — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=1.76.171026" />
+<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
+</head>
+<body>
+  <!-- คลังรูปภาพ (ตั้งแต่ 1.76): ครูทุกคนเพิ่ม "อัลบั้ม" = ลิงก์โฟลเดอร์ Google Drive / Google Photos ของกิจกรรม
+       ปก: ลิงก์รูปปกที่กรอกเอง > รูปแรกในโฟลเดอร์ (relay ดึงให้ ถ้าแชร์แบบทุกคนที่มีลิงก์) > ไอคอนสีกลุ่ม
+       แก้ไข/ลบ/สาธารณะ: เจ้าของรายการ + เจ้าหน้าที่ + Super Admin · หน้าสาธารณะ photos.html -->
+  <div id="app-topbar"></div>
+  <div class="container">
+    <div class="page-header orders-header">
+      <div>
+        <h1>คลังรูปภาพ</h1>
+        <p>รวมลิงก์อัลบั้มรูปกิจกรรมจาก Google Drive ของครูทุกคน</p>
+      </div>
+      <div class="ord-head-btns">
+        <button type="button" class="btn page-refresh-btn" id="galRefreshBtn" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
+        <button type="button" class="btn btn-secondary" id="galShareBtn"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i> แชร์หน้าสาธารณะ</button>
+        <button type="button" class="btn btn-primary" id="galAddBtn"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มอัลบั้ม</button>
+      </div>
+    </div>
+    <div class="orders-toolbar">
+      <input type="search" id="galSearch" placeholder="ค้นหาชื่อกิจกรรม" />
+      <select id="galYear" aria-label="ปีการศึกษา"></select>
+      <select id="galSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select>
+      <select id="galDept" aria-label="กลุ่มบริหารงาน"></select>
+      <select id="galMine" aria-label="ของฉัน"><option value="">ทุกอัลบั้ม</option><option value="mine">ที่ฉันเพิ่ม</option></select>
+    </div>
+    <div id="galRoot"><div class="loading">กำลังโหลด</div></div>
+  </div>
+  <div id="app-footer"></div>
+
+  <!-- เพิ่ม/แก้ไขอัลบั้ม -->
+  <div class="modal-backdrop" id="galModal" hidden>
+    <div class="modal-box modal-box-wide gal-modal">
+      <button type="button" class="modal-close-x" id="galCloseX" aria-label="ปิด">✕</button>
+      <h3 id="galModalTitle"><i class="fa-solid fa-images" aria-hidden="true"></i> เพิ่มอัลบั้มรูปภาพ</h3>
+      <div id="galError" class="error-box" hidden></div>
+      <form id="galForm" novalidate>
+        <div class="gal-form">
+          <div class="field full"><label for="galTitle">ชื่อกิจกรรม</label><input type="text" id="galTitle" maxlength="200" placeholder="เช่น ประชุมปิดภาคเรียนที่ 1/2569" /></div>
+          <div class="field"><label for="galDate">วันที่จัดกิจกรรม</label><input type="date" id="galDate" /></div>
+          <div class="field"><label for="galDeptIn">กลุ่มบริหารงาน <span class="hint-inline">(ไม่บังคับ)</span></label><select id="galDeptIn"></select></div>
+          <div class="field"><label for="galSemIn">ภาคเรียน</label><select id="galSemIn"><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select></div>
+          <div class="field"><label for="galYearIn">ปีการศึกษา</label><select id="galYearIn"></select></div>
+          <div class="field full"><label for="galUrl">ลิงก์อัลบั้ม (โฟลเดอร์ Google Drive / Google Photos)</label><input type="url" id="galUrl" placeholder="https://drive.google.com/drive/folders/..." /><div class="gal-check" id="galUrlCheck"></div></div>
+          <div class="field full"><label for="galCover">ลิงก์รูปหน้าปก <span class="hint-inline">(ไม่บังคับ)</span></label><input type="url" id="galCover" placeholder="https://drive.google.com/file/d/.../view" />
+            <div class="hint">ไม่ใส่ = ระบบดึงรูปแรกในโฟลเดอร์ให้อัตโนมัติ (โฟลเดอร์ต้องแชร์แบบ "ทุกคนที่มีลิงก์") · ดึงไม่ได้จะแสดงเป็นไอคอน</div></div>
+          <label class="gal-toggle full"><input type="checkbox" id="galPublic" /><span class="gal-sw" aria-hidden="true"></span>
+            <span><b>แสดงในหน้าสาธารณะ</b><small>คนนอกระบบดูได้ที่หน้า "คลังรูปภาพ (สาธารณะ)" · ปิด = เห็นเฉพาะคนในระบบ</small></span></label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-close" id="galCancel">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="galSave"><i class="fa-solid fa-check" aria-hidden="true"></i> บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- แชร์หน้าสาธารณะ -->
+  <div class="modal-backdrop" id="galShareModal" hidden>
+    <div class="modal-box gal-share-modal">
+      <button type="button" class="modal-close-x" id="galShareX" aria-label="ปิด">✕</button>
+      <h3><i class="fa-solid fa-share-nodes" aria-hidden="true"></i> ลิงก์คลังรูปภาพ (สาธารณะ)</h3>
+      <p class="hint">หน้าสาธารณะ ไม่ต้องล็อกอิน — แสดงเฉพาะอัลบั้มที่เปิด "แสดงในหน้าสาธารณะ"</p>
+      <div class="gal-share-link" id="galShareLink"></div>
+      <div class="gal-qr" id="galShareQr"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-close" id="galShareClose">ปิด</button>
+        <a class="btn btn-secondary" id="galShareOpen" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i> เปิดหน้า</a>
+        <button type="button" class="btn btn-primary" id="galShareCopy"><i class="fa-solid fa-copy" aria-hidden="true"></i> คัดลอกลิงก์</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/api.js?v=1.76.171026"></script>
+  <script src="assets/gallery.js?v=1.76.171026"></script>
+  <script src="assets/qrcode.min.js"></script>
+  <script>
+    var session = requireLogin();
+    var $ = function (id) { return document.getElementById(id); };
+    var albums = [], years = [], shown = GALLERY_PAGE, editId = '', settingsCache = null;
+    var YEAR_KEY = 'bnkah_gal_year';
+
+    function deptOptions(sel, emptyLabel, value) {
+      sel.innerHTML = '<option value="">' + emptyLabel + '</option>' + ((settingsCache && settingsCache.departments) || []).map(function (d) {
+        return '<option value="' + escapeHtml(d) + '"' + (d === value ? ' selected' : '') + '>' + escapeHtml(groupLabel(d)) + '</option>';
+      }).join('');
+    }
+    function yearOptions(sel, value, withAll) {
+      var now = new Date().getFullYear() + 543, ys = [];
+      for (var y = now + 1; y >= now - 5; y--) ys.push(String(y));
+      years.forEach(function (y) { if (ys.indexOf(y) === -1) ys.push(y); });
+      ys.sort().reverse();
+      sel.innerHTML = (withAll ? '<option value="">ทุกปีการศึกษา</option>' : '') + ys.map(function (y) { return '<option value="' + y + '"' + (y === value ? ' selected' : '') + '>' + (withAll ? 'ปีการศึกษา ' : '') + y + '</option>'; }).join('');
+    }
+    async function load(force) {
+      var root = $('galRoot');
+      if (force || !albums.length) root.innerHTML = '<div class="loading">กำลังโหลด</div>';
+      try {
+        var r = await apiCall('albumList', { year: $('galYear').value || '' });
+        albums = r.items || []; years = r.years || [];
+      } catch (e) { root.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; return; }
+      var cur = $('galYear').value; yearOptions($('galYear'), cur, true);
+      render();
+    }
+    function render() {
+      var list = filterAlbums(albums, { q: $('galSearch').value, semester: $('galSem').value, dept: $('galDept').value, mine: $('galMine').value === 'mine' });
+      var root = $('galRoot');
+      if (!list.length) { root.innerHTML = '<div class="card"><div class="empty-state">' + (albums.length ? 'ไม่พบอัลบั้มที่ตรงกับตัวกรอง' : 'ยังไม่มีอัลบั้มรูปภาพ — กด "เพิ่มอัลบั้ม" เพื่อเพิ่มอัลบั้มแรก') + '</div></div>'; return; }
+      root.innerHTML = '<div class="list-count">ทั้งหมด ' + list.length + ' อัลบั้ม</div><div class="alb-grid">' + list.slice(0, shown).map(function (a) { return albumCardHtml(a, { inSystem: true, showOwner: true }); }).join('') + '</div>' +
+        (list.length > shown ? '<div class="list-more"><button type="button" class="btn btn-secondary btn-sm" id="galMore">แสดงเพิ่ม (' + (list.length - shown) + ')</button></div>' : '');
+      wireAlbumCovers(root);
+    }
+    ['galSearch'].forEach(function (id) { $(id).addEventListener('input', function () { shown = GALLERY_PAGE; render(); }); });
+    ['galSem', 'galDept', 'galMine'].forEach(function (id) { $(id).addEventListener('change', function () { shown = GALLERY_PAGE; render(); }); });
+    $('galYear').addEventListener('change', function () { try { localStorage.setItem(YEAR_KEY, $('galYear').value); } catch (e) {} shown = GALLERY_PAGE; load(true); });
+    $('galRoot').addEventListener('click', async function (e) {
+      if (e.target.closest('#galMore')) { shown += GALLERY_PAGE; render(); return; }
+      var card = e.target.closest('[data-alb]'); if (!card) return;
+      var a = albums.filter(function (x) { return x.id === card.getAttribute('data-alb'); })[0]; if (!a) return;
+      if (e.target.closest('[data-alb-copy]')) { copyAlbumText(a); return; }
+      if (e.target.closest('[data-alb-edit]')) { openForm(a); return; }
+      if (e.target.closest('[data-alb-del]')) {
+        if (!(await askConfirm('ลบอัลบั้ม <b>' + escapeHtml(a.title) + '</b> ออกจากคลังรูปภาพ? (รูปใน Google Drive ไม่ถูกลบ)', 'ยืนยันการลบ'))) return;
+        var r = await withProgress('กำลังลบ', function () { return apiCall('albumDelete', { id: a.id }); }, { successLabel: 'ลบอัลบั้มแล้ว' });
+        if (r.ok) load();
+        return;
+      }
+      if (e.target.closest('[data-alb-pub]')) {
+        var to = !a.isPublic;
+        if (!(await askConfirm(to ? 'เปิดให้คนนอกระบบดูอัลบั้ม <b>' + escapeHtml(a.title) + '</b> ในหน้าสาธารณะ?' : 'ซ่อนอัลบั้ม <b>' + escapeHtml(a.title) + '</b> จากหน้าสาธารณะ? (คนในระบบยังเห็น)', 'ยืนยันการเปลี่ยน'))) return;
+        try { await apiCall('albumUpdate', { id: a.id, onlyPublic: true, isPublic: to }); a.isPublic = to; render(); showToast(to ? 'แสดงในหน้าสาธารณะแล้ว' : 'ซ่อนจากหน้าสาธารณะแล้ว'); }
+        catch (err) { showToast(err.message, true); }
+      }
+    });
+    function checkUrl() {
+      var v = $('galUrl').value.trim(), el = $('galUrlCheck');
+      if (!v) { el.innerHTML = ''; return; }
+      var ok = /^https:\/\/drive\.google\.com\/(drive\/(u\/\d+\/)?folders\/|open\?id=)[A-Za-z0-9_-]{10,}/.test(v) || /^https:\/\/(photos\.app\.goo\.gl|photos\.google\.com|goo\.gl\/photos)\//.test(v);
+      el.className = 'gal-check ' + (ok ? 'ok' : 'bad');
+      el.innerHTML = ok ? '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> ' + (/photos/.test(v) ? 'ลิงก์ Google Photos ถูกต้อง (ใส่ลิงก์รูปปกเองได้)' : 'ลิงก์โฟลเดอร์ Google Drive ถูกต้อง')
+        : '<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> ต้องเป็นลิงก์โฟลเดอร์ Google Drive หรือ Google Photos';
+    }
+    $('galUrl').addEventListener('input', checkUrl);
+    async function openForm(a) {
+      editId = a ? a.id : '';
+      $('galModalTitle').innerHTML = '<i class="fa-solid fa-images" aria-hidden="true"></i> ' + (a ? 'แก้ไขอัลบั้มรูปภาพ' : 'เพิ่มอัลบั้มรูปภาพ');
+      $('galError').hidden = true;
+      var term = await currentAcademicTerm();
+      deptOptions($('galDeptIn'), 'ไม่ระบุ', a ? a.department : (session.department || ''));
+      yearOptions($('galYearIn'), a ? a.academicYear : term.year, false);
+      $('galSemIn').value = a ? a.semester : term.semester;
+      $('galTitle').value = a ? a.title : '';
+      $('galDate').value = a ? a.eventDate : new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+      $('galUrl').value = a ? a.url : '';
+      $('galCover').value = a ? a.coverUrl : '';
+      $('galPublic').checked = a ? a.isPublic : false;
+      checkUrl();
+      showModalEl($('galModal'));
+      setTimeout(function () { $('galTitle').focus(); }, 60);
+    }
+    $('galAddBtn').addEventListener('click', function () { openForm(null); });
+    ['galCloseX', 'galCancel'].forEach(function (id) { $(id).addEventListener('click', function () { hideModalEl($('galModal')); }); });
+    $('galForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var p = { title: $('galTitle').value, eventDate: $('galDate').value, department: $('galDeptIn').value, semester: $('galSemIn').value, academicYear: $('galYearIn').value, url: $('galUrl').value.trim(), coverUrl: $('galCover').value.trim(), isPublic: $('galPublic').checked };
+      var err = !p.title.trim() ? 'กรุณากรอกชื่อกิจกรรม' : !p.eventDate ? 'กรุณาเลือกวันที่จัดกิจกรรม' : !p.url ? 'กรุณาใส่ลิงก์อัลบั้ม' : '';
+      if (err) { $('galError').textContent = err; $('galError').hidden = false; return; }
+      if (editId) p.id = editId;
+      var r = await withProgress(editId ? 'กำลังบันทึก' : 'กำลังเพิ่มอัลบั้ม', function () { return apiCall(editId ? 'albumUpdate' : 'albumCreate', p); }, { successLabel: editId ? 'บันทึกแล้ว' : 'เพิ่มอัลบั้มแล้ว' });
+      if (!r.ok) { $('galError').textContent = r.error.message; $('galError').hidden = false; return; }
+      hideModalEl($('galModal'));
+      if (!p.coverUrl && /drive\.google\.com/.test(p.url)) showToast(r.data && r.data.coverFileId ? 'ดึงภาพปกจากโฟลเดอร์ให้แล้ว' : 'ดึงภาพปกจากโฟลเดอร์ไม่ได้ — แสดงเป็นไอคอน (ใส่ลิงก์รูปปกเองได้ที่ "แก้ไข")', !(r.data && r.data.coverFileId));
+      load();
+    });
+    // แชร์หน้าสาธารณะ
+    function publicUrl() { return location.origin + location.pathname.replace(/[^\/]*$/, '') + 'photos.html'; }
+    $('galShareBtn').addEventListener('click', function () {
+      var u = publicUrl();
+      $('galShareLink').textContent = u; $('galShareOpen').href = u;
+      var box = $('galShareQr'); box.innerHTML = '';
+      try { new QRCode(box, { text: u, width: 160, height: 160 }); } catch (e) { box.textContent = ''; }
+      showModalEl($('galShareModal'));
+    });
+    ['galShareX', 'galShareClose'].forEach(function (id) { $(id).addEventListener('click', function () { hideModalEl($('galShareModal')); }); });
+    $('galShareCopy').addEventListener('click', function () {
+      navigator.clipboard.writeText(publicUrl()).then(function () { showToast('คัดลอกลิงก์แล้ว'); }, function () { showToast('คัดลอกไม่สำเร็จ', true); });
+    });
+    $('galRefreshBtn').addEventListener('click', async function () {
+      var b = $('galRefreshBtn'); b.classList.add('spinning');
+      try { await load(true); } finally { b.classList.remove('spinning'); }
+    });
+    window.__refreshPageData = function () { return load(true); };
+
+    if (session) {
+      mountChrome('gallery');
+      (async function () {
+        settingsCache = await getSiteSettings();
+        if (settingsCache.summerEnabled === false) { $('galSem').querySelector('[value="summer"]').remove(); $('galSemIn').querySelector('[value="summer"]').remove(); }
+        deptOptions($('galDept'), 'ทุกกลุ่มบริหารงาน', '');
+        var saved = ''; try { saved = localStorage.getItem(YEAR_KEY) || ''; } catch (e) {}
+        yearOptions($('galYear'), '', true);
+        if (saved) $('galYear').value = saved;
+        load(true);
+      })();
+    }
+  </script>
+</body>
+</html>

@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.75.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.76.171026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -35,8 +35,8 @@
     <div class="status-note" id="statusNote"></div>
   </div>
 
-  <!-- ตัวกรองเทอม/ปีการศึกษา + ช่องค้นหา + ปุ่มรีเฟรช (ตั้งแต่ V12.0) — ค่าเริ่มต้นของเทอม/ปีคือค่าที่ Super Admin ตั้งไว้ (หรือคำนวณจากเวลาจริงถ้ายังไม่ตั้ง)
-       ปุ่มรีเฟรชจะดึงข้อมูลผลงานใหม่ทั้งหมด + รีเซ็ตตัวกรองกลับไปที่เทอม/ปี "ปัจจุบันจริงตามเวลา" เสมอ (ไม่ใช้ค่าที่แอดมินตั้งเอง)
+  <!-- ตัวกรองภาคเรียน/ปีการศึกษา + ช่องค้นหา + ปุ่มรีเฟรช (ตั้งแต่ V12.0) — ค่าเริ่มต้นของภาคเรียน/ปีคือค่าที่ Super Admin ตั้งไว้ (หรือคำนวณจากเวลาจริงถ้ายังไม่ตั้ง)
+       ปุ่มรีเฟรชจะดึงข้อมูลผลงานใหม่ทั้งหมด + รีเซ็ตตัวกรองกลับไปที่ภาคเรียน/ปี "ปัจจุบันจริงตามเวลา" เสมอ (ไม่ใช้ค่าที่แอดมินตั้งเอง)
        1.71: กว้างขึ้น (1080px) — ประเภทงานเป็นกล่องเรียง 2 คอลัมน์บนจอใหญ่ / 1 คอลัมน์บนมือถือ · เกียรติบัตรเป็นกล่องหนึ่งในตาราง -->
   <div class="container-narrow view-wide">
     <div id="viewFilterBar" class="card view-filter" hidden>
@@ -48,14 +48,14 @@
         <option value="summer">ภาคฤดูร้อน</option>
       </select>
       <input type="search" id="viewSearchInput" placeholder="ค้นหาชื่อผลงาน..." />
-      <button type="button" class="btn btn-secondary btn-sm" id="viewRefreshBtn" title="รีเฟรชข้อมูล + กลับไปเทอม/ปีปัจจุบันจริงตามเวลา"><i class="fas fa-rotate ui-icon" aria-hidden="true"></i> รีเฟรช</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="viewRefreshBtn" title="รีเฟรชข้อมูล + กลับไปภาคเรียน/ปีปัจจุบันจริงตามเวลา"><i class="fas fa-rotate ui-icon" aria-hidden="true"></i> รีเฟรช</button>
     </div>
     <div id="content"><div class="loading">กำลังโหลดข้อมูล</div></div>
   </div>
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.75.171026"></script>
+  <script src="assets/api.js?v=1.76.171026"></script>
   <script>
     mountFooter();
     applyBranding();
@@ -83,7 +83,7 @@
     // ไม่มีปุ่มดาวน์โหลด/เปิดไฟล์ในหน้านี้ (ตามที่โรงเรียนกำหนด — ดาวน์โหลดได้เฉพาะครูในระบบ)
     var SMALL_SHOW = 5;
     var TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-    var allGroups = [];  // data.groups (ผลงานตามเทอม/ปี)
+    var allGroups = [];  // data.groups (ผลงานตามภาคเรียน/ปี)
     var allCerts = [];   // 1.59: เกียรติบัตรที่ครูคนนี้ได้รับ (คลังเกียรติบัตร)
     var certDisplayPos = -1; // 1.71: ตำแหน่งกล่องเกียรติบัตรเทียบกับลำดับประเภทงาน (-1 = ท้ายสุด)
     var _viewFiltersInitialized = false;
@@ -226,7 +226,7 @@
         '<div class="vbox-body">' + boxBodyHtml(box) + '</div></section>';
     }
 
-    // ---------- ตัวกรองเทอม/ปีการศึกษา + ค้นหา + รีเฟรช (ตั้งแต่ V12.0) ----------
+    // ---------- ตัวกรองภาคเรียน/ปีการศึกษา + ค้นหา + รีเฟรช (ตั้งแต่ V12.0) ----------
     function fillViewFilters() {
       var yearSel = document.getElementById('viewFilterYear');
       var curYear = yearSel.value;
@@ -430,7 +430,7 @@
     document.getElementById('viewRefreshBtn').addEventListener('click', async function () {
       document.getElementById('viewSearchInput').value = '';
       await load(); // ดึงผลงานล่าสุดใหม่ทั้งหมด
-      await applyTermFilter(true); // แล้วรีเซ็ตตัวกรองกลับไปเทอม/ปี "ปัจจุบันจริงตามเวลา" เสมอ
+      await applyTermFilter(true); // แล้วรีเซ็ตตัวกรองกลับไปภาคเรียน/ปี "ปัจจุบันจริงตามเวลา" เสมอ
       renderFilteredContent();
     });
     load();

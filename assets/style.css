@@ -529,6 +529,7 @@ body.login-page .login-wrap { flex: 1 1 auto; min-height: 0; }
   gap: 8px;
 }
 .section-title .ui-icon { color: var(--primary); }
+.section-title .btn .ui-icon { color: inherit; }
 .page-header { padding: 26px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
 .page-header h1 { font-size: 1.6rem; font-weight: 800; margin: 0 0 4px; letter-spacing: -0.02em; }
 .page-header p { color: var(--text-muted); margin: 0; }
@@ -690,7 +691,7 @@ input[type="color"] {
 
 /* ---------- ปฏิทิน + คอลัมน์ขวา (ปุ่ม "หน้าผลงานของฉัน" + เช็คลิสต์การส่งงาน) วางเป็น 2 คอลัมน์ติดกัน (ตั้งแต่ V9.8, ปรับคอลัมน์ขวาใน V9.9) ---------- */
 /* คอลัมน์ซ้าย = ปฏิทิน, คอลัมน์ขวา = ปุ่ม "หน้าผลงานของฉัน" ขนาดเล็กอยู่บนสุด + เช็คลิสต์สถานะการส่งงานอยู่ด้านล่าง — ซ้อนกันเป็นแนวตั้งอัตโนมัติเมื่อจอแคบกว่า 720px */
-.dash-cal-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(168px, 240px); gap: 18px; align-items: stretch; }
+.dash-cal-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(168px, 264px); gap: 18px; align-items: stretch; }
 .dash-cal-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 /* ปุ่ม "หน้าผลงานของฉัน" วางไว้บนสุดของคอลัมน์ขวา (ตั้งแต่ V9.9) — ขยายให้สูงขึ้นอีกครั้งตั้งแต่ V-ถัดไปหลัง V10.0 ตามที่ผู้ใช้แจ้งว่าเล็กไป */
 .dash-portfolio-btn { width: 100%; flex-shrink: 0; min-height: 66px; padding: 16px 14px; font-size: 1.05rem; }
@@ -712,13 +713,13 @@ input[type="color"] {
 .checklist-status { font-size: 0.76rem; font-weight: 700; margin-top: 1px; }
 .checklist-status.done { color: var(--accent); }
 .checklist-status.pending { color: var(--danger); }
-/* หมวดหมู่เทอม/ปีการศึกษา คั่นระหว่างกลุ่มงานในเช็คลิสต์ (ตั้งแต่ V-ถัดไปหลัง V10.1 — จัดกลุ่มตามเทอม/ปีการศึกษาแทนที่จะกรองแค่เทอมปัจจุบัน) */
+/* หมวดหมู่ภาคเรียน/ปีการศึกษา คั่นระหว่างกลุ่มงานในเช็คลิสต์ (ตั้งแต่ V-ถัดไปหลัง V10.1 — จัดกลุ่มตามภาคเรียน/ปีการศึกษาแทนที่จะกรองแค่ภาคเรียนปัจจุบัน) */
 .checklist-group { margin-bottom: 10px; }
 .checklist-group:last-child { margin-bottom: 0; }
-/* หัวข้อ "เทอม ปีการศึกษา" ของแต่ละกลุ่มในเช็คลิสต์การส่งงาน — เดิมเป็นแค่ตัวหนังสือเล็กสีจางๆ ขีดเส้นใต้บางๆ (0.78rem, สี --primary-dark
+/* หัวข้อ "ภาคเรียน ปีการศึกษา" ของแต่ละกลุ่มในเช็คลิสต์การส่งงาน — เดิมเป็นแค่ตัวหนังสือเล็กสีจางๆ ขีดเส้นใต้บางๆ (0.78rem, สี --primary-dark
    ซึ่งกลืนกับตัวหนังสือปกติ) ผู้ใช้แจ้งว่ามองไม่ค่อยเด่น จึงเปลี่ยนเป็นป้ายแถบสีพื้นหลังทึบ (--primary) ตัวหนังสือขาวตัดกันชัดเจน
-   ใหญ่ขึ้น พร้อมไอคอนปฏิทินนำหน้า ให้แยกแต่ละกลุ่มเทอม/ปีการศึกษาออกจากกันได้ชัดเจนตั้งแต่กวาดตาดูรอบแรก (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) */
-/* ตั้งแต่ 1.31.091026: ลดขนาดตัวอักษรของ "เทอม ปีการศึกษา" ให้พอดีบรรทัดเดียวในคอลัมน์แคบข้างปฏิทิน (เดิม 0.86rem ตัดขึ้นบรรทัดที่ 2) —
+   ใหญ่ขึ้น พร้อมไอคอนปฏิทินนำหน้า ให้แยกแต่ละกลุ่มภาคเรียน/ปีการศึกษาออกจากกันได้ชัดเจนตั้งแต่กวาดตาดูรอบแรก (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) */
+/* ตั้งแต่ 1.31.091026: ลดขนาดตัวอักษรของ "ภาคเรียน ปีการศึกษา" ให้พอดีบรรทัดเดียวในคอลัมน์แคบข้างปฏิทิน (เดิม 0.86rem ตัดขึ้นบรรทัดที่ 2) —
    white-space: nowrap กันตัดบรรทัด และ text-overflow ellipsis เป็นตาข่ายรองสำหรับจอที่แคบจนไม่พอจริงๆ */
 .checklist-group-title {
   display: flex; align-items: center; gap: 5px;
@@ -881,7 +882,7 @@ tbody tr:hover { background: var(--surface-2); }
 .tpl-frame-corner-br { bottom: -6px; right: -6px; }
 
 /* ---------- ดรอปดาวน์แยกตามประเภทงาน ในหน้าแสดงผลงานสาธารณะ (view.html — ตั้งแต่ V12.1) ----------
-   ใช้ <details>/<summary> มาตรฐานของเบราว์เซอร์ (ไม่ต้องเขียน JS คุมสถานะเปิด/ปิดเอง) ภายในกลุ่มเทอม/ปีเดียวกัน
+   ใช้ <details>/<summary> มาตรฐานของเบราว์เซอร์ (ไม่ต้องเขียน JS คุมสถานะเปิด/ปิดเอง) ภายในกลุ่มภาคเรียน/ปีเดียวกัน
    ถ้ามีมากกว่า 1 ประเภทงาน — ป้องกันหน้าจอยาวเกินไปตอนมีผลงาน/เกียรติบัตรจำนวนมากต่อประเภท ตามที่ผู้ใช้ระบุไว้ */
 .cat-accordion-tools { text-align: right; margin: -4px 0 10px; font-size: 0.85rem; }
 .cat-accordion-tools .link-btn {
@@ -1321,7 +1322,7 @@ body.has-sidenav > #app-footer { margin-left: var(--nav-w); transition: margin-l
 #app-topbar { position: sticky; top: 0; z-index: 48; }
 #app-topbar .topbar { position: relative; top: auto; }
 
-/* ---------- 1.38.101026: หน้าแรก — ข้อความต้อนรับ + ปุ่มฝั่งขวา, เช็คลิสต์ย่อ/ขยายต่อเทอม + ช่องเลือกปี ---------- */
+/* ---------- 1.38.101026: หน้าแรก — ข้อความต้อนรับ + ปุ่มฝั่งขวา, เช็คลิสต์ย่อ/ขยายต่อภาคเรียน + ช่องเลือกปี ---------- */
 .dash-welcome-row { display: flex; align-items: center; justify-content: space-between; gap: 12px 18px; flex-wrap: wrap; }
 .dash-welcome-row h1 { margin: 0; flex: 1 1 0; min-width: 240px; overflow-wrap: anywhere; }
 .dash-welcome-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex: 0 0 auto; }
@@ -1348,7 +1349,7 @@ button.checklist-group-toggle:hover, button.checklist-group-toggle:focus-visible
 .checklist-group-body[hidden] { display: none; }
 .checklist-group { margin-bottom: 8px; }
 
-/* ---------- 1.39.101026: การ์ด "เทอม/ปีการศึกษาปัจจุบัน" เลือกได้ 2 โหมด ---------- */
+/* ---------- 1.39.101026: การ์ด "ภาคเรียน/ปีการศึกษาปัจจุบัน" เลือกได้ 2 โหมด ---------- */
 .term-mode-options { display: grid; gap: 8px; margin-bottom: 14px; }
 .term-mode-opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; font-weight: 500; }
 .term-mode-opt:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
@@ -1607,7 +1608,7 @@ input[type="checkbox"].switch:checked:active:not(:disabled)::before { left: 19px
 .switch-state { font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-left: auto; }
 .switch-row input:checked ~ .switch-state { color: var(--primary); }
 
-/* ผลงานของฉันแบบชุด (ประเภทงาน + เทอม) */
+/* ผลงานของฉันแบบชุด (ประเภทงาน + ภาคเรียน) */
 .ordc-chip.cnt { background: var(--primary-light); color: var(--primary); border-color: transparent; }
 .icon-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; width: 34px; height: 32px; display: inline-flex; align-items: center; justify-content: center; color: var(--primary); cursor: pointer; transition: background-color 0.15s ease, transform 0.1s ease; padding: 0; font-size: 0.9rem; }
 .icon-btn:hover:not(:disabled) { background: var(--surface-2); }
@@ -1787,7 +1788,7 @@ table.ord-files { margin-top: 12px; }
 /* ---------- 1.53.121026 ---------- */
 /* ปิด "จัดทำบันทึกข้อความ" — ซ่อนตั้งแต่ก่อนหน้าเว็บแสดงผล (class memo-off ใส่โดยสคริปต์ใน <head>) ไม่กระพริบ */
 html.memo-off .memo-feature, html.memo-off .sidenav a[href="memo.html"] { display: none !important; }
-/* สรุปรวมการส่งงาน → รายการผลงานทั้งหมด แบบ C (จัดกลุ่มตามประเภทงาน + เทอม) */
+/* สรุปรวมการส่งงาน → รายการผลงานทั้งหมด แบบ C (จัดกลุ่มตามประเภทงาน + ภาคเรียน) */
 table.sum-teachers td.sum-name { font-weight: 700; }
 table.sum-teachers tr.sum-teacher.open td { background: color-mix(in srgb, var(--primary-light) 45%, transparent); }
 table.sum-teachers .sum-files-btn { width: auto; white-space: nowrap; }
@@ -1903,7 +1904,7 @@ table.sum-files td.a { width: 1%; }
 .theme-warn[hidden] { display: none; }
 @media (max-width: 640px) { .theme-row-label { flex-basis: 100%; } .theme-preview { margin-left: 0; } }
 
-/* ---------- 1.57: สีของกลุ่มในการ์ดกลุ่มบริหารงาน · หัวข้อเช็คลิสต์ · วันที่เหลือ · ป้ายเทอม/ปีการศึกษา ---------- */
+/* ---------- 1.57: สีของกลุ่มในการ์ดกลุ่มบริหารงาน · หัวข้อเช็คลิสต์ · วันที่เหลือ · ป้ายภาคเรียน/ปีการศึกษา ---------- */
 .group-color { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 12px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 12px; }
 .group-color-label { font-weight: 700; font-size: 0.88rem; flex: 0 0 auto; }
 .group-color-label small { display: block; font-weight: 400; font-size: 0.74rem; color: var(--text-muted); }
@@ -1926,7 +1927,7 @@ table.sum-files td.a { width: 1%; }
 }
 .dash-checklist-controls { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; width: 100%; }
 .dash-checklist-controls select { flex: 1 1 auto; min-width: 0; }
-/* หัวกลุ่มเทอมในเช็คลิสต์: พื้นอ่อน + ป้ายเทอม/ปีแยกกัน (เดิมแถบทึบสีเดียว ต่างกันแค่ตัวเลข) */
+/* หัวกลุ่มภาคเรียนในเช็คลิสต์: พื้นอ่อน + ป้ายภาคเรียน/ปีแยกกัน (เดิมแถบทึบสีเดียว ต่างกันแค่ตัวเลข) */
 .checklist-group-title { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); padding: 6px 8px; gap: 6px; }
 .checklist-group-title:hover { border-color: var(--primary); }
 .checklist-group.open .checklist-group-title { border-color: var(--primary); }
@@ -2254,7 +2255,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 /* เช็คลิสต์หน้าแรก: แท็บย่อยภาคเรียน (แถวเดียวกันใต้ช่องเลือกปี) */
 .cl-tabs { display: flex; gap: 4px; padding: 3px; margin: 0 0 8px; border-radius: 10px; background: var(--surface-2); flex-shrink: 0; }
 .cl-tabs:empty { display: none; }
-.cl-tabs button { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 0; background: none; border-radius: 8px; padding: 5px 6px; font: inherit; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); cursor: pointer; white-space: nowrap; }
+.cl-tabs button { flex: 1 1 auto; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 0; background: none; border-radius: 8px; padding: 5px 4px; font: inherit; font-size: 0.74rem; font-weight: 700; color: var(--text-muted); cursor: pointer; white-space: nowrap; }
 .cl-tabs button.on { background: var(--surface); color: var(--primary-dark); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
 .cl-tabs button.cur::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .cl-tab-n { min-width: 1.1rem; height: 1.1rem; line-height: 1.1rem; padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 0.68rem; font-weight: 800; text-align: center; }
@@ -2314,9 +2315,9 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .cert-merge-btn[hidden] { display: none; }
 @media (max-width: 1100px) { .cert-head-btns { flex-wrap: wrap; } }
 .cert-head-btns { margin-left: auto; }
-.cl-tabs { gap: 2px; }
-.cl-tabs button { padding: 5px 3px; gap: 3px; font-size: 0.76rem; }
-.cl-tab-n { min-width: 0.95rem; height: 0.95rem; line-height: 0.95rem; padding: 0 4px; font-size: 0.62rem; }
+.cl-tabs { gap: 2px; padding: 2px; }
+.cl-tabs button { padding: 5px 1px; gap: 2px; font-size: 0.7rem; }
+.cl-tab-n { min-width: 0.95rem; height: 0.95rem; line-height: 0.95rem; padding: 0 3px; font-size: 0.6rem; }
 .cert-prow.c-n-sc { grid-template-columns: 152px 1fr 88px 160px 30px; }
 .cert-prow.c-n-s { grid-template-columns: 152px 1fr 160px 30px; }
 .cert-prow .cert-no { font-size: 0.76rem; padding: 4px 6px; }
@@ -2748,7 +2749,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 
 /* ---------- 1.75: แถบบน — หูฟัง (แจ้งปัญหา) + กระดิ่ง (แจ้งเตือน) ---------- */
 .tb-icon-btn { position: relative; font-size: 16px; }
-.tb-icon-btn#reportOpenBtn { color: var(--primary-dark); }
+.tb-icon-btn#manualOpenBtn { color: var(--primary-dark); }
 .tb-icon-btn.has-new { color: var(--primary); }
 .tb-badge { position: absolute; top: -4px; right: -5px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: #ef4444; color: #fff; font-size: 0.66rem; font-weight: 800; line-height: 18px; text-align: center; border: 2px solid var(--surface); box-sizing: content-box; }
 .tb-badge[hidden] { display: none; }
@@ -2865,6 +2866,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .rpm-acts .grow { flex: 1; }
 .rpm-acts select { width: auto; }
 .rpm-tabcount { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: #ef4444; color: #fff; font-size: 0.7rem; line-height: 18px; text-align: center; }
+.rpm-tabcount[hidden] { display: none; }
 @media (max-width: 860px) { .rpm-grid { grid-template-columns: minmax(0, 1fr); } .rpm-list { max-height: none; } }
 .btn-success { background: #16a34a; color: #fff; border: 0; }
 .btn-success:hover { background: #15803d; color: #fff; }
@@ -2873,3 +2875,92 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .rp-box h3 { text-align: left; }
 .rp-box .modal-actions { justify-content: flex-end; }
 .rpm-acts select { flex: 0 1 auto; width: auto; max-width: 260px; }
+
+/* ---------- 1.76: คลังรูปภาพ (gallery.html / photos.html) ---------- */
+.alb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.alb-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+.alb-cover { position: relative; display: block; aspect-ratio: 16 / 10; background: color-mix(in srgb, var(--ac, var(--primary)) 12%, var(--surface)); overflow: hidden; }
+.alb-cover .alb-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s ease; }
+.alb-cover:hover .alb-img { transform: scale(1.04); }
+.alb-icon { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; font-size: 40px; color: var(--ac, var(--primary)); }
+.alb-cover.no-cover { border-bottom: 3px solid var(--ac, var(--primary)); }
+.alb-cover.no-cover .alb-icon { display: flex; }
+.alb-date { position: absolute; left: 10px; top: 10px; background: rgba(255,255,255,.92); color: #334155; border-radius: 8px; padding: 2px 8px; font-size: .72rem; font-weight: 800; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.alb-count { position: absolute; right: 10px; bottom: 10px; background: rgba(15,23,42,.65); color: #fff; border-radius: 8px; padding: 2px 8px; font-size: .72rem; font-weight: 700; }
+.alb-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.alb-title { font-weight: 800; font-size: .94rem; line-height: 1.35; overflow-wrap: anywhere; }
+.alb-meta { font-size: .76rem; color: var(--text-muted); }
+.alb-dept { color: color-mix(in srgb, var(--ac, var(--primary)) 80%, var(--text)); font-weight: 700; }
+.alb-owner { font-size: .74rem; color: var(--text-muted); }
+.alb-foot { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 8px; flex-wrap: wrap; }
+.alb-pub { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: .7rem; font-weight: 800; border-radius: 999px; padding: 2px 9px; border: 0; background: var(--surface-2); color: var(--text-muted); }
+.alb-pub.on { background: #dcfce7; color: #166534; }
+button.alb-pub { cursor: pointer; }
+button.alb-pub:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent); }
+.alb-acts { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.alb-open { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; font-size: .85rem; color: #fff; background: var(--primary); border-radius: 8px; }
+.alb-open:hover { background: var(--primary-dark); color: #fff; text-decoration: none; }
+.alb-foot { row-gap: 6px; }
+.alb-foot .alb-pub { white-space: nowrap; }
+.gal-modal h3 i { color: var(--primary); }
+.gal-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; text-align: left; }
+.gal-form .full { grid-column: 1 / -1; }
+.hint-inline { font-weight: 400; color: var(--text-muted); }
+.gal-check { font-size: .78rem; margin-top: 4px; }
+.gal-check.ok { color: #15803d; }
+.gal-check.bad { color: #dc2626; }
+.gal-toggle { display: flex; align-items: center; gap: 12px; border: 1.5px solid var(--border); border-radius: 12px; padding: 10px 12px; background: var(--surface-2); cursor: pointer; margin-top: 6px; }
+.gal-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.gal-sw { width: 42px; height: 24px; border-radius: 12px; background: #cbd5e1; position: relative; flex: none; transition: background .15s; }
+.gal-sw::after { content: ''; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
+.gal-toggle input:checked + .gal-sw { background: #16a34a; }
+.gal-toggle input:checked + .gal-sw::after { left: 21px; }
+.gal-toggle input:focus-visible + .gal-sw { box-shadow: 0 0 0 3px var(--primary-light); }
+.gal-toggle b { display: block; font-size: .9rem; }
+.gal-toggle small { display: block; color: var(--text-muted); font-size: .76rem; }
+.gal-share-link { background: var(--surface-2); border-radius: 10px; padding: 9px 12px; font-size: .84rem; word-break: break-all; margin: 8px 0; }
+.gal-share-modal { max-width: 500px; }
+.gal-qr { display: flex; justify-content: center; margin: 8px 0; }
+@media (max-width: 640px) { .gal-form { grid-template-columns: 1fr; } .alb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .alb-foot { gap: 4px; } }
+@media (max-width: 380px) { .alb-grid { grid-template-columns: minmax(0, 1fr); } }
+#galRoot > .list-count, #phRoot > .list-count { font-size: .82rem; color: var(--text-muted); margin-bottom: 8px; }
+
+/* ---------- 1.76: คู่มือการใช้งาน (ป็อปอัพ — สารบัญซ้าย เนื้อหาขวา · มือถือใช้ดรอปดาวน์) ---------- */
+.mn-box { max-width: 1080px; width: 100%; height: min(88vh, 900px); display: flex; flex-direction: column; text-align: left; padding: 20px 22px 16px; overflow: hidden; }
+.mn-box > h3 { margin: 0 40px 12px 0; display: flex; align-items: center; gap: 8px; }
+.mn-box > h3 i { color: var(--primary); }
+.mn-select { display: none; width: 100%; margin-bottom: 10px; }
+.mn-wrap { flex: 1; min-height: 0; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 18px; }
+.mn-toc { overflow-y: auto; border-right: 1px solid var(--border); padding-right: 10px; scrollbar-width: thin; }
+.mn-group { font-size: .72rem; font-weight: 800; color: var(--text-muted); text-transform: none; letter-spacing: .02em; margin: 12px 8px 4px; }
+.mn-group:first-child { margin-top: 0; }
+.mn-link { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; font: inherit; font-size: .88rem; font-weight: 600; color: var(--text); text-align: left; padding: 8px 10px; border-radius: 9px; cursor: pointer; }
+.mn-link i { width: 18px; text-align: center; color: var(--text-muted); }
+.mn-link:hover { background: var(--surface-2); }
+.mn-link.on { background: var(--primary-light); color: var(--primary-dark); }
+.mn-link.on i { color: var(--primary); }
+.mn-main { overflow-y: auto; padding-right: 6px; scrollbar-width: thin; outline: none; }
+.mn-h { display: flex; align-items: center; gap: 10px; font-size: 1.25rem; margin: 0 0 6px; }
+.mn-ic { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--primary-light); color: var(--primary); font-size: 1rem; flex-shrink: 0; }
+.mn-lead { color: var(--text-muted); margin: 0 0 14px; line-height: 1.6; }
+.mn-fig { margin: 0 0 20px; }
+.mn-fig figcaption { font-weight: 800; font-size: .9rem; margin-bottom: 8px; }
+.mn-img { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 2px 10px rgba(15, 23, 42, .08); cursor: zoom-in; background: #fff; }
+.mn-steps { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.mn-steps li { display: flex; align-items: flex-start; gap: 10px; line-height: 1.55; font-size: .9rem; }
+.mn-n { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #e11d48; color: #fff; font: 700 .75rem/22px Inter, sans-serif; text-align: center; margin-top: 1px; }
+.mn-tips { background: color-mix(in srgb, #f59e0b 10%, var(--surface)); border: 1px solid color-mix(in srgb, #f59e0b 35%, var(--border)); border-radius: 12px; padding: 10px 14px; margin: 4px 0 16px; }
+.mn-tips-h { font-weight: 800; font-size: .86rem; color: #b45309; margin-bottom: 4px; }
+.mn-tips ul { margin: 0; padding-left: 20px; font-size: .88rem; line-height: 1.6; }
+.mn-pager { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0 4px; border-top: 1px solid var(--border); margin-top: 6px; }
+.mn-zoom { position: absolute; inset: 0; z-index: 5; background: rgba(15, 23, 42, .88); display: flex; align-items: center; justify-content: center; padding: 18px; cursor: zoom-out; border-radius: inherit; }
+.mn-zoom[hidden] { display: none; }
+.mn-zoom img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; background: #fff; }
+@media (max-width: 760px) {
+  .mn-box { height: calc(100vh - 24px); padding: 16px 14px 12px; }
+  .mn-select { display: block; }
+  .mn-wrap { grid-template-columns: minmax(0, 1fr); }
+  .mn-toc { display: none; }
+  .mn-pager .btn { font-size: .78rem; }
+}
+@media (max-width: 760px) { .mn-zoom { align-items: flex-start; justify-content: flex-start; overflow: auto; padding: 10px; } .mn-zoom img { max-width: none; max-height: none; } }

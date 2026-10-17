@@ -19,7 +19,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.75.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.76.171026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -135,7 +135,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.75.171026"></script>
+  <script src="assets/api.js?v=1.76.171026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -180,7 +180,7 @@
       } catch (err) { /* ไม่ต้องแจ้ง error — แค่ตกไปใช้สีเริ่มต้นแทน */ }
     }
 
-    // 1.48.121026: ตัวกรองปีการศึกษา + ภาคเรียน (ทั้ง 2 แท็บ) เริ่มต้นที่เทอมปัจจุบันตอนเปิดหน้าครั้งแรก — ครั้งต่อไปคงค่าที่ผู้ใช้เลือกไว้
+    // 1.48.121026: ตัวกรองปีการศึกษา + ภาคเรียน (ทั้ง 2 แท็บ) เริ่มต้นที่ภาคเรียนปัจจุบันตอนเปิดหน้าครั้งแรก — ครั้งต่อไปคงค่าที่ผู้ใช้เลือกไว้
     var curTerm = null;
     var _termDefaulted = {};
     async function ensureTerm() {
@@ -532,7 +532,7 @@
       var box = document.getElementById('expPick');
       box.hidden = expState.scope !== 'pick';
       box.innerHTML = list.map(function (a) {
-        var sem = a.semester === 'summer' ? 'ฤดูร้อน' : 'เทอม ' + a.semester;
+        var sem = a.semester === 'summer' ? 'ฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester;
         return '<label class="aud-p"><input type="checkbox" data-xp="' + escapeHtml(a.eventId) + '"' + (expState.picked[a.eventId] ? ' checked' : '') + ' /><span>' + escapeHtml(a.title) + '</span><small>' + escapeHtml(sem + ' / ' + a.academicYear) + '</small></label>';
       }).join('');
     }
@@ -659,7 +659,7 @@
           } else {
             // ---------- ตั้งแต่เวอร์ชันถัดไปหลัง 1.22: ตัดแบ่งเป็นหน้ากระดาษ A4 จริง ----------
             // เดิมสร้าง PDF เป็น "หน้าเดียวยักษ์" ขนาดเท่าภาพที่ capture มาทั้งแผ่น (format: [widthMm, heightMm] ตามขนาดจริง) —
-            // ถ้ารายการที่แสดงมีหลายงาน/หลายแถวสะสมมาก (เช่นเลือก "ทุกงาน" ที่มีกำหนดการสะสมมาหลายเทอม) หน้าเดียวนั้นจะสูงมาก
+            // ถ้ารายการที่แสดงมีหลายงาน/หลายแถวสะสมมาก (เช่นเลือก "ทุกงาน" ที่มีกำหนดการสะสมมาหลายภาคเรียน) หน้าเดียวนั้นจะสูงมาก
             // (หลักพัน-หมื่น มม.) โปรแกรมอ่าน PDF ส่วนใหญ่จะ auto-fit ภาพยักษ์นี้ให้พอดีจอ ทำให้ของจริงที่มีสีเหลือเป็นแถบเล็กๆ
             // ท่ามกลางพื้นที่ขาวมหาศาล ดูเหมือน "สีซีด/จาง" ทั้งที่สีจริงถูกต้องทุกจุด (ยืนยันด้วยการอ่านค่าพิกเซลเทียบ CSS
             // ตรงกันเป๊ะ) ที่ถูกต้องคือต้องตัดแบ่งเป็นหน้า A4 มาตรฐานหลายหน้าเหมือนรายงานทั่วไป ปริ้นได้ตรงขนาดจริง

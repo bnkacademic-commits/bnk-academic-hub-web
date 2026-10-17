@@ -17,7 +17,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
-var APP_VERSION = '1.75.171026';
+var APP_VERSION = '1.76.171026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -759,7 +759,7 @@ var ICON_FA = {
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
   sun: 'fa-sun', palette: 'fa-palette', layout: 'fa-table-cells-large', pin: 'fa-thumbtack', clock: 'fa-clock',
-  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award'
+  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -773,13 +773,13 @@ function syncDateThai(inputId, outId) {
   if (!i || !o) return;
   o.textContent = i.value ? '(' + formatDateThai(i.value) + ')' : '(ไม่ระบุ)';
 }
-// 1.57: ป้ายภาคเรียน + ป้ายปีการศึกษา แยกกันชัดเจน — เทอม 1 = ป้ายทึบสีหลัก · เทอม 2 = ป้ายขอบสีหลัก · ภาคฤดูร้อน = ป้ายสีส้ม · ปีการศึกษา = ป้ายกลาง
+// 1.57: ป้ายภาคเรียน + ป้ายปีการศึกษา แยกกันชัดเจน — ภาคเรียนที่ 1 = ป้ายทึบสีหลัก · ภาคเรียนที่ 2 = ป้ายขอบสีหลัก · ภาคฤดูร้อน = ป้ายสีส้ม · ปีการศึกษา = ป้ายกลาง
 // opts.short: "ปี 2569" แทน "ปีการศึกษา 2569" (ใช้ในคอลัมน์แคบ)
 function termTagsHtml(semester, academicYear, opts) {
   opts = opts || {};
   var sem = String(semester || '');
   var cls = sem === 'summer' ? 'ts' : sem === '2' ? 't2' : 't1';
-  var label = sem === 'summer' ? 'ภาคฤดูร้อน' : 'เทอม ' + sem;
+  var label = sem === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + sem;
   return '<span class="term-tag ' + cls + '">' + escapeHtml(label) + '</span>' +
     (academicYear ? '<span class="year-tag">' + (opts.short ? 'ปี ' : 'ปีการศึกษา ') + escapeHtml(String(academicYear)) + '</span>' : '');
 }
@@ -862,10 +862,10 @@ function termScheduleOf(settings) {
   };
 }
 // คำนวณ "ปีการศึกษา/ภาคเรียนปัจจุบัน" จากวันที่จริง "ตามตารางวันเริ่มภาคเรียน" (โหมดอัตโนมัติ) — ไม่สนใจค่าที่ตั้งเอง (โหมด manual)
-// ใช้ตรงๆ เมื่อต้องการ "ค่าตามเวลาจริง" ล้วนๆ (เช่น ปุ่มรีเฟรชตัวกรองเทอม/ปีในหน้าแสดงผลงานสาธารณะ) · settings (ไม่ส่ง = ค่าเริ่มต้น) · now (ไม่ส่ง = ตอนนี้)
-// เทียบด้วยสตริง 'MM-DD' ของวันนี้กับวันเริ่มแต่ละเทอมตามลำดับในปีปฏิทิน:
-//   ตั้งแต่ term2Start เป็นต้นไป = เทอม 2 ของปีการศึกษา = ปี พ.ศ. ปัจจุบัน · term1Start ถึงก่อน term2Start = เทอม 1 ของปี พ.ศ. ปัจจุบัน
-//   ก่อน term1Start = ยังเป็นปีการศึกษาก่อนหน้า (ปี พ.ศ. − 1): ถ้าเปิดภาคฤดูร้อนและถึง summerStart แล้ว = ภาคฤดูร้อน ไม่งั้น = เทอม 2 ของปีก่อน
+// ใช้ตรงๆ เมื่อต้องการ "ค่าตามเวลาจริง" ล้วนๆ (เช่น ปุ่มรีเฟรชตัวกรองภาคเรียน/ปีในหน้าแสดงผลงานสาธารณะ) · settings (ไม่ส่ง = ค่าเริ่มต้น) · now (ไม่ส่ง = ตอนนี้)
+// เทียบด้วยสตริง 'MM-DD' ของวันนี้กับวันเริ่มแต่ละภาคเรียนตามลำดับในปีปฏิทิน:
+//   ตั้งแต่ term2Start เป็นต้นไป = ภาคเรียนที่ 2 ของปีการศึกษา = ปี พ.ศ. ปัจจุบัน · term1Start ถึงก่อน term2Start = ภาคเรียนที่ 1 ของปี พ.ศ. ปัจจุบัน
+//   ก่อน term1Start = ยังเป็นปีการศึกษาก่อนหน้า (ปี พ.ศ. − 1): ถ้าเปิดภาคฤดูร้อนและถึง summerStart แล้ว = ภาคฤดูร้อน ไม่งั้น = ภาคเรียนที่ 2 ของปีก่อน
 function trueCurrentAcademicTerm(settings, now) {
   now = now || new Date();
   var sch = termScheduleOf(settings);
@@ -878,7 +878,7 @@ function trueCurrentAcademicTerm(settings, now) {
   if (summerOn && sch.summerStart && md >= sch.summerStart) return { year: String(beYear - 1), semester: 'summer' };
   return { year: String(beYear - 1), semester: '2' };
 }
-// "ปีการศึกษา/ภาคเรียนปัจจุบัน" ที่ใช้จริงทั่วระบบ (ค่าเริ่มต้นของตัวกรอง/ปฏิทิน/เช็คลิสต์/ป้ายเทอมในหน้าฮับ) — ตั้งแต่ 1.41.111026 มี 2 โหมดตาม settings.termMode:
+// "ปีการศึกษา/ภาคเรียนปัจจุบัน" ที่ใช้จริงทั่วระบบ (ค่าเริ่มต้นของตัวกรอง/ปฏิทิน/เช็คลิสต์/ป้ายภาคเรียนในหน้าฮับ) — ตั้งแต่ 1.41.111026 มี 2 โหมดตาม settings.termMode:
 //   'manual' = ใช้ปี+ภาคเรียนที่ Super Admin กรอกไว้ (currentAcademicYear/currentSemester) · 'auto' = คำนวณจากวันที่ตามตารางวันเริ่มภาคเรียน
 async function currentAcademicTerm() {
   var s = await getSiteSettings();
@@ -1312,6 +1312,7 @@ var NAV_SLOTS = [
   { slot: 'directory', label: 'ทำเนียบบุคลากร', icon: 'directory', who: ['all'] },
   { slot: 'orders', label: 'คลังคำสั่ง', icon: 'orders', who: ['all'] },
   { slot: 'certs', label: 'คลังเกียรติบัตร', icon: 'certs', who: ['all'] },
+  { slot: 'gallery', label: 'คลังรูปภาพ', icon: 'gallery', who: ['all'] }, // 1.76
   { slot: 'settings', label: 'ตั้งค่าระบบ', icon: 'settings', who: ['all'] }
 ];
 var NAV_DEFAULT_ORDER = NAV_SLOTS.map(function (x) { return x.slot; });
@@ -1364,6 +1365,8 @@ function navLinksFor(session) {
   if (session) links.push({ href: 'orders.html', label: 'คลังคำสั่ง', key: 'orders', icon: 'orders' });
   // "คลังเกียรติบัตร" (ตั้งแต่ 1.59): ทุกบัญชีที่ล็อกอินเห็น
   if (session) links.push({ href: 'certs.html', label: 'คลังเกียรติบัตร', key: 'certs', icon: 'certs' });
+  // "คลังรูปภาพ" (ตั้งแต่ 1.76): ทุกบัญชีที่ล็อกอินเห็น — ครูทุกคนเพิ่มอัลบั้มได้
+  if (session) links.push({ href: 'gallery.html', label: 'คลังรูปภาพ', key: 'gallery', icon: 'gallery' });
   // 1.45.111026: ทุกบัญชีมีเมนู "ตั้งค่าระบบ" (ครู/ผู้บริหารเห็นเฉพาะแท็บ Signature Credit)
   if (session) {
     // หมายเหตุ: เมนู "จัดการ Layout" (V11.1) ถูกยกเลิกตั้งแต่ V11.5 — ทั้งรูปแบบการ์ด (V11.3) และลำดับการแสดงผล (V11.5)
@@ -1462,7 +1465,8 @@ function mountChrome(activePage) {
             '<svg class="refresh-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>' +
           '</button>' +
           // 1.75: แจ้งปัญหา (หูฟัง) + แจ้งเตือน (กระดิ่ง) — อยู่ระหว่างรีเฟรชกับเมนูบัญชี
-          '<button class="refresh-btn tb-icon-btn" id="reportOpenBtn" type="button" title="แจ้งปัญหา" aria-label="แจ้งปัญหา"><i class="fa-solid fa-headset" aria-hidden="true"></i></button>' +
+          // 1.76: ปุ่มคู่มือการใช้งาน (แทนหูฟัง — แจ้งปัญหาย้ายไปเมนูบัญชี)
+          '<button class="refresh-btn tb-icon-btn" id="manualOpenBtn" type="button" title="คู่มือการใช้งาน" aria-label="คู่มือการใช้งาน"><i class="fa-solid fa-book-open" aria-hidden="true"></i></button>' +
           '<button class="refresh-btn tb-icon-btn" id="notifBtn" type="button" title="แจ้งเตือน" aria-label="แจ้งเตือน" aria-expanded="false"><i class="fa-solid fa-bell" aria-hidden="true"></i><span class="tb-badge" id="notifBadge" hidden>0</span></button>' +
           '<div class="profile-menu">' +
             '<button class="profile-trigger" id="profileTrigger" aria-expanded="false" type="button">' +
@@ -1480,6 +1484,8 @@ function mountChrome(activePage) {
               '<div class="dd-divider"></div>' +
               '<button class="dd-item" id="ddChangeAvatar" type="button"><span class="dd-icon">' + icon('image', 16) + '</span> เปลี่ยนรูปโปรไฟล์</button>' +
               '<button class="dd-item" id="ddChangePw" type="button"><span class="dd-icon">' + icon('key', 16) + '</span> เปลี่ยนรหัสผ่าน</button>' +
+              '<button class="dd-item" id="ddReport" type="button"><span class="dd-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></span> แจ้งปัญหา</button>' +
+              '<div class="dd-divider"></div>' +
               '<button class="dd-item danger" id="ddLogout" type="button"><span class="dd-icon">' + icon('logout', 16) + '</span> ออกจากระบบ</button>' +
             '</div>' +
           '</div>' +
@@ -1562,7 +1568,8 @@ function mountChrome(activePage) {
     });
 
     initNotifBell(); // 1.75
-    document.getElementById('reportOpenBtn').addEventListener('click', function () { openReportModal(); });
+    document.getElementById('manualOpenBtn').addEventListener('click', function () { openManual(); });
+    document.getElementById('ddReport').addEventListener('click', function () { dropdown.classList.remove('open'); openReportModal(); });
     if (/^#report:/.test(location.hash)) { var rid = location.hash.slice(8); setTimeout(function () { openReportModal({ tab: 'mine', focus: rid }); }, 300); }
     setTimeout(function () { refreshTopBadges(); }, 400);
 
@@ -1592,7 +1599,7 @@ function mountFooter() {
         '<button type="button" data-ver="hard"><i class="fa-solid fa-broom" aria-hidden="true"></i> ล้างแคชแล้วโหลดใหม่</button></span></span></div>' +
       // 1.75: หน้าที่ล็อกอินแล้วแจ้งปัญหาผ่านปุ่มหูฟังที่แถบบน — ลิงก์อีเมลเหลือเฉพาะหน้าที่ไม่มีแถบบน (หน้าสาธารณะ/หน้าล็อกอิน)
       '<div class="footer-links"><a href="privacy.html">นโยบายความเป็นส่วนตัว</a>' +
-        (document.getElementById('reportOpenBtn') ? '' : ' · <a href="mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub') + '">แจ้งปัญหาการใช้งาน</a>') + '</div>' +
+        (document.getElementById('ddReport') ? '' : ' · <a href="mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub') + '">แจ้งปัญหาการใช้งาน</a>') + '</div>' +
     '</div>';
   var vb = document.getElementById('verBtn'), vm = document.getElementById('verMenu');
   vb.addEventListener('click', function (e) { e.stopPropagation(); vm.hidden = !vm.hidden; vb.setAttribute('aria-expanded', String(!vm.hidden)); });
@@ -1807,7 +1814,7 @@ function _isLoginPage() {
 // หน้าแสดงผลงานสาธารณะ (view.html) ก็บังคับใช้ธีมสว่างเท่านั้นเสมอเช่นกัน (ตั้งแต่ V9.9) — เป็นหน้าที่คนภายนอกเปิดดูได้โดยไม่ล็อกอิน
 // ไม่ควรพึ่งค่า localStorage ของเบราว์เซอร์คนดู (ซึ่งอาจไม่ใช่เจ้าของบัญชีเลยด้วยซ้ำ) มากำหนดหน้าตาของหน้านี้
 function _isForcedLightPage() {
-  return _isLoginPage() || /\/(view|certificate)\.html$/.test(location.pathname); // 1.75: หน้าค้นหาเกียรติบัตรด้วย
+  return _isLoginPage() || /\/(view|certificate|photos)\.html$/.test(location.pathname); // 1.75: หน้าค้นหาเกียรติบัตร · 1.76: หน้าคลังรูปภาพสาธารณะ
 }
 applyTheme(_isForcedLightPage() ? 'light' : getTheme());
 
@@ -1896,7 +1903,7 @@ function createAudiencePicker(el, opts) {
 // 1.75: กระดิ่งแจ้งเตือน + แจ้งปัญหา
 // ======================================================================
 var NOTIF_KIND = {
-  cert_reserved: ['fa-hashtag', '#ea580c'], cert_uploaded: ['fa-award', '#d97706'], order: ['fa-file-signature', '#2563eb'],
+  cert_reserved: ['fa-hashtag', '#ea580c'], cert_uploaded: ['fa-award', '#d97706'], order: ['fa-file-signature', '#2563eb'], album: ['fa-images', '#0d9488'],
   report_new: ['fa-inbox', '#ef4444'], report_reply: ['fa-reply', '#7c3aed'], report_status: ['fa-headset', '#7c3aed'],
   report_done: ['fa-circle-check', '#16a34a'], report_forward: ['fa-share', '#0891b2']
 };
@@ -1988,7 +1995,13 @@ function initNotifBell() {
   }
   function close() { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
   btn.addEventListener('click', function (e) { e.stopPropagation(); if (panel.hidden) open(); else close(); });
-  document.addEventListener('click', function (e) { if (!panel.hidden && !panel.contains(e.target) && !btn.contains(e.target)) close(); });
+  // 1.76: กดตัวกรอง/ปุ่มในกล่องแล้วกล่องวาดใหม่ (ปุ่มที่กดหลุดจากหน้า) — ใช้เส้นทางของเหตุการณ์ตอนกด ไม่ใช่ตำแหน่งปัจจุบันของปุ่ม
+  document.addEventListener('click', function (e) {
+    if (panel.hidden) return;
+    var path = e.composedPath ? e.composedPath() : [];
+    if (path.indexOf(panel) !== -1 || btn.contains(e.target)) return;
+    close();
+  });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) close(); });
   window.addEventListener('resize', function () { if (!panel.hidden) place(); });
   panel.addEventListener('click', async function (e) {
@@ -2051,6 +2064,21 @@ function reportClientInfo() {
   return { page: String(page).trim().slice(0, 100), ua: b + ' · ' + o + ' · จอ ' + screen.width + '×' + screen.height };
 }
 var _reportModal = null;
+// ---------- คู่มือการใช้งาน (1.76) — โหลด assets/manual.js เมื่อกดปุ่มครั้งแรก ----------
+var _manualLoading = null;
+function openManual(topicId) {
+  if (typeof manualOpen === 'function') { manualOpen(topicId); return; }
+  if (!_manualLoading) {
+    _manualLoading = new Promise(function (resolve, reject) {
+      var sc = document.createElement('script');
+      sc.src = 'assets/manual.js?v=' + APP_VERSION;
+      sc.onload = resolve;
+      sc.onerror = function () { _manualLoading = null; reject(new Error('โหลดคู่มือไม่สำเร็จ — ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่')); };
+      document.head.appendChild(sc);
+    });
+  }
+  _manualLoading.then(function () { manualOpen(topicId); }).catch(function (e) { showToast(e.message, true); });
+}
 function openReportModal(opts) {
   opts = opts || {};
   if (!_reportModal) {
