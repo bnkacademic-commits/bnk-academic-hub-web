@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.76.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.77.171026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -82,8 +82,8 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.76.171026"></script>
-  <script src="assets/gallery.js?v=1.76.171026"></script>
+  <script src="assets/api.js?v=1.77.171026"></script>
+  <script src="assets/gallery.js?v=1.77.171026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -205,12 +205,15 @@
     if (session) {
       mountChrome('gallery');
       (async function () {
-        settingsCache = await getSiteSettings();
-        if (settingsCache.summerEnabled === false) { $('galSem').querySelector('[value="summer"]').remove(); $('galSemIn').querySelector('[value="summer"]').remove(); }
-        deptOptions($('galDept'), 'ทุกกลุ่มบริหารงาน', '');
-        var saved = ''; try { saved = localStorage.getItem(YEAR_KEY) || ''; } catch (e) {}
-        yearOptions($('galYear'), '', true);
-        if (saved) $('galYear').value = saved;
+        // 1.77: เตรียมตัวกรองพลาดตรงไหนก็ต้องโหลดรายการเสมอ (1.76 ค้าง "กำลังโหลด" เมื่อปิดภาคฤดูร้อน — api.js ลบตัวเลือกไปก่อนแล้ว)
+        try {
+          settingsCache = await getSiteSettings();
+          if (settingsCache && settingsCache.summerEnabled === false) ['galSem', 'galSemIn'].forEach(function (id) { var o = $(id).querySelector('[value="summer"]'); if (o) o.remove(); });
+          deptOptions($('galDept'), 'ทุกกลุ่มบริหารงาน', '');
+          var saved = ''; try { saved = localStorage.getItem(YEAR_KEY) || ''; } catch (e) {}
+          yearOptions($('galYear'), '', true);
+          if (saved) $('galYear').value = saved;
+        } catch (e) { /* ใช้ค่าเริ่มต้นของตัวกรอง */ }
         load(true);
       })();
     }
