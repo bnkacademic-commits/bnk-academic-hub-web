@@ -3077,3 +3077,40 @@ a.ov-alert:hover { text-decoration: underline; }
 .ov-links { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .ov-links a { border: 1px solid var(--border); border-radius: 10px; padding: 6px 11px; font-size: .8rem; font-weight: 700; color: var(--primary-dark); text-decoration: none; }
 .ov-links a:hover { background: var(--primary-light); }
+/* 1.79.1: โควต้า 2 กลุ่ม + สลับการ์ด/รายการ */
+.ov-view { margin-left: auto; display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; gap: 2px; }
+.ov-view button { border: 0; background: none; font: inherit; font-size: .8rem; font-weight: 700; color: var(--text-muted); padding: 5px 10px; border-radius: 8px; cursor: pointer; }
+.ov-view button.on { background: var(--surface); color: var(--primary-dark); box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
+.ov-quota { display: block; }
+.ov-qsub { font-size: .8rem; font-weight: 800; color: var(--text-muted); margin: 4px 0 8px; display: flex; align-items: center; gap: 6px; }
+.ov-qa-s { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.ov-qa-s .ov-q-v b { font-size: 1.45rem; }
+.ov-qa-d { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ov-q-h b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ov-qa-d .ov-q-setup { grid-column: 1 / -1; }
+.ov-ql { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 18px 6px; }
+.ov-ql .ov-qsub { margin: 8px 0 2px; }
+.ov-qr { display: grid; grid-template-columns: 30px minmax(150px, 220px) minmax(0, 1fr) 190px 54px; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.ov-qr:last-child, .ov-qr:has(+ .ov-qsub) { border-bottom: 0; }
+.ov-qr-t b { display: block; font-size: .9rem; }
+.ov-qr-t small { display: block; font-size: .74rem; color: var(--text-muted); }
+.ov-qr-u { text-align: right; font-size: .84rem; color: var(--text-muted); white-space: nowrap; }
+.ov-qr-u b { color: var(--text); font-size: 1rem; }
+.ov-qr-p { text-align: right; font-weight: 800; font-size: .86rem; }
+.ov-qr.ok .ov-qr-p { color: #15803d; } .ov-qr.warn .ov-qr-p { color: #b45309; } .ov-qr.bad .ov-qr-p { color: #b91c1c; }
+.ov-qr.warn .ov-q-bar i { background: #f59e0b; } .ov-qr.bad .ov-q-bar i { background: #ef4444; }
+@media (max-width: 900px) { .ov-qa-d { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .ov-qa-s { grid-template-columns: minmax(0, 1fr); }
+  .ov-qa-d { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .ov-qa-d .ov-q { padding: 10px 11px; }
+  .ov-qa-d .ov-q-h b { font-size: .8rem; white-space: normal; line-height: 1.3; }
+  .ov-qa-d .ov-q-ic { width: 24px; height: 24px; font-size: .7rem; border-radius: 7px; }
+  .ov-qa-d .ov-q-p i { display: none; }
+  .ov-qa-d .ov-q-h { gap: 6px; align-items: flex-start; }
+  .ov-qa-d .ov-q-v b { font-size: 1rem; }
+  .ov-qr { grid-template-columns: 30px minmax(0, 1fr) auto; row-gap: 6px; }
+  .ov-qr .ov-q-bar { grid-column: 1 / -1; grid-row: 2; }
+  .ov-qr-u { grid-column: 2; grid-row: 3; text-align: left; }
+  .ov-qr-p { grid-column: 3; grid-row: 1; }
+}

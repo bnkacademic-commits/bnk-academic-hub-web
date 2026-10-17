@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.79.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.79.1.171026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -25,7 +25,8 @@
     </div>
     <div class="ov-alerts" id="ovAlerts"></div>
 
-    <div class="ov-sec"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> โควต้า <small id="ovQuotaNote">Cloudflare แผนฟรี รีเซ็ตทุกวัน 07:00 น. (เวลาไทย)</small></div>
+    <div class="ov-sec"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> โควต้า <small id="ovQuotaNote">Cloudflare แผนฟรี รีเซ็ตทุกวัน 07:00 น. (เวลาไทย)</small>
+      <span class="ov-view" role="group" aria-label="รูปแบบการแสดงโควต้า"><button type="button" data-qview="cards" title="แบบการ์ด"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i> การ์ด</button><button type="button" data-qview="list" title="แบบรายการ"><i class="fa-solid fa-list" aria-hidden="true"></i> รายการ</button></span></div>
     <div class="ov-quota" id="ovQuota"><div class="loading">กำลังโหลด</div></div>
 
     <div class="ov-sec"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i> ข้อมูลในระบบ <small id="ovTermNote"></small></div>
@@ -41,7 +42,7 @@
   </div>
   <div id="app-footer"></div>
 
-<script src="assets/api.js?v=1.79.171026"></script>
+<script src="assets/api.js?v=1.79.1.171026"></script>
 <script>
   var session = requireLogin();
   // เฉพาะ Super Admin — บทบาทอื่นไปหน้าแรกของตัวเอง
@@ -61,45 +62,68 @@
   }
   function verCmp(a, b) { var x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (var i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); } return 0; }
   // การ์ดโควต้า: แถบสี เขียว < 60% · เหลือง 60–79% · แดง ≥ 80% (มีไอคอน + ตัวเลข % กำกับเสมอ ไม่ใช้สีอย่างเดียว)
+  function pctText(o) { var p = o.used / o.limit * 100; return p > 0 && p < 1 ? '<1%' : Math.min(100, Math.round(p)) + '%'; }
+  function quotaRow(o) {
+    var pct = o.limit ? Math.min(100, o.used / o.limit * 100) : null;
+    var lvl = pct == null ? '' : (pct >= 80 ? 'bad' : (pct >= 60 ? 'warn' : 'ok'));
+    return '<div class="ov-qr ' + lvl + '"><span class="ov-q-ic" style="background:' + o.color + '"><i class="fa-solid ' + o.icon + '" aria-hidden="true"></i></span>' +
+      '<div class="ov-qr-t"><b>' + escapeHtml(o.title) + '</b>' + (o.note ? '<small>' + escapeHtml(o.note) + '</small>' : '') + '</div>' +
+      (pct == null ? '<div></div>' : '<div class="ov-q-bar" role="progressbar" aria-valuenow="' + Math.round(pct) + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + escapeHtml(o.title) + '"><i style="width:' + Math.max(pct, 1) + '%"></i></div>') +
+      '<div class="ov-qr-u"><b>' + escapeHtml(o.usedText) + '</b>' + (o.limitText ? ' / ' + escapeHtml(o.limitText) : '') + '</div>' +
+      '<div class="ov-qr-p">' + (pct == null ? '' : pctText(o)) + '</div></div>';
+  }
   function quotaCard(o) {
     var pct = o.limit ? Math.min(100, Math.round(o.used / o.limit * 100)) : null;
     var lvl = pct == null ? '' : (pct >= 80 ? 'bad' : (pct >= 60 ? 'warn' : 'ok'));
     var stIcon = lvl === 'bad' ? 'fa-triangle-exclamation' : (lvl === 'warn' ? 'fa-circle-exclamation' : 'fa-circle-check');
     return '<div class="ov-q ' + lvl + '"><div class="ov-q-h"><span class="ov-q-ic" style="background:' + o.color + '"><i class="fa-solid ' + o.icon + '" aria-hidden="true"></i></span><b>' + escapeHtml(o.title) + '</b>' +
-      (pct == null ? '' : '<span class="ov-q-p"><i class="fa-solid ' + stIcon + '" aria-hidden="true"></i> ' + pct + '%</span>') + '</div>' +
+      (pct == null ? '' : '<span class="ov-q-p"><i class="fa-solid ' + stIcon + '" aria-hidden="true"></i> ' + pctText(o) + '</span>') + '</div>' +
       '<div class="ov-q-v"><b>' + escapeHtml(o.usedText) + '</b>' + (o.limitText ? ' / ' + escapeHtml(o.limitText) : '') + '</div>' +
       (pct == null ? '' : '<div class="ov-q-bar" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + escapeHtml(o.title) + '"><i style="width:' + Math.max(pct, 1) + '%"></i></div>') +
-      (o.note ? '<div class="ov-q-n">' + escapeHtml(o.note) + '</div>' : '') + '</div>';
+      ((o.cardNote || o.note) ? '<div class="ov-q-n">' + escapeHtml(o.cardNote || o.note) + '</div>' : '') + '</div>';
   }
-  var state = { ov: null, sys: null, sysMs: null, sysErr: '', cf: null, cfErr: '' };
+  var state = { qView: (function () { try { return localStorage.getItem('bnkah_ov_qview') === 'list' ? 'list' : 'cards'; } catch (e) { return 'cards'; } })(), ov: null, sys: null, sysMs: null, sysErr: '', cf: null, cfErr: '' };
   function render() {
     var ov = state.ov, sys = state.sys, cf = state.cf, alerts = [];
     if (!ov) return;
     var L = ov.limits || {};
+    // 1.79.1: โควต้า 2 กลุ่ม — พื้นที่จัดเก็บ (g:'s') / ใช้ไปวันนี้ (g:'d') · แสดงได้ 2 แบบ: การ์ด (A) / รายการ (B) กดสลับได้ จำไว้ในเครื่อง
     var cards = [];
-    // Google Drive (relay)
     var st = (typeof _settingsCache !== 'undefined' && _settingsCache) || {};
     if (sys && sys.relay && sys.relay.ok) {
       var used = sys.relay.driveUsedBytes, lim = Number(st.driveQuotaBytes || 0) || sys.relay.driveLimitBytes;
-      cards.push({ title: 'พื้นที่ Google Drive', icon: 'fa-hard-drive', color: '#16a34a', used: used || 0, limit: lim || 0, usedText: fmtBytes(used), limitText: lim ? fmtBytes(lim) : '', note: (sys.relay.folders || []).length + ' โฟลเดอร์บัญชี · ไฟล์หลงในโฟลเดอร์หลัก ' + (sys.relay.looseFiles || 0) + ' ไฟล์' });
+      cards.push({ g: 's', title: 'Google Drive', icon: 'fa-hard-drive', color: '#16a34a', used: used || 0, limit: lim || 0, usedText: fmtBytes(used), limitText: lim ? fmtBytes(lim) : '', note: (sys.relay.folders || []).length + ' โฟลเดอร์บัญชี · ไฟล์หลง ' + (sys.relay.looseFiles || 0) });
     } else if (sys || state.sysErr) {
-      cards.push({ title: 'พื้นที่ Google Drive', icon: 'fa-hard-drive', color: '#16a34a', used: 0, limit: 0, usedText: 'ติดต่อ relay ไม่ได้', note: (sys && sys.relay && sys.relay.error) || state.sysErr || '' });
-    } else cards.push({ title: 'พื้นที่ Google Drive', icon: 'fa-hard-drive', color: '#16a34a', used: 0, limit: 0, usedText: 'กำลังตรวจ…' });
-    cards.push({ title: 'ฐานข้อมูล D1 (ขนาด)', icon: 'fa-database', color: '#0ea5e9', used: ov.d1.sizeBytes || 0, limit: L.d1DbBytes, usedText: fmtBytes(ov.d1.sizeBytes), limitText: fmtBytes(L.d1DbBytes), note: (ov.d1.tables || 0) + ' ตาราง · เพดานต่อฐานข้อมูลของแผนฟรี' });
+      cards.push({ g: 's', title: 'Google Drive', icon: 'fa-hard-drive', color: '#16a34a', used: 0, limit: 0, usedText: 'ติดต่อ relay ไม่ได้', note: (sys && sys.relay && sys.relay.error) || state.sysErr || '' });
+    } else cards.push({ g: 's', title: 'Google Drive', icon: 'fa-hard-drive', color: '#16a34a', used: 0, limit: 0, usedText: 'กำลังตรวจ…' });
+    cards.push({ g: 's', title: 'ฐานข้อมูล D1', icon: 'fa-database', color: '#0ea5e9', used: ov.d1.sizeBytes || 0, limit: L.d1DbBytes, usedText: fmtBytes(ov.d1.sizeBytes), limitText: fmtBytes(L.d1DbBytes), note: (ov.d1.tables || 0) + ' ตาราง · เพดานแผนฟรี' });
     if (cf && cf.configured) {
-      cards.push(cf.workers ? { title: 'คำขอ Worker วันนี้', icon: 'fa-bolt', color: '#f59e0b', used: cf.workers.requests, limit: L.workerRequests, usedText: fmtN(cf.workers.requests), limitText: fmtN(L.workerRequests), note: cf.workers.errors ? 'ผิดพลาด ' + fmtN(cf.workers.errors) + ' ครั้ง' : '' } : { title: 'คำขอ Worker วันนี้', icon: 'fa-bolt', color: '#f59e0b', used: 0, limit: 0, usedText: 'ดึงข้อมูลไม่ได้', note: cf.errors.workers || '' });
+      var bad = function (t, ic, col, err) { return { g: 'd', title: t, icon: ic, color: col, used: 0, limit: 0, usedText: 'ดึงข้อมูลไม่ได้', note: err || '' }; };
+      cards.push(cf.workers ? { g: 'd', title: 'คำขอ Worker', icon: 'fa-bolt', color: '#f59e0b', used: cf.workers.requests, limit: L.workerRequests, usedText: fmtN(cf.workers.requests), limitText: fmtN(L.workerRequests), note: cf.workers.errors ? 'ผิดพลาด ' + fmtN(cf.workers.errors) + ' ครั้ง' : '' } : bad('คำขอ Worker', 'fa-bolt', '#f59e0b', cf.errors.workers));
       if (cf.d1) {
-        cards.push({ title: 'D1 แถวที่อ่านวันนี้', icon: 'fa-magnifying-glass', color: '#8b5cf6', used: cf.d1.rowsRead, limit: L.d1RowsRead, usedText: fmtN(cf.d1.rowsRead), limitText: fmtN(L.d1RowsRead) });
-        cards.push({ title: 'D1 แถวที่เขียนวันนี้', icon: 'fa-pen', color: '#ec4899', used: cf.d1.rowsWritten, limit: L.d1RowsWritten, usedText: fmtN(cf.d1.rowsWritten), limitText: fmtN(L.d1RowsWritten) });
-      } else cards.push({ title: 'D1 อ่าน/เขียนวันนี้', icon: 'fa-magnifying-glass', color: '#8b5cf6', used: 0, limit: 0, usedText: 'ดึงข้อมูลไม่ได้', note: cf.errors.d1 || '' });
-      cards.push(cf.kv ? { title: 'KV อ่านวันนี้', icon: 'fa-key', color: '#64748b', used: cf.kv.read, limit: L.kvReads, usedText: fmtN(cf.kv.read), limitText: fmtN(L.kvReads), note: 'เขียนวันนี้ ' + fmtN(cf.kv.write) + ' / ' + fmtN(L.kvWrites) + (cf.kv.write / L.kvWrites >= 0.8 ? ' (ใกล้เต็ม)' : '') } : { title: 'KV อ่าน/เขียนวันนี้', icon: 'fa-key', color: '#64748b', used: 0, limit: 0, usedText: 'ดึงข้อมูลไม่ได้', note: cf.errors.kv || '' });
-      if (cf.kv && cf.kv.write / L.kvWrites >= 0.8) alerts.push(['bad', 'fa-key', 'KV เขียนวันนี้ใกล้เต็ม (' + fmtN(cf.kv.write) + ' / ' + fmtN(L.kvWrites) + ')']);
+        cards.push({ g: 'd', title: 'D1 อ่าน (แถว)', icon: 'fa-magnifying-glass', color: '#8b5cf6', used: cf.d1.rowsRead, limit: L.d1RowsRead, usedText: fmtN(cf.d1.rowsRead), limitText: fmtN(L.d1RowsRead) });
+        cards.push({ g: 'd', title: 'D1 เขียน (แถว)', icon: 'fa-pen', color: '#ec4899', used: cf.d1.rowsWritten, limit: L.d1RowsWritten, usedText: fmtN(cf.d1.rowsWritten), limitText: fmtN(L.d1RowsWritten) });
+      } else cards.push(bad('D1 อ่าน/เขียน', 'fa-magnifying-glass', '#8b5cf6', cf.errors.d1));
+      if (cf.kv) {
+        cards.push({ g: 'd', title: 'KV อ่าน', icon: 'fa-key', color: '#64748b', used: cf.kv.read, limit: L.kvReads, usedText: fmtN(cf.kv.read), limitText: fmtN(L.kvReads), cardNote: 'KV เขียน ' + fmtN(cf.kv.write) + ' / ' + fmtN(L.kvWrites) });
+        cards.push({ g: 'd', title: 'KV เขียน', icon: 'fa-key', color: '#475569', used: cf.kv.write, limit: L.kvWrites, usedText: fmtN(cf.kv.write), limitText: fmtN(L.kvWrites), listOnly: true });
+      } else cards.push(bad('KV อ่าน/เขียน', 'fa-key', '#64748b', cf.errors.kv));
     }
-    var qh = cards.map(quotaCard).join('');
-    if (cf && !cf.configured) qh += '<div class="ov-q ov-q-setup"><div class="ov-q-h"><span class="ov-q-ic" style="background:#f59e0b"><i class="fa-solid fa-plug" aria-hidden="true"></i></span><b>โควต้า Cloudflare วันนี้</b></div>' +
-      '<div class="ov-q-n" style="font-size:.84rem">ยังไม่ได้เชื่อม — ใส่ Worker secret <code>CF_ACCOUNT_ID</code> และ <code>CF_API_TOKEN</code> (สิทธิ์ Account Analytics: Read) แล้วจะเห็นคำขอ Worker, D1 อ่าน/เขียน และ KV ของวันนี้ (ขั้นตอนใน README หัวข้อ "หน้าภาพรวมระบบ")</div></div>';
+    var setupHtml = (cf && !cf.configured) ? '<div class="ov-q ov-q-setup"><div class="ov-q-h"><span class="ov-q-ic" style="background:#f59e0b"><i class="fa-solid fa-plug" aria-hidden="true"></i></span><b>โควต้า Cloudflare วันนี้</b></div>' +
+      '<div class="ov-q-n" style="font-size:.84rem">ยังไม่ได้เชื่อม — ใส่ Worker secret <code>CF_ACCOUNT_ID</code> และ <code>CF_API_TOKEN</code> (สิทธิ์ Account Analytics: Read) แล้วจะเห็นคำขอ Worker, D1 อ่าน/เขียน และ KV ของวันนี้ (ขั้นตอนใน README หัวข้อ "หน้าภาพรวมระบบ")</div></div>' : '';
+    var hasDaily = cards.some(function (c) { return c.g === 'd'; });
+    var subS = '<div class="ov-qsub"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> พื้นที่จัดเก็บ</div>';
+    var subD = '<div class="ov-qsub"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> ใช้ไปวันนี้ · รีเซ็ต 07:00 น.</div>';
+    var qh;
+    if (state.qView === 'list') {
+      qh = '<div class="ov-ql">' + subS + cards.filter(function (c) { return c.g === 's'; }).map(quotaRow).join('') +
+        (hasDaily ? subD + cards.filter(function (c) { return c.g === 'd'; }).map(quotaRow).join('') : '') + '</div>' + (setupHtml ? '<div class="ov-qa-d" style="margin-top:12px">' + setupHtml + '</div>' : '');
+    } else {
+      qh = subS + '<div class="ov-qa-s">' + cards.filter(function (c) { return c.g === 's'; }).map(quotaCard).join('') + '</div>' +
+        (hasDaily || setupHtml ? subD + '<div class="ov-qa-d">' + cards.filter(function (c) { return c.g === 'd' && !c.listOnly; }).map(quotaCard).join('') + setupHtml + '</div>' : '');
+    }
     $('ovQuota').innerHTML = qh;
-    cards.forEach(function (c) { if (c.limit && c.used / c.limit >= 0.8) alerts.push(['bad', 'fa-triangle-exclamation', c.title + ' ใช้ไปแล้ว ' + Math.round(c.used / c.limit * 100) + '%']); });
+    cards.forEach(function (c) { if (c.limit && c.used / c.limit >= 0.8) alerts.push(['bad', 'fa-triangle-exclamation', c.title + (c.g === 'd' ? ' วันนี้' : '') + ' ใช้ไปแล้ว ' + Math.round(c.used / c.limit * 100) + '%']); });
     // ข้อมูลในระบบ
     var R = ov.users.roles, lg = ov.users.logins, rp = ov.reports || { system: 0, dept: 0, systemOpen: 0 };
     var tiles = [
@@ -151,6 +175,9 @@
   if (session) {
     $('ovRefresh').addEventListener('click', async function () { var b = this; b.classList.add('spinning'); state.sys = null; state.cf = null; state.sysErr = ''; try { await load(); } finally { b.classList.remove('spinning'); } });
     window.__refreshPageData = load;
+    function syncQView() { document.querySelectorAll('[data-qview]').forEach(function (b) { var on = b.getAttribute('data-qview') === state.qView; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); }
+    document.querySelector('.ov-view').addEventListener('click', function (e) { var b = e.target.closest('[data-qview]'); if (!b) return; state.qView = b.getAttribute('data-qview'); try { localStorage.setItem('bnkah_ov_qview', state.qView); } catch (er) {} syncQView(); render(); });
+    syncQView();
     load();
   }
 </script>
