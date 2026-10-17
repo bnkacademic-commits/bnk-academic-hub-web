@@ -2891,6 +2891,8 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .alb-title { font-weight: 800; font-size: .94rem; line-height: 1.35; overflow-wrap: anywhere; }
 .alb-meta { font-size: .76rem; color: var(--text-muted); }
 .alb-dept { color: color-mix(in srgb, var(--ac, var(--primary)) 80%, var(--text)); font-weight: 700; }
+.alb-subj { font-size: .74rem; color: var(--text-muted); }
+.alb-subj i { margin-right: 3px; }
 .alb-owner { font-size: .74rem; color: var(--text-muted); }
 .alb-foot { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 8px; flex-wrap: wrap; }
 .alb-pub { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: .7rem; font-weight: 800; border-radius: 999px; padding: 2px 9px; border: 0; background: var(--surface-2); color: var(--text-muted); }

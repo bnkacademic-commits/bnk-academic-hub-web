@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.77.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.78.171026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login')||localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body class="pubc-body">
@@ -33,19 +33,20 @@
     <div id="phRoot"><div class="loading">กำลังโหลด</div></div>
   </main>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.77.171026"></script>
-  <script src="assets/gallery.js?v=1.77.171026"></script>
+  <script src="assets/api.js?v=1.78.171026"></script>
+  <script src="assets/gallery.js?v=1.78.171026"></script>
   <script>
     mountFooter();
     applyBranding();
     var $ = function (id) { return document.getElementById(id); };
-    var albums = [], shown = GALLERY_PAGE;
+    var albums = [], shown = GALLERY_PAGE, initYear = '';
     async function load() {
       try {
-        var r = await apiCall('publicAlbumList', { year: $('phYear').value });
+        var cur = initYear || $('phYear').value; initYear = '';
+        var r = await apiCall('publicAlbumList', { year: cur });
         albums = r.items || [];
-        var cur = $('phYear').value;
-        $('phYear').innerHTML = '<option value="">ทุกปีการศึกษา</option>' + (r.years || []).map(function (y) { return '<option value="' + y + '"' + (y === cur ? ' selected' : '') + '>ปีการศึกษา ' + y + '</option>'; }).join('');
+        var ys = (r.years || []).slice(); if (cur && ys.indexOf(cur) === -1) { ys.push(cur); ys.sort().reverse(); }
+        $('phYear').innerHTML = '<option value="">ทุกปีการศึกษา</option>' + ys.map(function (y) { return '<option value="' + y + '"' + (y === cur ? ' selected' : '') + '>ปีการศึกษา ' + y + '</option>'; }).join('');
         var depts = Array.from(new Set(albums.map(function (a) { return a.department; }).filter(Boolean)));
         var cd = $('phDept').value;
         $('phDept').innerHTML = '<option value="">ทุกกลุ่มบริหารงาน</option>' + depts.map(function (d) { return '<option value="' + escapeHtml(d) + '"' + (d === cd ? ' selected' : '') + '>' + escapeHtml(groupLabel(d)) + '</option>'; }).join('');
@@ -70,7 +71,11 @@
       var a = albums.filter(function (x) { return x.id === card.getAttribute('data-alb'); })[0];
       if (a) copyAlbumText(a);
     });
-    load();
+    // 1.78: ค่าเริ่มต้น = ปีการศึกษา + ภาคเรียนปัจจุบัน
+    (async function () {
+      try { var term = await currentAcademicTerm(); initYear = term.year; if ($('phSem').querySelector('[value="' + term.semester + '"]')) $('phSem').value = term.semester; } catch (e) { /* ทุกปี */ }
+      load();
+    })();
   </script>
 </body>
 </html>

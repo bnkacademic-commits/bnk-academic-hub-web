@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.77.171026" />
+<link rel="stylesheet" href="assets/style.css?v=1.78.171026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -49,7 +49,9 @@
         <div class="gal-form">
           <div class="field full"><label for="galTitle">ชื่อกิจกรรม</label><input type="text" id="galTitle" maxlength="200" placeholder="เช่น ประชุมปิดภาคเรียนที่ 1/2569" /></div>
           <div class="field"><label for="galDate">วันที่จัดกิจกรรม</label><input type="date" id="galDate" /></div>
+          <div class="field"><label for="galEndDate">ถึงวันที่ <span class="hint-inline">(ถ้าจัดวันเดียวไม่ต้องใส่)</span></label><input type="date" id="galEndDate" /></div>
           <div class="field"><label for="galDeptIn">กลุ่มบริหารงาน <span class="hint-inline">(ไม่บังคับ)</span></label><select id="galDeptIn"></select></div>
+          <div class="field"><label for="galSubjectIn">กลุ่มสาระการเรียนรู้ <span class="hint-inline">(ไม่บังคับ)</span></label><select id="galSubjectIn"></select></div>
           <div class="field"><label for="galSemIn">ภาคเรียน</label><select id="galSemIn"><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select></div>
           <div class="field"><label for="galYearIn">ปีการศึกษา</label><select id="galYearIn"></select></div>
           <div class="field full"><label for="galUrl">ลิงก์อัลบั้ม (โฟลเดอร์ Google Drive / Google Photos)</label><input type="url" id="galUrl" placeholder="https://drive.google.com/drive/folders/..." /><div class="gal-check" id="galUrlCheck"></div></div>
@@ -82,13 +84,13 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.77.171026"></script>
-  <script src="assets/gallery.js?v=1.77.171026"></script>
+  <script src="assets/api.js?v=1.78.171026"></script>
+  <script src="assets/gallery.js?v=1.78.171026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
     var $ = function (id) { return document.getElementById(id); };
-    var albums = [], years = [], shown = GALLERY_PAGE, editId = '', settingsCache = null;
+    var albums = [], years = [], subjectGroups = [], shown = GALLERY_PAGE, editId = '', settingsCache = null;
     var YEAR_KEY = 'bnkah_gal_year';
 
     function deptOptions(sel, emptyLabel, value) {
@@ -108,7 +110,7 @@
       if (force || !albums.length) root.innerHTML = '<div class="loading">กำลังโหลด</div>';
       try {
         var r = await apiCall('albumList', { year: $('galYear').value || '' });
-        albums = r.items || []; years = r.years || [];
+        albums = r.items || []; years = r.years || []; if (r.subjectGroups) subjectGroups = r.subjectGroups;
       } catch (e) { root.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; return; }
       var cur = $('galYear').value; yearOptions($('galYear'), cur, true);
       render();
@@ -152,6 +154,7 @@
         : '<i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> ต้องเป็นลิงก์โฟลเดอร์ Google Drive หรือ Google Photos';
     }
     $('galUrl').addEventListener('input', checkUrl);
+    $('galDate').addEventListener('change', function () { $('galEndDate').min = $('galDate').value; if ($('galEndDate').value && $('galEndDate').value < $('galDate').value) $('galEndDate').value = ''; });
     async function openForm(a) {
       editId = a ? a.id : '';
       $('galModalTitle').innerHTML = '<i class="fa-solid fa-images" aria-hidden="true"></i> ' + (a ? 'แก้ไขอัลบั้มรูปภาพ' : 'เพิ่มอัลบั้มรูปภาพ');
@@ -162,6 +165,10 @@
       $('galSemIn').value = a ? a.semester : term.semester;
       $('galTitle').value = a ? a.title : '';
       $('galDate').value = a ? a.eventDate : new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
+      $('galEndDate').value = a ? (a.endDate || '') : '';
+      $('galEndDate').min = $('galDate').value;
+      $('galSubjectIn').innerHTML = '<option value="">ไม่มี</option>' + subjectGroups.map(function (g) { return '<option value="' + escapeHtml(g) + '">' + escapeHtml(g) + '</option>'; }).join('');
+      $('galSubjectIn').value = a ? (a.subjectGroup || '') : '';
       $('galUrl').value = a ? a.url : '';
       $('galCover').value = a ? a.coverUrl : '';
       $('galPublic').checked = a ? a.isPublic : false;
@@ -173,8 +180,8 @@
     ['galCloseX', 'galCancel'].forEach(function (id) { $(id).addEventListener('click', function () { hideModalEl($('galModal')); }); });
     $('galForm').addEventListener('submit', async function (e) {
       e.preventDefault();
-      var p = { title: $('galTitle').value, eventDate: $('galDate').value, department: $('galDeptIn').value, semester: $('galSemIn').value, academicYear: $('galYearIn').value, url: $('galUrl').value.trim(), coverUrl: $('galCover').value.trim(), isPublic: $('galPublic').checked };
-      var err = !p.title.trim() ? 'กรุณากรอกชื่อกิจกรรม' : !p.eventDate ? 'กรุณาเลือกวันที่จัดกิจกรรม' : !p.url ? 'กรุณาใส่ลิงก์อัลบั้ม' : '';
+      var p = { title: $('galTitle').value, eventDate: $('galDate').value, endDate: $('galEndDate').value, subjectGroup: $('galSubjectIn').value, department: $('galDeptIn').value, semester: $('galSemIn').value, academicYear: $('galYearIn').value, url: $('galUrl').value.trim(), coverUrl: $('galCover').value.trim(), isPublic: $('galPublic').checked };
+      var err = !p.title.trim() ? 'กรุณากรอกชื่อกิจกรรม' : !p.eventDate ? 'กรุณาเลือกวันที่จัดกิจกรรม' : (p.endDate && p.endDate < p.eventDate) ? 'วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่ม' : !p.url ? 'กรุณาใส่ลิงก์อัลบั้ม' : '';
       if (err) { $('galError').textContent = err; $('galError').hidden = false; return; }
       if (editId) p.id = editId;
       var r = await withProgress(editId ? 'กำลังบันทึก' : 'กำลังเพิ่มอัลบั้ม', function () { return apiCall(editId ? 'albumUpdate' : 'albumCreate', p); }, { successLabel: editId ? 'บันทึกแล้ว' : 'เพิ่มอัลบั้มแล้ว' });
@@ -210,9 +217,11 @@
           settingsCache = await getSiteSettings();
           if (settingsCache && settingsCache.summerEnabled === false) ['galSem', 'galSemIn'].forEach(function (id) { var o = $(id).querySelector('[value="summer"]'); if (o) o.remove(); });
           deptOptions($('galDept'), 'ทุกกลุ่มบริหารงาน', '');
-          var saved = ''; try { saved = localStorage.getItem(YEAR_KEY) || ''; } catch (e) {}
-          yearOptions($('galYear'), '', true);
-          if (saved) $('galYear').value = saved;
+          // 1.78: ค่าเริ่มต้นตัวกรอง = ปีการศึกษา + ภาคเรียนปัจจุบัน (โหลดเฉพาะปีนั้น ไม่หน่วง) — เลือก "ทุกปีการศึกษา" เองได้
+          var term = await currentAcademicTerm();
+          yearOptions($('galYear'), term.year, true);
+          $('galYear').value = term.year;
+          if ($('galSem').querySelector('[value="' + term.semester + '"]')) $('galSem').value = term.semester;
         } catch (e) { /* ใช้ค่าเริ่มต้นของตัวกรอง */ }
         load(true);
       })();
