@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- 1.80: PWA — ติดตั้งลงหน้าจอหลัก/คอมได้ (manifest + ไอคอน · sw.js ลงทะเบียนใน api.js) -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>สรุปรวมการส่งงาน — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
@@ -19,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.79.2.181026" />
+<link rel="stylesheet" href="assets/style.css?v=1.80.0.181026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -133,9 +142,30 @@
     </div>
   </div>
 
+  <!-- 1.80: ตรวจผลงาน (เจ้าหน้าที่/Super Admin) — ตรวจเป็นชุดงาน: ครู × ประเภทงาน × ภาคเรียน · ไม่มีคำว่าผ่าน/ไม่ผ่าน -->
+  <div class="modal-backdrop" id="reviewModal" hidden>
+    <div class="modal-box rv-box" role="dialog" aria-modal="true" aria-labelledby="rvTitle">
+      <button type="button" class="modal-close-x" id="rvCloseX" aria-label="ปิด">✕</button>
+      <h3 id="rvTitle">ตรวจผลงาน</h3>
+      <p class="hint rv-sub" id="rvSub"></p>
+      <div class="rv-files" id="rvFiles"><div class="loading">กำลังโหลด</div></div>
+      <div class="rv-choice" role="radiogroup" aria-label="ผลการตรวจ">
+        <label class="rv-opt ok"><input type="radio" name="rvStatus" value="reviewed" checked /><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ตรวจแล้ว</label>
+        <label class="rv-opt fix"><input type="radio" name="rvStatus" value="revise" /><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขเพิ่มเติม</label>
+      </div>
+      <label class="rv-lbl" for="rvComment" id="rvCommentLbl">ข้อความถึงครู (ไม่บังคับ)</label>
+      <textarea id="rvComment" maxlength="500" rows="3" placeholder="เช่น ขอบคุณค่ะ"></textarea>
+      <div class="rv-chips" id="rvChips"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost btn-close" id="rvCancel" type="button">ยกเลิก</button>
+        <button class="btn btn-primary" id="rvSave" type="button"><i class="fa-solid fa-check" aria-hidden="true"></i> บันทึก</button>
+      </div>
+    </div>
+  </div>
+
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.79.2.181026"></script>
+  <script src="assets/api.js?v=1.80.0.181026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -463,12 +493,16 @@
           '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.categoryName) + '</b>' + categoryDeptBadgeHtml(a.categoryId) + ' · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
             ' · <span class="badge badge-ontime">ตามกำหนด ' + onTimeCount + '</span> <span class="badge badge-late">หลังกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
           '</div>' +
-          '<div class="table-wrap"><table><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th></tr></thead><tbody>';
+          (canReview ? reviewAllBtnHtml(a) : '') +
+          '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th><th>การตรวจ</th>' + (canReview ? '<th></th>' : '') + '</tr></thead><tbody>';
         a.rows.forEach(function (r) {
+          // 1.80: มือถือ = แถวละคน (ชื่อบรรทัดบน · สถานะ/วันที่ส่ง/การตรวจ/ปุ่มบรรทัดล่าง — ดู .asg-table ใน style.css)
           html += '<tr>' +
-            '<td>' + escapeHtml(r.userName) + '</td>' +
-            '<td>' + statusBadge(r.status) + '</td>' +
-            '<td>' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '-') + '</td>' +
+            '<td class="asg-name">' + escapeHtml(r.userName) + '</td>' +
+            '<td class="asg-st">' + statusBadge(r.status) + '</td>' +
+            '<td class="asg-time">' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '<span class="asg-none">-</span>') + '</td>' +
+            '<td class="asg-rv">' + (r.status === 'missing' ? '<span class="asg-none">-</span>' : reviewCellHtml(r)) + '</td>' +
+            (canReview ? '<td class="asg-act">' + (r.status === 'missing' ? '' : '<button type="button" class="btn btn-secondary btn-sm rv-btn" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '">' + (r.review && r.review.status === 'reviewed' ? 'ดู' : 'ตรวจ') + '</button>') + '</td>' : '') +
           '</tr>';
         });
         html += '</tbody></table></div></div>';
@@ -476,6 +510,111 @@
       var left = total - filtered.length;
       wrap.innerHTML = html + (left > 0 ? '<div class="list-more"><button type="button" class="btn btn-secondary btn-sm" data-more="1"><i class="fa-solid fa-chevron-down"></i> แสดงเพิ่ม ' + Math.min(ASG_PAGE, left) + ' งาน (เหลือ ' + left + ')</button></div>' : '');
     }
+    // ---------- 1.80: ตรวจผลงาน ----------
+    // เจ้าหน้าที่/Super Admin ตรวจได้ · ผู้บริหารเห็นเฉพาะ "ตรวจแล้ว" / "ยังไม่ตรวจ" (Worker ส่งมาแค่นั้น)
+    var canReview = session.role === 'admin';
+    function reviewCellHtml(r) {
+      if (r.status === 'missing') return '<span class="hint" style="margin:0;">-</span>';
+      var v = r.review || { status: 'none' };
+      if (v.status === 'reviewed') return '<span class="badge rvb-ok">ตรวจแล้ว</span>' + (v.revised ? '<div class="rv-note">แก้ไขเพิ่มเติมแล้ว</div>' : '');
+      if (v.status === 'revise') return '<span class="badge rvb-fix">แก้ไขเพิ่มเติม</span>';
+      if (v.status === 'resubmitted') return '<span class="badge rvb-none">ยังไม่ตรวจ</span><div class="rv-note">ส่งไฟล์เพิ่มเติมแล้ว</div>';
+      return '<span class="badge rvb-none">ยังไม่ตรวจ</span>';
+    }
+    function unreviewedRows(a) { return a.rows.filter(function (r) { return r.status !== 'missing' && (!r.review || r.review.status === 'none'); }); }
+    function reviewAllBtnHtml(a) {
+      var n = unreviewedRows(a).length;
+      return n ? '<div class="rv-allrow"><button type="button" class="btn btn-sm rv-all" data-rv-all="' + escapeHtml(a.eventId) + '"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ตรวจแล้วทั้งหมด (' + n + ')</button></div>' : '';
+    }
+    function rvIcon(mime, name) { var n = String(name || '').toLowerCase(); return /pdf/.test(mime) || /\.pdf$/.test(n) ? 'fa-file-pdf' : /^image\//.test(mime || '') ? 'fa-file-image' : /word|\.docx?$/.test(mime + n) ? 'fa-file-word' : 'fa-file'; }
+    var RV_CHIPS = { reviewed: ['ขอบคุณค่ะ', 'ขอบคุณครับ', 'เรียบร้อยดีมาก'], revise: ['รบกวนเพิ่มลายเซ็น', 'รบกวนแนบไฟล์ให้ครบ', 'รบกวนตรวจสอบภาคเรียนอีกครั้ง'] };
+    var rvModal = document.getElementById('reviewModal'), rvCur = null;
+    function rvStatus() { var c = rvModal.querySelector('input[name="rvStatus"]:checked'); return c ? c.value : 'reviewed'; }
+    function rvSync() {
+      var st = rvStatus();
+      rvModal.querySelectorAll('.rv-opt').forEach(function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
+      document.getElementById('rvCommentLbl').textContent = st === 'revise' ? 'ข้อความถึงครู (บอกว่าต้องเพิ่มเติมอะไร)' : 'ข้อความถึงครู (ไม่บังคับ)';
+      document.getElementById('rvComment').placeholder = st === 'revise' ? 'เช่น รบกวนเพิ่มหน้าลายเซ็นผู้บริหาร' : 'เช่น ขอบคุณค่ะ';
+      document.getElementById('rvChips').innerHTML = RV_CHIPS[st].map(function (t) { return '<button type="button" data-chip="' + escapeHtml(t) + '">' + escapeHtml(t) + '</button>'; }).join('');
+    }
+    rvModal.addEventListener('change', function (e) { if (e.target.name === 'rvStatus') rvSync(); });
+    document.getElementById('rvChips').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-chip]'); if (!b) return;
+      var ta = document.getElementById('rvComment'); var t = b.getAttribute('data-chip');
+      ta.value = ta.value.trim() ? ta.value.trim() + ' ' + t : t; ta.focus();
+    });
+    async function openReview(a, row) {
+      rvCur = { a: a, row: row };
+      document.getElementById('rvTitle').textContent = 'ตรวจผลงาน — ' + row.userName;
+      document.getElementById('rvSub').textContent = a.categoryName + ' · ' + (a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester) + ' ปีการศึกษา ' + a.academicYear;
+      var v = row.review || { status: 'none' };
+      rvModal.querySelector('input[value="' + (v.status === 'revise' ? 'revise' : 'reviewed') + '"]').checked = true;
+      document.getElementById('rvComment').value = v.status === 'revise' || v.status === 'reviewed' ? (v.comment || '') : '';
+      rvSync();
+      var fw = document.getElementById('rvFiles');
+      fw.innerHTML = '<div class="loading">กำลังโหลด</div>';
+      showModalEl(rvModal);
+      try {
+        var d = await apiCall('reviewFiles', { teacherId: row.userId, categoryId: a.categoryId, academicYear: a.academicYear, semester: a.semester });
+        rvCur.files = d.files;
+        var since = d.revisedSince || '';
+        fw.innerHTML = d.files.length ? d.files.map(function (f, i) {
+          var isNew = since && f.uploadedAt > since;
+          return '<button type="button" class="rv-file" data-rv-file="' + i + '"><i class="fa-solid ' + rvIcon(f.mimeType, f.fileName) + '" aria-hidden="true"></i><span class="rv-fn">' + escapeHtml(f.title || f.fileName) + '</span><span class="rv-fd' + (isNew ? ' new' : '') + '">' + escapeHtml(formatDateThai(f.uploadedAt)) + (isNew ? ' · ใหม่' : '') + '</span></button>';
+        }).join('') : '<div class="hint" style="margin:0;">ไม่พบไฟล์</div>';
+      } catch (err) { fw.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>'; }
+    }
+    document.getElementById('rvFiles').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-rv-file]'); if (!b || !rvCur || !rvCur.files) return;
+      var f = rvCur.files[Number(b.getAttribute('data-rv-file'))];
+      openFilePreview(drivePreviewUrl(f.fileUrl), rvCur.row.userName + ' — ' + (f.title || f.fileName), f.fileUrl);
+    });
+    function closeReview() { hideModalEl(rvModal); rvCur = null; }
+    document.getElementById('rvCancel').addEventListener('click', closeReview);
+    document.getElementById('rvCloseX').addEventListener('click', closeReview);
+    function applyReviewLocal(a, ids, st, comment) {
+      allAssignments.forEach(function (x) {
+        if (x.categoryId !== a.categoryId || x.academicYear !== a.academicYear || x.semester !== a.semester) return;
+        x.rows.forEach(function (r) {
+          if (ids.indexOf(r.userId) === -1) return;
+          var old = r.review || {};
+          r.review = { status: st, comment: comment, revised: !!old.revised || st === 'revise' || old.status === 'revise' || old.status === 'resubmitted', at: new Date().toISOString(), by: session.name };
+        });
+      });
+    }
+    document.getElementById('rvSave').addEventListener('click', async function () {
+      if (!rvCur) return;
+      var st = rvStatus(), comment = document.getElementById('rvComment').value.trim();
+      if (st === 'revise' && !comment) { showToast('กรุณาใส่ข้อความถึงครูว่าต้องแก้ไขเพิ่มเติมอะไร'); document.getElementById('rvComment').focus(); return; }
+      var cur = rvCur;
+      try {
+        await withProgress('กำลังบันทึกผลการตรวจ', function () { return apiCall('reviewSet', { teacherIds: [cur.row.userId], categoryId: cur.a.categoryId, academicYear: cur.a.academicYear, semester: cur.a.semester, status: st, comment: comment }); });
+        applyReviewLocal(cur.a, [cur.row.userId], st, comment);
+        closeReview(); renderAssignmentSummary();
+        showToast(st === 'revise' ? 'แจ้งแก้ไขเพิ่มเติมแล้ว' : 'บันทึกว่าตรวจแล้ว');
+      } catch (err) { showToast(err.message); }
+    });
+    document.getElementById('assignmentSummaryWrap').addEventListener('click', async function (e) {
+      var b = e.target.closest('[data-rv-ev]'), all = e.target.closest('[data-rv-all]');
+      var find = function (id) { return allAssignments.filter(function (x) { return x.eventId === id; })[0]; };
+      if (b) {
+        var a = find(b.getAttribute('data-rv-ev')); if (!a) return;
+        var row = a.rows.filter(function (r) { return r.userId === b.getAttribute('data-rv-u'); })[0];
+        if (row) openReview(a, row);
+        return;
+      }
+      if (all) {
+        var a2 = find(all.getAttribute('data-rv-all')); if (!a2) return;
+        var rows = unreviewedRows(a2); if (!rows.length) return;
+        if (!(await askConfirm('บันทึกว่า "ตรวจแล้ว" ให้ครู ' + rows.length + ' คนที่ยังไม่ได้ตรวจในงานนี้ (ไม่รวมคนที่แจ้งแก้ไขเพิ่มเติมไว้หรือเพิ่งส่งไฟล์เพิ่มเติม) ครูแต่ละคนจะได้รับแจ้งเตือน', 'ตรวจแล้วทั้งหมด'))) return;
+        var ids = rows.map(function (r) { return r.userId; });
+        try {
+          await withProgress('กำลังบันทึกผลการตรวจ', function () { return apiCall('reviewSet', { teacherIds: ids, categoryId: a2.categoryId, academicYear: a2.academicYear, semester: a2.semester, status: 'reviewed', comment: '' }); });
+          applyReviewLocal(a2, ids, 'reviewed', ''); renderAssignmentSummary(); showToast('บันทึกว่าตรวจแล้ว ' + ids.length + ' คน');
+        } catch (err) { showToast(err.message); }
+      }
+    });
+
     var ASG_PAGE = 10, asgShown = ASG_PAGE;
     function rerenderAsg() { asgShown = ASG_PAGE; renderAssignmentSummary(); }
     document.getElementById('assignmentSummaryWrap').addEventListener('click', function (e) { if (e.target.closest('[data-more]')) { asgShown += ASG_PAGE; renderAssignmentSummary(); } });

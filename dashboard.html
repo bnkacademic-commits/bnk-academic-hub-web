@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- 1.80: PWA — ติดตั้งลงหน้าจอหลัก/คอมได้ (manifest + ไอคอน · sw.js ลงทะเบียนใน api.js) -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>Hub ของฉัน — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
@@ -19,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.79.2.181026" />
+<link rel="stylesheet" href="assets/style.css?v=1.80.0.181026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -211,7 +220,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.79.2.181026"></script>
+  <script src="assets/api.js?v=1.80.0.181026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -547,6 +556,7 @@
         renderFileChips();
         document.getElementById('uploadForm').reset();
         if (reopenGroupAfterUpload) { var rk = reopenGroupAfterUpload; reopenGroupAfterUpload = null; openGroupModal(rk); }
+        loadCalendar(); // 1.80: ผลการตรวจ (แก้ไขเพิ่มเติม → ส่งแล้ว) ในเช็คลิสต์
       } else {
         errBox.textContent = r.error.message;
         errBox.hidden = false;
@@ -1001,11 +1011,33 @@
           '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
           '<div class="checklist-text">' +
             '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + (r.ev.categoryId ? categoryDeptBadgeHtml(r.ev.categoryId) : '') + '</div>' +
-            '<div class="checklist-status ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? 'ส่งแล้ว' : 'ยังไม่ส่ง') + '</div>' +
+            (r.done ? checklistReviewHtml(r.ev) : '<div class="checklist-status pending">ยังไม่ส่ง</div>') +
           '</div>' +
         '</div>';
       }).join('');
     }
+    // 1.80: ผลการตรวจผลงาน — ไม่มีคำว่าผ่าน/ไม่ผ่าน · ยังไม่ตรวจ = "ส่งแล้ว" ตามปกติ (ไม่มีป้ายรอตรวจ)
+    // ส่งไฟล์เพิ่มเติมหลัง "แก้ไขเพิ่มเติม" = "ส่งแล้ว" เหมือนงานปกติ · ตรวจแล้วหลังแก้ไข = หมายเหตุเล็ก "แก้ไขเพิ่มเติมแล้ว"
+    function checklistReviewHtml(ev) {
+      var v = ev.review;
+      var msg = function (cls) {
+        if (!v.comment) return '';
+        return '<div class="cl-msg' + cls + '"><b>ข้อความจาก ' + escapeHtml(v.by || 'เจ้าหน้าที่') + (v.at ? ' · ' + escapeHtml(formatDateThai(v.at)) : '') + '</b>' + escapeHtml(v.comment) + '</div>';
+      };
+      if (v && v.status === 'reviewed') {
+        return '<div class="cl-review"><span class="badge rvb-ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ตรวจแล้ว</span>' + (v.revised ? '<span class="rv-note" style="margin:0;">แก้ไขเพิ่มเติมแล้ว</span>' : '') + '</div>' + msg('');
+      }
+      if (v && v.status === 'revise') {
+        return '<div class="cl-review"><span class="badge rvb-fix"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขเพิ่มเติม</span></div>' + msg(' fix') +
+          '<button type="button" class="btn btn-primary btn-sm cl-fix-btn" data-cl-fix="' + escapeHtml(ev.id) + '"><i class="fa-solid fa-upload" aria-hidden="true"></i> ส่งไฟล์ที่แก้ไข</button>';
+      }
+      return '<div class="checklist-status done">ส่งแล้ว</div>';
+    }
+    document.getElementById('assignmentChecklistBody').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-cl-fix]'); if (!b) return;
+      var ev = (calState.events || []).filter(function (x) { return x.id === b.getAttribute('data-cl-fix'); })[0];
+      if (ev) openUploadModal({ categoryId: ev.categoryId, academicYear: ev.academicYear, semester: ev.semester });
+    });
     (function wireChecklistControls() {
       var tabs = document.getElementById('clTabs');
       if (!tabs) return;

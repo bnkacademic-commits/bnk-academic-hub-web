@@ -3,12 +3,21 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- 1.80: PWA — ติดตั้งลงหน้าจอหลัก/คอมได้ (manifest + ไอคอน · sw.js ลงทะเบียนใน api.js) -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>บันทึกข้อความส่งงาน — BNKAcademicHub</title>
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.79.2.181026" />
+<link rel="stylesheet" href="assets/style.css?v=1.80.0.181026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -18,7 +27,9 @@
      ไม่ผ่าน html2canvas/jsPDF เหมือนหน้า summary.html เพราะเป็นเอกสารทางการที่ต้องการตัวอักษรคมชัด เลือกคัดลอกได้จริง
      ไม่ใช่ภาพถ่ายหน้าจอ — หลีกเลี่ยงปัญหา "สีซีด"/คุณภาพภาพที่เคยเจอกับการจับภาพ canvas ไปในตัว */
   .memo-controls-wrap { max-width: 900px; margin: 0 auto; padding: 0 16px 32px; }
-  .memo-paper-outer { background: #525659; padding: 24px 0 60px; }
+  .memo-paper-outer { background: #525659; padding: 24px 0 60px; overflow-x: auto; }
+  /* 1.80: จอแคบกว่ากระดาษ A4 (มือถือ) = ย่อกระดาษให้พอดีจอด้วย zoom (fitMemoPaper) — พิมพ์/บันทึก PDF ยังเป็น A4 เต็มขนาด */
+  @media (max-width: 860px) { .memo-paper-outer { padding: 12px 0 32px; } }
   .memo-paper {
     width: 210mm; min-height: 297mm; margin: 0 auto; background: #ffffff; color: #111827;
     padding: 20mm 18mm; box-shadow: 0 6px 24px rgba(0,0,0,0.35); font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
@@ -45,7 +56,8 @@
   @media print {
     #app-topbar, #app-footer, .no-print { display: none !important; }
     .memo-paper-outer { background: #fff; padding: 0; }
-    .memo-paper { width: auto; min-height: 0; margin: 0; box-shadow: none; padding: 14mm 16mm; }
+    .memo-paper { width: auto; min-height: 0; margin: 0; box-shadow: none; padding: 14mm 16mm; zoom: 1 !important; }
+    .memo-paper-outer { overflow: visible; }
     @page { size: A4; margin: 0; }
     body { margin: 0; }
   }
@@ -135,7 +147,7 @@
 
   <div id="app-footer" class="no-print"></div>
 
-  <script src="assets/api.js?v=1.79.2.181026"></script>
+  <script src="assets/api.js?v=1.80.0.181026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireHubAccess();
@@ -270,6 +282,18 @@
       return defaultSubjectAndBody().body.replace('{N}', String(n));
     }
 
+    // 1.80: ย่อกระดาษ A4 ให้พอดีความกว้างจอ (มือถือ) — ไม่กระทบการพิมพ์ (@media print ตั้ง zoom: 1)
+    function fitMemoPaper() {
+      var paper = document.getElementById('memoPaper'), outer = paper.parentElement;
+      paper.style.zoom = '';
+      var avail = outer.clientWidth - 16, w = paper.offsetWidth;
+      if (w > 0 && avail > 0 && avail < w) paper.style.zoom = String(Math.max(0.3, avail / w));
+    }
+    window.addEventListener('resize', fitMemoPaper);
+    window.addEventListener('beforeprint', function () { document.getElementById('memoPaper').style.zoom = ''; });
+    window.addEventListener('afterprint', fitMemoPaper);
+    fitMemoPaper();
+
     async function renderMemoPaper() {
       var paper = document.getElementById('memoPaper');
       var settings = await getSiteSettings();
@@ -356,6 +380,7 @@
       '</div>';
 
       paper.innerHTML = html;
+      fitMemoPaper();
       if (items.length > 0) {
         var qrBox = document.getElementById('memoQrBox');
         if (qrBox) new QRCode(qrBox, { text: qrUrl, width: 96, height: 96 });

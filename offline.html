@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b6fcc" />
+<title>ไม่มีการเชื่อมต่ออินเทอร์เน็ต — BNKAcademicHub</title>
+<!-- 1.80: หน้าที่ service worker (sw.js) แสดงเมื่อเปิดแอปตอนไม่มีเน็ต — ไม่พึ่งไฟล์อื่น (ยกเว้นไอคอน/Font Awesome ที่แคชไว้) -->
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<style>
+  :root { --bg: #f8fafc; --text: #1e293b; --muted: #64748b; --primary: #0b6fcc; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0f172a; --text: #e2e8f0; --muted: #94a3b8; --primary: #3b82f6; } }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px 16px; box-sizing: border-box; text-align: center; }
+  .box { max-width: 340px; }
+  img { width: 72px; height: 72px; border-radius: 18px; margin-bottom: 18px; }
+  i.big { font-size: 2.6rem; color: var(--muted); display: block; margin-bottom: 12px; }
+  h1 { font-size: 1.25rem; margin: 0 0 6px; }
+  p { color: var(--muted); margin: 0 0 20px; line-height: 1.6; }
+  button { border: 0; background: var(--primary); color: #fff; font: inherit; font-weight: 700; padding: 10px 22px; border-radius: 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <img src="icons/icon-192.png" alt="" />
+    <i class="fa-solid fa-wifi big" aria-hidden="true"></i>
+    <h1>ไม่มีการเชื่อมต่ออินเทอร์เน็ต</h1>
+    <p>ตรวจสอบสัญญาณ Wi-Fi หรืออินเทอร์เน็ตมือถือ แล้วลองอีกครั้ง</p>
+    <button type="button" onclick="location.reload()"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> ลองอีกครั้ง</button>
+  </div>
+  <script>window.addEventListener('online', function () { location.reload(); });</script>
+</body>
+</html>

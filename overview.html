@@ -3,12 +3,21 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- 1.80: PWA — ติดตั้งลงหน้าจอหลัก/คอมได้ (manifest + ไอคอน · sw.js ลงทะเบียนใน api.js) -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
 <title>ภาพรวมระบบ — BNKAcademicHub</title>
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.79.2.181026" />
+<link rel="stylesheet" href="assets/style.css?v=1.80.0.181026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -42,7 +51,7 @@
   </div>
   <div id="app-footer"></div>
 
-<script src="assets/api.js?v=1.79.2.181026"></script>
+<script src="assets/api.js?v=1.80.0.181026"></script>
 <script>
   var session = requireLogin();
   // เฉพาะ Super Admin — บทบาทอื่นไปหน้าแรกของตัวเอง
@@ -152,14 +161,46 @@
       ['Drive relay', !sys && !state.sysErr ? '<span>กำลังตรวจ…</span>' : relayOk ? '<span class="ok"><i class="fa-solid fa-circle-check"></i> ตอบกลับ ' + (state.sysMs / 1000).toFixed(1) + ' วินาที</span>' : '<span class="bad"><i class="fa-solid fa-circle-xmark"></i> ติดต่อไม่ได้</span>'],
       ['รุ่นหน้าเว็บ / Worker', '<span class="' + (wOld ? 'bad' : 'ok') + '">' + (wOld ? '<i class="fa-solid fa-triangle-exclamation"></i> ' : '') + escapeHtml(APP_VERSION.split('.').slice(0, 2).join('.')) + ' / ' + escapeHtml(ov.workerVersion || 'เก่ากว่า 1.79') + '</span>'],
       ['ล้างข้อมูลเก่าอัตโนมัติ (Cron)', '<span class="' + (ov.cronLast ? 'ok' : 'muted') + '">' + escapeHtml(cronTxt) + '</span>'],
+      ['สำรองข้อมูล (Google Drive)', backupCell(ov.backup)],
       ['ไฟล์หลงในโฟลเดอร์หลักของ Drive', relayOk ? '<span class="' + (sys.relay.looseFiles ? 'warn' : 'ok') + '">' + fmtN(sys.relay.looseFiles || 0) + ' ไฟล์</span>' : '<span class="muted">—</span>'],
       ['ภาคเรียนปัจจุบัน', '<span>' + escapeHtml(state.termText || '—') + '</span>']
     ];
     $('ovStatus').innerHTML = stl.map(function (x) { return '<li><span>' + escapeHtml(x[0]) + '</span>' + x[1] + '</li>'; }).join('');
     if (sys && !relayOk) alerts.unshift(['bad', 'fa-plug-circle-xmark', 'ติดต่อ Drive relay ไม่ได้ — ครูอัพโหลดไฟล์ไม่ได้', 'settings.html']);
+    var bk = ov.backup;
+    if (bk && bk.configured) {
+      var okAt = bk.last && bk.last.lastOkAt ? Date.parse(bk.last.lastOkAt) : 0;
+      if (bk.last && !bk.last.ok) alerts.push(['bad', 'fa-database', 'สำรองข้อมูลล่าสุดไม่สำเร็จ: ' + bk.last.error]);
+      else if (!okAt || Date.now() - okAt > (bk.everyDays || 7) * 86400000 + 86400000) alerts.push(['warn', 'fa-database', okAt ? 'ไม่ได้สำรองข้อมูลมาแล้ว ' + Math.floor((Date.now() - okAt) / 86400000) + ' วัน — กด "สำรองตอนนี้" ในส่วนสถานะระบบ' : 'ยังไม่เคยสำรองข้อมูล — กด "สำรองตอนนี้" ในส่วนสถานะระบบ']);
+    }
     if (wOld) alerts.unshift(['bad', 'fa-triangle-exclamation', 'Worker ยังเป็นรุ่นเก่า (ต้องการ ' + WORKER_MIN_VERSION + ' ขึ้นไป) — อัพโหลดไฟล์ Worker แล้ว Deploy']);
     $('ovAlerts').innerHTML = alerts.map(function (a) { var inner = '<i class="fa-solid ' + a[1] + '" aria-hidden="true"></i> ' + escapeHtml(a[2]); return a[3] ? '<a class="ov-alert ' + a[0] + '" href="' + a[3] + '">' + inner + '</a>' : '<span class="ov-alert ' + a[0] + '">' + inner + '</span>'; }).join('');
   }
+  // 1.80: สำรองข้อมูล — วันที่สำรองสำเร็จล่าสุด + ปุ่มสำรองตอนนี้ + ลิงก์โฟลเดอร์ใน Drive
+  function backupCell(bk) {
+    if (!bk) return '<span class="muted">Worker รุ่นเก่า</span>';
+    if (!bk.configured) return '<span class="muted">ยังไม่ได้ตั้งค่า (ดู README)</span>';
+    var l = bk.last, h = '';
+    if (state.backingUp) h = '<span><span class="loading">กำลังสำรอง</span></span>';
+    else if (l && l.lastOkAt) {
+      var d = Math.floor((Date.now() - Date.parse(l.lastOkAt)) / 86400000);
+      h = '<span class="' + (l.ok && d <= (bk.everyDays || 7) ? 'ok' : 'warn') + '">' + escapeHtml(formatDateThai(l.lastOkAt)) + ' (' + (d ? d + ' วันที่แล้ว' : 'วันนี้') + ')' + (l.ok && l.size ? ' · ' + fmtBytes(l.size) : '') + '</span>';
+    } else h = '<span class="muted">ยังไม่เคยสำรอง</span>';
+    var link = l && l.folderUrl ? '<a href="' + escapeHtml(l.folderUrl) + '" target="_blank" rel="noopener" class="ov-bk-link">เปิดโฟลเดอร์</a>' : '';
+    return '<span class="ov-bk">' + h + link + '<button type="button" class="btn btn-secondary btn-sm ov-bk-btn" id="ovBackupBtn"' + (state.backingUp ? ' disabled' : '') + '><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> สำรองตอนนี้</button></span>';
+  }
+  document.getElementById('ovStatus').addEventListener('click', async function (e) {
+    if (!e.target.closest('#ovBackupBtn') || state.backingUp) return;
+    state.backingUp = true; render();
+    try {
+      var r = await apiCall('adminBackupNow', {});
+      state.ov.backup.last = r; showToast('สำรองข้อมูลเรียบร้อย — ' + r.name);
+    } catch (err) {
+      showToast(err.message, true);
+      try { state.ov = await apiCall('adminOverview', {}); } catch (e2) { /* ข้าม */ }
+    }
+    state.backingUp = false; render();
+  });
   async function load() {
     $('ovSub').textContent = 'หน้าแรกของผู้ดูแลระบบ · ข้อมูล ณ ' + formatDateTimeThai(new Date().toISOString());
     var term = await currentAcademicTerm();

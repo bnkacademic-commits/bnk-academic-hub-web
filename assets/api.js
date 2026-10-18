@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.79';
-var APP_VERSION = '1.79.2.181026';
+var WORKER_MIN_VERSION = '1.80';
+var APP_VERSION = '1.80.0.181026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -143,8 +143,11 @@ function markActive(force) {
   if (_idleWarnShown) hideIdleWarning();
 }
 function isIdleFor(ms) { return Date.now() - lastActiveAt() >= ms; }
+// 1.80: เข้าสู่ระบบอัตโนมัติ — ไม่ออกจากระบบเมื่อนิ่ง 60 นาที (token ฝั่ง Worker หมดอายุเองเมื่อไม่ได้ใช้งานเกิน 7 วัน)
+function isKeepLogin() { var s = getSession(); return !!(s && s.keepLogin); }
 function checkIdle() {
   if (!getToken()) return;
+  if (isKeepLogin()) { if (_idleWarnShown) hideIdleWarning(); return; }
   if (_progressBusy > 0) { markActive(true); return; }
   var idle = Date.now() - lastActiveAt();
   if (idle >= idleTimeoutMs()) { hideIdleWarning(); forceSessionExpire(); return; }
@@ -154,7 +157,7 @@ function scheduleSessionTimeout() {
   try {
     if (_idleTimer) return;
     if (!lastActiveAt()) markActive(true);
-    if (isIdleFor(idleTimeoutMs())) { forceSessionExpire(); return; } // กลับมาหลังพักเครื่อง/ปิดจอนานเกินกำหนด
+    if (isIdleFor(idleTimeoutMs()) && !isKeepLogin()) { forceSessionExpire(); return; } // กลับมาหลังพักเครื่อง/ปิดจอนานเกินกำหนด
     ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'wheel'].forEach(function (ev) {
       window.addEventListener(ev, function () { if (!_idleWarnShown || ev !== 'mousemove') markActive(false); }, { passive: true, capture: true });
     });
@@ -1564,6 +1567,9 @@ function mountChrome(activePage) {
             '</button>' +
             '<div class="profile-dropdown" id="profileDropdown">' +
               '<div class="dd-header"><div class="dd-name">' + escapeHtml(session.name) + '</div>' + accountInfoLines(session).map(function (l) { return '<div class="dd-role"><span class="dd-k">' + escapeHtml(l.label) + '</span><span class="dd-v">' + escapeHtml(l.value) + '</span></div>'; }).join('') + '</div>' +
+              // 1.80: ติดตั้งแอป (PWA) — แสดงเฉพาะเครื่องที่ติดตั้งได้และยังไม่ได้ติดตั้ง (ดู updateInstallItem)
+              '<button class="dd-item dd-install" id="ddInstall" type="button" hidden><span class="dd-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span> ติดตั้งแอปลงเครื่องนี้</button>' +
+              '<div class="dd-divider" id="ddInstallDiv" hidden></div>' +
               // 1.66: เลือกธีม 3 แบบ (ภาพตัวอย่างย่อ) แทนสวิตช์ Dark Mode เดิม
               '<div class="dd-theme-title">ธีม</div><div class="dd-themes" id="themePicker" role="radiogroup" aria-label="ธีม">' +
                 [['light', 'กระดาษขาว'], ['sepia', 'ถนอมตา'], ['dark', 'กลางคืน']].map(function (t) {
@@ -1660,6 +1666,8 @@ function mountChrome(activePage) {
     initNotifBell(); // 1.75
     document.getElementById('manualOpenBtn').addEventListener('click', function () { openManual(); });
     document.getElementById('ddReport').addEventListener('click', function () { dropdown.classList.remove('open'); openReportModal(); });
+    document.getElementById('ddInstall').addEventListener('click', function () { dropdown.classList.remove('open'); startInstallApp(); });
+    updateInstallItem();
     if (/^#report:/.test(location.hash)) { var rid = location.hash.slice(8); setTimeout(function () { openReportModal({ tab: 'mine', focus: rid }); }, 300); }
     setTimeout(function () { refreshTopBadges(); }, 400);
 
@@ -1673,24 +1681,43 @@ function mountChrome(activePage) {
 // Footer มาตรฐานทุกหน้า (ตั้งแต่ 1.29.091026 ตามที่ผู้ใช้กำหนดไว้): ชื่อโรงเรียน, ลิขสิทธิ์ (ปีอัตโนมัติ เป็น พ.ศ.), ลิขสิทธิ์ผลงานเป็นของเจ้าของ
 // ผลงาน, ผู้พัฒนา, ระบุว่าใช้ AI ช่วยพัฒนา + เวอร์ชัน, ลิงก์นโยบายความเป็นส่วนตัว/แจ้งปัญหา (mailto) — หน้า privacy.html ใช้ฟังก์ชันนี้ร่วมกัน
 var SUPPORT_EMAIL = 'Tear.Jeerasak@gmail.com'; // อีเมลผู้ดูแลระบบ (แจ้งปัญหา/ติดต่อเรื่องข้อมูลส่วนบุคคล)
-function mountFooter() {
+function mountFooter(opts) {
   var root = document.getElementById('app-footer');
   if (!root) return;
   var yearBE = new Date().getFullYear() + 543;
-  root.innerHTML =
-    '<div class="site-footer">' +
-      '<div class="footer-school">โรงเรียนบุ่งคล้านคร</div>' +
-      '<div>© ' + yearBE + ' โรงเรียนบุ่งคล้านคร สงวนลิขสิทธิ์</div>' +
-      '<div>ผลงานในระบบเป็นลิขสิทธิ์ของเจ้าของผลงาน</div>' +
-      '<div>Developed by Jeerasak Chomphuwattana</div>' +
-      // 1.75: กดเลขเวอร์ชัน = เมนู "โหลดหน้าใหม่" / "ล้างแคชแล้วโหลดใหม่"
-      '<div>Built with AI assistance · <span class="ver-wrap"><button type="button" class="ver-btn" id="verBtn" aria-haspopup="true" aria-expanded="false" title="โหลดหน้าใหม่ / ล้างแคช">v' + escapeHtml(APP_VERSION) + ' <i class="fa-solid fa-caret-up" aria-hidden="true"></i></button>' +
-        '<span class="ver-menu" id="verMenu" hidden><button type="button" data-ver="reload"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> โหลดหน้าใหม่</button>' +
-        '<button type="button" data-ver="hard"><i class="fa-solid fa-broom" aria-hidden="true"></i> ล้างแคชแล้วโหลดใหม่</button></span></span></div>' +
-      // 1.75: หน้าที่ล็อกอินแล้วแจ้งปัญหาผ่านปุ่มหูฟังที่แถบบน — ลิงก์อีเมลเหลือเฉพาะหน้าที่ไม่มีแถบบน (หน้าสาธารณะ/หน้าล็อกอิน)
-      '<div class="footer-links"><a href="privacy.html">นโยบายความเป็นส่วนตัว</a>' +
-        (document.getElementById('ddReport') ? '' : ' · <a href="mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub') + '">แจ้งปัญหาการใช้งาน</a>') + '</div>' +
-    '</div>';
+  // 1.75: กดเลขเวอร์ชัน = เมนู "โหลดหน้าใหม่" / "ล้างแคชแล้วโหลดใหม่"
+  var verHtml = '<span class="ver-wrap"><button type="button" class="ver-btn" id="verBtn" aria-haspopup="true" aria-expanded="false" title="โหลดหน้าใหม่ / ล้างแคช">v' + escapeHtml(APP_VERSION) + ' <i class="fa-solid fa-caret-up" aria-hidden="true"></i></button>' +
+    '<span class="ver-menu" id="verMenu" hidden><button type="button" data-ver="reload"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> โหลดหน้าใหม่</button>' +
+    '<button type="button" data-ver="hard"><i class="fa-solid fa-broom" aria-hidden="true"></i> ล้างแคชแล้วโหลดใหม่</button></span></span>';
+  var reportLink = '<a href="mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub') + '">';
+  if (opts && opts.compact) {
+    // 1.80: หน้าล็อกอินใช้ footer แบบย่อ 2 บรรทัด — กด "เกี่ยวกับระบบ" เพื่อดูบรรทัดที่เหลือ (หน้าล็อกอินไม่ยาวขึ้น)
+    root.innerHTML =
+      '<div class="site-footer">' +
+        '<div>© ' + yearBE + ' โรงเรียนบุ่งคล้านคร · ' + verHtml + '</div>' +
+        '<div class="footer-links"><a href="privacy.html">นโยบายความเป็นส่วนตัว</a> · ' + reportLink + 'แจ้งปัญหา</a> · ' +
+          '<button type="button" class="footer-about-btn" id="footerAboutBtn" aria-expanded="false" aria-controls="footerMore">เกี่ยวกับระบบ <i class="fa-solid fa-caret-down" aria-hidden="true"></i></button></div>' +
+        '<div class="footer-more" id="footerMore" hidden><div>ผลงานในระบบเป็นลิขสิทธิ์ของเจ้าของผลงาน</div><div>Developed by Jeerasak Chomphuwattana</div><div>Built with AI assistance</div></div>' +
+      '</div>';
+    var ab = document.getElementById('footerAboutBtn'), more = document.getElementById('footerMore');
+    ab.addEventListener('click', function () {
+      more.hidden = !more.hidden; ab.setAttribute('aria-expanded', String(!more.hidden));
+      ab.querySelector('i').className = 'fa-solid ' + (more.hidden ? 'fa-caret-down' : 'fa-caret-up');
+      if (!more.hidden) more.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+  } else {
+    root.innerHTML =
+      '<div class="site-footer">' +
+        '<div class="footer-school">โรงเรียนบุ่งคล้านคร</div>' +
+        '<div>© ' + yearBE + ' โรงเรียนบุ่งคล้านคร สงวนลิขสิทธิ์</div>' +
+        '<div>ผลงานในระบบเป็นลิขสิทธิ์ของเจ้าของผลงาน</div>' +
+        '<div>Developed by Jeerasak Chomphuwattana</div>' +
+        '<div>Built with AI assistance · ' + verHtml + '</div>' +
+        // 1.75: หน้าที่ล็อกอินแล้วแจ้งปัญหาผ่านเมนูบัญชี — ลิงก์อีเมลเหลือเฉพาะหน้าที่ไม่มีแถบบน (หน้าสาธารณะ/หน้าล็อกอิน)
+        '<div class="footer-links"><a href="privacy.html">นโยบายความเป็นส่วนตัว</a>' +
+          (document.getElementById('ddReport') ? '' : ' · ' + reportLink + 'แจ้งปัญหาการใช้งาน</a>') + '</div>' +
+      '</div>';
+  }
   var vb = document.getElementById('verBtn'), vm = document.getElementById('verMenu');
   vb.addEventListener('click', function (e) { e.stopPropagation(); vm.hidden = !vm.hidden; vb.setAttribute('aria-expanded', String(!vm.hidden)); if (!vm.hidden) announceMenuOpen('version'); });
   onOtherMenuOpen('version', function () { vm.hidden = true; vb.setAttribute('aria-expanded', 'false'); });
@@ -1996,7 +2023,10 @@ function createAudiencePicker(el, opts) {
 var NOTIF_KIND = {
   cert_reserved: ['fa-hashtag', '#ea580c'], cert_uploaded: ['fa-award', '#d97706'], order: ['fa-file-signature', '#2563eb'], album: ['fa-images', '#0d9488'],
   report_new: ['fa-inbox', '#ef4444'], report_reply: ['fa-reply', '#7c3aed'], report_status: ['fa-headset', '#7c3aed'],
-  report_done: ['fa-circle-check', '#16a34a'], report_forward: ['fa-share', '#0891b2']
+  report_done: ['fa-circle-check', '#16a34a'], report_forward: ['fa-share', '#0891b2'],
+  // 1.80: ตรวจผลงาน + เตือนกำหนดส่ง
+  review_ok: ['fa-circle-check', '#16a34a'], review_fix: ['fa-pen-to-square', '#ca8a04'], review_resubmit: ['fa-file-arrow-up', '#0369a1'],
+  due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626']
 };
 function applyTopBadges(r) {
   if (!r) return;
@@ -2041,27 +2071,34 @@ function initNotifBell() {
   panel.className = 'notif-panel'; panel.id = 'notifPanel'; panel.hidden = true;
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'แจ้งเตือน');
   document.body.appendChild(panel);
-  var state = { items: [], more: false, limit: 30, filter: 'all', loading: false };
+  var state = { items: [], due: [], more: false, limit: 30, filter: 'all', loading: false };
+  function itemHtml(n) {
+    var k = NOTIF_KIND[n.kind] || ['fa-bell', '#64748b'];
+    var tm = n.dueDate ? 'กำหนดส่ง ' + formatDateThai(n.dueDate) : notifTimeText(n.createdAt);
+    return '<button type="button" class="notif-item' + (n.unread ? ' unread' : '') + (n.pinned ? ' pinned' : '') + '" data-nid="' + escapeHtml(n.id) + '">' +
+      '<span class="notif-ic" style="background:' + k[1] + '"><i class="fa-solid ' + k[0] + '" aria-hidden="true"></i></span>' +
+      '<span class="notif-tx"><span class="notif-t">' + escapeHtml(n.title) + '</span>' + (n.body ? '<span class="notif-b">' + escapeHtml(n.body) + '</span>' : '') +
+      '<span class="notif-tm">' + escapeHtml(tm) + (n.dept ? ' · ' + escapeHtml(groupLabel(n.dept)) : '') + '</span></span>' +
+      (n.unread ? '<span class="notif-dot" aria-label="ยังไม่อ่าน"></span>' : '') + '</button>';
+  }
   function render() {
     var list = state.items.filter(function (n) { return state.filter === 'all' || n.unread; });
-    var unread = state.items.filter(function (n) { return n.unread; }).length;
+    var unreadRead = state.items.filter(function (n) { return n.unread; }).length;
+    var unread = unreadRead + state.due.length; // 1.80: เตือนกำหนดส่งนับเป็นยังไม่อ่านจนกว่าจะส่งงาน
     var html = '<div class="notif-head"><i class="fa-solid fa-bell" aria-hidden="true"></i><b>แจ้งเตือน</b>' +
-      (unread ? '<button type="button" class="notif-readall" data-nact="readall">อ่านทั้งหมดแล้ว</button>' : '') + '</div>' +
+      (unreadRead ? '<button type="button" class="notif-readall" data-nact="readall">อ่านทั้งหมดแล้ว</button>' : '') + '</div>' +
       '<div class="notif-filter"><button type="button" data-nf="all" class="' + (state.filter === 'all' ? 'on' : '') + '">ทั้งหมด</button>' +
       '<button type="button" data-nf="unread" class="' + (state.filter === 'unread' ? 'on' : '') + '">ยังไม่อ่าน (' + unread + ')</button></div><div class="notif-list">';
     if (state.loading && !state.items.length) html += '<div class="notif-empty"><span class="loading">กำลังโหลด</span></div>';
-    else if (!list.length) html += '<div class="notif-empty"><i class="fa-solid fa-bell-slash" aria-hidden="true"></i>' + (state.filter === 'unread' ? 'อ่านครบทุกรายการแล้ว' : 'ยังไม่มีแจ้งเตือนใหม่<br>เกียรติบัตร คำสั่ง และเรื่องที่แจ้ง จะแสดงที่นี่') + '</div>';
+    else if (!list.length && !state.due.length) html += '<div class="notif-empty"><i class="fa-solid fa-bell-slash" aria-hidden="true"></i>' + (state.filter === 'unread' ? 'อ่านครบทุกรายการแล้ว' : 'ยังไม่มีแจ้งเตือนใหม่<br>เกียรติบัตร คำสั่ง และเรื่องที่แจ้ง จะแสดงที่นี่') + '</div>';
     else {
+      // 1.80: "งานที่ต้องส่ง" ปักไว้บนสุดเสมอ (ทั้ง 2 ตัวกรอง) — หายเมื่อส่งงานแล้ว
+      if (state.due.length) html += '<div class="notif-group">งานที่ต้องส่ง</div>' + state.due.map(itemHtml).join('');
       var g = '';
       list.forEach(function (n) {
         var grp = notifGroupOf(n.createdAt);
         if (grp !== g) { g = grp; html += '<div class="notif-group">' + grp + '</div>'; }
-        var k = NOTIF_KIND[n.kind] || ['fa-bell', '#64748b'];
-        html += '<button type="button" class="notif-item' + (n.unread ? ' unread' : '') + '" data-nid="' + escapeHtml(n.id) + '">' +
-          '<span class="notif-ic" style="background:' + k[1] + '"><i class="fa-solid ' + k[0] + '" aria-hidden="true"></i></span>' +
-          '<span class="notif-tx"><span class="notif-t">' + escapeHtml(n.title) + '</span>' + (n.body ? '<span class="notif-b">' + escapeHtml(n.body) + '</span>' : '') +
-          '<span class="notif-tm">' + escapeHtml(notifTimeText(n.createdAt)) + (n.dept ? ' · ' + escapeHtml(groupLabel(n.dept)) : '') + '</span></span>' +
-          (n.unread ? '<span class="notif-dot" aria-label="ยังไม่อ่าน"></span>' : '') + '</button>';
+        html += itemHtml(n);
       });
       if (state.more && state.filter === 'all') html += '<button type="button" class="notif-more" data-nact="more">ดูเพิ่ม</button>';
     }
@@ -2070,7 +2107,7 @@ function initNotifBell() {
   }
   async function load() {
     state.loading = true; render();
-    try { var r = await apiCall('notifList', { limit: state.limit }); state.items = r.items || []; state.more = !!r.more; }
+    try { var r = await apiCall('notifList', { limit: state.limit }); state.items = r.items || []; state.due = r.due || []; state.more = !!r.more; applyTopBadges({ notifUnread: state.due.length }); }
     catch (e) { panel.querySelector('.notif-list').innerHTML = '<div class="notif-empty">' + escapeHtml(e.message) + '</div>'; state.loading = false; return; }
     state.loading = false; render();
   }
@@ -2113,9 +2150,9 @@ function initNotifBell() {
     if (a && a.getAttribute('data-nact') === 'more') { state.limit += 30; load(); return; }
     var it = e.target.closest('[data-nid]');
     if (!it) return;
-    var n = state.items.filter(function (x) { return x.id === it.getAttribute('data-nid'); })[0];
+    var n = state.items.concat(state.due).filter(function (x) { return x.id === it.getAttribute('data-nid'); })[0];
     if (!n) return;
-    if (n.unread) { n.unread = false; render(); try { await apiCall('notifRead', { id: n.id }); } catch (err) { /* ข้าม */ } }
+    if (n.unread && !n.pinned) { n.unread = false; render(); try { await apiCall('notifRead', { id: n.id }); } catch (err) { /* ข้าม */ } }
     close();
     var link = n.link || '';
     if (/^#report:/.test(link)) { openReportModal({ tab: 'mine', focus: link.slice(8) }); return; }
@@ -2124,6 +2161,73 @@ function initNotifBell() {
     if (link) location.href = link;
   });
 }
+
+// ======================================================================
+// 1.80: PWA — ติดตั้งแอปลงมือถือ/คอม (ไม่มีแจ้งเตือนในโทรศัพท์)
+// Android/คอม (Chrome, Edge): เก็บเหตุการณ์ beforeinstallprompt ไว้ แล้วเรียกหน้าต่างติดตั้งของระบบเมื่อกดเมนู
+// iPhone/iPad: เว็บสั่งติดตั้งเองไม่ได้ (Apple ไม่อนุญาต) → ป็อปอัพบอกวิธี 3 ขั้น · เปิดจากแอปที่ติดตั้งแล้ว = ซ่อนเมนู
+// ======================================================================
+var _deferredInstall = null;
+function isStandaloneApp() { try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch (e) { return false; } }
+function isIosDevice() { var ua = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); }
+function canOfferInstall() { return !isStandaloneApp() && (!!_deferredInstall || isIosDevice()); }
+function updateInstallItem() {
+  var b = document.getElementById('ddInstall'), d = document.getElementById('ddInstallDiv');
+  if (!b) return;
+  var on = canOfferInstall(); b.hidden = !on; if (d) d.hidden = !on;
+}
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); _deferredInstall = e; updateInstallItem(); });
+window.addEventListener('appinstalled', function () { _deferredInstall = null; updateInstallItem(); try { showToast('ติดตั้งแอปเรียบร้อยแล้ว'); } catch (e) { /* ข้าม */ } });
+async function startInstallApp() {
+  if (_deferredInstall) {
+    var ev = _deferredInstall; _deferredInstall = null;
+    try { ev.prompt(); await ev.userChoice; } catch (e) { /* ข้าม — ถ้ากดยกเลิก เบราว์เซอร์จะส่ง beforeinstallprompt มาใหม่ภายหลังเอง */ }
+    updateInstallItem();
+    return;
+  }
+  if (isIosDevice()) openIosInstallHelp();
+}
+function openIosInstallHelp() {
+  var m = document.getElementById('iosInstallModal');
+  if (!m) {
+    m = document.createElement('div');
+    m.className = 'modal-backdrop'; m.id = 'iosInstallModal'; m.hidden = true;
+    m.innerHTML = '<div class="modal-box ios-install-box" role="dialog" aria-modal="true" aria-labelledby="iosInstallTitle">' +
+      '<button type="button" class="modal-close-x" data-ios-close aria-label="ปิด">✕</button>' +
+      '<div class="ios-install-head"><img src="icons/apple-touch-icon.png" alt="" /><div><h3 id="iosInstallTitle">ติดตั้ง BNK Hub บน iPhone / iPad</h3><p class="hint">ใช้เวลาไม่ถึงนาที ทำครั้งเดียว</p></div></div>' +
+      '<ol class="ios-install-steps">' +
+        '<li>แตะปุ่ม <span class="ios-ic"><i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i></span> <b>แชร์</b> ที่แถบของ Safari</li>' +
+        '<li>เลื่อนลงแล้วแตะ <b>"เพิ่มไปยังหน้าจอโฮม"</b> <span class="ios-ic"><i class="fa-solid fa-square-plus" aria-hidden="true"></i></span></li>' +
+        '<li>แตะ <b>"เพิ่ม"</b> มุมขวาบน</li>' +
+      '</ol>' +
+      '<p class="ios-install-note">ต้องเปิดเว็บนี้ด้วย Safari · เข้าแอปครั้งแรกต้องเข้าสู่ระบบอีกครั้ง (ติ๊ก "เข้าสู่ระบบอัตโนมัติ" ไว้ จะไม่ต้องเข้าบ่อย)</p>' +
+      '<div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" data-ios-close>ปิด</button></div></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', function (e) { if (e.target.closest('[data-ios-close]')) hideModalEl(m); });
+  }
+  showModalEl(m);
+}
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { /* ไม่เป็นไร — ใช้งานเว็บได้ตามปกติ */ }); });
+}
+
+// 1.80: แถบแท็บที่เลื่อนได้ (มือถือ) — ขอบจางบอกว่ายังมีแท็บซ่อนอยู่ทางซ้าย/ขวา · กดแท็บแล้วเลื่อนให้เห็นทั้งแท็บ
+function syncTabScrollHints(el) {
+  var max = el.scrollWidth - el.clientWidth;
+  el.classList.toggle('more-r', max > 2 && el.scrollLeft < max - 2);
+  el.classList.toggle('more-l', max > 2 && el.scrollLeft > 2);
+}
+function initTabScrollHints() {
+  document.querySelectorAll('.tabs').forEach(function (el) {
+    if (el.__hint) { syncTabScrollHints(el); return; }
+    el.__hint = true;
+    el.addEventListener('scroll', function () { syncTabScrollHints(el); }, { passive: true });
+    el.addEventListener('click', function (e) { var b = e.target.closest('.tab-btn'); if (b && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); });
+    syncTabScrollHints(el);
+  });
+}
+window.addEventListener('resize', function () { document.querySelectorAll('.tabs').forEach(syncTabScrollHints); });
+document.addEventListener('DOMContentLoaded', function () { initTabScrollHints(); setTimeout(initTabScrollHints, 800); setTimeout(initTabScrollHints, 2500); });
 
 // ---------- แจ้งปัญหา (ป็อปอัพ) ----------
 var REPORT_STATUS = { open: ['รอรับเรื่อง', 'st-open'], progress: ['กำลังดำเนินการ', 'st-progress'], done: ['เสร็จแล้ว', 'st-done'] };

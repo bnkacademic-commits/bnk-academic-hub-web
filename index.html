@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- 1.80: PWA — ติดตั้งลงหน้าจอหลัก/คอมได้ (manifest + ไอคอน · sw.js ลงทะเบียนใน api.js) -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <!-- หน้าล็อกอินบังคับใช้ธีมสว่างเท่านั้นเสมอ (ไม่ว่าจะเคยตั้งค่าธีมมืดไว้จากหน้าอื่นหรือไม่) จึงไม่มี script คืนค่าธีมมืดจาก localStorage แบบหน้าอื่นๆ ในตัว -->
 <title>เข้าสู่ระบบ — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
@@ -19,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.79.2.181026" />
+<link rel="stylesheet" href="assets/style.css?v=1.80.0.181026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -32,7 +41,7 @@
         <div class="login-sub">ระบบรวบรวมและส่งผลงานครู</div>
       </div>
       <script>
-        // 1.79.2.181026: มีรูปหน้าเข้าสู่ระบบที่จำไว้ -> ใส่ทันที (ก่อนโหลดค่าตั้งค่า) ไม่เห็นหัวสีม่วงแวบ — ค่าจริงอัพเดตอีกครั้งใน applyBranding()
+        // 1.80.0.181026: มีรูปหน้าเข้าสู่ระบบที่จำไว้ -> ใส่ทันที (ก่อนโหลดค่าตั้งค่า) ไม่เห็นหัวสีม่วงแวบ — ค่าจริงอัพเดตอีกครั้งใน applyBranding()
         (function () { try { var b = JSON.parse(localStorage.getItem('bnkah_brand') || 'null'); if (b && b.loginHeroDataUrl) { var h = document.querySelector('.login-hero'), im = document.createElement('img'); im.className = 'login-hero-img'; im.alt = b.siteName || ''; im.src = b.loginHeroDataUrl; h.appendChild(im); h.classList.add('has-image'); } } catch (e) {} })();
       </script>
 
@@ -56,22 +65,27 @@
         <!-- หมายเหตุ: ตั้งใจไม่ใส่คลาส "field" ที่ div นี้ (ต่างจาก .field ปกติ) เพราะ .login-card .field มี margin-bottom
              ตายตัวไว้ค่อนข้างมาก พอรวมกับช่องนี้ที่เพิ่มเข้ามาใหม่ (V11.8) จะทำให้การ์ดสูงเกินจอมือถือจอเตี้ยอีกครั้ง
              (ปัญหาเดียวกับที่เคยแก้ไว้ตั้งแต่ V11.6) จึงคุมระยะห่างเองแยกต่างหากให้กระชับกว่าแทน -->
+        <!-- 1.80: 2 ช่องติ๊ก (2 แถว) — "จำชื่อผู้ใช้" เก็บเฉพาะชื่อผู้ใช้ (เลิกเก็บรหัสผ่าน) · "เข้าสู่ระบบอัตโนมัติ" ไม่ต้องเข้าใหม่
+             จนกว่าจะไม่ได้ใช้งานเกิน 7 วัน (Super Admin ติ๊กได้แต่ไม่มีผล) — ไอคอน i แตะ/ชี้แล้วขึ้นคำอธิบาย -->
         <div class="remember-row">
-          <label class="remember-check">
-            <input type="checkbox" id="rememberMe" /> จดจำฉันไว้ในเบราว์เซอร์นี้
-          </label>
+          <label class="remember-check"><input type="checkbox" id="rememberMe" /> จำชื่อผู้ใช้</label>
+          <div class="remember-line">
+            <label class="remember-check"><input type="checkbox" id="keepLogin" /> เข้าสู่ระบบอัตโนมัติ</label>
+            <button type="button" class="keep-info-btn" id="keepInfoBtn" aria-label="คำอธิบายเข้าสู่ระบบอัตโนมัติ" aria-expanded="false"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button>
+            <div class="keep-tip" id="keepTip" role="tooltip" hidden>ไม่ต้องเข้าสู่ระบบใหม่ ถ้าไม่ได้ใช้งานเกิน 7 วันจะออกจากระบบเอง · ใช้เฉพาะเครื่องส่วนตัว</div>
+          </div>
         </div>
         <button class="btn btn-primary btn-full" type="submit" id="loginBtn">เข้าสู่ระบบ</button>
       </form>
-      <p class="hint" style="text-align:center; margin-top:12px;">ติดต่อกลุ่มบริหารงานวิชาการของโรงเรียนเพื่อขอสร้างบัญชี</p>
+      <p class="hint login-contact">ติดต่อกลุ่มบริหารงานวิชาการเพื่อขอสร้างบัญชี</p>
     </div>
   </div>
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.79.2.181026"></script>
+  <script src="assets/api.js?v=1.80.0.181026"></script>
   <script>
-    mountFooter();
+    mountFooter({ compact: true }); // 1.80: หน้าล็อกอินใช้ footer แบบย่อ
     applyBranding();
 
     // ถ้าล็อกอินอยู่แล้ว พาไปหน้าที่เหมาะสมทันที
@@ -97,22 +111,33 @@
       togglePasswordIcon.classList.toggle('fa-eye-slash', !showing);
     });
 
-    // ---------- จดจำชื่อผู้ใช้/รหัสผ่านไว้ในเบราว์เซอร์นี้ (ตั้งแต่ V11.8) ----------
-    // เก็บไว้ใน localStorage ของเบราว์เซอร์นี้เท่านั้น (ไม่ได้ส่งไปที่ไหนเพิ่มเติม) ตามที่ผู้ใช้ขอ — ติ๊กถูกไว้ตอนล็อกอินสำเร็จ
-    // ครั้งถัดไปเปิดหน้านี้จากเบราว์เซอร์เดียวกันจะกรอกชื่อผู้ใช้/รหัสผ่านให้อัตโนมัติ ถ้าเอาติ๊กออกจะลบค่าที่เคยจำไว้ทิ้งทันที
+    // ---------- 1.80: จำชื่อผู้ใช้ (เฉพาะชื่อผู้ใช้) + เข้าสู่ระบบอัตโนมัติ ----------
+    // เดิม (V11.8) "จดจำฉันไว้ในเบราว์เซอร์นี้" เก็บรหัสผ่านไว้ในเครื่องด้วย — เลิกเก็บแล้ว และลบรหัสผ่านที่เคยเก็บไว้ทิ้งทันที
+    // ที่เปิดหน้านี้ (เก็บชื่อผู้ใช้ไว้ให้เหมือนเดิม) · การไม่ต้องล็อกอินบ่อยใช้ "เข้าสู่ระบบอัตโนมัติ" แทน (token ฝั่ง Worker)
     var REMEMBER_LOGIN_KEY = 'bnkah_remember_login';
+    var KEEP_PREF_KEY = 'bnkah_keep_pref';
+    var keepCheckbox = document.getElementById('keepLogin');
     (function restoreRememberedLogin() {
       try {
         var raw = localStorage.getItem(REMEMBER_LOGIN_KEY);
-        if (!raw) return;
-        var saved = JSON.parse(raw);
-        if (saved && saved.username) {
-          usernameInput.value = saved.username;
-          passwordInput.value = saved.password || '';
-          rememberCheckbox.checked = true;
+        if (raw) {
+          var saved = JSON.parse(raw);
+          if (saved && saved.username) {
+            usernameInput.value = saved.username;
+            rememberCheckbox.checked = true;
+            if ('password' in saved) localStorage.setItem(REMEMBER_LOGIN_KEY, JSON.stringify({ username: saved.username }));
+          } else localStorage.removeItem(REMEMBER_LOGIN_KEY);
         }
-      } catch (e) { /* localStorage อาจถูกปิด หรือค่าที่เก็บไว้เสียหาย — ข้ามไปเฉยๆ ไม่ต้องแจ้งเตือน */ }
+        keepCheckbox.checked = localStorage.getItem(KEEP_PREF_KEY) === '1';
+      } catch (e) { /* localStorage อาจถูกปิด หรือค่าที่เก็บไว้เสียหาย — ข้ามไปเฉยๆ */ }
+      if (usernameInput.value) passwordInput.focus();
     })();
+    var keepInfoBtn = document.getElementById('keepInfoBtn'), keepTip = document.getElementById('keepTip');
+    function setKeepTip(open) { keepTip.hidden = !open; keepInfoBtn.setAttribute('aria-expanded', String(open)); }
+    keepInfoBtn.addEventListener('click', function (e) { e.stopPropagation(); setKeepTip(keepTip.hidden); });
+    keepInfoBtn.addEventListener('mouseenter', function () { if (matchMedia('(hover: hover)').matches) setKeepTip(true); });
+    keepInfoBtn.addEventListener('mouseleave', function () { if (matchMedia('(hover: hover)').matches) setKeepTip(false); });
+    document.addEventListener('click', function (e) { if (!keepTip.hidden && !e.target.closest('.remember-line')) setKeepTip(false); });
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -122,13 +147,11 @@
       try {
         var username = usernameInput.value.trim();
         var password = passwordInput.value;
-        var data = await apiCall('login', { username: username, password: password });
+        var data = await apiCall('login', { username: username, password: password, keep: keepCheckbox.checked });
         try {
-          if (rememberCheckbox.checked) {
-            localStorage.setItem(REMEMBER_LOGIN_KEY, JSON.stringify({ username: username, password: password }));
-          } else {
-            localStorage.removeItem(REMEMBER_LOGIN_KEY);
-          }
+          if (rememberCheckbox.checked) localStorage.setItem(REMEMBER_LOGIN_KEY, JSON.stringify({ username: username }));
+          else localStorage.removeItem(REMEMBER_LOGIN_KEY);
+          localStorage.setItem(KEEP_PREF_KEY, keepCheckbox.checked ? '1' : '0');
         } catch (e) { /* localStorage อาจถูกปิด — ไม่กระทบการล็อกอิน แค่จำค่าไว้ให้ไม่ได้ */ }
         setSession(data.token, data.user);
         applyAccountTheme(data.user); // 1.41.111026: ใช้ Dark Mode ที่บัญชีนี้เคยเลือกไว้
