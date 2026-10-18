@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '1.79';
-var APP_VERSION = '1.79.1.171026';
+var APP_VERSION = '1.79.2.181026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1515,11 +1515,12 @@ function mountSideNav(links, activePage) {
     if (tb) document.documentElement.style.setProperty('--topbar-h', tb.offsetHeight + 'px');
   }
   toggle.addEventListener('click', function () {
-    if (_navIsMobile()) { mobileOpen = !mobileOpen; }
+    if (_navIsMobile()) { mobileOpen = !mobileOpen; if (mobileOpen && typeof announceMenuOpen === 'function') announceMenuOpen('nav'); }
     else { pinned = !pinned; hovering = false; try { localStorage.setItem(NAV_PIN_KEY, pinned ? '1' : '0'); } catch (e) { /* ไม่เป็นไร */ } }
     render();
   });
   backdrop.addEventListener('click', function () { mobileOpen = false; render(); });
+  document.addEventListener('bnkah:menu-open', function (e) { if (e.detail !== 'nav' && mobileOpen) { mobileOpen = false; render(); } }); // 1.79.2: เปิดเมนูอื่น = ปิดเมนูข้าง (มือถือ)
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && mobileOpen) { mobileOpen = false; render(); } });
   aside.addEventListener('mouseenter', function () { if (!_navIsMobile() && window.matchMedia('(hover: hover)').matches) { hovering = true; render(); } });
   aside.addEventListener('mouseleave', function () { hovering = false; render(); });
@@ -1599,7 +1600,9 @@ function mountChrome(activePage) {
       e.stopPropagation();
       var isOpen = dropdown.classList.toggle('open');
       trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if (isOpen) announceMenuOpen('profile');
     });
+    onOtherMenuOpen('profile', function () { dropdown.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); });
     document.addEventListener('click', function (e) {
       if (!dropdown.contains(e.target) && e.target !== trigger) {
         dropdown.classList.remove('open');
@@ -1689,7 +1692,8 @@ function mountFooter() {
         (document.getElementById('ddReport') ? '' : ' · <a href="mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub') + '">แจ้งปัญหาการใช้งาน</a>') + '</div>' +
     '</div>';
   var vb = document.getElementById('verBtn'), vm = document.getElementById('verMenu');
-  vb.addEventListener('click', function (e) { e.stopPropagation(); vm.hidden = !vm.hidden; vb.setAttribute('aria-expanded', String(!vm.hidden)); });
+  vb.addEventListener('click', function (e) { e.stopPropagation(); vm.hidden = !vm.hidden; vb.setAttribute('aria-expanded', String(!vm.hidden)); if (!vm.hidden) announceMenuOpen('version'); });
+  onOtherMenuOpen('version', function () { vm.hidden = true; vb.setAttribute('aria-expanded', 'false'); });
   document.addEventListener('click', function (e) { if (!vm.hidden && !e.target.closest('.ver-wrap')) { vm.hidden = true; vb.setAttribute('aria-expanded', 'false'); } });
   vm.addEventListener('click', function (e) {
     var b = e.target.closest('[data-ver]'); if (!b) return;
@@ -2027,6 +2031,9 @@ function notifGroupOf(iso) {
   if (t.toDateString() === now.toDateString()) return 'วันนี้';
   return (now - t) < 7 * 86400000 ? 'สัปดาห์นี้' : 'ก่อนหน้านี้';
 }
+// 1.79.2: เมนูในแถบบน/ท้ายหน้าเปิดได้ทีละอัน — เปิดอันหนึ่ง อันอื่นปิดเอง (ทุกเมนูใช้ stopPropagation จึงต้องแจ้งกันเอง)
+function announceMenuOpen(name) { document.dispatchEvent(new CustomEvent('bnkah:menu-open', { detail: name })); }
+function onOtherMenuOpen(name, closeFn) { document.addEventListener('bnkah:menu-open', function (e) { if (e.detail !== name) closeFn(); }); }
 function initNotifBell() {
   var btn = document.getElementById('notifBtn');
   if (!btn) return;
@@ -2076,12 +2083,14 @@ function initNotifBell() {
     panel.style.left = 'auto';
   }
   function open() {
+    announceMenuOpen('notif');
     place(); panel.hidden = false; btn.setAttribute('aria-expanded', 'true');
     applyTopBadges({ notifUnread: 0 }); // เปิดกล่อง = ตัวเลขแดงหาย (จุดยังไม่อ่านยังอยู่)
     apiCall('notifSeen', {}).catch(function () {});
     load();
   }
   function close() { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+  onOtherMenuOpen('notif', function () { if (!panel.hidden) close(); });
   btn.addEventListener('click', function (e) { e.stopPropagation(); if (panel.hidden) open(); else close(); });
   // 1.76: กดตัวกรอง/ปุ่มในกล่องแล้วกล่องวาดใหม่ (ปุ่มที่กดหลุดจากหน้า) — ใช้เส้นทางของเหตุการณ์ตอนกด ไม่ใช่ตำแหน่งปัจจุบันของปุ่ม
   document.addEventListener('click', function (e) {
