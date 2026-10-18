@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.80.0.181026" />
+<link rel="stylesheet" href="assets/style.css?v=1.81.0.181026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -51,7 +51,7 @@
   </div>
   <div id="app-footer"></div>
 
-<script src="assets/api.js?v=1.80.0.181026"></script>
+<script src="assets/api.js?v=1.81.0.181026"></script>
 <script>
   var session = requireLogin();
   // เฉพาะ Super Admin — บทบาทอื่นไปหน้าแรกของตัวเอง
@@ -156,7 +156,7 @@
     // สถานะระบบ
     var relayOk = sys && sys.relay && sys.relay.ok;
     var wOld = verCmp(ov.workerVersion, WORKER_MIN_VERSION) < 0;
-    var cronTxt = ov.cronLast ? formatDateTimeThai(ov.cronLast) : 'ยังไม่ได้ตั้ง Cron Trigger';
+    var cronTxt = ov.cronLast ? formatDateTimeThai(ov.cronLast) : 'ยังไม่เคยรัน — ถ้าตั้ง Cron Trigger แล้ว จะเห็นเวลาหลังรันครั้งแรก (03:00 น.)';
     var stl = [
       ['Drive relay', !sys && !state.sysErr ? '<span>กำลังตรวจ…</span>' : relayOk ? '<span class="ok"><i class="fa-solid fa-circle-check"></i> ตอบกลับ ' + (state.sysMs / 1000).toFixed(1) + ' วินาที</span>' : '<span class="bad"><i class="fa-solid fa-circle-xmark"></i> ติดต่อไม่ได้</span>'],
       ['รุ่นหน้าเว็บ / Worker', '<span class="' + (wOld ? 'bad' : 'ok') + '">' + (wOld ? '<i class="fa-solid fa-triangle-exclamation"></i> ' : '') + escapeHtml(APP_VERSION.split('.').slice(0, 2).join('.')) + ' / ' + escapeHtml(ov.workerVersion || 'เก่ากว่า 1.79') + '</span>'],

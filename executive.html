@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.80.0.181026" />
+<link rel="stylesheet" href="assets/style.css?v=1.81.0.181026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -82,6 +82,7 @@
             </div>
           </div>
           <div class="term-badge" id="currentTermBadge">-</div>
+          <div class="cal-kinds" id="calKinds" role="group" aria-label="กรองชนิดกำหนดการ"></div>
           <div class="calendar-grid" id="calGrid"></div>
           <div class="cal-legend" id="calLegend"></div>
         </div>
@@ -94,6 +95,7 @@
         </div>
       </div>
       <div id="calEventsUpcoming" style="margin-top:18px;"></div>
+      <div id="calActsUpcoming" style="margin-top:18px;"></div>
     </div>
   </div>
 
@@ -110,7 +112,7 @@
     </div>
   </div>
 
-<script src="assets/api.js?v=1.80.0.181026"></script>
+<script src="assets/api.js?v=1.81.0.181026"></script>
   <script>
     var session = requireViewerAccess();
     // ผู้บริหารเท่านั้นที่ใช้หน้านี้เป็นหน้าแรก (เจ้าหน้าที่/Super Admin มีหน้าแรกของตัวเองอยู่แล้ว) — ส่งกลับหน้าแรกของบทบาทนั้น
@@ -125,7 +127,13 @@
     var assignments = []; // ผลของ adminGetAssignmentSummary (กำหนดการที่ผูกประเภทงาน + สถานะการส่งของแต่ละคน)
     var MAX_CALENDAR_LANES = 2;
 
-    function eventsOnDate(dateStr) { return calState.events.filter(function (e) { return dateStr >= e.date && dateStr <= (e.endDate || e.date); }); }
+    // 1.81: กรองชนิด + กิจกรรม "ทำซ้ำทุกปี"
+    var calKind = '';
+    function calEvents() {
+      var y0 = Math.min(calState.year, new Date().getFullYear()), y1 = Math.max(calState.year, new Date().getFullYear()) + 1;
+      return expandRepeatEvents(calState.events, y0 + '-01-01', y1 + '-12-31').filter(function (e) { return !calKind || (calKind === 'activity') === isActivityEv(e); });
+    }
+    function eventsOnDate(dateStr) { return calEvents().filter(function (e) { return dateStr >= e.date && dateStr <= (e.endDate || e.date); }); }
     // จัดเรียง "แถว" ของแถบสีกำหนดการ ให้กำหนดการเดียวกันอยู่แถวเดิมทุกวัน (หลักการเดียวกับปฏิทินในหน้าแรกของครู)
     function computeEventLanes(events, monthStart, monthEnd) {
       var relevant = events.filter(function (e) { return (e.endDate || e.date) >= monthStart && e.date <= monthEnd; })
@@ -160,6 +168,8 @@
       var pad2 = function (n) { return String(n).padStart(2, '0'); };
       var laneOf = computeEventLanes(calState.events, calState.year + '-' + pad2(calState.month + 1) + '-01', calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(daysInMonth));
       var legendCats = {}; // 1.58: คำอธิบายสีของงานที่มีในเดือนนี้
+      var hasActs = false;
+      document.getElementById('calKinds').innerHTML = calKindChipsHtml(calKind);
       for (var i = 0; i < firstDay; i++) { var pad = document.createElement('div'); pad.className = 'calendar-cell empty'; grid.appendChild(pad); }
       for (var d = 1; d <= daysInMonth; d++) {
         var dateStr = calState.year + '-' + pad2(calState.month + 1) + '-' + pad2(d);
@@ -170,12 +180,14 @@
         if (evs.length > 0) { cell.className += ' has-event'; cell.title = evs.map(function (e) { return e.title; }).join(', '); }
         var colIndex = (firstDay + d - 1) % 7;
         // 1.58: แสดงงานเป็นจุดสี (แบบ A ที่ผู้ใช้เลือก) แทนแถบสีลากยาว — สูงสุด 4 จุด + "+N" · กดวันเพื่อดูรายละเอียด
-        var dotsHtml = evs.slice(0, 4).map(function (e) {
+        var acts = evs.filter(isActivityEv), dls = evs.filter(function (e) { return !isActivityEv(e); });
+        if (acts.length) hasActs = true;
+        var dotsHtml = dls.slice(0, 4).map(function (e) {
           var c = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
           return '<i class="cal-dot" style="background:' + c + ';" title="' + escapeHtml(e.title) + '"></i>';
-        }).join('') + (evs.length > 4 ? '<span class="cal-dot-more">+' + (evs.length - 4) + '</span>' : '');
-        evs.forEach(function (e) { if (e.categoryId) legendCats[e.categoryId] = e.categoryName || e.title; else legendCats['__none'] = 'กำหนดการทั่วไป'; });
-cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr ? '<span class="cal-today-label">วันนี้</span>' : '') + (dotsHtml ? '<div class="cal-dots">' + dotsHtml + '</div>' : '');
+        }).join('') + (dls.length > 4 ? '<span class="cal-dot-more">+' + (dls.length - 4) + '</span>' : '');
+        dls.forEach(function (e) { if (e.categoryId) legendCats[e.categoryId] = e.categoryName || e.title; else legendCats['__none'] = 'กำหนดการทั่วไป'; });
+cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr ? '<span class="cal-today-label">วันนี้</span>' : '') + activityBarsHtml(acts) + (dotsHtml ? '<div class="cal-dots">' + dotsHtml + '</div>' : '');
         grid.appendChild(cell);
       }
       var legend = document.getElementById('calLegend');
@@ -183,15 +195,21 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr 
       if (legend) legend.innerHTML = lk.slice(0, 8).map(function (k) {
         var c = k === '__none' ? '#9aa4b8' : (categoryColorMap[k] || '#3457d5');
         return '<span><i class="cal-dot" style="background:' + c + ';"></i>' + escapeHtml(legendCats[k]) + '</span>';
-      }).join('') + (lk.length > 8 ? '<span>และอีก ' + (lk.length - 8) + ' ประเภท (กดที่วันเพื่อดู)</span>' : ''); // แสดงสูงสุด 8 ประเภท
+      }).join('') + (lk.length > 8 ? '<span>และอีก ' + (lk.length - 8) + ' ประเภท (กดที่วันเพื่อดู)</span>' : '') // แสดงสูงสุด 8 ประเภท
+        + (hasActs ? '<span><i class="cal-act-swatch" aria-hidden="true"></i>แถบ = กิจกรรม (สีตามกลุ่มเจ้าของ)</span>' : '');
       renderUpcoming();
+      var actsBox = document.getElementById('calActsUpcoming');
+      actsBox.hidden = calKind === 'deadline' || (!calState.events.some(isActivityEv) && calKind !== 'activity');
+      if (!actsBox.hidden) actsBox.innerHTML = activityUpcomingHtml(calEvents().filter(isActivityEv));
     }
 
     // รายการ "กำหนดส่งงาน" ใต้ปฏิทิน (อ่านอย่างเดียว — ไม่มีปุ่มส่งงาน) พร้อมจำนวนผู้ส่งแล้ว/ทั้งหมดของแต่ละงาน
     function renderUpcoming() {
       var box = document.getElementById('calEventsUpcoming');
+      box.hidden = calKind === 'activity';
       var now = new Date();
       var list = calState.events.filter(function (e) {
+        if (isActivityEv(e)) return false;
         var diffDays = (new Date(e.endDate || e.date) - now) / 86400000;
         return diffDays > -1 && diffDays < 60;
       }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
@@ -218,7 +236,9 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr 
       document.getElementById('dayModalTitle').textContent = 'วัน' + THAI_DOW_FULL[dt.getDay()] + 'ที่ ' + dt.getDate() + ' ' + thaiMonths[dt.getMonth()] + ' ' + (dt.getFullYear() + 543) + (dateStr === todayYmd() ? ' (วันนี้)' : '');
       var evs = eventsOnDate(dateStr).sort(function (a, b) { return String(a.endDate || a.date).localeCompare(String(b.endDate || b.date)); });
       document.getElementById('dayModalSub').textContent = evs.length ? 'งานในวันนี้ ' + evs.length + ' รายการ' : '';
+      evs = evs.filter(isActivityEv).concat(evs.filter(function (e) { return !isActivityEv(e); }));
       document.getElementById('dayModalBody').innerHTML = evs.length ? evs.map(function (e) {
+        if (isActivityEv(e)) return activityDayHtml(e);
         var color = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
         var range = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
         var dl = daysLeftInfo(e.endDate || e.date), sm = summaryFor(e);
@@ -284,6 +304,11 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr 
       renderSummary(Number(results[2] && results[2].total) || 0, people);
     }
 
+    document.getElementById('calKinds').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-cal-kind]'); if (!b) return;
+      calKind = b.getAttribute('data-cal-kind') || '';
+      renderCalendar();
+    });
     document.getElementById('calPrev').addEventListener('click', function () {
       calState.month--; if (calState.month < 0) { calState.month = 11; calState.year--; }
       renderCalendar();

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.80.0.181026" />
+<link rel="stylesheet" href="assets/style.css?v=1.81.0.181026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -69,7 +69,13 @@
           <span><i class="fas fa-calendar-days ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการกำหนดการทั้งหมด</span>
           <button class="btn btn-primary btn-sm" id="openCreateEventBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มกำหนดการ</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">กด "แก้ไข" ที่รายการด้านล่าง เพื่อเปิดป็อปอัพนี้พร้อมข้อมูลเดิมมาแก้ไขได้</p>
+        <!-- 1.81: แยก 3 หมวด + ตัวกรองมาตรฐาน (ค่าเริ่มต้น = ปีการศึกษาปัจจุบัน ทุกภาคเรียน) + ผู้เพิ่ม -->
+        <div class="evl-tabs" id="evlTabs" role="tablist">
+          <button type="button" class="on" data-evl="all" role="tab">ทั้งหมด <span class="n" id="evlN-all">0</span></button>
+          <button type="button" data-evl="deadline" role="tab"><i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> กำหนดส่งงาน <span class="n" id="evlN-deadline">0</span></button>
+          <button type="button" data-evl="activity" role="tab"><i class="fa-solid fa-flag" aria-hidden="true"></i> กิจกรรม <span class="n" id="evlN-activity">0</span></button>
+        </div>
+        <div id="evlFltHost"></div>
         <div id="eventListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -143,18 +149,87 @@
       <button type="button" class="modal-close-x" id="eventModalCloseX" aria-label="ปิด">✕</button>
       <h3 id="eventModalTitle">เพิ่มกำหนดการ</h3>
       <div id="createEventError" class="error-box" hidden></div>
-      <div class="tabs" style="margin-bottom:14px;">
-        <button type="button" class="ev-tab-btn active" id="evTabBtn-period" data-ev-tab="period">ระยะเวลา</button>
-        <button type="button" class="ev-tab-btn" id="evTabBtn-category" data-ev-tab="category">ประเภทงาน</button>
+      <!-- 1.81: เลือกชนิดก่อน — กำหนดส่งงาน (ฟอร์มเดิม) / กิจกรรม (แจ้งให้ทราบ ไม่ต้องส่งงาน) · แก้ไขแล้วเปลี่ยนชนิดไม่ได้ -->
+      <div class="evk" id="evKindPick" role="radiogroup" aria-label="ชนิดกำหนดการ">
+        <button type="button" class="evk-card on" data-kind="deadline" role="radio" aria-checked="true"><i class="fa-solid fa-file-arrow-up evk-ic dl" aria-hidden="true"></i><span><b>กำหนดส่งงาน</b><small>ครูต้องส่งงาน ขึ้นในเช็คลิสต์</small></span></button>
+        <button type="button" class="evk-card" data-kind="activity" role="radio" aria-checked="false"><i class="fa-solid fa-flag evk-ic ac" aria-hidden="true"></i><span><b>กิจกรรม</b><small>แจ้งให้ทราบ ไม่ต้องส่งงาน</small></span></button>
       </div>
       <form id="createEventForm" style="text-align:left;">
         <input type="hidden" id="evEditId" value="" />
+        <input type="hidden" id="evKind" value="deadline" />
+
+        <div id="evActivityWrap" hidden>
+          <div class="field">
+            <label for="evActTitle">ชื่อกิจกรรม</label>
+            <input id="evActTitle" type="text" maxlength="150" placeholder="เช่น กิจกรรมวันคริสต์มาส" />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="evActDate">วันที่เริ่ม <span class="opt" id="evActDateTh"></span></label>
+              <input id="evActDate" type="date" />
+            </div>
+            <div class="field">
+              <label for="evActEndDate">ถึงวันที่ <span class="opt" id="evActEndDateTh">(ไม่บังคับ)</span></label>
+              <input id="evActEndDate" type="date" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="evActTimeStart">เวลา <span class="opt">(ไม่บังคับ)</span></label>
+              <div class="evk-time"><input id="evActTimeStart" type="time" aria-label="เวลาเริ่ม" /><span>–</span><input id="evActTimeEnd" type="time" aria-label="เวลาสิ้นสุด" /></div>
+            </div>
+            <div class="field">
+              <label for="evActLocation">สถานที่ <span class="opt">(ไม่บังคับ)</span></label>
+              <input id="evActLocation" type="text" maxlength="150" placeholder="เช่น หอประชุมโรงเรียน" />
+            </div>
+          </div>
+          <div class="field">
+            <label>เจ้าของกิจกรรม</label>
+            <div class="evk-seg" id="evActOwnerSeg">
+              <button type="button" class="on" data-owner="dept"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> กลุ่มบริหารงาน</button>
+              <button type="button" data-owner="subject"><i class="fa-solid fa-book" aria-hidden="true"></i> กลุ่มสาระการเรียนรู้</button>
+            </div>
+            <select id="evActOwnerGroup" aria-label="กลุ่มเจ้าของกิจกรรม"></select>
+            <div class="hint">สีในปฏิทินตามกลุ่มที่เลือก</div>
+          </div>
+          <div class="field">
+            <label>สำหรับ</label>
+            <div id="evActAudPick"></div>
+          </div>
+          <div class="field">
+            <label for="evActMessage">รายละเอียด <span class="opt">(ไม่บังคับ)</span></label>
+            <textarea id="evActMessage" placeholder="เช่น ขอเชิญครูและนักเรียนร่วมกิจกรรม"></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="evActYear">ปีการศึกษา</label>
+              <select id="evActYear"></select>
+            </div>
+            <div class="field">
+              <label for="evActSem">ภาคเรียน</label>
+              <select id="evActSem">
+                <option value="1">ภาคเรียนที่ 1</option>
+                <option value="2">ภาคเรียนที่ 2</option>
+                <option value="summer">ภาคฤดูร้อน</option>
+              </select>
+            </div>
+          </div>
+          <div class="hint" style="margin:2px 0 6px;">ระบบคำนวณปีการศึกษา/ภาคเรียนจากวันที่ให้อัตโนมัติ (แก้ได้) — ใช้สำหรับตัวกรอง</div>
+          <label class="evk-chk"><input type="checkbox" id="evActNotify" /><span><b>แจ้งเตือนในกระดิ่ง</b><small>แจ้งทุกคนที่เกี่ยวข้องตอนเพิ่ม และเตือนอีกครั้ง 1 วันก่อนกิจกรรมและวันกิจกรรม</small></span></label>
+          <label class="evk-chk"><input type="checkbox" id="evActRepeat" /><span><b>ทำซ้ำทุกปี</b><small>เช่น วันคริสต์มาส วันไหว้ครู — แสดงในปฏิทินปีถัดไปให้อัตโนมัติ</small></span></label>
+        </div>
+
+        <div id="evDeadlineWrap">
+        <div class="tabs" style="margin-bottom:14px;">
+          <button type="button" class="ev-tab-btn active" id="evTabBtn-period" data-ev-tab="period">ระยะเวลา</button>
+          <button type="button" class="ev-tab-btn" id="evTabBtn-category" data-ev-tab="category">ประเภทงาน</button>
+        </div>
 
         <div class="ev-tab-panel active" id="evTab-period">
           <div class="field-row">
             <div class="field">
               <label for="evDate">วันที่เริ่มต้น</label>
-              <input id="evDate" type="date" required />
+              <input id="evDate" type="date" />
             </div>
             <div class="field">
               <label for="evEndDate">วันที่สิ้นสุด</label>
@@ -198,8 +273,10 @@
           </div>
         </div>
 
+        </div><!-- /evDeadlineWrap -->
+
         <div class="modal-actions">
-          <button class="btn btn-primary" type="submit" id="evSubmitBtn">เพิ่มกำหนดการ</button>
+          <button class="btn btn-success" type="submit" id="evSubmitBtn">เพิ่มกำหนดการ</button>
           <button class="btn btn-ghost btn-close" type="button" id="eventModalClose">ยกเลิก</button>
         </div>
       </form>
@@ -208,7 +285,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.80.0.181026"></script>
+  <script src="assets/api.js?v=1.81.0.181026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -331,49 +408,128 @@
     function renderAudienceOptions() { evAud.refresh(); annAud.refresh(); }
 
     var lastEvents = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่ V10.0)
+    // ---------- 1.81: รายการกำหนดการ แยก ทั้งหมด / กำหนดส่งงาน / กิจกรรม + ตัวกรอง ----------
+    var SUBJECT_GROUPS = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ'];
+    var evlKind = 'all', evlShown = LIST_PAGE, evlTerm = null;
+    document.getElementById('evlFltHost').innerHTML = filterBarHtml({
+      id: 'evlFlt', search: { id: 'evlQ', placeholder: 'ค้นหาชื่อกำหนดการ / สถานที่ / ผู้เพิ่ม' },
+      fields: [
+        { id: 'evlYear', label: 'ปีการศึกษา', html: '<select id="evlYear"></select>' },
+        { id: 'evlSem', label: 'ภาคเรียน', html: '<select id="evlSem"><option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select>' },
+        { id: 'evlGroup', label: 'กลุ่ม', html: '<select id="evlGroup"><option value="">ทุกกลุ่ม</option></select>' },
+        { id: 'evlMine', label: 'ผู้เพิ่ม', html: '<select id="evlMine"><option value="">ทั้งหมด</option><option value="mine">ที่ฉันเพิ่ม</option></select>' }
+      ]
+    });
+    var evlBar = initFilterBar('evlFlt', { unit: 'รายการ', defaults: function () { return { evlYear: evlTerm ? String(evlTerm.year || '') : '', evlSem: '', evlGroup: '', evlMine: '' }; } });
+    if (!canManage) { var _m = document.getElementById('evlMine'); _m.closest('.flt-f').hidden = true; }
+    function evlFillYears() {
+      var sel = document.getElementById('evlYear'), cur = sel.value || (evlTerm ? String(evlTerm.year) : '');
+      var ys = {};
+      lastEvents.forEach(function (e) { if (e.academicYear) ys[e.academicYear] = 1; });
+      if (evlTerm && evlTerm.year) ys[evlTerm.year] = 1;
+      sel.innerHTML = '<option value="">ทุกปีการศึกษา</option>' + Object.keys(ys).sort().reverse().map(function (y) { return '<option value="' + escapeHtml(y) + '">ปีการศึกษา ' + escapeHtml(y) + '</option>'; }).join('');
+      sel.value = cur; if (sel.value !== cur) sel.value = '';
+      var g = document.getElementById('evlGroup'), gv = g.value;
+      g.innerHTML = groupFilterOptions(audDepts, SUBJECT_GROUPS, false);
+      g.value = gv; if (g.value !== gv) g.value = '';
+    }
+    function evGroupOf(ev) {
+      if (ev.kind === 'activity') return ev.ownerType === 'subject' ? { dept: '', subject: ev.ownerGroup } : { dept: ev.ownerGroup, subject: '' };
+      return { dept: ev.categoryDepartment || '', subject: '' };
+    }
+    function evlFiltered() {
+      var q = document.getElementById('evlQ').value.trim().toLowerCase();
+      var y = document.getElementById('evlYear').value, sm = document.getElementById('evlSem').value;
+      var gv = document.getElementById('evlGroup').value, mine = document.getElementById('evlMine').value === 'mine';
+      var base = lastEvents.filter(function (ev) {
+        // ทำซ้ำทุกปี = แสดงในทุกปีการศึกษา
+        if (y && ev.academicYear !== y && !(ev.kind === 'activity' && ev.repeatYearly)) return false;
+        if (sm && ev.semester !== sm) return false;
+        var g = evGroupOf(ev);
+        if (gv && !groupFilterMatch(gv, g.dept, g.subject)) return false;
+        if (mine && ev.createdBy !== session.id) return false;
+        if (q && (ev.title + ' ' + (ev.location || '') + ' ' + (ev.createdByName || '') + ' ' + (ev.message || '')).toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      });
+      var counts = { all: base.length, deadline: 0, activity: 0 };
+      base.forEach(function (ev) { counts[ev.kind === 'activity' ? 'activity' : 'deadline']++; });
+      ['all', 'deadline', 'activity'].forEach(function (k) { document.getElementById('evlN-' + k).textContent = counts[k]; });
+      return evlKind === 'all' ? base : base.filter(function (ev) { return (ev.kind === 'activity' ? 'activity' : 'deadline') === evlKind; });
+    }
+    function evOwnerBadge(ev) {
+      var g = evGroupOf(ev);
+      if (g.subject) return '<span class="evl-gb sub">กลุ่มสาระฯ ' + escapeHtml(g.subject) + '</span>';
+      if (g.dept) return '<span class="evl-gb">' + escapeHtml(groupLabel(g.dept)) + '</span>';
+      return '';
+    }
+    function evTimeText(ev) { return ev.timeStart ? (ev.timeStart + (ev.timeEnd ? '–' + ev.timeEnd : '') + ' น.') : ''; }
+    function renderEvents() {
+      var wrap = document.getElementById('eventListWrap');
+      var list = evlFiltered();
+      evlBar.update(list.length);
+      if (!lastEvents.length) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการ</div>'; return; }
+      if (!list.length) { wrap.innerHTML = '<div class="empty-state">ไม่พบกำหนดการตามตัวกรอง</div>'; return; }
+      var html = '';
+      list.slice(0, evlShown).forEach(function (ev) {
+        var isAct = ev.kind === 'activity';
+        var dateChip = ev.endDate && ev.endDate !== ev.date ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate) : formatDateThai(ev.date);
+        var meta = [];
+        if (isAct) {
+          if (ev.timeStart) meta.push('<i class="fa-solid fa-clock" aria-hidden="true"></i> ' + escapeHtml(evTimeText(ev)));
+          if (ev.location) meta.push('<i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(ev.location));
+          meta.push('สำหรับ: ' + escapeHtml(audienceLabel_(ev.audience)));
+          if (ev.repeatYearly) meta.push('<i class="fa-solid fa-rotate" aria-hidden="true"></i> ทุกปี');
+          if (ev.notify) meta.push('<i class="fa-solid fa-bell" aria-hidden="true"></i> แจ้งเตือน');
+        } else {
+          meta.push((ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + ' ปีการศึกษา ' + escapeHtml(ev.academicYear));
+          meta.push('สำหรับ: ' + escapeHtml(audienceLabel_(ev.audience)));
+        }
+        var by = ev.createdByName ? '<div class="evl-by"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> เพิ่มโดย ' + escapeHtml(ev.createdByName) + (ev.createdAt ? ' · ' + formatDateThai(String(ev.createdAt).slice(0, 10)) : '') + '</div>' : '';
+        var acts = canManage && ev.canEdit
+          ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button></div>'
+          : (canManage ? '<div class="evl-lock" title="แก้ไขได้เฉพาะผู้เพิ่ม เจ้าหน้าที่กลุ่มเจ้าของ และผู้ดูแลระบบ"><i class="fa-solid fa-lock" aria-hidden="true"></i> ดูได้อย่างเดียว</div>' : '');
+        html += '<div class="event-list-item evl-item">' +
+          '<div class="event-date-chip' + (isAct ? ' act' : '') + '">' + dateChip + '</div>' +
+          '<div class="evl-body">' +
+            '<div class="sub-item-title"><span class="evl-tp ' + (isAct ? 'ac' : 'dl') + '"><i class="fa-solid ' + (isAct ? 'fa-flag' : 'fa-file-arrow-up') + '" aria-hidden="true"></i> ' + (isAct ? 'กิจกรรม' : 'กำหนดส่งงาน') + '</span>' + escapeHtml(ev.title) + ' ' + evOwnerBadge(ev) + '</div>' +
+            (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
+            '<div class="sub-item-meta evl-meta">' + meta.join(' · ') + '</div>' + by +
+          '</div>' + acts + '</div>';
+      });
+      html += listMoreHtml(Math.min(evlShown, list.length), list.length);
+      wrap.innerHTML = html;
+    }
+    document.getElementById('evlTabs').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-evl]'); if (!b) return;
+      evlKind = b.getAttribute('data-evl'); evlShown = LIST_PAGE;
+      document.querySelectorAll('#evlTabs [data-evl]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      renderEvents();
+    });
+    document.getElementById('evlFlt').addEventListener('change', function () { evlShown = LIST_PAGE; renderEvents(); });
+    document.getElementById('evlFlt').addEventListener('input', function (e) { if (e.target.id === 'evlQ') { evlShown = LIST_PAGE; renderEvents(); } });
+    document.getElementById('eventListWrap').addEventListener('click', async function (e) {
+      var more = e.target.closest('[data-more]');
+      if (more) { evlShown = more.getAttribute('data-more') === 'all' ? 1e9 : evlShown + LIST_PAGE; renderEvents(); return; }
+      var eb = e.target.closest('button[data-edit-id]');
+      if (eb) { var ev = lastEvents.filter(function (x) { return x.id === eb.getAttribute('data-edit-id'); })[0]; if (ev) startEditEvent(ev); return; }
+      var db = e.target.closest('button[data-id]');
+      if (db) {
+        var ok = await askConfirm('ลบกำหนดการนี้?', 'ยืนยันการลบกำหนดการ');
+        if (!ok) return;
+        var evId = db.getAttribute('data-id');
+        var r = await withProgress('กำลังลบกำหนดการ', function () { return apiCall('adminDeleteEvent', { eventId: evId }); }, { successLabel: 'ลบกำหนดการแล้ว' });
+        if (r.ok) { loadEvents(); }
+      }
+    });
     async function loadEvents() {
       var wrap = document.getElementById('eventListWrap');
       try {
-        var events = await apiCall('adminListEvents', {});
-        lastEvents = events;
-        if (events.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการ</div>'; return; }
-        var html = '';
-        events.forEach(function (ev) {
-          var audienceLabel = audienceLabel_(ev.audience);
-          var dateChip = ev.endDate && ev.endDate !== ev.date
-            ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate)
-            : formatDateThai(ev.date);
-          var categoryMeta = ev.categoryId
-            ? '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('tag', 13) + ' กำหนดส่งงาน: ' + escapeHtml(ev.categoryName) + categoryDeptBadgeHtml(ev.categoryId) + ' · ปีการศึกษา ' + escapeHtml(ev.academicYear) + ' · ' + (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + '</div>'
-            : '';
-          html += '<div class="event-list-item">' +
-            '<div class="event-date-chip">' + dateChip + '</div>' +
-            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(ev.title) + '</div>' +
-            (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
-            '<div class="sub-item-meta">สำหรับ: ' + escapeHtml(audienceLabel) + '</div>' +
-            categoryMeta + '</div>' +
-            (canManage ? '<div style="display:flex; gap:6px; flex-shrink:0;">' +
-            '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button>' +
-            '<button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>' +
-            '</div>' : '') +
-            '</div>';
-        });
-        wrap.innerHTML = html;
-        wrap.querySelectorAll('button[data-edit-id]').forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            var ev = lastEvents.filter(function (e) { return e.id === btn.getAttribute('data-edit-id'); })[0];
-            if (ev) startEditEvent(ev);
-          });
-        });
-        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
-          btn.addEventListener('click', async function () {
-            var ok = await askConfirm('ลบกำหนดการนี้?', 'ยืนยันการลบกำหนดการ');
-            if (!ok) return;
-            var evId = btn.getAttribute('data-id');
-            var r = await withProgress('กำลังลบกำหนดการ', function () { return apiCall('adminDeleteEvent', { eventId: evId }); }, { successLabel: 'ลบกำหนดการแล้ว' });
-            if (r.ok) { loadEvents(); }
-          });
-        });
+        var res = await Promise.all([apiCall('adminListEvents', {}), evlTerm ? Promise.resolve(evlTerm) : currentAcademicTerm().catch(function () { return null; })]);
+        var firstTime = !evlTerm;
+        lastEvents = res[0]; evlTerm = res[1] || { year: '' };
+        evlFillYears();
+        if (firstTime && evlTerm.year) document.getElementById('evlYear').value = String(evlTerm.year);
+        renderEvents();
       } catch (err) {
         wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
@@ -395,6 +551,70 @@
     // ---------- เพิ่ม/แก้ไขกำหนดการเป็นป็อปอัพ (ตั้งแต่ V11.0 — เดิมเป็นฟอร์มฝังอยู่ในหน้า) ----------
     var eventModalEl = document.getElementById('eventModal');
     function audienceLabel_(a) { var t = audienceLabel(a, allUsers); return t === 'ทั้งหมด' ? 'ครูทุกคน' : t; }
+    // ---------- 1.81: ชนิดกำหนดการ (กำหนดส่งงาน / กิจกรรม) + ฟอร์มกิจกรรม ----------
+    var evActAud = createAudiencePicker(document.getElementById('evActAudPick'), { users: audUsers, departments: function () { return audDepts; } });
+    var evActOwnerType = 'dept';
+    function setEvKind(k) {
+      document.getElementById('evKind').value = k;
+      document.querySelectorAll('#evKindPick .evk-card').forEach(function (b) { var on = b.getAttribute('data-kind') === k; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
+      document.getElementById('evActivityWrap').hidden = k !== 'activity';
+      document.getElementById('evDeadlineWrap').hidden = k === 'activity';
+      var editing = !!document.getElementById('evEditId').value;
+      document.getElementById('evSubmitBtn').innerHTML = editing ? 'บันทึกการแก้ไข' : (k === 'activity' ? '<i class="fa-solid fa-check" aria-hidden="true"></i> เพิ่มกิจกรรม' : 'เพิ่มกำหนดการ');
+      document.getElementById('createEventError').hidden = true;
+    }
+    document.getElementById('evKindPick').addEventListener('click', function (e) {
+      var b = e.target.closest('.evk-card'); if (!b || document.getElementById('evEditId').value) return;
+      setEvKind(b.getAttribute('data-kind'));
+    });
+    function fillActOwnerGroups(value) {
+      var sel = document.getElementById('evActOwnerGroup');
+      var list = evActOwnerType === 'subject' ? SUBJECT_GROUPS : audDepts;
+      sel.innerHTML = '<option value="" disabled>— เลือก' + (evActOwnerType === 'subject' ? 'กลุ่มสาระการเรียนรู้' : 'กลุ่มบริหารงาน') + ' —</option>' + list.map(function (g) {
+        return '<option value="' + escapeHtml(g) + '">' + escapeHtml(evActOwnerType === 'subject' ? 'กลุ่มสาระการเรียนรู้' + g : groupLabel(g)) + '</option>';
+      }).join('');
+      var def = value || (evActOwnerType === 'dept' && session && session.department && audDepts.indexOf(session.department) !== -1 ? session.department : '');
+      sel.value = def; if (sel.value !== def) sel.value = '';
+    }
+    function setActOwnerType(t, value) {
+      evActOwnerType = t === 'subject' ? 'subject' : 'dept';
+      document.querySelectorAll('#evActOwnerSeg button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-owner') === evActOwnerType); });
+      fillActOwnerGroups(value);
+    }
+    document.getElementById('evActOwnerSeg').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-owner]'); if (b) setActOwnerType(b.getAttribute('data-owner'));
+    });
+    function fillActYears(value) {
+      var sel = document.getElementById('evActYear'), now = new Date().getFullYear() + 543, ys = [];
+      for (var y = now + 1; y >= now - 3; y--) ys.push(String(y));
+      if (value && ys.indexOf(String(value)) === -1) ys.push(String(value));
+      sel.innerHTML = ys.map(function (y) { return '<option value="' + y + '">ปีการศึกษา ' + y + '</option>'; }).join('');
+      if (value) sel.value = String(value);
+    }
+    // ปีการศึกษา/ภาคเรียนคำนวณจากวันที่เริ่มตามตารางวันเริ่มภาคเรียนในตั้งค่า (แก้เองได้)
+    async function syncActTermFromDate() {
+      var d = document.getElementById('evActDate').value; if (!d) return;
+      var st = null; try { st = await getSiteSettings(); } catch (e) { /* ค่าเริ่มต้น */ }
+      var t = trueCurrentAcademicTerm(st, new Date(d + 'T12:00:00'));
+      fillActYears(t.year);
+      var ss = document.getElementById('evActSem'); ss.value = t.semester; if (ss.value !== t.semester) ss.value = '2';
+    }
+    function syncActDatesTh() {
+      var a = document.getElementById('evActDate').value, b = document.getElementById('evActEndDate').value;
+      document.getElementById('evActDateTh').textContent = a ? '(' + formatDateThai(a) + ')' : '';
+      document.getElementById('evActEndDateTh').textContent = b ? '(' + formatDateThai(b) + ')' : '(ไม่บังคับ)';
+    }
+    document.getElementById('evActDate').addEventListener('change', syncActTermFromDate);
+    ['evActDate', 'evActEndDate'].forEach(function (id) { ['change', 'input'].forEach(function (t) { document.getElementById(id).addEventListener(t, syncActDatesTh); }); });
+    function resetActivityForm() {
+      ['evActTitle', 'evActDate', 'evActEndDate', 'evActTimeStart', 'evActTimeEnd', 'evActLocation', 'evActMessage'].forEach(function (id) { document.getElementById(id).value = ''; });
+      document.getElementById('evActNotify').checked = true;
+      document.getElementById('evActRepeat').checked = false;
+      syncActDatesTh();
+      evActAud.set('all');
+      setActOwnerType('dept');
+      currentAcademicTerm().then(function (t) { if (!document.getElementById('evEditId').value) { fillActYears(t.year); document.getElementById('evActSem').value = t.semester; } }).catch(function () { fillActYears(''); });
+    }
     function openCreateEvent() {
       document.getElementById('evEditId').value = '';
       document.getElementById('createEventForm').reset();
@@ -402,13 +622,36 @@
       switchEvTab('period');
       setEvCurrentTerm(); // 1.61: ปีการศึกษา/ภาคเรียนเริ่มต้น = ภาคเรียนปัจจุบันของระบบ
       loadEventCategories(); // รีเฟรชรายชื่อประเภทงานทุกครั้งที่เปิด เผื่อเพิ่ม/ลบประเภทงานที่แท็บ "ทั่วไป" มาระหว่างนี้
-      document.getElementById('evSubmitBtn').textContent = 'เพิ่มกำหนดการ';
+      resetActivityForm();
+      document.getElementById('evKindPick').hidden = false;
+      setEvKind('deadline');
       document.getElementById('eventModalTitle').textContent = 'เพิ่มกำหนดการ';
-      document.getElementById('createEventError').hidden = true;
       showModalEl(eventModalEl);
     }
     function startEditEvent(ev) {
       document.getElementById('evEditId').value = ev.id;
+      document.getElementById('evKindPick').hidden = true; // แก้ไขแล้วเปลี่ยนชนิดไม่ได้
+      if (ev.kind === 'activity') {
+        setEvKind('activity');
+        document.getElementById('evActTitle').value = ev.title || '';
+        document.getElementById('evActDate').value = ev.date;
+        document.getElementById('evActEndDate').value = (ev.endDate && ev.endDate !== ev.date) ? ev.endDate : '';
+        document.getElementById('evActTimeStart').value = ev.timeStart || '';
+        document.getElementById('evActTimeEnd').value = ev.timeEnd || '';
+        document.getElementById('evActLocation').value = ev.location || '';
+        document.getElementById('evActMessage').value = ev.message || '';
+        document.getElementById('evActNotify').checked = !!ev.notify;
+        document.getElementById('evActRepeat').checked = !!ev.repeatYearly;
+        syncActDatesTh();
+        evActAud.set(ev.audience);
+        setActOwnerType(ev.ownerType, ev.ownerGroup);
+        fillActYears(ev.academicYear);
+        document.getElementById('evActSem').value = ev.semester || '1';
+        document.getElementById('eventModalTitle').textContent = 'แก้ไขกิจกรรม: ' + ev.title;
+        showModalEl(eventModalEl);
+        return;
+      }
+      setEvKind('deadline');
       document.getElementById('evDate').value = ev.date;
       document.getElementById('evEndDate').value = (ev.endDate && ev.endDate !== ev.date) ? ev.endDate : '';
       evAud.set(ev.audience);
@@ -441,9 +684,11 @@
       e.preventDefault();
       var errBox = document.getElementById('createEventError');
       errBox.hidden = true;
+      if (document.getElementById('evKind').value === 'activity') return submitActivity(errBox);
       var evDateVal = document.getElementById('evDate').value;
       var evEndDateVal = document.getElementById('evEndDate').value;
       var evCategoryVal = document.getElementById('evCategory').value;
+      if (!evDateVal) { errBox.textContent = 'กรุณาเลือกวันที่เริ่มต้น'; switchEvTab('period'); errBox.hidden = false; return; }
       if (evEndDateVal && evEndDateVal < evDateVal) {
         errBox.textContent = 'วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่มต้น';
         switchEvTab('period');
@@ -486,6 +731,34 @@
         errBox.hidden = false;
       }
     });
+
+    async function submitActivity(errBox) {
+      var v = function (id) { return document.getElementById(id).value.trim(); };
+      var fail = function (m) { errBox.textContent = m; errBox.hidden = false; errBox.scrollIntoView({ block: 'nearest' }); };
+      if (!v('evActTitle')) return fail('กรุณากรอกชื่อกิจกรรม');
+      if (!v('evActDate')) return fail('กรุณาเลือกวันที่เริ่ม');
+      if (v('evActEndDate') && v('evActEndDate') < v('evActDate')) return fail('วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่ม');
+      if (!v('evActTimeStart') && v('evActTimeEnd')) return fail('กรุณาใส่เวลาเริ่มด้วย');
+      if (v('evActTimeStart') && v('evActTimeEnd') && v('evActTimeEnd') < v('evActTimeStart')) return fail('เวลาสิ้นสุดต้องไม่อยู่ก่อนเวลาเริ่ม');
+      if (!v('evActOwnerGroup')) return fail('กรุณาเลือกเจ้าของกิจกรรม');
+      var audErr = evActAud.check(); if (audErr) return fail(audErr);
+      var editId = document.getElementById('evEditId').value;
+      var ok = await askConfirm(editId ? 'ยืนยันบันทึกการแก้ไขกิจกรรมนี้?' : 'ยืนยันเพิ่มกิจกรรมนี้ในปฏิทิน?', editId ? 'ยืนยันการแก้ไขกิจกรรม' : 'ยืนยันการเพิ่มกิจกรรม');
+      if (!ok) return;
+      var payload = {
+        kind: 'activity', title: v('evActTitle'), date: v('evActDate'), endDate: v('evActEndDate'),
+        timeStart: v('evActTimeStart'), timeEnd: v('evActTimeEnd'), location: v('evActLocation'),
+        ownerType: evActOwnerType, ownerGroup: v('evActOwnerGroup'), audience: evActAud.get(), message: v('evActMessage'),
+        academicYear: v('evActYear'), semester: v('evActSem'),
+        notify: document.getElementById('evActNotify').checked, repeatYearly: document.getElementById('evActRepeat').checked
+      };
+      if (editId) payload.eventId = editId;
+      var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเพิ่มกิจกรรม', function () {
+        return apiCall(editId ? 'adminUpdateEvent' : 'adminCreateEvent', payload);
+      }, { successLabel: editId ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มกิจกรรมแล้ว' });
+      if (r.ok) { cancelEditEvent(); loadEvents(); }
+      else fail(r.error.message);
+    }
 
     // ---------- Announcements ----------
     // ป้ายบอกช่วงเวลาแสดงผล (ถ้าตั้งไว้) — ใช้ในแท็บนี้เท่านั้น (แท็บนี้ยังคงบอกชื่อผู้แจ้งประกาศไว้เหมือนเดิม ต่างจากหน้าฮับที่บอกแค่ "จากฝ่ายวิชาการ" ตั้งแต่ V10.0)

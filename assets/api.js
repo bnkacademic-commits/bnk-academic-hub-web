@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.80';
-var APP_VERSION = '1.80.0.181026';
+var WORKER_MIN_VERSION = '1.81';
+var APP_VERSION = '1.81.0.181026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -904,6 +904,81 @@ function formatCertNo(format, digits, year, num, semester, beYear) {
   return f.replace(/\{ปีการศึกษา\}/g, year).replace(/\{ปี พ\.ศ\.\}/g, beYear || year).replace(/\{เลขที่\}/g, n).replace(/\{ภาคเรียน\}/g, semester === 'summer' ? 'ฤดูร้อน' : String(semester || '')).replace(/\s+/g, ' ').trim();
 }
 // 1.57: จำนวนวันที่เหลือถึงวันสุดท้ายของกำหนดส่ง (นับตามวันที่ ไม่สนเวลา) — คืน { days, text, cls } หรือ null
+// ---------- 1.81: กิจกรรมในปฏิทิน (หน้าแรกครู/เจ้าหน้าที่ + หน้าผู้บริหาร) ----------
+// กิจกรรม = แถบชื่อในช่องวัน (สีตามกลุ่มเจ้าของ) · กำหนดส่งงาน = จุดสีเหมือนเดิม · "ทำซ้ำทุกปี" ฉายซ้ำวัน-เดือนเดิมในปีถัดๆ ไป
+var SUBJECT_GROUP_COLORS = { 'ภาษาไทย': '#dc2626', 'คณิตศาสตร์': '#2563eb', 'วิทยาศาสตร์และเทคโนโลยี': '#0891b2', 'สังคมศึกษา ศาสนา และวัฒนธรรม': '#ca8a04', 'สุขศึกษาและพลศึกษา': '#ea580c', 'ศิลปะ': '#db2777', 'การงานอาชีพ': '#65a30d', 'ภาษาต่างประเทศ': '#c026d3' };
+function isActivityEv(e) { return !!e && e.kind === 'activity'; }
+function activityColor(e) {
+  if (e.ownerType === 'subject') return SUBJECT_GROUP_COLORS[e.ownerGroup] || '#7c3aed';
+  return deptThemeColor(e.ownerGroup) || '#16a34a';
+}
+function activityOwnerLabel(e) { return e.ownerType === 'subject' ? 'กลุ่มสาระการเรียนรู้' + e.ownerGroup : groupLabel(e.ownerGroup); }
+function activityOwnerBadgeHtml(e) {
+  if (!e.ownerGroup) return '';
+  return e.ownerType === 'subject' ? '<span class="evl-gb sub">กลุ่มสาระฯ ' + escapeHtml(e.ownerGroup) + '</span>' : '<span class="evl-gb">' + escapeHtml(groupLabel(e.ownerGroup)) + '</span>';
+}
+function activityTimeText(e) { return e.timeStart ? e.timeStart + (e.timeEnd ? '–' + e.timeEnd : '') + ' น.' : ''; }
+function eventRangeText(e) { return e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date); }
+// เพิ่มกิจกรรม "ทำซ้ำทุกปี" ของปีถัดไปที่ทับช่วง fromYmd–toYmd (id = <id>@<ปี ค.ศ.>) — ไม่ฉายย้อนไปก่อนปีที่เพิ่ม
+function expandRepeatEvents(events, fromYmd, toYmd) {
+  var out = (events || []).slice(), y0 = +String(fromYmd).slice(0, 4), y1 = +String(toYmd).slice(0, 4);
+  (events || []).forEach(function (e) {
+    if (!isActivityEv(e) || !e.repeatYearly || !e.date) return;
+    var by = +e.date.slice(0, 4), end = e.endDate || e.date, span = +end.slice(0, 4) - by;
+    for (var y = Math.max(y0 - 1, by + 1); y <= y1; y++) {
+      var d = y + e.date.slice(4), ed = (y + span) + end.slice(4);
+      if (ed < fromYmd || d > toYmd) continue;
+      out.push(Object.assign({}, e, { id: e.id + '@' + y, origId: e.id, date: d, endDate: ed, projected: true }));
+    }
+  });
+  return out;
+}
+// แถบกิจกรรมในช่องวัน (สูงสุด 2 แถบ + "+N")
+function activityBarsHtml(acts) {
+  if (!acts.length) return '';
+  return '<div class="cal-acts">' + acts.slice(0, 2).map(function (e) {
+    return '<span class="cal-act" style="background:' + activityColor(e) + '" title="' + escapeHtml(e.title) + '">' + escapeHtml(e.title) + '</span>';
+  }).join('') + (acts.length > 2 ? '<span class="cal-act-more">+' + (acts.length - 2) + '</span>' : '') + '</div>';
+}
+// รายละเอียดกิจกรรมในป็อปอัพวันที่
+function activityDayHtml(e) {
+  var c = activityColor(e), tt = activityTimeText(e);
+  return '<div class="day-ev day-ev-act">' +
+    '<span class="day-ev-bar" style="background:' + c + '"></span>' +
+    '<div class="day-ev-main">' +
+      '<div class="day-ev-title"><i class="fa-solid fa-flag" style="color:' + c + '" aria-hidden="true"></i> ' + escapeHtml(e.title) + ' <span class="evl-tp ac">กิจกรรม</span></div>' +
+      '<div class="day-ev-meta"><i class="fas fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(eventRangeText(e)) + (e.repeatYearly ? ' · <i class="fa-solid fa-rotate" aria-hidden="true"></i> ทุกปี' : '') + '</div>' +
+      (tt ? '<div class="day-ev-meta"><i class="fa-solid fa-clock" aria-hidden="true"></i> ' + escapeHtml(tt) + '</div>' : '') +
+      (e.location ? '<div class="day-ev-meta"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(e.location) + '</div>' : '') +
+      (e.ownerGroup ? '<div class="day-ev-meta"><i class="fa-solid ' + (e.ownerType === 'subject' ? 'fa-book' : 'fa-sitemap') + '" aria-hidden="true"></i> ' + escapeHtml(activityOwnerLabel(e)) + '</div>' : '') +
+      (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') +
+    '</div></div>';
+}
+// "กิจกรรมที่จะถึง" ใต้ปฏิทิน — กิจกรรมที่ยังไม่จบ ภายใน 60 วัน (รวมที่ทำซ้ำทุกปี)
+function activityUpcomingHtml(acts, emptyText) {
+  var today = todayYmd(), lim = new Date(Date.now() + 60 * 86400000);
+  var limStr = lim.getFullYear() + '-' + ('0' + (lim.getMonth() + 1)).slice(-2) + '-' + ('0' + lim.getDate()).slice(-2);
+  var list = acts.filter(function (e) { return (e.endDate || e.date) >= today && e.date <= limStr; })
+    .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  var head = '<div class="cal-upcoming-heading act"><i class="fa-solid fa-flag ui-icon" aria-hidden="true"></i> กิจกรรมที่จะถึง</div>';
+  if (!list.length) return head + '<div class="empty-state">' + escapeHtml(emptyText || 'ไม่มีกิจกรรมในช่วงนี้') + '</div>';
+  return head + '<div class="cal-upcoming-grid">' + list.map(function (e) {
+    var tt = activityTimeText(e), dl = daysLeftInfo(e.date);
+    var meta = [];
+    if (tt) meta.push('<i class="fa-solid fa-clock" aria-hidden="true"></i> ' + escapeHtml(tt));
+    if (e.location) meta.push('<i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(e.location));
+    return '<div class="event-list-item cal-act-row" data-act-date="' + escapeHtml(e.date) + '">' +
+      '<div class="event-date-chip act">' + escapeHtml(eventRangeText(e)) + (dl && dl.days > 0 ? '<span class="days-left">(อีก ' + dl.days + ' วัน)</span>' : (e.date <= today ? '<span class="days-left">(วันนี้)</span>' : '')) + '</div>' +
+      '<div style="flex:1 1 220px; min-width:0;"><div class="sub-item-title"><i class="fa-solid fa-flag" style="color:' + activityColor(e) + '; margin-right:4px;" aria-hidden="true"></i>' + escapeHtml(e.title) + ' ' + activityOwnerBadgeHtml(e) + '</div>' +
+      (meta.length ? '<div class="sub-item-meta evl-meta">' + meta.join(' · ') + '</div>' : '') +
+      (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div></div>';
+  }).join('') + '</div>';
+}
+// ปุ่มกรองชนิด ทั้งหมด / กำหนดส่ง / กิจกรรม
+function calKindChipsHtml(kind) {
+  var b = function (k, label, ic) { return '<button type="button" data-cal-kind="' + k + '" class="' + (kind === k ? 'on' : '') + '" aria-pressed="' + (kind === k) + '">' + (ic ? '<i class="fa-solid ' + ic + '" aria-hidden="true"></i> ' : '') + label + '</button>'; };
+  return b('', 'ทั้งหมด', '') + b('deadline', 'กำหนดส่ง', 'fa-file-arrow-up') + b('activity', 'กิจกรรม', 'fa-flag');
+}
 function daysLeftInfo(endDateStr, now) {
   if (!endDateStr) return null;
   var m = String(endDateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -2026,7 +2101,8 @@ var NOTIF_KIND = {
   report_done: ['fa-circle-check', '#16a34a'], report_forward: ['fa-share', '#0891b2'],
   // 1.80: ตรวจผลงาน + เตือนกำหนดส่ง
   review_ok: ['fa-circle-check', '#16a34a'], review_fix: ['fa-pen-to-square', '#ca8a04'], review_resubmit: ['fa-file-arrow-up', '#0369a1'],
-  due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626']
+  due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626'],
+  activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'] // 1.81: กิจกรรม
 };
 function applyTopBadges(r) {
   if (!r) return;
@@ -2071,10 +2147,10 @@ function initNotifBell() {
   panel.className = 'notif-panel'; panel.id = 'notifPanel'; panel.hidden = true;
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'แจ้งเตือน');
   document.body.appendChild(panel);
-  var state = { items: [], due: [], more: false, limit: 30, filter: 'all', loading: false };
+  var state = { items: [], due: [], soon: [], more: false, limit: 30, filter: 'all', loading: false };
   function itemHtml(n) {
     var k = NOTIF_KIND[n.kind] || ['fa-bell', '#64748b'];
-    var tm = n.dueDate ? 'กำหนดส่ง ' + formatDateThai(n.dueDate) : notifTimeText(n.createdAt);
+    var tm = n.activityDate ? formatDateThai(n.dueDate) : n.dueDate ? 'กำหนดส่ง ' + formatDateThai(n.dueDate) : notifTimeText(n.createdAt);
     return '<button type="button" class="notif-item' + (n.unread ? ' unread' : '') + (n.pinned ? ' pinned' : '') + '" data-nid="' + escapeHtml(n.id) + '">' +
       '<span class="notif-ic" style="background:' + k[1] + '"><i class="fa-solid ' + k[0] + '" aria-hidden="true"></i></span>' +
       '<span class="notif-tx"><span class="notif-t">' + escapeHtml(n.title) + '</span>' + (n.body ? '<span class="notif-b">' + escapeHtml(n.body) + '</span>' : '') +
@@ -2084,15 +2160,16 @@ function initNotifBell() {
   function render() {
     var list = state.items.filter(function (n) { return state.filter === 'all' || n.unread; });
     var unreadRead = state.items.filter(function (n) { return n.unread; }).length;
-    var unread = unreadRead + state.due.length; // 1.80: เตือนกำหนดส่งนับเป็นยังไม่อ่านจนกว่าจะส่งงาน
+    var unread = unreadRead; // 1.81: งานที่ต้องส่ง/กิจกรรมใกล้ถึงปักไว้แยก ไม่นับเป็น "ยังไม่อ่าน"
     var html = '<div class="notif-head"><i class="fa-solid fa-bell" aria-hidden="true"></i><b>แจ้งเตือน</b>' +
       (unreadRead ? '<button type="button" class="notif-readall" data-nact="readall">อ่านทั้งหมดแล้ว</button>' : '') + '</div>' +
       '<div class="notif-filter"><button type="button" data-nf="all" class="' + (state.filter === 'all' ? 'on' : '') + '">ทั้งหมด</button>' +
       '<button type="button" data-nf="unread" class="' + (state.filter === 'unread' ? 'on' : '') + '">ยังไม่อ่าน (' + unread + ')</button></div><div class="notif-list">';
     if (state.loading && !state.items.length) html += '<div class="notif-empty"><span class="loading">กำลังโหลด</span></div>';
-    else if (!list.length && !state.due.length) html += '<div class="notif-empty"><i class="fa-solid fa-bell-slash" aria-hidden="true"></i>' + (state.filter === 'unread' ? 'อ่านครบทุกรายการแล้ว' : 'ยังไม่มีแจ้งเตือนใหม่<br>เกียรติบัตร คำสั่ง และเรื่องที่แจ้ง จะแสดงที่นี่') + '</div>';
+    else if (!list.length && !state.due.length && !state.soon.length) html += '<div class="notif-empty"><i class="fa-solid fa-bell-slash" aria-hidden="true"></i>' + (state.filter === 'unread' ? 'อ่านครบทุกรายการแล้ว' : 'ยังไม่มีแจ้งเตือนใหม่<br>เกียรติบัตร คำสั่ง และเรื่องที่แจ้ง จะแสดงที่นี่') + '</div>';
     else {
       // 1.80: "งานที่ต้องส่ง" ปักไว้บนสุดเสมอ (ทั้ง 2 ตัวกรอง) — หายเมื่อส่งงานแล้ว
+      if (state.soon.length) html += '<div class="notif-group">กิจกรรมใกล้ถึง</div>' + state.soon.map(itemHtml).join(''); // 1.81
       if (state.due.length) html += '<div class="notif-group">งานที่ต้องส่ง</div>' + state.due.map(itemHtml).join('');
       var g = '';
       list.forEach(function (n) {
@@ -2107,7 +2184,7 @@ function initNotifBell() {
   }
   async function load() {
     state.loading = true; render();
-    try { var r = await apiCall('notifList', { limit: state.limit }); state.items = r.items || []; state.due = r.due || []; state.more = !!r.more; applyTopBadges({ notifUnread: state.due.length }); }
+    try { var r = await apiCall('notifList', { limit: state.limit }); state.items = r.items || []; state.due = r.due || []; state.soon = r.soon || []; state.more = !!r.more; applyTopBadges({ notifUnread: 0 }); } // 1.81: เปิดกระดิ่ง = เลขหาย (งานที่ต้องส่งเตือนใหม่พรุ่งนี้)
     catch (e) { panel.querySelector('.notif-list').innerHTML = '<div class="notif-empty">' + escapeHtml(e.message) + '</div>'; state.loading = false; return; }
     state.loading = false; render();
   }
@@ -2150,7 +2227,7 @@ function initNotifBell() {
     if (a && a.getAttribute('data-nact') === 'more') { state.limit += 30; load(); return; }
     var it = e.target.closest('[data-nid]');
     if (!it) return;
-    var n = state.items.concat(state.due).filter(function (x) { return x.id === it.getAttribute('data-nid'); })[0];
+    var n = state.items.concat(state.due, state.soon).filter(function (x) { return x.id === it.getAttribute('data-nid'); })[0];
     if (!n) return;
     if (n.unread && !n.pinned) { n.unread = false; render(); try { await apiCall('notifRead', { id: n.id }); } catch (err) { /* ข้าม */ } }
     close();
