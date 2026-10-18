@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.81.0.181026" />
+<link rel="stylesheet" href="assets/style.css?v=1.81.1.181026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -220,42 +220,23 @@
         </div>
 
         <div id="evDeadlineWrap">
-        <div class="tabs" style="margin-bottom:14px;">
-          <button type="button" class="ev-tab-btn active" id="evTabBtn-period" data-ev-tab="period">ระยะเวลา</button>
-          <button type="button" class="ev-tab-btn" id="evTabBtn-category" data-ev-tab="category">ประเภทงาน</button>
-        </div>
-
-        <div class="ev-tab-panel active" id="evTab-period">
+        <!-- 1.81.1: ฟอร์มเดียว ไม่แยกแท็บ (เดิม "ระยะเวลา" / "ประเภทงาน") — คง id evTab-category / evTab-period ไว้เป็นกลุ่มช่อง -->
+        <div class="ev-tab-panel active" id="evTab-category">
+          <div class="field">
+            <label for="evCategory">ประเภทงาน</label>
+            <select id="evCategory"></select>
+            <div class="hint">ใช้ "ชื่อประเภทงาน" เป็นหัวข้อกำหนดการ และคำนวณสถานะการส่งงานในหน้า "สรุปรวมการส่งงาน"</div>
+            <div class="hint" id="evNoCategoryHint" hidden>ยังไม่มีประเภทงานในระบบ — ไปเพิ่มที่หน้า "ตั้งค่าระบบ" แท็บ "ข้อมูลหลัก" ก่อน ถึงจะเพิ่มกำหนดการได้</div>
+          </div>
           <div class="field-row">
             <div class="field">
-              <label for="evDate">วันที่เริ่มต้น</label>
+              <label for="evDate">วันที่เริ่มต้น <span class="opt" id="evDateTh"></span></label>
               <input id="evDate" type="date" />
             </div>
             <div class="field">
-              <label for="evEndDate">วันที่สิ้นสุด</label>
+              <label for="evEndDate">วันที่สิ้นสุด <span class="opt" id="evEndDateTh"></span></label>
               <input id="evEndDate" type="date" />
             </div>
-          </div>
-          <div class="field">
-            <label>สำหรับ</label>
-            <!-- 1.68: ทั้งหมด / กลุ่มบริหารงาน (1 กลุ่มขึ้นไป) / รายบุคคล (1 คนขึ้นไป) -->
-            <div id="evAudPick"></div>
-          </div>
-          <div class="field">
-            <label for="evMessage">รายละเอียดเพิ่มเติม</label>
-            <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
-          </div>
-        </div>
-
-        <div class="ev-tab-panel" id="evTab-category">
-          <div class="field">
-            <label for="evCategory">ประเภทงาน</label>
-            <!-- ไม่ใส่ required ตรงๆ เพราะช่องนี้อยู่ในแท็บที่อาจไม่ active (display:none) ตอน submit — required บน select
-                 ที่ซ่อนอยู่ทำให้ Chrome เงียบๆ บล็อกการ submit เองโดยไม่มี error โชว์เลย (ไม่ trigger event submit ให้ JS จัดการต่อ)
-                 จึงตรวจสอบเองด้วย JS ในตอน submit แทน (ดู errBox ด้านล่าง) -->
-            <select id="evCategory"></select>
-            <div class="hint">ระบบจะใช้ "ชื่อประเภทงาน" เป็นหัวข้อกำหนดการนี้โดยอัตโนมัติ และนำไปคำนวณสถานะการส่งงานให้ในหน้า "สรุปรวมการส่งงาน" (ใครส่งตรงเวลา/เกินกำหนด/ยังไม่ส่ง)</div>
-            <div class="hint" id="evNoCategoryHint" hidden>ยังไม่มีประเภทงานในระบบ — ไปเพิ่มที่หน้า "ตั้งค่าระบบ" แท็บ "ข้อมูลหลัก" ก่อน ถึงจะเพิ่มกำหนดการได้</div>
           </div>
           <div class="field-row">
             <div class="field">
@@ -272,6 +253,17 @@
             </div>
           </div>
         </div>
+        <div class="ev-tab-panel active" id="evTab-period">
+          <div class="field">
+            <label>สำหรับ</label>
+            <!-- 1.68: ทั้งหมด / กลุ่มบริหารงาน (1 กลุ่มขึ้นไป) / รายบุคคล (1 คนขึ้นไป) -->
+            <div id="evAudPick"></div>
+          </div>
+          <div class="field">
+            <label for="evMessage">รายละเอียดเพิ่มเติม <span class="opt">(ไม่บังคับ)</span></label>
+            <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
+          </div>
+        </div>
 
         </div><!-- /evDeadlineWrap -->
 
@@ -285,7 +277,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.81.0.181026"></script>
+  <script src="assets/api.js?v=1.81.1.181026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -390,14 +382,16 @@
     }
 
     // ---------- แท็บในป็อปอัพกำหนดการ (ระยะเวลา / ประเภทงาน) ----------
-    function switchEvTab(tabName) {
-      ['period', 'category'].forEach(function (t) {
-        document.getElementById('evTabBtn-' + t).classList.toggle('active', t === tabName);
-        document.getElementById('evTab-' + t).classList.toggle('active', t === tabName);
-      });
+    // 1.81.1: ไม่แยกแท็บแล้ว — เหลือไว้ให้จุดเรียกเดิม (ตรวจข้อมูลไม่ผ่าน) เลื่อนไปที่ข้อความแจ้งเตือน
+    function switchEvTab() {
+      var e = document.getElementById('createEventError'); if (e) setTimeout(function () { e.scrollIntoView({ block: 'nearest' }); }, 0);
     }
-    document.getElementById('evTabBtn-period').addEventListener('click', function () { switchEvTab('period'); });
-    document.getElementById('evTabBtn-category').addEventListener('click', function () { switchEvTab('category'); });
+    function syncEvDatesTh() {
+      var a = document.getElementById('evDate').value, b = document.getElementById('evEndDate').value;
+      document.getElementById('evDateTh').textContent = a ? '(' + formatDateThai(a) + ')' : '';
+      document.getElementById('evEndDateTh').textContent = b ? '(' + formatDateThai(b) + ')' : '(ไม่บังคับ)';
+    }
+    ['evDate', 'evEndDate'].forEach(function (id) { ['change', 'input'].forEach(function (t) { document.getElementById(id).addEventListener(t, syncEvDatesTh); }); });
 
     // 1.68: ตัวเลือก "สำหรับ" (api.js createAudiencePicker) — รายชื่อ = ครู/เจ้าหน้าที่ที่มีหน้าฮับ · กลุ่ม = รายชื่อกลุ่มบริหารงานในตั้งค่า
     var audDepts = [];
@@ -619,7 +613,7 @@
       document.getElementById('evEditId').value = '';
       document.getElementById('createEventForm').reset();
       evAud.set('all');
-      switchEvTab('period');
+      syncEvDatesTh();
       setEvCurrentTerm(); // 1.61: ปีการศึกษา/ภาคเรียนเริ่มต้น = ภาคเรียนปัจจุบันของระบบ
       loadEventCategories(); // รีเฟรชรายชื่อประเภทงานทุกครั้งที่เปิด เผื่อเพิ่ม/ลบประเภทงานที่แท็บ "ทั่วไป" มาระหว่างนี้
       resetActivityForm();
@@ -656,7 +650,7 @@
       document.getElementById('evEndDate').value = (ev.endDate && ev.endDate !== ev.date) ? ev.endDate : '';
       evAud.set(ev.audience);
       document.getElementById('evMessage').value = ev.message || '';
-      switchEvTab('period');
+      syncEvDatesTh();
       loadEventCategories().then(function () {
         document.getElementById('evCategory').value = ev.categoryId || '';
         if (ev.categoryId) {
@@ -697,7 +691,7 @@
       }
       // ประเภทงานบังคับเลือกเสมอตั้งแต่เวอร์ชันถัดจาก V11.2 (ไม่มี "กำหนดการทั่วไป" อีกต่อไป)
       if (!evCategoryVal) {
-        errBox.textContent = 'กรุณาเลือกประเภทงาน (แท็บ "ประเภทงาน")';
+        errBox.textContent = 'กรุณาเลือกประเภทงาน';
         switchEvTab('category');
         errBox.hidden = false;
         return;
