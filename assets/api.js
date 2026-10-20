@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.81';
-var APP_VERSION = '1.81.1.181026';
+var WORKER_MIN_VERSION = '1.82';
+var APP_VERSION = '1.82.0.191026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2096,7 +2096,7 @@ function createAudiencePicker(el, opts) {
 // 1.75: กระดิ่งแจ้งเตือน + แจ้งปัญหา
 // ======================================================================
 var NOTIF_KIND = {
-  cert_reserved: ['fa-hashtag', '#ea580c'], cert_uploaded: ['fa-award', '#d97706'], order: ['fa-file-signature', '#2563eb'], album: ['fa-images', '#0d9488'],
+  cert_reserved: ['fa-hashtag', '#ea580c'], cert_uploaded: ['fa-award', '#d97706'], order: ['fa-file-signature', '#2563eb'], album: ['fa-images', '#0d9488'], album_deleted: ['fa-trash-can', '#dc2626'],
   report_new: ['fa-inbox', '#ef4444'], report_reply: ['fa-reply', '#7c3aed'], report_status: ['fa-headset', '#7c3aed'],
   report_done: ['fa-circle-check', '#16a34a'], report_forward: ['fa-share', '#0891b2'],
   // 1.80: ตรวจผลงาน + เตือนกำหนดส่ง
