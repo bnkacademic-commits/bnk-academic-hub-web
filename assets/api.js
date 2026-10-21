@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.85';
-var APP_VERSION = '1.85.0.211026';
+var WORKER_MIN_VERSION = '1.85.2';
+var APP_VERSION = '1.85.2.221026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2133,6 +2133,7 @@ var NOTIF_KIND = {
   due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626'],
   activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'] // 1.81: กิจกรรม
 };
+var _notifCovers = {}; // 1.85.2: รูปปกอัลบั้มในกระดิ่ง
 function applyTopBadges(r) {
   if (!r) return;
   if (r.welcome) openWelcome(); // 1.79: ป็อปอัพต้อนรับครั้งแรกของบัญชี
@@ -2180,11 +2181,16 @@ function initNotifBell() {
   function itemHtml(n) {
     var k = NOTIF_KIND[n.kind] || ['fa-bell', '#64748b'];
     var tm = n.activityDate ? formatDateThai(n.dueDate) : n.dueDate ? 'กำหนดส่ง ' + formatDateThai(n.dueDate) : notifTimeText(n.createdAt);
-    return '<button type="button" class="notif-item' + (n.unread ? ' unread' : '') + (n.pinned ? ' pinned' : '') + '" data-nid="' + escapeHtml(n.id) + '">' +
-      '<span class="notif-ic" style="background:' + k[1] + '"><i class="fa-solid ' + k[0] + '" aria-hidden="true"></i></span>' +
+    // 1.85.2: อัลบั้ม = รูปปกแทนไอคอน + ชื่ออัลบั้มตัวหนา · ยังไม่อ่าน = ปุ่ม ✓ "อ่านแล้ว" ท้ายรายการ (ไม่ต้องเปิดหน้านั้น)
+    var ic = '<span class="notif-ic" style="background:' + k[1] + '"><i class="fa-solid ' + k[0] + '" aria-hidden="true"></i></span>';
+    if (n.kind === 'album' && n.album) {
+      var src = n.album.managed ? (_notifCovers[n.album.id] || '') : (n.album.coverFileId ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(n.album.coverFileId) + '&sz=w160' : '');
+      ic = '<span class="notif-th" data-nth="' + escapeHtml(n.album.id) + '">' + (src ? '<img src="' + src + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()" />' : '') + '<i class="fa-solid fa-images" aria-hidden="true"></i></span>';
+    }
+    return '<button type="button" class="notif-item' + (n.unread ? ' unread' : '') + (n.pinned ? ' pinned' : '') + (n.kind === 'album' ? ' alb' : '') + '" data-nid="' + escapeHtml(n.id) + '">' + ic +
       '<span class="notif-tx"><span class="notif-t">' + escapeHtml(n.title) + '</span>' + (n.body ? '<span class="notif-b">' + escapeHtml(n.body) + '</span>' : '') +
       '<span class="notif-tm">' + escapeHtml(tm) + (n.dept ? ' · ' + escapeHtml(groupLabel(n.dept)) : '') + '</span></span>' +
-      (n.unread ? '<span class="notif-dot" aria-label="ยังไม่อ่าน"></span>' : '') + '</button>';
+      (n.unread && !n.pinned ? '<span class="notif-rd" role="button" tabindex="0" data-nread="' + escapeHtml(n.id) + '" title="ทำเครื่องหมายว่าอ่านแล้ว" aria-label="อ่านแล้ว"><i class="fa-solid fa-check" aria-hidden="true"></i></span>' : (n.unread ? '<span class="notif-dot" aria-label="ยังไม่อ่าน"></span>' : '')) + '</button>';
   }
   function render() {
     var list = state.items.filter(function (n) { return state.filter === 'all' || n.unread; });
@@ -2210,6 +2216,21 @@ function initNotifBell() {
     }
     html += '</div><div class="notif-foot">แจ้งเตือนเก็บไว้ 30 วัน แล้วลบอัตโนมัติ</div>';
     panel.innerHTML = html;
+    loadNotifCovers();
+  }
+  // 1.85.2: รูปปกอัลบั้มที่ระบบเก็บไว้ (โหลดครั้งเดียวต่ออัลบั้ม)
+  function loadNotifCovers() {
+    var need = state.items.filter(function (n) { return n.kind === 'album' && n.album && n.album.managed && !(n.album.id in _notifCovers); }).map(function (n) { return n.album.id; }).slice(0, 30);
+    if (!need.length) return;
+    need.forEach(function (id) { _notifCovers[id] = ''; });
+    apiCall('albumCovers', { ids: need }).then(function (r) {
+      var cv = (r && r.covers) || {};
+      Object.keys(cv).forEach(function (id) {
+        _notifCovers[id] = cv[id];
+        var th = panel.querySelector('[data-nth="' + id + '"]');
+        if (th && !th.querySelector('img')) th.insertAdjacentHTML('afterbegin', '<img src="' + cv[id] + '" alt="" />');
+      });
+    }).catch(function () { /* ข้าม */ });
   }
   async function load() {
     state.loading = true; render();
@@ -2254,6 +2275,13 @@ function initNotifBell() {
       return;
     }
     if (a && a.getAttribute('data-nact') === 'more') { state.limit += 30; load(); return; }
+    var rd = e.target.closest('[data-nread]');
+    if (rd) { // 1.85.2: อ่านแล้ว โดยไม่เปิดหน้านั้น
+      e.preventDefault();
+      var nr = state.items.filter(function (x) { return x.id === rd.getAttribute('data-nread'); })[0];
+      if (nr) { nr.unread = false; render(); apiCall('notifRead', { id: nr.id }).catch(function () {}); }
+      return;
+    }
     var it = e.target.closest('[data-nid]');
     if (!it) return;
     var n = state.items.concat(state.due, state.soon).filter(function (x) { return x.id === it.getAttribute('data-nid'); })[0];
@@ -2408,9 +2436,13 @@ function openWelcome() {
 }
 
 // ---------- 1.85: ประกาศแบบป็อปอัพ — เปิดหน้าแรกแล้วเด้งทีละประกาศ (หลังป็อปอัพต้อนรับ) ----------
-// 'until' = ขึ้นทุกครั้งที่เข้าระบบจนกว่าจะติ๊ก "ไม่ต้องแสดงประกาศนี้อีก" (ภายในแท็บเดียวกันไม่ขึ้นซ้ำ — sessionStorage) · 'once' = ครั้งเดียวต่อคน
+// 'until' = ขึ้นทุกครั้งที่เข้าระบบจนกว่าจะติ๊ก "ไม่ต้องแสดงประกาศนี้อีก" (เข้าระบบครั้งเดียวกันในแท็บเดิมไม่ขึ้นซ้ำ — sessionStorage) · 'once' = ครั้งเดียวต่อคน
 var _annPopRunning = false;
-function _annPopShownKey(id) { return 'bnkah_annpop_' + id; }
+// 1.85.1: จำแยกตามการเข้าระบบแต่ละครั้งของแต่ละคน (uid + sv ใน token — เข้าระบบใหม่ sv เปลี่ยน) — ออกแล้วเข้าใหม่ / คนอื่นเข้าต่อในแท็บเดิม = แสดงอีก
+function _annPopLoginKey() {
+  try { var t = getToken() || '', b = t.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'); var o = JSON.parse(decodeURIComponent(escape(atob(b + '==='.slice((b.length + 3) % 4))))); return (o.uid || '') + '.' + (o.sv || 0); } catch (e) { return ''; }
+}
+function _annPopShownKey(id) { return 'bnkah_annpop_' + _annPopLoginKey() + '_' + id; }
 async function showAnnouncementPopups() {
   if (_annPopRunning) return;
   _annPopRunning = true;

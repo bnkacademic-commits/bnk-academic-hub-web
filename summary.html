@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.0.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.2.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.85.0.211026"></script>
+  <script src="assets/api.js?v=1.85.2.221026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -498,17 +498,19 @@
           '</div>' +
           '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.categoryName) + '</b>' + categoryDeptBadgeHtml(a.categoryId) + ' · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
             ' · <span class="badge badge-ontime">ตามกำหนด ' + onTimeCount + '</span> <span class="badge badge-late">หลังกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
+            reviewSummaryChip(a) +
           '</div>' +
           (canReview ? reviewAllBtnHtml(a) : '') +
-          '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th><th>การตรวจ</th>' + (canReview ? '<th></th>' : '') + '</tr></thead><tbody>';
+          '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th><th class="asg-rvh">การตรวจ</th></tr></thead><tbody>';
         a.rows.forEach(function (r) {
           // 1.80: มือถือ = แถวละคน (ชื่อบรรทัดบน · สถานะ/วันที่ส่ง/การตรวจ/ปุ่มบรรทัดล่าง — ดู .asg-table ใน style.css)
           html += '<tr>' +
             '<td class="asg-name">' + escapeHtml(r.userName) + '</td>' +
             '<td class="asg-st">' + statusBadge(r.status) + '</td>' +
             '<td class="asg-time">' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '<span class="asg-none">-</span>') + '</td>' +
-            '<td class="asg-rv">' + (r.status === 'missing' ? '<span class="asg-none">-</span>' : reviewCellHtml(r)) + '</td>' +
-            (canReview ? '<td class="asg-act">' + (r.status === 'missing' ? '' : '<button type="button" class="btn btn-secondary btn-sm rv-btn" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '">' + (r.review && r.review.status === 'reviewed' ? 'ดู' : 'ตรวจ') + '</button>') + '</td>' : '') +
+            // 1.85.2: ป้ายการตรวจ + หมายเหตุ + ปุ่ม อยู่ในช่องเดียว (ปุ่มกว้างเท่ากัน ชิดขวา)
+            '<td class="asg-rv">' + (r.status === 'missing' ? '<span class="asg-none">—</span>' : '<div class="asg-rvc"><div class="asg-rvs">' + reviewCellHtml(r) + '</div>' +
+              (canReview ? '<button type="button" class="btn btn-sm rv-btn ' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'btn-secondary' : 'btn-primary') + '" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '">' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'ดู' : 'ตรวจ') + '</button>' : '') + '</div>') + '</td>' +
           '</tr>';
         });
         html += '</tbody></table></div></div>';
@@ -522,10 +524,18 @@
     function reviewCellHtml(r) {
       if (r.status === 'missing') return '<span class="hint" style="margin:0;">-</span>';
       var v = r.review || { status: 'none' };
-      if (v.status === 'reviewed') return '<span class="badge rvb-ok">ตรวจแล้ว</span>' + (v.revised ? '<div class="rv-note">แก้ไขเพิ่มเติมแล้ว</div>' : '');
-      if (v.status === 'revise') return '<span class="badge rvb-fix">แก้ไขเพิ่มเติม</span>';
-      if (v.status === 'resubmitted') return '<span class="badge rvb-none">ยังไม่ตรวจ</span><div class="rv-note">ส่งไฟล์เพิ่มเติมแล้ว</div>';
+      if (v.status === 'reviewed') return '<span class="badge rvb-ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ตรวจแล้ว</span>' + (v.revised ? '<div class="rv-note">แก้ไขเพิ่มเติมแล้ว</div>' : '');
+      if (v.status === 'revise') return '<span class="badge rvb-fix"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขเพิ่มเติม</span><div class="rv-note">รอครูส่งไฟล์แก้ไข</div>';
+      if (v.status === 'resubmitted') return '<span class="badge rvb-none">ยังไม่ตรวจ</span><div class="rv-note new">ส่งไฟล์เพิ่มเติมแล้ว' + (v.resubmittedAt ? ' · ' + escapeHtml(formatDateThai(v.resubmittedAt)) : '') + '</div>';
       return '<span class="badge rvb-none">ยังไม่ตรวจ</span>';
+    }
+    // 1.85.2: สรุปการตรวจของงานนี้ (หัวตาราง)
+    function reviewSummaryChip(a) {
+      var sent = a.rows.filter(function (r) { return r.status !== 'missing'; });
+      if (!sent.length) return '';
+      var ok = sent.filter(function (r) { return r.review && r.review.status === 'reviewed'; }).length;
+      var fix = sent.filter(function (r) { return r.review && r.review.status === 'revise'; }).length;
+      return ' <span class="badge asg-rvsum">ตรวจแล้ว ' + ok + ' · รอตรวจ ' + (sent.length - ok - fix) + (fix ? ' · แก้ไข ' + fix : '') + '</span>';
     }
     function unreviewedRows(a) { return a.rows.filter(function (r) { return r.status !== 'missing' && (!r.review || r.review.status === 'none'); }); }
     function reviewAllBtnHtml(a) {

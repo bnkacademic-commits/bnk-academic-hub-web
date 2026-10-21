@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.0.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.2.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -45,7 +45,9 @@
          เจ้าหน้าที่/Super Admin จัดการได้เหมือนเดิมทุกอย่าง ส่วนผู้บริหาร (role 'executive') เปิดดูได้อย่างเดียว — ไม่มีปุ่มเพิ่ม/แก้ไข/ลบ
          (ฝั่ง Worker ก็ปิดสิทธิ์เขียนไว้ด้วย: เรียกได้เฉพาะ endpoint ที่เป็นการอ่าน) -->
     <div class="tabs">
-      <button class="tab-btn active" data-tab="announcements">ประกาศ</button>
+      <!-- 1.85.2: แยกประกาศ (ป็อปอัพ) กับประกาศ (ส่วนบน) — ป็อปอัพขึ้นก่อน -->
+      <button class="tab-btn active" data-tab="popups">ประกาศ(ป็อปอัพ)<span class="rpm-tabcount pop-tabcount" id="popTabCount" hidden></span></button>
+      <button class="tab-btn" data-tab="announcements">ประกาศ(ส่วนบน)</button>
       <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
       <!-- 1.75: เรื่องที่แจ้ง (เจ้าหน้าที่ = กลุ่มตัวเอง · Super Admin = ทุกเรื่อง) — ผู้บริหารไม่เห็นแท็บนี้ -->
       <button class="tab-btn" data-tab="reports" id="reportsTabBtn" hidden>เรื่องที่แจ้ง<span class="rpm-tabcount" id="reportsTabCount" hidden></span></button>
@@ -81,10 +83,22 @@
     </div>
 
     <!-- Announcements tab (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่เวอร์ชันถัดจาก V11.2 เปลี่ยนเป็นป็อปอัพเหมือนกำหนดการ + แก้ไขประกาศที่เผยแพร่ไปแล้วได้ด้วย) -->
-    <div class="tab-panel active" id="tab-announcements">
+    <!-- 1.85.2: ประกาศ (ป็อปอัพ) — เด้งกลางจอเมื่อเปิดหน้าแรก ไม่ขึ้นในกล่องประกาศ -->
+    <div class="tab-panel active" id="tab-popups">
       <div class="card">
         <div class="section-title" style="justify-content:space-between;">
-          <span><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการประกาศทั้งหมด</span>
+          <span><i class="fa-solid fa-window-restore ui-icon" style="font-size:17px;color:#7c3aed" aria-hidden="true"></i> ประกาศแบบป็อปอัพ (เด้งเมื่อเปิดหน้าแรก)</span>
+          <button class="btn btn-sm pop-add-btn" id="openCreatePopBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประกาศ (ป็อปอัพ)</button>
+        </div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เด้งขึ้นกลางจอเมื่อครูเปิดหน้าแรก (หลังป็อปอัพต้อนรับ) — ไม่แสดงในกล่องประกาศส่วนบน · แก้ไข/ลบได้เฉพาะของกลุ่มตัวเอง</p>
+        <div id="popListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-announcements">
+      <div class="card">
+        <div class="section-title" style="justify-content:space-between;">
+          <span><i class="fas fa-bullhorn ui-icon" style="font-size:17px" aria-hidden="true"></i> ประกาศส่วนบนของหน้าแรก</span>
           <button class="btn btn-primary btn-sm" id="openCreateAnnBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประกาศ</button>
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ประกาศแสดงในหน้าแรกของครูและเจ้าหน้าที่ทุกคน ในนามกลุ่มบริหารงานของผู้ประกาศ — แก้ไข/ลบได้เฉพาะประกาศของกลุ่มตัวเอง</p>
@@ -130,9 +144,10 @@
           </div>
           <div class="hint ann-time-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>ไม่ระบุเวลา = แสดงทันทีจนกว่าจะลบ · ระบุเวลา = แสดง/ซ่อนอัตโนมัติตามช่วงที่ตั้ง</span></div>
           <!-- 1.85: ประกาศแบบป็อปอัพ — เด้งกลางจอเมื่อเปิดหน้าแรก (นอกจากแสดงในรายการประกาศตามปกติ) -->
-          <div class="ann-pop" id="annPopBox">
-            <label class="ann-pop-tg"><input type="checkbox" id="annPopOn" /><span><b>แสดงเป็นป็อปอัพเมื่อเข้าระบบ</b><small>เด้งขึ้นกลางจอเมื่อเปิดหน้าแรก นอกจากแสดงในรายการประกาศตามปกติ</small></span></label>
-            <div class="ann-pop-sub" id="annPopSub" hidden>
+          <div class="ann-pop" id="annPopBox" hidden>
+            <input type="checkbox" id="annPopOn" hidden style="display:none" />
+            <div class="ann-pop-sub" id="annPopSub">
+              <div class="ann-pop-lbl">การแสดง</div>
               <label class="ann-pop-rd"><input type="radio" name="annPopMode" value="until" checked /> แสดงทุกครั้งที่เข้าระบบ จนกว่าจะติ๊ก "ไม่ต้องแสดงประกาศนี้อีก"</label>
               <label class="ann-pop-rd"><input type="radio" name="annPopMode" value="once" /> แสดงครั้งเดียวต่อคน</label>
               <div class="ann-pop-img">
@@ -291,7 +306,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.85.0.211026"></script>
+  <script src="assets/api.js?v=1.85.2.221026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -331,6 +346,7 @@
         ensureUsersLoaded().then(function () { if (lastAnnouncements.some(function (a) { return parseAudienceStr(a.audience).type === 'people'; })) loadAnnouncements(); });
         return p;
       },
+      popups: function () { return tabLoaders.announcements(); }, // 1.85.2
       calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); },
       reports: function () { return loadReportsManage(); }
     };
@@ -785,12 +801,63 @@
       var n = st ? (a.popup === 'once' ? '<span class="ann-pop-stat"><i class="fa-solid fa-eye" aria-hidden="true"></i> เห็นแล้ว ' + st.seen + ' / ' + st.total + ' คน</span>' : '<span class="ann-pop-stat"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i> ไม่แสดงอีกแล้ว ' + st.dismissed + ' / ' + st.total + ' คน · เห็นแล้ว ' + st.seen + ' คน</span>') : '';
       return '<div class="ann-pop-meta"><span class="ann-pop-tag"><i class="fa-solid fa-window-restore" aria-hidden="true"></i> ป็อปอัพ' + (a.popup === 'once' ? ' · ครั้งเดียว' : '') + (a.hasImage ? ' · มีรูป' : '') + '</span>' + n + '</div>';
     }
+    // 1.85.2: รายการประกาศแบบป็อปอัพ — รูป · สถานะ · การแสดง · จำนวนคน
+    var _popImgs = {};
+    function popActive(a) { var now = new Date().toISOString(); return (!a.showFrom || a.showFrom <= now) && (!a.showUntil || a.showUntil >= now); }
+    function renderPopups(list) {
+      var wrap = document.getElementById('popListWrap');
+      var act = list.filter(popActive).length, cnt = document.getElementById('popTabCount');
+      cnt.textContent = act ? act + ' กำลังแสดง' : ''; cnt.hidden = !act;
+      if (!list.length) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศแบบป็อปอัพ</div>'; return; }
+      list = list.slice().sort(function (x, y) { return (popActive(y) - popActive(x)) || String(y.createdAt).localeCompare(String(x.createdAt)); });
+      wrap.innerHTML = list.map(function (a) {
+        var gi = annGroupInfo(a.department), on = popActive(a), st = a.popupStats;
+        var pct = st && st.total ? Math.round((a.popup === 'once' ? st.seen : st.dismissed) / st.total * 100) : 0;
+        var now = new Date().toISOString(), wait = a.showFrom && a.showFrom > now;
+        return '<div class="pop-card' + (on ? '' : ' off') + '" data-pop="' + escapeHtml(a.id) + '">' +
+          '<div class="pop-pv' + (a.hasImage ? '' : ' no') + '" data-pop-img="' + escapeHtml(a.id) + '">' + (a.hasImage && _popImgs[a.id] ? '<img src="' + _popImgs[a.id] + '" alt="" />' : '<i class="fa-solid fa-' + (a.hasImage ? 'image' : 'window-restore') + '" aria-hidden="true"></i>') + '</div>' +
+          '<div class="pop-in"><div class="pop-t"><b>' + escapeHtml(a.title) + '</b> <span class="pop-st ' + (on ? 'on' : 'off') + '">' + (on ? 'กำลังแสดง' : wait ? 'ยังไม่ถึงเวลาแสดง' : 'หมดเวลาแสดง') + '</span> <span class="pop-st md">' + (a.popup === 'once' ? 'ครั้งเดียวต่อคน' : 'ทุกครั้งจนกว่าจะติ๊ก') + '</span></div>' +
+            '<div class="pop-m">' + escapeHtml(gi.label) + ' · ' + escapeHtml(audienceLabel_(a.audience)) + (a.showUntil ? ' · ถึง ' + escapeHtml(formatDateTimeThai(a.showUntil)) : '') + '</div>' +
+            (st ? '<div class="pop-m">' + (a.popup === 'once' ? 'เห็นแล้ว ' + st.seen + ' / ' + st.total + ' คน' : 'ไม่แสดงอีกแล้ว ' + st.dismissed + ' / ' + st.total + ' คน · เห็นแล้ว ' + st.seen + ' คน') + '</div><div class="pop-bar"><i style="width:' + pct + '%"></i></div>' : '') +
+          '</div>' +
+          (canManage && a.canEdit ? '<div class="pop-acts"><button class="btn btn-secondary btn-sm" data-edit-id="' + a.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button></div>' : '') +
+        '</div>';
+      }).join('');
+      list.forEach(function (a) {
+        if (!a.hasImage || _popImgs[a.id]) return;
+        apiCall('adminAnnouncementImage', { id: a.id }).then(function (r) {
+          if (!r.image) return; _popImgs[a.id] = r.image;
+          var el = wrap.querySelector('[data-pop-img="' + a.id + '"]'); if (el) el.innerHTML = '<img src="' + r.image + '" alt="" />';
+        }).catch(function () {});
+      });
+      wireAnnButtons(wrap);
+    }
+    function wireAnnButtons(wrap) {
+      wrap.querySelectorAll('button[data-edit-id]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var a = lastAnnouncements.filter(function (x) { return x.id === btn.getAttribute('data-edit-id'); })[0];
+          if (a) startEditAnn(a);
+        });
+      });
+      wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          var ok = await askConfirm('ลบประกาศนี้? ทุกบัญชีจะไม่เห็นประกาศนี้อีกต่อไป', 'ยืนยันการลบประกาศ');
+          if (!ok) return;
+          var annId = btn.getAttribute('data-id');
+          var r = await withProgress('กำลังลบประกาศ', function () { return apiCall('adminDeleteAnnouncement', { announcementId: annId }); }, { successLabel: 'ลบประกาศแล้ว' });
+          if (r.ok) { loadAnnouncements(); }
+        });
+      });
+    }
     async function loadAnnouncements() {
       var wrap = document.getElementById('annListWrap');
       try {
-        var rows = await apiCall('adminListAnnouncements', {});
-        lastAnnouncements = rows;
-        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศ</div>'; return; }
+        var all = await apiCall('adminListAnnouncements', {});
+        lastAnnouncements = all;
+        renderPopups(all.filter(function (a) { return a.popup; }));
+        var rows = all.filter(function (a) { return !a.popup; }); // 1.85.2: ส่วนบนเท่านั้น
+        _tabLoaded.popups = _tabLoaded.announcements = true;
+        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศส่วนบน</div>'; return; }
         var html = '';
         rows.forEach(function (a) {
           var gi = annGroupInfo(a.department);
@@ -806,23 +873,7 @@
           '</div>';
         });
         wrap.innerHTML = html;
-        wrap.querySelectorAll('button[data-edit-id]').forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            var a = lastAnnouncements.filter(function (x) { return x.id === btn.getAttribute('data-edit-id'); })[0];
-            if (a) startEditAnn(a);
-          });
-        });
-        wrap.querySelectorAll('button[data-id]').forEach(function (btn) {
-          btn.addEventListener('click', async function () {
-            var ok = await askConfirm('ลบประกาศนี้? ทุกบัญชีจะไม่เห็นประกาศนี้ในหน้าฮับอีกต่อไป', 'ยืนยันการลบประกาศ');
-            if (!ok) return;
-            var annId = btn.getAttribute('data-id');
-            var r = await withProgress('กำลังลบประกาศ', function () {
-              return apiCall('adminDeleteAnnouncement', { announcementId: annId });
-            }, { successLabel: 'ลบประกาศแล้ว' });
-            if (r.ok) { loadAnnouncements(); }
-          });
-        });
+        wireAnnButtons(wrap);
       } catch (err) {
         wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
@@ -856,10 +907,13 @@
     }
     // ---------- 1.85: ประกาศแบบป็อปอัพ ----------
     var annPop = { image: '', changed: false };
-    function setAnnPop(a) {
-      var on = !!(a && a.popup);
+    function setAnnPop(a, popupMode) {
+      var on = !!popupMode;
       document.getElementById('annPopOn').checked = on;
-      document.getElementById('annPopSub').hidden = !on;
+      document.getElementById('annPopBox').hidden = !on;
+      var lbl = on ? 'ประกาศ (ป็อปอัพ)' : 'ประกาศ (ส่วนบน)';
+      document.getElementById('annModalTitle').textContent = (a ? 'แก้ไข' : 'เพิ่ม') + lbl + (a ? ': ' + a.title : '');
+      document.getElementById('annSubmitBtn').textContent = a ? 'บันทึกการแก้ไข' : 'เพิ่ม' + lbl;
       var m = (a && a.popup) || 'until';
       document.querySelectorAll('input[name="annPopMode"]').forEach(function (x) { x.checked = x.value === m; });
       document.getElementById('annPopReset').checked = false;
@@ -873,7 +927,6 @@
       document.getElementById('annPopImg').src = src || '';
       document.getElementById('annPopPick').innerHTML = src ? '<i class="fa-solid fa-image" aria-hidden="true"></i> เปลี่ยนรูป' : '<i class="fa-solid fa-image" aria-hidden="true"></i> แนบรูปในป็อปอัพ (ไม่บังคับ) เช่น โปสเตอร์';
     }
-    document.getElementById('annPopOn').addEventListener('change', function () { document.getElementById('annPopSub').hidden = !this.checked; });
     document.getElementById('annPopPick').addEventListener('click', function () { document.getElementById('annPopFile').click(); });
     document.getElementById('annPopRm').addEventListener('click', function () { annPop.image = ''; annPop.changed = true; showAnnPopImg(''); });
     document.getElementById('annPopFile').addEventListener('change', function () {
@@ -903,14 +956,12 @@
       if (editing && on && document.getElementById('annPopReset').checked) pl.resetPopup = true;
       return pl;
     }
-    function openCreateAnn() {
+    function openCreateAnn(popupMode) {
       document.getElementById('annEditId').value = '';
       document.getElementById('createAnnForm').reset();
-      setAnnPop(null);
       setAnnGroup(annIsTop ? '' : (session.department || ''));
       annAud.set('all');
-      document.getElementById('annSubmitBtn').textContent = 'เพิ่มประกาศ';
-      document.getElementById('annModalTitle').textContent = 'เพิ่มประกาศ';
+      setAnnPop(null, popupMode === true);
       document.getElementById('createAnnError').hidden = true;
       showModalEl(annModalEl);
     }
@@ -922,9 +973,7 @@
       document.getElementById('annShowUntil').value = isoToLocalDatetimeInput(a.showUntil);
       setAnnGroup(a.department || '');
       annAud.set(a.audience || 'all');
-      setAnnPop(a);
-      document.getElementById('annSubmitBtn').textContent = 'บันทึกการแก้ไข';
-      document.getElementById('annModalTitle').textContent = 'แก้ไขประกาศ: ' + a.title;
+      setAnnPop(a, !!a.popup);
       document.getElementById('createAnnError').hidden = true;
       showModalEl(annModalEl);
     }
@@ -934,7 +983,8 @@
       document.getElementById('createAnnForm').reset();
       document.getElementById('annSubmitBtn').textContent = 'เพิ่มประกาศ';
     }
-    document.getElementById('openCreateAnnBtn').addEventListener('click', openCreateAnn);
+    document.getElementById('openCreateAnnBtn').addEventListener('click', function () { openCreateAnn(false); });
+    document.getElementById('openCreatePopBtn').addEventListener('click', function () { openCreateAnn(true); });
     document.getElementById('annModalClose').addEventListener('click', cancelEditAnn);
     document.getElementById('annModalCloseX').addEventListener('click', cancelEditAnn);
 
@@ -953,7 +1003,7 @@
       if (annAudErr) { errBox.textContent = annAudErr; errBox.hidden = false; return; }
       var editId = document.getElementById('annEditId').value;
       var okAnn = await askConfirm(
-        editId ? 'ยืนยันบันทึกการแก้ไขประกาศนี้?' : 'ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?',
+        editId ? 'ยืนยันบันทึกการแก้ไขประกาศนี้?' : (document.getElementById('annPopOn').checked ? 'ยืนยันเผยแพร่ประกาศแบบป็อปอัพนี้? (เด้งเมื่อผู้รับเปิดหน้าแรก)' : 'ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?'),
         editId ? 'ยืนยันการแก้ไขประกาศ' : 'ยืนยันการเผยแพร่ประกาศ'
       );
       if (!okAnn) return;
@@ -1062,13 +1112,13 @@
     }
     window.__onHashTab = openTabFromHash;
 
-    loadTabIfNeeded('announcements');
+    loadTabIfNeeded('popups');
     openTabFromHash();
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแถบเมนู) ----------
     window.__refreshPageData = function () {
       var activeBtn = document.querySelector('.tab-btn.active');
-      var activeTabKey = activeBtn ? activeBtn.getAttribute('data-tab') : 'announcements';
+      var activeTabKey = activeBtn ? activeBtn.getAttribute('data-tab') : 'popups';
       resetSettingsCache();
       _usersPromise = null;
       _eventCategoriesPromise = null;
