@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.84.1.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.84.2.211026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -120,9 +120,15 @@
       <label class="up-drop" id="upDrop">
         <input type="file" id="upInput" accept="image/*,.heic,.heif" multiple hidden />
         <i class="fa-solid fa-images" aria-hidden="true"></i>
-        <span><b>เลือกรูป</b> หรือ ลากรูปมาวางที่นี่</span>
+        <span id="upDropTxt"><b>เลือกรูป</b> หรือ ลากรูปมาวางที่นี่</span>
         <small>รูปภาพทุกชนิด (JPG, PNG, HEIC) · ไฟล์ต้นฉบับเต็มขนาด · เลือกได้ครั้งละหลายรูป</small>
       </label>
+      <!-- 1.84.2: เลือกรูปแล้วยังไม่อัป — ตรวจรายการ เอาออก/เพิ่ม แล้วกด "เริ่มอัป" -->
+      <div class="up-stage" id="upStage" hidden>
+        <div class="up-stage-sum"><span>เลือกแล้ว <b id="upStageN">0 รูป</b> · <span id="upStageBytes"></span></span><button type="button" class="linklike up-stage-clr" id="upStageClear"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> ล้างทั้งหมด</button></div>
+        <div class="up-stage-list" id="upStageList"></div>
+        <div class="up-stage-note" id="upStageNote"></div>
+      </div>
       <div class="up-tot" id="upTot" hidden>
         <div class="up-tot-row"><b id="upCount"></b><span id="upBytes"></span></div>
         <div class="up-bar"><span id="upBar"></span></div>
@@ -131,7 +137,17 @@
       </div>
       <div class="up-list" id="upList"></div>
       <div class="up-warn" id="upWarn" hidden><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> อย่าปิดหรือออกจากหน้านี้จนกว่าจะอัปเสร็จ (ย่อแอป/ล็อกจอมือถืออาจทำให้หยุด)</div>
-      <div class="modal-actions"><button type="button" class="btn btn-close" id="upClose">ปิด</button></div>
+      <div class="modal-actions"><button type="button" class="btn btn-close" id="upClose">ปิด</button><button type="button" class="btn btn-success" id="upStart" hidden><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> <span id="upStartTxt">เริ่มอัป</span></button></div>
+    </div>
+  </div>
+  <!-- 1.84.2: แชร์อัลบั้ม — ข้อความ / ลิงก์ + QR (Facebook, LINE) / ฝังในเว็บ -->
+  <div class="modal-backdrop" id="shModal" hidden>
+    <div class="modal-box sh-box">
+      <button type="button" class="modal-close-x" id="shCloseX" aria-label="ปิด">✕</button>
+      <h3><i class="fa-solid fa-share-nodes" aria-hidden="true"></i> แชร์อัลบั้ม</h3>
+      <div class="sh-tabs" id="shTabs" role="tablist"><button type="button" data-sh="text" role="tab">ข้อความ</button><button type="button" data-sh="link" role="tab">ลิงก์ + QR</button><button type="button" data-sh="embed" role="tab"><i class="fa-solid fa-code" aria-hidden="true"></i> ฝังในเว็บ</button></div>
+      <div id="shBody"></div>
+      <div class="modal-actions"><button type="button" class="btn btn-close" id="shClose">ปิด</button></div>
     </div>
   </div>
   <!-- 1.82: จัดการรูป — รายการไฟล์ (ไม่มีรูปย่อ) เลือกแล้วลบ -->
@@ -166,8 +182,8 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.84.1.211026"></script>
-  <script src="assets/gallery.js?v=1.84.1.211026"></script>
+  <script src="assets/api.js?v=1.84.2.211026"></script>
+  <script src="assets/gallery.js?v=1.84.2.211026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -414,7 +430,7 @@
       var acts = [];
       if (managed) { acts.push(['upload', 'fa-cloud-arrow-up', 'อัปรูป']); acts.push(['manage', 'fa-list-check', 'จัดการรูป']); }
       if (a.canEdit) acts.push(['edit', 'fa-pen', 'แก้ไข']);
-      if (a.mine) acts.push(['copy', 'fa-copy', 'คัดลอกข้อความ']);
+      acts.push(['share', 'fa-share-nodes', 'แชร์']); // 1.84.2: ข้อความ / ลิงก์ + QR / ฝังในเว็บ
       $('albBody').innerHTML = '<div class="alb-pg2">' +
         '<h3>' + escapeHtml(a.title) + '</h3>' +
         '<div class="alb-pg-meta"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(albumDateLabel(a)) + ' · ' + escapeHtml(albumSemLabel(a)) + ' ปีการศึกษา ' + escapeHtml(a.academicYear) + '</div>' +
@@ -438,11 +454,87 @@
       if (k === 'upload') openUpload(a);
       else if (k === 'manage') openManage();
       else if (k === 'edit') { albReturn = a.id; hideModalEl($('albModal')); openForm(albums.filter(function (x) { return x.id === a.id; })[0] || a); } // 1.84: หน้าแก้ไขต้องอยู่บนสุด
-      else if (k === 'copy') copyAlbumText(a);
+      else if (k === 'share') openShare(albums.filter(function (x) { return x.id === a.id; })[0] || a);
     });
     function closeAlbum() { hideModalEl($('albModal')); albPage.id = ''; if (/^#album=/.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* ข้าม */ } } }
     $('albCloseX').addEventListener('click', closeAlbum);
 
+    // ---------- 1.84.2: แชร์อัลบั้ม ----------
+    var sh = { a: null, tab: 'link', style: 'grid' };
+    function cardLink(a) { return API_URL.replace(/\/+$/, '') + '/a/' + encodeURIComponent(a.id); }
+    function embedSrc(a, st) { return location.href.replace(/[#?].*$/, '').replace(/[^\/]*$/, '') + 'embed.html#a=' + encodeURIComponent(a.id) + (st === 'card' ? '&s=card' : ''); }
+    function embedCode(a, st) {
+      var card = st === 'card';
+      return '<iframe src="' + embedSrc(a, st) + '" width="' + (card ? '340' : '100%') + '" height="' + (card ? '330' : '390') + '" style="border:0;max-width:' + (card ? '100%' : '760px') + '" loading="lazy" title="' + String(a.title).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }) + '"></iframe>';
+    }
+    function openShare(a) {
+      sh.a = a; sh.tab = a.isPublic ? 'link' : 'text'; sh.style = isManagedAlbum(a) ? 'grid' : 'card';
+      renderShare(); showModalEl($('shModal'));
+    }
+    function copyRow(id, val, label) { return '<div class="sh-row"><label for="' + id + '">' + label + '</label><div class="sh-copy"><input type="text" id="' + id + '" value="' + escapeHtml(val) + '" readonly /><button type="button" class="btn btn-success btn-sm" data-sh-copy="' + id + '"><i class="fa-solid fa-copy" aria-hidden="true"></i> คัดลอก</button></div></div>'; }
+    function pubGate(a) {
+      return '<div class="sh-gate"><i class="fa-solid fa-lock" aria-hidden="true"></i><div><b>อัลบั้มนี้แสดงเฉพาะในระบบ</b><span>ลิงก์การ์ดรูปปกและการฝังในเว็บใช้ได้เฉพาะอัลบั้มที่ "แสดงในหน้าสาธารณะ"</span>' +
+        (a.canEdit ? '<button type="button" class="btn btn-success btn-sm" id="shMakePub"><i class="fa-solid fa-globe" aria-hidden="true"></i> เปิดแสดงในหน้าสาธารณะ</button>' : '<span>— ให้ผู้สร้างอัลบั้ม เจ้าหน้าที่ หรือผู้ดูแลระบบเปิดก่อน</span>') + '</div></div>';
+    }
+    function renderShare() {
+      var a = sh.a; if (!a) return;
+      Array.prototype.forEach.call($('shTabs').children, function (b) { var on = b.getAttribute('data-sh') === sh.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      var h = '';
+      if (sh.tab === 'text') {
+        h = '<textarea class="sh-text" id="shText" readonly rows="6">' + escapeHtml(albumShareText(a)) + '</textarea>' +
+          '<div class="sh-acts"><button type="button" class="btn btn-success" data-sh-copy="shText"><i class="fa-solid fa-copy" aria-hidden="true"></i> คัดลอกข้อความ</button>' + (navigator.share ? '<button type="button" class="btn btn-secondary" id="shNative"><i class="fa-solid fa-share-from-square" aria-hidden="true"></i> ส่งต่อ…</button>' : '') + '</div>';
+      } else if (sh.tab === 'link') {
+        if (a.isPublic) {
+          var cl = cardLink(a);
+          h = copyRow('shCard', cl, '<i class="fa-solid fa-image" aria-hidden="true"></i> ลิงก์การ์ดรูปปก <em>แนะนำสำหรับ Facebook / LINE — ขึ้นรูปปก ชื่อ และจำนวนรูป</em>') +
+            '<div class="sh-soc"><a class="sh-fb" href="https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(cl) + '" target="_blank" rel="noopener"><b>f</b> แชร์ Facebook</a><a class="sh-line" href="https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(cl) + '" target="_blank" rel="noopener"><i class="fa-solid fa-comment" aria-hidden="true"></i> แชร์ LINE</a></div>';
+        } else h = pubGate(a);
+        h += copyRow('shDrive', a.url, '<i class="fa-solid fa-folder-open" aria-hidden="true"></i> ลิงก์ ' + (/photos/.test(a.url || '') ? 'Google Photos' : 'Google Drive') + ' <em>เปิดโฟลเดอร์ตรง · การ์ดบน Facebook ไม่มีรูปอัลบั้ม</em>');
+        if (a.isPublic) h += '<div class="sh-qr"><div id="shQr"></div><span>QR Code ของลิงก์การ์ด — สแกนแล้วเปิดรูปทั้งหมด<br><button type="button" class="linklike" id="shQrSave"><i class="fa-solid fa-download" aria-hidden="true"></i> บันทึกรูป QR</button></span></div>';
+      } else {
+        if (!a.isPublic) h = pubGate(a);
+        else {
+          var managed = isManagedAlbum(a);
+          if (!managed) sh.style = 'card';
+          h = '<div class="sh-style" id="shStyle"><button type="button" data-st="grid"' + (managed ? '' : ' disabled title="อัลบั้มแบบลิงก์โฟลเดอร์ของครู ระบบไม่มีรายการรูป — ใช้แบบการ์ด"') + ' class="' + (sh.style === 'grid' ? 'on' : '') + '"><span class="sh-mini g"><i></i><i></i><i></i><i></i><i></i></span>แบบตารางรูป</button><button type="button" data-st="card" class="' + (sh.style === 'card' ? 'on' : '') + '"><span class="sh-mini c"><i></i></span>แบบการ์ด (รูปปก)</button></div>' +
+            '<textarea class="sh-code" id="shCode" readonly rows="5">' + escapeHtml(embedCode(a, sh.style)) + '</textarea>' +
+            '<div class="sh-acts sh-acts-sp"><span class="hint">วางในเว็บโรงเรียน, Google Sites (แทรก → ฝัง → ฝังโค้ด), WordPress (บล็อก HTML) · Facebook ฝังไม่ได้ ใช้แท็บ "ลิงก์ + QR"</span><button type="button" class="btn btn-success" data-sh-copy="shCode"><i class="fa-solid fa-copy" aria-hidden="true"></i> คัดลอกโค้ด</button></div>' +
+            '<div class="sh-prev-l">ตัวอย่าง</div><div class="sh-prev"><iframe src="' + escapeHtml(embedSrc(a, sh.style)) + '" title="ตัวอย่างอัลบั้มที่ฝัง" loading="lazy" style="border:0;width:' + (sh.style === 'card' ? '340px;max-width:100%' : '100%') + ';height:' + (sh.style === 'card' ? 330 : 390) + 'px"></iframe></div>';
+        }
+      }
+      $('shBody').innerHTML = h;
+      var qr = $('shQr');
+      if (qr) { try { new QRCode(qr, { text: cardLink(a), width: 132, height: 132 }); } catch (e) { qr.textContent = ''; } }
+    }
+    $('shTabs').addEventListener('click', function (e) { var b = e.target.closest('[data-sh]'); if (!b) return; sh.tab = b.getAttribute('data-sh'); renderShare(); });
+    $('shBody').addEventListener('click', async function (e) {
+      var c = e.target.closest('[data-sh-copy]');
+      if (c) {
+        var el = $(c.getAttribute('data-sh-copy')), v = el.value;
+        try { await navigator.clipboard.writeText(v); } catch (er) { el.select(); try { document.execCommand('copy'); } catch (er2) { showToast('คัดลอกไม่สำเร็จ', true); return; } }
+        showToast(c.getAttribute('data-sh-copy') === 'shCode' ? 'คัดลอกโค้ดแล้ว — นำไปวางในเว็บได้เลย' : 'คัดลอกแล้ว');
+        return;
+      }
+      var st = e.target.closest('[data-st]');
+      if (st && !st.disabled) { sh.style = st.getAttribute('data-st'); renderShare(); return; }
+      if (e.target.closest('#shNative')) { try { await navigator.share({ text: albumShareText(sh.a) }); } catch (er) { /* ยกเลิก */ } return; }
+      if (e.target.closest('#shQrSave')) {
+        var cv = document.querySelector('#shQr canvas'), im = document.querySelector('#shQr img');
+        var src = cv ? cv.toDataURL('image/png') : im ? im.src : '';
+        if (src) { var dl = document.createElement('a'); dl.href = src; dl.download = 'QR-' + String(sh.a.title).replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 60) + '.png'; document.body.appendChild(dl); dl.click(); dl.remove(); }
+        return;
+      }
+      if (e.target.closest('#shMakePub')) {
+        var a = sh.a;
+        var r = await withProgress('กำลังเปิดแสดงในหน้าสาธารณะ', function () { return apiCall('albumUpdate', { id: a.id, onlyPublic: true, isPublic: true }); }, { successLabel: 'เปิดแสดงในหน้าสาธารณะแล้ว' });
+        if (!r.ok) return;
+        a.isPublic = true;
+        albums.forEach(function (x) { if (x.id === a.id) x.isPublic = true; });
+        if (albPage.data && albPage.data.album && albPage.data.album.id === a.id) { albPage.data.album.isPublic = true; if (!$('albModal').hidden) renderAlbumPage(); }
+        render(); renderShare();
+      }
+    });
+    ['shCloseX', 'shClose'].forEach(function (id) { $(id).addEventListener('click', function () { hideModalEl($('shModal')); }); });
     // ---------- อัปรูป ----------
     var UP_CONC = 3, UP_BATCH = 10, RELAY_MAX = 25 * 1024 * 1024;
     var up = null; // { album, items[], paused, mode('auto'|'direct'), directBroken, reason, done[], running }
@@ -462,10 +554,42 @@
       if (!up) return;
       var imgs = Array.from(list || []).filter(function (f) { return /^image\//.test(f.type) || /\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name); });
       if (!imgs.length) { showToast('ไม่พบไฟล์รูปภาพ', true); return; }
-      imgs.forEach(function (f) { up.items.push({ file: f, name: f.name, size: f.size, mime: mimeOf(f), state: 'wait', pct: 0, mode: '', err: '' }); });
+      if (up.running) { // กำลังอัปอยู่ = ต่อคิวทันที (แบบเดิม)
+        imgs.forEach(function (f) { up.items.push({ file: f, name: f.name, size: f.size, mime: mimeOf(f), state: 'wait', pct: 0, mode: '', err: '' }); });
+        renderUpload(); startUpload(); return;
+      }
+      // 1.84.2: ยังไม่อัป — พักไว้ให้ตรวจ แล้วกด "เริ่มอัป" · ตัดไฟล์ที่ชื่อและขนาดซ้ำ (ในที่เลือก / ที่อัปแล้วในอัลบั้ม)
+      var have = {};
+      var addKey = function (n, z) { have[String(n).toLowerCase() + '|' + z] = 1; };
+      (up.stage || []).forEach(function (x) { addKey(x.name, x.size); });
+      up.items.forEach(function (x) { if (x.state === 'done') addKey(x.name, x.size); });
+      if (albPage.data && albPage.data.album && albPage.data.album.id === up.album.id) (albPage.data.photos || []).forEach(function (x) { addKey(x.name, x.size); });
+      var dup = 0;
+      up.stage = up.stage || [];
+      imgs.forEach(function (f) {
+        var k = String(f.name).toLowerCase() + '|' + f.size;
+        if (have[k]) { dup++; return; }
+        have[k] = 1;
+        var prev = /^image\/(jpeg|png|webp|gif)$/.test(f.type) ? URL.createObjectURL(f) : '';
+        up.stage.push({ file: f, name: f.name, size: f.size, mime: mimeOf(f), prev: prev });
+      });
+      up.stageDup = (up.stageDup || 0) + dup;
       renderUpload();
-      startUpload();
     }
+    function clearStage() { if (!up || !up.stage) return; up.stage.forEach(function (x) { if (x.prev) URL.revokeObjectURL(x.prev); }); up.stage = []; up.stageDup = 0; }
+    function startStaged() {
+      if (!up || !up.stage || !up.stage.length) return;
+      up.stage.forEach(function (x) { if (x.prev) URL.revokeObjectURL(x.prev); up.items.push({ file: x.file, name: x.name, size: x.size, mime: x.mime, state: 'wait', pct: 0, mode: '', err: '' }); });
+      up.stage = []; up.stageDup = 0;
+      renderUpload(); startUpload();
+    }
+    $('upStart').addEventListener('click', startStaged);
+    $('upStageClear').addEventListener('click', function () { clearStage(); renderUpload(); });
+    $('upStageList').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-st-rm]'); if (!b || !up || !up.stage) return;
+      var i = +b.getAttribute('data-st-rm'), x = up.stage[i];
+      if (x) { if (x.prev) URL.revokeObjectURL(x.prev); up.stage.splice(i, 1); renderUpload(); }
+    });
     $('upInput').addEventListener('change', function () { addFiles($('upInput').files); $('upInput').value = ''; });
     var drop = $('upDrop');
     ['dragenter', 'dragover'].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
@@ -473,8 +597,30 @@
     drop.addEventListener('drop', function (e) { addFiles(e.dataTransfer && e.dataTransfer.files); });
     var upRenderTimer = 0;
     function renderUploadSoon() { if (!upRenderTimer) upRenderTimer = setTimeout(function () { upRenderTimer = 0; renderUpload(); }, 200); }
+    function renderStage() {
+      var st = (up && up.stage) || [], on = st.length > 0 && !up.running;
+      $('upStage').hidden = !on;
+      $('upStart').hidden = !on;
+      $('upClose').textContent = on ? 'ยกเลิก' : 'ปิด';
+      $('upDrop').classList.toggle('compact', on);
+      $('upDropTxt').innerHTML = on ? '<b>เพิ่มรูปอีก</b> หรือ ลากมาวางเพิ่ม' : '<b>เลือกรูป</b> หรือ ลากรูปมาวางที่นี่';
+      if (!on) { $('upStageList').innerHTML = ''; return; }
+      var tot = st.reduce(function (s, x) { return s + x.size; }, 0);
+      $('upStageN').textContent = st.length + ' รูป';
+      $('upStageBytes').textContent = formatBytes(tot);
+      $('upStartTxt').textContent = 'เริ่มอัป ' + st.length + ' รูป';
+      var LIM = 120;
+      $('upStageList').innerHTML = st.slice(0, LIM).map(function (x, i) {
+        return '<div class="up-st-it">' + (x.prev ? '<img src="' + x.prev + '" alt="" loading="lazy" />' : '<span class="up-st-ic"><i class="fa-solid fa-image" aria-hidden="true"></i></span>') +
+          '<div class="up-nm"><b>' + escapeHtml(x.name) + '</b><span class="muted">' + escapeHtml(formatBytes(x.size)) + '</span></div>' +
+          '<button type="button" class="up-st-rm" data-st-rm="' + i + '" aria-label="เอา ' + escapeHtml(x.name) + ' ออก" title="เอาออก"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>';
+      }).join('') + (st.length > LIM ? '<div class="muted up-more">… และอีก ' + (st.length - LIM) + ' รูป</div>' : '');
+      var mode = up.mode === 'relay' ? '<i class="fa-solid fa-route" aria-hidden="true"></i> จะส่งผ่าน relay' : '<i class="fa-solid fa-bolt" aria-hidden="true"></i> จะส่งตรงเข้า Google Drive';
+      $('upStageNote').innerHTML = mode + (up.stageDup ? ' · ไฟล์ซ้ำ (ชื่อและขนาดเดียวกัน) ' + up.stageDup + ' รูป ตัดออกให้แล้ว' : '');
+    }
     function renderUpload() {
       if (!up) return;
+      renderStage();
       var its = up.items, n = its.length, nd = its.filter(function (x) { return x.state === 'done'; }).length, ne = its.filter(function (x) { return x.state === 'err'; }).length;
       var tot = its.reduce(function (s, x) { return s + x.size; }, 0), got = its.reduce(function (s, x) { return s + (x.state === 'done' ? x.size : x.size * x.pct / 100); }, 0);
       $('upTot').hidden = !n;
@@ -507,6 +653,7 @@
     $('upRetryAll').addEventListener('click', function () { if (!up) return; up.items.forEach(function (x) { if (x.state === 'err') { x.state = 'wait'; x.err = ''; x.pct = 0; } }); startUpload(); renderUpload(); });
     $('upPause').addEventListener('click', function () { if (!up) return; up.paused = !up.paused; renderUpload(); });
     function closeUpload() {
+      if (up && !up.running && up.stage && up.stage.length) { clearStage(); renderUpload(); } // 1.84.2: ปิดก่อนกดเริ่ม = ยกเลิก
       if (up && up.running) { showToast('ยังอัปไม่เสร็จ — หน้าต่างนี้ปิดได้ แต่อย่าออกจากหน้านี้', false); }
       hideModalEl($('upModal'));
     }
