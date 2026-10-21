@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.tear-jeerasak.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.82';
-var APP_VERSION = '1.82.0.191026';
+var WORKER_MIN_VERSION = '1.83';
+var APP_VERSION = '1.83.0.201026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1318,11 +1318,19 @@ function openAvatarModal() {
   showModalEl(document.getElementById('sharedAvatarModal'));
 }
 
+// 1.83: ข้อความในป็อปอัพยืนยันแสดงตัวหนา (<b>/<strong>) และขึ้นบรรทัดใหม่ (<br>) ได้ — นอกนั้นแสดงเป็นตัวอักษรล้วนเสมอ
+// (escape ทั้งข้อความก่อน แล้วคืนเฉพาะแท็กที่อนุญาต · ค่าที่ผู้เรียก escapeHtml มาแล้วไม่ถูก escape ซ้ำ)
+function confirmMsgHtml(msg) {
+  return escapeHtml(String(msg == null ? '' : msg))
+    .replace(/&lt;(\/?)(b|strong)&gt;/g, '<$1$2>')
+    .replace(/&lt;br\s*\/?&gt;/g, '<br>')
+    .replace(/&amp;(amp|lt|gt|quot|#39|#039|nbsp);/g, '&$1;');
+}
 function askConfirm(msg, title) {
   ensureSharedModals();
   return new Promise(function (resolve) {
     document.getElementById('sharedConfirmTitle').textContent = title || 'ยืนยันการทำรายการ';
-    document.getElementById('sharedConfirmMsg').textContent = msg;
+    document.getElementById('sharedConfirmMsg').innerHTML = confirmMsgHtml(msg);
     var modal = document.getElementById('sharedConfirmModal');
     showModalEl(modal);
     var yesBtn = document.getElementById('sharedConfirmYes');

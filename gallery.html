@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.82.0.191026" />
+<link rel="stylesheet" href="assets/style.css?v=1.83.0.201026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -172,8 +172,8 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.82.0.191026"></script>
-  <script src="assets/gallery.js?v=1.82.0.191026"></script>
+  <script src="assets/api.js?v=1.83.0.201026"></script>
+  <script src="assets/gallery.js?v=1.83.0.201026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -353,7 +353,7 @@
     $('galAccSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-acc]'); if (b) setAccess(b.getAttribute('data-acc')); });
     async function confirmDeleteAlbum(a) {
       if (!galInfo.managedReady) return askConfirm('ลบอัลบั้ม <b>' + escapeHtml(a.title) + '</b> ออกจากคลังรูปภาพ? (รูปใน Google Drive ไม่ถูกลบ)', 'ยืนยันการลบ');
-      return askConfirm('ย้ายอัลบั้ม <b>' + escapeHtml(a.title) + '</b>' + (isManagedAlbum(a) && a.photoCount ? ' (' + a.photoCount + ' รูป)' : '') + ' ไปถังขยะ?<br>อัลบั้มจะหายจากคลังรูปภาพ' + (isManagedAlbum(a) ? ' และปิดลิงก์ใน Google Drive' : '') + 'ทันที · กู้คืนได้ภายใน ' + galInfo.trashDays + ' วัน' + (isManagedAlbum(a) ? '' : ' (โฟลเดอร์ของครูใน Google Drive ไม่ถูกลบ)'), 'ยืนยันการลบอัลบั้ม');
+      return askConfirm('ย้ายอัลบั้ม <b>' + escapeHtml(a.title) + '</b>' + (isManagedAlbum(a) && a.photoCount ? ' (' + a.photoCount + ' รูป)' : '') + ' ไปถังขยะ?<br>อัลบั้มจะหายจากคลังรูปภาพ' + (isManagedAlbum(a) ? ' และปิดลิงก์ใน Google Drive' : '') + ' ทันที · กู้คืนได้ภายใน ' + galInfo.trashDays + ' วัน' + (isManagedAlbum(a) ? '' : ' (โฟลเดอร์ของครูใน Google Drive ไม่ถูกลบ)'), 'ยืนยันการลบอัลบั้ม');
     }
 
     // ---------- แท็บ อัลบั้มทั้งหมด / ถังขยะ ----------
@@ -400,7 +400,7 @@
       if (e.target.closest('[data-tr-restore]')) {
         if (!(await askConfirm('กู้คืนอัลบั้ม <b>' + escapeHtml(a.title) + '</b>?' + (isManagedAlbum(a) ? ' (สิทธิ์ใน Google Drive กลับเป็นแบบเดิม)' : ''), 'ยืนยันการกู้คืน'))) return;
         var r = await withProgress('กำลังกู้คืน', function () { return apiCall('albumRestore', { id: a.id }); }, { successLabel: 'กู้คืนอัลบั้มแล้ว' });
-        if (r.ok) { await load(); loadTrash(); }
+        if (r.ok) { if (r.data && r.data.warn) showToast(r.data.warn, true); await load(); loadTrash(); }
         return;
       }
       if (e.target.closest('[data-tr-purge]')) {
@@ -461,7 +461,7 @@
     }
     function openUpload(a) {
       if (up && up.running && up.album.id !== a.id) { showToast('กำลังอัปรูปเข้าอัลบั้ม "' + up.album.title + '" อยู่ — รอให้เสร็จก่อน', true); showModalEl($('upModal')); return; }
-      if (!up || !up.running) up = { album: a, items: [], paused: false, mode: galInfo.uploadMode, directBroken: false, reason: '', done: [], running: false, sent: 0 };
+      if (!up || !up.running) up = { album: a, items: [], paused: false, mode: galInfo.uploadMode, reason: '', done: [], running: false, sent: 0 };
       $('upTitle').innerHTML = '<i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> อัปรูปเข้า "' + escapeHtml(a.title) + '"';
       renderUpload();
       showModalEl($('upModal'));
@@ -492,10 +492,11 @@
       $('upBytes').textContent = formatBytes(got) + ' / ' + formatBytes(tot) + eta;
       $('upBar').style.width = (tot ? Math.round(got / tot * 100) : 0) + '%';
       var relayN = its.filter(function (x) { return x.mode === 'relay'; }).length;
-      $('upMode').className = 'up-mode ' + (up.directBroken || relayN ? 'relay' : 'direct');
-      $('upMode').innerHTML = up.directBroken || relayN ? '<i class="fa-solid fa-route" aria-hidden="true"></i> ส่งผ่าน relay (สำรอง)' : '<i class="fa-solid fa-bolt" aria-hidden="true"></i> ส่งตรงเข้า Google Drive';
-      $('upMode').setAttribute('data-mode', up.directBroken || relayN ? 'relay' : 'direct');
-      $('upWhy').hidden = !up.reason; $('upWhy').textContent = up.reason ? (up.mode === 'direct' ? 'ส่งตรงไม่สำเร็จ: ' : 'ส่งตรงไม่สำเร็จ จึงส่งผ่าน relay แทน: ') + up.reason : '';
+      var directN = its.filter(function (x) { return x.mode === 'direct'; }).length;
+      $('upMode').className = 'up-mode ' + (relayN ? 'relay' : 'direct');
+      $('upMode').innerHTML = relayN ? '<i class="fa-solid fa-route" aria-hidden="true"></i> ส่งผ่าน relay (สำรอง) ' + relayN + ' ไฟล์' + (directN ? ' · ส่งตรง ' + directN + ' ไฟล์' : '') : '<i class="fa-solid fa-bolt" aria-hidden="true"></i> ส่งตรงเข้า Google Drive';
+      $('upMode').setAttribute('data-mode', relayN ? 'relay' : 'direct');
+      $('upWhy').hidden = !(up.reason && relayN); $('upWhy').textContent = up.reason && relayN ? 'ส่งตรงไม่สำเร็จ จึงส่งผ่าน relay แทน: ' + up.reason : '';
       $('upPause').hidden = !up.running;
       $('upPause').innerHTML = up.paused ? '<i class="fa-solid fa-play" aria-hidden="true"></i> อัปต่อ' : '<i class="fa-solid fa-pause" aria-hidden="true"></i> หยุดชั่วคราว';
       $('upRetryAll').hidden = !(ne && !up.running);
@@ -505,7 +506,7 @@
         var idx = its.indexOf(x);
         var st = x.state === 'done' ? '<span class="ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> เสร็จ' + (x.mode === 'relay' ? ' <em class="relay-tag">relay</em>' : '') + '</span>'
           : x.state === 'err' ? '<span class="bad" title="' + escapeHtml(x.err) + '"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> ไม่สำเร็จ</span> <button type="button" class="linklike" data-up-retry="' + idx + '">ลองใหม่</button>'
-          : x.state === 'run' ? x.pct + '%' : 'รอคิว';
+          : x.state === 'run' ? (x.retry ? 'ลองใหม่ (' + x.retry + ') ' : '') + x.pct + '%' : 'รอคิว';
         return '<div class="up-it ' + x.state + '"><i class="fa-solid fa-image" aria-hidden="true"></i><div class="up-nm"><div><b>' + escapeHtml(x.name) + '</b> <span class="muted">· ' + escapeHtml(formatBytes(x.size)) + '</span></div>' +
           (x.state === 'run' ? '<div class="up-bar sm"><span style="width:' + x.pct + '%"></span></div>' : '') + (x.state === 'err' ? '<div class="up-err">' + escapeHtml(x.err) + '</div>' : '') + '</div><span class="up-st">' + st + '</span></div>';
       }).join('') + (its.length > show.length ? '<div class="muted up-more">… และอีก ' + (its.length - show.length) + ' รูป</div>' : '');
@@ -566,9 +567,15 @@
       var need = up.items.filter(function (x) { return (x === cur || x.state === 'wait') && !x.session && !x.sessionErr && !x.sessPending; }).slice(0, UP_BATCH);
       if (cur && need.indexOf(cur) === -1 && !cur.session && !cur.sessionErr && !cur.sessPending) need.unshift(cur);
       need.forEach(function (x) { x.sessPending = true; });
-      if (!need.length || up.directBroken) { need.forEach(function (x) { x.sessPending = false; }); return; }
+      if (!need.length) return;
       var r;
-      try { r = await apiCall('albumUploadBegin', { id: up.album.id, origin: location.origin, files: need.map(function (x) { return { name: x.name, size: x.size, mime: x.mime }; }) }); }
+      try {
+        // 1.83: relay ตอบช้า/ล้มชั่วคราว (เช่น ครั้งแรกที่ถูกเรียก) = ลองใหม่อีก 2 ครั้ง
+        for (var att = 0; ; att++) {
+          try { r = await apiCall('albumUploadBegin', { id: up.album.id, origin: location.origin, files: need.map(function (x) { return { name: x.name, size: x.size, mime: x.mime }; }) }); break; }
+          catch (e) { if (att >= 2) throw e; await sleep(1500 * (att + 1)); }
+        }
+      }
       finally { need.forEach(function (x) { x.sessPending = false; }); }
       need.forEach(function (x, i) { var s0 = (r.sessions || [])[i] || {}; if (s0.url) x.session = s0.url; else x.sessionErr = s0.error || 'ขอช่องอัปโหลดไม่สำเร็จ'; });
     }
@@ -589,8 +596,11 @@
         if (!it) return;
         it.state = 'run'; it.pct = 0; it.sentBytes = 0; renderUploadSoon();
         try {
-          var res = null;
-          if (!up.directBroken) {
+          // 1.83: ส่งตรงไม่สำเร็จ = ขอช่องอัปโหลดใหม่แล้วลองอีก 2 ครั้ง · ยังไม่ได้ (โหมดอัตโนมัติ) = ไฟล์นี้ไฟล์เดียวส่งผ่าน relay
+          // ไฟล์ถัดไปกลับมาลองส่งตรงก่อนเสมอ (ไม่ค้างโหมดสำรองทั้งรอบ)
+          var res = null, lastErr = null;
+          for (var att = 0; att < 3 && !res; att++) {
+            if (att > 0) { await sleep(1500 * att); it.session = ''; it.sessionErr = ''; it.sentBytes = 0; it.pct = 0; it.retry = att; renderUploadSoon(); }
             if (!it.session && !it.sessionErr) {
               if (sessLock) { try { await sessLock; } catch (e) { /* ขอใหม่ด้านล่าง */ } }
               if (!it.session && !it.sessionErr) { sessLock = ensureSessions(it).finally(function () { sessLock = null; }); try { await sessLock; } catch (e2) { it.sessionErr = e2.message; } }
@@ -599,13 +609,15 @@
             try {
               if (it.sessionErr) throw new Error(it.sessionErr);
               res = await uploadDirect(it); res.mode = 'direct';
-            } catch (e) {
-              if (it.sentBytes) throw e; // ส่งไปบางส่วนแล้วหลุด — ไม่สลับวิธี (กดลองใหม่ได้)
-              if (up.mode === 'direct') throw new Error('ส่งตรงไม่สำเร็จ: ' + e.message + ' (ตั้งค่าเป็น "ส่งตรงเท่านั้น")');
-              up.directBroken = true; up.reason = e.message; renderUploadSoon();
-            }
+            } catch (e) { lastErr = e; if (it.sentBytes) break; } // ส่งไปบางส่วนแล้วหลุด (ลองต่อในตัวแล้ว) — ไม่ลองซ้ำ
           }
-          if (!res) { it.session = ''; res = await uploadRelay(it); res.mode = 'relay'; }
+          if (!res) {
+            var why = (lastErr && lastErr.message) || 'ไม่ทราบสาเหตุ';
+            if (it.sentBytes) throw new Error('ส่งตรงไม่สำเร็จกลางทาง: ' + why + ' (กด "ลองใหม่")');
+            if (up.mode === 'direct') throw new Error('ส่งตรงไม่สำเร็จ (ลอง 3 ครั้ง): ' + why + ' (ตั้งค่าเป็น "ส่งตรงเท่านั้น")');
+            up.reason = why; it.session = '';
+            res = await uploadRelay(it); res.mode = 'relay';
+          }
           it.state = 'done'; it.pct = 100; it.mode = res.mode;
           up.done.push({ fileId: res.fileId, name: res.name, size: res.size, mime: it.mime, mode: res.mode });
           it.file = null; // ปล่อยหน่วยความจำ
