@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.84.2.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.0.211026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -156,7 +156,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.84.2.211026"></script>
+  <script src="assets/api.js?v=1.85.0.211026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -452,10 +452,11 @@
     }
 
     // อัพไฟล์เพิ่มเข้าคำสั่ง (ไฟล์ที่ startIdx+1 .. total ของแถบคืบหน้า) — คืนรายการไฟล์ที่ไม่สำเร็จ
-    async function uploadMoreFiles(orderId, list, p, startIdx, total, logAdd) {
+    async function uploadMoreFiles(orderId, list, p, startIdx, total, logAdd, done) {
       var failed = [], seg = 100 / total;
       for (var k = 0; k < list.length; k++) {
         var f = list[k], i = startIdx + k, s0 = i * seg;
+        if (done && done.indexOf(f) !== -1) continue; // 1.85: ส่งใหม่ — ข้ามไฟล์ที่สำเร็จแล้ว
         var head = 'ไฟล์ ' + (i + 1) + '/' + total + ': ' + f.name;
         try {
           p.setProgress(s0 + seg * 0.02, 'กำลังเตรียม ' + head);
@@ -464,6 +465,7 @@
           var u = await uploadToRelay(f, fp);
           p.setProgress(s0 + seg * 0.94, 'กำลังบันทึก ' + head);
           await apiCall('orderFileFinalize', { orderId: orderId, fileRowId: fp.fileRowId, fileId: u.fileId, fileUrl: u.url, directUrl: u.directUrl, logAdd: !!logAdd });
+          if (done) done.push(f);
         } catch (err) { failed.push(f.name + ': ' + (err && err.message)); }
         p.setProgress(s0 + seg);
       }
@@ -485,9 +487,10 @@
       if (!addFilesList.length) return showAddErr('กรุณาเลือกไฟล์ PDF อย่างน้อย 1 ไฟล์');
       var o = addFilesOrder, list = addFilesList.slice();
       closeAddFiles();
+      var doneAdd = [];
       var r = await withProgress('กำลังเพิ่มไฟล์ในคำสั่ง...', async function (p) {
-        var failed = await uploadMoreFiles(o.id, list, p, 0, list.length, true);
-        if (failed.length) throw new Error('อัพโหลดไม่สำเร็จ ' + failed.length + '/' + list.length + ' ไฟล์ — ' + failed.join('; '));
+        var failed = await uploadMoreFiles(o.id, list, p, 0, list.length, true, doneAdd);
+        if (failed.length) throw Object.assign(new Error('อัพโหลดไม่สำเร็จ ' + failed.length + '/' + list.length + ' ไฟล์ — ' + failed.join('; ')), { retryLabel: 'ส่งใหม่ ' + failed.length + ' ไฟล์' });
         return true;
       }, { successLabel: 'เพิ่ม ' + list.length + ' ไฟล์แล้ว', upload: true });
       expanded[o.id] = true;
@@ -522,19 +525,23 @@
         if (r1.data && r1.data.driveSynced === false) showToast('บันทึกข้อมูลแล้ว แต่ยังเปลี่ยนชื่อ/ย้ายไฟล์ใน Google Drive ไม่ได้ (ผู้ดูแลระบบต้องอัพเดต Drive relay)', true);
       } else {
         var files = ordSelectedFiles.slice();
+        var made = null, doneMore = []; // 1.85: ส่งใหม่ — ไม่สร้างคำสั่งซ้ำ / ไม่ส่งไฟล์ที่สำเร็จแล้วซ้ำ
         var r2 = await withProgress('กำลังอัพโหลดคำสั่ง...', async function (p) {
           // 1.50.121026: แสดงขั้นตอน + แถบคืบหน้าแบบประมาณจากขนาดไฟล์ + ตัวจับเวลา (ดู withProgress opts.upload ใน api.js)
           // 1.51.121026: ไฟล์แรกสร้างคำสั่ง (orderUploadPrepare/Finalize) ไฟล์ที่เหลือเพิ่มเข้าคำสั่งเดียวกัน (orderFilePrepare/Finalize)
           var n = files.length, seg = 100 / n, file = files[0];
           var head = function (i) { return (n > 1 ? 'ไฟล์ ' + (i + 1) + '/' + n + ': ' : '') + files[i].name; };
-          p.setProgress(2, 'กำลังเตรียม ' + head(0));
-          var prep = await apiCall('orderUploadPrepare', Object.assign({ fileName: file.name, mimeType: 'application/pdf', fileSize: file.size }, fields));
-          p.creep(seg * 0.08, seg * 0.9, estimateUploadMs(file.size), 'กำลังอัพโหลด ' + head(0) + ' (' + formatBytes(file.size) + ') ไปที่ Google Drive');
-          var up = await uploadToRelay(file, prep);
-          p.setProgress(seg * 0.94, 'กำลังบันทึกรายการคำสั่ง');
-          await apiCall('orderUploadFinalize', { orderId: prep.orderId, fileId: up.fileId, fileUrl: up.url, directUrl: up.directUrl, fileName: prep.uploadFileName || file.name, mimeType: 'application/pdf' });
-          var failed = await uploadMoreFiles(prep.orderId, files.slice(1), p, 1, n, false);
-          if (failed.length) throw new Error('สร้างคำสั่งแล้ว แต่อัพโหลดไม่สำเร็จ ' + failed.length + '/' + n + ' ไฟล์ — ' + failed.join('; ') + ' (กด "เพิ่มไฟล์" ในคำสั่งนี้เพื่อลองใหม่)');
+          if (!made) {
+            p.setProgress(2, 'กำลังเตรียม ' + head(0));
+            var prep = await apiCall('orderUploadPrepare', Object.assign({ fileName: file.name, mimeType: 'application/pdf', fileSize: file.size }, fields));
+            p.creep(seg * 0.08, seg * 0.9, estimateUploadMs(file.size), 'กำลังอัพโหลด ' + head(0) + ' (' + formatBytes(file.size) + ') ไปที่ Google Drive');
+            var up = await uploadToRelay(file, prep);
+            p.setProgress(seg * 0.94, 'กำลังบันทึกรายการคำสั่ง');
+            await apiCall('orderUploadFinalize', { orderId: prep.orderId, fileId: up.fileId, fileUrl: up.url, directUrl: up.directUrl, fileName: prep.uploadFileName || file.name, mimeType: 'application/pdf' });
+            made = prep.orderId;
+          }
+          var failed = await uploadMoreFiles(made, files.slice(1), p, 1, n, false, doneMore);
+          if (failed.length) throw Object.assign(new Error('สร้างคำสั่งแล้ว แต่อัพโหลดไม่สำเร็จ ' + failed.length + '/' + n + ' ไฟล์ — ' + failed.join('; ')), { retryLabel: 'ส่งใหม่ ' + failed.length + ' ไฟล์' });
           return true;
         }, { successLabel: files.length > 1 ? 'เพิ่มคำสั่งพร้อมไฟล์ ' + files.length + ' ไฟล์แล้ว' : 'เพิ่มคำสั่งแล้ว', upload: true });
         if (!r2.ok) { closeModal(); await load(); return showToast(r2.error && r2.error.message, true); }

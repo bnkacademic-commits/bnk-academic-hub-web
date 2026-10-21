@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.84.2';
-var APP_VERSION = '1.84.2.211026';
+var WORKER_MIN_VERSION = '1.85';
+var APP_VERSION = '1.85.0.211026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -546,7 +546,8 @@ async function submitWorkFile(file, meta) {
     categoryId: meta.categoryId,
     title: meta.title,
     description: meta.description,
-    customFieldValues: meta.customFieldValues
+    customFieldValues: meta.customFieldValues,
+    replacesId: meta.replacesId || '' // 1.85: อัปโหลดทับไฟล์ที่เจ้าหน้าที่ให้แก้ไข
   });
   // ชื่อไฟล์จริงที่จะใช้อัพโหลด (ตั้งแต่ V11.7): Worker คำนวณให้แล้วจากประเภทงาน/ภาคเรียน/ปีการศึกษา (ดู uploadFileName ที่
   // teacherUploadPrepare คืนมา) แทนชื่อไฟล์เดิมจากเครื่องผู้ใช้ — เผื่อกรณี Worker เวอร์ชันเก่ายังไม่ส่งค่านี้มา จึงย้อนกลับไปใช้
@@ -1185,6 +1186,7 @@ function ensureSharedModals() {
         '<div class="progress-result" id="sharedProgressResult" hidden></div>' +
         '<div class="modal-actions">' +
           '<button type="button" class="btn btn-primary" id="sharedProgressOk" hidden>ตกลง</button>' +
+          '<button type="button" class="btn btn-success" id="sharedProgressRetry" hidden><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> <span id="sharedProgressRetryTxt">ส่งใหม่</span></button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -1384,6 +1386,7 @@ function _showProgressModal(title, opts) {
   document.getElementById('sharedProgressBarWrap').hidden = false;
   document.getElementById('sharedProgressResult').hidden = true;
   document.getElementById('sharedProgressOk').hidden = true;
+  document.getElementById('sharedProgressRetry').hidden = true;
   // X ซ่อนไว้ระหว่างกำลังทำงานอยู่โดยตั้งใจ (เช่นเดียวกับปุ่ม "ตกลง") เพื่อให้ผู้ใช้เห็นผลลัพธ์แน่นอนก่อนปิดป็อปอัพได้เสมอ
   document.getElementById('sharedProgressCloseX').hidden = true;
   setProgressIndeterminate('กำลังดำเนินการ...');
@@ -1424,7 +1427,7 @@ function setProgressIndeterminate(label) {
   bar.classList.add('indeterminate');
   if (label !== undefined) document.getElementById('sharedProgressLabel').textContent = label;
 }
-function _finishProgress(message, isError) {
+function _finishProgress(message, isError, retryLabel) {
   _stopProgressTimers();
   return new Promise(function (resolve) {
     document.getElementById('sharedProgressBarWrap').hidden = true;
@@ -1434,16 +1437,27 @@ function _finishProgress(message, isError) {
     resultBox.textContent = message;
     var okBtn = document.getElementById('sharedProgressOk');
     var closeXBtn = document.getElementById('sharedProgressCloseX');
+    var retryBtn = document.getElementById('sharedProgressRetry');
     okBtn.hidden = false;
     closeXBtn.hidden = false;
-    function onOk() {
+    // 1.85: อัพโหลดไม่สำเร็จ = ปุ่ม "ส่งใหม่" (ส่งเฉพาะไฟล์ที่ยังไม่สำเร็จ — งานแต่ละหน้าข้ามไฟล์ที่ส่งแล้วเอง)
+    retryBtn.hidden = !(isError && retryLabel);
+    okBtn.textContent = isError && retryLabel ? 'ปิด' : 'ตกลง';
+    if (retryLabel) document.getElementById('sharedProgressRetryTxt').textContent = retryLabel;
+    function off() {
       okBtn.removeEventListener('click', onOk);
       closeXBtn.removeEventListener('click', onOk);
-      hideModalEl(document.getElementById('sharedProgressModal'));
-      resolve();
+      retryBtn.removeEventListener('click', onRetry);
     }
+    function onOk() {
+      off();
+      hideModalEl(document.getElementById('sharedProgressModal'));
+      resolve('ok');
+    }
+    function onRetry() { off(); retryBtn.hidden = true; resolve('retry'); }
     okBtn.addEventListener('click', onOk);
     closeXBtn.addEventListener('click', onOk);
+    retryBtn.addEventListener('click', onRetry);
   });
 }
 /**
@@ -1451,21 +1465,28 @@ function _finishProgress(message, isError) {
  * workFn จะได้รับ { setProgress(percent, label), setLabel(label) } ไว้ใช้รายงานความคืบหน้าจริง (เช่น อัพโหลดหลายไฟล์)
  * เสร็จแล้วจะโชว์ผลลัพธ์ค้างไว้จนกว่าผู้ใช้จะกด "ตกลง" — คืนค่า { ok, data } หรือ { ok:false, error }
  */
+// 1.85: opts.retry (ค่าเริ่มต้น = opts.upload) — ไม่สำเร็จแล้วมีปุ่ม "ส่งใหม่" เรียก workFn ซ้ำ · err.retryLabel กำหนดข้อความปุ่ม · err.noRetry = ไม่มีปุ่ม (เช่น ไฟล์ผิดชนิด)
 async function withProgress(title, workFn, opts) {
   opts = opts || {};
-  _showProgressModal(title, { upload: !!opts.upload });
+  var canRetry = opts.retry !== undefined ? !!opts.retry : !!opts.upload;
   _progressBusy++; // 1.69: ระหว่างอัพโหลด/บันทึก ไม่นับเป็นเวลานิ่ง
   try {
-    var data = await workFn({
-      setProgress: setProgress,
-      creep: creepProgress,
-      setLabel: function (label) { document.getElementById('sharedProgressLabel').textContent = label; }
-    });
-    await _finishProgress(opts.successLabel || 'ดำเนินการสำเร็จ', false);
-    return { ok: true, data: data };
-  } catch (err) {
-    await _finishProgress((err && err.message) || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ', true);
-    return { ok: false, error: err };
+    for (;;) {
+      _showProgressModal(title, { upload: !!opts.upload });
+      try {
+        var data = await workFn({
+          setProgress: setProgress,
+          creep: creepProgress,
+          setLabel: function (label) { document.getElementById('sharedProgressLabel').textContent = label; }
+        });
+        await _finishProgress(opts.successLabel || 'ดำเนินการสำเร็จ', false);
+        return { ok: true, data: data };
+      } catch (err) {
+        var lbl = canRetry && !(err && err.noRetry) ? ((err && err.retryLabel) || 'ส่งใหม่') : '';
+        var act = await _finishProgress((err && err.message) || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ', true, lbl);
+        if (act !== 'retry') return { ok: false, error: err };
+      }
+    }
   } finally {
     _progressBusy = Math.max(0, _progressBusy - 1);
     markActive(true);
@@ -2386,6 +2407,47 @@ function openWelcome() {
   showModalEl(el);
 }
 
+// ---------- 1.85: ประกาศแบบป็อปอัพ — เปิดหน้าแรกแล้วเด้งทีละประกาศ (หลังป็อปอัพต้อนรับ) ----------
+// 'until' = ขึ้นทุกครั้งที่เข้าระบบจนกว่าจะติ๊ก "ไม่ต้องแสดงประกาศนี้อีก" (ภายในแท็บเดียวกันไม่ขึ้นซ้ำ — sessionStorage) · 'once' = ครั้งเดียวต่อคน
+var _annPopRunning = false;
+function _annPopShownKey(id) { return 'bnkah_annpop_' + id; }
+async function showAnnouncementPopups() {
+  if (_annPopRunning) return;
+  _annPopRunning = true;
+  try {
+    var r = await apiCall('hubAnnouncementPopups', {});
+    var list = (r.items || []).filter(function (a) { try { return !sessionStorage.getItem(_annPopShownKey(a.id)); } catch (e) { return true; } });
+    if (!list.length) return;
+    // รอป็อปอัพต้อนรับ (ครั้งแรกของบัญชี) ปิดก่อน
+    await new Promise(function (res) { var t0 = Date.now(); (function wait() { if (!_welcomeOpen && !document.getElementById('welcomeModal') && Date.now() - t0 > 900) res(); else setTimeout(wait, 300); })(); });
+    for (var i = 0; i < list.length; i++) await _showAnnPopup(list[i], i, list.length);
+  } catch (e) { /* ไม่มีป็อปอัพ / Worker รุ่นเก่า — ข้าม */ }
+  finally { _annPopRunning = false; }
+}
+function _showAnnPopup(a, i, n) {
+  return new Promise(function (resolve) {
+    var from = a.department ? groupLabel(a.department) : 'โรงเรียน';
+    var el = document.createElement('div');
+    el.className = 'modal-backdrop'; el.id = 'annPopupModal'; el.hidden = true;
+    el.innerHTML = '<div class="modal-box annp-box" role="dialog" aria-modal="true" aria-labelledby="annpTitle">' +
+      '<button type="button" class="modal-close-x" data-annp="close" aria-label="ปิด">✕</button>' +
+      '<div class="annp-hd"><small><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ประกาศจาก' + escapeHtml(from) + ' · ' + escapeHtml(formatDateThai(a.createdAt)) + (n > 1 ? '<span class="annp-n">' + (i + 1) + ' / ' + n + '</span>' : '') + '</small><h3 id="annpTitle">' + escapeHtml(a.title) + '</h3></div>' +
+      '<div class="annp-bd">' + (a.message ? escapeHtml(a.message) : '') + (a.image ? '<img src="' + a.image + '" alt="" />' : '') + '</div>' +
+      '<div class="annp-ft">' + (a.popup === 'until' ? '<label class="annp-ck"><input type="checkbox" id="annpNever" /> ไม่ต้องแสดงประกาศนี้อีก</label>' : '<span></span>') +
+      '<button type="button" class="btn btn-success" data-annp="ok">รับทราบ' + (i < n - 1 ? ' <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>' : '') + '</button></div></div>';
+    document.body.appendChild(el);
+    function done() {
+      var never = !!(el.querySelector('#annpNever') && el.querySelector('#annpNever').checked);
+      try { sessionStorage.setItem(_annPopShownKey(a.id), '1'); } catch (e) { /* ข้าม */ }
+      apiCall('hubAnnouncementPopupAck', { id: a.id, dismiss: never }).catch(function () { /* ข้าม */ });
+      hideModalEl(el);
+      setTimeout(function () { el.remove(); resolve(); }, 260);
+    }
+    el.addEventListener('click', function (e) { if (e.target.closest('[data-annp]')) done(); });
+    showModalEl(el);
+  });
+}
+
 // ---------- คู่มือการใช้งาน (1.76) — โหลด assets/manual.js เมื่อกดปุ่มครั้งแรก ----------
 var _manualLoading = null;
 function openManual(topicId) {
@@ -2508,18 +2570,21 @@ async function onReportModalClick(e) {
     if (!subject) { err.textContent = 'กรุณากรอกหัวข้อ'; err.hidden = false; document.getElementById('rpSubject').focus(); return; }
     if (!text) { err.textContent = 'กรุณากรอกรายละเอียดปัญหา'; err.hidden = false; document.getElementById('rpBody').focus(); return; }
     var info = reportClientInfo();
+    var sentFiles = {}; // 1.85: กด "ส่งใหม่" ไม่อัปรูปที่ส่งสำเร็จแล้วซ้ำ
     var r = await withProgress('กำลังส่งเรื่อง', async function () {
       var files = [];
       for (var i = 0; i < st.files.length; i++) {
+        if (sentFiles[i]) { files.push(sentFiles[i]); continue; }
         var f = st.files[i].file;
         var prep = await apiCall('reportFilePrepare', { fileName: f.name, mimeType: f.type, fileSize: f.size });
         var res = await fetch(prep.relayUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ uploadToken: prep.uploadToken, base64: await fileToBase64(f), filename: 'แจ้งปัญหา-' + Date.now() + '-' + (i + 1) + '.' + ((/\.(\w+)$/.exec(f.name) || [0, 'png'])[1]), mimeType: f.type }) });
         var j = JSON.parse(await res.text());
         if (!j.ok) throw new Error(j.error || 'อัพโหลดรูปไม่สำเร็จ');
-        files.push({ fileId: j.data.fileId, name: f.name });
+        sentFiles[i] = { fileId: j.data.fileId, name: f.name };
+        files.push(sentFiles[i]);
       }
       return apiCall('reportCreate', { target: st.target.target, department: st.target.department, subject: subject, body: text, page: info.page, ua: info.ua, files: files });
-    }, { successLabel: 'ส่งเรื่องเรียบร้อยแล้ว' });
+    }, { successLabel: 'ส่งเรื่องเรียบร้อยแล้ว', retry: st.files.length > 0 });
     if (r.ok) { st.step = 1; st.files = []; st.subject = ''; st.body = ''; st.tab = 'mine'; st.mine = null; st.open = r.data && r.data.id; renderReportModal(); }
   }
 }

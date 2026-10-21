@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.84.2.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.0.211026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -191,7 +191,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.84.2.211026"></script>
+  <script src="assets/api.js?v=1.85.0.211026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -761,6 +761,7 @@
       var failed = [], base = from || 0, seg = (100 - base) / Math.max(1, jobs.length);
       for (var i = 0; i < jobs.length; i++) {
         var j = jobs[i], s0 = base + i * seg, head = (jobs.length > 1 ? (i + 1) + '/' + jobs.length + ': ' : '') + j.label;
+        if (j.done) continue; // 1.85: ส่งใหม่ — ข้ามไฟล์ที่สำเร็จแล้ว
         try {
           p.setProgress(s0 + seg * 0.02, 'กำลังเตรียม ' + head);
           var fp = await apiCall('certItemFilePrepare', { certId: certId, itemId: j.itemId, fileName: j.file.name, mimeType: mimeOf(j.file), fileSize: j.file.size });
@@ -768,6 +769,7 @@
           var u = await uploadToRelay(j.file, fp);
           p.setProgress(s0 + seg * 0.94, 'กำลังบันทึก ' + head);
           await apiCall('certItemFileFinalize', { certId: certId, itemId: j.itemId, fileId: u.fileId, fileUrl: u.url, directUrl: u.directUrl, originalName: j.file.name, mimeType: mimeOf(j.file), log: !!log });
+          j.done = true;
         } catch (err) { failed.push(j.label + ': ' + (err && err.message)); }
         p.setProgress(s0 + seg);
       }
@@ -807,22 +809,28 @@
       var payload = Object.assign({ scope: mScope, kind: mKind, groups: pg.groups }, head);
       var nUp = pg.flat.filter(function (p) { return p.newFile; }).length;
       var wasEdit = !!editing, sc = mScope;
+      var run = null; // 1.85: ส่งใหม่ — ใช้รายการที่บันทึกแล้ว ไม่สร้างเกียรติบัตรซ้ำ · อัปเฉพาะไฟล์ที่ยังไม่สำเร็จ
       var r = await withProgress(wasEdit ? 'กำลังบันทึก...' : (sc === 'internal' ? 'กำลังจองเลขและบันทึก...' : 'กำลังเพิ่มเกียรติบัตร...'), async function (p) {
-        p.setProgress(1, sc === 'internal' && !wasEdit ? 'กำลังจองเลขที่เกียรติบัตร' : 'กำลังบันทึกข้อมูล');
-        var res = wasEdit ? await apiCall('certUpdate', Object.assign({ certId: editing.id }, payload)) : await apiCall('certCreate', payload);
-        var certId = wasEdit ? editing.id : res.certId;
-        var jobs = [];
-        (res.items || []).forEach(function (it, i) { var pp = pg.flat[i]; if (pp && pp.newFile) jobs.push({ itemId: it.id, file: pp.newFile, label: (pp.name || (people.filter(function (x) { return x.id === pp.userId; })[0] || {}).name || it.certNo || 'ยังไม่ระบุชื่อ') }); });
+        if (!run) {
+          p.setProgress(1, sc === 'internal' && !wasEdit ? 'กำลังจองเลขที่เกียรติบัตร' : 'กำลังบันทึกข้อมูล');
+          var res0 = wasEdit ? await apiCall('certUpdate', Object.assign({ certId: editing.id }, payload)) : await apiCall('certCreate', payload);
+          var jobs0 = [];
+          (res0.items || []).forEach(function (it, i) { var pp = pg.flat[i]; if (pp && pp.newFile) jobs0.push({ itemId: it.id, file: pp.newFile, label: (pp.name || (people.filter(function (x) { return x.id === pp.userId; })[0] || {}).name || it.certNo || 'ยังไม่ระบุชื่อ') }); });
+          run = { res: res0, certId: wasEdit ? editing.id : res0.certId, jobs: jobs0, published: false };
+        }
+        var res = run.res, certId = run.certId, jobs = run.jobs;
         var failed = jobs.length ? await uploadJobs(certId, jobs, p, wasEdit, 5) : [];
-        if (!wasEdit && sc === 'external') {
+        if (!wasEdit && sc === 'external' && !run.published) {
           if (failed.length === jobs.length) {
             try { await apiCall('certDelete', { certId: certId }); } catch (e) { /* รายการค้างถูกลบเองภายใน 1 ชั่วโมง */ }
-            throw new Error('อัพโหลดไฟล์ไม่สำเร็จ — ' + failed.join('; '));
+            run = null; // ส่งใหม่ = สร้างรายการใหม่
+            throw Object.assign(new Error('อัพโหลดไฟล์ไม่สำเร็จ — ' + failed.join('; ')), { retryLabel: 'ส่งใหม่' });
           }
           await apiCall('certPublish', { certId: certId });
+          run.published = true;
         }
         expanded[certId] = true;
-        if (failed.length) throw new Error('บันทึกแล้ว แต่อัพไฟล์ไม่สำเร็จ ' + failed.length + '/' + jobs.length + ' ไฟล์ — ' + failed.join('; ') + ' (กด "อัพไฟล์" ท้ายชื่อในรายการเพื่อลองใหม่)');
+        if (failed.length) throw Object.assign(new Error('บันทึกแล้ว แต่อัพไฟล์ไม่สำเร็จ ' + failed.length + '/' + jobs.length + ' ไฟล์ — ' + failed.join('; ')), { retryLabel: 'ส่งใหม่ ' + failed.length + ' ไฟล์' });
         if (res.driveSynced === false) showToast('บันทึกข้อมูลแล้ว แต่ยังเปลี่ยนชื่อไฟล์ใน Google Drive ไม่ครบ', true);
         return res;
       }, { successLabel: wasEdit ? 'บันทึกแล้ว' : (sc === 'internal' ? 'จองเลขและบันทึกแล้ว' : 'เพิ่มเกียรติบัตรแล้ว'), upload: nUp > 0 });

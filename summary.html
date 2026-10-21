@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.84.2.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.0.211026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -144,12 +144,18 @@
 
   <!-- 1.80: ตรวจผลงาน (เจ้าหน้าที่/Super Admin) — ตรวจเป็นชุดงาน: ครู × ประเภทงาน × ภาคเรียน · ไม่มีคำว่าผ่าน/ไม่ผ่าน -->
   <div class="modal-backdrop" id="reviewModal" hidden>
-    <div class="modal-box rv-box" role="dialog" aria-modal="true" aria-labelledby="rvTitle">
+    <div class="modal-box modal-box-wide rv-box" role="dialog" aria-modal="true" aria-labelledby="rvTitle">
       <button type="button" class="modal-close-x" id="rvCloseX" aria-label="ปิด">✕</button>
       <h3 id="rvTitle">ตรวจผลงาน</h3>
       <p class="hint rv-sub" id="rvSub"></p>
       <div class="rv-files" id="rvFiles"><div class="loading">กำลังโหลด</div></div>
-      <div class="rv-choice" role="radiogroup" aria-label="ผลการตรวจ">
+      <!-- 1.85: ตรวจทีละไฟล์ (ต้องรัน SQL ชุดที่ยี่สิบสาม — ยังไม่รัน = ตรวจทั้งชุดแบบเดิม) -->
+      <div class="rv-extra" id="rvExtraBox" hidden>
+        <label class="rv-extra-tg"><input type="checkbox" id="rvExtraOn" /> <span><b>ขอไฟล์เพิ่ม</b> (ไฟล์ที่ยังขาด)</span></label>
+        <input type="text" id="rvExtra" maxlength="300" placeholder="เช่น แผนการสอนหน่วย 4 และหน่วย 5" hidden />
+      </div>
+      <div class="rv-sum" id="rvSum" hidden></div>
+      <div class="rv-choice" id="rvChoice" role="radiogroup" aria-label="ผลการตรวจ">
         <label class="rv-opt ok"><input type="radio" name="rvStatus" value="reviewed" checked /><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ตรวจแล้ว</label>
         <label class="rv-opt fix"><input type="radio" name="rvStatus" value="revise" /><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขเพิ่มเติม</label>
       </div>
@@ -158,14 +164,14 @@
       <div class="rv-chips" id="rvChips"></div>
       <div class="modal-actions">
         <button class="btn btn-ghost btn-close" id="rvCancel" type="button">ยกเลิก</button>
-        <button class="btn btn-primary" id="rvSave" type="button"><i class="fa-solid fa-check" aria-hidden="true"></i> บันทึก</button>
+        <button class="btn btn-success" id="rvSave" type="button"><i class="fa-solid fa-check" aria-hidden="true"></i> <span id="rvSaveTxt">บันทึก</span></button>
       </div>
     </div>
   </div>
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.84.2.211026"></script>
+  <script src="assets/api.js?v=1.85.0.211026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -529,11 +535,22 @@
     function rvIcon(mime, name) { var n = String(name || '').toLowerCase(); return /pdf/.test(mime) || /\.pdf$/.test(n) ? 'fa-file-pdf' : /^image\//.test(mime || '') ? 'fa-file-image' : /word|\.docx?$/.test(mime + n) ? 'fa-file-word' : 'fa-file'; }
     var RV_CHIPS = { reviewed: ['ขอบคุณค่ะ', 'ขอบคุณครับ', 'เรียบร้อยดีมาก'], revise: ['รบกวนเพิ่มลายเซ็น', 'รบกวนแนบไฟล์ให้ครบ', 'รบกวนตรวจสอบภาคเรียนอีกครั้ง'] };
     var rvModal = document.getElementById('reviewModal'), rvCur = null;
-    function rvStatus() { var c = rvModal.querySelector('input[name="rvStatus"]:checked'); return c ? c.value : 'reviewed'; }
+    function rvStatus() {
+      if (rvCur && rvCur.perFile) return rvCur.files.some(function (f) { return !f.replaced && rvCur.st[f.id] && rvCur.st[f.id].state === 'fix'; }) || (document.getElementById('rvExtraOn').checked && document.getElementById('rvExtra').value.trim()) ? 'revise' : 'reviewed';
+      var c = rvModal.querySelector('input[name="rvStatus"]:checked'); return c ? c.value : 'reviewed';
+    }
     function rvSync() {
       var st = rvStatus();
+      if (rvCur && rvCur.perFile) {
+        var cur = rvCur.files.filter(function (f) { return !f.replaced; });
+        var nOk = cur.filter(function (f) { return rvCur.st[f.id].state !== 'fix'; }).length, nFix = cur.length - nOk;
+        var ex = document.getElementById('rvExtraOn').checked;
+        document.getElementById('rvSum').innerHTML = '<span class="p1">ผ่าน ' + nOk + '</span>' + (nFix ? '<span class="p2">ต้องแก้ไข ' + nFix + '</span>' : '') + (ex ? '<span class="p3">ขอไฟล์เพิ่ม</span>' : '') +
+          '<span class="rv-sum-st">= ' + (st === 'revise' ? '<b class="fix">แก้ไขเพิ่มเติม</b>' : '<b class="ok">ตรวจแล้ว</b>') + '</span>';
+        document.getElementById('rvSaveTxt').textContent = st === 'revise' ? 'บันทึก — แจ้งแก้ไขเพิ่มเติม' : 'บันทึก — ตรวจแล้ว';
+      } else document.getElementById('rvSaveTxt').textContent = 'บันทึก';
       rvModal.querySelectorAll('.rv-opt').forEach(function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
-      document.getElementById('rvCommentLbl').textContent = st === 'revise' ? 'ข้อความถึงครู (บอกว่าต้องเพิ่มเติมอะไร)' : 'ข้อความถึงครู (ไม่บังคับ)';
+      document.getElementById('rvCommentLbl').textContent = st === 'revise' && !(rvCur && rvCur.perFile) ? 'ข้อความถึงครู (บอกว่าต้องเพิ่มเติมอะไร)' : 'ข้อความถึงครู (ไม่บังคับ)';
       document.getElementById('rvComment').placeholder = st === 'revise' ? 'เช่น รบกวนเพิ่มหน้าลายเซ็นผู้บริหาร' : 'เช่น ขอบคุณค่ะ';
       document.getElementById('rvChips').innerHTML = RV_CHIPS[st].map(function (t) { return '<button type="button" data-chip="' + escapeHtml(t) + '">' + escapeHtml(t) + '</button>'; }).join('');
     }
@@ -553,21 +570,67 @@
       rvSync();
       var fw = document.getElementById('rvFiles');
       fw.innerHTML = '<div class="loading">กำลังโหลด</div>';
+      document.getElementById('rvExtraBox').hidden = true; document.getElementById('rvSum').hidden = true; document.getElementById('rvChoice').hidden = false;
       showModalEl(rvModal);
       try {
         var d = await apiCall('reviewFiles', { teacherId: row.userId, categoryId: a.categoryId, academicYear: a.academicYear, semester: a.semester });
-        rvCur.files = d.files;
-        var since = d.revisedSince || '';
-        fw.innerHTML = d.files.length ? d.files.map(function (f, i) {
-          var isNew = since && f.uploadedAt > since;
-          return '<button type="button" class="rv-file" data-rv-file="' + i + '"><i class="fa-solid ' + rvIcon(f.mimeType, f.fileName) + '" aria-hidden="true"></i><span class="rv-fn">' + escapeHtml(f.title || f.fileName) + '</span><span class="rv-fd' + (isNew ? ' new' : '') + '">' + escapeHtml(formatDateThai(f.uploadedAt)) + (isNew ? ' · ใหม่' : '') + '</span></button>';
-        }).join('') : '<div class="hint" style="margin:0;">ไม่พบไฟล์</div>';
+        if (!rvCur || rvCur.row !== row) return;
+        rvCur.files = d.files; rvCur.since = d.revisedSince || ''; rvCur.perFile = !!d.perFile;
+        // ไฟล์ใหม่ (ยังไม่เคยตรวจ) = ผ่านไว้ก่อน · ไฟล์ที่เคยให้แก้ไข = ต้องแก้ไข + ข้อความเดิม
+        rvCur.st = {}; d.files.forEach(function (f) { rvCur.st[f.id] = { state: f.state === 'fix' ? 'fix' : 'ok', note: f.note || '' }; });
+        var rv = d.review || {};
+        document.getElementById('rvExtraOn').checked = !!rv.extra; document.getElementById('rvExtra').value = rv.extra || ''; document.getElementById('rvExtra').hidden = !rv.extra;
+        renderRvFiles();
       } catch (err) { fw.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>'; }
     }
+    // 1.85: รายการไฟล์ — ปุ่ม ผ่าน/ต้องแก้ไข ต่อไฟล์ + ข้อความ · ไฟล์เดิมที่ถูกอัปโหลดทับแสดงใต้ไฟล์ใหม่ (ลบเมื่อบันทึกว่าผ่าน)
+    function renderRvFiles() {
+      var fw = document.getElementById('rvFiles'), files = rvCur.files, pf = rvCur.perFile;
+      document.getElementById('rvChoice').hidden = pf;
+      document.getElementById('rvExtraBox').hidden = !pf;
+      document.getElementById('rvSum').hidden = !pf;
+      fw.classList.toggle('pf', pf);
+      if (!files.length) { fw.innerHTML = '<div class="hint" style="margin:0;">ไม่พบไฟล์</div>'; rvSync(); return; }
+      var byId = {}; files.forEach(function (f) { byId[f.id] = f; });
+      var olds = function (f) { var out = [], id = f.replacesId, g = 0; while (id && byId[id] && byId[id].replaced && g++ < 20) { out.push(byId[id]); id = byId[id].replacesId; } return out; };
+      var cur = files.filter(function (f) { return !f.replaced; });
+      fw.innerHTML = (pf && cur.length > 1 ? '<div class="rv-allok"><button type="button" class="linklike" id="rvAllOk"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ผ่านทุกไฟล์</button></div>' : '') + cur.map(function (f) {
+        var i = files.indexOf(f), st = rvCur.st[f.id], isNew = rvCur.since && f.uploadedAt > rvCur.since, kind = fileKindOf(f.title || f.fileName, f.mimeType);
+        var fid = driveFileId(f.fileUrl);
+        var th = kind === 'image' && fid ? '<img src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(fid) + '&sz=w120" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement(\'i\'),{className:\'fa-solid fa-file-image\'}))" />' : '<i class="fa-solid ' + rvIcon(f.mimeType, f.fileName) + '" aria-hidden="true"></i>';
+        var old = olds(f);
+        return '<div class="rv-frow' + (pf ? (st.state === 'fix' ? ' fix' : ' ok') : '') + '">' +
+          '<div class="rv-fh"><button type="button" class="rv-file" data-rv-file="' + i + '" title="ดูไฟล์"><span class="rv-th">' + th + '</span><span class="rv-fn">' + escapeHtml(f.title || f.fileName) + (isNew ? ' <em class="rv-new">ใหม่</em>' : '') + '</span><span class="rv-fd">' + escapeHtml(formatDateThai(f.uploadedAt)) + '</span></button>' +
+          (pf ? '<span class="rv-seg" role="group" aria-label="ผลการตรวจไฟล์นี้"><button type="button" data-rv-st="ok" data-rv-id="' + escapeHtml(f.id) + '" class="' + (st.state !== 'fix' ? 'on ok' : '') + '"><i class="fa-solid fa-check" aria-hidden="true"></i> ผ่าน</button><button type="button" data-rv-st="fix" data-rv-id="' + escapeHtml(f.id) + '" class="' + (st.state === 'fix' ? 'on fix' : '') + '"><i class="fa-solid fa-pen" aria-hidden="true"></i> ต้องแก้ไข</button></span>' : '') + '</div>' +
+          (pf && st.state === 'fix' ? '<input type="text" class="rv-note" data-rv-note="' + escapeHtml(f.id) + '" maxlength="300" placeholder="ต้องแก้ไขอะไร เช่น รบกวนเพิ่มลายเซ็นผู้บริหาร" value="' + escapeHtml(st.note) + '" />' : '') +
+          old.map(function (o) { return '<div class="rv-old"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> <button type="button" class="linklike" data-rv-file="' + files.indexOf(o) + '">ไฟล์เดิม ' + escapeHtml(formatDateThai(o.uploadedAt)) + '</button>' + (o.note ? ' · เคยแจ้ง: ' + escapeHtml(o.note) : '') + ' · <span>ลบเมื่อบันทึกว่าไฟล์ใหม่ผ่าน</span></div>'; }).join('') +
+          '</div>';
+      }).join('');
+      rvSync();
+    }
+    document.getElementById('rvFiles').addEventListener('click', function (e) {
+      if (!rvCur || !rvCur.perFile) return;
+      if (e.target.closest('#rvAllOk')) { rvCur.files.forEach(function (f) { rvCur.st[f.id].state = 'ok'; }); renderRvFiles(); return; }
+      var b = e.target.closest('[data-rv-st]'); if (!b) return;
+      var id = b.getAttribute('data-rv-id'), st = b.getAttribute('data-rv-st');
+      rvCur.st[id].state = st; renderRvFiles();
+      if (st === 'fix') { var inp = document.querySelector('[data-rv-note="' + id + '"]'); if (inp) inp.focus(); }
+    });
+    document.getElementById('rvFiles').addEventListener('input', function (e) {
+      var n = e.target.closest('[data-rv-note]'); if (n && rvCur) rvCur.st[n.getAttribute('data-rv-note')].note = n.value;
+    });
+    document.getElementById('rvExtraOn').addEventListener('change', function () { var x = document.getElementById('rvExtra'); x.hidden = !this.checked; if (this.checked) x.focus(); rvSync(); });
+    document.getElementById('rvExtra').addEventListener('input', rvSync);
     document.getElementById('rvFiles').addEventListener('click', function (e) {
       var b = e.target.closest('[data-rv-file]'); if (!b || !rvCur || !rvCur.files) return;
-      var f = rvCur.files[Number(b.getAttribute('data-rv-file'))];
-      openFilePreview(drivePreviewUrl(f.fileUrl), rvCur.row.userName + ' — ' + (f.title || f.fileName), f.fileUrl);
+      // 1.85: ส่งชนิดไฟล์ให้พรีวิว (รูปภาพแสดงเป็นรูป — เดิมเปิดผ่านหน้าตัวอย่าง Drive ทำให้รูปไม่ขึ้น) + เลื่อนดูไฟล์ถัดไป
+      var files = rvCur.files, who = rvCur.row.userName;
+      var show = function (i) {
+        var f = files[i];
+        openFilePreview(drivePreviewUrl(f.fileUrl), who + ' — ' + (f.title || f.fileName), f.fileUrl, undefined,
+          files.length > 1 ? { index: i, total: files.length, go: show } : null, fileKindOf(f.title || f.fileName, f.mimeType));
+      };
+      show(Number(b.getAttribute('data-rv-file')));
     });
     function closeReview() { hideModalEl(rvModal); rvCur = null; }
     document.getElementById('rvCancel').addEventListener('click', closeReview);
@@ -585,10 +648,17 @@
     document.getElementById('rvSave').addEventListener('click', async function () {
       if (!rvCur) return;
       var st = rvStatus(), comment = document.getElementById('rvComment').value.trim();
-      if (st === 'revise' && !comment) { showToast('กรุณาใส่ข้อความถึงครูว่าต้องแก้ไขเพิ่มเติมอะไร'); document.getElementById('rvComment').focus(); return; }
-      var cur = rvCur;
+      var cur = rvCur, payload = { teacherIds: [cur.row.userId], categoryId: cur.a.categoryId, academicYear: cur.a.academicYear, semester: cur.a.semester, status: st, comment: comment };
+      if (cur.perFile) {
+        var miss = cur.files.filter(function (f) { return !f.replaced && cur.st[f.id].state === 'fix' && !cur.st[f.id].note.trim(); })[0];
+        if (miss) { showToast('กรุณาใส่ข้อความว่าต้องแก้ไขอะไรในไฟล์ "' + (miss.title || miss.fileName) + '"', true); var inp = document.querySelector('[data-rv-note="' + miss.id + '"]'); if (inp) inp.focus(); return; }
+        if (document.getElementById('rvExtraOn').checked && !document.getElementById('rvExtra').value.trim()) { showToast('กรุณาใส่ว่าขอไฟล์อะไรเพิ่ม', true); document.getElementById('rvExtra').focus(); return; }
+        payload.files = cur.files.filter(function (f) { return !f.replaced; }).map(function (f) { return { id: f.id, state: cur.st[f.id].state, note: cur.st[f.id].note.trim() }; });
+        payload.extra = document.getElementById('rvExtraOn').checked ? document.getElementById('rvExtra').value.trim() : '';
+      } else if (st === 'revise' && !comment) { showToast('กรุณาใส่ข้อความถึงครูว่าต้องแก้ไขเพิ่มเติมอะไร'); document.getElementById('rvComment').focus(); return; }
       try {
-        await withProgress('กำลังบันทึกผลการตรวจ', function () { return apiCall('reviewSet', { teacherIds: [cur.row.userId], categoryId: cur.a.categoryId, academicYear: cur.a.academicYear, semester: cur.a.semester, status: st, comment: comment }); });
+        var res = await withProgress('กำลังบันทึกผลการตรวจ', function () { return apiCall('reviewSet', payload); });
+        if (!res.ok) return;
         applyReviewLocal(cur.a, [cur.row.userId], st, comment);
         closeReview(); renderAssignmentSummary();
         showToast(st === 'revise' ? 'แจ้งแก้ไขเพิ่มเติมแล้ว' : 'บันทึกว่าตรวจแล้ว');

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.84.2.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.0.211026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -175,6 +175,7 @@
           <div class="dropzone" id="dropzone" tabindex="0">
             <div><i class="fas fa-paperclip ui-icon" aria-hidden="true"></i> ลากไฟล์มาวางที่นี่ หรือกดเพื่อเลือกไฟล์</div>
             <input type="file" id="upFiles" multiple hidden />
+            <input type="file" id="clReplaceFile" hidden /><!-- 1.85: อัปโหลดทับไฟล์ที่ต้องแก้ไข -->
           </div>
           <div id="fileChipList"></div>
         </div>
@@ -223,7 +224,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.84.2.211026"></script>
+  <script src="assets/api.js?v=1.85.0.211026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -301,6 +302,7 @@
           '<div class="hub-ann-m">' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
       }).join('') + (rows.length > ANN_SHOW ? '<button type="button" class="btn btn-ghost btn-sm ann-more" id="annMore">' + (annState.showAll ? '<i class="fa-solid fa-chevron-up"></i> แสดงน้อยลง' : '<i class="fa-solid fa-chevron-down"></i> ดูทั้งหมด (' + rows.length + ')') + '</button>' : '');
     }
+    setTimeout(function () { if (typeof showAnnouncementPopups === 'function') showAnnouncementPopups(); }, 600); // 1.85: ประกาศแบบป็อปอัพ
     async function loadHubAnnouncements() {
       var card = document.getElementById('annCard');
       var wrap = document.getElementById('hubAnnList');
@@ -523,10 +525,12 @@
       if (!ok) return;
 
       var filesToUpload = selectedFiles.slice();
+      var sentOk = []; // 1.85: ไฟล์ที่ส่งสำเร็จแล้ว — กด "ส่งใหม่" จะข้ามไฟล์เหล่านี้ (ไม่ส่งซ้ำ)
       var r = await withProgress('กำลังส่งงาน', async function (p) {
         var failed = [];
         for (var i = 0; i < filesToUpload.length; i++) {
           var f = filesToUpload[i];
+          if (sentOk.indexOf(f) !== -1) continue;
           // 1.50.121026: แต่ละไฟล์ได้ช่วงของแถบเท่ากัน — เตรียม -> อัพโหลด (ไหลตามเวลาที่ประมาณจากขนาดไฟล์) -> บันทึกรายการ
           var seg = 100 / filesToUpload.length, s0 = i * seg;
           var head = 'ไฟล์ ' + (i + 1) + '/' + filesToUpload.length + ': ' + f.name;
@@ -542,13 +546,16 @@
                 else if (stage === 'finalize') p.setProgress(s0 + seg * 0.95, 'กำลังบันทึก ' + head);
               }
             });
+            sentOk.push(f);
           } catch (err) {
             failed.push(f.name + ': ' + err.message);
           }
           p.setProgress(Math.round(((i + 1) / filesToUpload.length) * 100));
         }
         if (failed.length > 0) {
-          throw new Error('ส่งไม่สำเร็จ ' + failed.length + '/' + filesToUpload.length + ' ไฟล์ — ' + failed.join('; '));
+          var er = new Error('ส่งไม่สำเร็จ ' + failed.length + '/' + filesToUpload.length + ' ไฟล์ — ' + failed.join('; ') + (sentOk.length ? ' · ส่งสำเร็จแล้ว ' + sentOk.length + ' ไฟล์ (ไม่ต้องส่งซ้ำ)' : ''));
+          er.retryLabel = 'ส่งใหม่ ' + failed.length + ' ไฟล์';
+          throw er;
         }
         return { count: filesToUpload.length };
       }, { successLabel: 'ส่งงานทั้งหมด ' + filesToUpload.length + ' ไฟล์เรียบร้อยแล้ว', upload: true });
@@ -561,6 +568,8 @@
         if (reopenGroupAfterUpload) { var rk = reopenGroupAfterUpload; reopenGroupAfterUpload = null; openGroupModal(rk); }
         loadCalendar(); // 1.80: ผลการตรวจ (แก้ไขเพิ่มเติม → ส่งแล้ว) ในเช็คลิสต์
       } else {
+        // 1.85: เอาไฟล์ที่ส่งสำเร็จแล้วออกจากรายการ — กดส่งอีกครั้งจะส่งเฉพาะไฟล์ที่ยังไม่สำเร็จ
+        if (sentOk.length) { selectedFiles = selectedFiles.filter(function (f) { return sentOk.indexOf(f) === -1; }); renderFileChips(); }
         errBox.textContent = r.error.message;
         errBox.hidden = false;
       }
@@ -1049,12 +1058,45 @@
         return '<div class="cl-review"><span class="badge rvb-ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ตรวจแล้ว</span>' + (v.revised ? '<span class="rv-note" style="margin:0;">แก้ไขเพิ่มเติมแล้ว</span>' : '') + '</div>' + msg('');
       }
       if (v && v.status === 'revise') {
-        return '<div class="cl-review"><span class="badge rvb-fix"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขเพิ่มเติม</span></div>' + msg(' fix') +
-          '<button type="button" class="btn btn-primary btn-sm cl-fix-btn" data-cl-fix="' + escapeHtml(ev.id) + '"><i class="fa-solid fa-upload" aria-hidden="true"></i> ส่งไฟล์ที่แก้ไข</button>';
+        var head = '<div class="cl-review"><span class="badge rvb-fix"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขเพิ่มเติม</span></div>' + msg(' fix');
+        // 1.85: ตรวจทีละไฟล์ — ไฟล์ที่ต้องแก้ (อัปโหลดทับ) · ขอไฟล์เพิ่ม (เพิ่มไฟล์) · ผ่านแล้ว N ไฟล์
+        if ((v.fix && v.fix.length) || v.extra) {
+          var h = (v.fix || []).map(function (f) {
+            return '<div class="cl-ffix"><i class="fa-solid ' + (fileKindOf(f.name, f.mimeType) === 'image' ? 'fa-file-image' : /pdf/i.test(f.mimeType + f.name) ? 'fa-file-pdf' : 'fa-file-lines') + '" aria-hidden="true"></i><span class="cl-ffn"><b>' + escapeHtml(f.name) + '</b><small>' + escapeHtml(f.note) + '</small></span>' +
+              '<button type="button" class="btn btn-sm cl-rep-btn" data-cl-rep="' + escapeHtml(f.id) + '"><i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i> อัปโหลดทับ</button></div>';
+          }).join('');
+          if (v.extra) h += '<div class="cl-ffix extra"><i class="fa-solid fa-plus" aria-hidden="true"></i><span class="cl-ffn"><b>ขอไฟล์เพิ่ม</b><small>' + escapeHtml(v.extra) + (v.added ? ' · ส่งเพิ่มแล้ว ' + v.added + ' ไฟล์' : '') + '</small></span>' +
+            '<button type="button" class="btn btn-sm cl-rep-btn" data-cl-fix="' + escapeHtml(ev.id) + '"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มไฟล์</button></div>';
+          var foot = [];
+          if (v.fixed) foot.push('<i class="fa-solid fa-clock" aria-hidden="true"></i> ส่งไฟล์แก้ไขแล้ว ' + v.fixed + ' ไฟล์ (รอตรวจ)');
+          if (v.okCount) foot.push('<i class="fa-solid fa-circle-check" aria-hidden="true"></i> ผ่านแล้ว ' + v.okCount + ' ไฟล์');
+          return head + '<div class="cl-files">' + h + '</div>' + (foot.length ? '<div class="cl-ffoot">' + foot.join(' · ') + '</div>' : '');
+        }
+        return head + '<button type="button" class="btn btn-primary btn-sm cl-fix-btn" data-cl-fix="' + escapeHtml(ev.id) + '"><i class="fa-solid fa-upload" aria-hidden="true"></i> ส่งไฟล์ที่แก้ไข</button>';
       }
       return '<div class="checklist-status done">ส่งแล้ว</div>';
     }
+    // 1.85: อัปโหลดทับไฟล์ที่ต้องแก้ไข (ไฟล์เดิมเก็บไว้จนเจ้าหน้าที่ตรวจว่าไฟล์ใหม่ผ่าน)
+    var clReplaceId = '';
+    document.getElementById('clReplaceFile').addEventListener('change', async function () {
+      var f = this.files && this.files[0], id = clReplaceId; this.value = ''; clReplaceId = '';
+      if (!f || !id) return;
+      if (f.size > 25 * 1024 * 1024) { showToast('ไฟล์มีขนาดใหญ่เกิน 25MB', true); return; }
+      var r = await withProgress('กำลังส่งไฟล์ที่แก้ไข', async function (p) {
+        await submitWorkFile(f, {
+          replacesId: id,
+          onStage: function (stage) {
+            if (stage === 'upload') p.creep(5, 92, estimateUploadMs(f.size), 'กำลังอัพโหลด ' + f.name + ' (' + formatBytes(f.size) + ')');
+            else if (stage === 'finalize') p.setProgress(95, 'กำลังบันทึก');
+          }
+        });
+        return true;
+      }, { successLabel: 'ส่งไฟล์ที่แก้ไขแล้ว — รอเจ้าหน้าที่ตรวจอีกครั้ง', upload: true });
+      if (r.ok) { loadCalendar(); loadSubmissions(); }
+    });
     document.getElementById('assignmentChecklistBody').addEventListener('click', function (e) {
+      var rp = e.target.closest('[data-cl-rep]');
+      if (rp) { clReplaceId = rp.getAttribute('data-cl-rep'); document.getElementById('clReplaceFile').click(); return; }
       var b = e.target.closest('[data-cl-fix]'); if (!b) return;
       var ev = (calState.events || []).filter(function (x) { return x.id === b.getAttribute('data-cl-fix'); })[0];
       if (ev) openUploadModal({ categoryId: ev.categoryId, academicYear: ev.academicYear, semester: ev.semester });

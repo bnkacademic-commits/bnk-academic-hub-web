@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.84.2.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.0.211026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -129,6 +129,20 @@
             </div>
           </div>
           <div class="hint ann-time-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>ไม่ระบุเวลา = แสดงทันทีจนกว่าจะลบ · ระบุเวลา = แสดง/ซ่อนอัตโนมัติตามช่วงที่ตั้ง</span></div>
+          <!-- 1.85: ประกาศแบบป็อปอัพ — เด้งกลางจอเมื่อเปิดหน้าแรก (นอกจากแสดงในรายการประกาศตามปกติ) -->
+          <div class="ann-pop" id="annPopBox">
+            <label class="ann-pop-tg"><input type="checkbox" id="annPopOn" /><span><b>แสดงเป็นป็อปอัพเมื่อเข้าระบบ</b><small>เด้งขึ้นกลางจอเมื่อเปิดหน้าแรก นอกจากแสดงในรายการประกาศตามปกติ</small></span></label>
+            <div class="ann-pop-sub" id="annPopSub" hidden>
+              <label class="ann-pop-rd"><input type="radio" name="annPopMode" value="until" checked /> แสดงทุกครั้งที่เข้าระบบ จนกว่าจะติ๊ก "ไม่ต้องแสดงประกาศนี้อีก"</label>
+              <label class="ann-pop-rd"><input type="radio" name="annPopMode" value="once" /> แสดงครั้งเดียวต่อคน</label>
+              <div class="ann-pop-img">
+                <input type="file" id="annPopFile" accept="image/*" hidden />
+                <div class="ann-pop-prev" id="annPopPrev" hidden><img id="annPopImg" alt="" /><button type="button" class="ann-pop-rm" id="annPopRm" aria-label="เอารูปออก"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
+                <button type="button" class="ann-pop-pick" id="annPopPick"><i class="fa-solid fa-image" aria-hidden="true"></i> แนบรูปในป็อปอัพ (ไม่บังคับ) เช่น โปสเตอร์</button>
+              </div>
+              <label class="ann-pop-rd" id="annPopResetRow" hidden><input type="checkbox" id="annPopReset" /> แสดงป็อปอัพนี้ใหม่ให้ทุกคน (รวมคนที่ติ๊กไม่แสดงอีกแล้ว)</label>
+            </div>
+          </div>
           <div class="modal-actions">
             <button class="btn btn-primary" type="submit" id="annSubmitBtn">เพิ่มประกาศ</button>
             <button class="btn btn-ghost btn-close" type="button" id="annModalClose">ยกเลิก</button>
@@ -277,7 +291,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.84.2.211026"></script>
+  <script src="assets/api.js?v=1.85.0.211026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -764,6 +778,13 @@
       return '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('clock', 13) + ' ' + parts.join(' · ') + '</div>';
     }
     var lastAnnouncements = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่เวอร์ชันถัดจาก V11.2)
+    // 1.85: ป้ายป็อปอัพ + จำนวนคนที่เห็น/ติ๊กไม่แสดงอีก
+    function annPopMeta(a) {
+      if (!a.popup) return '';
+      var st = a.popupStats;
+      var n = st ? (a.popup === 'once' ? '<span class="ann-pop-stat"><i class="fa-solid fa-eye" aria-hidden="true"></i> เห็นแล้ว ' + st.seen + ' / ' + st.total + ' คน</span>' : '<span class="ann-pop-stat"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i> ไม่แสดงอีกแล้ว ' + st.dismissed + ' / ' + st.total + ' คน · เห็นแล้ว ' + st.seen + ' คน</span>') : '';
+      return '<div class="ann-pop-meta"><span class="ann-pop-tag"><i class="fa-solid fa-window-restore" aria-hidden="true"></i> ป็อปอัพ' + (a.popup === 'once' ? ' · ครั้งเดียว' : '') + (a.hasImage ? ' · มีรูป' : '') + '</span>' + n + '</div>';
+    }
     async function loadAnnouncements() {
       var wrap = document.getElementById('annListWrap');
       try {
@@ -777,7 +798,7 @@
             '<div style="flex:1 1 220px; min-width:220px;"><div class="ann-gchip-row"><span class="ann-gchip"' + (gi.color ? ' style="--g:' + gi.color + '"' : '') + '><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ' + escapeHtml(gi.label) + '</span></div><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
             (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
             '<div class="sub-item-meta">' + (a.createdByName ? 'โดย ' + escapeHtml(a.createdByName) + ' · ' : '') + formatDateTimeThai(a.createdAt) + ' · สำหรับ: ' + escapeHtml(audienceLabel_(a.audience)) + '</div>' +
-            annScheduleMeta(a) + '</div>' +
+            annScheduleMeta(a) + annPopMeta(a) + '</div>' +
             (canManage && a.canEdit ? '<div style="display:flex; gap:6px; flex-shrink:0;">' +
             '<button class="btn btn-secondary btn-sm" data-edit-id="' + a.id + '">แก้ไข</button>' +
             '<button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button>' +
@@ -833,9 +854,59 @@
         box.hidden = false; field.hidden = true;
       }
     }
+    // ---------- 1.85: ประกาศแบบป็อปอัพ ----------
+    var annPop = { image: '', changed: false };
+    function setAnnPop(a) {
+      var on = !!(a && a.popup);
+      document.getElementById('annPopOn').checked = on;
+      document.getElementById('annPopSub').hidden = !on;
+      var m = (a && a.popup) || 'until';
+      document.querySelectorAll('input[name="annPopMode"]').forEach(function (x) { x.checked = x.value === m; });
+      document.getElementById('annPopReset').checked = false;
+      document.getElementById('annPopResetRow').hidden = !(a && a.popup);
+      annPop = { image: '', changed: false };
+      showAnnPopImg('');
+      if (a && a.hasImage) apiCall('adminAnnouncementImage', { id: a.id }).then(function (r) { if (!annPop.changed) { annPop.image = r.image || ''; showAnnPopImg(annPop.image); } }).catch(function () {});
+    }
+    function showAnnPopImg(src) {
+      document.getElementById('annPopPrev').hidden = !src;
+      document.getElementById('annPopImg').src = src || '';
+      document.getElementById('annPopPick').innerHTML = src ? '<i class="fa-solid fa-image" aria-hidden="true"></i> เปลี่ยนรูป' : '<i class="fa-solid fa-image" aria-hidden="true"></i> แนบรูปในป็อปอัพ (ไม่บังคับ) เช่น โปสเตอร์';
+    }
+    document.getElementById('annPopOn').addEventListener('change', function () { document.getElementById('annPopSub').hidden = !this.checked; });
+    document.getElementById('annPopPick').addEventListener('click', function () { document.getElementById('annPopFile').click(); });
+    document.getElementById('annPopRm').addEventListener('click', function () { annPop.image = ''; annPop.changed = true; showAnnPopImg(''); });
+    document.getElementById('annPopFile').addEventListener('change', function () {
+      var f = this.files && this.files[0]; this.value = '';
+      if (!f) return;
+      if (!/^image\//.test(f.type)) { showToast('แนบได้เฉพาะไฟล์รูปภาพ', true); return; }
+      var rd = new FileReader();
+      rd.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+          var k = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
+          var c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+          var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+          var q = 0.85, url = c.toDataURL('image/jpeg', q);
+          while (url.length * 0.75 > 850 * 1024 && q > 0.4) { q -= 0.1; url = c.toDataURL('image/jpeg', q); }
+          annPop.image = url; annPop.changed = true; showAnnPopImg(url);
+        };
+        img.onerror = function () { showToast('อ่านไฟล์รูปนี้ไม่ได้ ลองไฟล์อื่น', true); };
+        img.src = String(rd.result);
+      };
+      rd.readAsDataURL(f);
+    });
+    function annPopPayload(pl, editing) {
+      var on = document.getElementById('annPopOn').checked;
+      pl.popup = on ? (document.querySelector('input[name="annPopMode"]:checked') || {}).value || 'until' : '';
+      if (annPop.changed) { if (annPop.image) { pl.imageBase64 = annPop.image.split(',')[1]; pl.imageMime = 'image/jpeg'; } else if (editing) pl.removeImage = true; }
+      if (editing && on && document.getElementById('annPopReset').checked) pl.resetPopup = true;
+      return pl;
+    }
     function openCreateAnn() {
       document.getElementById('annEditId').value = '';
       document.getElementById('createAnnForm').reset();
+      setAnnPop(null);
       setAnnGroup(annIsTop ? '' : (session.department || ''));
       annAud.set('all');
       document.getElementById('annSubmitBtn').textContent = 'เพิ่มประกาศ';
@@ -851,6 +922,7 @@
       document.getElementById('annShowUntil').value = isoToLocalDatetimeInput(a.showUntil);
       setAnnGroup(a.department || '');
       annAud.set(a.audience || 'all');
+      setAnnPop(a);
       document.getElementById('annSubmitBtn').textContent = 'บันทึกการแก้ไข';
       document.getElementById('annModalTitle').textContent = 'แก้ไขประกาศ: ' + a.title;
       document.getElementById('createAnnError').hidden = true;
@@ -895,6 +967,7 @@
       annPayload.audience = annAud.get();
       if (annIsTop) annPayload.department = document.getElementById('annDept').value;
       if (editId) annPayload.announcementId = editId;
+      annPopPayload(annPayload, !!editId);
       var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเผยแพร่ประกาศ', function () {
         return apiCall(editId ? 'adminUpdateAnnouncement' : 'adminCreateAnnouncement', annPayload);
       }, { successLabel: editId ? 'บันทึกการแก้ไขแล้ว' : 'เผยแพร่ประกาศแล้ว' });

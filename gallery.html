@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.84.2.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.0.211026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -130,8 +130,9 @@
         <div class="up-stage-note" id="upStageNote"></div>
       </div>
       <div class="up-tot" id="upTot" hidden>
-        <div class="up-tot-row"><b id="upCount"></b><span id="upBytes"></span></div>
+        <div class="up-tot-row"><b id="upCount"></b><span class="up-pct" id="upPct">0%</span></div>
         <div class="up-bar"><span id="upBar"></span></div>
+        <div class="up-tot-row"><span id="upBytes"></span></div>
         <div class="up-tot-row"><span class="up-mode" id="upMode"></span><span class="up-tot-acts"><button type="button" class="btn btn-secondary btn-sm" id="upRetryAll" hidden><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> ลองใหม่ทั้งหมด</button><button type="button" class="btn btn-secondary btn-sm" id="upPause"><i class="fa-solid fa-pause" aria-hidden="true"></i> หยุดชั่วคราว</button></span></div>
         <div class="up-why" id="upWhy" hidden></div>
       </div>
@@ -182,8 +183,8 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.84.2.211026"></script>
-  <script src="assets/gallery.js?v=1.84.2.211026"></script>
+  <script src="assets/api.js?v=1.85.0.211026"></script>
+  <script src="assets/gallery.js?v=1.85.0.211026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -624,7 +625,8 @@
       var its = up.items, n = its.length, nd = its.filter(function (x) { return x.state === 'done'; }).length, ne = its.filter(function (x) { return x.state === 'err'; }).length;
       var tot = its.reduce(function (s, x) { return s + x.size; }, 0), got = its.reduce(function (s, x) { return s + (x.state === 'done' ? x.size : x.size * x.pct / 100); }, 0);
       $('upTot').hidden = !n;
-      $('upCount').textContent = 'อัปแล้ว ' + nd + ' / ' + n + ' รูป' + (ne ? ' · ไม่สำเร็จ ' + ne : '');
+      $('upCount').innerHTML = escapeHtml('อัปแล้ว ' + nd + ' / ' + n + ' รูป' + (ne ? ' · ไม่สำเร็จ ' + ne : ''));
+      $('upPct').textContent = (tot ? Math.floor(got / tot * 100) : 0) + '%'; // 1.85: % รวม
       var eta = '';
       if (up.running && up.t0 && got > 0) { var rate = got / ((Date.now() - up.t0) / 1000); var left = (tot - got) / rate; eta = left > 90 ? ' · เหลือประมาณ ' + Math.ceil(left / 60) + ' นาที' : left > 5 ? ' · เหลือไม่ถึง ' + Math.ceil(left / 60) + ' นาที' : ''; }
       $('upBytes').textContent = formatBytes(got) + ' / ' + formatBytes(tot) + eta;

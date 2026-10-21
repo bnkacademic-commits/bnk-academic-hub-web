@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.84.2.211026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.0.211026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -71,10 +71,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.84.2.211026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.85.0.211026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.84.2.211026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.85.0.211026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -108,7 +108,7 @@
         </div>
       </div>
 
-      <!-- 1.84.2.211026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.85.0.211026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -559,6 +559,8 @@
           </select>
         </div>
         <div class="hint" id="userCount" style="margin:-4px 0 8px;"></div>
+        <!-- 1.85: คำแนะนำครั้งแรก — แสดงอีกครั้งให้ทุกคน (Super Admin) -->
+        <div class="welcome-bulk super-admin-only" id="welcomeBulk" hidden><span><b>คำแนะนำครั้งแรก</b><small id="welcomeBulkCount"></small></span><button type="button" class="btn btn-secondary btn-sm" id="welcomeBulkBtn"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> แสดงอีกครั้งให้ทุกคน</button></div>
         <div id="userTableWrap" class="table-wrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -817,6 +819,12 @@
               <div class="error-box" id="manageAvatarError" hidden style="margin:0;"></div>
             </div>
           </div>
+        </div>
+        <!-- 1.85: คำแนะนำครั้งแรก (ป็อปอัพต้อนรับ) — แสดงอีกครั้งรายคน -->
+        <div class="mu-section" id="muWelcomeSec" hidden>
+          <div class="mu-section-title">คำแนะนำครั้งแรก</div>
+          <div class="mu-welcome"><span id="muWelcomeState"></span><button type="button" class="btn btn-secondary btn-sm" id="muWelcomeReset"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> แสดงอีกครั้ง</button></div>
+          <div class="hint" style="margin-top:4px;">กดแล้ว ครั้งหน้าที่บัญชีนี้เข้าระบบ จะเห็นป็อปอัพต้อนรับอีกครั้ง</div>
         </div>
         <form id="muPwForm" class="mu-section" style="text-align:left;">
           <div class="mu-section-title">ตั้งรหัสผ่านใหม่</div>
@@ -1175,7 +1183,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.84.2.211026"></script>
+  <script src="assets/api.js?v=1.85.0.211026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1592,7 +1600,7 @@
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.84.2.211026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.85.0.211026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -2114,7 +2122,7 @@
           var resized = (type === 'logoWide' && logoWidePending) ? logoWidePending : await resizeImageToBase64(file, maxSize);
           p.setLabel('กำลังอัพโหลดขึ้นเซิร์ฟเวอร์...');
           return apiCall('adminUpdateSiteAsset', { type: type, fileBase64: resized.base64, mimeType: resized.mimeType });
-        }, { successLabel: 'อัพโหลดสำเร็จ (ปรับขนาดรูปให้อัตโนมัติแล้ว)' });
+        }, { successLabel: 'อัพโหลดสำเร็จ (ปรับขนาดรูปให้อัตโนมัติแล้ว)', retry: true });
         if (r.ok) {
           _settingsCache = r.data;
           renderAssetPreview(previewId, type === 'icon' ? r.data.iconDataUrl : type === 'logoWide' ? r.data.logoWideDataUrl : r.data.logoDataUrl);
@@ -2254,7 +2262,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.84.2.211026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.85.0.211026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);
@@ -2350,7 +2358,7 @@
         var pend = loginHeroPending;
         var r = await withProgress('กำลังอัพโหลดรูปหน้าเข้าสู่ระบบ', function () {
           return apiCall('adminUpdateSiteAsset', { type: 'loginHero', fileBase64: pend.base64, mimeType: pend.mimeType });
-        }, { successLabel: 'อัพโหลดสำเร็จ' });
+        }, { successLabel: 'อัพโหลดสำเร็จ', retry: true });
         if (r.ok) {
           _settingsCache = r.data; loginHeroPending = null;
           renderLoginHeroPreview(r.data.loginHeroDataUrl);
@@ -3172,6 +3180,7 @@
       try {
         allUsers = await apiCall('adminListUsers', {});
         renderUserTable();
+        if (typeof renderWelcomeBulk === 'function') renderWelcomeBulk(); // 1.85
       } catch (err) {
         if (wrap) wrap.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
@@ -3275,6 +3284,38 @@
     }
     ['info', 'type', 'status'].forEach(function (k) {
       document.getElementById('muTabBtn-' + k).addEventListener('click', function () { switchMuTab(k); });
+    });
+    // 1.85: คำแนะนำครั้งแรก (ป็อปอัพต้อนรับ) — ไม่แสดงกับ Super Admin (ไม่เห็นป็อปอัพนี้อยู่แล้ว)
+    function renderMuWelcome() {
+      var u = muFresh(), sec = document.getElementById('muWelcomeSec');
+      sec.hidden = !u || u.welcomedAt === null || u.welcomedAt === undefined || (u.role === 'admin' && !u.hasHub);
+      if (sec.hidden) return;
+      document.getElementById('muWelcomeState').innerHTML = u.welcomedAt ? '<i class="fa-solid fa-circle-check" style="color:#16a34a"></i> ดูแล้วเมื่อ ' + escapeHtml(formatDateThai(u.welcomedAt)) : '<i class="fa-solid fa-clock" style="color:#f59e0b"></i> ยังไม่เห็น (จะแสดงเมื่อเข้าระบบครั้งถัดไป)';
+      document.getElementById('muWelcomeReset').hidden = !u.welcomedAt;
+    }
+    document.getElementById('muWelcomeReset').addEventListener('click', async function () {
+      var u = muFresh(); if (!u) return;
+      var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminResetWelcome', { userId: u.id }); }, { successLabel: 'ครั้งหน้าที่ ' + u.name + ' เข้าระบบ จะเห็นคำแนะนำอีกครั้ง' });
+      if (!r.ok) return;
+      allUsers.forEach(function (x) { if (x.id === u.id) x.welcomedAt = ''; });
+      renderMuWelcome(); renderWelcomeBulk();
+    });
+    function welcomeEligible(x) { return x.status === 'active' && !(x.role === 'admin' && !x.hasHub) && x.welcomedAt !== null && x.welcomedAt !== undefined; }
+    function renderWelcomeBulk() {
+      var box = document.getElementById('welcomeBulk'); if (!box) return;
+      var list = (allUsers || []).filter(welcomeEligible);
+      box.hidden = !isSuperAdminSession || !list.length;
+      if (box.hidden) return;
+      var seen = list.filter(function (x) { return !!x.welcomedAt; }).length;
+      document.getElementById('welcomeBulkCount').textContent = 'ดูแล้ว ' + seen + ' คน · ยังไม่เห็น ' + (list.length - seen) + ' คน';
+      document.getElementById('welcomeBulkBtn').disabled = !seen;
+    }
+    document.getElementById('welcomeBulkBtn').addEventListener('click', async function () {
+      if (!(await askConfirm('แสดงคำแนะนำครั้งแรก (ป็อปอัพต้อนรับ) อีกครั้งให้ <b>ทุกบัญชี</b>?<br>แต่ละคนจะเห็นอีก 1 ครั้งเมื่อเข้าระบบครั้งถัดไป', 'แสดงอีกครั้งให้ทุกคน'))) return;
+      var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminResetWelcome', { all: true }); }, { successLabel: 'ทุกคนจะเห็นคำแนะนำอีกครั้งเมื่อเข้าระบบครั้งถัดไป' });
+      if (!r.ok) return;
+      allUsers.forEach(function (x) { if (x.welcomedAt) x.welcomedAt = ''; });
+      renderWelcomeBulk();
     });
     function renderMuHeader() {
       var u = muFresh();
@@ -3506,7 +3547,7 @@
       document.getElementById('muNameError').hidden = true;
       document.getElementById('muPw').value = ''; document.getElementById('muPwConfirm').value = '';
       document.getElementById('muPwError').hidden = true;
-      renderMuHeader(); renderMuTypeTab(); renderMuStatusTab();
+      renderMuHeader(); renderMuTypeTab(); renderMuStatusTab(); renderMuWelcome();
       switchMuTab(tab || 'info');
       showModalEl(manageUserModalEl);
     };
