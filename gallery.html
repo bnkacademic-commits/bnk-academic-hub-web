@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.83.0.201026" />
+<link rel="stylesheet" href="assets/style.css?v=1.84.0.211026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -94,13 +94,7 @@
           <div class="field full gal-link-only"><label for="galUrl">ลิงก์อัลบั้ม (โฟลเดอร์ Google Drive / Google Photos)</label><input type="url" id="galUrl" placeholder="https://drive.google.com/drive/folders/..." /><div class="gal-check" id="galUrlCheck"></div></div>
           <div class="field full gal-link-only"><label for="galCover">ลิงก์รูปหน้าปก <span class="hint-inline">(ไม่บังคับ)</span></label><input type="url" id="galCover" placeholder="https://drive.google.com/file/d/.../view" />
             <div class="hint">ไม่ใส่ = ระบบดึงรูปแรกในโฟลเดอร์ให้อัตโนมัติ (โฟลเดอร์ต้องแชร์แบบ "ทุกคนที่มีลิงก์") · ดึงไม่ได้จะแสดงเป็นไอคอน</div></div>
-          <div class="field full gal-managed-only"><label>ใครดูได้</label>
-            <div class="gal-acc" id="galAccSeg" role="radiogroup" aria-label="ใครดูได้">
-              <button type="button" class="on" data-acc="domain" role="radio" aria-checked="true"><i class="fa-solid fa-school" aria-hidden="true"></i> เฉพาะในโรงเรียน</button>
-              <button type="button" data-acc="public" role="radio" aria-checked="false"><i class="fa-solid fa-globe" aria-hidden="true"></i> สาธารณะ</button>
-            </div>
-            <div class="hint" id="galAccHint"></div></div>
-          <label class="gal-toggle full gal-link-only"><input type="checkbox" id="galPublic" /><span class="gal-sw" aria-hidden="true"></span>
+          <label class="gal-toggle full"><input type="checkbox" id="galPublic" /><span class="gal-sw" aria-hidden="true"></span>
             <span><b>แสดงในหน้าสาธารณะ</b><small>คนนอกระบบดูได้ที่หน้า "คลังรูปภาพ (สาธารณะ)" · ปิด = เห็นเฉพาะคนในระบบ</small></span></label>
         </div>
         <div class="modal-actions">
@@ -172,8 +166,8 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.83.0.201026"></script>
-  <script src="assets/gallery.js?v=1.83.0.201026"></script>
+  <script src="assets/api.js?v=1.84.0.211026"></script>
+  <script src="assets/gallery.js?v=1.84.0.211026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -246,9 +240,7 @@
       }
       if (e.target.closest('[data-alb-pub]')) {
         var to = !a.isPublic;
-        var msg = isManagedAlbum(a)
-          ? (to ? 'เปลี่ยนอัลบั้ม <b>' + escapeHtml(a.title) + '</b> เป็น "สาธารณะ"? ทุกคนที่มีลิงก์เปิดดูรูปใน Google Drive ได้ และขึ้นในหน้าคลังรูปภาพสาธารณะ' : 'เปลี่ยนอัลบั้ม <b>' + escapeHtml(a.title) + '</b> เป็น "เฉพาะในโรงเรียน"? เปิดดูใน Google Drive ได้เฉพาะเมลโรงเรียน และไม่ขึ้นในหน้าสาธารณะ')
-          : (to ? 'เปิดให้คนนอกระบบดูอัลบั้ม <b>' + escapeHtml(a.title) + '</b> ในหน้าสาธารณะ?' : 'ซ่อนอัลบั้ม <b>' + escapeHtml(a.title) + '</b> จากหน้าสาธารณะ? (คนในระบบยังเห็น)');
+        var msg = to ? 'เปิดให้คนนอกระบบดูอัลบั้ม <b>' + escapeHtml(a.title) + '</b> ในหน้าสาธารณะ?' : 'ซ่อนอัลบั้ม <b>' + escapeHtml(a.title) + '</b> จากหน้าสาธารณะ? (คนในระบบยังเห็น)';
         if (!(await askConfirm(msg, 'ยืนยันการเปลี่ยน'))) return;
         try { await apiCall('albumUpdate', { id: a.id, onlyPublic: true, isPublic: to }); a.isPublic = to; render(); showToast(to ? 'แสดงในหน้าสาธารณะแล้ว' : 'ซ่อนจากหน้าสาธารณะแล้ว'); }
         catch (err) { showToast(err.message, true); }
@@ -284,18 +276,17 @@
       // 1.82: เก็บรูปที่ไหน (เพิ่มใหม่เท่านั้น — แก้ไขแล้วเปลี่ยนไม่ได้) · ยังไม่ได้รัน SQL ชุดที่ยี่สิบสอง = แบบลิงก์อย่างเดียว
       $('galStore').hidden = !!a || !galInfo.managedReady;
       setStore(a ? (isManagedAlbum(a) ? 'managed' : 'link') : (galInfo.managedReady ? 'managed' : 'link'));
-      setAccess(a && a.isPublic ? 'public' : 'domain');
       checkUrl();
       showModalEl($('galModal'));
       setTimeout(function () { $('galTitle').focus(); }, 60);
     }
     $('galAddBtn').addEventListener('click', function () { openForm(null); });
-    ['galCloseX', 'galCancel'].forEach(function (id) { $(id).addEventListener('click', function () { hideModalEl($('galModal')); }); });
+    ['galCloseX', 'galCancel'].forEach(function (id) { $(id).addEventListener('click', function () { hideModalEl($('galModal')); if (albReturn) { var rid = albReturn; albReturn = ''; openAlbum(rid); } }); });
     $('galForm').addEventListener('submit', async function (e) {
       e.preventDefault();
       var p = { title: $('galTitle').value, eventDate: $('galDate').value, endDate: $('galEndDate').value, subjectGroup: $('galSubjectIn').value, department: $('galDeptIn').value, semester: $('galSemIn').value, academicYear: $('galYearIn').value, url: $('galUrl').value.trim(), coverUrl: $('galCover').value.trim(), isPublic: $('galPublic').checked };
       var managed = galStoreMode === 'managed';
-      if (managed) { p.storage = 'managed'; p.isPublic = galAccessMode === 'public'; delete p.url; delete p.coverUrl; }
+      if (managed) { p.storage = 'managed'; delete p.url; delete p.coverUrl; }
       var err = !p.title.trim() ? 'กรุณากรอกชื่อกิจกรรม' : !p.eventDate ? 'กรุณาเลือกวันที่จัดกิจกรรม' : (p.endDate && p.endDate < p.eventDate) ? 'วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่ม' : (!managed && !p.url) ? 'กรุณาใส่ลิงก์อัลบั้ม' : '';
       if (err) { $('galError').textContent = err; $('galError').hidden = false; return; }
       if (editId) p.id = editId;
@@ -306,11 +297,12 @@
         if (r.data && r.data.warn) showToast(r.data.warn, true);
         await load();
         if (!editId && r.data && r.data.id) { var na = albums.filter(function (x) { return x.id === r.data.id; })[0]; if (na) { openAlbum(na.id); openUpload(na); } }
-        else if (albPage.id) openAlbum(albPage.id);
+        else if (albReturn) { var rid = albReturn; albReturn = ''; openAlbum(rid); }
         return;
       }
       if (!p.coverUrl && /drive\.google\.com/.test(p.url)) showToast(r.data && r.data.coverFileId ? 'ดึงภาพปกจากโฟลเดอร์ให้แล้ว' : 'ดึงภาพปกจากโฟลเดอร์ไม่ได้ — แสดงเป็นไอคอน (ใส่ลิงก์รูปปกเองได้ที่ "แก้ไข")', !(r.data && r.data.coverFileId));
-      load();
+      await load();
+      if (albReturn) { var rid2 = albReturn; albReturn = ''; openAlbum(rid2); }
     });
     // แชร์หน้าสาธารณะ
     function publicUrl() { return location.origin + location.pathname.replace(/[^\/]*$/, '') + 'photos.html'; }
@@ -334,7 +326,7 @@
     // =================================================================
     // 1.82: อัลบั้มแบบระบบสร้างโฟลเดอร์ · อัปรูปผ่านเว็บ · จัดการรูป · ถังขยะอัลบั้ม
     // =================================================================
-    var galStoreMode = 'managed', galAccessMode = 'domain';
+    var galStoreMode = 'managed';
     function setStore(m) {
       galStoreMode = m === 'link' ? 'link' : 'managed';
       document.querySelectorAll('#galStore [data-store]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-store') === galStoreMode); });
@@ -342,15 +334,7 @@
       document.querySelectorAll('#galForm .gal-managed-only').forEach(function (el) { el.hidden = galStoreMode !== 'managed'; });
       $('galSave').innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i> ' + (editId ? 'บันทึก' : galStoreMode === 'managed' ? 'สร้างอัลบั้มแล้วอัปรูป' : 'บันทึก');
     }
-    function setAccess(m) {
-      galAccessMode = m === 'public' ? 'public' : 'domain';
-      document.querySelectorAll('#galAccSeg [data-acc]').forEach(function (b) { var on = b.getAttribute('data-acc') === galAccessMode; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
-      $('galAccHint').textContent = galAccessMode === 'public'
-        ? 'ดูในเว็บ: ทุกคนที่ล็อกอิน · เปิดใน Google Drive: ทุกคนที่มีลิงก์ · ขึ้นในหน้าคลังรูปภาพสาธารณะ'
-        : 'ดูในเว็บ: ทุกคนที่ล็อกอิน · เปิดใน Google Drive: เฉพาะเมลโรงเรียน · ไม่ขึ้นในหน้าสาธารณะ';
-    }
     $('galStore').addEventListener('click', function (e) { var b = e.target.closest('[data-store]'); if (b) setStore(b.getAttribute('data-store')); });
-    $('galAccSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-acc]'); if (b) setAccess(b.getAttribute('data-acc')); });
     async function confirmDeleteAlbum(a) {
       if (!galInfo.managedReady) return askConfirm('ลบอัลบั้ม <b>' + escapeHtml(a.title) + '</b> ออกจากคลังรูปภาพ? (รูปใน Google Drive ไม่ถูกลบ)', 'ยืนยันการลบ');
       return askConfirm('ย้ายอัลบั้ม <b>' + escapeHtml(a.title) + '</b>' + (isManagedAlbum(a) && a.photoCount ? ' (' + a.photoCount + ' รูป)' : '') + ' ไปถังขยะ?<br>อัลบั้มจะหายจากคลังรูปภาพ' + (isManagedAlbum(a) ? ' และปิดลิงก์ใน Google Drive' : '') + ' ทันที · กู้คืนได้ภายใน ' + galInfo.trashDays + ' วัน' + (isManagedAlbum(a) ? '' : ' (โฟลเดอร์ของครูใน Google Drive ไม่ถูกลบ)'), 'ยืนยันการลบอัลบั้ม');
@@ -385,7 +369,7 @@
       if (!trashItems.length) { root.innerHTML = '<div class="card"><div class="empty-state">ถังขยะว่าง</div></div>'; return; }
       root.innerHTML = '<div class="card trash-list">' + trashItems.map(function (a) {
         var left = a.daysLeft <= 1 ? 'พรุ่งนี้' : 'เหลือ ' + a.daysLeft + ' วัน';
-        var kind = isManagedAlbum(a) ? '<span class="tr-tag ' + (a.isPublic ? 'pub' : 'in') + '">' + (a.isPublic ? 'สาธารณะ (ปิดลิงก์แล้ว)' : 'เฉพาะในโรงเรียน') + '</span>' : '<span class="tr-tag link">ลิงก์โฟลเดอร์ของครู</span>';
+        var kind = isManagedAlbum(a) ? '<span class="tr-tag in">ระบบสร้างโฟลเดอร์ · ปิดลิงก์แล้ว</span>' : '<span class="tr-tag link">ลิงก์โฟลเดอร์ของครู</span>';
         return '<div class="tr-item" data-tr="' + escapeHtml(a.id) + '"><span class="tr-ic" style="--ac:' + albumColor(a) + '"><i class="fa-solid fa-images" aria-hidden="true"></i></span>' +
           '<div class="tr-main"><div class="tr-title">' + escapeHtml(a.title) + ' ' + kind + '</div>' +
           '<div class="tr-meta">' + (isManagedAlbum(a) ? a.photoCount + ' รูป · ' : '') + 'ลบโดย ' + escapeHtml(a.deletedByName || '-') + ' · ' + escapeHtml(formatDateTimeThai(a.deletedAt)) + (isManagedAlbum(a) ? '' : ' · ลบแค่รายการในเว็บ ไม่แตะโฟลเดอร์ของครู') + '</div></div>' +
@@ -398,7 +382,7 @@
       var it = e.target.closest('[data-tr]'); if (!it) return;
       var a = trashItems.filter(function (x) { return x.id === it.getAttribute('data-tr'); })[0]; if (!a) return;
       if (e.target.closest('[data-tr-restore]')) {
-        if (!(await askConfirm('กู้คืนอัลบั้ม <b>' + escapeHtml(a.title) + '</b>?' + (isManagedAlbum(a) ? ' (สิทธิ์ใน Google Drive กลับเป็นแบบเดิม)' : ''), 'ยืนยันการกู้คืน'))) return;
+        if (!(await askConfirm('กู้คืนอัลบั้ม <b>' + escapeHtml(a.title) + '</b>?' + (isManagedAlbum(a) ? ' (ลิงก์ใน Google Drive กลับมาเปิดได้)' : ''), 'ยืนยันการกู้คืน'))) return;
         var r = await withProgress('กำลังกู้คืน', function () { return apiCall('albumRestore', { id: a.id }); }, { successLabel: 'กู้คืนอัลบั้มแล้ว' });
         if (r.ok) { if (r.data && r.data.warn) showToast(r.data.warn, true); await load(); loadTrash(); }
         return;
@@ -411,41 +395,49 @@
     });
 
     // ---------- หน้าอัลบั้ม (ป็อปอัพ) ----------
-    var albPage = { id: '', data: null };
+    var albPage = { id: '', data: null }, albReturn = '';
     async function openAlbum(id) {
       albPage.id = id;
+      var la = albums.filter(function (x) { return x.id === id; })[0];
+      if (la && !isManagedAlbum(la)) { albPage.data = { album: la, photos: [], link: true }; renderAlbumPage(); if ($('albModal').hidden) showModalEl($('albModal')); return; } // 1.84: อัลบั้มแบบลิงก์ — ไม่ต้องเรียก API
       $('albBody').innerHTML = '<div class="loading">กำลังโหลด</div>';
       if ($('albModal').hidden) showModalEl($('albModal'));
       try { albPage.data = await apiCall('albumPhotos', { id: id }); }
       catch (e) { $('albBody').innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; return; }
       renderAlbumPage();
     }
+    // 1.84: หน้าอัลบั้มแนวตั้ง — ข้อมูล → รูปปก 16:9 → ปุ่มหลักเต็มความกว้าง → ปุ่มรองกว้างเท่ากัน (มือถือ 2×2) · ใช้กับทั้งสองแบบ
     function renderAlbumPage() {
-      var a = albPage.data.album, cover = ALBUM_COVERS[a.id] || '';
-      var listA = albums.filter(function (x) { return x.id === a.id; })[0]; if (listA) Object.assign(listA, a);
-      $('albBody').innerHTML = '<div class="alb-pg">' +
-        '<div class="alb-pg-cover' + (cover ? '' : ' no-cover') + '" style="--ac:' + albumColor(a) + '">' + (cover ? '<img src="' + cover + '" alt="" />' : '<i class="fa-solid fa-images" aria-hidden="true"></i>') +
-          '<span class="alb-pg-n"><i class="fa-solid fa-images" aria-hidden="true"></i> ' + a.photoCount + ' รูป</span></div>' +
-        '<div class="alb-pg-info"><h3>' + escapeHtml(a.title) + '</h3>' +
-          '<div class="alb-pg-meta"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(albumDateLabel(a)) + ' · ' + escapeHtml(albumSemLabel(a)) + ' ปีการศึกษา ' + escapeHtml(a.academicYear) + '</div>' +
-          '<div class="alb-pg-meta">' + (a.department ? '<span class="tr-tag in">' + escapeHtml(groupLabel(a.department)) + '</span> ' : '') + (a.subjectGroup ? '<span class="tr-tag sub">กลุ่มสาระฯ ' + escapeHtml(a.subjectGroup) + '</span> ' : '') +
-            '<span class="tr-tag ' + (a.isPublic ? 'pub' : 'in') + '"><i class="fa-solid ' + albumPubIcon(a) + '" aria-hidden="true"></i> ' + albumPubLabel(a) + '</span></div>' +
-          '<div class="alb-pg-meta"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> สร้างโดย ' + escapeHtml(a.createdByName || '-') + ' · อัปโดย ' + (a.uploaderCount || 0) + ' คน · ' + escapeHtml(formatBytes(a.totalBytes || 0)) + '</div>' +
-          '<a class="btn btn-primary alb-pg-drive" href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> ดูรูปทั้งหมดใน Google Drive</a>' +
-          '<div class="alb-pg-acts"><button type="button" class="btn btn-secondary btn-sm" data-ap="upload"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> อัปรูป</button>' +
-            '<button type="button" class="btn btn-secondary btn-sm" data-ap="manage"><i class="fa-solid fa-list-check" aria-hidden="true"></i> จัดการรูป</button>' +
-            (a.canEdit ? '<button type="button" class="btn btn-secondary btn-sm" data-ap="edit"><i class="fa-solid fa-pen" aria-hidden="true"></i> แก้ไข</button>' : '') +
-            (a.mine ? '<button type="button" class="btn btn-secondary btn-sm" data-ap="copy"><i class="fa-solid fa-copy" aria-hidden="true"></i> คัดลอกข้อความ</button>' : '') + '</div>' +
-          '<div class="hint alb-pg-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ' + (a.isPublic ? 'ทุกคนที่มีลิงก์เปิดดูใน Google Drive ได้' : 'เปิดใน Google Drive ด้วยเมลโรงเรียน (อัลบั้มนี้เป็นแบบเฉพาะในโรงเรียน)') + '</div>' +
-        '</div></div>';
-      if (!cover && a.coverFileId) loadManagedCovers(document, [a], false).then(function () { if (ALBUM_COVERS[a.id] && albPage.id === a.id && !$('albModal').hidden) renderAlbumPage(); });
+      var a = albPage.data.album, managed = isManagedAlbum(a), cover = albumCoverUrl(a, 1280) || '';
+      if (managed) { var listA = albums.filter(function (x) { return x.id === a.id; })[0]; if (listA) Object.assign(listA, a); }
+      var isPhotos = !managed && /photos/.test(a.url || '');
+      var acts = [];
+      if (managed) { acts.push(['upload', 'fa-cloud-arrow-up', 'อัปรูป']); acts.push(['manage', 'fa-list-check', 'จัดการรูป']); }
+      if (a.canEdit) acts.push(['edit', 'fa-pen', 'แก้ไข']);
+      if (a.mine) acts.push(['copy', 'fa-copy', 'คัดลอกข้อความ']);
+      $('albBody').innerHTML = '<div class="alb-pg2">' +
+        '<h3>' + escapeHtml(a.title) + '</h3>' +
+        '<div class="alb-pg-meta"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(albumDateLabel(a)) + ' · ' + escapeHtml(albumSemLabel(a)) + ' ปีการศึกษา ' + escapeHtml(a.academicYear) + '</div>' +
+        '<div class="alb-pg-meta">' + (a.department ? '<span class="tr-tag in">' + escapeHtml(groupLabel(a.department)) + '</span>' : '') + (a.subjectGroup ? '<span class="tr-tag sub">กลุ่มสาระฯ ' + escapeHtml(a.subjectGroup) + '</span>' : '') +
+          '<span class="tr-tag ' + (a.isPublic ? 'pub' : 'link') + '"><i class="fa-solid ' + albumPubIcon(a) + '" aria-hidden="true"></i> ' + (a.isPublic ? 'แสดงในหน้าสาธารณะ' : 'เฉพาะในระบบ') + '</span>' +
+          (managed ? '' : '<span class="tr-tag link"><i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์โฟลเดอร์ของครู</span>') + '</div>' +
+        '<div class="alb-pg-meta"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> สร้างโดย ' + escapeHtml(a.createdByName || '-') + (managed ? ' · อัปโดย ' + (a.uploaderCount || 0) + ' คน · ' + escapeHtml(formatBytes(a.totalBytes || 0)) : '') + '</div>' +
+        '<a class="alb-pg2-cover' + (cover ? '' : ' no-cover') + '" style="--ac:' + albumColor(a) + '" href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener" aria-label="ดูรูปทั้งหมด">' + (cover ? '<img src="' + cover + '" alt="" referrerpolicy="no-referrer" />' : '<i class="fa-solid fa-images" aria-hidden="true"></i>') +
+          (a.photoCount > 0 ? '<span class="alb-pg-n"><i class="fa-solid fa-images" aria-hidden="true"></i> ' + a.photoCount + ' รูป</span>' : '') + '</a>' +
+        '<a class="btn btn-primary alb-pg2-drive" href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener"><i class="fa-solid ' + (isPhotos ? 'fa-images' : 'fa-folder-open') + '" aria-hidden="true"></i> ดูรูปทั้งหมดใน ' + (isPhotos ? 'Google Photos' : 'Google Drive') + '</a>' +
+        (acts.length ? '<div class="alb-pg2-acts n' + acts.length + '">' + acts.map(function (x) { return '<button type="button" data-ap="' + x[0] + '"><i class="fa-solid ' + x[1] + '" aria-hidden="true"></i><span>' + x[2] + '</span></button>'; }).join('') + '</div>' : '') +
+        '<div class="hint alb-pg-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ' + (managed ? 'เปิดดูใน Google Drive ได้ทุกคนที่มีลิงก์ · ไม่ต้องล็อกอิน Google' : 'โฟลเดอร์นี้เป็นของครูผู้สร้าง — เพิ่ม/ลบรูปใน Google Drive โดยตรง · เปิดดูได้ตามสิทธิ์ที่ครูตั้งไว้ในโฟลเดอร์') + '</div>' +
+        '</div>';
+      var img = $('albBody').querySelector('.alb-pg2-cover img');
+      if (img) img.addEventListener('error', function () { var c = img.parentNode; c.classList.add('no-cover'); img.remove(); c.insertAdjacentHTML('afterbegin', '<i class="fa-solid fa-images" aria-hidden="true"></i>'); });
+      if (managed && !cover && a.coverFileId) loadManagedCovers(document, [a], false).then(function () { if (ALBUM_COVERS[a.id] && albPage.id === a.id && !$('albModal').hidden) renderAlbumPage(); });
     }
     $('albBody').addEventListener('click', function (e) {
       var b = e.target.closest('[data-ap]'); if (!b || !albPage.data) return;
       var a = albPage.data.album, k = b.getAttribute('data-ap');
       if (k === 'upload') openUpload(a);
       else if (k === 'manage') openManage();
-      else if (k === 'edit') openForm(a);
+      else if (k === 'edit') { albReturn = a.id; hideModalEl($('albModal')); openForm(albums.filter(function (x) { return x.id === a.id; })[0] || a); } // 1.84: หน้าแก้ไขต้องอยู่บนสุด
       else if (k === 'copy') copyAlbumText(a);
     });
     function closeAlbum() { hideModalEl($('albModal')); albPage.id = ''; if (/^#album=/.test(location.hash)) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* ข้าม */ } } }

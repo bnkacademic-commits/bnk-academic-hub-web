@@ -20,8 +20,8 @@ function albumCoverUrl(a, w) {
   if (isManagedAlbum(a)) return ALBUM_COVERS[a.id] || '';
   return a.coverFileId ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(a.coverFileId) + '&sz=w' + (w || 640) : '';
 }
-function albumPubLabel(a) { return a.isPublic ? 'สาธารณะ' : (isManagedAlbum(a) ? 'เฉพาะในโรงเรียน' : 'เฉพาะในระบบ'); }
-function albumPubIcon(a) { return a.isPublic ? 'fa-globe' : (isManagedAlbum(a) ? 'fa-school' : 'fa-lock'); }
+function albumPubLabel(a) { return a.isPublic ? 'สาธารณะ' : 'เฉพาะในระบบ'; } // 1.84: ทั้งสองแบบ = แสดง/ไม่แสดงในหน้าสาธารณะ
+function albumPubIcon(a) { return a.isPublic ? 'fa-globe' : 'fa-lock'; }
 // โหลดปกของอัลบั้ม managed ที่ยังไม่มีในหน่วยความจำ (ครั้งละไม่เกิน 60) แล้วใส่ในการ์ดที่แสดงอยู่
 async function loadManagedCovers(root, list, isPublic) {
   var need = list.filter(function (a) { return isManagedAlbum(a) && a.coverFileId && !ALBUM_COVERS[a.id]; }).map(function (a) { return a.id; }).slice(0, 60);
@@ -45,7 +45,8 @@ function albumCardHtml(a, opts) {
   opts = opts || {};
   var cover = albumCoverUrl(a);
   // 1.82: อัลบั้ม managed ในระบบ = กดแล้วเปิดหน้าอัลบั้ม (ป็อปอัพ) · หน้าสาธารณะ/แบบลิงก์ = เปิด Google Drive
-  var openAttr = opts.inSystem && isManagedAlbum(a) ? ' href="#album=' + escapeHtml(a.id) + '" data-alb-view' : ' href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener"';
+  // 1.84: ในระบบ = เปิดหน้าอัลบั้มทั้งสองแบบ · หน้าสาธารณะ = เปิด Google Drive / Google Photos
+  var openAttr = opts.inSystem ? ' href="#album=' + escapeHtml(a.id) + '" data-alb-view' : ' href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener"';
   var coverHtml = cover
     ? '<img class="alb-img" src="' + cover + '" alt="" loading="lazy" referrerpolicy="no-referrer" />'
     : '';
@@ -70,7 +71,7 @@ function albumCardHtml(a, opts) {
           // 1.78: คัดลอกข้อความไปส่งในกลุ่มได้เฉพาะเจ้าของอัลบั้ม (ในระบบ)
           (opts.inSystem && a.mine ? '<button type="button" class="icon-btn" data-alb-copy title="คัดลอกข้อความไปส่งในกลุ่ม" aria-label="คัดลอกข้อความ ' + escapeHtml(a.title) + '"><i class="fa-solid fa-copy"></i></button>' : '') +
           (opts.inSystem && isManagedAlbum(a) ? '<button type="button" class="icon-btn" data-alb-upload title="อัปรูป" aria-label="อัปรูปเข้า ' + escapeHtml(a.title) + '"><i class="fa-solid fa-cloud-arrow-up"></i></button>' : '') +
-          '<a class="alb-open"' + openAttr + ' title="เปิดอัลบั้ม" aria-label="เปิดอัลบั้ม ' + escapeHtml(a.title) + '"><i class="fa-solid ' + (opts.inSystem && isManagedAlbum(a) ? 'fa-images' : 'fa-up-right-from-square') + '" aria-hidden="true"></i></a>' +
+          '<a class="alb-open"' + openAttr + ' title="เปิดอัลบั้ม" aria-label="เปิดอัลบั้ม ' + escapeHtml(a.title) + '"><i class="fa-solid ' + (opts.inSystem ? 'fa-images' : 'fa-up-right-from-square') + '" aria-hidden="true"></i></a>' +
         '</span></div></div></article>';
 }
 // รูปปกโหลดไม่ได้ (เช่น เจ้าของเลิกแชร์) = ใช้ไอคอน
