@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.0.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.1.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -71,10 +71,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.86.0.221026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.86.1.221026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.86.0.221026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.86.1.221026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -108,7 +108,7 @@
         </div>
       </div>
 
-      <!-- 1.86.0.221026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.86.1.221026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -242,7 +242,18 @@
             <option value="direct">ส่งตรงเท่านั้น — ไม่ใช้วิธีสำรอง</option>
             <option value="relay">ผ่าน relay เท่านั้น — แบบเดิม (เครือข่ายส่งตรงไม่ได้)</option>
           </select>
-          <div class="hint" style="margin-top:6px;">ส่งตรง = เร็ว ไฟล์ละไม่เกิน 100 MB ส่งต่อจากจุดเดิมเมื่อเน็ตสะดุด รับคนส่งพร้อมกันได้มาก · ผ่าน relay = ช้ากว่า ไฟล์ละไม่เกิน 25 MB</div>
+          <div class="hint" style="margin-top:6px;">ส่งตรง = เร็ว ไฟล์ใหญ่ได้ (ตามขนาดสูงสุดด้านล่าง) ส่งต่อจากจุดเดิมเมื่อเน็ตสะดุด รับคนส่งพร้อมกันได้มาก · ผ่าน relay = ช้ากว่า ไฟล์ละไม่เกิน 25 MB</div>
+        </div>
+        <!-- 1.86.1: เพดานขนาดไฟล์ต่อไฟล์ -->
+        <div class="field" style="margin:14px 0 0; max-width:520px;">
+          <label for="setFileMaxMB">ขนาดไฟล์สูงสุดต่อไฟล์</label>
+          <select id="setFileMaxMB">
+            <option value="10">10 MB</option>
+            <option value="25">25 MB (แนะนำ)</option>
+            <option value="50">50 MB (เฉพาะส่งตรง)</option>
+            <option value="100">100 MB (เฉพาะส่งตรง)</option>
+          </select>
+          <div class="hint" style="margin-top:6px;">ใช้กับส่งงาน คำสั่ง และเกียรติบัตร · ไฟล์ที่ใหญ่เกินจะเลือกไม่ได้ตั้งแต่แรก · ส่งผ่าน relay ได้ไม่เกิน 25 MB เสมอ · ไม่เกี่ยวกับคลังรูปภาพ</div>
         </div>
       </div>
 
@@ -1197,7 +1208,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.86.0.221026"></script>
+  <script src="assets/api.js?v=1.86.1.221026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1343,6 +1354,8 @@
       if (gum) gum.value = s.galleryUploadMode === 'direct' ? 'direct' : 'auto';
       var fum = document.getElementById('setFileUploadMode'); // 1.86
       if (fum) fum.value = s.fileUploadMode === 'direct' || s.fileUploadMode === 'relay' ? s.fileUploadMode : 'auto';
+      var fmx = document.getElementById('setFileMaxMB'); // 1.86.1
+      if (fmx) fmx.value = ['10', '25', '50', '100'].indexOf(String(s.fileMaxMB)) !== -1 ? String(s.fileMaxMB) : '25';
       var retSel = document.getElementById('setOrderRetention');
       if (retSel) {
         var ry = String(Number(s.orderRetentionYears || 0));
@@ -1402,6 +1415,20 @@
         var ok = await askConfirm(msg[v], 'ยืนยันวิธีส่งไฟล์');
         if (!ok) { sel.value = prev; return; }
         var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { fileUploadMode: v }); }, { successLabel: 'บันทึกวิธีส่งไฟล์แล้ว' });
+        if (r.ok) { resetSettingsCache(); prev = v; } else sel.value = prev;
+      });
+    })();
+    // 1.86.1: ขนาดไฟล์สูงสุดต่อไฟล์ — บันทึกทันทีเมื่อเปลี่ยน
+    (function () {
+      var sel = document.getElementById('setFileMaxMB');
+      if (!sel) return;
+      var prev = '25';
+      sel.addEventListener('focus', function () { prev = sel.value; });
+      sel.addEventListener('change', async function () {
+        var v = sel.value;
+        var ok = await askConfirm('ตั้งขนาดไฟล์สูงสุดเป็น ' + v + ' MB ต่อไฟล์?' + (Number(v) > 25 ? ' (ไฟล์เกิน 25 MB ส่งได้เฉพาะแบบส่งตรง)' : ''), 'ยืนยันขนาดไฟล์สูงสุด');
+        if (!ok) { sel.value = prev; return; }
+        var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { fileMaxMB: Number(v) }); }, { successLabel: 'บันทึกขนาดไฟล์สูงสุดแล้ว' });
         if (r.ok) { resetSettingsCache(); prev = v; } else sel.value = prev;
       });
     })();
@@ -1631,7 +1658,7 @@
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.86.0.221026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.86.1.221026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -2293,7 +2320,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.86.0.221026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.86.1.221026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);
