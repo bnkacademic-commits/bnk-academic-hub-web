@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.87.0.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.87.1.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -208,7 +208,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.87.0.221026"></script>
+  <script src="assets/api.js?v=1.87.1.221026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -482,7 +482,7 @@
         return head + '<table class="sub-files cert-items"><tbody>' + g.items.map(function (it) {
           var off = it.status !== 'active';
           var act;
-          if (off || cancelled) act = '<span class="hint">ยกเลิกแล้ว</span>';
+          if (off || cancelled) act = '<span class="hint">ยกเลิกแล้ว</span>' + (it.canPurge && !cancelled ? ' <button type="button" class="btn btn-danger btn-sm cert-it-purge" data-it-purge="' + escapeHtml(c.id) + '" data-it="' + escapeHtml(it.id) + '" title="ผู้ดูแลระบบ: ลบเลขท้ายสุดที่ยกเลิกแล้วออกถาวร — เลขถัดไปย้อนกลับ"><i class="fa-solid fa-trash-can"></i> ลบถาวร</button>' : ''); // 1.87.1
           else if (it.file) act = '<button type="button" class="icon-btn" data-it-view="' + escapeHtml(c.id) + '" data-it="' + escapeHtml(it.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(it.name) + '"><i class="fa-solid fa-eye"></i></button>' +
             dlLink(it.file, 'icon-btn', '<i class="fa-solid fa-download"></i>', it.name) +
             (c.canManage ? '<button type="button" class="icon-btn" data-it-up="' + escapeHtml(c.id) + '" data-it="' + escapeHtml(it.id) + '" title="เปลี่ยนไฟล์" aria-label="เปลี่ยนไฟล์ของ ' + escapeHtml(it.name) + '"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>' : '');
@@ -540,7 +540,8 @@
         '</div>' +
         (open ? '<div class="ordc-detail"><table>' + rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>' +
           itemsTableHtml(c) +
-          ((canShare || c.canManage || c.canPurge) ? '<div class="ordc-acts">' +
+          ((canShare || c.canManage || c.canPurge || c.canRestore) ? '<div class="ordc-acts">' +
+            (c.canRestore ? '<button type="button" class="btn btn-success btn-sm" data-restore="' + escapeHtml(c.id) + '"><i class="fa-solid fa-rotate-left"></i> นำกลับมาใช้ทั้งชุด</button>' : '') + // 1.87.1
             (c.canPurge ? '<button type="button" class="btn btn-danger btn-sm" data-purge="' + escapeHtml(c.id) + '"><i class="fa-solid fa-trash-can"></i> ลบถาวร (คืนเลขที่)</button>' : '') + // 1.86.2
             (canShare ? '<button type="button" class="btn btn-secondary btn-sm" data-share="' + escapeHtml(c.id) + '"><i class="fa-solid fa-share-nodes"></i> แชร์ลิงก์กิจกรรม</button>' : '') +
             (c.canManage ? '<button type="button" class="btn btn-ghost btn-sm" data-edit="' + escapeHtml(c.id) + '"><i class="fa-solid fa-pen"></i> แก้ไข / เพิ่มคน</button><button type="button" class="btn btn-danger btn-sm" data-del="' + escapeHtml(c.id) + '"><i class="fa-solid fa-trash"></i> ' + (c.scope === 'internal' ? 'ยกเลิกเกียรติบัตรชุดนี้' : 'ลบเกียรติบัตร') + '</button>' : '') +
@@ -1230,7 +1231,7 @@
       $('certRoot').addEventListener('click', async function (ev) {
         if (ev.target.closest('a[download]')) return;
         var mb = ev.target.closest('[data-more]'); if (mb) { shownN = mb.hasAttribute('data-more-all') ? 1e9 : shownN + LIST_PAGE; render(); return; }
-        var t = ev.target.closest('[data-edit],[data-del],[data-purge],[data-preview],[data-expand-up],[data-expand],[data-it-view],[data-it-up],[data-share]');
+        var t = ev.target.closest('[data-edit],[data-del],[data-purge],[data-restore],[data-it-purge],[data-preview],[data-expand-up],[data-expand],[data-it-view],[data-it-up],[data-share]');
         if (!t) return;
         var byId = function (attr) { var v = t.getAttribute(attr); return certs.filter(function (x) { return x.id === v; })[0]; };
         if (t.hasAttribute('data-expand-up')) { expanded[t.getAttribute('data-expand-up')] = true; render(); return; }
@@ -1244,10 +1245,26 @@
         }
         if (t.hasAttribute('data-share')) { var cs = byId('data-share'); if (cs) openShare(cs); return; }
         if (t.hasAttribute('data-edit')) { var ce = byId('data-edit'); if (ce) openModal(ce.scope, ce); return; }
+        if (t.hasAttribute('data-restore')) { // 1.87.1: นำกลับมาใช้ทั้งชุด
+          var cr = byId('data-restore'); if (!cr) return;
+          if (!(await askConfirm('นำเกียรติบัตร "' + cr.activity + '" กลับมาใช้ทั้งชุด? ทุกคนได้เลขที่เดิม แต่ต้องอัปไฟล์ใหม่ทุกใบ (ไฟล์เดิมลงถังขยะไปแล้ว) — คนที่ไม่ใช้แล้วกด "ยกเลิก" รายคนในหน้าแก้ไขได้', 'นำกลับมาใช้ทั้งชุด'))) return;
+          var rr = await withProgress('กำลังนำกลับมาใช้...', function () { return apiCall('certRestore', { certId: cr.id }); }, { successLabel: 'นำกลับมาใช้แล้ว — อัปไฟล์ใหม่ได้เลย' });
+          if (rr.ok) { $('certMine').value = ''; expanded[cr.id] = true; await load(); }
+          return;
+        }
+        if (t.hasAttribute('data-it-purge')) { // 1.87.1: ลบถาวรรายคน (เลขท้ายสุดที่ยกเลิกแล้ว)
+          var cip = byId('data-it-purge'); if (!cip) return;
+          var itp = (cip.items || []).filter(function (x) { return x.id === t.getAttribute('data-it'); })[0]; if (!itp) return;
+          if (!(await askConfirm('ลบเลขที่ ' + itp.certNo + (itp.name ? ' (' + itp.name + ')' : '') + ' ที่ยกเลิกแล้วออกถาวร? เป็นเลขท้ายสุด — ลบแล้วเลขถัดไปจะย้อนกลับมาเป็นเลขนี้ และกู้คืนไม่ได้', 'ลบถาวร'))) return;
+          var rp2 = await withProgress('กำลังลบถาวร...', function () { return apiCall('certItemPurge', { certId: cip.id, itemId: itp.id }); }, { successLabel: 'ลบถาวรแล้ว' });
+          if (rp2.ok) await load();
+          return;
+        }
         if (t.hasAttribute('data-purge')) { // 1.86.2: ผู้ดูแลระบบ — ลบชุดที่ยกเลิกแล้วออกถาวร เลขที่กลับมาใช้ได้
           var cpg = byId('data-purge'); if (!cpg) return; var cp = cpg;
           var nos = noRange(cp.items || []);
-          if (!(await askConfirm('ลบเกียรติบัตร "' + cp.activity + '" ที่ยกเลิกแล้วออกถาวร?' + (nos ? ' เลขที่ ' + nos + ' จะไม่ถูกนับว่าออกไปแล้ว' : '') + ' — ใช้กับชุดที่ทดลองหรือออกผิดเท่านั้น ลบแล้วกู้คืนไม่ได้', 'ลบถาวร'))) return;
+          var midWarn = cp.purgeMiddle ? ' ⚠ ชุดนี้อยู่กลางทะเบียน (มีเลขที่ออกต่อจากชุดนี้แล้ว) — ลบแล้วเลขที่ของชุดนี้จะไม่แสดงในทะเบียนและไม่นำกลับมาใช้' : ''; // 1.87.1
+          if (!(await askConfirm('ลบเกียรติบัตร "' + cp.activity + '" ที่ยกเลิกแล้วออกถาวร?' + (nos ? ' เลขที่ ' + nos + ' จะไม่ถูกนับว่าออกไปแล้ว' : '') + ' — ใช้กับชุดที่ทดลองหรือออกผิดเท่านั้น ลบแล้วกู้คืนไม่ได้' + midWarn, 'ลบถาวร'))) return;
           var rp = await withProgress('กำลังลบถาวร...', function () { return apiCall('certPurge', { certId: cp.id }); }, { successLabel: 'ลบถาวรแล้ว' });
           if (!rp.ok) return;
           var cs2 = (rp.data && rp.data.counters) || [];
