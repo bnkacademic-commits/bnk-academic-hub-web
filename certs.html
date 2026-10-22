@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.2.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.3.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -191,7 +191,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.86.2.221026"></script>
+  <script src="assets/api.js?v=1.86.3.221026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -568,6 +568,18 @@
     function renderCompToggle() {
       Array.prototype.forEach.call(document.querySelectorAll('#certCompTg [data-comp]'), function (b) { var on = (b.getAttribute('data-comp') === '1') === hasComp; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
     }
+    // ---- 1.86.3: ชั้น/ห้อง — 51 / 5/1 / 5-1 / 5 1 / 510 / ม.5/1 → "ม.5/1" · 5 → "ม.5" · อื่นๆ (เช่น ป.6) คงเดิม ----
+    function normCls(v) {
+      var s = String(v || '').trim().replace(/\s+/g, ' ');
+      if (!s) return '';
+      var t = s.replace(/^ม\s*\.?\s*/, '');
+      var m = /^([1-6])\s*[\/\-.\s]\s*(\d{1,2})$/.exec(t) || /^([1-6])(\d{1,2})$/.exec(t);
+      if (m) return 'ม.' + m[1] + '/' + Number(m[2]);
+      if (/^[1-6]$/.test(t)) return 'ม.' + t;
+      return s;
+    }
+    function clsHasPrefix(v) { return !v || /^ม\.[1-6](\/\d{1,2})?$/.test(v); }
+    function clsShow(v) { return clsHasPrefix(v) ? String(v || '').replace(/^ม\./, '') : v; }
     function peopleHtml(g, gi, cols, pn, internal) {
       return g.people.map(function (p, pi) {
         var at = ' data-g="' + gi + '" data-p="' + pi + '"';
@@ -576,7 +588,8 @@
         else if (mKind === 'teacher') who = '<select data-p-user' + at + ' aria-label="ครูผู้ได้รับ">' + personOptions(p.userId) + '</select>';
         else if (mKind === 'school') who = '<div class="cert-school-box"><i class="fa-solid fa-school" aria-hidden="true"></i> ' + escapeHtml(p.name || schoolName || 'โรงเรียน') + '</div>';
         else who = '<input data-p-name' + at + ' maxlength="120" placeholder="ชื่อ-สกุล เช่น ด.ญ.กมลชนก ใจดี" value="' + escapeHtml(p.name) + '" aria-label="ชื่อนักเรียน" />' +
-          '<input class="cls" data-p-cls' + at + ' maxlength="30" placeholder="ชั้น/ห้อง" value="' + escapeHtml(p.cls) + '" aria-label="ชั้น/ห้อง" />';
+          // 1.86.3: ช่องชั้น/ห้องมี "ม." ให้แล้ว — พิมพ์ 51 หรือ 5/1 ระบบจัดเป็น ม.5/1 (ค่าอื่นเช่น ป.6 คงตามที่พิมพ์ ไม่แสดง ม.)
+          '<span class="cls-in' + (clsHasPrefix(p.cls) ? '' : ' raw') + '"><b aria-hidden="true">ม.</b><input class="cls" data-p-cls' + at + ' maxlength="30" placeholder="' + (gi === 0 && pi === 0 ? '5/1' : '') + '" value="' + escapeHtml(clsShow(p.cls)) + '" aria-label="ชั้น/ห้อง (มัธยม)" /></span>';
         var no = internal ? (p.certNo ? '<span class="cert-no">' + escapeHtml(p.certNo) + '</span>' : (pn[gi + ':' + pi] ? '<span class="cert-no preview" title="เลขตัวอย่าง — เลขจริงออกตอนบันทึก">' + escapeHtml(pn[gi + ':' + pi]) + '</span>' : '<span class="cert-no empty">—</span>')) : '';
         var canRm = mKind !== 'school' && (g.people.length > 1 || groups.length > 1);
         return '<div class="cert-prow c-' + cols + '">' + no + who + fileSlotHtml(p, gi, pi) +
@@ -591,6 +604,7 @@
       if (mKind !== 'school') links += '<button type="button" class="cert-add-link" data-p-paste="' + gi + '"><i class="fa-solid fa-paste"></i> วางรายชื่อจาก Excel</button>';
       if (internal && mKind !== 'school') links += '<span class="cert-res"><i class="fa-solid fa-user-clock"></i> จองเลขไว้ก่อน (ยังไม่ใส่ชื่อ) <input type="number" min="1" max="100" value="1" data-res-n="' + gi + '" aria-label="จำนวนแถวว่าง" /> ใบ <button type="button" class="btn btn-sm" data-res-add="' + gi + '"><i class="fa-solid fa-plus"></i> เพิ่มแถวว่าง</button></span>';
       if (g.people.length > 1) links += '<button type="button" class="cert-add-link" data-f-multi="' + gi + '"><i class="fa-solid fa-folder-open"></i> เลือกไฟล์ทีเดียวหลายไฟล์ (เรียงตามลำดับรายชื่อ)</button>';
+      if (mKind === 'student' && gi === 0) links += '<span class="cls-hint">ชั้น/ห้อง พิมพ์ 51 หรือ 5/1 ก็ได้</span>'; // 1.86.3
       var paste = '';
       if (pasteOpen === gi && pasteMatch) paste = pasteMatchHtml(gi, internal);
       else if (pasteOpen === gi) paste = '<div class="cert-paste"><textarea id="certPasteText" rows="5" placeholder="' + (mKind === 'teacher' ? 'วางรายชื่อครู บรรทัดละ 1 คน — ระบบจะจับคู่กับชื่อในระบบให้อัตโนมัติ (ไม่สนคำนำหน้า)' : 'วางรายชื่อ บรรทัดละ 1 คน — คัดลอก 2 คอลัมน์ (ชื่อ-สกุล | ชั้น/ห้อง) จาก Excel มาวางได้เลย') + '"></textarea>' +
@@ -945,13 +959,20 @@
         var gEl = $('certGroups').querySelector('[data-g-comp="' + (groups.length - 1) + '"]'); if (gEl) gEl.focus();
       });
       var G = $('certGroups');
+      // 1.86.3: ออกจากช่องชั้น/ห้อง = แสดงตามรูปแบบที่จัดแล้ว (51 → 5/1) · ค่าที่ไม่ใช่ชั้นมัธยม (เช่น ป.6) ซ่อน "ม."
+      G.addEventListener('focusout', function (e) {
+        var t = e.target; if (!t.hasAttribute || !t.hasAttribute('data-p-cls')) return;
+        var pp = groups[Number(t.getAttribute('data-g'))].people[Number(t.getAttribute('data-p'))]; if (!pp) return;
+        pp.cls = normCls(t.value); t.value = clsShow(pp.cls);
+        var w = t.closest('.cls-in'); if (w) w.classList.toggle('raw', !clsHasPrefix(pp.cls));
+      });
       G.addEventListener('input', function (e) {
         var t = e.target, gi = t.getAttribute('data-g'), pi = t.getAttribute('data-p');
         if (t.hasAttribute('data-g-comp')) groups[Number(t.getAttribute('data-g-comp'))].competition = t.value;
         else if (t.hasAttribute('data-g-award')) groups[Number(t.getAttribute('data-g-award'))].award = t.value;
         else if (t.hasAttribute('data-g-level')) groups[Number(t.getAttribute('data-g-level'))].awardLevel = t.value;
         else if (t.hasAttribute('data-p-name')) { groups[Number(gi)].people[Number(pi)].name = t.value; if (mScope === 'internal') refreshNumbers(); else updateNote(); }
-        else if (t.hasAttribute('data-p-cls')) groups[Number(gi)].people[Number(pi)].cls = t.value;
+        else if (t.hasAttribute('data-p-cls')) groups[Number(gi)].people[Number(pi)].cls = normCls(t.value); // 1.86.3
       });
       G.addEventListener('change', function (e) {
         var t = e.target;
@@ -974,7 +995,7 @@
         var t = e.target.closest('[data-match-ok],[data-res-add],[data-p-unblank],[data-p-add],[data-p-rm],[data-g-rm],[data-f-pick],[data-f-clear],[data-f-multi],[data-p-paste],[data-paste-ok],[data-paste-cancel]');
         if (!t) return;
         var gi = Number(t.getAttribute('data-g')), pi = Number(t.getAttribute('data-p'));
-        if (t.hasAttribute('data-p-add')) { var g0 = Number(t.getAttribute('data-p-add')); groups[g0].people.push(newPerson()); renderGroups(); var ins = G.querySelectorAll('[data-g="' + g0 + '"][data-p-name], [data-g="' + g0 + '"][data-p-user]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+        if (t.hasAttribute('data-p-add')) { var g0 = Number(t.getAttribute('data-p-add')); var np = newPerson(); var lastP = groups[g0].people[groups[g0].people.length - 1]; if (mKind === 'student' && lastP && lastP.cls) np.cls = lastP.cls; /* 1.86.3: ใช้ชั้นเดียวกับแถวบน */ groups[g0].people.push(np); renderGroups(); var ins = G.querySelectorAll('[data-g="' + g0 + '"][data-p-name], [data-g="' + g0 + '"][data-p-user]'); if (ins.length) ins[ins.length - 1].focus(); return; }
         if (t.hasAttribute('data-p-rm')) {
           groups[gi].people.splice(pi, 1);
           if (!groups[gi].people.length) groups.splice(gi, 1);
@@ -1023,7 +1044,7 @@
             var cols = ln.split('\t').map(function (x) { return x.replace(/\s+/g, ' ').trim(); }).filter(Boolean);
             if (!cols.length) return null;
             var cls = cols.length > 1 ? cols[cols.length - 1] : '';
-            return { name: cols.length > 1 ? cols.slice(0, -1).join(' ') : cols[0], cls: cls };
+            return { name: cols.length > 1 ? cols.slice(0, -1).join(' ') : cols[0], cls: normCls(cls) }; // 1.86.3
           }).filter(Boolean);
           var ps = groups[g1].people.filter(personFilled).concat(add);
           groups[g1].people = ps.length ? ps : [newPerson()];
