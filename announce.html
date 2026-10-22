@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.1.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.2.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -45,8 +45,8 @@
          เจ้าหน้าที่/Super Admin จัดการได้เหมือนเดิมทุกอย่าง ส่วนผู้บริหาร (role 'executive') เปิดดูได้อย่างเดียว — ไม่มีปุ่มเพิ่ม/แก้ไข/ลบ
          (ฝั่ง Worker ก็ปิดสิทธิ์เขียนไว้ด้วย: เรียกได้เฉพาะ endpoint ที่เป็นการอ่าน) -->
     <div class="tabs">
-      <!-- 1.85.2: แยกประกาศ (ป็อปอัพ) กับประกาศ (ส่วนบน) — ป็อปอัพขึ้นก่อน -->
-      <button class="tab-btn active" data-tab="popups">ประกาศ(ป็อปอัพ)<span class="rpm-tabcount pop-tabcount" id="popTabCount" hidden></span></button>
+      <!-- 1.85.2: แยกประกาศ (ป็อปอัป) กับประกาศ (ส่วนบน) — ป็อปอัปขึ้นก่อน -->
+      <button class="tab-btn active" data-tab="popups">ประกาศ(ป็อปอัป)<span class="rpm-tabcount pop-tabcount" id="popTabCount" hidden></span></button>
       <button class="tab-btn" data-tab="announcements">ประกาศ(ส่วนบน)</button>
       <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
       <!-- 1.75: เรื่องที่แจ้ง (เจ้าหน้าที่ = กลุ่มตัวเอง · Super Admin = ทุกเรื่อง) — ผู้บริหารไม่เห็นแท็บนี้ -->
@@ -82,15 +82,15 @@
       </div>
     </div>
 
-    <!-- Announcements tab (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่เวอร์ชันถัดจาก V11.2 เปลี่ยนเป็นป็อปอัพเหมือนกำหนดการ + แก้ไขประกาศที่เผยแพร่ไปแล้วได้ด้วย) -->
-    <!-- 1.85.2: ประกาศ (ป็อปอัพ) — เด้งกลางจอเมื่อเปิดหน้าแรก ไม่ขึ้นในกล่องประกาศ -->
+    <!-- Announcements tab (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่เวอร์ชันถัดจาก V11.2 เปลี่ยนเป็นป็อปอัปเหมือนกำหนดการ + แก้ไขประกาศที่เผยแพร่ไปแล้วได้ด้วย) -->
+    <!-- 1.85.2: ประกาศ (ป็อปอัป) — เด้งกลางจอเมื่อเปิดหน้าแรก ไม่ขึ้นในกล่องประกาศ -->
     <div class="tab-panel active" id="tab-popups">
       <div class="card">
         <div class="section-title" style="justify-content:space-between;">
-          <span><i class="fa-solid fa-window-restore ui-icon" style="font-size:17px;color:#7c3aed" aria-hidden="true"></i> ประกาศแบบป็อปอัพ (เด้งเมื่อเปิดหน้าแรก)</span>
-          <button class="btn btn-sm pop-add-btn" id="openCreatePopBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประกาศ (ป็อปอัพ)</button>
+          <span><i class="fa-solid fa-window-restore ui-icon" style="font-size:17px;color:#7c3aed" aria-hidden="true"></i> ประกาศแบบป็อปอัป (เด้งเมื่อเปิดหน้าแรก)</span>
+          <button class="btn btn-sm pop-add-btn" id="openCreatePopBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มประกาศ (ป็อปอัป)</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เด้งขึ้นกลางจอเมื่อครูเปิดหน้าแรก (หลังป็อปอัพต้อนรับ) — ไม่แสดงในกล่องประกาศส่วนบน · แก้ไข/ลบได้เฉพาะของกลุ่มตัวเอง</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">เด้งขึ้นกลางจอเมื่อครูเปิดหน้าแรก (หลังป็อปอัปต้อนรับ) — ไม่แสดงในกล่องประกาศส่วนบน · แก้ไข/ลบได้เฉพาะของกลุ่มตัวเอง</p>
         <div id="popListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -143,7 +143,7 @@
             </div>
           </div>
           <div class="hint ann-time-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>ไม่ระบุเวลา = แสดงทันทีจนกว่าจะลบ · ระบุเวลา = แสดง/ซ่อนอัตโนมัติตามช่วงที่ตั้ง</span></div>
-          <!-- 1.85: ประกาศแบบป็อปอัพ — เด้งกลางจอเมื่อเปิดหน้าแรก (นอกจากแสดงในรายการประกาศตามปกติ) -->
+          <!-- 1.85: ประกาศแบบป็อปอัป — เด้งกลางจอเมื่อเปิดหน้าแรก (นอกจากแสดงในรายการประกาศตามปกติ) -->
           <div class="ann-pop" id="annPopBox" hidden>
             <input type="checkbox" id="annPopOn" hidden style="display:none" />
             <div class="ann-pop-sub" id="annPopSub">
@@ -153,9 +153,9 @@
               <div class="ann-pop-img">
                 <input type="file" id="annPopFile" accept="image/*" hidden />
                 <div class="ann-pop-prev" id="annPopPrev" hidden><img id="annPopImg" alt="" /><button type="button" class="ann-pop-rm" id="annPopRm" aria-label="เอารูปออก"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>
-                <button type="button" class="ann-pop-pick" id="annPopPick"><i class="fa-solid fa-image" aria-hidden="true"></i> แนบรูปในป็อปอัพ (ไม่บังคับ) เช่น โปสเตอร์</button>
+                <button type="button" class="ann-pop-pick" id="annPopPick"><i class="fa-solid fa-image" aria-hidden="true"></i> แนบรูปในป็อปอัป (ไม่บังคับ) เช่น โปสเตอร์</button>
               </div>
-              <label class="ann-pop-rd" id="annPopResetRow" hidden><input type="checkbox" id="annPopReset" /> แสดงป็อปอัพนี้ใหม่ให้ทุกคน (รวมคนที่ติ๊กไม่แสดงอีกแล้ว)</label>
+              <label class="ann-pop-rd" id="annPopResetRow" hidden><input type="checkbox" id="annPopReset" /> แสดงป็อปอัปนี้ใหม่ให้ทุกคน (รวมคนที่ติ๊กไม่แสดงอีกแล้ว)</label>
             </div>
           </div>
           <div class="modal-actions">
@@ -169,7 +169,7 @@
 
   </div>
 
-  <!-- Add/edit calendar event modal (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่ V11.0 เปลี่ยนเป็นป็อปอัพ)
+  <!-- Add/edit calendar event modal (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่ V11.0 เปลี่ยนเป็นป็อปอัป)
        ตั้งแต่เวอร์ชันถัดจาก V11.2: แบ่งเป็น 2 แท็บ (ระยะเวลา/ประเภทงาน) และ "ประเภทงาน" กลายเป็นช่องบังคับเลือกเสมอ
        (เลิกมี "กำหนดการทั่วไป" ที่ไม่ผูกประเภทงานแล้ว — กำหนดงานทุกรายการต้องมาจากระบบกลางเท่านั้น) ช่อง "หัวข้อ" ที่เคยกรอก
        เองถูกตัดออกจากฟอร์มไปเลย เพราะหัวข้อ = ชื่อประเภทงานเสมอ (คำนวณฝั่ง Worker ให้อัตโนมัติ ไม่ต้องส่งหัวข้อมาจากหน้าเว็บอีกต่อไป) -->
@@ -306,7 +306,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.86.1.221026"></script>
+  <script src="assets/api.js?v=1.86.2.221026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -411,7 +411,7 @@
       }
     }
 
-    // ---------- แท็บในป็อปอัพกำหนดการ (ระยะเวลา / ประเภทงาน) ----------
+    // ---------- แท็บในป็อปอัปกำหนดการ (ระยะเวลา / ประเภทงาน) ----------
     // 1.81.1: ไม่แยกแท็บแล้ว — เหลือไว้ให้จุดเรียกเดิม (ตรวจข้อมูลไม่ผ่าน) เลื่อนไปที่ข้อความแจ้งเตือน
     function switchEvTab() {
       var e = document.getElementById('createEventError'); if (e) setTimeout(function () { e.scrollIntoView({ block: 'nearest' }); }, 0);
@@ -572,7 +572,7 @@
         if (t.semester && Array.prototype.some.call(ss.options, function (o) { return o.value === String(t.semester); })) ss.value = String(t.semester);
       } catch (e) { /* ใช้ค่าเริ่มต้นของฟอร์ม */ }
     }
-    // ---------- เพิ่ม/แก้ไขกำหนดการเป็นป็อปอัพ (ตั้งแต่ V11.0 — เดิมเป็นฟอร์มฝังอยู่ในหน้า) ----------
+    // ---------- เพิ่ม/แก้ไขกำหนดการเป็นป็อปอัป (ตั้งแต่ V11.0 — เดิมเป็นฟอร์มฝังอยู่ในหน้า) ----------
     var eventModalEl = document.getElementById('eventModal');
     function audienceLabel_(a) { var t = audienceLabel(a, allUsers); return t === 'ทั้งหมด' ? 'ครูทุกคน' : t; }
     // ---------- 1.81: ชนิดกำหนดการ (กำหนดส่งงาน / กิจกรรม) + ฟอร์มกิจกรรม ----------
@@ -687,7 +687,7 @@
           document.getElementById('evYear').value = ev.academicYear;
           document.getElementById('evSemester').value = ev.semester;
         }
-        // กำหนดการเก่าก่อนอัพเดต (ทั่วไป ไม่ผูกประเภทงาน) จะไม่มี categoryId ให้ตั้งไว้ — ต้องเลือกประเภทงานใหม่ก่อนถึงจะบันทึกได้
+        // กำหนดการเก่าก่อนอัปเดต (ทั่วไป ไม่ผูกประเภทงาน) จะไม่มี categoryId ให้ตั้งไว้ — ต้องเลือกประเภทงานใหม่ก่อนถึงจะบันทึกได้
       });
       document.getElementById('evSubmitBtn').textContent = 'บันทึกการแก้ไข';
       document.getElementById('eventModalTitle').textContent = 'แก้ไขกำหนดการ: ' + ev.title;
@@ -794,21 +794,21 @@
       return '<div class="sub-item-meta" style="display:flex; align-items:center; gap:4px;">' + icon('clock', 13) + ' ' + parts.join(' · ') + '</div>';
     }
     var lastAnnouncements = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่เวอร์ชันถัดจาก V11.2)
-    // 1.85: ป้ายป็อปอัพ + จำนวนคนที่เห็น/ติ๊กไม่แสดงอีก
+    // 1.85: ป้ายป็อปอัป + จำนวนคนที่เห็น/ติ๊กไม่แสดงอีก
     function annPopMeta(a) {
       if (!a.popup) return '';
       var st = a.popupStats;
       var n = st ? (a.popup === 'once' ? '<span class="ann-pop-stat"><i class="fa-solid fa-eye" aria-hidden="true"></i> เห็นแล้ว ' + st.seen + ' / ' + st.total + ' คน</span>' : '<span class="ann-pop-stat"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i> ไม่แสดงอีกแล้ว ' + st.dismissed + ' / ' + st.total + ' คน · เห็นแล้ว ' + st.seen + ' คน</span>') : '';
-      return '<div class="ann-pop-meta"><span class="ann-pop-tag"><i class="fa-solid fa-window-restore" aria-hidden="true"></i> ป็อปอัพ' + (a.popup === 'once' ? ' · ครั้งเดียว' : '') + (a.hasImage ? ' · มีรูป' : '') + '</span>' + n + '</div>';
+      return '<div class="ann-pop-meta"><span class="ann-pop-tag"><i class="fa-solid fa-window-restore" aria-hidden="true"></i> ป็อปอัป' + (a.popup === 'once' ? ' · ครั้งเดียว' : '') + (a.hasImage ? ' · มีรูป' : '') + '</span>' + n + '</div>';
     }
-    // 1.85.2: รายการประกาศแบบป็อปอัพ — รูป · สถานะ · การแสดง · จำนวนคน
+    // 1.85.2: รายการประกาศแบบป็อปอัป — รูป · สถานะ · การแสดง · จำนวนคน
     var _popImgs = {};
     function popActive(a) { var now = new Date().toISOString(); return (!a.showFrom || a.showFrom <= now) && (!a.showUntil || a.showUntil >= now); }
     function renderPopups(list) {
       var wrap = document.getElementById('popListWrap');
       var act = list.filter(popActive).length, cnt = document.getElementById('popTabCount');
       cnt.textContent = act ? act + ' กำลังแสดง' : ''; cnt.hidden = !act;
-      if (!list.length) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศแบบป็อปอัพ</div>'; return; }
+      if (!list.length) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศแบบป็อปอัป</div>'; return; }
       list = list.slice().sort(function (x, y) { return (popActive(y) - popActive(x)) || String(y.createdAt).localeCompare(String(x.createdAt)); });
       wrap.innerHTML = list.map(function (a) {
         var gi = annGroupInfo(a.department), on = popActive(a), st = a.popupStats;
@@ -879,7 +879,7 @@
       }
     }
 
-    // ---------- เพิ่ม/แก้ไขประกาศเป็นป็อปอัพ (ตั้งแต่เวอร์ชันถัดจาก V11.2 — เดิมเป็นฟอร์มฝังอยู่ในหน้า และแก้ไขประกาศที่เผยแพร่ไปแล้วไม่ได้เลย) ----------
+    // ---------- เพิ่ม/แก้ไขประกาศเป็นป็อปอัป (ตั้งแต่เวอร์ชันถัดจาก V11.2 — เดิมเป็นฟอร์มฝังอยู่ในหน้า และแก้ไขประกาศที่เผยแพร่ไปแล้วไม่ได้เลย) ----------
     var annModalEl = document.getElementById('annModal');
     // แปลง ISO (UTC) ที่เก็บไว้ กลับเป็นรูปแบบเวลาท้องถิ่นสำหรับช่อง input type="datetime-local" (YYYY-MM-DDTHH:mm)
     function isoToLocalDatetimeInput(iso) {
@@ -905,13 +905,13 @@
         box.hidden = false; field.hidden = true;
       }
     }
-    // ---------- 1.85: ประกาศแบบป็อปอัพ ----------
+    // ---------- 1.85: ประกาศแบบป็อปอัป ----------
     var annPop = { image: '', changed: false };
     function setAnnPop(a, popupMode) {
       var on = !!popupMode;
       document.getElementById('annPopOn').checked = on;
       document.getElementById('annPopBox').hidden = !on;
-      var lbl = on ? 'ประกาศ (ป็อปอัพ)' : 'ประกาศ (ส่วนบน)';
+      var lbl = on ? 'ประกาศ (ป็อปอัป)' : 'ประกาศ (ส่วนบน)';
       document.getElementById('annModalTitle').textContent = (a ? 'แก้ไข' : 'เพิ่ม') + lbl + (a ? ': ' + a.title : '');
       document.getElementById('annSubmitBtn').textContent = a ? 'บันทึกการแก้ไข' : 'เพิ่ม' + lbl;
       var m = (a && a.popup) || 'until';
@@ -925,7 +925,7 @@
     function showAnnPopImg(src) {
       document.getElementById('annPopPrev').hidden = !src;
       document.getElementById('annPopImg').src = src || '';
-      document.getElementById('annPopPick').innerHTML = src ? '<i class="fa-solid fa-image" aria-hidden="true"></i> เปลี่ยนรูป' : '<i class="fa-solid fa-image" aria-hidden="true"></i> แนบรูปในป็อปอัพ (ไม่บังคับ) เช่น โปสเตอร์';
+      document.getElementById('annPopPick').innerHTML = src ? '<i class="fa-solid fa-image" aria-hidden="true"></i> เปลี่ยนรูป' : '<i class="fa-solid fa-image" aria-hidden="true"></i> แนบรูปในป็อปอัป (ไม่บังคับ) เช่น โปสเตอร์';
     }
     document.getElementById('annPopPick').addEventListener('click', function () { document.getElementById('annPopFile').click(); });
     document.getElementById('annPopRm').addEventListener('click', function () { annPop.image = ''; annPop.changed = true; showAnnPopImg(''); });
@@ -1003,7 +1003,7 @@
       if (annAudErr) { errBox.textContent = annAudErr; errBox.hidden = false; return; }
       var editId = document.getElementById('annEditId').value;
       var okAnn = await askConfirm(
-        editId ? 'ยืนยันบันทึกการแก้ไขประกาศนี้?' : (document.getElementById('annPopOn').checked ? 'ยืนยันเผยแพร่ประกาศแบบป็อปอัพนี้? (เด้งเมื่อผู้รับเปิดหน้าแรก)' : 'ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?'),
+        editId ? 'ยืนยันบันทึกการแก้ไขประกาศนี้?' : (document.getElementById('annPopOn').checked ? 'ยืนยันเผยแพร่ประกาศแบบป็อปอัปนี้? (เด้งเมื่อผู้รับเปิดหน้าแรก)' : 'ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?'),
         editId ? 'ยืนยันการแก้ไขประกาศ' : 'ยืนยันการเผยแพร่ประกาศ'
       );
       if (!okAnn) return;

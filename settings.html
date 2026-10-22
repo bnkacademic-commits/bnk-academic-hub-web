@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.1.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.2.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -71,16 +71,16 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.86.1.221026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.86.2.221026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.86.1.221026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.86.2.221026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
               <li><b>ขนาด 960 × 160 px (6:1)</b> แสดงในแถบด้านบนสูง 44 px</li>
               <li>ใช้ PNG พื้นหลังโปร่งใส ตัวหนังสือใหญ่ อ่านง่าย</li>
-              <li>รูปไม่ใช่ 6:1 อัพได้ ระบบเปิดหน้าจัดรูปให้</li>
+              <li>รูปไม่ใช่ 6:1 อัปได้ ระบบเปิดหน้าจัดรูปให้</li>
             </ul>
           </div>
           <div id="logoWideError" class="error-box" hidden></div>
@@ -95,7 +95,7 @@
             <input type="file" id="logoWideFile" accept="image/png,image/webp,image/svg+xml,image/jpeg" hidden />
             <div class="asset-picker-btns">
               <button type="button" class="btn btn-secondary" id="logoWidePickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูป Banner</button>
-              <button type="button" class="btn btn-primary" id="logoWideUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัพโหลด</button>
+              <button type="button" class="btn btn-primary" id="logoWideUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัปโหลด</button>
               <button type="button" class="btn btn-ghost" id="logoWideRemoveBtn" hidden><i class="fas fa-trash ui-icon" aria-hidden="true"></i> เอาออก</button>
             </div>
             <div class="asset-picker-name hint" id="logoWideFileName">ยังไม่ได้เลือกไฟล์</div>
@@ -108,7 +108,7 @@
         </div>
       </div>
 
-      <!-- 1.86.1.221026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.86.2.221026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -117,7 +117,7 @@
           <ul class="bsc-list">
             <li><b>ขนาด 1080 × 360 px (3:1)</b> แสดงเต็มหัวการ์ดเข้าสู่ระบบ</li>
             <li>ใส่ตรา ชื่อเว็บ และคำบรรยายไว้ในรูปได้เลย (แทนของเดิมทั้งหมด)</li>
-            <li>รูปไม่ใช่ 3:1 อัพได้ ระบบเปิดหน้าจัดรูปให้</li>
+            <li>รูปไม่ใช่ 3:1 อัปได้ ระบบเปิดหน้าจัดรูปให้</li>
           </ul>
         </div>
         <div id="loginHeroError" class="error-box" hidden></div>
@@ -129,7 +129,7 @@
           <input type="file" id="loginHeroFile" accept="image/png,image/webp,image/jpeg" hidden />
           <div class="asset-picker-btns">
             <button type="button" class="btn btn-secondary" id="loginHeroPickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูปหน้าเข้าสู่ระบบ</button>
-            <button type="button" class="btn btn-primary" id="loginHeroUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัพโหลด</button>
+            <button type="button" class="btn btn-primary" id="loginHeroUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัปโหลด</button>
             <button type="button" class="btn btn-ghost" id="loginHeroRemoveBtn" hidden><i class="fas fa-trash ui-icon" aria-hidden="true"></i> เอาออก</button>
           </div>
           <div class="asset-picker-name hint" id="loginHeroFileName">ยังไม่ได้เลือกไฟล์</div>
@@ -260,17 +260,17 @@
       <!-- ระยะเวลาเก็บคำสั่งในคลังคำสั่ง (ตั้งแต่ 1.43.111026) — Super Admin เท่านั้น (ทั้งแท็บ "ทั่วไป" เป็น super-admin-only) -->
       <div class="card" id="orderRetentionCard">
         <div class="section-title"><i class="fas fa-box-archive ui-icon" style="font-size:17px" aria-hidden="true"></i> ระยะเวลาเก็บคำสั่ง (คลังคำสั่ง)</div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">นับจากวันที่อัพโหลดคำสั่ง เมื่อครบกำหนด ระบบจะย้ายไฟล์ลงถังขยะของ Google Drive (กู้คืนได้ราว 30 วัน) และลบรายการออกจากคลังคำสั่งทันที — ระบบตรวจทุกครั้งที่มีคนเปิดหน้าคลังคำสั่ง</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">นับจากวันที่อัปโหลดคำสั่ง เมื่อครบกำหนด ระบบจะย้ายไฟล์ลงถังขยะของ Google Drive (กู้คืนได้ราว 30 วัน) และลบรายการออกจากคลังคำสั่งทันที — ระบบตรวจทุกครั้งที่มีคนเปิดหน้าคลังคำสั่ง</p>
         <div id="orderRetentionError" class="error-box" hidden></div>
         <form id="orderRetentionForm" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
           <div class="field" style="margin:0; min-width:220px;">
             <label for="setOrderRetention">เก็บคำสั่งไว้</label>
             <select id="setOrderRetention">
               <option value="0">ตลอดไป (ไม่ลบอัตโนมัติ)</option>
-              <option value="1">1 ปีหลังอัพโหลด</option><option value="2">2 ปีหลังอัพโหลด</option><option value="3">3 ปีหลังอัพโหลด</option>
-              <option value="4">4 ปีหลังอัพโหลด</option><option value="5">5 ปีหลังอัพโหลด</option><option value="6">6 ปีหลังอัพโหลด</option>
-              <option value="7">7 ปีหลังอัพโหลด</option><option value="8">8 ปีหลังอัพโหลด</option><option value="9">9 ปีหลังอัพโหลด</option>
-              <option value="10">10 ปีหลังอัพโหลด</option><option value="15">15 ปีหลังอัพโหลด</option><option value="20">20 ปีหลังอัพโหลด</option>
+              <option value="1">1 ปีหลังอัปโหลด</option><option value="2">2 ปีหลังอัปโหลด</option><option value="3">3 ปีหลังอัปโหลด</option>
+              <option value="4">4 ปีหลังอัปโหลด</option><option value="5">5 ปีหลังอัปโหลด</option><option value="6">6 ปีหลังอัปโหลด</option>
+              <option value="7">7 ปีหลังอัปโหลด</option><option value="8">8 ปีหลังอัปโหลด</option><option value="9">9 ปีหลังอัปโหลด</option>
+              <option value="10">10 ปีหลังอัปโหลด</option><option value="15">15 ปีหลังอัปโหลด</option><option value="20">20 ปีหลังอัปโหลด</option>
             </select>
           </div>
           <button class="btn btn-primary" type="submit">บันทึก</button>
@@ -282,17 +282,17 @@
         <div id="iconError" class="error-box" hidden></div>
         <div class="file-input-row">
           <div class="asset-preview" id="iconPreview">—</div>
-          <!-- 1.45.111026: ปุ่มเลือกไฟล์/อัพโหลดแบบเดียวกับปุ่มอื่นของเว็บ (ซ่อน input file ดั้งเดิมของเบราว์เซอร์) — เลือกแล้วเห็นตัวอย่างทันที -->
+          <!-- 1.45.111026: ปุ่มเลือกไฟล์/อัปโหลดแบบเดียวกับปุ่มอื่นของเว็บ (ซ่อน input file ดั้งเดิมของเบราว์เซอร์) — เลือกแล้วเห็นตัวอย่างทันที -->
           <div class="asset-picker">
             <input type="file" id="iconFile" accept="image/*" hidden />
             <div class="asset-picker-btns">
               <button type="button" class="btn btn-secondary" id="iconPickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูปไอคอน</button>
-              <button type="button" class="btn btn-primary" id="iconUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัพโหลด</button>
+              <button type="button" class="btn btn-primary" id="iconUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัปโหลด</button>
             </div>
             <div class="asset-picker-name hint" id="iconFileName">ยังไม่ได้เลือกไฟล์</div>
           </div>
         </div>
-        <div class="hint">แนะนำไฟล์สี่เหลี่ยมจัตุรัส — เลือกไฟล์ใหญ่แค่ไหนก็ได้ ระบบจะปรับขนาดให้เล็กลงอัตโนมัติก่อนอัพโหลด</div>
+        <div class="hint">แนะนำไฟล์สี่เหลี่ยมจัตุรัส — เลือกไฟล์ใหญ่แค่ไหนก็ได้ ระบบจะปรับขนาดให้เล็กลงอัตโนมัติก่อนอัปโหลด</div>
       </div>
 
       <div class="card">
@@ -300,17 +300,17 @@
         <div id="logoError" class="error-box" hidden></div>
         <div class="file-input-row">
           <div class="asset-preview" id="logoPreview">—</div>
-          <!-- 1.45.111026: ปุ่มเลือกไฟล์/อัพโหลดแบบเดียวกับปุ่มอื่นของเว็บ (ซ่อน input file ดั้งเดิมของเบราว์เซอร์) — เลือกแล้วเห็นตัวอย่างทันที -->
+          <!-- 1.45.111026: ปุ่มเลือกไฟล์/อัปโหลดแบบเดียวกับปุ่มอื่นของเว็บ (ซ่อน input file ดั้งเดิมของเบราว์เซอร์) — เลือกแล้วเห็นตัวอย่างทันที -->
           <div class="asset-picker">
             <input type="file" id="logoFile" accept="image/*" hidden />
             <div class="asset-picker-btns">
               <button type="button" class="btn btn-secondary" id="logoPickBtn"><i class="fas fa-image ui-icon" aria-hidden="true"></i> เลือกรูปโลโก้</button>
-              <button type="button" class="btn btn-primary" id="logoUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัพโหลด</button>
+              <button type="button" class="btn btn-primary" id="logoUploadBtn" disabled><i class="fas fa-cloud-arrow-up ui-icon" aria-hidden="true"></i> อัปโหลด</button>
             </div>
             <div class="asset-picker-name hint" id="logoFileName">ยังไม่ได้เลือกไฟล์</div>
           </div>
         </div>
-        <div class="hint">แสดงแทนไอคอนจุดกลมด้านซ้ายบนของทุกหน้า แนะนำพื้นหลังโปร่งใส — ระบบจะปรับขนาดไฟล์ให้อัตโนมัติก่อนอัพโหลด</div>
+        <div class="hint">แสดงแทนไอคอนจุดกลมด้านซ้ายบนของทุกหน้า แนะนำพื้นหลังโปร่งใส — ระบบจะปรับขนาดไฟล์ให้อัตโนมัติก่อนอัปโหลด</div>
       </div>
 
       <div class="card" id="curTermCard">
@@ -432,7 +432,7 @@
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างกลุ่มบริหารงานของโรงเรียน (เช่น วิชาการ, งบประมาณ, บุคคล, ทั่วไป) แล้วกด "จัดการสมาชิก" เพื่อเลือกครูที่สังกัดกลุ่มนั้น — จากนั้นติ๊ก "เจ้าหน้าที่" จากสมาชิกในกลุ่มได้เลย เจ้าหน้าที่จะได้สิทธิ์แอดมินดูแลงานของกลุ่ม (เลือกกี่คนก็ได้ แนะนำ 2-3 คน) ส่วนครูที่ไม่ได้ติ๊กยังเป็นสมาชิกกลุ่มตามปกติ ทำเนียบบุคลากรจะแสดงเฉพาะว่าใครสังกัดกลุ่มใด ไม่บอกว่าใครเป็นเจ้าหน้าที่</p>
         <div id="deptError" class="error-box" hidden></div>
-        <!-- 1.45.111026: เลือกดูทีละกลุ่มจากดร็อปดาวน์ (เดิมแสดงการ์ดทุกกลุ่มเรียงยาวลงมา) · เพิ่มกลุ่มผ่านป็อปอัพ -->
+        <!-- 1.45.111026: เลือกดูทีละกลุ่มจากดร็อปดาวน์ (เดิมแสดงการ์ดทุกกลุ่มเรียงยาวลงมา) · เพิ่มกลุ่มผ่านป็อปอัป -->
         <div class="dept-picker-row" id="deptPickerRow" hidden>
           <label for="deptPick">เลือกกลุ่ม</label>
           <select id="deptPick"></select>
@@ -597,7 +597,7 @@
           <span><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> ปุ่มลิงก์เว็บไซต์โรงเรียน</span>
           <button class="btn btn-primary btn-sm" id="openCreateExtLinkBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มปุ่ม</button>
         </div>
-        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างปุ่มลิงก์ไปเว็บไซต์โรงเรียน (เช่น ระบบอื่นของโรงเรียน เว็บไซต์หน่วยงาน) ไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ เป็นส่วนใหม่ก่อนปฏิทิน — กดปุ่มแล้วเปิดลิงก์ในแท็บเบราว์เซอร์ใหม่ทันที ถ้าอัพโหลดรูปภาพไว้ด้วย ปุ่มจะแสดงเป็นรูปนั้นแทนปุ่มสีข้อความ (ปุ่มรูปภาพแสดงผลจริงที่ขนาด <b>160×60px</b> เป๊ะ — สร้างรูปต้นฉบับขนาด <b>320×120px</b> พอดี คือ 2 เท่าของขนาดแสดงผลจริงเพื่อความคมชัด อัตราส่วน 8:3 พื้นหลังโปร่งใส จะเต็มปุ่มสนิทไม่มีขอบขาวหรือถูกครอบตัด) จัดลำดับก่อน-หลังได้ด้วยปุ่ม ▲ ▼ ท้ายแถว</p>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างปุ่มลิงก์ไปเว็บไซต์โรงเรียน (เช่น ระบบอื่นของโรงเรียน เว็บไซต์หน่วยงาน) ไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ เป็นส่วนใหม่ก่อนปฏิทิน — กดปุ่มแล้วเปิดลิงก์ในแท็บเบราว์เซอร์ใหม่ทันที ถ้าอัปโหลดรูปภาพไว้ด้วย ปุ่มจะแสดงเป็นรูปนั้นแทนปุ่มสีข้อความ (ปุ่มรูปภาพแสดงผลจริงที่ขนาด <b>160×60px</b> เป๊ะ — สร้างรูปต้นฉบับขนาด <b>320×120px</b> พอดี คือ 2 เท่าของขนาดแสดงผลจริงเพื่อความคมชัด อัตราส่วน 8:3 พื้นหลังโปร่งใส จะเต็มปุ่มสนิทไม่มีขอบขาวหรือถูกครอบตัด) จัดลำดับก่อน-หลังได้ด้วยปุ่ม ▲ ▼ ท้ายแถว</p>
         <div id="extLinkListWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
     </div>
@@ -742,17 +742,17 @@
     </div>
   </div>
 
-  <!-- Add work category modal (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่ V-ถัดไปหลัง V10.1 เปลี่ยนเป็นป็อปอัพ + เลือกข้อมูลที่ต้องกรอกได้) -->
+  <!-- Add work category modal (เดิมเป็นฟอร์มฝังอยู่ในหน้า ตั้งแต่ V-ถัดไปหลัง V10.1 เปลี่ยนเป็นป็อปอัป + เลือกข้อมูลที่ต้องกรอกได้) -->
   <div class="modal-backdrop" id="createCatModal" hidden>
     <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="createCatModalCloseX" aria-label="ปิด">✕</button>
       <h3>เพิ่มประเภทงาน</h3>
       <div id="createCatError" class="error-box" hidden></div>
-      <!-- แยกเป็น 2 แท็บย่อย (ตั้งแต่เวอร์ชันถัดไปหลัง 1.22) — เดิมยัดทุกช่องไว้แท็บเดียวทำให้ป็อปอัพสูงมาก (ร่วมกับ
+      <!-- แยกเป็น 2 แท็บย่อย (ตั้งแต่เวอร์ชันถัดไปหลัง 1.22) — เดิมยัดทุกช่องไว้แท็บเดียวทำให้ป็อปอัปสูงมาก (ร่วมกับ
            การแก้ .modal-box ให้เลื่อนได้ใน style.css) ลดความสูงที่เห็นพร้อมกันลงโดยแยก "พื้นฐาน" (ชื่อ/สี/รูปแบบการ์ด/
            แจ้งเตือนอย่างเดียว) ออกจาก "ข้อมูลที่ต้องกรอก" (รายการ checkbox ที่จะยาวขึ้นเรื่อยๆ ถ้าเพิ่มตัวเลือกใหม่ในอนาคต)
-           ช่อง required (catName) อยู่ในแท็บแรกที่ active อยู่เสมอตอนเปิดป็อปอัพ จึงไม่ชนปัญหา required ซ่อนอยู่ใน
-           แท็บที่ไม่ active เหมือนที่เคยพบใน evCategory ของป็อปอัพกำหนดการ -->
+           ช่อง required (catName) อยู่ในแท็บแรกที่ active อยู่เสมอตอนเปิดป็อปอัป จึงไม่ชนปัญหา required ซ่อนอยู่ใน
+           แท็บที่ไม่ active เหมือนที่เคยพบใน evCategory ของป็อปอัปกำหนดการ -->
       <div class="tabs" style="margin-bottom:14px;">
         <button type="button" class="ev-tab-btn active" id="catTabBtn-basic" data-cat-tab="basic">พื้นฐาน</button>
         <button type="button" class="ev-tab-btn" id="catTabBtn-fields" data-cat-tab="fields">ข้อมูลที่ต้องกรอก</button>
@@ -775,7 +775,7 @@
           <div class="field">
             <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
               <input type="checkbox" id="catNoSubmission" style="width:auto; margin-top:3px;" />
-              <span><span style="display:block;">ไม่ส่งผ่านระบบ (แจ้งเตือนอย่างเดียว)</span><span class="hint" style="margin:0;">กำหนดการของประเภทงานนี้จะไม่มีปุ่ม "ส่งงาน" และไม่ขึ้นในเช็คลิสต์การส่งงานของครู — เป็นแค่การ์ดแจ้งเตือนในปฏิทิน/กำหนดการเท่านั้น (เหมาะกับประกาศ/แจ้งเตือนที่ไม่ต้องอัพโหลดไฟล์)</span></span>
+              <span><span style="display:block;">ไม่ส่งผ่านระบบ (แจ้งเตือนอย่างเดียว)</span><span class="hint" style="margin:0;">กำหนดการของประเภทงานนี้จะไม่มีปุ่ม "ส่งงาน" และไม่ขึ้นในเช็คลิสต์การส่งงานของครู — เป็นแค่การ์ดแจ้งเตือนในปฏิทิน/กำหนดการเท่านั้น (เหมาะกับประกาศ/แจ้งเตือนที่ไม่ต้องอัปโหลดไฟล์)</span></span>
             </label>
           </div>
           <!-- ฝ่ายที่ดูแล + การแสดงผลในหน้าสาธารณะ (ตั้งแต่ 1.26.081026) -->
@@ -808,7 +808,7 @@
 
   <!-- จัดการบัญชี (ตั้งแต่ 1.29.091026) — Super Admin เท่านั้น
        1.42.111026: แยกเป็น 3 แท็บ "ข้อมูล" (ชื่อ/รูปโปรไฟล์/ตั้งรหัสผ่าน) · "ประเภทบัญชี" (เดิม "เปลี่ยน Role" + กลุ่มบริหารงานที่ต้องสังกัด + แต่งตั้งเจ้าหน้าที่)
-       · "สถานะ" (สถานะบัญชี + ระงับ/คืนสิทธิ์ + ลบถาวร) แทนป็อปอัพย่อยเดิม (ตั้งรหัสผ่านใหม่ / เปลี่ยน Role / กลุ่มบริหารงาน) ที่เปิดซ้อนกันทีละอัน -->
+       · "สถานะ" (สถานะบัญชี + ระงับ/คืนสิทธิ์ + ลบถาวร) แทนป็อปอัปย่อยเดิม (ตั้งรหัสผ่านใหม่ / เปลี่ยน Role / กลุ่มบริหารงาน) ที่เปิดซ้อนกันทีละอัน -->
   <div class="modal-backdrop super-admin-only" id="manageUserModal" hidden>
     <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="manageUserModalCloseX" aria-label="ปิด">✕</button>
@@ -845,11 +845,11 @@
             </div>
           </div>
         </div>
-        <!-- 1.85: คำแนะนำครั้งแรก (ป็อปอัพต้อนรับ) — แสดงอีกครั้งรายคน -->
+        <!-- 1.85: คำแนะนำครั้งแรก (ป็อปอัปต้อนรับ) — แสดงอีกครั้งรายคน -->
         <div class="mu-section" id="muWelcomeSec" hidden>
           <div class="mu-section-title">คำแนะนำครั้งแรก</div>
           <div class="mu-welcome"><span id="muWelcomeState"></span><button type="button" class="btn btn-secondary btn-sm" id="muWelcomeReset"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> แสดงอีกครั้ง</button></div>
-          <div class="hint" style="margin-top:4px;">กดแล้ว ครั้งหน้าที่บัญชีนี้เข้าระบบ จะเห็นป็อปอัพต้อนรับอีกครั้ง</div>
+          <div class="hint" style="margin-top:4px;">กดแล้ว ครั้งหน้าที่บัญชีนี้เข้าระบบ จะเห็นป็อปอัปต้อนรับอีกครั้ง</div>
         </div>
         <form id="muPwForm" class="mu-section" style="text-align:left;">
           <div class="mu-section-title">ตั้งรหัสผ่านใหม่</div>
@@ -930,7 +930,7 @@
   </div>
 
   <!-- ลบบัญชีถาวร (ตั้งแต่ 1.30.091026) — ลบได้เฉพาะบัญชีที่ "ระงับ" แล้ว และต้องพิมพ์ Username ยืนยัน (เซิร์ฟเวอร์ตรวจซ้ำอีกชั้น)
-       หน้าเว็บเรียก adminPurgeUser ซ้ำเป็นรอบๆ จนได้ done:true (Worker แผนฟรีลบไฟล์ได้ครั้งละจำกัด) แล้วแสดงสรุปผลในป็อปอัพเดียวกันนี้ -->
+       หน้าเว็บเรียก adminPurgeUser ซ้ำเป็นรอบๆ จนได้ done:true (Worker แผนฟรีลบไฟล์ได้ครั้งละจำกัด) แล้วแสดงสรุปผลในป็อปอัปเดียวกันนี้ -->
   <div class="modal-backdrop super-admin-only" id="purgeUserModal" hidden>
     <div class="modal-box">
       <button type="button" class="modal-close-x" id="purgeUserModalCloseX" aria-label="ปิด">✕</button>
@@ -960,8 +960,8 @@
     </div>
   </div>
 
-  <!-- แก้ไขประเภทงาน (ตั้งแต่ 1.29.091026) — รวมตัวเลือกแก้ไขทั้งหมดของประเภทงานไว้ในป็อปอัพเดียว แทนการวาง dropdown/checkbox ไว้ในแต่ละแถวของรายการ
-       (เดิมมีแค่ป็อปอัพ "ข้อมูลที่ต้องกรอก" อย่างเดียว) โครงเดียวกับป็อปอัพ "เพิ่มประเภทงาน" (แท็บ พื้นฐาน / ข้อมูลที่ต้องกรอก) -->
+  <!-- แก้ไขประเภทงาน (ตั้งแต่ 1.29.091026) — รวมตัวเลือกแก้ไขทั้งหมดของประเภทงานไว้ในป็อปอัปเดียว แทนการวาง dropdown/checkbox ไว้ในแต่ละแถวของรายการ
+       (เดิมมีแค่ป็อปอัป "ข้อมูลที่ต้องกรอก" อย่างเดียว) โครงเดียวกับป็อปอัป "เพิ่มประเภทงาน" (แท็บ พื้นฐาน / ข้อมูลที่ต้องกรอก) -->
   <div class="modal-backdrop" id="editCatModal" hidden>
     <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="editCatModalCloseX" aria-label="ปิด">✕</button>
@@ -1107,7 +1107,7 @@
     </div>
   </div>
 
-  <!-- เพิ่มกลุ่มบริหารงาน (ป็อปอัพ — ตั้งแต่ 1.45.111026 เหมือนปุ่ม "เพิ่มประเภทงาน") -->
+  <!-- เพิ่มกลุ่มบริหารงาน (ป็อปอัป — ตั้งแต่ 1.45.111026 เหมือนปุ่ม "เพิ่มประเภทงาน") -->
   <div class="modal-backdrop super-admin-only" id="deptAddModal" hidden>
     <div class="modal-box">
       <button type="button" class="modal-close-x" id="deptAddCloseX" aria-label="ปิด">✕</button>
@@ -1208,7 +1208,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.86.1.221026"></script>
+  <script src="assets/api.js?v=1.86.2.221026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1220,7 +1220,7 @@
     ];
     // รูปแบบการ์ดพรีวิวของ "ประเภทงาน" — ตั้งแต่เวอร์ชันถัดจาก V11.3 กำหนดที่ประเภทงานครั้งเดียว มีผลกับทุกครูอัตโนมัติ
     // (คัดลอกมาจาก DISPLAY_TEMPLATES ฝั่ง Worker — worker/src/handlers/admin.js — ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา)
-    // ตั้งแต่ V12.0: เพิ่ม 'bookInline' (เล่มหนังสือแสดงไฟล์ในตัวการ์ด ไม่ต้องกดเปิดป๊อปอัพ) และ 'compact' (รายการย่อ เหมาะกับ
+    // ตั้งแต่ V12.0: เพิ่ม 'bookInline' (เล่มหนังสือแสดงไฟล์ในตัวการ์ด ไม่ต้องกดเปิดป๊อปอัป) และ 'compact' (รายการย่อ เหมาะกับ
     // ประเภทงานที่มีผลงานจำนวนมากต่อครู) รวมเป็น 7 รูปแบบ (นับมาตรฐานด้วย) — 'frame' ขยายกรอบรูปให้ใหญ่ขึ้นแล้ว (ดู style.css)
     // 1.71: เหลือ 3 รูปแบบ (ไฟล์ใหญ่/ปานกลาง/เล็ก) — ค่าเดิมในฐานข้อมูลแปลงอัตโนมัติด้วย normalizeTemplate (api.js)
     var TEMPLATE_OPTIONS = [
@@ -1359,7 +1359,7 @@
       var retSel = document.getElementById('setOrderRetention');
       if (retSel) {
         var ry = String(Number(s.orderRetentionYears || 0));
-        if (!retSel.querySelector('option[value="' + ry + '"]')) { var oo = document.createElement('option'); oo.value = ry; oo.textContent = ry + ' ปีหลังอัพโหลด'; retSel.appendChild(oo); }
+        if (!retSel.querySelector('option[value="' + ry + '"]')) { var oo = document.createElement('option'); oo.value = ry; oo.textContent = ry + ' ปีหลังอัปโหลด'; retSel.appendChild(oo); }
         retSel.value = ry;
       }
       renderAssetPreview('iconPreview', s.iconDataUrl);
@@ -1385,7 +1385,7 @@
         var errBox = document.getElementById('orderRetentionError');
         errBox.hidden = true;
         var y = Number(document.getElementById('setOrderRetention').value);
-        var ok = await askConfirm(y ? ('ยืนยันให้เก็บคำสั่งไว้ ' + y + ' ปีหลังอัพโหลด? คำสั่งที่อัพโหลดมานานกว่านี้จะถูกย้ายลงถังขยะของ Google Drive และลบออกจากคลังคำสั่งเมื่อมีคนเปิดหน้าคลังคำสั่งครั้งถัดไป') : 'ยืนยันให้เก็บคำสั่งไว้ตลอดไป (ไม่ลบอัตโนมัติ)?', 'ยืนยันระยะเวลาเก็บคำสั่ง');
+        var ok = await askConfirm(y ? ('ยืนยันให้เก็บคำสั่งไว้ ' + y + ' ปีหลังอัปโหลด? คำสั่งที่อัปโหลดมานานกว่านี้จะถูกย้ายลงถังขยะของ Google Drive และลบออกจากคลังคำสั่งเมื่อมีคนเปิดหน้าคลังคำสั่งครั้งถัดไป') : 'ยืนยันให้เก็บคำสั่งไว้ตลอดไป (ไม่ลบอัตโนมัติ)?', 'ยืนยันระยะเวลาเก็บคำสั่ง');
         if (!ok) return;
         var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { orderRetentionYears: y }); }, { successLabel: 'บันทึกระยะเวลาเก็บคำสั่งแล้ว' });
         if (r.ok) resetSettingsCache(); else { errBox.textContent = r.error.message; errBox.hidden = false; }
@@ -1658,7 +1658,7 @@
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.86.1.221026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.86.2.221026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -2172,15 +2172,15 @@
         var file = document.getElementById(fileInputId).files[0];
         if (!file) { errBox.textContent = 'กรุณาเลือกไฟล์รูปภาพก่อน'; errBox.hidden = false; return; }
         var label = { logo: 'โลโก้เว็บ', icon: 'ไอคอนเว็บ', logoWide: 'Banner เว็บไซต์' }[type];
-        var ok = await askConfirm('ยืนยันเปลี่ยน' + label + 'เป็นไฟล์นี้? (ระบบจะปรับขนาดรูปให้อัตโนมัติ)', 'ยืนยันการอัพโหลด');
+        var ok = await askConfirm('ยืนยันเปลี่ยน' + label + 'เป็นไฟล์นี้? (ระบบจะปรับขนาดรูปให้อัตโนมัติ)', 'ยืนยันการอัปโหลด');
         if (!ok) return;
         var maxSize = type === 'icon' ? 128 : type === 'logoWide' ? 900 : 480; // ไอคอนย่อเล็กกว่าโลโก้ เพราะแสดงเป็นจุดกลมเล็กๆ · โลโก้แบบยาวด้านยาวสุด 900 px
-        var r = await withProgress('กำลังอัพโหลด' + label, async function (p) {
+        var r = await withProgress('กำลังอัปโหลด' + label, async function (p) {
           p.setLabel('กำลังปรับขนาดรูป...');
           var resized = (type === 'logoWide' && logoWidePending) ? logoWidePending : await resizeImageToBase64(file, maxSize);
-          p.setLabel('กำลังอัพโหลดขึ้นเซิร์ฟเวอร์...');
+          p.setLabel('กำลังอัปโหลดขึ้นเซิร์ฟเวอร์...');
           return apiCall('adminUpdateSiteAsset', { type: type, fileBase64: resized.base64, mimeType: resized.mimeType });
-        }, { successLabel: 'อัพโหลดสำเร็จ (ปรับขนาดรูปให้อัตโนมัติแล้ว)', retry: true });
+        }, { successLabel: 'อัปโหลดสำเร็จ (ปรับขนาดรูปให้อัตโนมัติแล้ว)', retry: true });
         if (r.ok) {
           _settingsCache = r.data;
           renderAssetPreview(previewId, type === 'icon' ? r.data.iconDataUrl : type === 'logoWide' ? r.data.logoWideDataUrl : r.data.logoDataUrl);
@@ -2188,7 +2188,7 @@
           applyBranding();
           document.getElementById(fileInputId).value = '';
           document.getElementById(type + 'UploadBtn').disabled = true;
-          document.getElementById(type + 'FileName').textContent = 'อัพโหลดแล้ว — เลือกรูปใหม่ได้ทุกเมื่อ';
+          document.getElementById(type + 'FileName').textContent = 'อัปโหลดแล้ว — เลือกรูปใหม่ได้ทุกเมื่อ';
         } else {
           errBox.textContent = r.error.message;
           errBox.hidden = false;
@@ -2234,14 +2234,14 @@
           showToast(r.error.message, true);
         }
       });
-      // ปุ่มเลือกรูป (1.45.111026): เลือกแล้วแสดงตัวอย่างในกรอบทันที + เปิดปุ่มอัพโหลด
+      // ปุ่มเลือกรูป (1.45.111026): เลือกแล้วแสดงตัวอย่างในกรอบทันที + เปิดปุ่มอัปโหลด
       ['icon', 'logo'].forEach(function (k) {
         var inp = document.getElementById(k + 'File');
         document.getElementById(k + 'PickBtn').addEventListener('click', function () { inp.click(); });
         inp.addEventListener('change', function () {
           var f = inp.files && inp.files[0];
           document.getElementById(k + 'UploadBtn').disabled = !f;
-          document.getElementById(k + 'FileName').textContent = f ? f.name + ' (' + Math.max(1, Math.round(f.size / 1024)) + ' KB) — กด "อัพโหลด" เพื่อใช้รูปนี้' : 'ยังไม่ได้เลือกไฟล์';
+          document.getElementById(k + 'FileName').textContent = f ? f.name + ' (' + Math.max(1, Math.round(f.size / 1024)) + ' KB) — กด "อัปโหลด" เพื่อใช้รูปนี้' : 'ยังไม่ได้เลือกไฟล์';
           if (f && /^image\//.test(f.type)) { var rd = new FileReader(); rd.onload = function () { renderAssetPreview(k + 'Preview', rd.result); }; rd.readAsDataURL(f); }
         });
       });
@@ -2267,7 +2267,7 @@
         document.getElementById('logoCropModal').classList.toggle('crop-mode-login', mode === 'login');
       }
       var loginHeroPending = null;
-      var logoWidePending = null; // { base64, mimeType } ที่ครอป/ย่อแล้ว รอกดอัพโหลด
+      var logoWidePending = null; // { base64, mimeType } ที่ครอป/ย่อแล้ว รอกดอัปโหลด
       var crop = { img: null, scale: 1, ox: 0, oy: 0, min: 1, max: 4, name: '' };
       function renderWideCanvas(c, w, h) {
         var ctx = c.getContext('2d');
@@ -2291,7 +2291,7 @@
         drawCrop();
         scheduleCropResult();
       }
-      // ตัวอย่างผลลัพธ์จริงในแถบด้านบน (สว่าง/มืด) + ขนาดไฟล์ที่จะได้ — อัพเดตหลังเลื่อน/ซูม/ติ๊กพื้นหลัง
+      // ตัวอย่างผลลัพธ์จริงในแถบด้านบน (สว่าง/มืด) + ขนาดไฟล์ที่จะได้ — อัปเดตหลังเลื่อน/ซูม/ติ๊กพื้นหลัง
       var _cropResT = null;
       function scheduleCropResult() {
         clearTimeout(_cropResT);
@@ -2320,7 +2320,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.86.1.221026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.86.2.221026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);
@@ -2354,7 +2354,7 @@
         renderAssetPreview('logoWidePreview', 'data:' + res.mimeType + ';base64,' + res.base64);
         document.getElementById('logoWideUploadBtn').disabled = false;
         var probe = new Image();
-        probe.onload = function () { document.getElementById('logoWideFileName').textContent = name + ' — ได้ Banner ขนาด ' + probe.naturalWidth + ' × ' + probe.naturalHeight + ' px แล้ว กด "อัพโหลด" เพื่อใช้รูปนี้'; };
+        probe.onload = function () { document.getElementById('logoWideFileName').textContent = name + ' — ได้ Banner ขนาด ' + probe.naturalWidth + ' × ' + probe.naturalHeight + ' px แล้ว กด "อัปโหลด" เพื่อใช้รูปนี้'; };
         probe.src = 'data:' + res.mimeType + ';base64,' + res.base64;
       }
       document.getElementById('logoWidePickBtn').addEventListener('click', function () { document.getElementById('logoWideFile').click(); });
@@ -2406,17 +2406,17 @@
         loginHeroPending = res;
         renderLoginHeroPreview('data:' + res.mimeType + ';base64,' + res.base64);
         document.getElementById('loginHeroUploadBtn').disabled = false;
-        document.getElementById('loginHeroFileName').textContent = name + ' — ได้รูปขนาด ' + WIDE_W + ' × ' + WIDE_H + ' px แล้ว กด "อัพโหลด" เพื่อใช้รูปนี้';
+        document.getElementById('loginHeroFileName').textContent = name + ' — ได้รูปขนาด ' + WIDE_W + ' × ' + WIDE_H + ' px แล้ว กด "อัปโหลด" เพื่อใช้รูปนี้';
       }
       document.getElementById('loginHeroUploadBtn').addEventListener('click', async function () {
         var errBox = document.getElementById('loginHeroError'); errBox.hidden = true;
         if (!loginHeroPending) { errBox.textContent = 'กรุณาเลือกรูปก่อน'; errBox.hidden = false; return; }
-        var ok = await askConfirm('ยืนยันใช้รูปนี้เป็นรูปหน้าเข้าสู่ระบบ? (แสดงแทนโลโก้ + ชื่อเว็บในหน้าเข้าสู่ระบบ)', 'ยืนยันการอัพโหลด');
+        var ok = await askConfirm('ยืนยันใช้รูปนี้เป็นรูปหน้าเข้าสู่ระบบ? (แสดงแทนโลโก้ + ชื่อเว็บในหน้าเข้าสู่ระบบ)', 'ยืนยันการอัปโหลด');
         if (!ok) return;
         var pend = loginHeroPending;
-        var r = await withProgress('กำลังอัพโหลดรูปหน้าเข้าสู่ระบบ', function () {
+        var r = await withProgress('กำลังอัปโหลดรูปหน้าเข้าสู่ระบบ', function () {
           return apiCall('adminUpdateSiteAsset', { type: 'loginHero', fileBase64: pend.base64, mimeType: pend.mimeType });
-        }, { successLabel: 'อัพโหลดสำเร็จ', retry: true });
+        }, { successLabel: 'อัปโหลดสำเร็จ', retry: true });
         if (r.ok) {
           _settingsCache = r.data; loginHeroPending = null;
           renderLoginHeroPreview(r.data.loginHeroDataUrl);
@@ -2424,7 +2424,7 @@
           document.getElementById('loginHeroRemoveBtn').hidden = false;
           document.getElementById('loginHeroFile').value = '';
           document.getElementById('loginHeroUploadBtn').disabled = true;
-          document.getElementById('loginHeroFileName').textContent = 'อัพโหลดแล้ว — เลือกรูปใหม่ได้ทุกเมื่อ';
+          document.getElementById('loginHeroFileName').textContent = 'อัปโหลดแล้ว — เลือกรูปใหม่ได้ทุกเมื่อ';
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
       document.getElementById('loginHeroRemoveBtn').addEventListener('click', async function () {
@@ -2479,7 +2479,7 @@
         if (r.ok) { _settingsCache = r.data; renderAssetPreview('logoWidePreview', ''); document.getElementById('logoWideRemoveBtn').hidden = true; document.getElementById('setTopbarShowName').checked = r.data.topbarShowName !== false; syncWidePreviewName(); applyBranding(); }
       });
 
-      // ---------- ประเภทงาน (เฉพาะ Super Admin) — ตั้งแต่ V-ถัดไปหลัง V10.1 เพิ่มเป็นป็อปอัพ + เลือกข้อมูลที่ต้องกรอกได้ ----------
+      // ---------- ประเภทงาน (เฉพาะ Super Admin) — ตั้งแต่ V-ถัดไปหลัง V10.1 เพิ่มเป็นป็อปอัป + เลือกข้อมูลที่ต้องกรอกได้ ----------
       var createCatModalEl = document.getElementById('createCatModal');
       var editCatModalEl = document.getElementById('editCatModal');
       var currentCategoryRows = [];
@@ -2495,7 +2495,7 @@
           var deptOrder = (currentDepartments && currentDepartments.length ? currentDepartments : (siteS.departments || [])).slice();
           // ตั้งแต่ 1.41.111026: ป้ายฝ่ายข้างชื่อประเภทงาน
           // ตั้งแต่ 1.29.091026: แถวรายการประเภทงานเหลือแค่ "สรุป + ปุ่มแก้ไข/ลบ" — ตัวเลือกแก้ไขทั้งหมด (สี/รูปแบบการ์ด/ฝ่าย/แจ้งเตือนอย่างเดียว/
-          // ไม่แสดงสาธารณะ/ข้อมูลที่ต้องกรอก) ย้ายไปอยู่ในป็อปอัพ "แก้ไขประเภทงาน" (editCatModal) ที่เปิดจากปุ่ม "แก้ไข" แทน ตามที่ผู้ใช้ขอ
+          // ไม่แสดงสาธารณะ/ข้อมูลที่ต้องกรอก) ย้ายไปอยู่ในป็อปอัป "แก้ไขประเภทงาน" (editCatModal) ที่เปิดจากปุ่ม "แก้ไข" แทน ตามที่ผู้ใช้ขอ
           // เพราะเดิมแต่ละแถวมี dropdown 2 ตัว + checkbox 2 ตัว + ปุ่ม 2 ปุ่มวางเรียงกันจนดูรก
           rows.forEach(function (c) {
             var fieldsLabel = (c.customFields && c.customFields.length > 0)
@@ -2744,7 +2744,7 @@
         });
       })();
 
-      // ---- ป็อปอัพ "จัดการสมาชิก" ----
+      // ---- ป็อปอัป "จัดการสมาชิก" ----
       var gmModal = document.getElementById('groupMembersModal');
       var gmDept = '', gmChecked = {}, gmInitial = {};
       function openGroupMembers(dept) {
@@ -2806,7 +2806,7 @@
         else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
 
-      // ---- ป็อปอัพ "เปลี่ยนชื่อ" ----
+      // ---- ป็อปอัป "เปลี่ยนชื่อ" ----
       var grpRenameModal = document.getElementById('groupRenameModal');
       var grpRenameFrom = '';
       function openGroupRename(dept) {
@@ -2980,8 +2980,8 @@
           errBox.hidden = false;
         }
       });
-      // ---------- ป็อปอัพ "แก้ไขประเภทงาน" (ตั้งแต่ 1.29.091026) ----------
-      // บันทึกเฉพาะค่าที่เปลี่ยนจริง (เทียบกับค่าเดิมตอนเปิดป็อปอัพ) โดยเรียก endpoint เดิมทีละตัว — ไม่ต้องเพิ่ม API ฝั่ง Worker
+      // ---------- ป็อปอัป "แก้ไขประเภทงาน" (ตั้งแต่ 1.29.091026) ----------
+      // บันทึกเฉพาะค่าที่เปลี่ยนจริง (เทียบกับค่าเดิมตอนเปิดป็อปอัป) โดยเรียก endpoint เดิมทีละตัว — ไม่ต้องเพิ่ม API ฝั่ง Worker
       var editCatOriginal = null;
       function switchEditCatTab(tabName) {
         ['basic', 'fields'].forEach(function (t) {
@@ -3126,7 +3126,7 @@
         extLinkImageRemoved = false;
         document.getElementById('extLinkImageFile').value = '';
       }
-      // 1.52.121026: ตัวอย่างปุ่มจริง (ใช้ extLinkButtonHtml เดียวกับหน้าแรก) อัพเดตตามชื่อ/สี/รูปที่เลือก
+      // 1.52.121026: ตัวอย่างปุ่มจริง (ใช้ extLinkButtonHtml เดียวกับหน้าแรก) อัปเดตตามชื่อ/สี/รูปที่เลือก
       var extLinkPreviewImage = '';
       function renderExtLinkPreview() {
         var box = document.getElementById('extLinkPreview');
@@ -3136,7 +3136,7 @@
       function renderExtLinkImagePreview(dataUrl, name) {
         extLinkPreviewImage = dataUrl || '';
         document.getElementById('extLinkRemoveImageBtn').hidden = !dataUrl;
-        document.getElementById('extLinkImageName').textContent = dataUrl ? (name || 'ใช้รูปที่อัพโหลดไว้') : 'ยังไม่ได้เลือกรูป — ใช้ปุ่มสี';
+        document.getElementById('extLinkImageName').textContent = dataUrl ? (name || 'ใช้รูปที่อัปโหลดไว้') : 'ยังไม่ได้เลือกรูป — ใช้ปุ่มสี';
         renderExtLinkPreview();
       }
       var EXT_SWATCHES = ['#3457d5', '#4f46e5', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#d97706', '#16a34a', '#0d9488', '#0284c7', '#475569', '#111827'];
@@ -3291,8 +3291,8 @@
           '<td>' + statusBadgeHtml(u) + (u.joinedAt && u.status === 'active' ? '<div class="hint join-hint">เริ่มงาน ' + escapeHtml(formatDateThai(u.joinedAt)) + '</div>' : '') + '</td>' +
           '<td style="white-space:nowrap;">' +
             (canManageUser(u)
-              // ตั้งแต่ 1.29.091026: รวมปุ่มจัดการบัญชี (พักใช้งาน/คืนสิทธิ์/ตั้งรหัสผ่านใหม่/แก้ไขแผนก/ลบถาวร) ไว้ในป็อปอัพ "จัดการบัญชี" ที่เปิดจากปุ่มเดียว
-              // แทนการวางเรียงหลายปุ่มต่อแถวจนรก — ปุ่มในป็อปอัพยังใช้ data-act เดิมทุกตัว
+              // ตั้งแต่ 1.29.091026: รวมปุ่มจัดการบัญชี (พักใช้งาน/คืนสิทธิ์/ตั้งรหัสผ่านใหม่/แก้ไขแผนก/ลบถาวร) ไว้ในป็อปอัป "จัดการบัญชี" ที่เปิดจากปุ่มเดียว
+              // แทนการวางเรียงหลายปุ่มต่อแถวจนรก — ปุ่มในป็อปอัปยังใช้ data-act เดิมทุกตัว
               ? '<button class="btn btn-secondary btn-sm" data-manage-user="' + u.id + '" data-name="' + escapeHtml(u.name) + '"><i class="fas fa-sliders ui-icon" aria-hidden="true"></i> จัดการ</button>'
               : '<span class="hint">ไม่มีสิทธิ์จัดการบัญชีนี้</span>') +
           '</td>' +
@@ -3316,9 +3316,9 @@
       document.getElementById('userTypeFilter').addEventListener('change', renderUserTable);
       document.getElementById('userStatusFilter').addEventListener('change', renderUserTable);
     })();
-    // ---------- ป็อปอัพ "จัดการบัญชี" (ตั้งแต่ 1.29.091026; แยกเป็น 3 แท็บตั้งแต่ 1.42.111026) ----------
+    // ---------- ป็อปอัป "จัดการบัญชี" (ตั้งแต่ 1.29.091026; แยกเป็น 3 แท็บตั้งแต่ 1.42.111026) ----------
     // แท็บ "ข้อมูล" (ชื่อ/รูปโปรไฟล์/ตั้งรหัสผ่าน) · "ประเภทบัญชี" (ครู+กลุ่มบริหารงาน+แต่งตั้งเจ้าหน้าที่ / ผู้บริหาร / Super Admin) · "สถานะ" (ระงับ/คืนสิทธิ์/ลบถาวร)
-    // ป็อปอัพนี้และป็อปอัพลบถาวรเป็น super-admin-only (ถูกลบออกจาก DOM สำหรับคนอื่น) — ผูก event เฉพาะเมื่อเป็น Super Admin
+    // ป็อปอัปนี้และป็อปอัปลบถาวรเป็น super-admin-only (ถูกลบออกจาก DOM สำหรับคนอื่น) — ผูก event เฉพาะเมื่อเป็น Super Admin
     var openManageUserModal = function () {};
     function replaceUserInList(nu) {
       for (var i = 0; i < allUsers.length; i++) { if (allUsers[i].id === nu.id) { allUsers[i] = nu; return nu; } }
@@ -3343,7 +3343,7 @@
     ['info', 'type', 'status'].forEach(function (k) {
       document.getElementById('muTabBtn-' + k).addEventListener('click', function () { switchMuTab(k); });
     });
-    // 1.85: คำแนะนำครั้งแรก (ป็อปอัพต้อนรับ) — ไม่แสดงกับ Super Admin (ไม่เห็นป็อปอัพนี้อยู่แล้ว)
+    // 1.85: คำแนะนำครั้งแรก (ป็อปอัปต้อนรับ) — ไม่แสดงกับ Super Admin (ไม่เห็นป็อปอัปนี้อยู่แล้ว)
     function renderMuWelcome() {
       var u = muFresh(), sec = document.getElementById('muWelcomeSec');
       sec.hidden = !u || u.welcomedAt === null || u.welcomedAt === undefined || (u.role === 'admin' && !u.hasHub);
@@ -3369,7 +3369,7 @@
       document.getElementById('welcomeBulkBtn').disabled = !seen;
     }
     document.getElementById('welcomeBulkBtn').addEventListener('click', async function () {
-      if (!(await askConfirm('แสดงคำแนะนำครั้งแรก (ป็อปอัพต้อนรับ) อีกครั้งให้ <b>ทุกบัญชี</b>?<br>แต่ละคนจะเห็นอีก 1 ครั้งเมื่อเข้าระบบครั้งถัดไป', 'แสดงอีกครั้งให้ทุกคน'))) return;
+      if (!(await askConfirm('แสดงคำแนะนำครั้งแรก (ป็อปอัปต้อนรับ) อีกครั้งให้ <b>ทุกบัญชี</b>?<br>แต่ละคนจะเห็นอีก 1 ครั้งเมื่อเข้าระบบครั้งถัดไป', 'แสดงอีกครั้งให้ทุกคน'))) return;
       var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminResetWelcome', { all: true }); }, { successLabel: 'ทุกคนจะเห็นคำแนะนำอีกครั้งเมื่อเข้าระบบครั้งถัดไป' });
       if (!r.ok) return;
       allUsers.forEach(function (x) { if (x.welcomedAt) x.welcomedAt = ''; });
@@ -3381,7 +3381,7 @@
         ' ' + statusBadgeHtml(u);
     }
     // ----- แท็บ "ข้อมูล" -----
-    var manageAvatarTarget = null;   // บัญชีที่กำลังเปิดป็อปอัพอยู่
+    var manageAvatarTarget = null;   // บัญชีที่กำลังเปิดป็อปอัปอยู่
     var manageAvatarPending = null;  // รูปที่เลือกแล้วแต่ยังไม่บันทึก (ผลจาก resizeImageForAvatar)
     function syncManageAvatarUi() {
       var u = manageAvatarTarget;
@@ -3410,7 +3410,7 @@
       if (!manageAvatarPending || !manageAvatarTarget) return;
       var target = manageAvatarTarget, errBox = document.getElementById('manageAvatarError');
       errBox.hidden = true;
-      var r = await withProgress('กำลังอัพโหลดรูปโปรไฟล์', function () { return uploadResizedAvatar(manageAvatarPending, target.id); }, { successLabel: 'อัพเดทรูปโปรไฟล์แล้ว', upload: true });
+      var r = await withProgress('กำลังอัปโหลดรูปโปรไฟล์', function () { return uploadResizedAvatar(manageAvatarPending, target.id); }, { successLabel: 'อัปเดตรูปโปรไฟล์แล้ว', upload: true });
       if (r.ok) {
         manageAvatarPending = null;
         target.avatarUrl = r.data.avatarUrl;
@@ -3612,7 +3612,7 @@
     document.getElementById('manageUserClose').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
     document.getElementById('manageUserModalCloseX').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
 
-    // ---------- ป็อปอัพ "ลบบัญชีถาวร" (ตั้งแต่ 1.30.091026) ----------
+    // ---------- ป็อปอัป "ลบบัญชีถาวร" (ตั้งแต่ 1.30.091026) ----------
     var purgeUserModalEl = document.getElementById('purgeUserModal');
     var purgeBusy = false;
     var purgeTarget = null;
@@ -3663,7 +3663,7 @@
           if (res.done) finished = true;
           else statusEl.textContent = 'กำลังลบผลงาน... ลบแล้ว ' + totalDeleted + ' ชิ้น (เหลืออีก ' + res.remaining + ')';
         }
-        if (!finished) errMsg = 'ลบไม่ครบในรอบนี้ กรุณาเปิดป็อปอัพนี้แล้วกดลบถาวรอีกครั้งเพื่อทำต่อ';
+        if (!finished) errMsg = 'ลบไม่ครบในรอบนี้ กรุณาเปิดป็อปอัปนี้แล้วกดลบถาวรอีกครั้งเพื่อทำต่อ';
       } catch (err) {
         errMsg = (err && err.message) || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ';
       }
@@ -3681,11 +3681,11 @@
       doneBtn.hidden = false;
     });
 
-    } // end if (isSuperAdminSession) — ป็อปอัพจัดการบัญชี/ลบถาวร
+    } // end if (isSuperAdminSession) — ป็อปอัปจัดการบัญชี/ลบถาวร
 
     // ---------- Create user modal ----------
     // ตั้งแต่ V10.0 แท็บ "จัดการบัญชี" (และปุ่ม/ฟอร์มทั้งหมดในนี้) เป็น super-admin-only — ครอบด้วย if (isSuperAdminSession) กัน error ตอนคนอื่นเปิดหน้านี้
-    // 1.42.111026: ป็อปอัพย่อย "ตั้งรหัสผ่านใหม่" / "เปลี่ยน Role" / "กลุ่มบริหารงาน" ย้ายไปเป็นแท็บในป็อปอัพ "จัดการบัญชี" แล้ว
+    // 1.42.111026: ป็อปอัปย่อย "ตั้งรหัสผ่านใหม่" / "เปลี่ยน Role" / "กลุ่มบริหารงาน" ย้ายไปเป็นแท็บในป็อปอัป "จัดการบัญชี" แล้ว
     if (isSuperAdminSession && document.getElementById('createUserModal')) {
       var createUserModal = document.getElementById('createUserModal');
       document.getElementById('openCreateUserBtn').addEventListener('click', function () {
@@ -3748,7 +3748,7 @@
 
     // (1.32.101026) ปฏิทินและประกาศย้ายไปหน้า "ประกาศและปฏิทิน" (announce.html) แล้ว
 
-    // ---------- แท็บในป็อปอัพ "ประเภทงาน" (พื้นฐาน / ข้อมูลที่ต้องกรอก) — ตั้งแต่เวอร์ชันถัดไปหลัง 1.22 ----------
+    // ---------- แท็บในป็อปอัป "ประเภทงาน" (พื้นฐาน / ข้อมูลที่ต้องกรอก) — ตั้งแต่เวอร์ชันถัดไปหลัง 1.22 ----------
     function switchCatTab(tabName) {
       ['basic', 'fields'].forEach(function (t) {
         document.getElementById('catTabBtn-' + t).classList.toggle('active', t === tabName);

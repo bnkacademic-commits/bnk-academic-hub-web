@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.1.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.2.221026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -51,7 +51,7 @@
   </div>
   <div id="app-footer"></div>
 
-<script src="assets/api.js?v=1.86.1.221026"></script>
+<script src="assets/api.js?v=1.86.2.221026"></script>
 <script>
   var session = requireLogin();
   // เฉพาะ Super Admin — บทบาทอื่นไปหน้าแรกของตัวเอง
@@ -169,7 +169,7 @@
       ['ภาคเรียนปัจจุบัน', '<span>' + escapeHtml(state.termText || '—') + '</span>']
     ];
     $('ovStatus').innerHTML = stl.map(function (x) { return '<li><span>' + escapeHtml(x[0]) + '</span>' + x[1] + '</li>'; }).join('');
-    if (sys && !relayOk) alerts.unshift(['bad', 'fa-plug-circle-xmark', 'ติดต่อ Drive relay ไม่ได้ — ครูอัพโหลดไฟล์ไม่ได้', 'settings.html']);
+    if (sys && !relayOk) alerts.unshift(['bad', 'fa-plug-circle-xmark', 'ติดต่อ Drive relay ไม่ได้ — ครูอัปโหลดไฟล์ไม่ได้', 'settings.html']);
     var bk = ov.backup;
     if (bk && bk.configured) {
       var okAt = bk.last && bk.last.lastOkAt ? Date.parse(bk.last.lastOkAt) : 0;
@@ -178,7 +178,7 @@
     }
     var gr = state.galRoot;
     if (gr && !gr.error && !gr.ok) alerts.push(['warn', 'fa-folder-closed', 'โฟลเดอร์ "' + (gr.name || 'BNKAcademicHub คลังรูปภาพ') + '" ยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์ — ผู้มีสิทธิ์อ่าน" — คนในระบบจะเปิดดูรูปในอัลบั้มไม่ได้ (กดเพื่อเปิดโฟลเดอร์แล้วตั้งค่าแชร์)', gr.url || '']);
-    if (wOld) alerts.unshift(['bad', 'fa-triangle-exclamation', 'Worker ยังเป็นรุ่นเก่า (ต้องการ ' + WORKER_MIN_VERSION + ' ขึ้นไป) — อัพโหลดไฟล์ Worker แล้ว Deploy']);
+    if (wOld) alerts.unshift(['bad', 'fa-triangle-exclamation', 'Worker ยังเป็นรุ่นเก่า (ต้องการ ' + WORKER_MIN_VERSION + ' ขึ้นไป) — อัปโหลดไฟล์ Worker แล้ว Deploy']);
     $('ovAlerts').innerHTML = alerts.map(function (a) { var inner = '<i class="fa-solid ' + a[1] + '" aria-hidden="true"></i> ' + escapeHtml(a[2]); return a[3] ? '<a class="ov-alert ' + a[0] + '" href="' + escapeHtml(a[3]) + '"' + (/^https?:/.test(a[3]) ? ' target="_blank" rel="noopener"' : '') + '>' + inner + '</a>' : '<span class="ov-alert ' + a[0] + '">' + inner + '</span>'; }).join('');
   }
   // 1.82: อัปรูป 7 วันล่าสุด — ส่งตรงเข้า Google Drive / ผ่าน relay (วิธีสำรอง) + สาเหตุครั้งล่าสุด

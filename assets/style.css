@@ -222,7 +222,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 /* ---------- Scrollbar แบบกำหนดเอง (ตั้งแต่ V11.8.5 ตามที่ผู้ใช้ขอ) ----------
    ผู้ใช้แจ้งว่าเห็น scrollbar มาตรฐานของระบบปฏิบัติการ/เบราว์เซอร์ (กล่องมีปุ่มลูกศรขึ้น-ลงเหลี่ยมๆ) โผล่ในหลายแท็บของหน้า
    ตั้งค่า ดูไม่เข้ากับดีไซน์มนโค้ง/เรียบทันสมัยของเว็บทั้งระบบ — กำหนด scrollbar เองทั้งเว็บ (ทุกจุดที่มีเนื้อหาล้นจนต้องเลื่อน
-   ไม่ว่าจะเป็นแท็บ/ป็อปอัพ/รายการใดๆ ทั้งตอนนี้และที่จะเพิ่มในอนาคต) ให้บางเรียบ ไม่มีปุ่มลูกศรหัวท้าย และใช้สีจากตัวแปรธีม
+   ไม่ว่าจะเป็นแท็บ/ป็อปอัป/รายการใดๆ ทั้งตอนนี้และที่จะเพิ่มในอนาคต) ให้บางเรียบ ไม่มีปุ่มลูกศรหัวท้าย และใช้สีจากตัวแปรธีม
    (--border/--text-muted) จึงเข้ากับทั้งโหมดสว่างและโหมดมืดอัตโนมัติ */
 * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -358,7 +358,7 @@ a:hover { text-decoration: underline; }
 .manage-avatar-box .profile-avatar { width: 72px; height: 72px; }
 .manage-avatar-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 
-/* ป็อปอัพเปลี่ยนรูปโปรไฟล์ */
+/* ป็อปอัปเปลี่ยนรูปโปรไฟล์ */
 .avatar-preview-wrap { display: flex; justify-content: center; margin: 4px 0 10px; }
 .avatar-preview-lg { width: 96px; height: 96px; font-size: 2rem; }
 .profile-trigger .profile-name { font-size: 0.88rem; font-weight: 600; }
@@ -591,8 +591,8 @@ input:focus, select:focus, textarea:focus {
 .field-row[hidden] { display: none; } /* author display:flex ชนะ UA [hidden] เสมอ ต้องบังคับซ่อนเอง (บั๊กเดียวกับ .btn[hidden] ที่แก้ไว้ก่อนหน้า) — ใช้กับ #evTermFields ในหน้าตั้งค่า ปฏิทิน */
 /* min-width: 0 สำคัญมาก — ค่าเริ่มต้นของ flex item คือ min-width: auto (ไม่ใช่ 0) ทำให้ยอมหดได้ไม่สุดกว่าความกว้าง "เนื้อหาภายใน"
    ของตัวเอง แม้จะตั้ง width:100% ไว้แล้วก็ตาม ช่องที่กระทบชัดสุดคือ input[type=datetime-local] ซึ่ง Chromium คำนวณความกว้าง
-   ขั้นต่ำภายในไว้สูงกว่าที่คอลัมน์ field-row จัดสรรให้จริงเสมอ ทำให้ช่องนั้นล้นออกนอกป็อปอัพ (ไม่ขึ้นกับว่าป็อปอัพกว้างแค่ไหน
-   เป็นบั๊กเดิมของ flexbox ไม่ใช่เรื่องขนาดป็อปอัพ) — พบจากผู้ใช้แจ้ง "แถวยาวเกินไป" แล้วตรวจเจอที่ป็อปอัพ "ประกาศ" (ช่องวันที่เริ่ม/สิ้นสุด) */
+   ขั้นต่ำภายในไว้สูงกว่าที่คอลัมน์ field-row จัดสรรให้จริงเสมอ ทำให้ช่องนั้นล้นออกนอกป็อปอัป (ไม่ขึ้นกับว่าป็อปอัปกว้างแค่ไหน
+   เป็นบั๊กเดิมของ flexbox ไม่ใช่เรื่องขนาดป็อปอัป) — พบจากผู้ใช้แจ้ง "แถวยาวเกินไป" แล้วตรวจเจอที่ป็อปอัป "ประกาศ" (ช่องวันที่เริ่ม/สิ้นสุด) */
 .field-row > .field { flex: 1; min-width: 0; }
 textarea { resize: vertical; min-height: 70px; }
 .file-input-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -812,10 +812,10 @@ tbody tr:hover { background: var(--surface-2); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; animation: cardIn 0.25s ease both; }
 
-/* แท็บย่อยภายในป็อปอัพ (เริ่มที่ป็อปอัพกำหนดการ ตั้งแต่เวอร์ชันถัดจาก V11.2 — ตั้งแต่เวอร์ชันถัดไปหลัง 1.22 ใช้ร่วมกับ
-   ป็อปอัพ "ประเภทงาน" ด้วย เพื่อลดความสูงของป็อปอัพที่เนื้อหาเยอะ) — หน้าตาเหมือน .tabs/.tab-btn/.tab-panel
+/* แท็บย่อยภายในป็อปอัป (เริ่มที่ป็อปอัปกำหนดการ ตั้งแต่เวอร์ชันถัดจาก V11.2 — ตั้งแต่เวอร์ชันถัดไปหลัง 1.22 ใช้ร่วมกับ
+   ป็อปอัป "ประเภทงาน" ด้วย เพื่อลดความสูงของป็อปอัปที่เนื้อหาเยอะ) — หน้าตาเหมือน .tabs/.tab-btn/.tab-panel
    ทุกประการ แต่ใช้ชื่อคลาสแยกต่างหาก เพราะโค้ด JS ของแท็บหลักในหน้า (querySelectorAll('.tab-btn')) จะกวาดจับปุ่มพวกนี้
-   ไปด้วยถ้าใช้ชื่อคลาสซ้ำกัน ทำให้สถานะแท็บหลักของหน้าพัง (สลับแท็บในป็อปอัพแล้วแท็บหลักเปลี่ยนตามผิดๆ) */
+   ไปด้วยถ้าใช้ชื่อคลาสซ้ำกัน ทำให้สถานะแท็บหลักของหน้าพัง (สลับแท็บในป็อปอัปแล้วแท็บหลักเปลี่ยนตามผิดๆ) */
 .ev-tab-btn {
   background: none; border: none; padding: 10px 16px; font-family: inherit;
   font-size: 0.96rem; font-weight: 600; color: var(--text-muted); cursor: pointer;
@@ -872,7 +872,7 @@ tbody tr:hover { background: var(--surface-2); }
    พร้อมมุมประดับทอง 4 มุม (.tpl-frame-corner) จำลองหมุด/ลวดลายกรอบรูปโบราณ
    ปรับอีกรอบ (V12.1 รอบ 2 — ตามที่ผู้ใช้แจ้งหลัง V12.1 รอบแรก): เดิมกรอบเป็นกล่องตายตัว 280x210 (4:3) แล้วครอบตัดรูปด้วย
    object-fit:cover ให้พอดีกล่องเสมอ ทำให้เกียรติบัตรแนวตั้ง/สัดส่วนอื่นที่ไม่ใช่ 4:3 ถูกครอบตัดขอบเสียรายละเอียดไป — เปลี่ยนมาให้
-   กรอบ "ห่อ" ตามสัดส่วนจริงของไฟล์ที่อัพโหลดแทน (ไม่มีการครอบตัดอีกต่อไป) โดยกำหนดเพดานขนาดสูงสุดไว้ที่ตัว <img> เอง
+   กรอบ "ห่อ" ตามสัดส่วนจริงของไฟล์ที่อัปโหลดแทน (ไม่มีการครอบตัดอีกต่อไป) โดยกำหนดเพดานขนาดสูงสุดไว้ที่ตัว <img> เอง
    (max-width/max-height) แล้วให้ .tpl-frame/.tpl-frame-mat เป็น inline-block ห่อขนาดตามเนื้อหาจริง (ไม่ตั้ง width/height ตายตัว)
    รูปแนวนอนจะได้กรอบกว้าง รูปแนวตั้ง/จัตุรัสจะได้กรอบทรงนั้นตามจริง */
 .tpl-frame {
@@ -920,7 +920,7 @@ tbody tr:hover { background: var(--surface-2); }
 .cat-accordion-count { background: var(--primary-light); color: var(--primary-dark); font-size: 0.78rem; font-weight: 700; padding: 2px 9px; border-radius: 999px; margin-left: 10px; flex-shrink: 0; }
 .cat-accordion-body { padding: 2px 14px 6px; background: var(--surface); }
 
-/* 'bookInline' (ตั้งแต่ V12.0): เล่มหนังสือที่ฝัง iframe พรีวิวของ Drive ไว้ในตัวการ์ดเลย ไม่ต้องกดเปิดป๊อปอัพก่อนเหมือน 'book' ปุ่ม "ดูแบบเต็มจอ" ยังเปิดป๊อปอัพเดิมได้ถ้าต้องการดูใหญ่ขึ้น */
+/* 'bookInline' (ตั้งแต่ V12.0): เล่มหนังสือที่ฝัง iframe พรีวิวของ Drive ไว้ในตัวการ์ดเลย ไม่ต้องกดเปิดป๊อปอัปก่อนเหมือน 'book' ปุ่ม "ดูแบบเต็มจอ" ยังเปิดป๊อปอัปเดิมได้ถ้าต้องการดูใหญ่ขึ้น */
 .tpl-bookinline-frame { width: 100%; height: 340px; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.16), 0 0 0 1px var(--border); margin-bottom: 4px; background: var(--surface-2); }
 .tpl-bookinline-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
 .tpl-bookinline-empty { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.95rem; }
@@ -942,7 +942,7 @@ tbody tr:hover { background: var(--surface-2); }
 }
 .tpl-pin-item { border: 2px solid var(--primary); border-radius: 10px; padding: 14px 12px; margin-bottom: 4px; box-shadow: 0 4px 14px rgba(52,87,213,0.15); }
 
-/* ป็อปอัพ "เปิดอ่านแบบเล่มหนังสือ" — ใช้ตัวแสดงตัวอย่างของ Google Drive เอง (พลิกหน้าได้ในตัว) แทนการสร้างแอนิเมชันพลิกหน้าเอง */
+/* ป็อปอัป "เปิดอ่านแบบเล่มหนังสือ" — ใช้ตัวแสดงตัวอย่างของ Google Drive เอง (พลิกหน้าได้ในตัว) แทนการสร้างแอนิเมชันพลิกหน้าเอง */
 .tpl-book-lightbox { position: fixed; inset: 0; background: rgba(20,22,30,0.75); display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 200; }
 .tpl-book-lightbox[hidden] { display: none; }
 .tpl-book-lightbox-box { background: var(--surface); border-radius: 12px; width: 100%; max-width: 760px; height: 86vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
@@ -1073,7 +1073,7 @@ tbody tr:hover { background: var(--surface-2); }
    ปุ่มสีข้อความ: สูงคงที่ (--ext-link-h) กว้างยืดหยุ่นตามความยาวชื่อปุ่ม (flex: 1 1 auto)
    ปุ่มรูปภาพ (V11.9.1): แก้บั๊กที่ผู้ใช้แจ้งว่า "รูปไม่เต็มปุ่ม" — ต้นเหตุคือ V11.9 เดิมให้กล่องปุ่มกว้างยืดหยุ่น (flex:1 1 auto) บวก padding
    8px 14px แล้วค่อยยัดรูปเข้าไปด้วย object-fit:contain ขนาดกล่องจริงจึงไม่คงที่ ไม่มีทางสร้างรูปให้พอดีเป๊ะได้เลย — เปลี่ยนเป็นกล่องขนาด
-   คงที่ตายตัว 160×60px (อัตราส่วน 8:3 เท่ากับขนาดรูปที่แนะนำในหน้าตั้งค่าพอดี — แนะนำอัพโหลดรูปต้นฉบับ 320×120px คือ 2 เท่าของขนาด
+   คงที่ตายตัว 160×60px (อัตราส่วน 8:3 เท่ากับขนาดรูปที่แนะนำในหน้าตั้งค่าพอดี — แนะนำอัปโหลดรูปต้นฉบับ 320×120px คือ 2 เท่าของขนาด
    แสดงผลจริงเพื่อความคมชัดบนจอ retina) ไม่มี padding แล้ว ใช้ object-fit:cover เต็มกล่องไม่มีขอบขาวเหลือ ถ้าอัตราส่วนรูปตรง 8:3 พอดีจะเต็มปุ่ม
    สนิทไม่มีครอบตัดเลย (คำนวณตัวเลขมาให้ลงตัวพอดี ไม่ใช่ค่าประมาณ) */
 .ext-links-grid { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -1100,7 +1100,7 @@ tbody tr:hover { background: var(--surface-2); }
   display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100;
   opacity: 0; transition: opacity 0.18s ease;
 }
-/* ป็อปอัพยืนยัน (askConfirm) ต้องลอยอยู่เหนือป็อปอัพอื่นๆ เสมอ เผื่อถูกเปิดซ้อนจากในโมดัลฟอร์มต่างๆ */
+/* ป็อปอัปยืนยัน (askConfirm) ต้องลอยอยู่เหนือป็อปอัปอื่นๆ เสมอ เผื่อถูกเปิดซ้อนจากในโมดัลฟอร์มต่างๆ */
 #sharedConfirmModal { z-index: 150; }
 .modal-backdrop[hidden] { display: none; }
 .modal-backdrop.show { opacity: 1; }
@@ -1109,24 +1109,24 @@ tbody tr:hover { background: var(--surface-2); }
   width: 100%; max-width: 420px; box-shadow: var(--shadow-lg); text-align: center;
   transform: translateY(10px) scale(0.97); opacity: 0; transition: transform 0.2s ease, opacity 0.2s ease;
   position: relative;
-  /* ตั้งแต่เวอร์ชันถัดไปหลัง 1.22: จุดบั๊กจริงที่ทำให้ผู้ใช้แจ้งว่าป็อปอัพ "ล้นจอ" — เดิม .modal-box ไม่มี max-height/overflow
+  /* ตั้งแต่เวอร์ชันถัดไปหลัง 1.22: จุดบั๊กจริงที่ทำให้ผู้ใช้แจ้งว่าป็อปอัป "ล้นจอ" — เดิม .modal-box ไม่มี max-height/overflow
      เลย ปล่อยให้สูงเท่าเนื้อหาจริงเสมอ ถ้าเนื้อหาสูงกว่าจอ (เช่นจอโน้ตบุ๊กที่ขยายหน้าต่างไม่เต็ม หรือซูมหน้าเว็บ) ส่วนบน/ล่างของ
-     ป็อปอัพ (รวมปุ่ม "บันทึก"/"ยกเลิก") จะถูกเบียดออกไปนอกจอโดยไม่มีทางเลื่อนดูได้เลย เพราะ .modal-backdrop ใช้ flex จัดกลาง
+     ป็อปอัป (รวมปุ่ม "บันทึก"/"ยกเลิก") จะถูกเบียดออกไปนอกจอโดยไม่มีทางเลื่อนดูได้เลย เพราะ .modal-backdrop ใช้ flex จัดกลาง
      โดยไม่บีบลูกให้เล็กลง — ตั้ง max-height ตามความสูงจอลบ padding ของ .modal-backdrop (20px บน+ล่าง) แล้วเปิด overflow-y:auto
-     ป็อปอัพจึงไม่ล้นจอได้อีกต่อไปไม่ว่าเนื้อหาจะยาวแค่ไหน (เลื่อนดูในกล่องได้แทน) */
+     ป็อปอัปจึงไม่ล้นจอได้อีกต่อไปไม่ว่าเนื้อหาจะยาวแค่ไหน (เลื่อนดูในกล่องได้แทน) */
   max-height: calc(100vh - 40px); overflow-y: auto;
 }
-/* ป็อปอัพที่เนื้อหาเยอะ (ฟอร์มหลายแถว/ช่อง field-row คู่/คำอธิบายยาว) คับแคบเกินไปในกล่อง 420px เดิมบนจอที่กว้างพอ
-   (เช่น ป็อปอัพ "กำหนดการ"/"ประเภทงาน"/"ประกาศ"/"ผู้ใช้ใหม่"/"เว็บภายนอก"/"ส่งงาน" ที่มีฟิลด์สะสมเพิ่มมาเรื่อยๆ หลายเวอร์ชัน) —
+/* ป็อปอัปที่เนื้อหาเยอะ (ฟอร์มหลายแถว/ช่อง field-row คู่/คำอธิบายยาว) คับแคบเกินไปในกล่อง 420px เดิมบนจอที่กว้างพอ
+   (เช่น ป็อปอัป "กำหนดการ"/"ประเภทงาน"/"ประกาศ"/"ผู้ใช้ใหม่"/"เว็บภายนอก"/"ส่งงาน" ที่มีฟิลด์สะสมเพิ่มมาเรื่อยๆ หลายเวอร์ชัน) —
    เพิ่มคลาสนี้ใช้คู่กับ .modal-box เพื่อขยายเพดานความกว้างเป็น 620px ให้แถวคู่ (field-row) และคำอธิบายมีที่หายใจมากขึ้น
    ไม่กระทบจอมือถือเลย เพราะ width:100% อยู่แล้วเท่าเดิม เพดานใหม่มีผลเฉพาะจอที่กว้างพอจะเห็นความต่างจริงๆ (ตั้งแต่เวอร์ชันถัดจาก V12.1) */
 .modal-box.modal-box-wide { max-width: 620px; }
 .modal-backdrop.show .modal-box { transform: translateY(0) scale(1); opacity: 1; }
 .modal-box h3 { margin-top: 0; }
-/* flex-wrap: wrap เพิ่มเข้ามา (ตั้งแต่รอบปรับปรุงป็อปอัพ "หน้าผลงานของฉัน" เป็น 3 ปุ่ม) กันปุ่มล้นแถวออกนอกกรอบบนจอมือถือแคบๆ — ไม่กระทบป็อปอัพอื่นที่มีแค่ 2 ปุ่มเพราะพอดีแถวเดียวอยู่แล้ว */
+/* flex-wrap: wrap เพิ่มเข้ามา (ตั้งแต่รอบปรับปรุงป็อปอัป "หน้าผลงานของฉัน" เป็น 3 ปุ่ม) กันปุ่มล้นแถวออกนอกกรอบบนจอมือถือแคบๆ — ไม่กระทบป็อปอัปอื่นที่มีแค่ 2 ปุ่มเพราะพอดีแถวเดียวอยู่แล้ว */
 .modal-actions { display: flex; gap: 10px; margin-top: 18px; justify-content: center; flex-wrap: wrap; }
 
-/* ปุ่ม X ปิดป็อปอัพ มุมบนขวา — ใช้ร่วมกันทุกป็อปอัพในเว็บ */
+/* ปุ่ม X ปิดป็อปอัป มุมบนขวา — ใช้ร่วมกันทุกป็อปอัปในเว็บ */
 .modal-close-x {
   position: absolute; top: 10px; right: 10px; width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
@@ -1139,8 +1139,8 @@ tbody tr:hover { background: var(--surface-2); }
 #qrcode-box { display: flex; justify-content: center; margin: 16px 0; background: #fff; border-radius: 12px; padding: 12px; }
 .qr-link { font-size: 0.88rem; word-break: break-all; color: var(--text-muted); background: var(--surface-2); padding: 8px 10px; border-radius: 8px; margin-top: 6px; }
 
-/* ---------- Progress modal (ป็อปอัพกำลังทำงาน) ---------- */
-#sharedProgressModal { z-index: 160; } /* ต้องลอยเหนือแม้แต่ป็อปอัพยืนยัน เพราะเปิดขึ้นทันทีหลังกดยืนยัน */
+/* ---------- Progress modal (ป็อปอัปกำลังทำงาน) ---------- */
+#sharedProgressModal { z-index: 160; } /* ต้องลอยเหนือแม้แต่ป็อปอัปยืนยัน เพราะเปิดขึ้นทันทีหลังกดยืนยัน */
 .progress-track {
   width: 100%; height: 10px; border-radius: 999px; background: var(--surface-2);
   overflow: hidden; margin: 18px 0 10px;
@@ -1420,7 +1420,7 @@ button.checklist-group-toggle:hover, button.checklist-group-toggle:focus-visible
 .orders-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .orders-actions .btn { text-decoration: none; }
 
-/* ---------- ป็อปอัพจัดการบัญชีแบบ 3 แท็บ (ตั้งแต่ 1.42.111026) ---------- */
+/* ---------- ป็อปอัปจัดการบัญชีแบบ 3 แท็บ (ตั้งแต่ 1.42.111026) ---------- */
 .mu-target { margin-bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .mu-target-name { font-weight: 600; }
 .mu-tabs { margin-bottom: 14px; }
@@ -1514,7 +1514,7 @@ input[type="checkbox"]:focus:not(:focus-visible), input[type="radio"]:focus:not(
 input[type="checkbox"]:disabled, input[type="radio"]:disabled { opacity: 0.45; cursor: not-allowed; }
 .login-card input[type="checkbox"] { width: 17px !important; height: 17px !important; min-width: 17px; }
 
-/* ---------- ปุ่มเลือก/อัพโหลดไอคอนและโลโก้เว็บ (1.45.111026) ---------- */
+/* ---------- ปุ่มเลือก/อัปโหลดไอคอนและโลโก้เว็บ (1.45.111026) ---------- */
 .asset-picker { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 220px; }
 .asset-picker-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .asset-picker-btns .btn { width: auto; display: inline-flex; align-items: center; gap: 6px; }
@@ -1547,7 +1547,7 @@ td > .badge { white-space: nowrap; } /* 1.45: ป้ายสถานะใน�
 .profile-dropdown .dd-header .dd-role .dd-v { display: block; font-size: 0.8rem; color: var(--text); font-weight: 600; word-break: break-word; }
 .profile-dropdown .dd-header .dd-name { margin-bottom: 4px; }
 
-/* ---------- ป็อปอัพเด้งกระพริบเมื่อกดพื้นที่ว่าง (1.46.121026) ---------- */
+/* ---------- ป็อปอัปเด้งกระพริบเมื่อกดพื้นที่ว่าง (1.46.121026) ---------- */
 @keyframes modalBump {
   0% { transform: scale(1); box-shadow: var(--shadow-lg); }
   25% { transform: scale(1.035); box-shadow: 0 0 0 4px var(--primary-light), var(--shadow-lg); }
@@ -1685,7 +1685,7 @@ table.sub-files td.a { white-space: nowrap; text-align: right; width: 1%; }
   .group-modal-box h3 { font-size: 1.05rem; }
 }
 
-/* ---------- 1.50.121026: แอนิเมชันระหว่างรอ (ป็อปอัพกำลังดำเนินการ) ---------- */
+/* ---------- 1.50.121026: แอนิเมชันระหว่างรอ (ป็อปอัปกำลังดำเนินการ) ---------- */
 .progress-anim { position: relative; width: 64px; height: 64px; margin: 6px auto 2px; display: grid; place-items: center; }
 .progress-ring { position: absolute; inset: 0; border-radius: 50%; border: 4px solid var(--primary-light); border-top-color: var(--primary); animation: progressSpin 0.9s linear infinite; }
 .progress-anim i { font-size: 1.5rem; color: var(--primary); }
@@ -1746,7 +1746,7 @@ table.ord-files { margin-top: 12px; }
 .wide-logo-preview .wlp-logo { height: 40px; display: flex; align-items: center; color: var(--text-muted); font-size: 0.85rem; }
 .wide-logo-preview .wlp-logo img { height: 40px; width: auto; max-width: 240px; object-fit: contain; }
 .wide-logo-preview .wlp-name { font-weight: 800; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-/* ป็อปอัพส่งออกรายงาน (หน้าสรุปรวม) */
+/* ป็อปอัปส่งออกรายงาน (หน้าสรุปรวม) */
 .export-box { max-width: 560px; text-align: left; }
 .export-head { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; padding-right: 30px; }
 .export-head h3 { margin: 0 0 2px; }
@@ -1784,7 +1784,7 @@ table.ord-files { margin-top: 12px; }
 .ext-link-btn-image.is-square { width: auto; min-width: 160px; max-width: 260px; padding: 0 16px 0 8px; gap: 10px; justify-content: flex-start; background: var(--surface); flex: 0 1 auto; }
 .ext-link-btn-image.is-square img { width: 44px; height: 44px; flex-shrink: 0; object-fit: cover; border-radius: 22%; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18); }
 .ext-link-btn-image.is-square .ext-link-label { display: block; color: var(--text); font-weight: 700; font-size: 0.9rem; text-align: left; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-/* ป็อปอัพปุ่มลิงก์เว็บไซต์โรงเรียน */
+/* ป็อปอัปปุ่มลิงก์เว็บไซต์โรงเรียน */
 .extlink-box { max-width: 820px; text-align: left; }
 .extlink-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 20px; }
 .extlink-side { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px; align-self: start; }
@@ -1967,7 +1967,7 @@ table.sum-files td.a { width: 1%; }
 .checklist-group-toggle .cl-group-allok { color: var(--accent); }
 .checklist-group-toggle .cl-group-chevron { color: var(--text-muted); }
 
-/* ---------- 1.58: วันที่เริ่มปฏิบัติงาน / ย้ายออก · ปฏิทิน (วงรอบวันนี้ + ป็อปอัพรายละเอียดวัน) ---------- */
+/* ---------- 1.58: วันที่เริ่มปฏิบัติงาน / ย้ายออก · ปฏิทิน (วงรอบวันนี้ + ป็อปอัปรายละเอียดวัน) ---------- */
 .badge-moved { background: var(--warn-light); color: var(--warn); }
 .join-hint { font-size: 0.72rem; margin-top: 3px; }
 .date-thai { font-weight: 600; }
@@ -1976,13 +1976,13 @@ table.sum-files td.a { width: 1%; }
 .mu-transfer-box { margin-top: 10px; padding: 10px 12px; border: 1px dashed var(--warn); border-radius: 12px; background: var(--warn-light); display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .mu-transfer-box input[type="date"] { width: auto; }
 .mu-transfer-box[hidden] { display: none; }
-/* วันนี้: วงรอบกรอบวัน + เลขวันในวงกลมสีหลัก · ทุกวันกดได้ (เปิดป็อปอัพรายละเอียดวัน) */
+/* วันนี้: วงรอบกรอบวัน + เลขวันในวงกลมสีหลัก · ทุกวันกดได้ (เปิดป็อปอัปรายละเอียดวัน) */
 .calendar-cell[data-date] { cursor: pointer; transition: box-shadow 0.15s ease; }
 .calendar-cell[data-date]:hover { box-shadow: inset 0 0 0 2px var(--border); }
 .calendar-cell[data-date]:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .calendar-cell.is-today { background: var(--surface); box-shadow: inset 0 0 0 2px var(--primary), 0 0 0 3px var(--primary-light); z-index: 1; }
 .calendar-cell.is-today:hover { box-shadow: inset 0 0 0 2px var(--primary), 0 0 0 3px var(--primary-light); }
-/* ป็อปอัพรายละเอียดวัน */
+/* ป็อปอัปรายละเอียดวัน */
 .day-modal-box { max-width: 560px; }
 .day-modal-box h3 { margin-bottom: 2px; padding-right: 30px; }
 .day-modal-body { margin-top: 10px; max-height: 60vh; overflow-y: auto; }
@@ -2156,7 +2156,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .cert-no { display: inline-block; font-family: Inter, 'Noto Sans Thai', sans-serif; font-weight: 700; font-size: 0.8rem; color: var(--primary-dark); background: var(--primary-light); border-radius: 8px; padding: 4px 8px; white-space: nowrap; text-align: center; }
 .cert-no.preview { background: transparent; border: 1px dashed var(--primary); }
 .cert-no.empty { background: transparent; color: var(--text-muted); }
-/* ป็อปอัพ: รายการแข่งขัน + ผู้ได้รับ */
+/* ป็อปอัป: รายการแข่งขัน + ผู้ได้รับ */
 .cert-grp { border: 1.5px solid color-mix(in srgb, var(--primary) 25%, var(--border)); border-radius: 16px; margin-bottom: 12px; overflow: hidden; }
 .cert-grp-h { display: grid; grid-template-columns: auto 1fr 250px 34px; gap: 10px; align-items: end; padding: 10px 12px; background: var(--primary-light); }
 .cert-grp-h .cert-grp-num { margin-bottom: 9px; }
@@ -2277,7 +2277,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .cl-tabs button.on { background: var(--surface); color: var(--primary-dark); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
 .cl-tabs button.cur::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .cl-tab-n { min-width: 1.1rem; height: 1.1rem; line-height: 1.1rem; padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 0.68rem; font-weight: 800; text-align: center; }
-/* ป้ายกลุ่มบริหารงานของประเภทงาน — ใช้สีของกลุ่มที่ตั้งไว้ทุกจุด (หน้าแรก กำหนดส่งงาน เช็คลิสต์ ป็อปอัพวัน หน้าผู้บริหาร สรุปรวม ประกาศ) */
+/* ป้ายกลุ่มบริหารงานของประเภทงาน — ใช้สีของกลุ่มที่ตั้งไว้ทุกจุด (หน้าแรก กำหนดส่งงาน เช็คลิสต์ ป็อปอัปวัน หน้าผู้บริหาร สรุปรวม ประกาศ) */
 .cat-dept-badge[data-dept-color] { background: var(--primary-light); color: var(--primary-dark); border-color: color-mix(in srgb, var(--primary) 30%, transparent); }
 /* 1.61: แท็บทุกแถวในเว็บไม่แสดงแถบเลื่อน (ยังเลื่อนด้วยนิ้ว/ทัชแพด/ล้อเมาส์+Shift ได้ตามเดิม) */
 .tabs, .cert-tabs, .cl-tabs, .nav-prev-tabs, .cert-kind-seg, [role="tablist"] { scrollbar-width: none; -ms-overflow-style: none; overflow-y: hidden; }
@@ -2304,7 +2304,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
   .cert-add-card { flex: 1 1 100%; min-width: 0; }
   .cert-share-btn { order: 3; flex: 1 1 100%; justify-content: center; }
 }
-/* สีของป็อปอัพตามชนิด (ตายตัวเช่นกัน) */
+/* สีของป็อปอัปตามชนิด (ตายตัวเช่นกัน) */
 .cert-modal.m-ext { --cm: #059669; --cm-d: #047857; }
 .cert-modal.m-int { --cm: #ea580c; --cm-d: #c2410c; }
 .cert-modal.m-ext, .cert-modal.m-int { border-top: 5px solid var(--cm); }
@@ -2417,11 +2417,11 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 :root[data-theme="dark"] .cal-groups button:not(.on) { color: var(--text); background: color-mix(in srgb, var(--g) 18%, var(--surface)); border-color: color-mix(in srgb, var(--g) 55%, var(--surface)); }
 @media (max-width: 560px) { .cal-groups { gap: 6px; } .cal-groups button { padding: 5px 11px; font-size: 0.8rem; } }
 
-/* ป็อปอัพรายวัน: กว้างขึ้น · สูงตามรายการ (เลื่อนทั้งกล่องเมื่อเกินจอแทนการเลื่อนในกรอบเล็ก) */
+/* ป็อปอัปรายวัน: กว้างขึ้น · สูงตามรายการ (เลื่อนทั้งกล่องเมื่อเกินจอแทนการเลื่อนในกรอบเล็ก) */
 .day-modal-box { max-width: 680px; }
 .day-modal-body { max-height: none; overflow: visible; }
 
-/* ปุ่มในป็อปอัพ (แบบ 3 + ปุ่ม X แบบ 1 ที่ผู้ใช้เลือก)
+/* ปุ่มในป็อปอัป (แบบ 3 + ปุ่ม X แบบ 1 ที่ผู้ใช้เลือก)
    X = วงกลมแดงสดทึบ กากบาทขาวหนา · ปิด/ยกเลิก = พื้นแดงอ่อน ตัวแดง · ยืนยัน/บันทึก = เขียวมาตรฐาน · ลบ = แดงทึบ */
 .modal-close-x { top: 10px; right: 10px; width: 34px; height: 34px; background: #ef4444; color: #fff; font-size: 1.05rem; font-weight: 900; box-shadow: 0 3px 8px rgba(239, 68, 68, 0.4); z-index: 2; }
 .modal-close-x:hover { background: #dc2626; color: #fff; }
@@ -2508,7 +2508,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 :root[data-theme="dark"] .hub-ann-g { color: color-mix(in srgb, var(--g) 55%, #fff); }
 @media (max-width: 560px) { .hub-ann { padding: 12px; gap: 10px; } .hub-ann-ic { flex-basis: 36px; height: 36px; font-size: 15px; border-radius: 11px; } .ann-card .ann-sum > span:not(.ann-dots):not(.ann-new-n) { display: none; } }
 
-/* ป็อปอัพเพิ่มประกาศ: กล่อง "ประกาศจาก" สีของกลุ่ม · ป้ายกลุ่มในรายการ · ข้อความช่วงเวลาแบบสั้น */
+/* ป็อปอัปเพิ่มประกาศ: กล่อง "ประกาศจาก" สีของกลุ่ม · ป้ายกลุ่มในรายการ · ข้อความช่วงเวลาแบบสั้น */
 .ann-from { --g: var(--primary); display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 10px 14px; margin: 0 0 14px; background: color-mix(in srgb, var(--g) 10%, var(--surface)); border: 1.5px solid color-mix(in srgb, var(--g) 40%, var(--surface)); color: var(--g); font-weight: 800; font-size: 0.92rem; }
 .ann-from[hidden] { display: none; }
 .ann-from > i { width: 30px; height: 30px; border-radius: 50%; background: var(--g); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
@@ -2542,7 +2542,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 @keyframes pageRefreshSpin { to { transform: rotate(360deg); } }
 .ord-head-btns { display: flex; gap: 8px; align-items: center; margin-left: auto; }
 .cert-head-btns .page-refresh-btn { height: auto; align-self: stretch; }
-/* ตัวเลือก "สำหรับ" (ทั้งหมด / กลุ่มบริหารงาน / รายบุคคล) ในป็อปอัพกำหนดการ/ประกาศ */
+/* ตัวเลือก "สำหรับ" (ทั้งหมด / กลุ่มบริหารงาน / รายบุคคล) ในป็อปอัปกำหนดการ/ประกาศ */
 .aud-pick { display: flex; flex-direction: column; gap: 8px; }
 .aud-seg { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1.5px solid var(--ctl-border); flex-wrap: wrap; }
 .aud-seg button { flex: 1 1 0; min-width: max-content; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; background: none; border-radius: 9px; padding: 7px 10px; font: inherit; font-size: 0.86rem; font-weight: 700; color: var(--ctl-text); cursor: pointer; }
@@ -2562,13 +2562,13 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .aud-p:hover { background: var(--surface-2); }
 .aud-p input { margin: 0; }
 .aud-p small { margin-left: auto; color: var(--text-muted); font-size: 0.72rem; }
-/* หน้าสรุปรวม: ตัวเลือกในป็อปอัพส่งออกรายงาน */
+/* หน้าสรุปรวม: ตัวเลือกในป็อปอัปส่งออกรายงาน */
 .exp-sec { margin: 0 0 12px; text-align: left; }
 .exp-lbl { font-size: 0.82rem; font-weight: 800; margin-bottom: 6px; }
 .exp-pick { margin-top: 8px; max-height: 220px; overflow-y: auto; border: 1.5px solid var(--ctl-border); border-radius: 12px; padding: 6px; }
 .exp-pick[hidden] { display: none; }
 .exp-names { margin: 0 0 14px; }
-/* หน้ารายงานที่สร้างไว้จับภาพ (อยู่หลังป็อปอัพระหว่างสร้าง แล้วลบทิ้ง) — สีโหมดสว่างเสมอ */
+/* หน้ารายงานที่สร้างไว้จับภาพ (อยู่หลังป็อปอัประหว่างสร้าง แล้วลบทิ้ง) — สีโหมดสว่างเสมอ */
 .rep-pdf, .rep-ig { position: absolute; left: 0; top: 0; z-index: -1; background: #fff; color: #1e293b; box-sizing: border-box; }
 .rep-pdf { width: 1000px; padding: 24px; }
 .rep-card { border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
@@ -2624,7 +2624,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .cal-mpick-today:hover { background: var(--primary-light); }
 
 /* ===== 1.69 ===== */
-/* ป็อปอัพเตือนก่อนออกจากระบบเมื่อไม่มีการใช้งาน */
+/* ป็อปอัปเตือนก่อนออกจากระบบเมื่อไม่มีการใช้งาน */
 .idle-ic { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--warn-light); color: var(--warn); }
 .idle-left { font-size: 2.2rem; font-weight: 800; color: var(--warn); font-variant-numeric: tabular-nums; margin: 4px 0 2px; }
 #sharedIdleModal { z-index: 160; }
@@ -2801,7 +2801,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .notif-more { display: block; width: 100%; padding: 9px; border: 0; border-top: 1px solid var(--border); background: none; font: inherit; font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); cursor: pointer; }
 .notif-foot { padding: 8px 14px; font-size: 0.72rem; color: var(--text-muted); text-align: center; border-top: 1px solid var(--border); background: var(--surface-2); }
 
-/* ---------- 1.75: ป็อปอัพแจ้งปัญหา ---------- */
+/* ---------- 1.75: ป็อปอัปแจ้งปัญหา ---------- */
 .rp-box h3 i { color: var(--primary); margin-right: 4px; }
 .rp-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin: 4px 0 14px; }
 .rp-tabs button { font: inherit; font-weight: 700; font-size: 0.9rem; padding: 8px 14px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--text-muted); cursor: pointer; }
@@ -2945,7 +2945,7 @@ button.alb-pub:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 3
 @media (max-width: 380px) { .alb-grid { grid-template-columns: minmax(0, 1fr); } }
 #galRoot > .list-count, #phRoot > .list-count { font-size: .82rem; color: var(--text-muted); margin-bottom: 8px; }
 
-/* ---------- 1.76: คู่มือการใช้งาน (ป็อปอัพ — สารบัญซ้าย เนื้อหาขวา · มือถือใช้ดรอปดาวน์) ---------- */
+/* ---------- 1.76: คู่มือการใช้งาน (ป็อปอัป — สารบัญซ้าย เนื้อหาขวา · มือถือใช้ดรอปดาวน์) ---------- */
 .mn-box { max-width: 1080px; width: 100%; height: min(88vh, 900px); display: flex; flex-direction: column; text-align: left; padding: 20px 22px 16px; overflow: hidden; }
 .mn-box > h3 { margin: 0 40px 12px 0; display: flex; align-items: center; gap: 8px; }
 .mn-box > h3 i { color: var(--primary); }
@@ -3028,7 +3028,7 @@ button.alb-pub:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 3
 .flt .btn.flt-done { background: #16a34a; color: #fff; }
 .cert-toolbar .cert-merge-btn { margin-left: auto; }
 
-/* ---------- 1.79: ป็อปอัพต้อนรับ ---------- */
+/* ---------- 1.79: ป็อปอัปต้อนรับ ---------- */
 .modal-box.wl-box { max-width: 560px; padding: 0; text-align: left; overflow: hidden; }
 .wl-box .modal-close-x { z-index: 2; }
 .wl-hd { background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 60%, #60a5fa)); color: #fff; padding: 22px 56px 18px 24px; }
@@ -3181,7 +3181,7 @@ a.ov-alert:hover { text-decoration: underline; }
 .ov-bk-link { font-size: .8rem; }
 .ov-bk-btn { padding: 4px 10px; font-size: .78rem; }
 
-/* 1.80: PWA — เมนูติดตั้งแอป + ป็อปอัพวิธีติดตั้งบน iPhone */
+/* 1.80: PWA — เมนูติดตั้งแอป + ป็อปอัปวิธีติดตั้งบน iPhone */
 .dd-item.dd-install, #profileDropdown .dd-item.dd-install { color: var(--primary); font-weight: 600; }
 .dd-item.dd-install[hidden], .dd-divider[hidden] { display: none; }
 .ios-install-box { max-width: 400px; text-align: left; }
@@ -3544,7 +3544,7 @@ a.ov-alert:hover { text-decoration: underline; }
 .cl-rep-btn:hover { background: #6d28d9; color: #fff; }
 .cl-ffoot { margin-top: 6px; font-size: .8rem; color: #15803d; }
 
-/* 1.85: ประกาศแบบป็อปอัพ — ฟอร์ม + รายการ */
+/* 1.85: ประกาศแบบป็อปอัป — ฟอร์ม + รายการ */
 .ann-pop { border: 2px solid var(--border); border-radius: 12px; padding: 10px 12px; margin: 10px 0; }
 .ann-pop { border-color: #c4b5fd; background: color-mix(in srgb, #7c3aed 4%, var(--surface)); }
 .ann-pop-tg { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; margin: 0; }
@@ -3563,7 +3563,7 @@ a.ov-alert:hover { text-decoration: underline; }
 .ann-pop-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; font-size: .78rem; }
 .ann-pop-tag { background: #ede9fe; color: #6d28d9; border-radius: 99px; padding: 1px 9px; font-weight: 700; }
 .ann-pop-stat { background: #dcfce7; color: #15803d; border-radius: 99px; padding: 1px 9px; }
-/* ป็อปอัพที่ผู้ใช้เห็น */
+/* ป็อปอัปที่ผู้ใช้เห็น */
 .annp-box { max-width: 480px; padding: 0; overflow: hidden; text-align: left; }
 .annp-hd { background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; padding: 16px 52px 14px 18px; position: relative; }
 .annp-hd small { display: flex; gap: 6px; align-items: center; opacity: .9; font-size: .8rem; }
@@ -3595,7 +3595,7 @@ a.ov-alert:hover { text-decoration: underline; }
 .notif-rd { flex: none; align-self: center; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #c4b5fd; color: #7c3aed; background: var(--surface); display: inline-flex; align-items: center; justify-content: center; font-size: .72rem; cursor: pointer; }
 .notif-rd:hover { background: #7c3aed; color: #fff; border-color: #7c3aed; }
 
-/* 1.85.2: แท็บประกาศ (ป็อปอัพ) */
+/* 1.85.2: แท็บประกาศ (ป็อปอัป) */
 .pop-add-btn { background: #7c3aed; color: #fff; border: 0; }
 .pop-add-btn:hover { background: #6d28d9; color: #fff; }
 .pop-tabcount { background: #ede9fe !important; color: #6d28d9 !important; font-weight: 700; padding: 0 7px; width: auto !important; }
@@ -3621,7 +3621,7 @@ a.ov-alert:hover { text-decoration: underline; }
 .fic-lg { width: 52px; height: 52px; border-radius: 13px; font-size: 26px; }
 [data-theme="dark"] .fic { background: color-mix(in srgb, var(--c) 28%, var(--surface, #1e293b)); color: color-mix(in srgb, var(--c) 70%, #fff); }
 .cert-it-file .fic { vertical-align: middle; }
-/* 1.86: สายฟ้าเล็กมุมไอคอนอัพโหลด = ส่งตรงเข้า Google Drive */
+/* 1.86: สายฟ้าเล็กมุมไอคอนอัปโหลด = ส่งตรงเข้า Google Drive */
 .progress-bolt { position: absolute; right: 2px; bottom: 4px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #f59e0b; box-shadow: 0 0 0 2px var(--surface); }
 .progress-bolt[hidden] { display: none; }
 .progress-anim .progress-bolt i { font-size: 11px; color: #fff; animation: none; }

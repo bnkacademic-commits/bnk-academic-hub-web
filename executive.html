@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.1.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.2.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -101,7 +101,7 @@
 
   <div id="app-footer"></div>
 
-    <!-- 1.58: ป็อปอัพรายละเอียดวัน -->
+    <!-- 1.58: ป็อปอัปรายละเอียดวัน -->
   <div class="modal-backdrop" id="dayModal" hidden>
     <div class="modal-box day-modal-box">
       <button type="button" class="modal-close-x" id="dayModalCloseX" aria-label="ปิด">✕</button>
@@ -112,7 +112,7 @@
     </div>
   </div>
 
-<script src="assets/api.js?v=1.86.1.221026"></script>
+<script src="assets/api.js?v=1.86.2.221026"></script>
   <script>
     var session = requireViewerAccess();
     // ผู้บริหารเท่านั้นที่ใช้หน้านี้เป็นหน้าแรก (เจ้าหน้าที่/Super Admin มีหน้าแรกของตัวเองอยู่แล้ว) — ส่งกลับหน้าแรกของบทบาทนั้น
@@ -233,7 +233,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr 
       }).join('') + '</div>';
     }
 
-    // ---------- 1.58: ป็อปอัพรายละเอียดวัน (อ่านอย่างเดียว + จำนวนผู้ส่ง) ----------
+    // ---------- 1.58: ป็อปอัปรายละเอียดวัน (อ่านอย่างเดียว + จำนวนผู้ส่ง) ----------
     var THAI_DOW_FULL = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
     function openDayModal(dateStr) {
       var p = dateStr.split('-'), dt = new Date(+p[0], +p[1] - 1, +p[2]);

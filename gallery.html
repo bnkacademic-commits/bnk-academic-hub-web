@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.1.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.2.221026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -29,7 +29,7 @@
     <div class="page-header orders-header">
       <div>
         <h1>คลังรูปภาพ</h1>
-        <p>รวมอัลบั้มรูปกิจกรรมของโรงเรียน — สร้างอัลบั้มแล้วอัปรูปผ่านเว็บได้เลย หรือใช้ลิงก์โฟลเดอร์ Google Drive ที่มีอยู่</p>
+        <p>รวมอัลบั้มรูปกิจกรรมของโรงเรียน อัปผ่านเว็บหรือใช้ลิงก์ที่มีอยู่ก็ได้</p>
       </div>
       <div class="ord-head-btns">
         <button type="button" class="btn page-refresh-btn" id="galRefreshBtn" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
@@ -79,8 +79,8 @@
         <div class="gal-store" id="galStore">
           <div class="gal-store-lbl">เก็บรูปที่ไหน</div>
           <div class="gal-store-cards">
-            <button type="button" class="gal-sc on" data-store="managed"><i class="fa-solid fa-folder-plus gal-sc-ic" style="background:#16a34a" aria-hidden="true"></i><span><b>ให้ระบบสร้างโฟลเดอร์ <em>แนะนำ</em></b><small>ทุกคนอัปรูปผ่านเว็บได้ · รูปเป็นของโรงเรียน ไม่หายเมื่อครูย้ายออก</small></span></button>
-            <button type="button" class="gal-sc" data-store="link"><i class="fa-solid fa-folder-open gal-sc-ic" style="background:#64748b" aria-hidden="true"></i><span><b>ใช้ลิงก์โฟลเดอร์ของฉัน</b><small>แบบเดิม — วางลิงก์โฟลเดอร์ Drive / Google Photos ที่มีอยู่แล้ว</small></span></button>
+            <button type="button" class="gal-sc on" data-store="managed"><i class="fa-solid fa-folder-plus gal-sc-ic" style="background:#16a34a" aria-hidden="true"></i><span><b>ให้ระบบสร้างโฟลเดอร์</b><small>อัปรูปผ่านเว็บได้เลย เก็บไว้ในไดรฟ์ของโรงเรียน</small></span></button>
+            <button type="button" class="gal-sc" data-store="link"><i class="fa-solid fa-folder-open gal-sc-ic" style="background:#64748b" aria-hidden="true"></i><span><b>ใช้ลิงก์โฟลเดอร์ของฉัน</b><small>วางลิงก์โฟลเดอร์ Drive หรืออัลบั้ม Google Photos ที่มีอยู่แล้ว</small></span></button>
           </div>
         </div>
         <div class="gal-form">
@@ -183,8 +183,8 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.86.1.221026"></script>
-  <script src="assets/gallery.js?v=1.86.1.221026"></script>
+  <script src="assets/api.js?v=1.86.2.221026"></script>
+  <script src="assets/gallery.js?v=1.86.2.221026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -411,7 +411,7 @@
       }
     });
 
-    // ---------- หน้าอัลบั้ม (ป็อปอัพ) ----------
+    // ---------- หน้าอัลบั้ม (ป็อปอัป) ----------
     var albPage = { id: '', data: null }, albReturn = '';
     async function openAlbum(id) {
       albPage.id = id;

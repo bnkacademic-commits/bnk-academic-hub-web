@@ -44,7 +44,7 @@ function albumColor(a) { return (a.department && deptThemeColor(a.department)) |
 function albumCardHtml(a, opts) {
   opts = opts || {};
   var cover = albumCoverUrl(a);
-  // 1.82: อัลบั้ม managed ในระบบ = กดแล้วเปิดหน้าอัลบั้ม (ป็อปอัพ) · หน้าสาธารณะ/แบบลิงก์ = เปิด Google Drive
+  // 1.82: อัลบั้ม managed ในระบบ = กดแล้วเปิดหน้าอัลบั้ม (ป็อปอัป) · หน้าสาธารณะ/แบบลิงก์ = เปิด Google Drive
   // 1.84: ในระบบ = เปิดหน้าอัลบั้มทั้งสองแบบ · หน้าสาธารณะ = เปิด Google Drive / Google Photos
   var openAttr = opts.inSystem ? ' href="#album=' + escapeHtml(a.id) + '" data-alb-view' : ' href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener"';
   var coverHtml = cover

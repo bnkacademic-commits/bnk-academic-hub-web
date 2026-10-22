@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.1.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.2.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -44,7 +44,7 @@
     </div>
 
     <!-- ตั้งแต่ 1.41.111026: การ์ด "เว็บไซต์โรงเรียน" อยู่บนสุด เหนือข้อความต้อนรับ · ปุ่ม "หน้าผลงานของฉัน" และ "จัดทำบันทึกข้อความ" อยู่ฝั่งขวาของข้อความต้อนรับ
-         · ตัดคำอธิบาย "อัพโหลด จัดการ และแชร์ผลงาน…" ออกตามที่ผู้ใช้ขอ -->
+         · ตัดคำอธิบาย "อัปโหลด จัดการ และแชร์ผลงาน…" ออกตามที่ผู้ใช้ขอ -->
     <div class="page-header dash-welcome-row">
       <div class="dash-welcome-text">
         <h1 id="welcomeHeading">ยินดีต้อนรับ</h1>
@@ -98,7 +98,7 @@
               </div>
             </div>
           </div>
-          <!-- 1.65: ป้ายกรองตามกลุ่มบริหารงาน (สีของกลุ่ม) — กรองจุดในปฏิทิน คำอธิบายสี ป็อปอัพรายวัน กำหนดส่งงาน และเช็คลิสต์ -->
+          <!-- 1.65: ป้ายกรองตามกลุ่มบริหารงาน (สีของกลุ่ม) — กรองจุดในปฏิทิน คำอธิบายสี ป็อปอัปรายวัน กำหนดส่งงาน และเช็คลิสต์ -->
           <div class="cal-groups" id="calGroups" role="tablist" aria-label="กรองตามกลุ่มบริหารงาน" hidden></div>
           <!-- 1.81: กรองชนิด ทั้งหมด / กำหนดส่ง / กิจกรรม -->
           <div class="cal-kinds" id="calKinds" role="group" aria-label="กรองชนิดกำหนดการ"></div>
@@ -194,7 +194,7 @@
     </div>
   </div>
 
-  <!-- 1.58: ป็อปอัพรายละเอียดวัน — กดวันในปฏิทินแล้วแสดงงานทั้งหมดที่ครอบคลุมวันนั้น -->
+  <!-- 1.58: ป็อปอัปรายละเอียดวัน — กดวันในปฏิทินแล้วแสดงงานทั้งหมดที่ครอบคลุมวันนั้น -->
   <div class="modal-backdrop" id="dayModal" hidden>
     <div class="modal-box day-modal-box">
       <button type="button" class="modal-close-x" id="dayModalCloseX" aria-label="ปิด">✕</button>
@@ -224,7 +224,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.86.1.221026"></script>
+  <script src="assets/api.js?v=1.86.2.221026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -302,7 +302,7 @@
           '<div class="hub-ann-m">' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
       }).join('') + (rows.length > ANN_SHOW ? '<button type="button" class="btn btn-ghost btn-sm ann-more" id="annMore">' + (annState.showAll ? '<i class="fa-solid fa-chevron-up"></i> แสดงน้อยลง' : '<i class="fa-solid fa-chevron-down"></i> ดูทั้งหมด (' + rows.length + ')') + '</button>' : '');
     }
-    setTimeout(function () { if (typeof showAnnouncementPopups === 'function') showAnnouncementPopups(); }, 600); // 1.85: ประกาศแบบป็อปอัพ
+    setTimeout(function () { if (typeof showAnnouncementPopups === 'function') showAnnouncementPopups(); }, 600); // 1.85: ประกาศแบบป็อปอัป
     async function loadHubAnnouncements() {
       var card = document.getElementById('annCard');
       var wrap = document.getElementById('hubAnnList');
@@ -465,7 +465,7 @@
 
     // preset (ไม่บังคับ): { categoryId, academicYear, semester } — ใช้ตอนกดปุ่ม "ส่งงาน" จากรายการแจ้งเตือนกำหนดส่งในปฏิทิน (V9.5)
     // เพื่อเลือกภาคเรียน/ปีการศึกษา/ประเภทงานของกำหนดการนั้นให้อัตโนมัติ ไม่ต้องเลือกเองซ้ำ
-    var reopenGroupAfterUpload = null; // 1.49.121026: เปิดมาจากป็อปอัพชุดผลงาน -> ปิด/ส่งเสร็จแล้วกลับไปที่ชุดนั้น
+    var reopenGroupAfterUpload = null; // 1.49.121026: เปิดมาจากป็อปอัปชุดผลงาน -> ปิด/ส่งเสร็จแล้วกลับไปที่ชุดนั้น
     function openUploadModal(preset) {
       reopenGroupAfterUpload = (preset && preset.reopenGroup) || null;
       selectedFiles = [];
@@ -480,7 +480,7 @@
       // (settings.currentAcademicYear/currentSemester) ทำให้ถ้าไม่ได้ตั้งใจเปลี่ยนช่องเหล่านี้เอง งานจะถูกบันทึกผิดปี/ภาคเรียน
       // ไปจากที่ระบบถือว่าเป็น "ปัจจุบัน" จริงๆ แล้วหายไปจาก "รายการผลงาน" (ค่า filter เริ่มต้น = ปี/ภาคเรียนปัจจุบันจริงเสมอ)
       // เหมือนไม่ถูกบันทึก ทั้งที่จริงถูกบันทึกแล้วแค่ผิดปี/ภาคเรียน — แก้โดยตั้งค่าเริ่มต้นทั้งสองช่องนี้จาก currentAcademicTerm()
-      // (ตัวเดียวกับที่ตัวกรอง "รายการผลงาน" ใช้) ทุกครั้งที่เปิดป็อปอัพนี้แบบไม่มี preset มาให้ (ปุ่มจากปฏิทินยังคง preset
+      // (ตัวเดียวกับที่ตัวกรอง "รายการผลงาน" ใช้) ทุกครั้งที่เปิดป็อปอัปนี้แบบไม่มี preset มาให้ (ปุ่มจากปฏิทินยังคง preset
       // ของกำหนดการนั้นๆ ไว้เหมือนเดิม ไม่กระทบ)
       if (!preset || !preset.academicYear || !preset.semester) {
         currentAcademicTerm().then(function (term) {
@@ -534,7 +534,7 @@
         for (var i = 0; i < filesToUpload.length; i++) {
           var f = filesToUpload[i];
           if (sentOk.indexOf(f) !== -1) continue;
-          // 1.50.121026: แต่ละไฟล์ได้ช่วงของแถบเท่ากัน — เตรียม -> อัพโหลด (ไหลตามเวลาที่ประมาณจากขนาดไฟล์) -> บันทึกรายการ
+          // 1.50.121026: แต่ละไฟล์ได้ช่วงของแถบเท่ากัน — เตรียม -> อัปโหลด (ไหลตามเวลาที่ประมาณจากขนาดไฟล์) -> บันทึกรายการ
           var seg = 100 / filesToUpload.length, s0 = i * seg;
           var head = 'ไฟล์ ' + (i + 1) + '/' + filesToUpload.length + ': ' + f.name;
           p.setProgress(s0, 'กำลังเตรียม ' + head);
@@ -545,7 +545,7 @@
               categoryId: categoryId,
               customFieldValues: customFieldValues,
               onStage: function (stage) {
-                if (stage === 'upload') p.creep(s0 + seg * 0.05, s0 + seg * 0.92, estimateUploadMs(f.size), 'กำลังอัพโหลด ' + head + ' (' + formatBytes(f.size) + ')');
+                if (stage === 'upload') p.creep(s0 + seg * 0.05, s0 + seg * 0.92, estimateUploadMs(f.size), 'กำลังอัปโหลด ' + head + ' (' + formatBytes(f.size) + ')');
                 else if (stage === 'finalize') p.setProgress(s0 + seg * 0.95, 'กำลังบันทึก ' + head);
               },
               onProgress: function (fr) { p.setProgress(s0 + seg * (0.05 + 0.87 * fr)); } // 1.86: ส่งตรง = % จริง
@@ -621,7 +621,7 @@
     function renderSubmissions() {
       var el = document.getElementById('submissionList');
       if (allSubmissions.length === 0) {
-        el.innerHTML = '<div class="empty-state">ยังไม่มีผลงานที่อัพโหลด</div>';
+        el.innerHTML = '<div class="empty-state">ยังไม่มีผลงานที่อัปโหลด</div>';
         return;
       }
       var search = document.getElementById('subSearch').value.trim().toLowerCase();
@@ -754,7 +754,7 @@
       show(Math.max(0, Math.min(startIdx || 0, list.length - 1)));
     }
 
-    // ---------- ป็อปอัพชุดผลงาน (ปุ่ม "ส่งงานเพิ่มหรือแก้ไข" ในกำหนดส่งงาน) — ตั้งแต่ 1.49.121026 ----------
+    // ---------- ป็อปอัปชุดผลงาน (ปุ่ม "ส่งงานเพิ่มหรือแก้ไข" ในกำหนดส่งงาน) — ตั้งแต่ 1.49.121026 ----------
     var groupModal = document.getElementById('groupModal');
     var groupModalKey = null;
     function renderGroupModal() {
@@ -787,7 +787,7 @@
         var ga = groupFromAll(t.getAttribute('data-grp-add'));
         if (!ga) return;
         var fromModal = !groupModal.hidden;
-        if (fromModal) hideModalEl(groupModal); // ไม่ซ้อนป็อปอัพ — ส่งเสร็จ/ปิดแล้วจะกลับมาที่ชุดนี้ถ้ามาจากป็อปอัพ
+        if (fromModal) hideModalEl(groupModal); // ไม่ซ้อนป็อปอัป — ส่งเสร็จ/ปิดแล้วจะกลับมาที่ชุดนี้ถ้ามาจากป็อปอัป
         openUploadModal({ categoryId: ga.categoryId, academicYear: ga.academicYear, semester: ga.semester, reopenGroup: fromModal ? ga.key : null });
         return;
       }
@@ -1078,7 +1078,7 @@
         await submitWorkFile(f, {
           replacesId: id,
           onStage: function (stage) {
-            if (stage === 'upload') p.creep(5, 92, estimateUploadMs(f.size), 'กำลังอัพโหลด ' + f.name + ' (' + formatBytes(f.size) + ')');
+            if (stage === 'upload') p.creep(5, 92, estimateUploadMs(f.size), 'กำลังอัปโหลด ' + f.name + ' (' + formatBytes(f.size) + ')');
             else if (stage === 'finalize') p.setProgress(95, 'กำลังบันทึก');
           },
           onProgress: function (fr) { p.setProgress(5 + 87 * fr); } // 1.86
@@ -1145,7 +1145,7 @@
         var isToday = dateStr === todayStr;
         var cell = document.createElement('div');
         cell.className = 'calendar-cell' + (isToday ? ' is-today' : '');
-        // 1.58: กดวันได้ทุกวัน -> ป็อปอัพรายละเอียดงานของวันนั้น
+        // 1.58: กดวันได้ทุกวัน -> ป็อปอัปรายละเอียดงานของวันนั้น
         cell.setAttribute('data-date', dateStr); cell.setAttribute('role', 'button'); cell.tabIndex = 0;
         cell.setAttribute('aria-label', d + ' ' + thaiMonths[calState.month] + (isToday ? ' (วันนี้)' : ''));
         var evs = eventsOnDate(dateStr);
@@ -1215,10 +1215,10 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           // เกินกำหนดส่งแล้ว + ยังไม่ส่ง (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) — แสดงป้าย "เกินกำหนด" สีแดงให้เห็นชัดเจน ไม่ใช่แค่หายเงียบๆ ไปจากรายการ
           // ตั้งแต่ V12.0: ไม่มีสถานะเกินกำหนดสำหรับ e.noSubmission เพราะไม่มีอะไรให้ "ส่ง" จริง
           var isOverdue = e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && new Date(e.endDate || e.date) < now;
-          // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัพส่งงานพร้อมเลือกปี/ภาคเรียน/ประเภทงานให้อัตโนมัติ
+          // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัปส่งงานพร้อมเลือกปี/ภาคเรียน/ประเภทงานให้อัตโนมัติ
           // ยังกดได้ตามปกติแม้เกินกำหนดแล้ว (ระบบไม่เคยบล็อกการส่งงานย้อนหลังอยู่แล้ว เพียงแต่เดิมรายการหายไปก่อนจะมีโอกาสกด)
           // ตั้งแต่ V12.0: ถ้าเป็นประเภทงาน "แจ้งเตือนอย่างเดียว" ไม่มีปุ่มส่งงานเลย ขึ้นป้ายแจ้งเตือนเฉยๆ แทน
-          // 1.49.121026: ส่งแล้ว (มีผลงานประเภทนี้ในภาคเรียน/ปีนี้) -> ปุ่มเปลี่ยนเป็น "ส่งงานเพิ่มหรือแก้ไข" เปิดป็อปอัพชุดผลงาน (ดู/พรีวิว/ลบ/เพิ่มไฟล์)
+          // 1.49.121026: ส่งแล้ว (มีผลงานประเภทนี้ในภาคเรียน/ปีนี้) -> ปุ่มเปลี่ยนเป็น "ส่งงานเพิ่มหรือแก้ไข" เปิดป็อปอัปชุดผลงาน (ดู/พรีวิว/ลบ/เพิ่มไฟล์)
           var isSubmitted = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
           var submitBtn = isSubmitted
             ? '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ส่งงานเพิ่มหรือแก้ไข</button>'
@@ -1226,7 +1226,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
             ? '<button class="btn ' + (isOverdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
             : (e.categoryId && e.noSubmission ? '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>' : '');
           var termLabel = e.categoryId ? termTagsHtml(e.semester, e.academicYear) : ''; // 1.57: ป้ายแทนตัวหนังสือจางๆ
-          // ตั้งแต่เวอร์ชันถัดจาก V11.1 หัวข้อกำหนดการที่ผูกประเภทงานจะเป็นชื่อประเภทงานเป๊ะๆ อยู่แล้ว (กรอกเองไม่ได้อีกต่อไป) — ไม่ต้องต่อท้าย "(ชื่อประเภทงาน)" ซ้ำอีกถ้าซ้ำกับหัวข้ออยู่แล้ว (กำหนดการเก่าก่อนอัพเดตที่หัวข้อเคยพิมพ์เองไว้ต่างจากชื่อประเภทงาน ยังโชว์วงเล็บต่อท้ายตามเดิม)
+          // ตั้งแต่เวอร์ชันถัดจาก V11.1 หัวข้อกำหนดการที่ผูกประเภทงานจะเป็นชื่อประเภทงานเป๊ะๆ อยู่แล้ว (กรอกเองไม่ได้อีกต่อไป) — ไม่ต้องต่อท้าย "(ชื่อประเภทงาน)" ซ้ำอีกถ้าซ้ำกับหัวข้ออยู่แล้ว (กำหนดการเก่าก่อนอัปเดตที่หัวข้อเคยพิมพ์เองไว้ต่างจากชื่อประเภทงาน ยังโชว์วงเล็บต่อท้ายตามเดิม)
           var showCategorySuffix = e.categoryName && e.categoryName !== e.title;
           var overdueBadge = isOverdue ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> เกินกำหนด</span>' : '';
           if (isSubmitted) overdueBadge = '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>';
@@ -1255,7 +1255,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       }
     }
 
-    // ---------- 1.58: ป็อปอัพรายละเอียดวัน ----------
+    // ---------- 1.58: ป็อปอัปรายละเอียดวัน ----------
     var THAI_DOW_FULL = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
     function eventActionHtml(e) {
       if (!e.categoryId) return '';

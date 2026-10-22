@@ -17,12 +17,12 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.1.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.2.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
-  <!-- คลังเกียรติบัตร (1.59, ปรับเป็นรายใบใน 1.60): 2 แท็บ ภายใน/ภายนอก · ปุ่มเพิ่มแยกภายใน (รันเลขที่ + จองเลขก่อนอัพไฟล์ได้) / ภายนอก (ต้องมีไฟล์ครบ)
+  <!-- คลังเกียรติบัตร (1.59, ปรับเป็นรายใบใน 1.60): 2 แท็บ ภายใน/ภายนอก · ปุ่มเพิ่มแยกภายใน (รันเลขที่ + จองเลขก่อนอัปไฟล์ได้) / ภายนอก (ต้องมีไฟล์ครบ)
        1 ชุด = 1 กิจกรรม มีได้หลายรายการแข่งขัน (แต่ละรายการมีรางวัล + ผู้ได้รับ) · 1 คน = 1 ไฟล์ · แชร์ลิงก์หน้าค้นหาสาธารณะ certificate.html
        ทุกบัญชีดูได้ · ครู/เจ้าหน้าที่เพิ่มได้ · แก้ไข/ลบ: เจ้าของ + เจ้าหน้าที่ — ดู worker/src/handlers/certs.js -->
   <div id="app-topbar"></div>
@@ -74,7 +74,7 @@
     <div id="certRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
 
-  <!-- เพิ่ม/แก้ไขเกียรติบัตร (ภายใน/ภายนอก ใช้ป็อปอัพเดียวกัน) -->
+  <!-- เพิ่ม/แก้ไขเกียรติบัตร (ภายใน/ภายนอก ใช้ป็อปอัปเดียวกัน) -->
   <div class="modal-backdrop" id="certModal" hidden>
     <div class="modal-box modal-box-wide cert-modal">
       <button type="button" class="modal-close-x" id="certCloseX" aria-label="ปิด">✕</button>
@@ -191,7 +191,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.86.1.221026"></script>
+  <script src="assets/api.js?v=1.86.2.221026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -277,13 +277,13 @@
       $('certCntExternal').textContent = certs.filter(function (c) { return c.scope === 'external' && c.status !== 'cancelled'; }).length;
       Array.prototype.forEach.call(document.querySelectorAll('#certKindSeg button'), function (b) { b.classList.toggle('on', b.getAttribute('data-kind') === kindFilter); });
     }
-    // แจ้งเตือน: เกียรติบัตรของฉันที่จองเลข/บันทึกแล้วแต่ยังอัพไฟล์ไม่ครบ
+    // แจ้งเตือน: เกียรติบัตรของฉันที่จองเลข/บันทึกแล้วแต่ยังอัปไฟล์ไม่ครบ
     function renderPendingAlert() {
       var mine = pendingMine; // 1.63: นับจากทุกปี (Worker ส่งมาเป็นรายการเบาๆ)
       var el = $('certPendingAlert');
       if (!mine.length) { el.hidden = true; el.innerHTML = ''; return; }
       var n = mine.reduce(function (s, c) { return s + c.missing; }, 0), nn = mine.reduce(function (s, c) { return s + (c.unnamed || 0); }, 0);
-      el.innerHTML = '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><div><b>มี ' + mine.length + ' รายการของคุณที่ยังไม่ครบ</b> (' + [n ? 'ขาดไฟล์ ' + n + ' ใบ' : '', nn ? 'รอใส่ชื่อ ' + nn + ' คน' : ''].filter(Boolean).join(' · ') + ') — กด "อัพไฟล์" / "ใส่ชื่อ" ที่รายการ</div>' +
+      el.innerHTML = '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i><div><b>มี ' + mine.length + ' รายการของคุณที่ยังไม่ครบ</b> (' + [n ? 'ขาดไฟล์ ' + n + ' ใบ' : '', nn ? 'รอใส่ชื่อ ' + nn + ' คน' : ''].filter(Boolean).join(' · ') + ') — กด "อัปไฟล์" / "ใส่ชื่อ" ที่รายการ</div>' +
         '<button type="button" class="btn btn-sm cert-alert-btn" id="certPendingShow">ดูเฉพาะรายการนี้</button>';
       el.hidden = false;
     }
@@ -367,7 +367,7 @@
           else if (it.file) act = '<button type="button" class="icon-btn" data-it-view="' + escapeHtml(c.id) + '" data-it="' + escapeHtml(it.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(it.name) + '"><i class="fa-solid fa-eye"></i></button>' +
             dlLink(it.file, 'icon-btn', '<i class="fa-solid fa-download"></i>', it.name) +
             (c.canManage ? '<button type="button" class="icon-btn" data-it-up="' + escapeHtml(c.id) + '" data-it="' + escapeHtml(it.id) + '" title="เปลี่ยนไฟล์" aria-label="เปลี่ยนไฟล์ของ ' + escapeHtml(it.name) + '"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>' : '');
-          else act = c.canManage ? '<button type="button" class="btn btn-primary btn-sm" data-it-up="' + escapeHtml(c.id) + '" data-it="' + escapeHtml(it.id) + '"><i class="fa-solid fa-upload"></i> อัพไฟล์</button>' : '<span class="hint">ยังไม่มีไฟล์</span>';
+          else act = c.canManage ? '<button type="button" class="btn btn-primary btn-sm" data-it-up="' + escapeHtml(c.id) + '" data-it="' + escapeHtml(it.id) + '"><i class="fa-solid fa-upload"></i> อัปไฟล์</button>' : '<span class="hint">ยังไม่มีไฟล์</span>';
           return '<tr class="' + (off || cancelled ? 'off' : (!it.file ? 'miss' : '')) + '">' +
             (internal ? '<td class="cert-no-cell">' + (it.certNo ? '<span class="cert-no">' + escapeHtml(it.certNo) + '</span>' : '') + '</td>' : '') +
             '<td>' + (it.unnamed ? '<span class="cert-blank-tag"><i class="fa-solid fa-user-clock"></i> ยังไม่ระบุชื่อ</span>' + (c.canManage && !off && !cancelled ? ' <button type="button" class="btn btn-secondary btn-sm" data-edit="' + escapeHtml(c.id) + '"><i class="fa-solid fa-user-pen"></i> ใส่ชื่อ</button>' : '') : '<span class="cert-it-name">' + escapeHtml(it.name) + '</span>') + (it.cls ? ' <span class="hint">' + escapeHtml(it.cls) + '</span>' : '') + (it.file && !off ? ' <span class="cert-it-file">' + fileIcon(it.file) + '</span>' : '') + '</td>' +
@@ -406,14 +406,14 @@
               (oneAward ? '<span class="ordc-chip cert-award"><i class="fa-solid fa-trophy"></i> ' + escapeHtml(oneAward) + '</span>' : '') +
               recvChip(c, shown) +
               (nameless ? '<span class="ordc-chip cert-noname"><i class="fa-solid fa-user-clock"></i> รอใส่ชื่อ ' + nameless + '</span>' : '') +
-              (miss ? '<span class="ordc-chip cert-miss"><i class="fa-solid fa-clock"></i> ยังไม่อัพไฟล์ ' + miss + '/' + its.length + '</span>' : '') +
+              (miss ? '<span class="ordc-chip cert-miss"><i class="fa-solid fa-clock"></i> ยังไม่อัปไฟล์ ' + miss + '/' + its.length + '</span>' : '') +
               (cancelled ? '<span class="ordc-chip cert-cancel"><i class="fa-solid fa-ban"></i> ยกเลิกแล้ว</span>' : '') +
               (c.isOwner ? '<span class="ordc-chip own">ของฉัน</span>' : '') +
             '</div>' +
           '</div>' +
           '<div class="ordc-btns orders-actions">' +
             (nameless && c.canManage ? '<button type="button" class="btn btn-secondary btn-sm cert-up-btn" data-edit="' + escapeHtml(c.id) + '"><i class="fa-solid fa-user-pen"></i> ใส่ชื่อ</button>' : '') +
-            (miss && c.canManage ? '<button type="button" class="btn btn-primary btn-sm cert-up-btn" data-expand-up="' + escapeHtml(c.id) + '"><i class="fa-solid fa-upload"></i> อัพไฟล์</button>' : '') +
+            (miss && c.canManage ? '<button type="button" class="btn btn-primary btn-sm cert-up-btn" data-expand-up="' + escapeHtml(c.id) + '"><i class="fa-solid fa-upload"></i> อัปไฟล์</button>' : '') +
             (files.length ? '<button type="button" class="icon-btn ord-ic" data-preview="' + escapeHtml(c.id) + '" title="' + (files.length > 1 ? 'พรีวิวทีละไฟล์' : 'พรีวิว') + '" aria-label="พรีวิว ' + escapeHtml(c.activity) + '"><i class="fa-solid fa-eye"></i></button>' : '') +
             (files.length === 1 ? dlLink(files[0].file, 'icon-btn ord-ic ord-dl', '<i class="fa-solid fa-download"></i>', files[0].name) : '') +
           '</div>' +
@@ -421,7 +421,8 @@
         '</div>' +
         (open ? '<div class="ordc-detail"><table>' + rows.map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>' +
           itemsTableHtml(c) +
-          ((canShare || c.canManage) ? '<div class="ordc-acts">' +
+          ((canShare || c.canManage || c.canPurge) ? '<div class="ordc-acts">' +
+            (c.canPurge ? '<button type="button" class="btn btn-danger btn-sm" data-purge="' + escapeHtml(c.id) + '"><i class="fa-solid fa-trash-can"></i> ลบถาวร (คืนเลขที่)</button>' : '') + // 1.86.2
             (canShare ? '<button type="button" class="btn btn-secondary btn-sm" data-share="' + escapeHtml(c.id) + '"><i class="fa-solid fa-share-nodes"></i> แชร์ลิงก์กิจกรรม</button>' : '') +
             (c.canManage ? '<button type="button" class="btn btn-ghost btn-sm" data-edit="' + escapeHtml(c.id) + '"><i class="fa-solid fa-pen"></i> แก้ไข / เพิ่มคน</button><button type="button" class="btn btn-danger btn-sm" data-del="' + escapeHtml(c.id) + '"><i class="fa-solid fa-trash"></i> ' + (c.scope === 'internal' ? 'ยกเลิกเกียรติบัตรชุดนี้' : 'ลบเกียรติบัตร') + '</button>' : '') +
           '</div>' : '') +
@@ -432,7 +433,7 @@
     // 1.63: โหลดทีละปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · เลือก "ทุกปีการศึกษา" จึงโหลดทั้งหมด · ปีที่โหลดแล้วจำไว้ (certCache)
     var certCache = makeYearCache(function (y) { return apiCall('certList', { year: y }); });
     async function load() { certCache.clear(); await loadYear(selYear, true); }
-    // 1.68: จำรายการล่าสุดของแต่ละปีไว้ในแท็บเบราว์เซอร์นี้ (sessionStorage — ปิดเบราว์เซอร์แล้วหาย) เปิดหน้าครั้งถัดไปแสดงทันที แล้วค่อยอัพเดตเป็นข้อมูลล่าสุด
+    // 1.68: จำรายการล่าสุดของแต่ละปีไว้ในแท็บเบราว์เซอร์นี้ (sessionStorage — ปิดเบราว์เซอร์แล้วหาย) เปิดหน้าครั้งถัดไปแสดงทันที แล้วค่อยอัปเดตเป็นข้อมูลล่าสุด
     function certSnapKey(y) { return 'bnkah_certs_snap_' + ((session && (session.id || session.username)) || '') + '_' + y; }
     function readCertSnap(y) { try { var v = sessionStorage.getItem(certSnapKey(y)); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
     function writeCertSnap(y, res) { try { var t = JSON.stringify(res); if (t.length < 1500000) sessionStorage.setItem(certSnapKey(y), t); } catch (e) { /* เต็ม/ปิดไว้ — ไม่เป็นไร */ } }
@@ -469,7 +470,7 @@
       applyCertRes(res);
     }
 
-    // ================= ป็อปอัพ เพิ่ม/แก้ไข =================
+    // ================= ป็อปอัป เพิ่ม/แก้ไข =================
     // groups = [{competition, award, people:[{id, name, cls, userId, certNo, file (ไฟล์เดิม), newFile (File ที่เลือกใหม่)}]}]
     var mType = 'training', mMode = 'onsite', hasComp = false, mScope = 'internal', mKind = 'student', editing = null, groups = [], simDecision = null, tried = false, pickTarget = null, pasteOpen = -1;
     function newPerson() {
@@ -653,7 +654,7 @@
       if (mScope === 'internal') {
         var nNew = all.filter(function (p) { return !p.certNo; }).length;
         note.innerHTML = '<i class="fa-solid fa-circle-info" aria-hidden="true"></i><div>รวม ' + all.length + ' คน' + (nNew ? ' · เลขที่ของคนใหม่ ' + nNew + ' คนเป็น <b>ตัวอย่าง</b> เลขจริงออกตอนกดบันทึก' : '') +
-          ' · ยังไม่มีไฟล์ก็บันทึกได้ (รายการจะขึ้นป้าย "ยังไม่อัพไฟล์" จนกว่าจะอัพครบ)</div>';
+          ' · ยังไม่มีไฟล์ก็บันทึกได้ (รายการจะขึ้นป้าย "ยังไม่อัปไฟล์" จนกว่าจะอัปครบ)</div>';
       } else {
         note.innerHTML = '<i class="fa-solid fa-circle-info" aria-hidden="true"></i><div>รวม ' + all.length + ' คน · เกียรติบัตรภายนอกต้องแนบไฟล์ให้ครบทุกคน · ไฟล์จะถูกตั้งชื่อใหม่ตามชื่อผู้ได้รับอัตโนมัติ</div>';
       }
@@ -676,7 +677,7 @@
       document.querySelector('#certModal .cert-modal').classList.toggle('m-int', internal);
       document.querySelector('#certModal .cert-modal').classList.toggle('m-ext', !internal);
       $('certModalTitle').innerHTML = '<i class="fa-solid ' + (internal ? 'fa-school' : 'fa-earth-asia') + '" aria-hidden="true"></i> ' + (c ? 'แก้ไขเกียรติบัตร' : 'เพิ่มเกียรติบัตร') + (internal ? 'ภายใน' : 'ภายนอก');
-      $('certModalSub').textContent = internal ? 'ระบบออกเลขที่ให้อัตโนมัติ · บันทึกเพื่อจองเลขได้เลย แล้วค่อยอัพไฟล์ทีหลัง · 1 คน = 1 ไฟล์' : 'เกียรติบัตรจากหน่วยงานภายนอก · ต้องแนบไฟล์ให้ครบทุกคนจึงจะบันทึกได้ · 1 คน = 1 ไฟล์';
+      $('certModalSub').textContent = internal ? 'ระบบออกเลขที่ให้อัตโนมัติ · บันทึกเพื่อจองเลขได้เลย แล้วค่อยอัปไฟล์ทีหลัง · 1 คน = 1 ไฟล์' : 'เกียรติบัตรจากหน่วยงานภายนอก · ต้องแนบไฟล์ให้ครบทุกคนจึงจะบันทึกได้ · 1 คน = 1 ไฟล์';
       $('certSaveBtn').innerHTML = internal && !c ? '<i class="fa-solid fa-hashtag"></i> จองเลขและบันทึก' : '<i class="fa-solid fa-floppy-disk"></i> บันทึก';
       $('certFSem').innerHTML = '<option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option>' + (summerOn ? '<option value="summer">ภาคฤดูร้อน</option>' : '');
       var term = curTerm || { year: '', semester: '1' };
@@ -742,7 +743,7 @@
       return '';
     }
     function mimeOf(f) { return f.type || (/\.png$/i.test(f.name) ? 'image/png' : /\.webp$/i.test(f.name) ? 'image/webp' : /\.jpe?g$/i.test(f.name) ? 'image/jpeg' : 'application/pdf'); }
-    // jobs = [{itemId, file, label}] — อัพทีละไฟล์ คืนรายการที่ไม่สำเร็จ
+    // jobs = [{itemId, file, label}] — อัปทีละไฟล์ คืนรายการที่ไม่สำเร็จ
     async function uploadJobs(certId, jobs, p, log, from) {
       var failed = [], base = from || 0, seg = (100 - base) / Math.max(1, jobs.length);
       for (var i = 0; i < jobs.length; i++) {
@@ -751,7 +752,7 @@
         try {
           p.setProgress(s0 + seg * 0.02, 'กำลังเตรียม ' + head);
           var fp = await apiCall('certItemFilePrepare', Object.assign({ certId: certId, itemId: j.itemId, fileName: j.file.name, mimeType: mimeOf(j.file), fileSize: j.file.size }, directUploadParams()));
-          var u = await sendPreparedFileProgress(fp, j.file, p, s0 + seg * 0.08, s0 + seg * 0.9, 'กำลังอัพโหลดไฟล์ของ ' + head + ' (' + formatBytes(j.file.size) + ')', { mimeType: mimeOf(j.file) }); // 1.86
+          var u = await sendPreparedFileProgress(fp, j.file, p, s0 + seg * 0.08, s0 + seg * 0.9, 'กำลังอัปโหลดไฟล์ของ ' + head + ' (' + formatBytes(j.file.size) + ')', { mimeType: mimeOf(j.file) }); // 1.86
           p.setProgress(s0 + seg * 0.94, 'กำลังบันทึก ' + head);
           await apiCall('certItemFileFinalize', { certId: certId, itemId: j.itemId, fileId: u.fileId, fileUrl: u.url, directUrl: u.directUrl, originalName: j.file.name, mimeType: mimeOf(j.file), log: !!log, via: u.via, fallbackReason: u.fallbackReason || '' });
           j.done = true;
@@ -763,7 +764,7 @@
 
     // ----- บันทึก -----
     function payloadGroups() {
-      // ตัดแถวว่าง (ลำดับต้องตรงกับที่ Worker สร้างรายการ) และเก็บคู่ (คน -> ไฟล์ใหม่) ไว้อัพหลังบันทึก
+      // ตัดแถวว่าง (ลำดับต้องตรงกับที่ Worker สร้างรายการ) และเก็บคู่ (คน -> ไฟล์ใหม่) ไว้อัปหลังบันทึก
       var flat = [];
       var gs = groups.map(function (g) {
         var ps = g.people.filter(personFilled);
@@ -809,13 +810,13 @@
           if (failed.length === jobs.length) {
             try { await apiCall('certDelete', { certId: certId }); } catch (e) { /* รายการค้างถูกลบเองภายใน 1 ชั่วโมง */ }
             run = null; // ส่งใหม่ = สร้างรายการใหม่
-            throw Object.assign(new Error('อัพโหลดไฟล์ไม่สำเร็จ — ' + failed.join('; ')), { retryLabel: 'ส่งใหม่' });
+            throw Object.assign(new Error('อัปโหลดไฟล์ไม่สำเร็จ — ' + failed.join('; ')), { retryLabel: 'ส่งใหม่' });
           }
           await apiCall('certPublish', { certId: certId });
           run.published = true;
         }
         expanded[certId] = true;
-        if (failed.length) throw Object.assign(new Error('บันทึกแล้ว แต่อัพไฟล์ไม่สำเร็จ ' + failed.length + '/' + jobs.length + ' ไฟล์ — ' + failed.join('; ')), { retryLabel: 'ส่งใหม่ ' + failed.length + ' ไฟล์' });
+        if (failed.length) throw Object.assign(new Error('บันทึกแล้ว แต่อัปไฟล์ไม่สำเร็จ ' + failed.length + '/' + jobs.length + ' ไฟล์ — ' + failed.join('; ')), { retryLabel: 'ส่งใหม่ ' + failed.length + ' ไฟล์' });
         if (res.driveSynced === false) showToast('บันทึกข้อมูลแล้ว แต่ยังเปลี่ยนชื่อไฟล์ใน Google Drive ไม่ครบ', true);
         return res;
       }, { successLabel: wasEdit ? 'บันทึกแล้ว' : (sc === 'internal' ? 'จองเลขและบันทึกแล้ว' : 'เพิ่มเกียรติบัตรแล้ว'), upload: nUp > 0 });
@@ -825,17 +826,17 @@
       if (!r.ok) showToast(r.error && r.error.message, true);
     }
 
-    // ----- อัพ/เปลี่ยนไฟล์ทีละคนจากรายการ -----
+    // ----- อัป/เปลี่ยนไฟล์ทีละคนจากรายการ -----
     var itemTarget = null;
     async function uploadOne(file) {
       var t = itemTarget; itemTarget = null;
       if (!t) return;
       var err = checkFile(file); if (err) return showToast(err, true);
-      var r = await withProgress('กำลังอัพไฟล์...', async function (p) {
+      var r = await withProgress('กำลังอัปไฟล์...', async function (p) {
         var failed = await uploadJobs(t.c.id, [{ itemId: t.it.id, file: file, label: t.it.name }], p, true, 0);
         if (failed.length) throw new Error(failed[0]);
         return true;
-      }, { successLabel: 'อัพไฟล์ของ ' + t.it.name + ' แล้ว', upload: true });
+      }, { successLabel: 'อัปไฟล์ของ ' + t.it.name + ' แล้ว', upload: true });
       expanded[t.c.id] = true;
       if (r.ok) await load();
     }
@@ -849,7 +850,7 @@
       var n = c ? certs.filter(function (x) { return x.kind === 'student' && x.status === 'complete' && x.activity === c.activity && x.academicYear === c.academicYear; }).reduce(function (s, x) { return s + activeItems(x).length; }, 0) : 0;
       $('certShareTitle').innerHTML = '<i class="fa-solid ' + (c ? 'fa-share-nodes' : 'fa-magnifying-glass') + '" aria-hidden="true"></i> ' + (c ? 'แชร์ลิงก์ดาวน์โหลดเกียรติบัตรของกิจกรรม' : 'ลิงก์หน้าค้นหาเกียรติบัตร');
       $('certShareSub').textContent = c ? c.activity + ' · ปีการศึกษา ' + c.academicYear + ' · นักเรียน ' + n + ' คน' : 'หน้าสาธารณะ ไม่ต้องล็อกอิน — นักเรียนพิมพ์ชื่อหรือเลขที่เกียรติบัตรเพื่อค้นหาและดาวน์โหลด';
-      $('certShareHint').textContent = c ? 'เปิดลิงก์แล้วเห็นรายชื่อนักเรียนทุกคนในกิจกรรมนี้ จัดตามรายการแข่งขัน · แสดงเฉพาะเกียรติบัตรนักเรียน' : 'แสดงเฉพาะเกียรติบัตรนักเรียนที่อัพไฟล์แล้ว · ไม่มีรายการทั้งหมดให้เลื่อนดู ต้องค้นหาเท่านั้น';
+      $('certShareHint').textContent = c ? 'เปิดลิงก์แล้วเห็นรายชื่อนักเรียนทุกคนในกิจกรรมนี้ จัดตามรายการแข่งขัน · แสดงเฉพาะเกียรติบัตรนักเรียน' : 'แสดงเฉพาะเกียรติบัตรนักเรียนที่อัปไฟล์แล้ว · ไม่มีรายการทั้งหมดให้เลื่อนดู ต้องค้นหาเท่านั้น';
       var shown; try { shown = decodeURI(shareUrl); } catch (e) { shown = shareUrl; }
       $('certShareLink').textContent = shown; $('certShareLink').title = shown;
       $('certShareOpen').href = shareUrl;
@@ -957,7 +958,7 @@
         if (t.hasAttribute('data-match-sel')) { var mi = Number(t.getAttribute('data-match-sel')); pasteMatch[mi].userId = t.value; pasteMatch[mi].status = t.value ? (pasteMatch[mi].status === 'no' ? 'set' : pasteMatch[mi].status) : 'no'; return; }
         if (t.hasAttribute('data-p-user')) { groups[Number(t.getAttribute('data-g'))].people[Number(t.getAttribute('data-p'))].userId = t.value; renderGroups(); }
       });
-      // อัพเดตเฉพาะป้ายเลขที่ตัวอย่าง (ไม่วาดช่องพิมพ์ใหม่ ช่องพิมพ์ไม่หลุดโฟกัส)
+      // อัปเดตเฉพาะป้ายเลขที่ตัวอย่าง (ไม่วาดช่องพิมพ์ใหม่ ช่องพิมพ์ไม่หลุดโฟกัส)
       function refreshNumbers() {
         var pn = previewNumbers();
         groups.forEach(function (g, gi) { g.people.forEach(function (p, pi) {
@@ -1069,7 +1070,7 @@
       $('certRoot').addEventListener('click', async function (ev) {
         if (ev.target.closest('a[download]')) return;
         var mb = ev.target.closest('[data-more]'); if (mb) { shownN = mb.hasAttribute('data-more-all') ? 1e9 : shownN + LIST_PAGE; render(); return; }
-        var t = ev.target.closest('[data-edit],[data-del],[data-preview],[data-expand-up],[data-expand],[data-it-view],[data-it-up],[data-share]');
+        var t = ev.target.closest('[data-edit],[data-del],[data-purge],[data-preview],[data-expand-up],[data-expand],[data-it-view],[data-it-up],[data-share]');
         if (!t) return;
         var byId = function (attr) { var v = t.getAttribute(attr); return certs.filter(function (x) { return x.id === v; })[0]; };
         if (t.hasAttribute('data-expand-up')) { expanded[t.getAttribute('data-expand-up')] = true; render(); return; }
@@ -1083,6 +1084,22 @@
         }
         if (t.hasAttribute('data-share')) { var cs = byId('data-share'); if (cs) openShare(cs); return; }
         if (t.hasAttribute('data-edit')) { var ce = byId('data-edit'); if (ce) openModal(ce.scope, ce); return; }
+        if (t.hasAttribute('data-purge')) { // 1.86.2: ผู้ดูแลระบบ — ลบชุดที่ยกเลิกแล้วออกถาวร เลขที่กลับมาใช้ได้
+          var cpg = byId('data-purge'); if (!cpg) return; var cp = cpg;
+          var nos = noRange(cp.items || []);
+          if (!(await askConfirm('ลบเกียรติบัตร "' + cp.activity + '" ที่ยกเลิกแล้วออกถาวร?' + (nos ? ' เลขที่ ' + nos + ' จะไม่ถูกนับว่าออกไปแล้ว' : '') + ' — ใช้กับชุดที่ทดลองหรือออกผิดเท่านั้น ลบแล้วกู้คืนไม่ได้', 'ลบถาวร'))) return;
+          var rp = await withProgress('กำลังลบถาวร...', function () { return apiCall('certPurge', { certId: cp.id }); }, { successLabel: 'ลบถาวรแล้ว' });
+          if (!rp.ok) return;
+          var cs2 = (rp.data && rp.data.counters) || [];
+          for (var k = 0; k < cs2.length; k++) {
+            var cn = cs2[k], want = cn.maxIssued + 1;
+            if (cn.next <= want) continue;
+            var lbl = (cn.mode === 'be' ? 'ปี พ.ศ. ' : 'ปีการศึกษา ') + cn.year;
+            if (!(await askConfirm('ตั้งเลขที่ถัดไปของ' + lbl + ' กลับเป็น ' + want + '? (ตอนนี้ ' + cn.next + ' · ' + (cn.maxIssued ? 'เลขล่าสุดที่ยังใช้อยู่ ' + cn.maxIssued : 'ยังไม่มีเลขที่ใช้อยู่') + ')', 'ตั้งเลขถัดไป'))) continue;
+            await withProgress('กำลังบันทึก', function () { return apiCall('certSetNextNo', { year: cn.year, next: want, mode: cn.mode }); }, { successLabel: 'เลขถัดไปของ' + lbl + ' = ' + want });
+          }
+          await load(); return;
+        }
         if (t.hasAttribute('data-del')) {
           var cd = byId('data-del'); if (!cd) return;
           var n = activeItems(cd).length, internal = cd.scope === 'internal';
@@ -1100,7 +1117,7 @@
         var b = this; b.classList.add('spinning'); b.disabled = true;
         try { await load(); } finally { b.classList.remove('spinning'); b.disabled = false; }
       });
-      loadYear(); // เปิดหน้า = แสดงรายการที่จำไว้ก่อน (ถ้ามี) แล้วอัพเดต · load() = โหลดใหม่ทั้งหมด (หลังบันทึก/รีเฟรช)
+      loadYear(); // เปิดหน้า = แสดงรายการที่จำไว้ก่อน (ถ้ามี) แล้วอัปเดต · load() = โหลดใหม่ทั้งหมด (หลังบันทึก/รีเฟรช)
     }
   </script>
 </body>

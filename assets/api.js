@@ -12,14 +12,14 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // (ผู้ดูแลระบบ/นักพัฒนาเป็นคนแก้เลขนี้เองในไฟล์โค้ดทุกครั้งที่ปล่อยเวอร์ชันใหม่ — แสดงผลที่แถวล่างสุดของหน้าตั้งค่าเท่านั้น)
 // ⚠️ สำคัญ (ตั้งแต่ V11.8): ทุกครั้งที่แก้เลขนี้ ต้องไปแก้ "?v=..." ต่อท้าย assets/style.css และ assets/api.js ใน <link>/<script>
 // ของทุกไฟล์ .html (index/dashboard/settings/summary/view) ให้ตรงกันด้วย — เป็นตัวกันแคชเก่า (cache-busting) เพราะเบราว์เซอร์/
-// CDN ของโฮสติ้งบางเจ้ามักแคชไฟล์ .css/.js ชื่อเดิมไว้นาน ทำให้อัพโหลดไฟล์ใหม่ทับแล้วแต่ผู้ใช้ยังเห็นหน้าเว็บเวอร์ชันเก่าอยู่
+// CDN ของโฮสติ้งบางเจ้ามักแคชไฟล์ .css/.js ชื่อเดิมไว้นาน ทำให้อัปโหลดไฟล์ใหม่ทับแล้วแต่ผู้ใช้ยังเห็นหน้าเว็บเวอร์ชันเก่าอยู่
 // (แม้จะลบแคชเบราว์เซอร์ตัวเองแล้วก็ตาม ถ้า CDN กลางทางยังแคชอยู่) เปลี่ยนเลขท้าย query string ทุกเวอร์ชันบังคับให้โหลดใหม่เสมอ
 // ตั้งแต่เวอร์ชัน 1.21.081026 เปลี่ยนรูปแบบเลขเวอร์ชันจาก "V<major>.<minor>" เป็น "1.<ลำดับรัน>.<DDMMYY วันที่ปล่อยเวอร์ชัน>"
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.86.1';
-var APP_VERSION = '1.86.1.221026';
+var WORKER_MIN_VERSION = '1.86.2';
+var APP_VERSION = '1.86.2.221026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -73,7 +73,7 @@ async function apiCall(action, payload) {
     var errMsg = json.error || 'เกิดข้อผิดพลาดไม่ทราบสาเหตุ';
     // ตั้งแต่ 1.41.111026: "ไม่รู้จักคำสั่ง: xxx" = หน้าเว็บใหม่แต่ Worker บนเซิร์ฟเวอร์ยังเป็นโค้ดเก่า (ยังไม่ได้ deploy) — บอกวิธีแก้ให้ชัด
     var unk = /^ไม่รู้จักคำสั่ง:\s*(\S+)/.exec(errMsg);
-    if (unk) errMsg = 'เซิร์ฟเวอร์ (Worker) ยังเป็นโค้ดเก่า ไม่มีคำสั่ง "' + unk[1] + '" — ต้องอัพเดตไฟล์ Worker เป็นชุดเดียวกับหน้าเว็บ (เวอร์ชัน ' + APP_VERSION + ') แล้ว Deploy Worker ใหม่ (ดู README ขั้นตอนอัพเดต) ก่อนใช้ฟีเจอร์นี้';
+    if (unk) errMsg = 'เซิร์ฟเวอร์ (Worker) ยังเป็นโค้ดเก่า ไม่มีคำสั่ง "' + unk[1] + '" — ต้องอัปเดตไฟล์ Worker เป็นชุดเดียวกับหน้าเว็บ (เวอร์ชัน ' + APP_VERSION + ') แล้ว Deploy Worker ใหม่ (ดู README ขั้นตอนอัปเดต) ก่อนใช้ฟีเจอร์นี้';
     var err = new Error(errMsg);
     err.code = json.code || null;
     throw err;
@@ -94,13 +94,13 @@ function setSession(token, user) {
     localStorage.setItem(SESSION_ACTIVE_KEY, String(Date.now()));
   } catch (e) { /* localStorage อาจถูกปิด */ }
 }
-// อัพเดตข้อมูลผู้ใช้ที่แคชไว้ใน localStorage ให้สดขึ้น โดย "ไม่แตะ" เวลา login (SESSION_LOGIN_AT_KEY) และ token เดิม
+// อัปเดตข้อมูลผู้ใช้ที่แคชไว้ใน localStorage ให้สดขึ้น โดย "ไม่แตะ" เวลา login (SESSION_LOGIN_AT_KEY) และ token เดิม
 // (ตั้งแต่ 1.25.081026) — ต่างจาก setSession() ด้านบนตรงที่ setSession() รีเซ็ตตัวจับเวลาหมดอายุ 1 ชั่วโมงใหม่ทุกครั้ง ซึ่งไม่ใช่
 // สิ่งที่ต้องการตอนแค่รีเฟรชข้อมูลโปรไฟล์ (เช่น ตำแหน่ง/กลุ่มสาระการเรียนรู้ที่เจ้าหน้าที่ฝ่ายวิชาการเพิ่งตั้งให้) กลางเซสชัน
 function updateCachedSessionUser(user) {
   try { localStorage.setItem(SESSION_USER_KEY, JSON.stringify(user)); } catch (e) { /* localStorage อาจถูกปิด */ }
 }
-// เรียก checkSession ครั้งเดียวเพื่อดึงข้อมูลผู้ใช้ปัจจุบันสดๆ จากเซิร์ฟเวอร์มาอัพเดตแคช แล้วคืนค่า session ที่อัพเดตแล้วกลับไป
+// เรียก checkSession ครั้งเดียวเพื่อดึงข้อมูลผู้ใช้ปัจจุบันสดๆ จากเซิร์ฟเวอร์มาอัปเดตแคช แล้วคืนค่า session ที่อัปเดตแล้วกลับไป
 // (ตั้งแต่ 1.25.081026) ใช้ที่หน้า memo.html เพื่อให้แน่ใจว่าตำแหน่ง/กลุ่มสาระการเรียนรู้ที่แสดงเป็นค่าล่าสุดเสมอ ไม่ใช่ค่าเก่า
 // ที่ค้างมาตั้งแต่ตอน login ครั้งก่อน (ถ้าเรียกไม่สำเร็จ เช่น เน็ตสะดุด ก็ปล่อยผ่านคืนค่า session เดิมที่มีอยู่ไปเฉยๆ)
 async function refreshSessionUser() {
@@ -128,7 +128,7 @@ function logout() {
 // ---------- เซสชันหมดเวลาอัตโนมัติเมื่ออยู่ในระบบครบ 1 ชั่วโมง ----------
 var _sessionTimeoutHandle = null;
 // เวลาใช้งานล่าสุดเก็บใน localStorage (ใช้ร่วมกันทุกแท็บ) — ขยับเมาส์/คลิก/พิมพ์/เลื่อน/แตะ = ใช้งาน (บันทึกไม่ถี่กว่า 10 วินาทีครั้ง)
-// ระหว่างป็อปอัพความคืบหน้า (อัพโหลด/บันทึก) ทำงานอยู่ นับเป็นการใช้งาน · ตรวจทุก 15 วินาที + ตอนกลับมาที่แท็บ
+// ระหว่างป็อปอัปความคืบหน้า (อัปโหลด/บันทึก) ทำงานอยู่ นับเป็นการใช้งาน · ตรวจทุก 15 วินาที + ตอนกลับมาที่แท็บ
 var _idleTimer = null, _idleLastWrite = 0, _progressBusy = 0, _idleWarnShown = false;
 function idleTimeoutMs() { return Number(window.__BNKAH_IDLE_MS) || SESSION_TIMEOUT_MS; }
 function idleWarnMs() { return Number(window.__BNKAH_IDLE_WARN_MS) || SESSION_IDLE_WARN_MS; }
@@ -165,7 +165,7 @@ function scheduleSessionTimeout() {
     _idleTimer = setInterval(checkIdle, Math.min(15000, Math.max(1000, Math.floor(idleWarnMs() / 4))));
   } catch (e) { /* localStorage อาจถูกปิด: ไม่ตั้งเวลาหมดอายุอัตโนมัติ */ }
 }
-// ป็อปอัพเตือนก่อนหมดเวลา (นับถอยหลัง) — กด "ใช้งานต่อ" หรือใช้งานใดๆ (ยกเว้นแค่ขยับเมาส์ผ่าน) = นับใหม่
+// ป็อปอัปเตือนก่อนหมดเวลา (นับถอยหลัง) — กด "ใช้งานต่อ" หรือใช้งานใดๆ (ยกเว้นแค่ขยับเมาส์ผ่าน) = นับใหม่
 var _idleCountdown = null;
 function showIdleWarning() {
   ensureSharedModals();
@@ -200,7 +200,7 @@ function forceSessionExpire() {
 // ---------- ป้องกันล็อกอินซ้อนกัน (ตั้งแต่ V11.7) ----------
 // ตรวจเป็นระยะว่าบัญชีนี้ถูกเข้าสู่ระบบใหม่จากที่อื่น (เครื่อง/เบราว์เซอร์อื่น) มาแทนที่ session ปัจจุบันหรือยัง โดยเรียก
 // action 'checkSession' เบาๆ ทุก 10 วินาที — ถ้า backend ตอบกลับด้วย code 'SESSION_REPLACED' (ดู requireAuth ใน
-// worker/src/lib/util.js) แสดงว่ามีคนล็อกอินบัญชีนี้จากที่อื่นไปแล้ว จึงเด้งออกพร้อมป็อปอัพแจ้งเตือนทันที
+// worker/src/lib/util.js) แสดงว่ามีคนล็อกอินบัญชีนี้จากที่อื่นไปแล้ว จึงเด้งออกพร้อมป็อปอัปแจ้งเตือนทันที
 // error อื่นๆ ระหว่างตรวจ (เช่น เครือข่ายสะดุดชั่วคราว) ปล่อยผ่านเฉยๆ รอตรวจรอบถัดไป ไม่ถือเป็นการเด้งออก
 // 1.69: ทุก 30 วินาที (เดิม 10) และเฉพาะตอนที่มีการใช้งานภายใน 2 นาทีที่ผ่านมา — ลดคำขอไป Worker · ใช้งานต่อหลังนิ่ง = ตรวจทันที
 // คำตอบมี token ใหม่ (ต่ออายุอัตโนมัติ) -> เก็บแทนของเดิม
@@ -325,7 +325,7 @@ function applyAccountTheme(user) {
   var t = user && (user.theme === 'dark' || user.theme === 'sepia') ? user.theme : 'light';
   setTheme(t);
 }
-// เมื่อผู้ใช้กดสลับ Dark Mode เอง: ตั้งค่าบนหน้าเว็บทันที + บันทึกลงบัญชี (ส่งแบบไม่รอผล พลาดก็ไม่กระทบการใช้งาน) และอัพเดตค่าที่แคชใน session
+// เมื่อผู้ใช้กดสลับ Dark Mode เอง: ตั้งค่าบนหน้าเว็บทันที + บันทึกลงบัญชี (ส่งแบบไม่รอผล พลาดก็ไม่กระทบการใช้งาน) และอัปเดตค่าที่แคชใน session
 function saveThemeToAccount(theme) {
   if (!getToken()) return;
   var s = getSession();
@@ -362,7 +362,7 @@ async function getSiteSettings() {
 }
 
 // 1.53.121026: จำค่าแบรนด์ล่าสุด (ชื่อเว็บ/โลโก้/โลโก้แบบยาว/แสดงชื่อในแถบด้านบน) ไว้ในเครื่อง แล้ววาดแถบด้านบนจากค่าที่จำไว้ทันทีตอนเปิดหน้า
-// (ไม่ต้องรอโหลดค่าตั้งค่า — โลโก้/ชื่อเว็บไม่กระพริบเปลี่ยนเวลาเปลี่ยนหน้า) แล้วค่อยอัพเดตตามค่าจริงเมื่อโหลดเสร็จ
+// (ไม่ต้องรอโหลดค่าตั้งค่า — โลโก้/ชื่อเว็บไม่กระพริบเปลี่ยนเวลาเปลี่ยนหน้า) แล้วค่อยอัปเดตตามค่าจริงเมื่อโหลดเสร็จ
 var BRAND_CACHE_KEY = 'bnkah_brand';
 function cachedBrand() { try { return JSON.parse(localStorage.getItem(BRAND_CACHE_KEY) || 'null'); } catch (e) { return null; } }
 function cacheBrand(s) {
@@ -375,7 +375,7 @@ function renderBrand(s) {
   document.querySelectorAll('.js-site-name').forEach(function (el) { el.textContent = s.siteName || 'BNKAcademicHub'; });
   document.querySelectorAll('.js-brand-logo').forEach(function (el) {
     // โลโก้แบบยาว (settings.logoWideDataUrl, 1.52) แสดงแทนโลโก้เล็ก เฉพาะแถบด้านบนสุด (ปุ่ม .js-home-btn)
-    // ชื่อเว็บในแถบด้านบน แสดง/ซ่อนตามสวิตช์ settings.topbarShowName (1.53 — อัพโลโก้แบบยาวแล้วระบบปิดให้อัตโนมัติ)
+    // ชื่อเว็บในแถบด้านบน แสดง/ซ่อนตามสวิตช์ settings.topbarShowName (1.53 — อัปโลโก้แบบยาวแล้วระบบปิดให้อัตโนมัติ)
     var homeBtn = el.closest && el.closest('.js-home-btn');
     if (homeBtn) {
       homeBtn.classList.toggle('has-wide-logo', !!s.logoWideDataUrl);
@@ -530,11 +530,11 @@ function fileToBase64(file) {
 }
 /**
  * ส่งไฟล์งาน 1 ไฟล์ขึ้น Drive — แบ่งเป็น 3 ขั้นตอนแทนที่จะเป็น apiCall เดียวจบแบบ action อื่นๆ:
- *   1) apiCall('teacherUploadPrepare', ...) — ให้ Worker ตรวจสิทธิ์/ประเภทงาน แล้วขอ "ตั๋วอัพโหลด" จาก Drive relay
+ *   1) apiCall('teacherUploadPrepare', ...) — ให้ Worker ตรวจสิทธิ์/ประเภทงาน แล้วขอ "ตั๋วอัปโหลด" จาก Drive relay
  *   2) ยิงไฟล์ (base64) ตรงไปที่ relay เอง ไม่ผ่าน Worker เลย
  *   3) apiCall('teacherUploadFinalize', ...) — แจ้ง Worker บันทึกผลไฟล์ลงฐานข้อมูล
  * เหตุผลที่ไม่ใช่คำสั่งเดียวจบเหมือนระบบเดิม: ไฟล์งานอาจใหญ่ถึง 25MB ซึ่งเกินเวลาประมวลผล (CPU time) ต่อ
- * คำขอของ Cloudflare Workers แผนฟรี (~10ms) ถ้าให้ Worker เป็นตัวกลางรับ-ส่งไฟล์เองจะเสี่ยงอัพโหลดไม่สำเร็จ
+ * คำขอของ Cloudflare Workers แผนฟรี (~10ms) ถ้าให้ Worker เป็นตัวกลางรับ-ส่งไฟล์เองจะเสี่ยงอัปโหลดไม่สำเร็จ
  * สำหรับไฟล์ขนาดใหญ่ — ขั้นตอนที่ใช้เวลานาน (อ่าน/ยิงไฟล์จริง) จึงข้าม Worker ไปเลย
  */
 // ---------- 1.86: ส่งไฟล์ตรงเข้า Google Drive (ส่งงาน / คำสั่ง / เกียรติบัตร) — relay เป็นวิธีสำรอง ----------
@@ -591,7 +591,7 @@ async function _relayPost(prep, payload) {
   } catch (e) { throw new Error('ติดต่อระบบเก็บไฟล์ไม่สำเร็จ (เครือข่ายขัดข้อง) กรุณาลองใหม่อีกครั้ง'); }
   var j;
   try { j = JSON.parse(text); } catch (e) { throw new Error('ระบบเก็บไฟล์ตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง'); }
-  if (!j.ok) throw new Error(j.error || 'อัพโหลดไฟล์ไม่สำเร็จ');
+  if (!j.ok) throw new Error(j.error || 'อัปโหลดไฟล์ไม่สำเร็จ');
   return j.data;
 }
 // opts: filename, mimeType, onProgress(0..1 — เฉพาะส่งตรง), onRelay() (สลับไปส่งผ่าน relay) · คืน {fileId, url, directUrl, via, fallbackReason}
@@ -642,7 +642,7 @@ async function submitWorkFile(file, meta) {
     replacesId: meta.replacesId || '', // 1.85: อัปโหลดทับไฟล์ที่เจ้าหน้าที่ให้แก้ไข
     direct: 1, origin: location.origin // 1.86: ขอช่องส่งตรงเข้า Google Drive
   });
-  // ชื่อไฟล์จริงที่จะใช้อัพโหลด (ตั้งแต่ V11.7): Worker คำนวณให้แล้วจากประเภทงาน/ภาคเรียน/ปีการศึกษา (ดู uploadFileName ที่
+  // ชื่อไฟล์จริงที่จะใช้อัปโหลด (ตั้งแต่ V11.7): Worker คำนวณให้แล้วจากประเภทงาน/ภาคเรียน/ปีการศึกษา (ดู uploadFileName ที่
   // teacherUploadPrepare คืนมา) แทนชื่อไฟล์เดิมจากเครื่องผู้ใช้ — เผื่อกรณี Worker เวอร์ชันเก่ายังไม่ส่งค่านี้มา จึงย้อนกลับไปใช้
   // ชื่อไฟล์เดิมได้เสมอ (fallback)
   var uploadFileName = prep.uploadFileName || file.name;
@@ -697,7 +697,7 @@ function resizeImageToBase64(file, maxSize) {
   });
 }
 /**
- * อ่านไฟล์รูปโปรไฟล์ ย่อขนาด (ไม่เกิน 480px ด้านที่ยาวที่สุด) แล้วบีบอัดเป็น JPEG คุณภาพ 0.85 ก่อนอัพโหลด
+ * อ่านไฟล์รูปโปรไฟล์ ย่อขนาด (ไม่เกิน 480px ด้านที่ยาวที่สุด) แล้วบีบอัดเป็น JPEG คุณภาพ 0.85 ก่อนอัปโหลด
  * เพื่อให้ไฟล์เล็กพอเหมาะกับการแสดงในหน้าเว็บเสมอ (ทั้งหน้าโปรไฟล์และหน้าผลงานสาธารณะ) โดยผู้ใช้ไม่ต้องไปย่อไฟล์เอง
  */
 function resizeImageForAvatar(file) {
@@ -734,10 +734,10 @@ function resizeImageForAvatar(file) {
   });
 }
 /**
- * อัพโหลดรูปโปรไฟล์ (ที่ย่อ/บีบอัดไว้แล้วจาก resizeImageForAvatar) ขึ้น Google Drive ผ่าน Drive relay
+ * อัปโหลดรูปโปรไฟล์ (ที่ย่อ/บีบอัดไว้แล้วจาก resizeImageForAvatar) ขึ้น Google Drive ผ่าน Drive relay
  * ด้วยขั้นตอนเดียวกับการส่งไฟล์งาน (prepare -> ยิงตรงไป relay -> finalize) ดู submitWorkFile ด้านบนประกอบ
  */
-// targetUserId (ตั้งแต่ 1.33.101026): ถ้าระบุ = Super Admin อัพรูปให้บัญชีอื่น (adminAvatarUpload*) ไม่ระบุ = รูปของตัวเอง
+// targetUserId (ตั้งแต่ 1.33.101026): ถ้าระบุ = Super Admin อัปรูปให้บัญชีอื่น (adminAvatarUpload*) ไม่ระบุ = รูปของตัวเอง
 async function uploadResizedAvatar(resized, targetUserId) {
   var approxBytes = Math.ceil(resized.base64.length * 3 / 4);
   var prep = await apiCall(targetUserId ? 'adminAvatarUploadPrepare' : 'profileAvatarUploadPrepare', targetUserId ? { userId: targetUserId, fileName: 'avatar.jpg', fileSize: approxBytes } : { fileName: 'avatar.jpg', fileSize: approxBytes });
@@ -758,7 +758,7 @@ async function uploadResizedAvatar(resized, targetUserId) {
   } catch (e) {
     throw new Error('ระบบเก็บไฟล์ตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
   }
-  if (!relayJson.ok) throw new Error(relayJson.error || 'อัพโหลดรูปโปรไฟล์ไม่สำเร็จ');
+  if (!relayJson.ok) throw new Error(relayJson.error || 'อัปโหลดรูปโปรไฟล์ไม่สำเร็จ');
   var result = relayJson.data;
   var finalizePayload = {
     fileId: result.fileId, fileUrl: result.url, directUrl: result.directUrl,
@@ -768,9 +768,9 @@ async function uploadResizedAvatar(resized, targetUserId) {
   return apiCall(targetUserId ? 'adminAvatarUploadFinalize' : 'profileAvatarUploadFinalize', finalizePayload);
 }
 
-// ไอคอนคนทั่วไป (SVG เส้น currentColor) — ใช้เป็นรูปโปรไฟล์เริ่มต้นเมื่อบัญชียังไม่ได้อัพโหลดรูปเอง
+// ไอคอนคนทั่วไป (SVG เส้น currentColor) — ใช้เป็นรูปโปรไฟล์เริ่มต้นเมื่อบัญชียังไม่ได้อัปโหลดรูปเอง
 var PERSON_ICON_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm0 2c-3.33 0-10 1.68-10 5v3h20v-3c0-3.32-6.67-5-10-5z"/></svg>';
-// คืน HTML สำหรับวงกลมรูปโปรไฟล์: รูปที่อัพโหลดไว้ (ถ้ามี) หรือไอคอนคนเริ่มต้น
+// คืน HTML สำหรับวงกลมรูปโปรไฟล์: รูปที่อัปโหลดไว้ (ถ้ามี) หรือไอคอนคนเริ่มต้น
 function avatarInnerHtml(avatarUrl) {
   if (avatarUrl) return '<img src="' + escapeHtml(avatarUrl) + '" alt="" />';
   return PERSON_ICON_SVG;
@@ -785,7 +785,7 @@ function categoryDotHtml(color) {
   return '<span class="category-dot" style="background:' + escapeHtml(color || '#3457d5') + ';"></span>';
 }
 // สร้าง map { categoryId: color } จากรายการประเภทงาน — ใช้เมื่อรายการที่จะแสดง (ผลงาน/กำหนดการ) มีแค่ categoryId/categoryName
-// (ไม่ได้เก็บสีติดไปด้วยตอนบันทึก) ให้ดึงสีปัจจุบันของประเภทงานนั้นมาแสดงแทนเสมอ — สีจะอัพเดตทันทีทุกจุดถ้า Super Admin เปลี่ยนสีทีหลัง
+// (ไม่ได้เก็บสีติดไปด้วยตอนบันทึก) ให้ดึงสีปัจจุบันของประเภทงานนั้นมาแสดงแทนเสมอ — สีจะอัปเดตทันทีทุกจุดถ้า Super Admin เปลี่ยนสีทีหลัง
 // 1.65: สีของประเภทงาน = สีของกลุ่มบริหารงานที่ผูกไว้ (ตั้งค่าที่ "กลุ่มบริหารงาน") — ไม่มีช่องเลือกสีตอนสร้าง/แก้ไขประเภทงานแล้ว
 // ประเภทงานที่ยังไม่ผูกกลุ่ม/กลุ่มยังไม่ตั้งสี = สีที่เคยเก็บไว้ (ค่าเริ่มต้น #3457d5)
 // 1.71: รูปแบบการ์ดผลงานเหลือ 3 แบบ — แปลงค่าเดิม: book/bookInline → 'bookInline' (ไฟล์ใหญ่) · frame → 'frame' (ไฟล์ปานกลาง)
@@ -1018,7 +1018,7 @@ function activityBarsHtml(acts) {
     return '<span class="cal-act" style="background:' + activityColor(e) + '" title="' + escapeHtml(e.title) + '">' + escapeHtml(e.title) + '</span>';
   }).join('') + (acts.length > 2 ? '<span class="cal-act-more">+' + (acts.length - 2) + '</span>' : '') + '</div>';
 }
-// รายละเอียดกิจกรรมในป็อปอัพวันที่
+// รายละเอียดกิจกรรมในป็อปอัปวันที่
 function activityDayHtml(e) {
   var c = activityColor(e), tt = activityTimeText(e);
   return '<div class="day-ev day-ev-act">' +
@@ -1136,7 +1136,7 @@ async function currentAcademicTerm() {
 // จะถูกซ่อนเมื่อ settings.memoEnabled === false — เรียกซ้ำได้ทุกครั้งที่ค่าตั้งค่าเปลี่ยน
 function isMemoEnabled(st) { return !(st && st.memoEnabled === false); }
 // 1.53.121026: แก้เมนูกระพริบ — จำสถานะไว้ใน localStorage (bnkah_memo_off) แล้วสคริปต์ใน <head> ของทุกหน้าใส่ class "memo-off"
-// ที่ <html> ก่อนหน้าเว็บแสดงผล (CSS ซ่อนให้ตั้งแต่แรก ไม่ต้องรอโหลดค่าตั้งค่า) — ค่าตั้งค่าจริงที่โหลดมาภายหลังอัพเดต class/ค่าที่จำไว้ให้ตรงเสมอ
+// ที่ <html> ก่อนหน้าเว็บแสดงผล (CSS ซ่อนให้ตั้งแต่แรก ไม่ต้องรอโหลดค่าตั้งค่า) — ค่าตั้งค่าจริงที่โหลดมาภายหลังอัปเดต class/ค่าที่จำไว้ให้ตรงเสมอ
 function memoOffCached() { try { return localStorage.getItem('bnkah_memo_off') === '1'; } catch (e) { return false; } }
 function applyMemoFeatureVisibility(st) {
   var off = !isMemoEnabled(st);
@@ -1206,7 +1206,7 @@ function ensureSharedModals() {
         '<h3>รูปโปรไฟล์</h3>' +
         '<div id="sharedAvatarError" class="error-box" hidden></div>' +
         '<div class="avatar-preview-wrap"><span class="profile-avatar avatar-preview-lg" id="sharedAvatarPreview"></span></div>' +
-        '<p class="hint" style="text-align:center; margin-top:-6px;">ระบบจะย่อขนาดและบีบอัดรูปให้อัตโนมัติก่อนอัพโหลด</p>' +
+        '<p class="hint" style="text-align:center; margin-top:-6px;">ระบบจะย่อขนาดและบีบอัดรูปให้อัตโนมัติก่อนอัปโหลด</p>' +
         '<input type="file" id="sharedAvatarFileInput" accept="image/*" hidden />' +
         '<div class="modal-actions" style="flex-wrap:wrap;">' +
           '<button type="button" class="btn btn-secondary" id="sharedAvatarPickBtn">เลือกรูปภาพ</button>' +
@@ -1270,13 +1270,13 @@ function ensureSharedModals() {
   document.body.appendChild(wrap);
   var goToLoginFromExpire = function () { location.href = 'index.html?_=' + Date.now(); };
   document.getElementById('sharedExpireOk').addEventListener('click', goToLoginFromExpire);
-  // X ของป็อปอัพหมดเวลาการใช้งานทำหน้าที่เดียวกับปุ่ม "เข้าสู่ระบบอีกครั้ง" เสมอ (ไม่ให้ปิดค้างไว้แล้วนั่งดูหน้าที่ session หมดอายุแล้วเฉยๆ)
+  // X ของป็อปอัปหมดเวลาการใช้งานทำหน้าที่เดียวกับปุ่ม "เข้าสู่ระบบอีกครั้ง" เสมอ (ไม่ให้ปิดค้างไว้แล้วนั่งดูหน้าที่ session หมดอายุแล้วเฉยๆ)
   document.getElementById('sharedExpireCloseX').addEventListener('click', goToLoginFromExpire);
-  // 1.69: ป็อปอัพเตือนก่อนหมดเวลา
+  // 1.69: ป็อปอัปเตือนก่อนหมดเวลา
   document.getElementById('sharedIdleStay').addEventListener('click', function () { markActive(true); hideIdleWarning(); });
   document.getElementById('sharedIdleLogout').addEventListener('click', function () { logout(); });
 
-  // ป็อปอัพ "เข้าสู่ระบบจากที่อื่น" (ตั้งแต่ V11.7) — ปุ่ม "เข้าสู่ระบบอีกครั้ง" และ X ทำหน้าที่เดียวกันเสมอ เหมือนป็อปอัพหมดเวลาการใช้งานด้านบน
+  // ป็อปอัป "เข้าสู่ระบบจากที่อื่น" (ตั้งแต่ V11.7) — ปุ่ม "เข้าสู่ระบบอีกครั้ง" และ X ทำหน้าที่เดียวกันเสมอ เหมือนป็อปอัปหมดเวลาการใช้งานด้านบน
   document.getElementById('sharedSessionReplacedOk').addEventListener('click', goToLoginFromExpire);
   document.getElementById('sharedSessionReplacedCloseX').addEventListener('click', goToLoginFromExpire);
 
@@ -1308,7 +1308,7 @@ function ensureSharedModals() {
     }
   });
 
-  // ---------- ป็อปอัพรูปโปรไฟล์ ----------
+  // ---------- ป็อปอัปรูปโปรไฟล์ ----------
   var _pendingAvatar = null; // ผลลัพธ์จาก resizeImageForAvatar ระหว่างที่ยังไม่กดบันทึก
   var avatarModal = document.getElementById('sharedAvatarModal');
   var avatarErrBox = document.getElementById('sharedAvatarError');
@@ -1341,9 +1341,9 @@ function ensureSharedModals() {
   avatarSaveBtn.addEventListener('click', async function () {
     if (!_pendingAvatar) return;
     avatarErrBox.hidden = true;
-    var r = await withProgress('กำลังอัพโหลดรูปโปรไฟล์', function () {
+    var r = await withProgress('กำลังอัปโหลดรูปโปรไฟล์', function () {
       return uploadResizedAvatar(_pendingAvatar);
-    }, { successLabel: 'อัพเดทรูปโปรไฟล์แล้ว', upload: true });
+    }, { successLabel: 'อัปเดตรูปโปรไฟล์แล้ว', upload: true });
     if (r.ok) {
       _pendingAvatar = null;
       avatarSaveBtn.hidden = true;
@@ -1397,7 +1397,7 @@ function openAvatarModal() {
   showModalEl(document.getElementById('sharedAvatarModal'));
 }
 
-// 1.83: ข้อความในป็อปอัพยืนยันแสดงตัวหนา (<b>/<strong>) และขึ้นบรรทัดใหม่ (<br>) ได้ — นอกนั้นแสดงเป็นตัวอักษรล้วนเสมอ
+// 1.83: ข้อความในป็อปอัปยืนยันแสดงตัวหนา (<b>/<strong>) และขึ้นบรรทัดใหม่ (<br>) ได้ — นอกนั้นแสดงเป็นตัวอักษรล้วนเสมอ
 // (escape ทั้งข้อความก่อน แล้วคืนเฉพาะแท็กที่อนุญาต · ค่าที่ผู้เรียก escapeHtml มาแล้วไม่ถูก escape ซ้ำ)
 function confirmMsgHtml(msg) {
   return escapeHtml(String(msg == null ? '' : msg))
@@ -1430,10 +1430,10 @@ function askConfirm(msg, title) {
   });
 }
 
-// ---------- ป็อปอัพ "กำลังดำเนินการ" (Progress bar) ----------
+// ---------- ป็อปอัป "กำลังดำเนินการ" (Progress bar) ----------
 // เปิดหลังกดยืนยัน (askConfirm) แสดงระหว่างรอ backend ตอบกลับ แล้วให้ผู้ใช้กด "ตกลง" อีกครั้งเมื่อเสร็จ/error
 // 1.50.121026: แอนิเมชันระหว่างรอ (ไอคอนเคลื่อนไหว + วงหมุน + ตัวจับเวลา + แถบคืบหน้าแบบประมาณการ) ให้เห็นว่าระบบยังทำงานอยู่
-// และกันปิด/รีเฟรชหน้าระหว่างอัพโหลด (beforeunload) — การอัพโหลดไป Apps Script วัดความคืบหน้าจริงเป็นไบต์ไม่ได้
+// และกันปิด/รีเฟรชหน้าระหว่างอัปโหลด (beforeunload) — การอัปโหลดไป Apps Script วัดความคืบหน้าจริงเป็นไบต์ไม่ได้
 // (ถ้าฟัง xhr.upload.onprogress เบราว์เซอร์จะส่ง CORS preflight ซึ่ง Apps Script ไม่รองรับ) จึงใช้การประมาณจากขนาดไฟล์แทน (creepProgress)
 var _progressRun = { timer: null, creep: null, started: 0, upload: false };
 function _progressBeforeUnload(e) { e.preventDefault(); e.returnValue = ''; return ''; }
@@ -1465,7 +1465,7 @@ function _showProgressModal(title, opts) {
   document.getElementById('sharedProgressResult').hidden = true;
   document.getElementById('sharedProgressOk').hidden = true;
   document.getElementById('sharedProgressRetry').hidden = true;
-  // X ซ่อนไว้ระหว่างกำลังทำงานอยู่โดยตั้งใจ (เช่นเดียวกับปุ่ม "ตกลง") เพื่อให้ผู้ใช้เห็นผลลัพธ์แน่นอนก่อนปิดป็อปอัพได้เสมอ
+  // X ซ่อนไว้ระหว่างกำลังทำงานอยู่โดยตั้งใจ (เช่นเดียวกับปุ่ม "ตกลง") เพื่อให้ผู้ใช้เห็นผลลัพธ์แน่นอนก่อนปิดป็อปอัปได้เสมอ
   document.getElementById('sharedProgressCloseX').hidden = true;
   setProgressIndeterminate('กำลังดำเนินการ...');
   showModalEl(document.getElementById('sharedProgressModal'));
@@ -1480,7 +1480,7 @@ function _setBar(percent) {
   if (pct) pct.textContent = Math.round(v) + '%';
   return v;
 }
-// 1.86: ไอคอนสายฟ้าเล็กที่มุมไอคอนอัพโหลด = กำลังส่งตรงเข้า Google Drive ('' = ซ่อน — ส่งผ่าน relay ไม่แสดงอะไร)
+// 1.86: ไอคอนสายฟ้าเล็กที่มุมไอคอนอัปโหลด = กำลังส่งตรงเข้า Google Drive ('' = ซ่อน — ส่งผ่าน relay ไม่แสดงอะไร)
 function setUploadVia(via) { var b = document.getElementById('sharedProgressBolt'); if (b) b.hidden = via !== 'direct'; }
 function setProgress(percent, label) {
   if (_progressRun.creep) { clearInterval(_progressRun.creep); _progressRun.creep = null; }
@@ -1496,7 +1496,7 @@ function creepProgress(from, to, estMs, label) {
     _setBar(from + (to - from) * 0.97 * k);
   }, 200);
 }
-// เวลาที่คาดว่าจะใช้ส่งไฟล์ขนาด bytes ไป Drive relay (base64 + อัพโหลด + Apps Script บันทึกไฟล์)
+// เวลาที่คาดว่าจะใช้ส่งไฟล์ขนาด bytes ไป Drive relay (base64 + อัปโหลด + Apps Script บันทึกไฟล์)
 function estimateUploadMs(bytes) { return 2500 + (Number(bytes) || 0) * 1.37 / 900; }
 function setProgressIndeterminate(label) {
   if (_progressRun.creep) { clearInterval(_progressRun.creep); _progressRun.creep = null; }
@@ -1520,7 +1520,7 @@ function _finishProgress(message, isError, retryLabel) {
     var retryBtn = document.getElementById('sharedProgressRetry');
     okBtn.hidden = false;
     closeXBtn.hidden = false;
-    // 1.85: อัพโหลดไม่สำเร็จ = ปุ่ม "ส่งใหม่" (ส่งเฉพาะไฟล์ที่ยังไม่สำเร็จ — งานแต่ละหน้าข้ามไฟล์ที่ส่งแล้วเอง)
+    // 1.85: อัปโหลดไม่สำเร็จ = ปุ่ม "ส่งใหม่" (ส่งเฉพาะไฟล์ที่ยังไม่สำเร็จ — งานแต่ละหน้าข้ามไฟล์ที่ส่งแล้วเอง)
     retryBtn.hidden = !(isError && retryLabel);
     okBtn.textContent = isError && retryLabel ? 'ปิด' : 'ตกลง';
     if (retryLabel) document.getElementById('sharedProgressRetryTxt').textContent = retryLabel;
@@ -1541,15 +1541,15 @@ function _finishProgress(message, isError, retryLabel) {
   });
 }
 /**
- * เรียกใช้งานหลัง askConfirm() แล้ว — เปิดป็อปอัพ Progress bar ระหว่างรอ workFn() ทำงาน (มักคือ apiCall)
- * workFn จะได้รับ { setProgress(percent, label), setLabel(label) } ไว้ใช้รายงานความคืบหน้าจริง (เช่น อัพโหลดหลายไฟล์)
+ * เรียกใช้งานหลัง askConfirm() แล้ว — เปิดป็อปอัป Progress bar ระหว่างรอ workFn() ทำงาน (มักคือ apiCall)
+ * workFn จะได้รับ { setProgress(percent, label), setLabel(label) } ไว้ใช้รายงานความคืบหน้าจริง (เช่น อัปโหลดหลายไฟล์)
  * เสร็จแล้วจะโชว์ผลลัพธ์ค้างไว้จนกว่าผู้ใช้จะกด "ตกลง" — คืนค่า { ok, data } หรือ { ok:false, error }
  */
 // 1.85: opts.retry (ค่าเริ่มต้น = opts.upload) — ไม่สำเร็จแล้วมีปุ่ม "ส่งใหม่" เรียก workFn ซ้ำ · err.retryLabel กำหนดข้อความปุ่ม · err.noRetry = ไม่มีปุ่ม (เช่น ไฟล์ผิดชนิด)
 async function withProgress(title, workFn, opts) {
   opts = opts || {};
   var canRetry = opts.retry !== undefined ? !!opts.retry : !!opts.upload;
-  _progressBusy++; // 1.69: ระหว่างอัพโหลด/บันทึก ไม่นับเป็นเวลานิ่ง
+  _progressBusy++; // 1.69: ระหว่างอัปโหลด/บันทึก ไม่นับเป็นเวลานิ่ง
   try {
     for (;;) {
       _showProgressModal(title, { upload: !!opts.upload });
@@ -1771,7 +1771,7 @@ function mountChrome(activePage) {
       '</div>';
 
     document.querySelector('.js-home-btn').addEventListener('click', function () { location.href = homePageFor(session); });
-    renderBrand(cachedBrand()); // 1.53: วาดแบรนด์จากค่าที่จำไว้ทันที (applyBranding อัพเดตตามค่าจริงอีกครั้ง)
+    renderBrand(cachedBrand()); // 1.53: วาดแบรนด์จากค่าที่จำไว้ทันที (applyBranding อัปเดตตามค่าจริงอีกครั้ง)
     mountSideNav(links, activePage);
     // ซ่อนเมนู "ทำเนียบบุคลากร" ถ้า Super Admin ปิดทำเนียบไว้ (settings.directoryMode = 'off') — ตั้งแต่ 1.32.101026
     getSiteSettings().then(function (st) {
@@ -1930,7 +1930,7 @@ async function hardReloadPage() {
   location.reload();
 }
 
-// ---------- พรีวิวไฟล์แบบป็อปอัพเต็มหน้าจอ (ตั้งแต่ 1.43.111026) ----------
+// ---------- พรีวิวไฟล์แบบป็อปอัปเต็มหน้าจอ (ตั้งแต่ 1.43.111026) ----------
 // ใช้กับคลังคำสั่ง (orders.html) และผลงานในหน้าแรกของครู (dashboard.html) — แสดงไฟล์ผ่านหน้า preview ของ Google Drive ใน iframe
 // ปิดได้ 3 ทาง: กดพื้นที่ว่างรอบไฟล์ · ปุ่ม ✕ · ปุ่ม Esc — ปุ่ม "เปิดไฟล์" (แท็บใหม่) ยังมีแยกต่างหากเหมือนเดิม
 // drivePreviewUrl: แปลงลิงก์ไฟล์ Google Drive (…/file/d/<id>/view…) เป็นลิงก์ preview ที่ฝังใน iframe ได้ — ลิงก์แบบอื่นคืนค่าเดิม
@@ -1938,7 +1938,7 @@ function drivePreviewUrl(url) {
   var id = driveFileId(url);
   return id ? 'https://drive.google.com/file/d/' + id + '/preview' : String(url || '');
 }
-// ลิงก์ดาวน์โหลดไฟล์ Google Drive โดยตรง (1.47.121026 — ปุ่ม "ดาวน์โหลด" ในป็อปอัพพรีวิว) — ลิงก์แบบอื่นคืนค่าว่าง
+// ลิงก์ดาวน์โหลดไฟล์ Google Drive โดยตรง (1.47.121026 — ปุ่ม "ดาวน์โหลด" ในป็อปอัปพรีวิว) — ลิงก์แบบอื่นคืนค่าว่าง
 // 1.51.121026: แก้บั๊ก — ไฟล์ Word/Excel/PowerPoint ที่ Drive คืนลิงก์เป็น docs.google.com/document|spreadsheets|presentation/d/<id>/edit
 // (ไม่ใช่ /file/d/) เดิมหา id ไม่เจอ ได้ลิงก์ว่าง กดแล้ววนกลับหน้าเดิม (dashboard.html) — ไม่ใช่เรื่องสิทธิ์ของ Google Drive
 function driveDownloadUrl(url) {
@@ -2011,7 +2011,7 @@ function driveFileId(url) {
     /drive\.google\.com\/.*\/d\/([A-Za-z0-9_-]{10,})/.exec(u);
   return m ? m[1] : '';
 }
-// ชื่อชนิดไฟล์สำหรับข้อความในป็อปอัพดาวน์โหลด
+// ชื่อชนิดไฟล์สำหรับข้อความในป็อปอัปดาวน์โหลด
 function officeKindLabel(name) {
   var n = String(name || '').toLowerCase();
   if (/\.(xlsx?|xlsm|xltx?|csv|ods)$/.test(n)) return 'Excel';
@@ -2110,10 +2110,10 @@ function _filePreviewBodyHtml(previewUrl, title, openUrl, downloadUrl, kind) {
   return '<iframe class="file-preview-iframe" src="' + escapeHtml(previewUrl) + '" title="' + escapeHtml(title || 'พรีวิวไฟล์') + '" allow="autoplay" loading="eager"></iframe>';
 }
 
-// ---------- ป็อปอัพทั้งเว็บ: กดพื้นที่ว่างรอบป็อปอัพ = ป็อปอัพเด้งกระพริบเตือน (ไม่ปิด) — ตั้งแต่ 1.46.121026 ----------
-// ใช้กับทุก .modal-backdrop ทุกหน้า รวมถึงป็อปอัพที่สร้างทีหลัง (ผูก event ที่ document ครั้งเดียว) — ยกเว้นพรีวิวไฟล์ (openFilePreview)
+// ---------- ป็อปอัปทั้งเว็บ: กดพื้นที่ว่างรอบป็อปอัป = ป็อปอัปเด้งกระพริบเตือน (ไม่ปิด) — ตั้งแต่ 1.46.121026 ----------
+// ใช้กับทุก .modal-backdrop ทุกหน้า รวมถึงป็อปอัปที่สร้างทีหลัง (ผูก event ที่ document ครั้งเดียว) — ยกเว้นพรีวิวไฟล์ (openFilePreview)
 // และกล่องเปิดหนังสือใน view.html ซึ่งกดพื้นที่ว่างแล้วปิดตามเดิม (ไม่ใช่ .modal-backdrop)
-// ต้องกดลงและปล่อยบนพื้นที่ว่างทั้งคู่ — กันกรณีลากคลุมข้อความในช่องกรอกแล้วปล่อยเมาส์นอกป็อปอัพ
+// ต้องกดลงและปล่อยบนพื้นที่ว่างทั้งคู่ — กันกรณีลากคลุมข้อความในช่องกรอกแล้วปล่อยเมาส์นอกป็อปอัป
 (function () {
   var downOnBackdrop = null;
   document.addEventListener('mousedown', function (e) {
@@ -2240,7 +2240,7 @@ var NOTIF_KIND = {
 var _notifCovers = {}; // 1.85.2: รูปปกอัลบั้มในกระดิ่ง
 function applyTopBadges(r) {
   if (!r) return;
-  if (r.welcome) openWelcome(); // 1.79: ป็อปอัพต้อนรับครั้งแรกของบัญชี
+  if (r.welcome) openWelcome(); // 1.79: ป็อปอัปต้อนรับครั้งแรกของบัญชี
   var b = document.getElementById('notifBadge');
   if (b && typeof r.notifUnread === 'number') {
     b.textContent = r.notifUnread > 99 ? '99+' : String(r.notifUnread);
@@ -2403,7 +2403,7 @@ function initNotifBell() {
 // ======================================================================
 // 1.80: PWA — ติดตั้งแอปลงมือถือ/คอม (ไม่มีแจ้งเตือนในโทรศัพท์)
 // Android/คอม (Chrome, Edge): เก็บเหตุการณ์ beforeinstallprompt ไว้ แล้วเรียกหน้าต่างติดตั้งของระบบเมื่อกดเมนู
-// iPhone/iPad: เว็บสั่งติดตั้งเองไม่ได้ (Apple ไม่อนุญาต) → ป็อปอัพบอกวิธี 3 ขั้น · เปิดจากแอปที่ติดตั้งแล้ว = ซ่อนเมนู
+// iPhone/iPad: เว็บสั่งติดตั้งเองไม่ได้ (Apple ไม่อนุญาต) → ป็อปอัปบอกวิธี 3 ขั้น · เปิดจากแอปที่ติดตั้งแล้ว = ซ่อนเมนู
 // ======================================================================
 var _deferredInstall = null;
 function isStandaloneApp() { try { return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; } catch (e) { return false; } }
@@ -2467,7 +2467,7 @@ function initTabScrollHints() {
 window.addEventListener('resize', function () { document.querySelectorAll('.tabs').forEach(syncTabScrollHints); });
 document.addEventListener('DOMContentLoaded', function () { initTabScrollHints(); setTimeout(initTabScrollHints, 800); setTimeout(initTabScrollHints, 2500); });
 
-// ---------- แจ้งปัญหา (ป็อปอัพ) ----------
+// ---------- แจ้งปัญหา (ป็อปอัป) ----------
 var REPORT_STATUS = { open: ['รอรับเรื่อง', 'st-open'], progress: ['กำลังดำเนินการ', 'st-progress'], done: ['เสร็จแล้ว', 'st-done'] };
 function reportStatusChip(st) { var s = REPORT_STATUS[st] || [st, '']; return '<span class="rp-status ' + s[1] + '">' + escapeHtml(s[0]) + '</span>'; }
 function reportTargetChip(r) {
@@ -2503,7 +2503,7 @@ function reportClientInfo() {
   return { page: String(page).trim().slice(0, 100), ua: b + ' · ' + o + ' · จอ ' + screen.width + '×' + screen.height };
 }
 var _reportModal = null;
-// ---------- 1.79: ป็อปอัพต้อนรับ (ครั้งแรกของบัญชี — จำในฐานข้อมูล users.welcomed_at) ----------
+// ---------- 1.79: ป็อปอัปต้อนรับ (ครั้งแรกของบัญชี — จำในฐานข้อมูล users.welcomed_at) ----------
 var _welcomeOpen = false;
 var WELCOME_ITEMS = {
   t: [['fa-paper-plane', '#0b6fcc', 'ส่งผลงาน', 'กดปุ่ม "ส่งงาน" ในหน้าแรก ตามรายการกำหนดส่ง'], ['fa-bell', '#f59e0b', 'กระดิ่งแจ้งเตือน', 'เกียรติบัตรที่มีชื่อคุณ คำสั่งและอัลบั้มใหม่'], ['fa-book-open', '#7c3aed', 'คู่มือการใช้งาน', 'ปุ่มรูปหนังสือ มุมขวาบน มีภาพประกอบทุกขั้นตอน'], ['fa-headset', '#ef4444', 'แจ้งปัญหา', 'กดชื่อของคุณมุมขวาบน แล้วเลือก "แจ้งปัญหา"']],
@@ -2539,7 +2539,7 @@ function openWelcome() {
   showModalEl(el);
 }
 
-// ---------- 1.85: ประกาศแบบป็อปอัพ — เปิดหน้าแรกแล้วเด้งทีละประกาศ (หลังป็อปอัพต้อนรับ) ----------
+// ---------- 1.85: ประกาศแบบป็อปอัป — เปิดหน้าแรกแล้วเด้งทีละประกาศ (หลังป็อปอัปต้อนรับ) ----------
 // 'until' = ขึ้นทุกครั้งที่เข้าระบบจนกว่าจะติ๊ก "ไม่ต้องแสดงประกาศนี้อีก" (เข้าระบบครั้งเดียวกันในแท็บเดิมไม่ขึ้นซ้ำ — sessionStorage) · 'once' = ครั้งเดียวต่อคน
 var _annPopRunning = false;
 // 1.85.1: จำแยกตามการเข้าระบบแต่ละครั้งของแต่ละคน (uid + sv ใน token — เข้าระบบใหม่ sv เปลี่ยน) — ออกแล้วเข้าใหม่ / คนอื่นเข้าต่อในแท็บเดิม = แสดงอีก
@@ -2554,10 +2554,10 @@ async function showAnnouncementPopups() {
     var r = await apiCall('hubAnnouncementPopups', {});
     var list = (r.items || []).filter(function (a) { try { return !sessionStorage.getItem(_annPopShownKey(a.id)); } catch (e) { return true; } });
     if (!list.length) return;
-    // รอป็อปอัพต้อนรับ (ครั้งแรกของบัญชี) ปิดก่อน
+    // รอป็อปอัปต้อนรับ (ครั้งแรกของบัญชี) ปิดก่อน
     await new Promise(function (res) { var t0 = Date.now(); (function wait() { if (!_welcomeOpen && !document.getElementById('welcomeModal') && Date.now() - t0 > 900) res(); else setTimeout(wait, 300); })(); });
     for (var i = 0; i < list.length; i++) await _showAnnPopup(list[i], i, list.length);
-  } catch (e) { /* ไม่มีป็อปอัพ / Worker รุ่นเก่า — ข้าม */ }
+  } catch (e) { /* ไม่มีป็อปอัป / Worker รุ่นเก่า — ข้าม */ }
   finally { _annPopRunning = false; }
 }
 function _showAnnPopup(a, i, n) {
@@ -2636,7 +2636,7 @@ async function renderReportModal() {
     }
     if (st.step === 1) {
       var m = st.meta, h = '<div class="rp-q">ปัญหาเกี่ยวกับอะไร</div>';
-      if (m.canSystem) h += '<button type="button" class="rp-sys-card" data-rp-target="system"><span class="rp-ic"><i class="fa-solid fa-laptop-code" aria-hidden="true"></i></span><span><b>การใช้งานระบบ (เว็บมีปัญหา)</b><small>อัพโหลดไม่ได้ · หน้าค้าง/ขึ้นข้อผิดพลาด · ปุ่มกดไม่ทำงาน → ส่งถึงผู้ดูแลระบบ</small></span><i class="fa-solid fa-chevron-right rp-go" aria-hidden="true"></i></button>' +
+      if (m.canSystem) h += '<button type="button" class="rp-sys-card" data-rp-target="system"><span class="rp-ic"><i class="fa-solid fa-laptop-code" aria-hidden="true"></i></span><span><b>การใช้งานระบบ (เว็บมีปัญหา)</b><small>อัปโหลดไม่ได้ · หน้าค้าง/ขึ้นข้อผิดพลาด · ปุ่มกดไม่ทำงาน → ส่งถึงผู้ดูแลระบบ</small></span><i class="fa-solid fa-chevron-right rp-go" aria-hidden="true"></i></button>' +
         '<div class="rp-sep">หรือ เรื่องของกลุ่มบริหารงาน → ส่งถึงเจ้าหน้าที่กลุ่มนั้น</div>';
       h += '<div class="rp-groups">' + m.departments.map(function (d) {
         return '<button type="button" class="rp-group" data-rp-target="dept" data-rp-dept="' + escapeHtml(d.name) + '"' + deptColorAttr(d.name) + '><span class="rp-ic"><i class="fa-solid fa-user-group" aria-hidden="true"></i></span><span><b>' + escapeHtml(d.label) + '</b>' + (d.hint ? '<small>' + escapeHtml(d.hint) + '</small>' : '') + '</span></button>';
@@ -2647,7 +2647,7 @@ async function renderReportModal() {
     }
     var t = st.target, info = reportClientInfo();
     body.innerHTML = '<div class="rp-to"' + (t.target === 'dept' ? deptColorAttr(t.department) : '') + '><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> ส่งถึง <b>' + escapeHtml(t.target === 'system' ? 'ผู้ดูแลระบบ (การใช้งานระบบ)' : 'เจ้าหน้าที่' + groupLabel(t.department)) + '</b><button type="button" class="rp-change" data-rp-act="back">เปลี่ยน</button></div>' +
-      '<label class="rp-l" for="rpSubject">หัวข้อ</label><input type="text" id="rpSubject" maxlength="150" placeholder="' + (t.target === 'system' ? 'เช่น อัพโหลดไฟล์ PowerPoint ไม่ได้' : 'เช่น เกียรติบัตรอบรมไม่ครบ') + '" value="' + escapeHtml(st.subject || '') + '" />' +
+      '<label class="rp-l" for="rpSubject">หัวข้อ</label><input type="text" id="rpSubject" maxlength="150" placeholder="' + (t.target === 'system' ? 'เช่น อัปโหลดไฟล์ PowerPoint ไม่ได้' : 'เช่น เกียรติบัตรอบรมไม่ครบ') + '" value="' + escapeHtml(st.subject || '') + '" />' +
       '<label class="rp-l" for="rpBody">รายละเอียดปัญหา</label><textarea id="rpBody" rows="5" maxlength="3000" placeholder="เล่าสิ่งที่เกิดขึ้น · ต้องการให้แก้ไขอะไร">' + escapeHtml(st.body || '') + '</textarea>' +
       '<div class="rp-l">แนบภาพหน้าจอ <span class="rp-hint">(ไม่บังคับ · สูงสุด ' + (st.meta.maxFiles || 3) + ' รูป)</span></div>' +
       '<div class="rp-att">' + st.files.map(function (f, i) { return '<span class="rp-thumb"><img src="' + f.url + '" alt="" /><button type="button" data-rp-rm="' + i + '" aria-label="เอารูปออก">✕</button></span>'; }).join('') +
@@ -2715,7 +2715,7 @@ async function onReportModalClick(e) {
         var prep = await apiCall('reportFilePrepare', { fileName: f.name, mimeType: f.type, fileSize: f.size });
         var res = await fetch(prep.relayUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ uploadToken: prep.uploadToken, base64: await fileToBase64(f), filename: 'แจ้งปัญหา-' + Date.now() + '-' + (i + 1) + '.' + ((/\.(\w+)$/.exec(f.name) || [0, 'png'])[1]), mimeType: f.type }) });
         var j = JSON.parse(await res.text());
-        if (!j.ok) throw new Error(j.error || 'อัพโหลดรูปไม่สำเร็จ');
+        if (!j.ok) throw new Error(j.error || 'อัปโหลดรูปไม่สำเร็จ');
         sentFiles[i] = { fileId: j.data.fileId, name: f.name };
         files.push(sentFiles[i]);
       }
