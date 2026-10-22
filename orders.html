@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.3.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.0.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -63,7 +63,7 @@
       <div id="ordError" class="error-box" hidden></div>
       <form id="ordForm" style="text-align:left;" novalidate>
         <div class="field" id="ordFileWrap">
-          <label>ไฟล์คำสั่ง (PDF เท่านั้น สูงสุด 10 ไฟล์ ไม่เกิน 25MB ต่อไฟล์)</label>
+          <label>ไฟล์คำสั่ง (PDF เท่านั้น สูงสุด 10 ไฟล์ ไม่เกิน <span data-upmax>100MB</span> ต่อไฟล์)</label>
           <!-- 1.44.111026: ช่องเลือกไฟล์แบบเดียวกับตอนครูส่งผลงาน (ลากไฟล์มาวาง หรือกดเพื่อเลือก) · 1.51.121026: เลือกได้หลายไฟล์ -->
           <div class="dropzone" id="ordDropzone" tabindex="0">
             <div><i class="fas fa-paperclip ui-icon" aria-hidden="true"></i> ลากไฟล์ PDF มาวางที่นี่ หรือกดเพื่อเลือกไฟล์ (เลือกได้หลายไฟล์)</div>
@@ -156,7 +156,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.85.3.221026"></script>
+  <script src="assets/api.js?v=1.86.0.221026"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -420,12 +420,12 @@
       }).join('');
     }
     function renderFileChip() { $('ordFileChip').innerHTML = chipsHtml(ordSelectedFiles, 'data-rm-file'); }
-    // ตรวจไฟล์ที่เลือก (PDF ≤ 25MB) แล้วเพิ่มเข้า list ได้ไม่เกิน limit — คืนข้อความ error (ถ้ามี)
+    // ตรวจไฟล์ที่เลือก (PDF ≤ maxUploadBytes) แล้วเพิ่มเข้า list ได้ไม่เกิน limit — คืนข้อความ error (ถ้ามี)
     function addPicked(list, fileList, limit) {
       var errs = [];
       Array.from(fileList || []).forEach(function (f) {
         if (!/\.pdf$/i.test(f.name) || (f.type && f.type !== 'application/pdf')) { errs.push('"' + f.name + '" ไม่ใช่ไฟล์ PDF'); return; }
-        if (f.size > 25 * 1024 * 1024) { errs.push('"' + f.name + '" ใหญ่เกิน 25MB'); return; }
+        if (f.size > maxUploadBytes()) { errs.push('"' + f.name + '" ใหญ่เกิน ' + maxUploadLabel()); return; } // 1.86: ส่งตรงได้ถึง 100MB
         if (list.length >= limit) { errs.push('เลือกได้สูงสุด ' + limit + ' ไฟล์'); return; }
         list.push(f);
       });
@@ -437,20 +437,6 @@
       renderFileChip();
     }
 
-    async function uploadToRelay(file, prep) {
-      var base64 = await fileToBase64(file);
-      var text;
-      try {
-        var r = await fetch(prep.relayUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ uploadToken: prep.uploadToken, base64: base64, filename: prep.uploadFileName || file.name, mimeType: 'application/pdf' }) });
-        text = await r.text();
-      } catch (e) { throw new Error('ติดต่อระบบเก็บไฟล์ไม่สำเร็จ (เครือข่ายขัดข้อง) กรุณาลองใหม่อีกครั้ง'); }
-      var j;
-      try { j = JSON.parse(text); } catch (e) { throw new Error('ระบบเก็บไฟล์ตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง'); }
-      if (!j.ok) throw new Error(j.error || 'อัพโหลดไฟล์ไม่สำเร็จ');
-      return j.data;
-    }
-
     // อัพไฟล์เพิ่มเข้าคำสั่ง (ไฟล์ที่ startIdx+1 .. total ของแถบคืบหน้า) — คืนรายการไฟล์ที่ไม่สำเร็จ
     async function uploadMoreFiles(orderId, list, p, startIdx, total, logAdd, done) {
       var failed = [], seg = 100 / total;
@@ -460,11 +446,10 @@
         var head = 'ไฟล์ ' + (i + 1) + '/' + total + ': ' + f.name;
         try {
           p.setProgress(s0 + seg * 0.02, 'กำลังเตรียม ' + head);
-          var fp = await apiCall('orderFilePrepare', { orderId: orderId, fileName: f.name, mimeType: 'application/pdf', fileSize: f.size });
-          p.creep(s0 + seg * 0.08, s0 + seg * 0.9, estimateUploadMs(f.size), 'กำลังอัพโหลด ' + head + ' (' + formatBytes(f.size) + ')');
-          var u = await uploadToRelay(f, fp);
+          var fp = await apiCall('orderFilePrepare', Object.assign({ orderId: orderId, fileName: f.name, mimeType: 'application/pdf', fileSize: f.size }, directUploadParams()));
+          var u = await sendPreparedFileProgress(fp, f, p, s0 + seg * 0.08, s0 + seg * 0.9, 'กำลังอัพโหลด ' + head + ' (' + formatBytes(f.size) + ')', { mimeType: 'application/pdf' }); // 1.86: ส่งตรง/สำรอง
           p.setProgress(s0 + seg * 0.94, 'กำลังบันทึก ' + head);
-          await apiCall('orderFileFinalize', { orderId: orderId, fileRowId: fp.fileRowId, fileId: u.fileId, fileUrl: u.url, directUrl: u.directUrl, logAdd: !!logAdd });
+          await apiCall('orderFileFinalize', { orderId: orderId, fileRowId: fp.fileRowId, fileId: u.fileId, fileUrl: u.url, directUrl: u.directUrl, logAdd: !!logAdd, via: u.via, fallbackReason: u.fallbackReason || '' });
           if (done) done.push(f);
         } catch (err) { failed.push(f.name + ': ' + (err && err.message)); }
         p.setProgress(s0 + seg);
@@ -533,11 +518,10 @@
           var head = function (i) { return (n > 1 ? 'ไฟล์ ' + (i + 1) + '/' + n + ': ' : '') + files[i].name; };
           if (!made) {
             p.setProgress(2, 'กำลังเตรียม ' + head(0));
-            var prep = await apiCall('orderUploadPrepare', Object.assign({ fileName: file.name, mimeType: 'application/pdf', fileSize: file.size }, fields));
-            p.creep(seg * 0.08, seg * 0.9, estimateUploadMs(file.size), 'กำลังอัพโหลด ' + head(0) + ' (' + formatBytes(file.size) + ') ไปที่ Google Drive');
-            var up = await uploadToRelay(file, prep);
+            var prep = await apiCall('orderUploadPrepare', Object.assign({ fileName: file.name, mimeType: 'application/pdf', fileSize: file.size }, fields, directUploadParams()));
+            var up = await sendPreparedFileProgress(prep, file, p, seg * 0.08, seg * 0.9, 'กำลังอัพโหลด ' + head(0) + ' (' + formatBytes(file.size) + ') ไปที่ Google Drive', { mimeType: 'application/pdf' }); // 1.86
             p.setProgress(seg * 0.94, 'กำลังบันทึกรายการคำสั่ง');
-            await apiCall('orderUploadFinalize', { orderId: prep.orderId, fileId: up.fileId, fileUrl: up.url, directUrl: up.directUrl, fileName: prep.uploadFileName || file.name, mimeType: 'application/pdf' });
+            await apiCall('orderUploadFinalize', { orderId: prep.orderId, fileId: up.fileId, fileUrl: up.url, directUrl: up.directUrl, fileName: prep.uploadFileName || file.name, mimeType: 'application/pdf', via: up.via, fallbackReason: up.fallbackReason || '' });
             made = prep.orderId;
           }
           var failed = await uploadMoreFiles(made, files.slice(1), p, 1, n, false, doneMore);

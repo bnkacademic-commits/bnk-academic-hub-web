@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.3.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.0.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -191,7 +191,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.85.3.221026"></script>
+  <script src="assets/api.js?v=1.86.0.221026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -738,21 +738,10 @@
     function okFile(f) { return /\.(pdf|jpe?g|png|webp)$/i.test(f.name) && (!f.type || /^(application\/pdf|image\/(jpeg|png|webp))$/.test(f.type)); }
     function checkFile(f) {
       if (!okFile(f)) return '"' + f.name + '" ไม่ใช่ไฟล์ PDF/รูปภาพ (JPG/PNG/WEBP)';
-      if (f.size > 25 * 1024 * 1024) return '"' + f.name + '" ใหญ่เกิน 25MB';
+      if (f.size > maxUploadBytes()) return '"' + f.name + '" ใหญ่เกิน ' + maxUploadLabel(); // 1.86
       return '';
     }
     function mimeOf(f) { return f.type || (/\.png$/i.test(f.name) ? 'image/png' : /\.webp$/i.test(f.name) ? 'image/webp' : /\.jpe?g$/i.test(f.name) ? 'image/jpeg' : 'application/pdf'); }
-    async function uploadToRelay(file, prep) {
-      var base64 = await fileToBase64(file), text;
-      try {
-        var r = await fetch(prep.relayUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ uploadToken: prep.uploadToken, base64: base64, filename: prep.uploadFileName || file.name, mimeType: mimeOf(file) }) });
-        text = await r.text();
-      } catch (e) { throw new Error('ติดต่อระบบเก็บไฟล์ไม่สำเร็จ (เครือข่ายขัดข้อง) กรุณาลองใหม่อีกครั้ง'); }
-      var j; try { j = JSON.parse(text); } catch (e) { throw new Error('ระบบเก็บไฟล์ตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง'); }
-      if (!j.ok) throw new Error(j.error || 'อัพโหลดไฟล์ไม่สำเร็จ');
-      return j.data;
-    }
     // jobs = [{itemId, file, label}] — อัพทีละไฟล์ คืนรายการที่ไม่สำเร็จ
     async function uploadJobs(certId, jobs, p, log, from) {
       var failed = [], base = from || 0, seg = (100 - base) / Math.max(1, jobs.length);
@@ -761,11 +750,10 @@
         if (j.done) continue; // 1.85: ส่งใหม่ — ข้ามไฟล์ที่สำเร็จแล้ว
         try {
           p.setProgress(s0 + seg * 0.02, 'กำลังเตรียม ' + head);
-          var fp = await apiCall('certItemFilePrepare', { certId: certId, itemId: j.itemId, fileName: j.file.name, mimeType: mimeOf(j.file), fileSize: j.file.size });
-          p.creep(s0 + seg * 0.08, s0 + seg * 0.9, estimateUploadMs(j.file.size), 'กำลังอัพโหลดไฟล์ของ ' + head + ' (' + formatBytes(j.file.size) + ')');
-          var u = await uploadToRelay(j.file, fp);
+          var fp = await apiCall('certItemFilePrepare', Object.assign({ certId: certId, itemId: j.itemId, fileName: j.file.name, mimeType: mimeOf(j.file), fileSize: j.file.size }, directUploadParams()));
+          var u = await sendPreparedFileProgress(fp, j.file, p, s0 + seg * 0.08, s0 + seg * 0.9, 'กำลังอัพโหลดไฟล์ของ ' + head + ' (' + formatBytes(j.file.size) + ')', { mimeType: mimeOf(j.file) }); // 1.86
           p.setProgress(s0 + seg * 0.94, 'กำลังบันทึก ' + head);
-          await apiCall('certItemFileFinalize', { certId: certId, itemId: j.itemId, fileId: u.fileId, fileUrl: u.url, directUrl: u.directUrl, originalName: j.file.name, mimeType: mimeOf(j.file), log: !!log });
+          await apiCall('certItemFileFinalize', { certId: certId, itemId: j.itemId, fileId: u.fileId, fileUrl: u.url, directUrl: u.directUrl, originalName: j.file.name, mimeType: mimeOf(j.file), log: !!log, via: u.via, fallbackReason: u.fallbackReason || '' });
           j.done = true;
         } catch (err) { failed.push(j.label + ': ' + (err && err.message)); }
         p.setProgress(s0 + seg);

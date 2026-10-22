@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.3.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.0.221026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -51,7 +51,7 @@
   </div>
   <div id="app-footer"></div>
 
-<script src="assets/api.js?v=1.85.3.221026"></script>
+<script src="assets/api.js?v=1.86.0.221026"></script>
 <script>
   var session = requireLogin();
   // เฉพาะ Super Admin — บทบาทอื่นไปหน้าแรกของตัวเอง
@@ -163,6 +163,7 @@
       ['ล้างข้อมูลเก่าอัตโนมัติ (Cron)', '<span class="' + (ov.cronLast ? 'ok' : 'muted') + '">' + escapeHtml(cronTxt) + '</span>'],
       ['สำรองข้อมูล (Google Drive)', backupCell(ov.backup)],
       ['อัปรูปคลังรูปภาพ 7 วัน', galleryUpCell(ov.galleryUploads)],
+      ['ส่งไฟล์ (ส่งงาน/คำสั่ง/เกียรติบัตร) 7 วัน', fileUpCell(ov.fileFallback)],
       ['สิทธิ์โฟลเดอร์คลังรูปภาพ', galleryRootCell(state.galRoot)],
       ['ไฟล์หลงในโฟลเดอร์หลักของ Drive', relayOk ? '<span class="' + (sys.relay.looseFiles ? 'warn' : 'ok') + '">' + fmtN(sys.relay.looseFiles || 0) + ' ไฟล์</span>' : '<span class="muted">—</span>'],
       ['ภาคเรียนปัจจุบัน', '<span>' + escapeHtml(state.termText || '—') + '</span>']
@@ -181,6 +182,15 @@
     $('ovAlerts').innerHTML = alerts.map(function (a) { var inner = '<i class="fa-solid ' + a[1] + '" aria-hidden="true"></i> ' + escapeHtml(a[2]); return a[3] ? '<a class="ov-alert ' + a[0] + '" href="' + escapeHtml(a[3]) + '"' + (/^https?:/.test(a[3]) ? ' target="_blank" rel="noopener"' : '') + '>' + inner + '</a>' : '<span class="ov-alert ' + a[0] + '">' + inner + '</span>'; }).join('');
   }
   // 1.82: อัปรูป 7 วันล่าสุด — ส่งตรงเข้า Google Drive / ผ่าน relay (วิธีสำรอง) + สาเหตุครั้งล่าสุด
+  // 1.86: ส่งงาน/คำสั่ง/เกียรติบัตร — นับเฉพาะครั้งที่ส่งตรงไม่ได้แล้วใช้วิธีสำรอง (relay) + สาเหตุล่าสุด
+  var UP_KIND = { submission: 'ส่งงาน', order: 'คำสั่ง', cert: 'เกียรติบัตร' };
+  function fileUpCell(f) {
+    var st = _settingsCache || {}, m = st.fileUploadMode === 'direct' ? 'ส่งตรงเท่านั้น' : st.fileUploadMode === 'relay' ? 'ผ่าน relay เท่านั้น' : 'อัตโนมัติ';
+    if (!f) return '<span class="muted">— (Worker รุ่นเก่า)</span>';
+    var h = '<span class="' + (f.count7 ? 'warn' : 'ok') + '">' + (f.count7 ? 'ใช้วิธีสำรอง (relay) ' + fmtN(f.count7) + ' ครั้ง' : 'ส่งตรงทั้งหมด ไม่ต้องใช้วิธีสำรอง') + ' · ตั้งค่า: ' + m + '</span>';
+    if (f.count7 && f.last) h += '<span class="muted" style="display:block;font-size:.8em;">ล่าสุด ' + escapeHtml(formatDateTimeThai(f.last.at)) + ' (' + escapeHtml(UP_KIND[f.last.kind] || '') + ')' + (f.last.reason ? ' — ' + escapeHtml(f.last.reason) : '') + '</span>';
+    return '<span>' + h + '</span>';
+  }
   function galleryUpCell(g) {
     if (!g) return '<span class="muted">— (ยังไม่ได้รัน SQL ชุดที่ยี่สิบสอง)</span>';
     var h = '<span class="' + (g.relay ? 'warn' : 'ok') + '">ส่งตรง ' + fmtN(g.direct) + ' · ผ่าน relay ' + fmtN(g.relay) + ' ไฟล์</span>';

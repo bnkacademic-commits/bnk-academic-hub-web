@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.85.2';
-var APP_VERSION = '1.85.3.221026';
+var WORKER_MIN_VERSION = '1.86.0';
+var APP_VERSION = '1.86.0.221026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -357,6 +357,7 @@ async function getSiteSettings() {
     });
   }
   _settingsCache = await _settingsPromise;
+  try { applyUploadMaxLabels(); } catch (e) { /* หน้าที่ยังไม่มี DOM */ } // 1.86
   return _settingsCache;
 }
 
@@ -536,6 +537,92 @@ function fileToBase64(file) {
  * คำขอของ Cloudflare Workers แผนฟรี (~10ms) ถ้าให้ Worker เป็นตัวกลางรับ-ส่งไฟล์เองจะเสี่ยงอัพโหลดไม่สำเร็จ
  * สำหรับไฟล์ขนาดใหญ่ — ขั้นตอนที่ใช้เวลานาน (อ่าน/ยิงไฟล์จริง) จึงข้าม Worker ไปเลย
  */
+// ---------- 1.86: ส่งไฟล์ตรงเข้า Google Drive (ส่งงาน / คำสั่ง / เกียรติบัตร) — relay เป็นวิธีสำรอง ----------
+// *Prepare ที่ส่ง direct + origin ไป จะได้ prep.session (ช่องอัปโหลดแบบ resumable ของ Google) + prep.uploadToken (ticket ของ relay)
+// ส่งตรงสำเร็จ → ยืนยันกับ relay ด้วย ticket (relay ตรวจโฟลเดอร์ + ตั้งแชร์) · ส่งตรงไม่ได้ (โหมดอัตโนมัติ) → ส่งผ่าน relay ด้วย ticket เดิม
+var RELAY_MAX_UPLOAD = 25 * 1024 * 1024, DIRECT_MAX_UPLOAD = 100 * 1024 * 1024;
+function directUploadParams() { return { direct: 1, origin: location.origin }; }
+// เพดานขนาดไฟล์ตามวิธีส่งที่ตั้งไว้ (ผ่าน relay เท่านั้น = 25MB · อื่นๆ = 100MB — ไฟล์เกิน 25MB ส่งได้เฉพาะแบบส่งตรง)
+function maxUploadBytes() { var s = _settingsCache; return s && !s.__fallback && s.fileUploadMode === 'relay' ? RELAY_MAX_UPLOAD : DIRECT_MAX_UPLOAD; }
+function maxUploadLabel() { return Math.round(maxUploadBytes() / 1048576) + 'MB'; }
+function applyUploadMaxLabels() { document.querySelectorAll('[data-upmax]').forEach(function (el) { el.textContent = maxUploadLabel(); }); }
+function _upSleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function _xhrPutFile(url, body, contentRange, onProg) {
+  return new Promise(function (resolve, reject) {
+    var x = new XMLHttpRequest();
+    x.open('PUT', url);
+    if (contentRange) x.setRequestHeader('Content-Range', contentRange);
+    if (onProg && body) x.upload.onprogress = function (ev) { if (ev.lengthComputable) onProg(ev.loaded); };
+    x.onload = function () {
+      if (x.status === 200 || x.status === 201) { try { resolve({ done: JSON.parse(x.responseText) }); } catch (e) { reject(new Error('Google ตอบกลับไม่ถูกต้อง')); } }
+      else if (x.status === 308) { var rg = x.getResponseHeader('Range'); resolve({ got: rg ? Number(rg.split('-')[1]) + 1 : 0 }); }
+      else reject(Object.assign(new Error('Google ตอบกลับ HTTP ' + x.status), { http: x.status }));
+    };
+    x.onerror = function () { reject(Object.assign(new Error('เชื่อมต่อ Google ไม่สำเร็จ (เครือข่ายหรือ CORS)'), { net: true })); };
+    x.send(body);
+  });
+}
+// PUT ไฟล์ไปที่ช่องอัปโหลด — เน็ตสะดุดกลางทาง = ถามว่า Google รับไปแล้วเท่าไรแล้วส่งต่อจากจุดนั้น (สูงสุด 3 ครั้ง)
+async function _putDirect(url, file, onFrac) {
+  var size = file.size, got = 0, tries = 0;
+  for (;;) {
+    try {
+      var r = await _xhrPutFile(url, got ? file.slice(got) : file, got ? 'bytes ' + got + '-' + (size - 1) + '/' + size : '', function (l) { if (onFrac) onFrac(Math.min(1, (got + l) / Math.max(1, size))); });
+      if (r.done) return r.done;
+      got = r.got;
+    } catch (e) {
+      if (++tries > 3 || (e.http && e.http >= 400 && e.http < 500 && e.http !== 408 && e.http !== 429)) throw e;
+      if (tries === 1 && !got && e.net) throw e; // ส่งตรงไม่ได้ตั้งแต่ต้น (เครือข่าย/ไฟร์วอลล์) — ไม่ต้องรอ ให้ใช้วิธีสำรองเลย
+      await _upSleep(1000 * tries);
+      try { var q = await _xhrPutFile(url, null, 'bytes */' + size); if (q.done) return q.done; got = q.got; } catch (e2) { got = 0; }
+    }
+  }
+}
+async function _relayPost(prep, payload) {
+  var text;
+  try {
+    var res = await fetch(prep.relayUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+    text = await res.text();
+  } catch (e) { throw new Error('ติดต่อระบบเก็บไฟล์ไม่สำเร็จ (เครือข่ายขัดข้อง) กรุณาลองใหม่อีกครั้ง'); }
+  var j;
+  try { j = JSON.parse(text); } catch (e) { throw new Error('ระบบเก็บไฟล์ตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง'); }
+  if (!j.ok) throw new Error(j.error || 'อัพโหลดไฟล์ไม่สำเร็จ');
+  return j.data;
+}
+// opts: filename, mimeType, onProgress(0..1 — เฉพาะส่งตรง), onRelay() (สลับไปส่งผ่าน relay) · คืน {fileId, url, directUrl, via, fallbackReason}
+async function sendPreparedFile(prep, file, opts) {
+  opts = opts || {};
+  var name = opts.filename || prep.uploadFileName || file.name, mime = opts.mimeType || file.type || 'application/octet-stream', reason = '';
+  if (prep.session) {
+    var stage = 'put';
+    try {
+      setUploadVia('direct');
+      var done = await _putDirect(prep.session, file, opts.onProgress);
+      stage = 'confirm';
+      for (var a = 0; ; a++) {
+        try { var conf = await _relayPost(prep, { uploadToken: prep.uploadToken, directFileId: done.id }); conf.via = 'direct'; return conf; }
+        catch (e) { if (a >= 2) throw e; await _upSleep(1500 * (a + 1)); }
+      }
+    } catch (e) {
+      setUploadVia('');
+      if (stage === 'confirm') throw new Error('ส่งไฟล์เข้า Google Drive แล้ว แต่ยืนยันไฟล์ไม่สำเร็จ (' + e.message + ') กรุณาส่งใหม่');
+      reason = (e && e.message) || 'ส่งตรงไม่สำเร็จ';
+      if (prep.uploadMode === 'direct') throw new Error('ส่งตรงเข้า Google Drive ไม่สำเร็จ: ' + reason + ' (ตั้งค่าไว้เป็น "ส่งตรงเท่านั้น")');
+      if (file.size > RELAY_MAX_UPLOAD) throw new Error('ส่งตรงเข้า Google Drive ไม่สำเร็จ (' + reason + ') — ไฟล์ใหญ่เกิน 25MB จึงส่งด้วยวิธีสำรองไม่ได้ กรุณาลองใหม่');
+      if (opts.onRelay) opts.onRelay();
+    }
+  } else if (prep.sessionError) reason = 'ขอช่องส่งตรงไม่สำเร็จ: ' + prep.sessionError;
+  if (file.size > RELAY_MAX_UPLOAD) throw new Error('ไฟล์มีขนาดใหญ่เกิน 25MB');
+  var r = await _relayPost(prep, { uploadToken: prep.uploadToken, base64: await fileToBase64(file), filename: name, mimeType: mime });
+  r.via = 'relay'; r.fallbackReason = reason;
+  return r;
+}
+// ใช้กับ withProgress: ส่งตรง = แถบเดินตาม % จริง · ผ่าน relay = แถบไหลตามเวลาที่ประมาณ (แบบเดิม)
+async function sendPreparedFileProgress(prep, file, p, from, to, label, opts) {
+  var relayCreep = function () { p.creep(from, to, estimateUploadMs(file.size), label); };
+  if (prep.session) p.setProgress(from, label); else relayCreep();
+  return sendPreparedFile(prep, file, Object.assign({ onProgress: function (fr) { p.setProgress(from + (to - from) * fr); }, onRelay: relayCreep }, opts || {}));
+}
 async function submitWorkFile(file, meta) {
   var prep = await apiCall('teacherUploadPrepare', {
     fileName: file.name,
@@ -547,33 +634,17 @@ async function submitWorkFile(file, meta) {
     title: meta.title,
     description: meta.description,
     customFieldValues: meta.customFieldValues,
-    replacesId: meta.replacesId || '' // 1.85: อัปโหลดทับไฟล์ที่เจ้าหน้าที่ให้แก้ไข
+    replacesId: meta.replacesId || '', // 1.85: อัปโหลดทับไฟล์ที่เจ้าหน้าที่ให้แก้ไข
+    direct: 1, origin: location.origin // 1.86: ขอช่องส่งตรงเข้า Google Drive
   });
   // ชื่อไฟล์จริงที่จะใช้อัพโหลด (ตั้งแต่ V11.7): Worker คำนวณให้แล้วจากประเภทงาน/ภาคเรียน/ปีการศึกษา (ดู uploadFileName ที่
   // teacherUploadPrepare คืนมา) แทนชื่อไฟล์เดิมจากเครื่องผู้ใช้ — เผื่อกรณี Worker เวอร์ชันเก่ายังไม่ส่งค่านี้มา จึงย้อนกลับไปใช้
   // ชื่อไฟล์เดิมได้เสมอ (fallback)
   var uploadFileName = prep.uploadFileName || file.name;
   if (meta.onStage) meta.onStage('upload');
-  var base64 = await fileToBase64(file);
-  var relayText;
-  try {
-    var relayRes = await fetch(prep.relayUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ uploadToken: prep.uploadToken, base64: base64, filename: uploadFileName, mimeType: file.type })
-    });
-    relayText = await relayRes.text();
-  } catch (e) {
-    throw new Error('ติดต่อระบบเก็บไฟล์ไม่สำเร็จ (เครือข่ายขัดข้อง) กรุณาลองใหม่อีกครั้ง');
-  }
-  var relayJson;
-  try {
-    relayJson = JSON.parse(relayText);
-  } catch (e) {
-    throw new Error('ระบบเก็บไฟล์ตอบกลับข้อมูลไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
-  }
-  if (!relayJson.ok) throw new Error(relayJson.error || 'อัพโหลดไฟล์ไม่สำเร็จ');
-  var result = relayJson.data;
+  // 1.86: ส่งตรงเข้า Google Drive (prep.session) — ไม่ได้ค่อยส่งผ่าน relay (วิธีสำรอง) · ผลรูปแบบเดียวกัน
+  var result = await sendPreparedFile(prep, file, { filename: uploadFileName, mimeType: file.type, onProgress: meta.onProgress,
+    onRelay: function () { if (meta.onStage) meta.onStage('upload'); } });
   if (meta.onStage) meta.onStage('finalize');
   return apiCall('teacherUploadFinalize', {
     submissionId: prep.submissionId,
@@ -581,7 +652,8 @@ async function submitWorkFile(file, meta) {
     fileUrl: result.url,
     directUrl: result.directUrl,
     fileName: uploadFileName,
-    mimeType: file.type
+    mimeType: file.type,
+    via: result.via, fallbackReason: result.fallbackReason || ''
   });
 }
 /**
@@ -1177,7 +1249,7 @@ function ensureSharedModals() {
         '<button type="button" class="modal-close-x" id="sharedProgressCloseX" aria-label="ปิด" hidden>✕</button>' +
         '<h3 id="sharedProgressTitle">กำลังดำเนินการ</h3>' +
         '<div id="sharedProgressBarWrap">' +
-          '<div class="progress-anim" id="sharedProgressAnim" aria-hidden="true"><span class="progress-ring"></span><i class="fa-solid fa-gear" id="sharedProgressIcon"></i></div>' +
+          '<div class="progress-anim" id="sharedProgressAnim"><span class="progress-ring" aria-hidden="true"></span><i class="fa-solid fa-gear" id="sharedProgressIcon" aria-hidden="true"></i><span class="progress-bolt" id="sharedProgressBolt" title="ส่งตรงเข้า Google Drive" aria-label="ส่งตรงเข้า Google Drive" hidden><i class="fa-solid fa-bolt" aria-hidden="true"></i></span></div>' +
           '<div class="progress-track"><div class="progress-bar-fill" id="sharedProgressBar"></div></div>' +
           '<div class="progress-label" id="sharedProgressLabel" aria-live="polite"></div>' +
           '<div class="progress-meta"><span id="sharedProgressPct"></span><span id="sharedProgressTime"></span></div>' +
@@ -1375,6 +1447,7 @@ function _showProgressModal(title, opts) {
   _progressRun.upload = !!opts.upload;
   document.getElementById('sharedProgressIcon').className = 'fa-solid ' + (opts.upload ? 'fa-cloud-arrow-up is-upload' : 'fa-gear is-spin');
   document.getElementById('sharedProgressNote').hidden = !opts.upload;
+  document.getElementById('sharedProgressBolt').hidden = true; // 1.86
   document.getElementById('sharedProgressPct').textContent = '';
   document.getElementById('sharedProgressTime').textContent = '';
   _progressRun.timer = setInterval(function () {
@@ -1402,6 +1475,8 @@ function _setBar(percent) {
   if (pct) pct.textContent = Math.round(v) + '%';
   return v;
 }
+// 1.86: ไอคอนสายฟ้าเล็กที่มุมไอคอนอัพโหลด = กำลังส่งตรงเข้า Google Drive ('' = ซ่อน — ส่งผ่าน relay ไม่แสดงอะไร)
+function setUploadVia(via) { var b = document.getElementById('sharedProgressBolt'); if (b) b.hidden = via !== 'direct'; }
 function setProgress(percent, label) {
   if (_progressRun.creep) { clearInterval(_progressRun.creep); _progressRun.creep = null; }
   _setBar(percent);

@@ -3621,3 +3621,7 @@ a.ov-alert:hover { text-decoration: underline; }
 .fic-lg { width: 52px; height: 52px; border-radius: 13px; font-size: 26px; }
 [data-theme="dark"] .fic { background: color-mix(in srgb, var(--c) 28%, var(--surface, #1e293b)); color: color-mix(in srgb, var(--c) 70%, #fff); }
 .cert-it-file .fic { vertical-align: middle; }
+/* 1.86: สายฟ้าเล็กมุมไอคอนอัพโหลด = ส่งตรงเข้า Google Drive */
+.progress-bolt { position: absolute; right: 2px; bottom: 4px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: #f59e0b; box-shadow: 0 0 0 2px var(--surface); }
+.progress-bolt[hidden] { display: none; }
+.progress-anim .progress-bolt i { font-size: 11px; color: #fff; animation: none; }

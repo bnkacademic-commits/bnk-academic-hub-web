@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.3.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.0.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -171,7 +171,7 @@
         </div>
         <div id="upCustomFields"></div>
         <div class="field">
-          <label>ไฟล์ผลงาน (สูงสุด 20 ไฟล์ต่อครั้ง ไม่เกิน 25MB ต่อไฟล์)</label>
+          <label>ไฟล์ผลงาน (สูงสุด 20 ไฟล์ต่อครั้ง ไม่เกิน <span data-upmax>100MB</span> ต่อไฟล์)</label>
           <div class="dropzone" id="dropzone" tabindex="0">
             <div><i class="fas fa-paperclip ui-icon" aria-hidden="true"></i> ลากไฟล์มาวางที่นี่ หรือกดเพื่อเลือกไฟล์</div>
             <input type="file" id="upFiles" multiple hidden />
@@ -224,7 +224,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.85.3.221026"></script>
+  <script src="assets/api.js?v=1.86.0.221026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -402,6 +402,9 @@
 
     function addFiles(fileList) {
       var incoming = Array.from(fileList);
+      // 1.86: ตัดไฟล์ที่ใหญ่เกินเพดานตั้งแต่ตอนเลือก (ส่งตรงได้ถึง 100MB · ตั้งค่า "ผ่าน relay เท่านั้น" = 25MB)
+      var big = incoming.filter(function (f) { return f.size > maxUploadBytes(); });
+      if (big.length) { showToast('ไฟล์ใหญ่เกิน ' + maxUploadLabel() + ': ' + big.map(function (f) { return f.name; }).join(', '), true); incoming = incoming.filter(function (f) { return big.indexOf(f) === -1; }); }
       var room = MAX_UPLOAD_FILES - selectedFiles.length;
       if (incoming.length > room) {
         showToast('ส่งได้สูงสุด ' + MAX_UPLOAD_FILES + ' ไฟล์ต่อครั้ง — ' + (room > 0 ? 'รับไว้ ' + room + ' ไฟล์แรก ส่วนที่เหลือส่งเพิ่มในชุดเดิมได้ภายหลัง' : 'เลือกครบแล้ว ส่งชุดนี้ก่อนแล้วค่อยเพิ่มไฟล์ในชุดเดิมได้'), true);
@@ -544,7 +547,8 @@
               onStage: function (stage) {
                 if (stage === 'upload') p.creep(s0 + seg * 0.05, s0 + seg * 0.92, estimateUploadMs(f.size), 'กำลังอัพโหลด ' + head + ' (' + formatBytes(f.size) + ')');
                 else if (stage === 'finalize') p.setProgress(s0 + seg * 0.95, 'กำลังบันทึก ' + head);
-              }
+              },
+              onProgress: function (fr) { p.setProgress(s0 + seg * (0.05 + 0.87 * fr)); } // 1.86: ส่งตรง = % จริง
             });
             sentOk.push(f);
           } catch (err) {
@@ -1069,14 +1073,15 @@
     document.getElementById('clReplaceFile').addEventListener('change', async function () {
       var f = this.files && this.files[0], id = clReplaceId; this.value = ''; clReplaceId = '';
       if (!f || !id) return;
-      if (f.size > 25 * 1024 * 1024) { showToast('ไฟล์มีขนาดใหญ่เกิน 25MB', true); return; }
+      if (f.size > maxUploadBytes()) { showToast('ไฟล์มีขนาดใหญ่เกิน ' + maxUploadLabel(), true); return; } // 1.86
       var r = await withProgress('กำลังส่งไฟล์ที่แก้ไข', async function (p) {
         await submitWorkFile(f, {
           replacesId: id,
           onStage: function (stage) {
             if (stage === 'upload') p.creep(5, 92, estimateUploadMs(f.size), 'กำลังอัพโหลด ' + f.name + ' (' + formatBytes(f.size) + ')');
             else if (stage === 'finalize') p.setProgress(95, 'กำลังบันทึก');
-          }
+          },
+          onProgress: function (fr) { p.setProgress(5 + 87 * fr); } // 1.86
         });
         return true;
       }, { successLabel: 'ส่งไฟล์ที่แก้ไขแล้ว — รอเจ้าหน้าที่ตรวจอีกครั้ง', upload: true });

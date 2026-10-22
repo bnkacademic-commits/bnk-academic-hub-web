@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.3.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.86.0.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -71,10 +71,10 @@
           <button class="btn btn-primary" type="submit">บันทึก</button>
         </form>
         <!-- 1.52.121026: โลโก้แบบยาว — แสดงแทน "โลโก้ + ชื่อเว็บ" เฉพาะแถบด้านบนสุดของทุกหน้า (หน้าเข้าสู่ระบบ/ไอคอนแท็บยังใช้โลโก้และไอคอนเดิม)
-             1.85.3.221026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
+             1.86.0.221026: เปลี่ยนชื่อเรียกเป็น "Banner เว็บไซต์" -->
         <div class="wide-logo-block">
           <div class="mu-section-title">Banner เว็บไซต์</div>
-          <!-- 1.85.3.221026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
+          <!-- 1.86.0.221026: รวมคำแนะนำ Banner ไว้ที่การ์ดนี้ที่เดียว (เดิมมีย่อหน้า hint แยกใต้ปุ่มอีกจุด) -->
           <div class="banner-size-card">
             <div class="bsc-box"><span>960 × 160 px</span></div>
             <ul class="bsc-list">
@@ -108,7 +108,7 @@
         </div>
       </div>
 
-      <!-- 1.85.3.221026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
+      <!-- 1.86.0.221026: รูปหน้าเข้าสู่ระบบ — แสดงแทน "โลโก้ + ชื่อเว็บ + คำบรรยาย" (หัวการ์ดสีม่วง) ในหน้าเข้าสู่ระบบ
            กรอบ 3:1 ผลลัพธ์ 1080×360 (การ์ดล็อกอินกว้าง 360 px -> คมชัดบนจอความละเอียดสูง 3 เท่า) -->
       <div class="card" id="loginHeroCard">
         <div class="section-title"><i class="fas fa-right-to-bracket ui-icon" style="font-size:17px" aria-hidden="true"></i> รูปหน้าเข้าสู่ระบบ</div>
@@ -229,6 +229,20 @@
             <option value="direct">ส่งตรงเท่านั้น — ไม่ใช้วิธีสำรอง (ใช้ทดสอบ: ส่งตรงไม่ได้จะขึ้นข้อผิดพลาด)</option>
           </select>
           <div class="hint" style="margin-top:6px;">ส่งตรง = เร็ว ไฟล์ใหญ่ได้ ส่งต่อจากจุดเดิมเมื่อเน็ตสะดุด · ผ่าน relay = ช้ากว่า ไฟล์ละไม่เกิน 25 MB</div>
+        </div>
+      </div>
+
+      <!-- 1.86: วิธีส่งไฟล์งาน/คำสั่ง/เกียรติบัตร (Super Admin) -->
+      <div class="card" id="fileUploadCard">
+        <div class="section-title"><i class="fas fa-bolt ui-icon" style="font-size:17px" aria-hidden="true"></i> วิธีส่งไฟล์ (ส่งงาน / คำสั่ง / เกียรติบัตร)</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:14px;">ส่งตรงเข้า Google Drive ของบัญชีที่ติดตั้ง relay — relay แค่ออกช่องอัปโหลดและยืนยันไฟล์ ไม่ต้องรับตัวไฟล์ · หน้าภาพรวมระบบบอกจำนวนครั้งที่ต้องใช้วิธีสำรอง 7 วันล่าสุด · รูปโปรไฟล์/โลโก้/ไฟล์แนบแจ้งปัญหายังส่งผ่าน relay ตามเดิม</p>
+        <div class="field" style="margin:0; max-width:520px;">
+          <select id="setFileUploadMode" aria-label="วิธีส่งไฟล์">
+            <option value="auto">อัตโนมัติ — ส่งตรง ไม่ได้ค่อยผ่าน relay (แนะนำ)</option>
+            <option value="direct">ส่งตรงเท่านั้น — ไม่ใช้วิธีสำรอง</option>
+            <option value="relay">ผ่าน relay เท่านั้น — แบบเดิม (เครือข่ายส่งตรงไม่ได้)</option>
+          </select>
+          <div class="hint" style="margin-top:6px;">ส่งตรง = เร็ว ไฟล์ละไม่เกิน 100 MB ส่งต่อจากจุดเดิมเมื่อเน็ตสะดุด รับคนส่งพร้อมกันได้มาก · ผ่าน relay = ช้ากว่า ไฟล์ละไม่เกิน 25 MB</div>
         </div>
       </div>
 
@@ -1183,7 +1197,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.85.3.221026"></script>
+  <script src="assets/api.js?v=1.86.0.221026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1327,6 +1341,8 @@
       document.getElementById('setMemoEnabled').checked = isMemoEnabled(s);
       var gum = document.getElementById('setGalleryUploadMode');
       if (gum) gum.value = s.galleryUploadMode === 'direct' ? 'direct' : 'auto';
+      var fum = document.getElementById('setFileUploadMode'); // 1.86
+      if (fum) fum.value = s.fileUploadMode === 'direct' || s.fileUploadMode === 'relay' ? s.fileUploadMode : 'auto';
       var retSel = document.getElementById('setOrderRetention');
       if (retSel) {
         var ry = String(Number(s.orderRetentionYears || 0));
@@ -1372,6 +1388,21 @@
         if (!ok) { sel.value = prev; return; }
         var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { galleryUploadMode: v }); }, { successLabel: 'บันทึกวิธีอัปรูปแล้ว' });
         if (r.ok) resetSettingsCache(); else sel.value = prev;
+      });
+    })();
+    // 1.86: วิธีส่งไฟล์ (ส่งงาน/คำสั่ง/เกียรติบัตร) — บันทึกทันทีเมื่อเปลี่ยน
+    (function () {
+      var sel = document.getElementById('setFileUploadMode');
+      if (!sel) return;
+      var prev = 'auto';
+      sel.addEventListener('focus', function () { prev = sel.value; });
+      sel.addEventListener('change', async function () {
+        var v = sel.value;
+        var msg = { auto: 'ตั้งเป็น "อัตโนมัติ"? (ส่งตรงไม่ได้จะส่งผ่าน relay แทน)', direct: 'ตั้งเป็น "ส่งตรงเท่านั้น"? ถ้าส่งตรงไม่ได้ ครูจะส่งไฟล์ไม่ได้จนกว่าจะเปลี่ยนกลับ', relay: 'ตั้งเป็น "ผ่าน relay เท่านั้น"? ไฟล์ละไม่เกิน 25 MB และส่งช้ากว่าแบบส่งตรง' };
+        var ok = await askConfirm(msg[v], 'ยืนยันวิธีส่งไฟล์');
+        if (!ok) { sel.value = prev; return; }
+        var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { fileUploadMode: v }); }, { successLabel: 'บันทึกวิธีส่งไฟล์แล้ว' });
+        if (r.ok) { resetSettingsCache(); prev = v; } else sel.value = prev;
       });
     })();
     // ---------- 1.59: ลำดับเมนูข้าง ----------
@@ -1600,7 +1631,7 @@
         } else { errBox.textContent = r.error.message; errBox.hidden = false; }
       });
     }
-    // 1.85.3.221026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
+    // 1.86.0.221026: ตัวอย่างรูปหน้าเข้าสู่ระบบ (การ์ดจำลองในแท็บทั่วไป)
     function renderLoginHeroPreview(url) {
       var box = document.getElementById('loginHeroPreview');
       box.classList.toggle('has-image', !!url);
@@ -2262,7 +2293,7 @@
         }
         ctx.putImageData(im, 0, 0);
       }
-      // 1.85.3.221026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
+      // 1.86.0.221026: โหมดรูปหน้าเข้าสู่ระบบ — พื้นขาว (ใช้ทั้งรูปแล้วมีที่ว่างเป็นสีขาว) ไม่ตัดขอบ ไฟล์ JPEG (รูปภาพประกอบ PNG ใหญ่เกินเพดาน)
       function exportLogin() {
         var c = document.createElement('canvas'); c.width = WIDE_W; c.height = WIDE_H;
         var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, WIDE_W, WIDE_H);
