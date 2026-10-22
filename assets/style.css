@@ -632,6 +632,7 @@ input[type="color"] {
   padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
   margin-top: 8px; font-size: 0.84rem; background: var(--surface-2); word-break: break-all;
 }
+.file-chip-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .file-chip-remove {
   cursor: pointer; color: var(--danger); font-weight: 700; font-size: 1.1rem;
   background: none; border: none; line-height: 1; flex-shrink: 0; padding: 0 2px;
@@ -3509,6 +3510,7 @@ a.ov-alert:hover { text-decoration: underline; }
 .rv-th { width: 38px; height: 38px; flex: none; border-radius: 8px; overflow: hidden; background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
 .rv-th img { width: 100%; height: 100%; object-fit: cover; }
 .rv-th i { font-size: 18px; }
+.rv-th .fic { width: 100%; height: 100%; border-radius: 0; }
 .rv-new { font-style: normal; background: var(--primary); color: #fff; border-radius: 99px; padding: 0 7px; font-size: .7rem; margin-left: 4px; }
 .rv-seg { display: flex; background: var(--surface-2); border-radius: 9px; padding: 3px; gap: 3px; flex: none; }
 .rv-seg button { border: 0; background: transparent; border-radius: 7px; padding: 5px 9px; font: inherit; font-size: .78rem; font-weight: 700; color: var(--text-muted); cursor: pointer; white-space: nowrap; box-shadow: none; }
@@ -3531,6 +3533,7 @@ a.ov-alert:hover { text-decoration: underline; }
 /* 1.85: หน้าแรกครู — ไฟล์ที่ต้องแก้ไข */
 .cl-files { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
 .cl-ffix { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 6px 8px; }
+.cl-ffix > .fic { flex: none; }
 .cl-ffix > i { color: #dc2626; font-size: 18px; flex: none; width: 22px; text-align: center; }
 .cl-ffix.extra > i { color: var(--text-muted); }
 .cl-ffn { flex: 1 1 150px; min-width: 0; display: flex; flex-direction: column; font-size: .84rem; }
@@ -3610,3 +3613,11 @@ a.ov-alert:hover { text-decoration: underline; }
 .pop-acts { display: flex; gap: 6px; flex: none; }
 .ann-pop-lbl { font-weight: 700; font-size: .86rem; }
 .ann-pop[hidden] { display: none; }
+
+/* 1.85.3: ไอคอนชนิดไฟล์ แบบ 2 */
+.fic { --c: #64748b; width: 34px; height: 34px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; flex: none; font-size: 17px; line-height: 1; color: var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface, #fff)); }
+.fic-sm { width: 28px; height: 28px; border-radius: 7px; font-size: 14px; }
+.fic-xs { width: 22px; height: 22px; border-radius: 6px; font-size: 11.5px; }
+.fic-lg { width: 52px; height: 52px; border-radius: 13px; font-size: 26px; }
+[data-theme="dark"] .fic { background: color-mix(in srgb, var(--c) 28%, var(--surface, #1e293b)); color: color-mix(in srgb, var(--c) 70%, #fff); }
+.cert-it-file .fic { vertical-align: middle; }

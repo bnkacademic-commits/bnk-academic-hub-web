@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.2.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.3.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -224,7 +224,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.85.2.221026"></script>
+  <script src="assets/api.js?v=1.85.3.221026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -390,7 +390,7 @@
       if (selectedFiles.length === 0) { wrap.innerHTML = ''; return; }
       wrap.innerHTML = '<div class="hint" style="margin:8px 0 2px;">เลือกแล้ว ' + selectedFiles.length + '/' + MAX_UPLOAD_FILES + ' ไฟล์</div>' +
         selectedFiles.map(function (f, i) {
-          return '<div class="file-chip"><span>' + escapeHtml(f.name) + '</span><button type="button" class="file-chip-remove" data-idx="' + i + '">&times;</button></div>';
+          return '<div class="file-chip"><span class="file-chip-name">' + fileTypeIconHtml(f.name, f.type, 'xs') + '<span>' + escapeHtml(f.name) + '</span></span><button type="button" class="file-chip-remove" data-idx="' + i + '">&times;</button></div>';
         }).join('');
       wrap.querySelectorAll('.file-chip-remove').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -678,19 +678,7 @@
         '<span class="y">' + escapeHtml(s.academicYear) + '</span></div>';
     }
     // ไอคอนตามชนิดไฟล์ (ดูจาก mimeType / นามสกุลชื่อไฟล์)
-    function fileIconHtml(s) {
-      var n = String(s.title || s.fileName || '').toLowerCase(), m = String(s.mimeType || '').toLowerCase();
-      var ic = 'fa-file', col = 'var(--text-muted)';
-      if (/pdf/.test(m) || /\.pdf$/.test(n)) { ic = 'fa-file-pdf'; col = '#dc2626'; }
-      else if (/^image\//.test(m) || /\.(jpe?g|png|gif|webp|heic|bmp)$/.test(n)) { ic = 'fa-file-image'; col = '#16a34a'; }
-      else if (/word|document/.test(m) || /\.docx?$/.test(n)) { ic = 'fa-file-word'; col = '#2563eb'; }
-      else if (/sheet|excel/.test(m) || /\.(xlsx?|csv)$/.test(n)) { ic = 'fa-file-excel'; col = '#15803d'; }
-      else if (/presentation|powerpoint/.test(m) || /\.pptx?$/.test(n)) { ic = 'fa-file-powerpoint'; col = '#ea580c'; }
-      else if (/^video\//.test(m) || /\.(mp4|mov|avi|mkv)$/.test(n)) { ic = 'fa-file-video'; col = '#7c3aed'; }
-      else if (/^audio\//.test(m) || /\.(mp3|wav|m4a)$/.test(n)) { ic = 'fa-file-audio'; col = '#db2777'; }
-      else if (/zip|compressed/.test(m) || /\.(zip|rar|7z)$/.test(n)) { ic = 'fa-file-zipper'; col = '#a16207'; }
-      return '<i class="fa-solid ' + ic + ' sub-file-ic" style="color:' + col + '" aria-hidden="true"></i>';
-    }
+    function fileIconHtml(s) { return fileTypeIconHtml(s.title || s.fileName, s.mimeType, 'sm'); } // 1.85.3
     function groupDeptChip(g) {
       var d = g.categoryId ? _catDeptMap[g.categoryId] : '';
       return d ? '<span class="ordc-chip dept-c"' + deptColorAttr(d) + '>' + escapeHtml(groupLabel(d)) + '</span>' : '';
@@ -1062,7 +1050,7 @@
         // 1.85: ตรวจทีละไฟล์ — ไฟล์ที่ต้องแก้ (อัปโหลดทับ) · ขอไฟล์เพิ่ม (เพิ่มไฟล์) · ผ่านแล้ว N ไฟล์
         if ((v.fix && v.fix.length) || v.extra) {
           var h = (v.fix || []).map(function (f) {
-            return '<div class="cl-ffix"><i class="fa-solid ' + (fileKindOf(f.name, f.mimeType) === 'image' ? 'fa-file-image' : /pdf/i.test(f.mimeType + f.name) ? 'fa-file-pdf' : 'fa-file-lines') + '" aria-hidden="true"></i><span class="cl-ffn"><b>' + escapeHtml(f.name) + '</b><small>' + escapeHtml(f.note) + '</small></span>' +
+            return '<div class="cl-ffix">' + fileTypeIconHtml(f.name, f.mimeType, 'sm') + '<span class="cl-ffn"><b>' + escapeHtml(f.name) + '</b><small>' + escapeHtml(f.note) + '</small></span>' +
               '<button type="button" class="btn btn-sm cl-rep-btn" data-cl-rep="' + escapeHtml(f.id) + '"><i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i> อัปโหลดทับ</button></div>';
           }).join('');
           if (v.extra) h += '<div class="cl-ffix extra"><i class="fa-solid fa-plus" aria-hidden="true"></i><span class="cl-ffn"><b>ขอไฟล์เพิ่ม</b><small>' + escapeHtml(v.extra) + (v.added ? ' · ส่งเพิ่มแล้ว ' + v.added + ' ไฟล์' : '') + '</small></span>' +

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.2.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.3.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.85.2.221026"></script>
+  <script src="assets/api.js?v=1.85.3.221026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -300,15 +300,7 @@
       var summer = g.semester === 'summer';
       return '<div class="ordc-date term" aria-hidden="true"><span class="m">ภาคเรียน</span><span class="d' + (summer ? ' long' : '') + '">' + (summer ? 'ฤดูร้อน' : escapeHtml(g.semester)) + '</span><span class="y">' + escapeHtml(g.academicYear) + '</span></div>';
     }
-    function sumFileIcon(s) {
-      var k = fileKindOf(s.title || s.fileName, s.mimeType), n = String(s.title || s.fileName || '').toLowerCase();
-      var ic = 'fa-file', col = 'var(--text-muted)';
-      if (k === 'pdf') { ic = 'fa-file-pdf'; col = '#dc2626'; }
-      else if (k === 'image') { ic = 'fa-file-image'; col = '#16a34a'; }
-      else if (k === 'video') { ic = 'fa-file-video'; col = '#7c3aed'; }
-      else if (k === 'office') { var l = officeKindLabel(n); ic = l === 'Excel' ? 'fa-file-excel' : l === 'PowerPoint' ? 'fa-file-powerpoint' : 'fa-file-word'; col = l === 'Excel' ? '#15803d' : l === 'PowerPoint' ? '#ea580c' : '#2563eb'; }
-      return '<i class="fa-solid ' + ic + ' sub-file-ic" style="color:' + col + '" aria-hidden="true"></i>';
-    }
+    function sumFileIcon(s) { return fileTypeIconHtml(s.title || s.fileName, s.mimeType, 'sm'); } // 1.85.3
     function buildSumGroups(rows) {
       var map = {}, order = [];
       rows.forEach(function (s) {
@@ -542,7 +534,6 @@
       var n = unreviewedRows(a).length;
       return n ? '<div class="rv-allrow"><button type="button" class="btn btn-sm rv-all" data-rv-all="' + escapeHtml(a.eventId) + '"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ตรวจแล้วทั้งหมด (' + n + ')</button></div>' : '';
     }
-    function rvIcon(mime, name) { var n = String(name || '').toLowerCase(); return /pdf/.test(mime) || /\.pdf$/.test(n) ? 'fa-file-pdf' : /^image\//.test(mime || '') ? 'fa-file-image' : /word|\.docx?$/.test(mime + n) ? 'fa-file-word' : 'fa-file'; }
     var RV_CHIPS = { reviewed: ['ขอบคุณค่ะ', 'ขอบคุณครับ', 'เรียบร้อยดีมาก'], revise: ['รบกวนเพิ่มลายเซ็น', 'รบกวนแนบไฟล์ให้ครบ', 'รบกวนตรวจสอบภาคเรียนอีกครั้ง'] };
     var rvModal = document.getElementById('reviewModal'), rvCur = null;
     function rvStatus() {
@@ -607,7 +598,8 @@
       fw.innerHTML = (pf && cur.length > 1 ? '<div class="rv-allok"><button type="button" class="linklike" id="rvAllOk"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ผ่านทุกไฟล์</button></div>' : '') + cur.map(function (f) {
         var i = files.indexOf(f), st = rvCur.st[f.id], isNew = rvCur.since && f.uploadedAt > rvCur.since, kind = fileKindOf(f.title || f.fileName, f.mimeType);
         var fid = driveFileId(f.fileUrl);
-        var th = kind === 'image' && fid ? '<img src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(fid) + '&sz=w120" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement(\'i\'),{className:\'fa-solid fa-file-image\'}))" />' : '<i class="fa-solid ' + rvIcon(f.mimeType, f.fileName) + '" aria-hidden="true"></i>';
+        var fic = fileTypeIconHtml(f.title || f.fileName, f.mimeType); // 1.85.3
+        var th = kind === 'image' && fid ? '<img src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(fid) + '&sz=w120" alt="" loading="lazy" referrerpolicy="no-referrer" data-fb="' + escapeHtml(fic) + '" onerror="this.outerHTML=this.getAttribute(\'data-fb\')" />' : fic;
         var old = olds(f);
         return '<div class="rv-frow' + (pf ? (st.state === 'fix' ? ' fix' : ' ok') : '') + '">' +
           '<div class="rv-fh"><button type="button" class="rv-file" data-rv-file="' + i + '" title="ดูไฟล์"><span class="rv-th">' + th + '</span><span class="rv-fn">' + escapeHtml(f.title || f.fileName) + (isNew ? ' <em class="rv-new">ใหม่</em>' : '') + '</span><span class="rv-fd">' + escapeHtml(formatDateThai(f.uploadedAt)) + '</span></button>' +

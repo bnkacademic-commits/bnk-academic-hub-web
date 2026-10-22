@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '1.85.2';
-var APP_VERSION = '1.85.2.221026';
+var APP_VERSION = '1.85.3.221026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1900,6 +1900,30 @@ function fileKindOf(name, mime) {
   if (/^audio\//.test(m) || /\.(mp3|wav|m4a|ogg)$/.test(n)) return 'video';
   return m || n ? 'other' : 'pdf';
 }
+// 1.85.3: ไอคอนชนิดไฟล์ (แบบ 2 พื้นสีอ่อน + ไอคอนไฟล์สีประจำชนิด) ใช้ร่วมทุกหน้า
+var FILE_TYPE_ICONS = {
+  word: ['fa-file-word', '#2563eb', 'Word'], excel: ['fa-file-excel', '#16a34a', 'Excel'],
+  ppt: ['fa-file-powerpoint', '#ea580c', 'PowerPoint'], pdf: ['fa-file-pdf', '#dc2626', 'PDF'],
+  image: ['fa-image', '#7c3aed', 'รูปภาพ'], video: ['fa-file-video', '#db2777', 'วิดีโอ'],
+  audio: ['fa-file-audio', '#0891b2', 'เสียง'], zip: ['fa-file-zipper', '#a16207', 'ไฟล์บีบอัด'],
+  other: ['fa-file-lines', '#64748b', 'ไฟล์']
+};
+function fileTypeKey(name, mime) {
+  var n = String(name || '').toLowerCase(), m = String(mime || '').toLowerCase();
+  if (/pdf/.test(m) || /\.pdf$/.test(n)) return 'pdf';
+  if (/^image\//.test(m) || /\.(jpe?g|png|gif|webp|bmp|svg|heic|heif|tiff?)$/.test(n)) return 'image';
+  if (/presentation|powerpoint/.test(m) || /\.(pptx?|ppsx?|potx?|odp)$/.test(n)) return 'ppt';
+  if (/spreadsheet|excel/.test(m) || /\.(xlsx?|xlsm|xltx?|csv|ods)$/.test(n)) return 'excel';
+  if (/wordprocessing|msword|opendocument\.text|rtf/.test(m) || /\.(docx?|dotx?|odt|rtf)$/.test(n)) return 'word';
+  if (/^video\//.test(m) || /\.(mp4|mov|m4v|webm|avi|mkv)$/.test(n)) return 'video';
+  if (/^audio\//.test(m) || /\.(mp3|wav|m4a|ogg)$/.test(n)) return 'audio';
+  if (/zip|compressed|rar/.test(m) || /\.(zip|rar|7z)$/.test(n)) return 'zip';
+  return m || n ? 'other' : 'pdf';
+}
+function fileTypeIconHtml(name, mime, size) {
+  var k = fileTypeKey(name, mime), t = FILE_TYPE_ICONS[k];
+  return '<span class="fic fic-' + k + (size ? ' fic-' + size : '') + '" style="--c:' + t[1] + '" title="' + t[2] + '" aria-hidden="true"><i class="fa-solid ' + t[0] + '"></i></span>';
+}
 function driveFileId(url) {
   var u = String(url || '');
   var m = /\/(?:file|document|spreadsheets|presentation|drawings|forms)\/(?:u\/\d+\/)?d\/([A-Za-z0-9_-]{10,})/.exec(u) ||
@@ -1964,7 +1988,7 @@ function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav, kind) {
       // 1.72: ลิงก์รูปตรง + ภาพย่อไม่ได้ทั้งคู่ -> ใช้ตัวพรีวิวของ Google Drive (iframe) เป็นทางสุดท้าย
       var wrap = img.parentNode, fid = driveFileId(openUrl || previewUrl);
       wrap.outerHTML = fid ? '<iframe class="file-preview-iframe" src="https://drive.google.com/file/d/' + fid + '/preview" title="' + escapeHtml(title || 'พรีวิวไฟล์') + '" loading="eager"></iframe>'
-        : _filePreviewDlPanel('fa-file-image', 'แสดงรูปตัวอย่างไม่ได้', 'รูปนี้อาจเป็นชนิดที่เบราว์เซอร์แสดงไม่ได้ (เช่น HEIC) หรือยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์" — ดาวน์โหลดไปเปิดในเครื่องได้เลย', downloadUrl, openUrl);
+        : _filePreviewDlPanel(fileTypeIconHtml('x.jpg', 'image/jpeg', 'lg'), 'แสดงรูปตัวอย่างไม่ได้', 'รูปนี้อาจเป็นชนิดที่เบราว์เซอร์แสดงไม่ได้ (เช่น HEIC) หรือยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์" — ดาวน์โหลดไปเปิดในเครื่องได้เลย', downloadUrl, openUrl);
     });
     img.addEventListener('load', function () { img.classList.add('loaded'); });
   }
@@ -1981,7 +2005,7 @@ function openFilePreview(previewUrl, title, openUrl, downloadUrl, nav, kind) {
 }
 
 function _filePreviewDlPanel(icon, heading, text, downloadUrl, openUrl) {
-  return '<div class="file-preview-dlpanel"><i class="fa-solid ' + icon + '" aria-hidden="true"></i>' +
+  return '<div class="file-preview-dlpanel">' + (icon.charAt(0) === '<' ? icon : '<i class="fa-solid ' + icon + '" aria-hidden="true"></i>') +
     '<div class="fp-dl-h">' + escapeHtml(heading) + '</div><p>' + escapeHtml(text) + '</p>' +
     (downloadUrl ? '<a class="btn btn-primary file-preview-dl-big" href="' + escapeHtml(downloadUrl) + '" target="_blank" rel="noopener" download><i class="fa-solid fa-download"></i> ดาวน์โหลดไฟล์</a>' : '') +
     (!downloadUrl && openUrl ? '<a class="btn btn-secondary" href="' + escapeHtml(openUrl) + '" target="_blank" rel="noopener">เปิดไฟล์</a>' : '') +
@@ -1997,11 +2021,11 @@ function _filePreviewBodyHtml(previewUrl, title, openUrl, downloadUrl, kind) {
   if ((kind === 'office' || kind === 'other') && id) kind = 'pdf';
   if (kind === 'office') {
     var lbl = officeKindLabel(title);
-    var ic = lbl === 'Excel' ? 'fa-file-excel' : lbl === 'PowerPoint' ? 'fa-file-powerpoint' : 'fa-file-word';
-    return _filePreviewDlPanel(ic + ' office-' + lbl.toLowerCase(), 'ไฟล์ ' + lbl + ' — ดาวน์โหลดไปเปิดในคอมพิวเตอร์', 'ไฟล์ ' + lbl + ' แสดงตัวอย่างบนเว็บแล้วรูปแบบเอกสารจะเพี้ยน จึงให้ดาวน์โหลดไปเปิดด้วยโปรแกรม ' + lbl + ' ในเครื่องแทน', downloadUrl, openUrl);
+    var ic = fileTypeIconHtml(lbl === 'Excel' ? 'x.xlsx' : lbl === 'PowerPoint' ? 'x.pptx' : 'x.docx', '', 'lg'); // 1.85.3
+    return _filePreviewDlPanel(ic, 'ไฟล์ ' + lbl + ' — ดาวน์โหลดไปเปิดในคอมพิวเตอร์', 'ไฟล์ ' + lbl + ' แสดงตัวอย่างบนเว็บแล้วรูปแบบเอกสารจะเพี้ยน จึงให้ดาวน์โหลดไปเปิดด้วยโปรแกรม ' + lbl + ' ในเครื่องแทน', downloadUrl, openUrl);
   }
   if (kind === 'other') {
-    return _filePreviewDlPanel('fa-file', 'ไฟล์ชนิดนี้แสดงตัวอย่างไม่ได้', 'ดาวน์โหลดไปเปิดด้วยโปรแกรมในเครื่องได้เลย', downloadUrl, openUrl);
+    return _filePreviewDlPanel(fileTypeIconHtml(title, '', 'lg'), 'ไฟล์ชนิดนี้แสดงตัวอย่างไม่ได้', 'ดาวน์โหลดไปเปิดด้วยโปรแกรมในเครื่องได้เลย', downloadUrl, openUrl);
   }
   return '<iframe class="file-preview-iframe" src="' + escapeHtml(previewUrl) + '" title="' + escapeHtml(title || 'พรีวิวไฟล์') + '" allow="autoplay" loading="eager"></iframe>';
 }

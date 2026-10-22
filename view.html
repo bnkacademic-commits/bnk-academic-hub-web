@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.85.2.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.85.3.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -64,7 +64,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.85.2.221026"></script>
+  <script src="assets/api.js?v=1.85.3.221026"></script>
   <script>
     mountFooter();
     applyBranding();
@@ -118,22 +118,6 @@
       var e = entries[i]; if (!e) return;
       openFilePreview(e.previewUrl, e.title, '', '', entries.length > 1 ? { index: i, total: entries.length, go: function (j) { showPreview(entries, j); } } : null, e.kind);
     }
-    function fileIconOf(name, mime) {
-      var n = String(name || '').toLowerCase(), m = String(mime || '').toLowerCase();
-      if (/pdf/.test(m)) return ['fa-file-pdf', 'pdf'];
-      if (/^image\//.test(m)) return ['fa-file-image', 'img'];
-      if (/^video\//.test(m)) return ['fa-file-video', 'vid'];
-      if (/presentation|powerpoint/.test(m)) return ['fa-file-powerpoint', 'ppt'];
-      if (/spreadsheet|excel/.test(m)) return ['fa-file-excel', 'xls'];
-      if (/wordprocessing|msword/.test(m)) return ['fa-file-word', 'doc'];
-      if (/\.pdf$/.test(n)) return ['fa-file-pdf', 'pdf'];
-      if (/\.(jpe?g|png|gif|webp|bmp|heic|heif|svg|tiff?)$/.test(n)) return ['fa-file-image', 'img'];
-      if (/\.(docx?|odt|rtf)$/.test(n)) return ['fa-file-word', 'doc'];
-      if (/\.(xlsx?|xlsm|csv|ods)$/.test(n)) return ['fa-file-excel', 'xls'];
-      if (/\.(pptx?|ppsx?|odp)$/.test(n)) return ['fa-file-powerpoint', 'ppt'];
-      if (/\.(mp4|mov|m4v|webm|avi|mkv)$/.test(n)) return ['fa-file-video', 'vid'];
-      return ['fa-file-lines', 'gen'];
-    }
     function thumbHtml(id, alt) {
       return id ? '<img class="vmf-img" src="https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w640" data-fallback="https://lh3.googleusercontent.com/d/' + encodeURIComponent(id) + '=w640" alt="' + escapeHtml(alt) + '" referrerpolicy="no-referrer" loading="lazy" />'
         : '<div class="no-img"><i class="fa-solid fa-award" aria-hidden="true"></i></div>';
@@ -186,9 +170,9 @@
       // หลายไฟล์: รายการ 2 คอลัมน์ใต้ตัวแสดง กดเลือกไฟล์ไหนก็แสดงไฟล์นั้น
       if (box.items.length > 1) {
         html += '<div class="vlg-list">' + box.items.map(function (x, i) {
-          var ic = fileIconOf(x.fileName, x.mimeType), on = i === st.page;
+          var on = i === st.page;
           return '<button type="button" class="vlg-li' + (on ? ' on' : '') + '" data-pick="' + i + '"' + (on ? ' aria-current="true"' : '') + '>' +
-            '<span class="vsl-ic ic-' + ic[1] + '"><i class="fa-solid ' + ic[0] + '" aria-hidden="true"></i></span>' +
+            fileTypeIconHtml(x.fileName, x.mimeType, 'sm') +
             '<span class="vlg-li-txt"><b>' + escapeHtml(x.title) + '</b><small>' + (on ? '<span class="vlg-now">กำลังแสดง</span> · ' : '') + escapeHtml(formatDateThai(x.uploadedAt)) + '</small></span></button>';
         }).join('') + '</div>';
       }
@@ -214,8 +198,8 @@
       var n = box.items.length, show = st.all ? n : Math.min(n, SMALL_SHOW);
       var html = '<div class="vsl">';
       for (var i = 0; i < show; i++) {
-        var it = box.items[i], e = box.entries[i], ic = fileIconOf(it.fileName, it.mimeType);
-        html += '<div class="vsl-r"><span class="vsl-ic ic-' + ic[1] + '"><i class="fa-solid ' + ic[0] + '" aria-hidden="true"></i></span>' +
+        var it = box.items[i], e = box.entries[i];
+        html += '<div class="vsl-r">' + fileTypeIconHtml(it.fileName, it.mimeType) +
           '<div class="vsl-txt"><div class="vsl-t">' + escapeHtml(it.title) + '</div><div class="vsl-m">' + escapeHtml([formatDateThai(it.uploadedAt), customFieldsText(it.customFieldValues)].filter(Boolean).join(' · ')) + '</div></div>' +
           (e && (e.id || it.fileUrl) ? '<button type="button" class="vsl-eye" data-open="' + i + '" title="ดูไฟล์" aria-label="ดู ' + escapeHtml(it.title) + '"><i class="fa-solid fa-eye"></i></button>' : '') + '</div>';
       }
