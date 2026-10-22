@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.86.3.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.87.0.221026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -46,6 +46,7 @@
     <div class="cert-tabs" role="tablist" id="certTabs">
       <button type="button" role="tab" data-scope="internal"><i class="fa-solid fa-school"></i> ภายใน<span class="ct-long">โรงเรียน</span> <b class="n" id="certCntInternal">0</b></button>
       <button type="button" role="tab" data-scope="external"><i class="fa-solid fa-earth-asia"></i> ภายนอก<span class="ct-long">โรงเรียน</span> <b class="n" id="certCntExternal">0</b></button>
+      <button type="button" role="tab" data-scope="register"><i class="fa-solid fa-book"></i> ทะเบียน<span class="ct-long">เกียรติบัตร</span></button>
     </div>
       <button type="button" class="btn page-refresh-btn" id="certRefreshBtn" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
     </div>
@@ -72,6 +73,22 @@
     <div class="flt-chips" id="certFltChips"></div>
     <div class="flt-meta"><span class="flt-count" id="certFltCount"></span><span class="year-scope-hint" id="certYearHint" hidden></span></div>
     <div id="certRoot"><div class="loading">กำลังโหลด...</div></div>
+    <!-- 1.87: ทะเบียนเกียรติบัตร (ภายในเท่านั้น) — ทุกเลขเรียงตามเลขที่ · ดาวน์โหลด PDF / Excel · พิมพ์ -->
+    <div id="certReg" class="cert-reg" hidden>
+      <div class="rg-bar">
+        <select id="rgKey" aria-label="ปีของเลขที่"></select>
+        <select id="rgKind" aria-label="ประเภทผู้รับ"><option value="">ผู้รับทุกประเภท</option><option value="teacher">ครู</option><option value="student">นักเรียน</option><option value="school">โรงเรียน</option></select>
+        <label class="rg-chk"><input type="checkbox" id="rgShowCancel" checked /> แสดงเลขที่ยกเลิก</label>
+        <input type="search" id="rgQ" placeholder="ค้นหาชื่อ / เลขที่ / กิจกรรม" aria-label="ค้นหาในทะเบียน" />
+        <div class="rg-btns">
+          <button type="button" class="btn btn-secondary btn-sm" id="rgPdf"><i class="fa-solid fa-file-pdf" style="color:#dc2626" aria-hidden="true"></i> PDF</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="rgXlsx"><i class="fa-solid fa-file-excel" style="color:#16a34a" aria-hidden="true"></i> Excel</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="rgPrint" title="พิมพ์ หรือเลือก &quot;บันทึกเป็น PDF&quot; ได้ไฟล์ที่ค้นหาข้อความได้"><i class="fa-solid fa-print" aria-hidden="true"></i> พิมพ์</button>
+        </div>
+      </div>
+      <div class="rg-sum" id="rgSum"></div>
+      <div class="rg-wrap" id="rgWrap"><div class="loading">กำลังโหลด...</div></div>
+    </div>
   </div>
 
   <!-- เพิ่ม/แก้ไขเกียรติบัตร (ภายใน/ภายนอก ใช้ป็อปอัปเดียวกัน) -->
@@ -191,7 +208,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.86.3.221026"></script>
+  <script src="assets/api.js?v=1.87.0.221026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -210,7 +227,7 @@
     function semText(s) { return s === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + s; }
     function showErr(msg) { var e = $('certError'); e.textContent = msg || ''; e.hidden = !msg; if (msg) e.scrollIntoView({ block: 'nearest' }); }
     function publicBase() { return location.origin + location.pathname.replace(/[^\/]*$/, '') + 'certificate.html'; }
-    try { var savedTab = localStorage.getItem(TAB_KEY); if (savedTab === 'external' || savedTab === 'internal') scope = savedTab; } catch (e) { /* ใช้ค่าเริ่มต้น */ }
+    try { var savedTab = localStorage.getItem(TAB_KEY); if (savedTab === 'external' || savedTab === 'internal' || savedTab === 'register') scope = savedTab; } catch (e) { /* ใช้ค่าเริ่มต้น */ }
 
     // ---------- ชื่อกิจกรรมคล้ายกัน (กันพิมพ์ต่างกัน) ----------
     function normName(s) { return String(s || '').toLowerCase().replace(/[\s.,\-_()"'“”:;\/]+/g, ''); }
@@ -288,11 +305,113 @@
       el.hidden = false;
     }
 
+    // ---------- 1.87: ทะเบียนเกียรติบัตร ----------
+    var reg = { key: null, data: {}, loading: null };
+    var RG_STATE = { file: ['มีไฟล์แล้ว', 'ok', 'fa-circle-check'], nofile: ['ยังไม่มีไฟล์', 'miss', 'fa-clock'], cancelled: ['ยกเลิก', 'can', 'fa-ban'], reserved: ['จองไว้', 'res', 'fa-user-clock'] };
+    function rgKeyLabel(k) { return /^BE/.test(k) ? 'ปี พ.ศ. ' + k.slice(2) : 'ปีการศึกษา ' + k; }
+    async function showRegister(force) {
+      var k = reg.key;
+      if (!force && k !== null && reg.data[k]) return renderRegister();
+      $('rgWrap').innerHTML = '<div class="loading">กำลังโหลด...</div>';
+      try {
+        var d = await apiCall('certRegister', { key: k || '' });
+        reg.key = d.key; reg.data[d.key] = d; reg.keys = d.keys || [];
+      } catch (e) { $('rgWrap').innerHTML = '<div class="error-box">' + escapeHtml(e.message || 'โหลดทะเบียนไม่สำเร็จ') + '</div>'; return; }
+      renderRegister();
+    }
+    function rgRows() {
+      var d = reg.data[reg.key] || { rows: [] }, kind = $('rgKind').value, showC = $('rgShowCancel').checked, q = $('rgQ').value.trim().toLowerCase();
+      return d.rows.filter(function (r) {
+        if (kind && r.kind !== kind) return false;
+        if (!showC && r.state === 'cancelled') return false;
+        if (q && (r.certNo + ' ' + r.name + ' ' + r.cls + ' ' + r.activity + ' ' + r.award + ' ' + r.by).toLowerCase().indexOf(q) < 0) return false;
+        return true;
+      });
+    }
+    function rgActivity(r) { return r.activity + (r.award ? ' — ' + r.award : ''); }
+    function rgRange(rows) { var ns = rows.map(function (r) { return r.certNo; }).filter(Boolean); return ns.length ? (ns.length > 1 ? ns[0] + ' – ' + ns[ns.length - 1] : ns[0]) : ''; }
+    function renderRegister() {
+      var sel = $('rgKey');
+      sel.innerHTML = (reg.keys || []).map(function (k) { return '<option value="' + escapeHtml(k.key) + '">' + escapeHtml(rgKeyLabel(k.key)) + ' (' + k.n + ' เลข)</option>'; }).join('') || '<option value="">ยังไม่มีเลขที่</option>';
+      sel.value = reg.key || '';
+      var all = (reg.data[reg.key] || { rows: [] }).rows, rows = rgRows();
+      var cnt = function (st) { return all.filter(function (r) { return r.state === st; }).length; };
+      $('rgSum').innerHTML = all.length ? '<span>ทั้งหมด <b>' + all.length + '</b> เลข' + (rgRange(all) ? ' (' + escapeHtml(rgRange(all)) + ')' : '') + '</span><span>ใช้อยู่ <b>' + (all.length - cnt('cancelled')) + '</b></span><span>มีไฟล์แล้ว <b>' + cnt('file') + '</b></span><span>ยังไม่มีไฟล์ <b>' + cnt('nofile') + '</b></span><span>ยกเลิก <b>' + cnt('cancelled') + '</b></span><span>จองไว้ <b>' + cnt('reserved') + '</b></span>' + (rows.length !== all.length ? '<span class="rg-shown">แสดง ' + rows.length + ' รายการ</span>' : '') : '';
+      ['rgPdf', 'rgXlsx', 'rgPrint'].forEach(function (id) { $(id).disabled = !rows.length; });
+      if (!all.length) { $('rgWrap').innerHTML = '<div class="orders-empty"><i class="fa-solid fa-book" aria-hidden="true"></i> ยังไม่มีเกียรติบัตรภายในที่ออกเลขที่</div>'; return; }
+      if (!rows.length) { $('rgWrap').innerHTML = '<div class="orders-empty">ไม่พบรายการที่ตรงกับเงื่อนไข</div>'; return; }
+      $('rgWrap').innerHTML = '<table class="rg-tbl"><thead><tr><th>เลขที่</th><th>ชื่อ - นามสกุล</th><th>ชั้น/ห้อง</th><th>กิจกรรม / รางวัล</th><th>วันที่</th><th>ผู้รับ</th><th>ผู้บันทึก</th><th>สถานะ</th></tr></thead><tbody>' +
+        rows.map(function (r) { var s = RG_STATE[r.state]; return '<tr class="' + (r.state === 'cancelled' ? 'off' : '') + '"><td class="no">' + escapeHtml(r.certNo) + '</td><td class="nm">' + (r.name ? escapeHtml(r.name) : '—') + '</td><td class="cl">' + escapeHtml(r.cls) + '</td><td>' + escapeHtml(rgActivity(r)) + '</td><td class="dt">' + escapeHtml(formatDateThai(r.certDate)) + '</td><td class="kd">' + escapeHtml(KIND_LABEL[r.kind] || '') + '</td><td class="kd">' + escapeHtml(r.by) + '</td><td><span class="rg-st ' + s[1] + '"><i class="fa-solid ' + s[2] + '" aria-hidden="true"></i> ' + s[0] + '</span></td></tr>'; }).join('') + '</tbody></table>';
+    }
+    function rgDocTitle() { return 'ทะเบียนคุมเกียรติบัตร' + (schoolName ? ' ' + schoolName : ''); }
+    function rgDocSub(rows) { return rgKeyLabel(reg.key) + (rgRange(rows) ? ' · เลขที่ ' + rgRange(rows) : '') + ' · ข้อมูล ณ วันที่ ' + formatDateThai(new Date().toISOString()); }
+    function rgFileBase() { return 'bnk-cert-register-' + String(reg.key || '').toLowerCase(); } // ชื่อไฟล์ภาษาอังกฤษ (แบบเดียวกับไฟล์ส่งออกหน้าสรุป — บางเครื่องตัดชื่อไทยเป็น download)
+    function rgPlainState(r) { return RG_STATE[r.state][0]; }
+    function rgPrintTable(rows) {
+      return '<table class="rgp-tbl"><thead><tr><th style="width:13%">เลขที่</th><th style="width:17%">ชื่อ - นามสกุล</th><th style="width:7%">ชั้น/ห้อง</th><th>กิจกรรม / รางวัล</th><th style="width:9%">วันที่</th><th style="width:6%">ผู้รับ</th><th style="width:14%">ผู้บันทึก</th><th style="width:8%">สถานะ</th></tr></thead><tbody>' +
+        rows.map(function (r) { return '<tr' + (r.state === 'cancelled' ? ' class="off"' : '') + '><td class="c">' + escapeHtml(r.certNo) + '</td><td>' + (r.name ? escapeHtml(r.name) : '—') + '</td><td class="c">' + escapeHtml(r.cls) + '</td><td>' + escapeHtml(rgActivity(r)) + '</td><td class="c">' + escapeHtml(formatDateThai(r.certDate)) + '</td><td class="c">' + escapeHtml(KIND_LABEL[r.kind] || '') + '</td><td>' + escapeHtml(r.by) + '</td><td class="c">' + rgPlainState(r) + '</td></tr>'; }).join('') + '</tbody></table>';
+    }
+    function rgExportXlsx() {
+      var rows = rgRows();
+      var blob = buildXlsx('ทะเบียนเกียรติบัตร', ['เลขที่', 'ชื่อ - นามสกุล', 'ชั้น/ห้อง', 'กิจกรรม', 'รางวัล / รายการ', 'วันที่', 'ผู้รับ', 'ผู้บันทึก', 'สถานะ'],
+        rows.map(function (r) { return [r.certNo, r.name || '', r.cls, r.activity, r.award, formatDateThai(r.certDate), KIND_LABEL[r.kind] || '', r.by, rgPlainState(r)]; }),
+        [18, 28, 10, 44, 28, 14, 10, 26, 13], rgDocTitle() + ' — ' + rgDocSub(rows));
+      downloadBlob(blob, rgFileBase() + '.xlsx');
+    }
+    function rgPrint() {
+      var rows = rgRows(), box = document.createElement('div');
+      box.id = 'rgPrintArea';
+      box.innerHTML = '<h2>' + escapeHtml(rgDocTitle()) + '</h2><div class="rgp-sub">' + escapeHtml(rgDocSub(rows)) + '</div>' + rgPrintTable(rows) + '<div class="rgp-by">BNKAcademicHub · พิมพ์โดย ' + escapeHtml((session && session.name) || '') + '</div>';
+      document.body.appendChild(box); document.body.classList.add('rg-printing');
+      var done = function () { document.body.classList.remove('rg-printing'); box.remove(); window.removeEventListener('afterprint', done); };
+      window.addEventListener('afterprint', done);
+      setTimeout(function () { window.print(); setTimeout(done, 1500); }, 100);
+    }
+    // PDF: แบ่งหน้า A4 แนวนอน (1123×794 px) ตามความสูงจริงของแถว → html2canvas ทีละหน้า → jsPDF (ภาพความละเอียดสูง — วางสระ/วรรณยุกต์ไทยถูกต้องเสมอ)
+    async function rgExportPdf() {
+      var rows = rgRows();
+      await withProgress('กำลังสร้าง PDF', async function (p) {
+        p.setProgress(5, 'กำลังเตรียม');
+        await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js');
+        if (document.fonts && document.fonts.ready) await document.fonts.ready;
+        var stage = document.createElement('div'); stage.className = 'rgp-stage'; document.body.appendChild(stage);
+        var pages = [], i = 0;
+        try {
+          while (i < rows.length || !pages.length) {
+            var pg = document.createElement('div'); pg.className = 'rgp-page';
+            pg.innerHTML = '<h2>' + escapeHtml(rgDocTitle()) + '</h2><div class="rgp-sub">' + escapeHtml(rgDocSub(rows)) + '</div>' + rgPrintTable([]) + '<div class="rgp-foot"><span>BNKAcademicHub · พิมพ์โดย ' + escapeHtml((session && session.name) || '') + '</span><span class="rgp-pn"></span></div>';
+            stage.appendChild(pg);
+            var tb = pg.querySelector('tbody'), limit = pg.querySelector('.rgp-foot').offsetTop - 8, added = 0;
+            while (i < rows.length) {
+              tb.insertAdjacentHTML('beforeend', rgPrintTable([rows[i]]).replace(/^[\s\S]*<tbody>|<\/tbody>[\s\S]*$/g, ''));
+              var tr = tb.lastElementChild;
+              if (tr.offsetTop + tr.offsetHeight + pg.querySelector('table').offsetTop > limit && added > 0) { tr.remove(); break; }
+              i++; added++;
+            }
+            pages.push(pg);
+            if (!rows.length) break;
+          }
+          var pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+          for (var k = 0; k < pages.length; k++) {
+            pages[k].querySelector('.rgp-pn').textContent = 'หน้า ' + (k + 1) + ' / ' + pages.length;
+            p.setProgress(10 + 85 * k / pages.length, 'กำลังสร้างหน้า ' + (k + 1) + ' / ' + pages.length);
+            var canvas = await html2canvas(pages[k], { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true });
+            if (k) pdf.addPage();
+            pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 297, 210);
+          }
+          pdf.save(rgFileBase() + '.pdf');
+        } finally { stage.remove(); }
+        return true;
+      }, { successLabel: 'ดาวน์โหลด PDF แล้ว' });
+    }
+
     // ---------- รายการ ----------
     function iReceived(c) { return c.kind === 'teacher' && activeItems(c).some(function (it) { return it.userId === session.id; }); }
     function rerender() { shownN = LIST_PAGE; render(); }
     function render() {
       renderTabs(); renderPendingAlert();
+      document.body.classList.toggle('cert-reg-on', scope === 'register'); $('certReg').hidden = scope !== 'register';
+      if (scope === 'register') { showRegister(); return; }
       var q = $('certSearch').value.trim().toLowerCase();
       var hint = $('certYearHint');
       hint.hidden = !(q && selYear);
@@ -432,7 +551,7 @@
 
     // 1.63: โหลดทีละปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · เลือก "ทุกปีการศึกษา" จึงโหลดทั้งหมด · ปีที่โหลดแล้วจำไว้ (certCache)
     var certCache = makeYearCache(function (y) { return apiCall('certList', { year: y }); });
-    async function load() { certCache.clear(); await loadYear(selYear, true); }
+    async function load() { certCache.clear(); reg.data = {}; await loadYear(selYear, true); } // 1.87: ทะเบียนโหลดใหม่ด้วย
     // 1.68: จำรายการล่าสุดของแต่ละปีไว้ในแท็บเบราว์เซอร์นี้ (sessionStorage — ปิดเบราว์เซอร์แล้วหาย) เปิดหน้าครั้งถัดไปแสดงทันที แล้วค่อยอัปเดตเป็นข้อมูลล่าสุด
     function certSnapKey(y) { return 'bnkah_certs_snap_' + ((session && (session.id || session.username)) || '') + '_' + y; }
     function readCertSnap(y) { try { var v = sessionStorage.getItem(certSnapKey(y)); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
@@ -503,7 +622,7 @@
       groups.forEach(function (g, gi) { g.people.forEach(function (p, pi) { if (personFilled(p) && !p.certNo) out[gi + ':' + pi] = formatCertNo(numbering.format, numbering.digits, year, next++, $('certFSem').value, be); }); });
       return out;
     }
-    function personFilled(p) { if (p.blank) return mScope === 'internal'; return mKind === 'teacher' ? !!p.userId : mKind === 'school' ? true : !!String(p.name || '').trim(); }
+    function personFilled(p) { if (p.cancelled) return false; if (p.blank) return mScope === 'internal'; return mKind === 'teacher' ? !!p.userId : mKind === 'school' ? true : !!String(p.name || '').trim(); }
     // ---- 1.64: วางรายชื่อครูจาก Excel -> จับคู่กับบัญชีในระบบ (ไม่สนคำนำหน้า/ช่องว่าง/จุด) ----
     var pasteMatch = null; // [{raw, userId, status: ok|q|no|set}]
     var NAME_PREFIX = /^(ว่าที่\s*(ร\.?\s*ต\.?|ร้อยตรี)(\s*หญิง)?|นางสาว|น\.\s*ส\.|นาง|นาย|ครู|ดร\.|ผศ\.|รศ\.|ศ\.|mr\.?|mrs\.?|ms\.?|miss)\s*/i;
@@ -592,8 +711,15 @@
           '<span class="cls-in' + (clsHasPrefix(p.cls) ? '' : ' raw') + '"><b aria-hidden="true">ม.</b><input class="cls" data-p-cls' + at + ' maxlength="30" placeholder="' + (gi === 0 && pi === 0 ? '5/1' : '') + '" value="' + escapeHtml(clsShow(p.cls)) + '" aria-label="ชั้น/ห้อง (มัธยม)" /></span>';
         var no = internal ? (p.certNo ? '<span class="cert-no">' + escapeHtml(p.certNo) + '</span>' : (pn[gi + ':' + pi] ? '<span class="cert-no preview" title="เลขตัวอย่าง — เลขจริงออกตอนบันทึก">' + escapeHtml(pn[gi + ':' + pi]) + '</span>' : '<span class="cert-no empty">—</span>')) : '';
         var canRm = mKind !== 'school' && (g.people.length > 1 || groups.length > 1);
-        return '<div class="cert-prow c-' + cols + '">' + no + who + fileSlotHtml(p, gi, pi) +
-          (canRm ? '<button type="button" class="icon-btn del" data-p-rm' + at + ' aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button>' : '<span></span>') + '</div>';
+        // 1.87: ภายใน — คนที่บันทึกแล้ว = "ยกเลิก" (นำกลับมาใช้ได้ เลขที่เดิม) · แถวใหม่ / ภายนอก = ✕ ลบ
+        var saved = internal && !!p.id, act;
+        if (p.cancelled) {
+          who = who.replace(/<(input|select|button)\b/g, '<$1 disabled');
+          act = '<button type="button" class="cert-act-btn restore" data-p-restore' + at + '><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> นำกลับมาใช้</button>';
+        } else if (saved && mKind !== 'school') act = '<button type="button" class="cert-act-btn cancel" data-p-cancel' + at + '><i class="fa-solid fa-ban" aria-hidden="true"></i> ยกเลิก</button>';
+        else act = canRm ? '<button type="button" class="icon-btn del" data-p-rm' + at + ' aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button>' : '<span></span>';
+        var fslot = p.cancelled ? '<span class="cert-can-tag" title="ไฟล์ของคนนี้ย้ายลงถังขยะแล้ว — นำกลับมาใช้แล้วต้องอัปไฟล์ใหม่"><i class="fa-solid fa-ban" aria-hidden="true"></i> ยกเลิกแล้ว</span>' : fileSlotHtml(p, gi, pi);
+        return '<div class="cert-prow c-' + cols + (p.cancelled ? ' off' : '') + '">' + no + who + fslot + act + '</div>';
       }).join('');
     }
     function peopleBlock(g, gi, cols, pn, internal) {
@@ -609,7 +735,8 @@
       if (pasteOpen === gi && pasteMatch) paste = pasteMatchHtml(gi, internal);
       else if (pasteOpen === gi) paste = '<div class="cert-paste"><textarea id="certPasteText" rows="5" placeholder="' + (mKind === 'teacher' ? 'วางรายชื่อครู บรรทัดละ 1 คน — ระบบจะจับคู่กับชื่อในระบบให้อัตโนมัติ (ไม่สนคำนำหน้า)' : 'วางรายชื่อ บรรทัดละ 1 คน — คัดลอก 2 คอลัมน์ (ชื่อ-สกุล | ชั้น/ห้อง) จาก Excel มาวางได้เลย') + '"></textarea>' +
         '<div><button type="button" class="btn btn-primary btn-sm" data-paste-ok="' + gi + '">' + (mKind === 'teacher' ? 'จับคู่รายชื่อ' : 'เพิ่มรายชื่อ') + '</button> <button type="button" class="btn btn-ghost btn-sm" data-paste-cancel>ยกเลิก</button></div></div>';
-      return '<div class="cert-plist">' + head + peopleHtml(g, gi, cols, pn, internal) + '</div><div class="cert-grp-links">' + links + '</div>' + paste;
+      var acts = internal && mKind !== 'school' && groups.some(function (gg) { return gg.people.some(function (pp) { return !!pp.id; }); });
+      return '<div class="cert-plist' + (acts ? ' acts' : '') + '">' + head + peopleHtml(g, gi, cols, pn, internal) + '</div><div class="cert-grp-links">' + links + '</div>' + paste;
     }
     function renderGroups() {
       var pn = previewNumbers(), internal = mScope === 'internal';
@@ -703,8 +830,8 @@
       $('certFDate').value = c ? c.certDate : '';
       syncCertDate();
       if (c) {
-        groups = groupsOf(c, false).map(function (g) {
-          return { competition: g.competition, award: g.award, awardLevel: (g.items[0] && g.items[0].awardLevel) || '', people: g.items.map(function (it) { return { id: it.id, name: it.name, cls: it.cls, userId: it.userId, certNo: it.certNo, file: it.file, blank: !!it.unnamed }; }) };
+        groups = groupsOf(c, c.scope === 'internal').map(function (g) { // 1.87: ภายใน — แสดงคนที่ยกเลิกไว้ด้วย (นำกลับมาใช้ได้)
+          return { competition: g.competition, award: g.award, awardLevel: (g.items[0] && g.items[0].awardLevel) || '', people: g.items.map(function (it) { var off = it.status !== 'active'; return { id: it.id, name: it.name, cls: it.cls, userId: it.userId, certNo: it.certNo, file: off ? null : it.file, blank: !!it.unnamed, cancelled: off, wasCancelled: off }; }) };
         });
         mKind = c.kind;
       }
@@ -780,7 +907,7 @@
     function payloadGroups() {
       // ตัดแถวว่าง (ลำดับต้องตรงกับที่ Worker สร้างรายการ) และเก็บคู่ (คน -> ไฟล์ใหม่) ไว้อัปหลังบันทึก
       var flat = [];
-      var gs = groups.map(function (g) {
+      var gs = groups.filter(function (g) { return !(g.people.some(function (p) { return p.cancelled; }) && !g.people.some(personFilled)); }).map(function (g) { // 1.87: รายการที่เหลือแต่คนที่ยกเลิก = ไม่ส่ง
         var ps = g.people.filter(personFilled);
         ps.forEach(function (p) { flat.push(p); });
         return { competition: g.competition.replace(/\s+/g, ' ').trim(), award: g.award.replace(/\s+/g, ' ').trim(), awardLevel: String(g.awardLevel || '').replace(/\s+/g, ' ').trim(),
@@ -800,6 +927,9 @@
       if (!head.activity) return showErr(mType === 'award' ? 'กรุณากรอกชื่อผลงาน/รางวัล' : 'กรุณากรอกชื่อกิจกรรม/โครงการ/หลักสูตร');
       if (!head.agency) { $('certFAgency').focus(); return showErr('กรุณากรอกหน่วยงาน'); }
       if (!head.certDate) return showErr('กรุณาเลือกวันที่ตามเกียรติบัตร');
+      if (!pg.groups.length) return showErr('ยกเลิกผู้รับครบทุกคนแล้ว — ถ้าไม่ใช้เกียรติบัตรชุดนี้ ให้ปิดหน้าต่างแล้วกด "ยกเลิก" ทั้งชุดในรายการ'); // 1.87
+      var newCancel = []; groups.forEach(function (g) { g.people.forEach(function (p) { if (p.cancelled && !p.wasCancelled) newCancel.push(p); }); });
+      if (newCancel.some(function (p) { return !!p.file; }) && !(await askConfirm('ยกเลิก ' + newCancel.length + ' คน — ไฟล์เกียรติบัตรของคนที่ยกเลิกจะย้ายลงถังขยะ (นำกลับมาใช้ภายหลังได้ เลขที่เดิม แต่ต้องอัปไฟล์ใหม่)', 'ยืนยันการยกเลิก'))) return;
       for (var gi = 0; gi < pg.groups.length; gi++) if (!pg.groups[gi].people.length) return showErr('รายการแข่งขันที่ ' + (gi + 1) + ' ยังไม่มีผู้รับเกียรติบัตร' + (mKind === 'teacher' ? ' (เลือกครู)' : mKind === 'student' ? ' (กรอกชื่อนักเรียน)' : ''));
       if (mScope === 'external') {
         var miss = pg.flat.filter(function (p) { return !p.newFile && !p.file; }).length;
@@ -927,6 +1057,13 @@
         loadYear(ys.length === 1 ? ys[0] : '');
       });
       $('certTabs').addEventListener('click', function (e) { var b = e.target.closest('button[data-scope]'); if (!b) return; scope = b.getAttribute('data-scope'); try { localStorage.setItem(TAB_KEY, scope); } catch (x) { /* ไม่เป็นไร */ } fillFilters(); rerender(); });
+      // 1.87: ทะเบียนเกียรติบัตร
+      $('rgKey').addEventListener('change', function () { reg.key = this.value; showRegister(); });
+      ['rgKind', 'rgShowCancel'].forEach(function (id) { $(id).addEventListener('change', renderRegister); });
+      $('rgQ').addEventListener('input', renderRegister);
+      $('rgXlsx').addEventListener('click', rgExportXlsx);
+      $('rgPrint').addEventListener('click', rgPrint);
+      $('rgPdf').addEventListener('click', rgExportPdf);
       $('certKindSeg').addEventListener('click', function (e) { var b = e.target.closest('button[data-kind]'); if (!b) return; kindFilter = b.getAttribute('data-kind'); rerender(); });
       $('certSearch').addEventListener('input', rerender);
       ['certActivity', 'certSem', 'certMine'].forEach(function (id) { $(id).addEventListener('change', rerender); });
@@ -992,10 +1129,12 @@
         updateNote();
       }
       G.addEventListener('click', function (e) {
-        var t = e.target.closest('[data-match-ok],[data-res-add],[data-p-unblank],[data-p-add],[data-p-rm],[data-g-rm],[data-f-pick],[data-f-clear],[data-f-multi],[data-p-paste],[data-paste-ok],[data-paste-cancel]');
+        var t = e.target.closest('[data-match-ok],[data-res-add],[data-p-unblank],[data-p-add],[data-p-rm],[data-p-cancel],[data-p-restore],[data-g-rm],[data-f-pick],[data-f-clear],[data-f-multi],[data-p-paste],[data-paste-ok],[data-paste-cancel]');
         if (!t) return;
         var gi = Number(t.getAttribute('data-g')), pi = Number(t.getAttribute('data-p'));
         if (t.hasAttribute('data-p-add')) { var g0 = Number(t.getAttribute('data-p-add')); var np = newPerson(); var lastP = groups[g0].people[groups[g0].people.length - 1]; if (mKind === 'student' && lastP && lastP.cls) np.cls = lastP.cls; /* 1.86.3: ใช้ชั้นเดียวกับแถวบน */ groups[g0].people.push(np); renderGroups(); var ins = G.querySelectorAll('[data-g="' + g0 + '"][data-p-name], [data-g="' + g0 + '"][data-p-user]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+        if (t.hasAttribute('data-p-cancel')) { var pc = groups[gi].people[pi]; pc.cancelled = true; renderGroups(); return; } // 1.87: มีผลเมื่อกดบันทึก
+        if (t.hasAttribute('data-p-restore')) { var pr = groups[gi].people[pi]; pr.cancelled = false; if (pr.wasCancelled) pr.file = null; renderGroups(); return; }
         if (t.hasAttribute('data-p-rm')) {
           groups[gi].people.splice(pi, 1);
           if (!groups[gi].people.length) groups.splice(gi, 1);
