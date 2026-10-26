@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.88.1.261026" />
+<link rel="stylesheet" href="assets/style.css?v=1.88.3.261026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -230,7 +230,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.88.1.261026"></script>
+  <script src="assets/api.js?v=1.88.3.261026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -1009,6 +1009,11 @@
     // ที่ Super Admin ตั้งไว้หรืออัตโนมัติ) · มีช่องเลือกปีการศึกษา (ค่าเริ่มต้น = ปีปัจจุบัน) · ปุ่ม ↻ = กลับไปปีปัจจุบัน + ย่อ/ขยายกลับค่าเริ่มต้น
     // 1.61: เช็คลิสต์แยกเป็นแท็บย่อย "ภาคเรียนที่ 1 / ภาคเรียนที่ 2" (+ "ภาคฤดูร้อน" เมื่อเปิดใช้) อยู่แถวเดียวกันใต้ช่องเลือกปีการศึกษา — แทนการย่อ/ขยายเดิม
     // ค่าเริ่มต้น = ภาคเรียนปัจจุบัน (ถ้าดูปีปัจจุบัน) ไม่งั้นภาคเรียนที่ 1 · แต่ละแท็บมีตัวเลขงานที่ยังไม่ส่ง · ปุ่ม ↻ = กลับไปปี/ภาคเรียนปัจจุบัน
+    // 1.88.2: ลิงก์แนบอยู่ใต้ปุ่มส่งงาน/ป้ายแจ้งเตือน (คอลัมน์ขวา) ให้มองเห็นง่าย
+    function evSideHtml(action, links) {
+      if (!links || !links.length) return action;
+      return '<div class="ev-side">' + (action || '') + eventLinksHtml(links, false) + '</div>';
+    }
     var checklistState = { term: null, loading: false, year: '', sem: '', summerOn: true };
     function renderAssignmentChecklist() {
       var wrap = document.getElementById('assignmentChecklistBody');
@@ -1332,7 +1337,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
               (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + overdueBadge + '</div>' +
             (termLabel ? '<div class="sub-item-meta term-tags-row">' + categoryDotHtml(categoryColorMap[e.categoryId]) + termLabel + '</div>' : '') +
-            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + eventLinksHtml(e.links, true) + '</div>' + submitBtn + '</div>';
+            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + evSideHtml(submitBtn, e.links) + '</div>';
         }).join('') + '</div>';
         upcomingBox.querySelectorAll('button[data-group-event]').forEach(function (btn) {
           btn.addEventListener('click', function () {
@@ -1383,8 +1388,8 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
             '<div class="day-ev-title">' + escapeHtml(e.title) + (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + (isEnd && e.categoryId && !e.noSubmission ? ' <span class="day-ev-end"><i class="fas fa-flag" aria-hidden="true"></i> ครบกำหนดวันนี้</span>' : '') + (done ? ' <span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>' : '') + '</div>' +
             '<div class="day-ev-meta"><i class="fas fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(range) + dlHtml + '</div>' +
             (e.categoryId ? '<div class="term-tags-row">' + termTagsHtml(e.semester, e.academicYear) + '</div>' : '') +
-            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + eventLinksHtml(e.links, false) +
-          '</div>' + eventActionHtml(e) + '</div>';
+            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') +
+          '</div>' + evSideHtml(eventActionHtml(e), e.links) + '</div>';
       }).join('') : '<div class="empty-state">ไม่มีงานหรือกำหนดการในวันนี้</div>';
       showModalEl(document.getElementById('dayModal'));
     }

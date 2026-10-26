@@ -3793,3 +3793,18 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 :root[data-theme="dark"] .mx-fx { background: rgba(202,138,4,.2); color: #fde68a; }
 :root[data-theme="dark"] .mx-late { background: rgba(234,88,12,.2); color: #fdba74; }
 :root[data-theme="dark"] .mx-no { background: rgba(220,38,38,.2); color: #fca5a5; }
+
+/* 1.88.2: คอลัมน์ขวาของกำหนดส่งงาน — ปุ่มส่งงาน/ป้ายแจ้งเตือน แล้วตามด้วยปุ่มลิงก์แนบ */
+.ev-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; align-self: center; flex-shrink: 0; max-width: 260px; }
+.ev-side > .event-submit-btn, .ev-side > .notice-badge { align-self: flex-end; }
+.ev-side .ev-lbtns { margin-top: 0; flex-direction: column; align-items: flex-end; gap: 6px; }
+.ev-side .ev-lbtn { white-space: normal; text-align: left; }
+@media (max-width: 560px) {
+  .ev-side { align-items: stretch; max-width: none; width: 100%; }
+  .ev-side > .event-submit-btn, .ev-side > .notice-badge { align-self: stretch; justify-content: center; }
+  .ev-side .ev-lbtns { align-items: stretch; }
+  .ev-side .ev-lbtn { justify-content: center; }
+  .day-ev .ev-side { margin-left: 17px; }
+}
+/* 1.88.2: จอแคบ (รายการเรียงแนวตั้ง) — กล่องข้อความไม่ต้องสูง 220px ตาม flex-basis เดิม (เคยเว้นช่องว่างก่อนปุ่ม) */
+@media (max-width: 560px) { .cal-upcoming-grid .event-list-item > div { flex: 0 0 auto !important; min-width: 0 !important; } }
