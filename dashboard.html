@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.88.0.261026" />
+<link rel="stylesheet" href="assets/style.css?v=1.88.1.261026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -230,7 +230,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.88.0.261026"></script>
+  <script src="assets/api.js?v=1.88.1.261026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -1284,7 +1284,9 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
         if (isActivityEv(e)) return false;
         var ed = new Date(e.endDate || e.date); // ใช้วันสิ้นสุดตัดสินว่ายังไม่ผ่านไป เผื่อเป็นกำหนดการช่วงหลายวัน
         var diffDays = (ed - now) / 86400000;
-        if (diffDays > -1 && diffDays < 60) return true;
+        // 1.88.1: งานช่วงยาว (เช่น 2 พ.ย. – 26 ก.พ.) ขึ้นตั้งแต่วันเริ่มเข้าช่วง 60 วัน จนถึงวันสุดท้าย — เดิมดูแค่วันสุดท้าย งานที่จบเกิน 60 วันจึงไม่ขึ้นเลย
+        var startDays = (new Date(e.date) - now) / 86400000;
+        if (diffDays > -1 && Math.min(diffDays, startDays) < 60) return true;
         // ตั้งแต่เวอร์ชันถัดจาก V11.9.1: งานที่ผูกประเภทงานไว้ (ส่งได้จริง) แต่ "ยังไม่ส่ง" ให้ค้างอยู่ในรายการนี้ต่อไปแม้เกินกำหนดส่งแล้ว
         // (ไม่มีเพดาน 60 วันเหมือนกำหนดการทั่วไป) เพื่อให้ยังกดปุ่ม "ส่งงาน" ได้จากตรงนี้เสมอ — เคยหายไปจากรายการทันทีที่เกินกำหนดเกิน 1 วัน
         // ซึ่งผู้ใช้แจ้งว่าไม่สะดวก เพราะหาไม่เจอว่าจะกดส่งงานที่ค้างได้จากไหน พองานถูกส่งแล้วจะหลุดออกจากรายการตามปกติเหมือนเดิม
