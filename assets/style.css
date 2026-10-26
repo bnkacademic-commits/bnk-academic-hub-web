@@ -3710,3 +3710,14 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 .rgp-tbl th { background: #e8edf4 !important; font-size: 13px !important; letter-spacing: 0; text-transform: none; }
 .rgp-tbl td { background: #fff !important; }
 .rgp-tbl tr.off td { color: #8a8a8a !important; }
+/* 1.87.2: ข้อความแชร์อัลบั้ม */
+.sh-edit-hint { font-size: 0.8rem; color: var(--text-muted); margin: 6px 2px 0; }
+.sh-edit-hint .linklike { font-size: inherit; }
+.ast-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.ast-chip { border: 1px dashed var(--primary); background: var(--primary-light); color: var(--primary-dark); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+.ast-chip:hover { border-style: solid; }
+.ast-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ast-grid textarea { width: 100%; font: inherit; font-size: 0.9rem; line-height: 1.5; resize: vertical; }
+.ast-preview { margin: 0; min-height: 150px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); font: inherit; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.ast-acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+@media (max-width: 720px) { .ast-grid { grid-template-columns: 1fr; } }

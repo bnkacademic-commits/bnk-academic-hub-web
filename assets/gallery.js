@@ -82,12 +82,26 @@ function wireAlbumCovers(root) {
   });
 }
 // ข้อความสำหรับส่งในกลุ่ม LINE/กลุ่มโรงเรียน
+// 1.87.2: ผู้ดูแลระบบสูงสุดตั้งแม่แบบได้ (ตั้งค่าระบบ → ทั่วไป · settings.albumShareTemplate — ว่าง = ค่าเริ่มต้น)
+// ช่องที่ระบบเติมให้: {ชื่ออัลบั้ม} {วันที่} {ภาคเรียน} {ปีการศึกษา} {กลุ่มบริหารงาน} {กลุ่มสาระ} {จำนวนรูป} {ลิงก์}
+// บรรทัดที่มีช่องซึ่งอัลบั้มนั้นไม่มีค่า (เช่น ไม่ได้ระบุกลุ่มสาระ) = ตัดทั้งบรรทัด
+var ALBUM_SHARE_DEFAULT = 'ภาพกิจกรรม: {ชื่ออัลบั้ม}\nวันที่ {วันที่} · {ภาคเรียน} ปีการศึกษา {ปีการศึกษา}\n{กลุ่มบริหารงาน}\nกลุ่มสาระการเรียนรู้{กลุ่มสาระ}\nดูภาพทั้งหมด: {ลิงก์}';
+var ALBUM_SHARE_FIELDS = ['ชื่ออัลบั้ม', 'วันที่', 'ภาคเรียน', 'ปีการศึกษา', 'กลุ่มบริหารงาน', 'กลุ่มสาระ', 'จำนวนรูป', 'ลิงก์'];
+function albumShareValues(a) {
+  return { 'ชื่ออัลบั้ม': a.title || '', 'วันที่': albumDateLabel(a), 'ภาคเรียน': albumSemLabel(a), 'ปีการศึกษา': a.academicYear || '',
+    'กลุ่มบริหารงาน': a.department ? groupLabel(a.department) : '', 'กลุ่มสาระ': a.subjectGroup || '', 'จำนวนรูป': a.photoCount > 0 ? a.photoCount + ' รูป' : '', 'ลิงก์': a.url || '' };
+}
+function fillAlbumShareTemplate(tpl, a) {
+  var v = albumShareValues(a);
+  return String(tpl || ALBUM_SHARE_DEFAULT).split('\n').map(function (line) {
+    var empty = false;
+    var out = line.replace(/\{([^{}]+)\}/g, function (m, k) { if (!(k in v)) return m; if (!v[k]) empty = true; return v[k]; });
+    return empty ? null : out;
+  }).filter(function (l) { return l !== null; }).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
 function albumShareText(a) {
-  return 'ภาพกิจกรรม: ' + a.title + '\n' +
-    'วันที่ ' + albumDateLabel(a) + ' · ' + albumSemLabel(a) + ' ปีการศึกษา ' + a.academicYear + '\n' +
-    (a.department ? groupLabel(a.department) + '\n' : '') +
-    (a.subjectGroup ? 'กลุ่มสาระการเรียนรู้' + a.subjectGroup + '\n' : '') +
-    'ดูภาพทั้งหมด: ' + a.url;
+  var s = (typeof _settingsCache !== 'undefined' && _settingsCache && !_settingsCache.__fallback) ? _settingsCache : {};
+  return fillAlbumShareTemplate(String(s.albumShareTemplate || '').trim() || ALBUM_SHARE_DEFAULT, a);
 }
 async function copyAlbumText(a) {
   var text = albumShareText(a);

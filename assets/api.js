@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.87.1';
-var APP_VERSION = '1.87.1.221026';
+var WORKER_MIN_VERSION = '1.87.2';
+var APP_VERSION = '1.87.2.261026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -270,6 +270,14 @@ function requireViewerAccess() {
   var s = requireLogin();
   if (!s) return null;
   if (s.role !== 'admin' && s.role !== 'executive') { location.href = homePageFor(s); return null; }
+  return s;
+}
+// 1.87.2: หัวหน้ากลุ่มบริหารงาน (บัญชีครูที่มีหน้าที่พิเศษ "หัวหน้ากลุ่มบริหารงาน" ในทำเนียบ) — เห็นสรุปรวมการส่งงาน + ตรวจงานของกลุ่มตัวเอง
+function isDeptHeadSession(s) { return !!s && s.role === 'teacher' && Array.isArray(s.headRoles) && s.headRoles.indexOf('dept') !== -1; }
+function requireSummaryAccess() {
+  var s = requireLogin();
+  if (!s) return null;
+  if (s.role !== 'admin' && s.role !== 'executive' && !isDeptHeadSession(s)) { location.href = homePageFor(s); return null; }
   return s;
 }
 function requireAdminAccess() {
@@ -1685,6 +1693,7 @@ function navLinksFor(session) {
     links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard', icon: 'home' });
     links.push({ href: 'memo.html', label: 'จัดทำบันทึกข้อความ', key: 'memo', icon: 'memo' });
   }
+  if (isDeptHeadSession(session)) links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary', icon: 'summary' }); // 1.87.2
   // ผู้บริหาร (ตั้งแต่ 1.32.101026): หน้าแรกของตัวเอง = ปฏิทิน + สรุปภาพรวม (executive.html) — ไม่มีหน้าฮับ ไม่ส่งงาน
   if (isExec) links.push({ href: 'executive.html', label: 'หน้าแรก', key: 'executive', icon: 'home' });
   // 1.79: Super Admin มีหน้าแรกของตัวเอง = ภาพรวมระบบ (overview.html)

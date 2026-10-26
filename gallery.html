@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.87.1.221026" />
+<link rel="stylesheet" href="assets/style.css?v=1.87.2.261026" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -183,8 +183,8 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=1.87.1.221026"></script>
-  <script src="assets/gallery.js?v=1.87.1.221026"></script>
+  <script src="assets/api.js?v=1.87.2.261026"></script>
+  <script src="assets/gallery.js?v=1.87.2.261026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -470,7 +470,7 @@
     }
     function openShare(a) {
       sh.a = a; sh.tab = a.isPublic ? 'link' : 'text'; sh.style = isManagedAlbum(a) ? 'grid' : 'card';
-      renderShare(); showModalEl($('shModal'));
+      sh.text = null; renderShare(); showModalEl($('shModal'));
     }
     function copyRow(id, val, label) { return '<div class="sh-row"><label for="' + id + '">' + label + '</label><div class="sh-copy"><input type="text" id="' + id + '" value="' + escapeHtml(val) + '" readonly /><button type="button" class="btn btn-success btn-sm" data-sh-copy="' + id + '"><i class="fa-solid fa-copy" aria-hidden="true"></i> คัดลอก</button></div></div>'; }
     function pubGate(a) {
@@ -482,7 +482,9 @@
       Array.prototype.forEach.call($('shTabs').children, function (b) { var on = b.getAttribute('data-sh') === sh.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
       var h = '';
       if (sh.tab === 'text') {
-        h = '<textarea class="sh-text" id="shText" readonly rows="6">' + escapeHtml(albumShareText(a)) + '</textarea>' +
+        if (sh.text == null || sh.textFor !== a.id) { sh.text = albumShareText(a); sh.textFor = a.id; } // 1.87.2: แก้ข้อความก่อนคัดลอกได้ (ครั้งนี้เท่านั้น ไม่บันทึก)
+        h = '<textarea class="sh-text" id="shText" rows="6" aria-label="ข้อความแชร์ — แก้ได้ก่อนคัดลอก">' + escapeHtml(sh.text) + '</textarea>' +
+          '<div class="sh-edit-hint"><i class="fa-solid fa-pen" aria-hidden="true"></i> แก้ข้อความได้ก่อนคัดลอก (ใช้ครั้งนี้เท่านั้น)' + (sh.text !== albumShareText(a) ? ' · <button type="button" class="linklike" id="shTextReset">ใช้ข้อความเดิม</button>' : '') + '</div>' +
           '<div class="sh-acts"><button type="button" class="btn btn-success" data-sh-copy="shText"><i class="fa-solid fa-copy" aria-hidden="true"></i> คัดลอกข้อความ</button>' + (navigator.share ? '<button type="button" class="btn btn-secondary" id="shNative"><i class="fa-solid fa-share-from-square" aria-hidden="true"></i> ส่งต่อ…</button>' : '') + '</div>';
       } else if (sh.tab === 'link') {
         if (a.isPublic) {
@@ -518,7 +520,8 @@
       }
       var st = e.target.closest('[data-st]');
       if (st && !st.disabled) { sh.style = st.getAttribute('data-st'); renderShare(); return; }
-      if (e.target.closest('#shNative')) { try { await navigator.share({ text: albumShareText(sh.a) }); } catch (er) { /* ยกเลิก */ } return; }
+      if (e.target.closest('#shTextReset')) { sh.text = albumShareText(sh.a); renderShare(); return; }
+      if (e.target.closest('#shNative')) { try { await navigator.share({ text: ($('shText') && $('shText').value) || albumShareText(sh.a) }); } catch (er) { /* ยกเลิก */ } return; }
       if (e.target.closest('#shQrSave')) {
         var cv = document.querySelector('#shQr canvas'), im = document.querySelector('#shQr img');
         var src = cv ? cv.toDataURL('image/png') : im ? im.src : '';
@@ -535,6 +538,7 @@
         render(); renderShare();
       }
     });
+    $('shModal').addEventListener('input', function (e) { if (e.target.id === 'shText') sh.text = e.target.value; }); // 1.87.2
     ['shCloseX', 'shClose'].forEach(function (id) { $(id).addEventListener('click', function () { hideModalEl($('shModal')); }); });
     // ---------- อัปรูป ----------
     var UP_CONC = 3, UP_BATCH = 10, RELAY_MAX = 25 * 1024 * 1024;
