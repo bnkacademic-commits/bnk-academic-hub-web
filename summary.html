@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.87.2.261026" />
+<link rel="stylesheet" href="assets/style.css?v=1.88.0.261026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.87.2.261026"></script>
+  <script src="assets/api.js?v=1.88.0.261026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -426,12 +426,14 @@
       var curAsg = asgSel.value, curYear = yearSel.value;
 
       asgSel.innerHTML = '<option value="">ทุกงาน</option>';
+      var seenSeries = {};
       allAssignments.forEach(function (a) {
+        if (a.seriesId) { if (seenSeries[a.seriesId]) return; seenSeries[a.seriesId] = 1; } // 1.88: งานแบบหลายรอบ = ตัวเลือกเดียว
         var opt = document.createElement('option');
-        opt.value = a.eventId; opt.textContent = a.title;
+        opt.value = a.seriesId ? 's:' + a.seriesId : a.eventId; opt.textContent = a.seriesId ? a.categoryName + ' (' + allAssignments.filter(function (x) { return x.seriesId === a.seriesId; }).length + ' รอบ)' : a.title;
         asgSel.appendChild(opt);
       });
-      if (allAssignments.some(function (a) { return a.eventId === curAsg; })) asgSel.value = curAsg;
+      if (Array.prototype.some.call(asgSel.options, function (o) { return o.value === curAsg; })) asgSel.value = curAsg;
 
       var years = withCurrentYear(Array.from(new Set(allAssignments.map(function (a) { return a.academicYear; }))).filter(Boolean).sort().reverse());
       yearSel.innerHTML = '<option value="">ทุกปีการศึกษา</option>';
@@ -453,11 +455,11 @@
       var norm = function (v) { return String(v || '').replace(/\s+/g, '').toLowerCase(); };
       var out = [];
       allAssignments.forEach(function (a) {
-        if (fAsg && a.eventId !== fAsg) return;
+        if (fAsg && (fAsg.indexOf('s:') === 0 ? a.seriesId !== fAsg.slice(2) : a.eventId !== fAsg)) return;
         if (fYear && a.academicYear !== fYear) return;
         if (fSem && a.semester !== fSem) return;
         if (!q || norm(a.title).indexOf(q) !== -1 || norm(a.categoryName).indexOf(q) !== -1) { out.push(a); return; }
-        var rows = a.rows.filter(function (r) { return norm(r.userName).indexOf(q) !== -1; });
+        var rows = a.rows.filter(function (r) { return norm(r.userName).indexOf(q) !== -1 || norm(r.subjectGroup).indexOf(q) !== -1; });
         if (rows.length) out.push(Object.assign({}, a, { rows: rows }));
       });
       return out;
@@ -474,10 +476,18 @@
         return;
       }
       // 1.68: แสดงทีละ 10 งาน + "แสดงเพิ่ม" (งานละหลายสิบแถว — แสดงพร้อมกันทั้งหมดหน้าเว็บช้ามาก) · รายงานยังรวมทุกงานตามตัวกรอง
-      var html = '<div class="ordc-count hint">' + filtered.length + ' งาน</div>';
-      var total = filtered.length;
-      filtered = filtered.slice(0, asgShown);
+      // 1.88: งานแบบหลายรอบรวมเป็นการ์ดเดียว (ตาราง ครู × รอบ)
+      var units = [], bySeries = {};
       filtered.forEach(function (a) {
+        if (!a.seriesId) { units.push(a); return; }
+        if (!bySeries[a.seriesId]) { bySeries[a.seriesId] = { series: [] }; units.push(bySeries[a.seriesId]); }
+        bySeries[a.seriesId].series.push(a);
+      });
+      var html = '<div class="ordc-count hint">' + units.length + ' งาน</div>';
+      var total = units.length;
+      units.slice(0, asgShown).forEach(function (a) {
+        if (a.series) { html += seriesMatrixHtml(a.series); return; }
+        var noRv = a.reviewMode === 'none';
         var dateRange = a.endDate && a.endDate !== a.date ? formatDateThai(a.date) + ' – ' + formatDateThai(a.endDate) : formatDateThai(a.date);
         var semLabel = a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester;
         var onTimeCount = a.rows.filter(function (r) { return r.status === 'onTime'; }).length;
@@ -490,10 +500,10 @@
           '</div>' +
           '<div class="sub-item-meta" style="margin-bottom:12px;">ประเภทงาน: <b>' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.categoryName) + '</b>' + categoryDeptBadgeHtml(a.categoryId) + ' · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
             ' · <span class="badge badge-ontime">ตามกำหนด ' + onTimeCount + '</span> <span class="badge badge-late">หลังกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
-            reviewSummaryChip(a) +
-          '</div>' +
-          (canReview ? reviewAllBtnHtml(a) : '') +
-          '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th><th class="asg-rvh">การตรวจ</th></tr></thead><tbody>';
+            (noRv ? ' <span class="badge asg-rvsum">ดูแค่ว่าส่งแล้ว</span>' : reviewSummaryChip(a)) +
+          '</div>' + eventLinksHtml(a.links, true) +
+          (canReview && !noRv ? reviewAllBtnHtml(a) : '') +
+          '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th>' + (noRv ? '' : '<th class="asg-rvh">การตรวจ</th>') + '</tr></thead><tbody>';
         a.rows.forEach(function (r) {
           // 1.80: มือถือ = แถวละคน (ชื่อบรรทัดบน · สถานะ/วันที่ส่ง/การตรวจ/ปุ่มบรรทัดล่าง — ดู .asg-table ใน style.css)
           html += '<tr>' +
@@ -501,14 +511,68 @@
             '<td class="asg-st">' + statusBadge(r.status) + '</td>' +
             '<td class="asg-time">' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '<span class="asg-none">-</span>') + '</td>' +
             // 1.85.2: ป้ายการตรวจ + หมายเหตุ + ปุ่ม อยู่ในช่องเดียว (ปุ่มกว้างเท่ากัน ชิดขวา)
-            '<td class="asg-rv">' + (r.status === 'missing' ? '<span class="asg-none">—</span>' : '<div class="asg-rvc"><div class="asg-rvs">' + reviewCellHtml(r) + '</div>' +
-              (canReview ? '<button type="button" class="btn btn-sm rv-btn ' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'btn-secondary' : 'btn-primary') + '" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '">' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'ดู' : 'ตรวจ') + '</button>' : '') + '</div>') + '</td>' +
+            (noRv ? '' : '<td class="asg-rv">' + (r.status === 'missing' ? '<span class="asg-none">—</span>' : '<div class="asg-rvc"><div class="asg-rvs">' + reviewCellHtml(r) + '</div>' +
+              (canReview ? '<button type="button" class="btn btn-sm rv-btn ' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'btn-secondary' : 'btn-primary') + '" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '">' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'ดู' : 'ตรวจ') + '</button>' : '') + '</div>') + '</td>') +
           '</tr>';
         });
         html += '</tbody></table></div></div>';
       });
-      var left = total - filtered.length;
+      var left = total - Math.min(total, asgShown);
       wrap.innerHTML = html + (left > 0 ? '<div class="list-more"><button type="button" class="btn btn-secondary btn-sm" data-more="1"><i class="fa-solid fa-chevron-down"></i> แสดงเพิ่ม ' + Math.min(ASG_PAGE, left) + ' งาน (เหลือ ' + left + ')</button></div>' : '');
+    }
+    // ---------- 1.88: งานแบบหลายรอบ — ตาราง ครู × รอบ ----------
+    function asgRoundShort(a) { var l = a.roundLabel || ('รอบ ' + a.roundNo); var m = /^(\S+) \d{4}$/.exec(l); return m ? m[1] : l; }
+    function matrixCell(a, r, today) {
+      if (!r) return '<span class="mx-c mx-na">—</span>';
+      var noRv = a.reviewMode === 'none', v = r.review || { status: 'none' }, cls, txt, ic;
+      if (r.status === 'missing') {
+        if (a.date > today) return '<span class="mx-c mx-wait">รอถึงกำหนด</span>';
+        if ((a.endDate || a.date) >= today) return '<span class="mx-c mx-open">รอส่ง</span>';
+        return '<span class="mx-c mx-no"><i class="fa-solid fa-xmark" aria-hidden="true"></i> ยังไม่ส่ง</span>';
+      }
+      if (!noRv && v.status === 'reviewed') { cls = 'mx-ok'; ic = 'fa-circle-check'; txt = 'ตรวจแล้ว'; }
+      else if (!noRv && v.status === 'revise') { cls = 'mx-fx'; ic = 'fa-pen'; txt = 'แก้ไข'; }
+      else if (!noRv && v.status === 'resubmitted') { cls = 'mx-rv'; ic = 'fa-file-arrow-up'; txt = 'ส่งแก้แล้ว'; }
+      else if (r.status === 'late') { cls = 'mx-late'; ic = 'fa-clock'; txt = 'เกินกำหนด'; }
+      else { cls = 'mx-rv'; ic = 'fa-file-circle-check'; txt = 'ส่งแล้ว'; }
+      var inner = '<i class="fa-solid ' + ic + '" aria-hidden="true"></i> ' + txt;
+      var tip = (r.submittedAt ? 'ส่งเมื่อ ' + formatDateTimeThai(r.submittedAt) : '');
+      if (canReview && !noRv) return '<button type="button" class="mx-c ' + cls + ' mx-btn" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '" title="' + escapeHtml(tip + ' · กดเพื่อตรวจรอบนี้') + '">' + inner + '</button>';
+      return '<span class="mx-c ' + cls + '" title="' + escapeHtml(tip) + '">' + inner + '</span>';
+    }
+    function seriesMatrixHtml(rounds) {
+      rounds = rounds.slice().sort(function (x, y) { return (x.endDate || x.date).localeCompare(y.endDate || y.date) || x.roundNo - y.roundNo; });
+      var a0 = rounds[0], today = todayYmd();
+      var semLabel = a0.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a0.semester;
+      var people = {}, order = [];
+      rounds.forEach(function (a) { a.rows.forEach(function (r) { if (!people[r.userId]) { people[r.userId] = { id: r.userId, name: r.userName, sg: r.subjectGroup || '', by: {} }; order.push(r.userId); } people[r.userId].by[a.eventId] = r; }); });
+      var list = order.map(function (id) { return people[id]; }).sort(function (x, y) { return String(x.name).localeCompare(String(y.name), 'th'); });
+      var opened = rounds.filter(function (a) { return a.date <= today; });
+      var allDone = list.filter(function (p) { return opened.length && opened.every(function (a) { var r = p.by[a.eventId]; return !r || r.status !== 'missing'; }); }).length;
+      var cur = opened.filter(function (a) { return (a.endDate || a.date) >= today; })[0] || opened[opened.length - 1];
+      var curTxt = cur ? ' · รอบ ' + escapeHtml(cur.roundLabel || cur.roundNo) + ' ส่งแล้ว ' + cur.rows.filter(function (r) { return r.status !== 'missing'; }).length + '/' + cur.rows.length : '';
+      var noRv = a0.reviewMode === 'none';
+      var h = '<div class="card asg-series" style="margin-bottom:16px; box-shadow:none; border:1px solid var(--border);">' +
+        '<div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">' +
+          '<span>' + icon('tag', 16) + ' ' + escapeHtml(a0.categoryName) + ' · ' + semLabel + '/' + escapeHtml(a0.academicYear) + ' · ' + rounds.length + ' รอบ</span>' +
+          '<span class="hint" style="margin:0;">ครบทุกรอบที่ถึงกำหนด ' + allDone + '/' + list.length + ' คน' + curTxt + '</span>' +
+        '</div>' +
+        '<div class="sub-item-meta" style="margin-bottom:10px;">' + categoryDotHtml(categoryColorMap[a0.categoryId]) + escapeHtml(a0.categoryName) + categoryDeptBadgeHtml(a0.categoryId) +
+          (noRv ? ' · <span class="badge asg-rvsum">ดูแค่ว่าส่งแล้ว</span>' : ' · <span class="badge asg-rvsum">ตรวจทีละรอบ</span>') + '</div>' +
+        '<div class="table-wrap mx-wrap"><table class="mx-table"><thead><tr><th class="mx-name">ครู</th>' +
+          rounds.map(function (a) { return '<th><div>' + escapeHtml(asgRoundShort(a)) + '</div><small>' + escapeHtml(formatDateThai(a.endDate || a.date).replace(/ \d{4}$/, '')) + '</small></th>'; }).join('') +
+          '<th>รวม</th></tr></thead><tbody>' +
+          list.map(function (p) {
+            var n = rounds.filter(function (a) { var r = p.by[a.eventId]; return r && r.status !== 'missing'; }).length;
+            var need = rounds.filter(function (a) { return !!p.by[a.eventId]; }).length;
+            return '<tr><td class="mx-name">' + escapeHtml(p.name) + (p.sg ? ' <small>· ' + escapeHtml(subjectShort(p.sg)) + '</small>' : '') + '</td>' +
+              rounds.map(function (a) { return '<td>' + matrixCell(a, p.by[a.eventId], today) + '</td>'; }).join('') +
+              '<td class="mx-tot">' + n + '/' + need + '</td></tr>';
+          }).join('') +
+        '</tbody></table></div>' +
+        (canReview && !noRv ? '<div class="hint" style="margin-top:6px;">กดช่องของรอบเพื่อเปิดหน้าต่างตรวจ (ไฟล์ของรอบนั้น)</div>' : '') +
+      '</div>';
+      return h;
     }
     // ---------- 1.80: ตรวจผลงาน ----------
     // เจ้าหน้าที่/Super Admin ตรวจได้ · ผู้บริหารเห็นเฉพาะ "ตรวจแล้ว" / "ยังไม่ตรวจ" (Worker ส่งมาแค่นั้น)
@@ -564,7 +628,7 @@
     async function openReview(a, row) {
       rvCur = { a: a, row: row };
       document.getElementById('rvTitle').textContent = 'ตรวจผลงาน — ' + row.userName;
-      document.getElementById('rvSub').textContent = a.categoryName + ' · ' + (a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester) + ' ปีการศึกษา ' + a.academicYear;
+      document.getElementById('rvSub').textContent = a.categoryName + (a.seriesId ? ' (รอบ ' + (a.roundLabel || a.roundNo) + ')' : '') + ' · ' + (a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester) + ' ปีการศึกษา ' + a.academicYear;
       var v = row.review || { status: 'none' };
       rvModal.querySelector('input[value="' + (v.status === 'revise' ? 'revise' : 'reviewed') + '"]').checked = true;
       document.getElementById('rvComment').value = v.status === 'revise' || v.status === 'reviewed' ? (v.comment || '') : '';
@@ -574,7 +638,7 @@
       document.getElementById('rvExtraBox').hidden = true; document.getElementById('rvSum').hidden = true; document.getElementById('rvChoice').hidden = false;
       showModalEl(rvModal);
       try {
-        var d = await apiCall('reviewFiles', { teacherId: row.userId, categoryId: a.categoryId, academicYear: a.academicYear, semester: a.semester });
+        var d = await apiCall('reviewFiles', { teacherId: row.userId, categoryId: a.categoryId, academicYear: a.academicYear, semester: a.semester, eventId: a.seriesId ? a.eventId : '' });
         if (!rvCur || rvCur.row !== row) return;
         rvCur.files = d.files; rvCur.since = d.revisedSince || ''; rvCur.perFile = !!d.perFile;
         // ไฟล์ใหม่ (ยังไม่เคยตรวจ) = ผ่านไว้ก่อน · ไฟล์ที่เคยให้แก้ไข = ต้องแก้ไข + ข้อความเดิม
@@ -639,7 +703,7 @@
     document.getElementById('rvCloseX').addEventListener('click', closeReview);
     function applyReviewLocal(a, ids, st, comment) {
       allAssignments.forEach(function (x) {
-        if (x.categoryId !== a.categoryId || x.academicYear !== a.academicYear || x.semester !== a.semester) return;
+        if (a.seriesId ? x.eventId !== a.eventId : (x.seriesId || x.categoryId !== a.categoryId || x.academicYear !== a.academicYear || x.semester !== a.semester)) return;
         x.rows.forEach(function (r) {
           if (ids.indexOf(r.userId) === -1) return;
           var old = r.review || {};
@@ -650,7 +714,7 @@
     document.getElementById('rvSave').addEventListener('click', async function () {
       if (!rvCur) return;
       var st = rvStatus(), comment = document.getElementById('rvComment').value.trim();
-      var cur = rvCur, payload = { teacherIds: [cur.row.userId], categoryId: cur.a.categoryId, academicYear: cur.a.academicYear, semester: cur.a.semester, status: st, comment: comment };
+      var cur = rvCur, payload = { teacherIds: [cur.row.userId], categoryId: cur.a.categoryId, academicYear: cur.a.academicYear, semester: cur.a.semester, eventId: cur.a.seriesId ? cur.a.eventId : '', status: st, comment: comment };
       if (cur.perFile) {
         var miss = cur.files.filter(function (f) { return !f.replaced && cur.st[f.id].state === 'fix' && !cur.st[f.id].note.trim(); })[0];
         if (miss) { showToast('กรุณาใส่ข้อความว่าต้องแก้ไขอะไรในไฟล์ "' + (miss.title || miss.fileName) + '"', true); var inp = document.querySelector('[data-rv-note="' + miss.id + '"]'); if (inp) inp.focus(); return; }
@@ -681,7 +745,7 @@
         if (!(await askConfirm('บันทึกว่า "ตรวจแล้ว" ให้ครู ' + rows.length + ' คนที่ยังไม่ได้ตรวจในงานนี้ (ไม่รวมคนที่แจ้งแก้ไขเพิ่มเติมไว้หรือเพิ่งส่งไฟล์เพิ่มเติม) ครูแต่ละคนจะได้รับแจ้งเตือน', 'ตรวจแล้วทั้งหมด'))) return;
         var ids = rows.map(function (r) { return r.userId; });
         try {
-          await withProgress('กำลังบันทึกผลการตรวจ', function () { return apiCall('reviewSet', { teacherIds: ids, categoryId: a2.categoryId, academicYear: a2.academicYear, semester: a2.semester, status: 'reviewed', comment: '' }); });
+          await withProgress('กำลังบันทึกผลการตรวจ', function () { return apiCall('reviewSet', { teacherIds: ids, categoryId: a2.categoryId, academicYear: a2.academicYear, semester: a2.semester, eventId: a2.seriesId ? a2.eventId : '', status: 'reviewed', comment: '' }); });
           applyReviewLocal(a2, ids, 'reviewed', ''); renderAssignmentSummary(); showToast('บันทึกว่าตรวจแล้ว ' + ids.length + ' คน');
         } catch (err) { showToast(err.message); }
       }

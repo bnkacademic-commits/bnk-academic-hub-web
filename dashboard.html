@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.87.2.261026" />
+<link rel="stylesheet" href="assets/style.css?v=1.88.0.261026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -169,6 +169,12 @@
           <label for="upCategory">ประเภทงาน</label>
           <select id="upCategory"><option value="">กำลังโหลด...</option></select>
         </div>
+        <!-- 1.88: งานแบบหลายรอบ — เลือกรอบที่ส่ง -->
+        <div class="field" id="upRoundField" hidden>
+          <label for="upRound">รอบที่ส่ง</label>
+          <select id="upRound"></select>
+          <div class="hint">งานนี้ส่งเป็นรอบ — ส่งหลังกำหนดได้ (ขึ้น "เกินกำหนด")</div>
+        </div>
         <div id="upCustomFields"></div>
         <div class="field">
           <label>ไฟล์ผลงาน (สูงสุด 20 ไฟล์ต่อครั้ง ไม่เกิน <span data-upmax>25MB</span> ต่อไฟล์)</label>
@@ -224,7 +230,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.87.2.261026"></script>
+  <script src="assets/api.js?v=1.88.0.261026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
@@ -464,6 +470,28 @@
     }
     document.getElementById('upCategory').addEventListener('change', renderUploadCustomFields);
 
+    // 1.88: ค่าเริ่มต้นของป็อปอัปส่งงานจากกำหนดการ (รอบ = ระบุ eventId)
+    function evPreset(e) { return e ? { categoryId: e.categoryId, academicYear: e.academicYear, semester: e.semester, eventId: e.seriesId ? e.id : '' } : null; }
+    function roundsOf(catId, year, sem) {
+      return (calState.events || []).filter(function (e) { return e.seriesId && e.categoryId === catId && String(e.academicYear) === String(year) && String(e.semester) === String(sem); })
+        .sort(function (a, b) { return (a.endDate || a.date).localeCompare(b.endDate || b.date) || a.roundNo - b.roundNo; });
+    }
+    var upRoundWant = '';
+    function refreshUploadRounds() {
+      var f = document.getElementById('upRoundField'), sel = document.getElementById('upRound');
+      var rs = roundsOf(document.getElementById('upCategory').value, document.getElementById('upYear').value, document.getElementById('upSemester').value);
+      f.hidden = !rs.length;
+      if (!rs.length) { sel.innerHTML = ''; return; }
+      var today = todayYmd(), cur = upRoundWant || sel.value;
+      sel.innerHTML = rs.map(function (e) {
+        var done = isAssignmentSubmitted(e), late = !done && (e.endDate || e.date) < today, wait = e.date > today;
+        return '<option value="' + escapeHtml(e.id) + '">' + escapeHtml((e.roundLabel || ('รอบที่ ' + e.roundNo)) + ' · ครบกำหนด ' + formatDateThai(e.endDate || e.date) + (done ? ' · ส่งแล้ว' : late ? ' · เกินกำหนด' : wait ? ' · ยังไม่ถึงรอบ' : '')) + '</option>';
+      }).join('');
+      if (cur && rs.some(function (e) { return e.id === cur; })) sel.value = cur;
+      else { var first = rs.filter(function (e) { return !isAssignmentSubmitted(e) && e.date <= today; })[0] || rs.filter(function (e) { return !isAssignmentSubmitted(e); })[0] || rs[rs.length - 1]; sel.value = first.id; }
+      upRoundWant = '';
+    }
+    ['upCategory', 'upYear', 'upSemester'].forEach(function (id) { document.getElementById(id).addEventListener('change', refreshUploadRounds); });
     // preset (ไม่บังคับ): { categoryId, academicYear, semester } — ใช้ตอนกดปุ่ม "ส่งงาน" จากรายการแจ้งเตือนกำหนดส่งในปฏิทิน (V9.5)
     // เพื่อเลือกภาคเรียน/ปีการศึกษา/ประเภทงานของกำหนดการนั้นให้อัตโนมัติ ไม่ต้องเลือกเองซ้ำ
     var reopenGroupAfterUpload = null; // 1.49.121026: เปิดมาจากป็อปอัปชุดผลงาน -> ปิด/ส่งเสร็จแล้วกลับไปที่ชุดนั้น
@@ -490,9 +518,12 @@
         });
       }
       document.getElementById('upCustomFields').innerHTML = '';
+      upRoundWant = (preset && preset.eventId) || '';
+      document.getElementById('upRoundField').hidden = true;
       loadUploadCategories().then(function () {
         if (preset && preset.categoryId) document.getElementById('upCategory').value = preset.categoryId;
         renderUploadCustomFields();
+        if (!preset || !preset.academicYear || !preset.semester) currentAcademicTerm().then(refreshUploadRounds); else refreshUploadRounds();
       });
       showModalEl(uploadModal);
     }
@@ -520,7 +551,9 @@
         customFieldValues[inp.getAttribute('data-custom-field')] = inp.value.trim();
       });
 
-      var categoryLabel = document.getElementById('upCategory').selectedOptions[0].textContent;
+      var roundId = document.getElementById('upRoundField').hidden ? '' : document.getElementById('upRound').value; // 1.88
+      var roundEv = roundId ? (calState.events || []).filter(function (x) { return x.id === roundId; })[0] : null;
+      var categoryLabel = document.getElementById('upCategory').selectedOptions[0].textContent + (roundEv ? ' รอบ ' + (roundEv.roundLabel || roundEv.roundNo) : '');
       var semLabel = semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + semester;
       var ok = await askConfirm(
         'ยืนยันส่งงาน ' + selectedFiles.length + ' ไฟล์ ประเภท "' + categoryLabel + '" ปีการศึกษา ' + academicYear + ' ' + semLabel + ' ใช่หรือไม่?',
@@ -544,6 +577,7 @@
               academicYear: academicYear,
               semester: semester,
               categoryId: categoryId,
+              eventId: roundId,
               customFieldValues: customFieldValues,
               onStage: function (stage) {
                 if (stage === 'upload') p.creep(s0 + seg * 0.05, s0 + seg * 0.92, estimateUploadMs(f.size), 'กำลังอัปโหลด ' + head + ' (' + formatBytes(f.size) + ')');
@@ -965,6 +999,7 @@
     // ย้ายออกมาเป็นฟังก์ชันกลาง (เดิมประกาศซ้อนอยู่ในตัว renderAssignmentChecklist เท่านั้น) เพราะ renderCalendar() ด้านล่าง
     // ก็ต้องใช้เกณฑ์เดียวกันนี้ด้วย เพื่อตัดสินว่ากำหนดการที่เกินกำหนดแล้วควรยังค้างอยู่ใน "กำหนดการ" ใต้ปฏิทินหรือไม่
     function isAssignmentSubmitted(e) {
+      if (e.seriesId) return allSubmissions.some(function (s) { return s.eventId === e.id; }); // 1.88: รอบ = ไฟล์ที่ผูกรอบนี้
       return allSubmissions.some(function (s) {
         return s.categoryId === e.categoryId && s.academicYear === e.academicYear && s.semester === e.semester;
       });
@@ -1012,14 +1047,14 @@
       var tabs = document.getElementById('clTabs');
       if (tabs) {
         tabs.innerHTML = sems.map(function (sm) {
-          var pend = inYear.filter(function (e) { return e.semester === sm && !isAssignmentSubmitted(e); }).length;
+          var pend = clItems(inYear.filter(function (e) { return e.semester === sm; })).filter(function (r) { return r.series ? seriesPending(r.series) : !r.done; }).length;
           var on = sm === checklistState.sem;
           var cur = isCurYear && sm === String(checklistState.term.semester);
           return '<button type="button" role="tab" data-cl-sem="' + sm + '" class="' + (on ? 'on' : '') + (cur ? ' cur' : '') + '" aria-selected="' + on + '"' + (cur ? ' title="ภาคเรียนปัจจุบัน"' : '') + '>' +
             (sm === 'summer' ? 'ฤดูร้อน' : 'ภาคเรียน ' + sm) + (pend ? '<span class="cl-tab-n" title="ยังไม่ส่ง ' + pend + ' งาน">' + (pend > 99 ? '99+' : pend) + '</span>' : '') + '</button>';
         }).join('');
       }
-      var rows = inYear.filter(function (e) { return e.semester === checklistState.sem; }).map(function (e) { return { ev: e, done: isAssignmentSubmitted(e) }; });
+      var rows = clItems(inYear.filter(function (e) { return e.semester === checklistState.sem; }));
       if (!rows.length) {
         wrap.innerHTML = '<div class="empty-state" style="padding:16px 4px;">ไม่มีงานที่ต้องส่งใน' + (checklistState.sem === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + checklistState.sem) + ' ปีการศึกษา ' + escapeHtml(checklistState.year) + '</div>';
         return;
@@ -1029,6 +1064,7 @@
         return new Date(a.ev.date) - new Date(b.ev.date);
       });
       wrap.innerHTML = rows.map(function (r) {
+        if (r.series) return seriesChecklistHtml(r);
         var dotColor = categoryColorMap[r.ev.categoryId] || '';
         return '<div class="checklist-item">' +
           '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
@@ -1038,6 +1074,64 @@
           '</div>' +
         '</div>';
       }).join('');
+    }
+    // ---------- 1.88: งานแบบหลายรอบในเช็คลิสต์ — 1 รายการต่อชุด + ป้ายรายรอบ ----------
+    function clItems(evs) {
+      var out = [], bySeries = {};
+      evs.forEach(function (e) {
+        if (!e.seriesId) { out.push({ ev: e, done: isAssignmentSubmitted(e) }); return; }
+        if (!bySeries[e.seriesId]) { bySeries[e.seriesId] = { series: [], ev: null, done: false }; out.push(bySeries[e.seriesId]); }
+        bySeries[e.seriesId].series.push(e);
+      });
+      out.forEach(function (r) {
+        if (!r.series) return;
+        r.series.sort(function (a, b) { return (a.endDate || a.date).localeCompare(b.endDate || b.date) || a.roundNo - b.roundNo; });
+        r.done = r.series.every(isAssignmentSubmitted);
+        r.focus = seriesFocus(r.series);
+        r.ev = r.focus || r.series[0];
+      });
+      return out;
+    }
+    function seriesPending(rounds) { var t = todayYmd(); return rounds.some(function (e) { return e.date <= t && !isAssignmentSubmitted(e); }); }
+    // รอบที่ควรส่งตอนนี้: รอบที่เปิดแล้วแต่ยังไม่ส่ง (เก่าสุดก่อน) → ไม่มีก็รอบถัดไปที่ยังไม่ส่ง
+    function seriesFocus(rounds) {
+      var t = todayYmd();
+      return rounds.filter(function (e) { return e.date <= t && !isAssignmentSubmitted(e); })[0] || rounds.filter(function (e) { return !isAssignmentSubmitted(e); })[0] || null;
+    }
+    function roundFirstSent(e) { var at = ''; allSubmissions.forEach(function (s) { if (s.eventId === e.id && (!at || s.uploadedAt < at)) at = s.uploadedAt; }); return at; }
+    function roundShort(e) { var l = e.roundLabel || ('รอบ ' + e.roundNo); var m = /^(\S+) \d{4}$/.exec(l); return m ? m[1] : l; }
+    function seriesChecklistHtml(r) {
+      var t = todayYmd(), rounds = r.series, f = r.focus, sent = rounds.filter(isAssignmentSubmitted).length;
+      var name = rounds[0].categoryName || rounds[0].title.replace(/\s*\([^()]*\)\s*$/, '');
+      var chips = rounds.map(function (e) {
+        var done = isAssignmentSubmitted(e), end = e.endDate || e.date, cls, txt = roundShort(e), ic = '';
+        var rv = e.review && e.review.status;
+        if (done) {
+          var late = String(roundFirstSent(e)).slice(0, 10) > end;
+          cls = rv === 'revise' ? 'fx' : (late ? 'late' : 'ok');
+          ic = rv === 'revise' ? ' แก้ไข <i class="fa-solid fa-pen" aria-hidden="true"></i>' : (late ? ' เกินกำหนด <i class="fa-solid fa-check" aria-hidden="true"></i>' : (rv === 'reviewed' ? ' ตรวจแล้ว <i class="fa-solid fa-check-double" aria-hidden="true"></i>' : ' ส่งแล้ว <i class="fa-solid fa-check" aria-hidden="true"></i>'));
+        } else if (e.date > t) { cls = 'wait'; }
+        else if (end < t) { cls = 'no'; ic = ' ยังไม่ส่ง'; }
+        else { cls = 'open'; ic = ' รอส่ง'; }
+        return '<span class="cl-rchip ' + cls + '" title="' + escapeHtml((e.roundLabel || '') + ' · ครบกำหนด ' + formatDateThai(end)) + '">' + escapeHtml(txt) + ic + '</span>';
+      }).join('');
+      var meta = '';
+      if (f) { var dl = daysLeftInfo(f.endDate || f.date); meta = 'รอบ ' + escapeHtml(f.roundLabel || f.roundNo) + ' ครบกำหนด ' + escapeHtml(formatDateThai(f.endDate || f.date)) + (dl ? ' · <span class="days-left ' + dl.cls + '">' + escapeHtml(dl.text) + '</span>' : ''); }
+      var btn = f && !beforeMyJoin(f) ? '<button type="button" class="btn ' + ((f.endDate || f.date) < t ? 'btn-danger' : 'btn-primary') + ' btn-sm cl-round-btn" data-cl-fix="' + escapeHtml(f.id) + '"><i class="fa-solid fa-upload" aria-hidden="true"></i> ส่งงานรอบ ' + escapeHtml(roundShort(f)) + '</button>' : '';
+      var rvBlocks = rounds.filter(function (e) { return e.review && e.review.status === 'revise'; }).map(function (e) {
+        return '<div class="cl-round-rv"><div class="cl-round-rv-h">รอบ ' + escapeHtml(e.roundLabel || e.roundNo) + '</div>' + checklistReviewHtml(e) + '</div>';
+      }).join('');
+      var dotColor = categoryColorMap[rounds[0].categoryId] || '';
+      return '<div class="checklist-item cl-series">' +
+        '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
+        '<div class="checklist-text">' +
+          '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(name) + categoryDeptBadgeHtml(rounds[0].categoryId) + '</div>' +
+          (meta ? '<div class="cl-round-meta">' + meta + '</div>' : '') +
+          '<div class="cl-rchips">' + chips + '</div>' +
+          '<div class="checklist-status ' + (r.done ? 'done' : 'pending') + '">ส่งแล้ว ' + sent + '/' + rounds.length + ' รอบ</div>' +
+          eventLinksHtml(rounds[0].links, false) + rvBlocks + btn +
+        '</div>' +
+      '</div>';
     }
     // 1.80: ผลการตรวจผลงาน — ไม่มีคำว่าผ่าน/ไม่ผ่าน · ยังไม่ตรวจ = "ส่งแล้ว" ตามปกติ (ไม่มีป้ายรอตรวจ)
     // ส่งไฟล์เพิ่มเติมหลัง "แก้ไขเพิ่มเติม" = "ส่งแล้ว" เหมือนงานปกติ · ตรวจแล้วหลังแก้ไข = หมายเหตุเล็ก "แก้ไขเพิ่มเติมแล้ว"
@@ -1093,7 +1187,7 @@
       if (rp) { clReplaceId = rp.getAttribute('data-cl-rep'); document.getElementById('clReplaceFile').click(); return; }
       var b = e.target.closest('[data-cl-fix]'); if (!b) return;
       var ev = (calState.events || []).filter(function (x) { return x.id === b.getAttribute('data-cl-fix'); })[0];
-      if (ev) openUploadModal({ categoryId: ev.categoryId, academicYear: ev.academicYear, semester: ev.semester });
+      if (ev) openUploadModal(evPreset(ev));
     });
     (function wireChecklistControls() {
       var tabs = document.getElementById('clTabs');
@@ -1222,7 +1316,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           // 1.49.121026: ส่งแล้ว (มีผลงานประเภทนี้ในภาคเรียน/ปีนี้) -> ปุ่มเปลี่ยนเป็น "ส่งงานเพิ่มหรือแก้ไข" เปิดป็อปอัปชุดผลงาน (ดู/พรีวิว/ลบ/เพิ่มไฟล์)
           var isSubmitted = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
           var submitBtn = isSubmitted
-            ? '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ส่งงานเพิ่มหรือแก้ไข</button>'
+            ? '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ' + (e.seriesId ? 'ส่งไฟล์เพิ่มในรอบนี้' : 'ส่งงานเพิ่มหรือแก้ไข') + '</button>'
             : (e.categoryId && !e.noSubmission)
             ? '<button class="btn ' + (isOverdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
             : (e.categoryId && e.noSubmission ? '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>' : '');
@@ -1236,21 +1330,22 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
               (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + overdueBadge + '</div>' +
             (termLabel ? '<div class="sub-item-meta term-tags-row">' + categoryDotHtml(categoryColorMap[e.categoryId]) + termLabel + '</div>' : '') +
-            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + submitBtn + '</div>';
+            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + eventLinksHtml(e.links, true) + '</div>' + submitBtn + '</div>';
         }).join('') + '</div>';
         upcomingBox.querySelectorAll('button[data-group-event]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var ev = calState.events.filter(function (x) { return x.id === btn.getAttribute('data-group-event'); })[0];
             if (!ev) return;
+            if (ev.seriesId) { openUploadModal(evPreset(ev)); return; } // 1.88: รอบ = ส่งไฟล์เพิ่มในรอบนั้น
             var s0 = allSubmissions.filter(function (s) { return s.categoryId === ev.categoryId && s.academicYear === ev.academicYear && s.semester === ev.semester; })[0];
-            if (s0) openGroupModal(subGroupKey(s0)); else openUploadModal({ categoryId: ev.categoryId, academicYear: ev.academicYear, semester: ev.semester });
+            if (s0) openGroupModal(subGroupKey(s0)); else openUploadModal(evPreset(ev));
           });
         });
         upcomingBox.querySelectorAll('button[data-submit-event]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var evId = btn.getAttribute('data-submit-event');
             var ev = calState.events.filter(function (e) { return e.id === evId; })[0];
-            openUploadModal(ev ? { categoryId: ev.categoryId, academicYear: ev.academicYear, semester: ev.semester } : null);
+            openUploadModal(evPreset(ev));
           });
         });
       }
@@ -1262,7 +1357,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       if (!e.categoryId) return '';
       if (e.noSubmission) return '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>';
       if (beforeMyJoin(e)) return '<span class="hint day-ev-note">ก่อนเริ่มปฏิบัติงาน</span>';
-      if (isAssignmentSubmitted(e)) return '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ส่งงานเพิ่มหรือแก้ไข</button>';
+      if (isAssignmentSubmitted(e)) return '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ' + (e.seriesId ? 'ส่งไฟล์เพิ่มในรอบนี้' : 'ส่งงานเพิ่มหรือแก้ไข') + '</button>';
       var late = new Date(e.endDate || e.date) < new Date() && (daysLeftInfo(e.endDate || e.date) || {}).days < 0;
       return '<button class="btn ' + (late ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>';
     }
@@ -1286,7 +1381,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
             '<div class="day-ev-title">' + escapeHtml(e.title) + (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + (isEnd && e.categoryId && !e.noSubmission ? ' <span class="day-ev-end"><i class="fas fa-flag" aria-hidden="true"></i> ครบกำหนดวันนี้</span>' : '') + (done ? ' <span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>' : '') + '</div>' +
             '<div class="day-ev-meta"><i class="fas fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(range) + dlHtml + '</div>' +
             (e.categoryId ? '<div class="term-tags-row">' + termTagsHtml(e.semester, e.academicYear) + '</div>' : '') +
-            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') +
+            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + eventLinksHtml(e.links, false) +
           '</div>' + eventActionHtml(e) + '</div>';
       }).join('') : '<div class="empty-state">ไม่มีงานหรือกำหนดการในวันนี้</div>';
       showModalEl(document.getElementById('dayModal'));
@@ -1306,10 +1401,10 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
         var e = calState.events.filter(function (x) { return x.id === id; })[0];
         if (!e) return;
         close();
-        if (g) {
+        if (g && !e.seriesId) {
           var s0 = allSubmissions.filter(function (s) { return s.categoryId === e.categoryId && s.academicYear === e.academicYear && s.semester === e.semester; })[0];
-          if (s0) openGroupModal(subGroupKey(s0)); else openUploadModal({ categoryId: e.categoryId, academicYear: e.academicYear, semester: e.semester });
-        } else openUploadModal({ categoryId: e.categoryId, academicYear: e.academicYear, semester: e.semester });
+          if (s0) openGroupModal(subGroupKey(s0)); else openUploadModal(evPreset(e));
+        } else openUploadModal(evPreset(e));
       });
     })();
 

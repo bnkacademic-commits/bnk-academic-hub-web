@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.87.2.261026" />
+<link rel="stylesheet" href="assets/style.css?v=1.88.0.261026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -257,16 +257,41 @@
             <div class="hint">ใช้ "ชื่อประเภทงาน" เป็นหัวข้อกำหนดการ และคำนวณสถานะการส่งงานในหน้า "สรุปรวมการส่งงาน"</div>
             <div class="hint" id="evNoCategoryHint" hidden>ยังไม่มีประเภทงานในระบบ — ไปเพิ่มที่หน้า "ตั้งค่าระบบ" แท็บ "ข้อมูลหลัก" ก่อน ถึงจะเพิ่มกำหนดการได้</div>
           </div>
-          <div class="field-row">
+          <!-- 1.88: ส่งกี่รอบ — ครั้งเดียว / ทุกเดือน / กำหนดเอง (แต่ละรอบเป็นกำหนดการแยกในปฏิทิน) -->
+          <div class="field" id="evRoundsField">
+            <label>ส่งกี่รอบ</label>
+            <div class="evk-seg" id="evRoundSeg">
+              <button type="button" class="on" data-rmode="once">ครั้งเดียว</button>
+              <button type="button" data-rmode="monthly"><i class="fa-solid fa-calendar-week" aria-hidden="true"></i> ทุกเดือน</button>
+              <button type="button" data-rmode="custom"><i class="fa-solid fa-calendar-plus" aria-hidden="true"></i> กำหนดเอง</button>
+            </div>
+          </div>
+          <div id="evRoundInfo" class="ev-round-info" hidden></div>
+          <div class="field-row" id="evOnceDates">
             <div class="field">
-              <label for="evDate">วันที่เริ่มต้น <span class="opt" id="evDateTh"></span></label>
+              <label for="evDate"><span id="evDateLbl">วันที่เริ่มต้น</span> <span class="opt" id="evDateTh"></span></label>
               <input id="evDate" type="date" />
             </div>
-            <div class="field">
+            <div class="field" id="evEndDateField">
               <label for="evEndDate">วันที่สิ้นสุด <span class="opt" id="evEndDateTh"></span></label>
               <input id="evEndDate" type="date" />
             </div>
           </div>
+          <div id="evMonthly" hidden>
+            <div class="field-row ev-row3">
+              <div class="field"><label for="evMFrom">ตั้งแต่เดือน</label><select id="evMFrom"></select></div>
+              <div class="field"><label for="evMTo">ถึงเดือน</label><select id="evMTo"></select></div>
+              <div class="field"><label for="evMDue">ครบกำหนด</label><select id="evMDue"></select></div>
+            </div>
+          </div>
+          <div id="evCustom" hidden>
+            <div class="field">
+              <label>วันครบกำหนดแต่ละรอบ</label>
+              <div id="evCustomList" class="ev-cust-list"></div>
+              <button type="button" class="ev-add-btn" id="evCustomAdd"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มรอบ</button>
+            </div>
+          </div>
+          <div id="evRoundPreview" class="ev-rounds" hidden></div>
           <div class="field-row">
             <div class="field">
               <label for="evYear">ปีการศึกษา</label>
@@ -292,6 +317,22 @@
             <label for="evMessage">รายละเอียดเพิ่มเติม <span class="opt">(ไม่บังคับ)</span></label>
             <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
           </div>
+          <!-- 1.88: ลิงก์แนบ (สูงสุด 3) — ครูเห็นเป็นปุ่ม -->
+          <div class="field">
+            <label>ลิงก์แนบ <span class="opt">(ไม่บังคับ · สูงสุด 3 ลิงก์)</span></label>
+            <div id="evLinks" class="ev-links"></div>
+            <button type="button" class="ev-add-btn" id="evLinkAdd"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มลิงก์</button>
+            <div class="hint">ครูเห็นเป็นปุ่ม (ไม่ใส่ข้อความบนปุ่ม = "เปิดลิงก์") · ใส่ได้เฉพาะลิงก์ที่ขึ้นต้นด้วย https://</div>
+          </div>
+          <!-- 1.88: การตรวจ (เฉพาะงานที่ต้องส่ง) -->
+          <div class="field" id="evReviewField">
+            <label>การตรวจ</label>
+            <div class="evk-seg" id="evReviewSeg">
+              <button type="button" class="on" data-rvmode=""><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> <span id="evRvLbl">ตรวจงาน</span></button>
+              <button type="button" data-rvmode="none"><i class="fa-solid fa-check" aria-hidden="true"></i> ดูแค่ว่าส่งแล้ว</button>
+            </div>
+          </div>
+          <label class="evk-chk" id="evApplySeriesWrap" hidden><input type="checkbox" id="evApplySeries" /><span><b>ใช้กับทุกรอบของงานนี้</b><small>สำหรับ · รายละเอียด · ลิงก์แนบ · การตรวจ (วันที่แก้เฉพาะรอบนี้)</small></span></label>
         </div>
 
         </div><!-- /evDeadlineWrap -->
@@ -304,9 +345,27 @@
     </div>
   </div>
 
+  <!-- 1.88: เพิ่มรอบให้งานแบบหลายรอบ -->
+  <div class="modal-backdrop" id="roundModal" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close-x" id="roundModalCloseX" aria-label="ปิด">✕</button>
+      <h3 id="roundModalTitle">เพิ่มรอบ</h3>
+      <div id="roundModalError" class="error-box" hidden></div>
+      <div class="field"><label for="rdLabel">ชื่อรอบ</label><input id="rdLabel" type="text" maxlength="40" placeholder="เช่น เม.ย. 2570" /><div class="hint">แสดงในปฏิทินเป็น "ชื่องาน (ชื่อรอบ)"</div></div>
+      <div class="field-row">
+        <div class="field"><label for="rdDate">เริ่มส่งได้</label><input id="rdDate" type="date" /></div>
+        <div class="field"><label for="rdEnd">ครบกำหนด</label><input id="rdEnd" type="date" /></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-success" type="button" id="roundModalOk"><i class="fa-solid fa-check" aria-hidden="true"></i> เพิ่มรอบ</button>
+        <button class="btn btn-ghost btn-close" type="button" id="roundModalClose">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.87.2.261026"></script>
+  <script src="assets/api.js?v=1.88.0.261026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -507,15 +566,20 @@
         } else {
           meta.push((ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + ' ปีการศึกษา ' + escapeHtml(ev.academicYear));
           meta.push('สำหรับ: ' + escapeHtml(audienceLabel_(ev.audience)));
+          if (ev.reviewMode === 'none') meta.push('<i class="fa-solid fa-check" aria-hidden="true"></i> ดูแค่ว่าส่งแล้ว');
+          if (ev.links && ev.links.length) meta.push('<i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์ ' + ev.links.length);
         }
+        var nSeries = ev.seriesId ? lastEvents.filter(function (x) { return x.seriesId === ev.seriesId; }).length : 0;
+        var roundBadge = ev.seriesId ? '<span class="evl-round"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> รอบ ' + ev.roundNo + '/' + nSeries + '</span>' : '';
+        var seriesActs = ev.seriesId ? '<button class="btn btn-secondary btn-sm" data-add-round="' + ev.seriesId + '"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มรอบ</button><button class="btn btn-danger btn-sm" data-del-series="' + ev.seriesId + '">ลบทั้งชุด</button>' : '';
         var by = ev.createdByName ? '<div class="evl-by"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> เพิ่มโดย ' + escapeHtml(ev.createdByName) + (ev.createdAt ? ' · ' + formatDateThai(String(ev.createdAt).slice(0, 10)) : '') + '</div>' : '';
         var acts = canManage && ev.canEdit
-          ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button></div>'
+          ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">' + (ev.seriesId ? 'ลบรอบนี้' : 'ลบ') + '</button>' + seriesActs + '</div>'
           : (canManage ? '<div class="evl-lock" title="แก้ไขได้เฉพาะผู้เพิ่ม เจ้าหน้าที่กลุ่มเจ้าของ และผู้ดูแลระบบ"><i class="fa-solid fa-lock" aria-hidden="true"></i> ดูได้อย่างเดียว</div>' : '');
         html += '<div class="event-list-item evl-item">' +
           '<div class="event-date-chip' + (isAct ? ' act' : '') + '">' + dateChip + '</div>' +
           '<div class="evl-body">' +
-            '<div class="sub-item-title"><span class="evl-tp ' + (isAct ? 'ac' : 'dl') + '"><i class="fa-solid ' + (isAct ? 'fa-flag' : 'fa-file-arrow-up') + '" aria-hidden="true"></i> ' + (isAct ? 'กิจกรรม' : 'กำหนดส่งงาน') + '</span>' + escapeHtml(ev.title) + ' ' + evOwnerBadge(ev) + '</div>' +
+            '<div class="sub-item-title"><span class="evl-tp ' + (isAct ? 'ac' : 'dl') + '"><i class="fa-solid ' + (isAct ? 'fa-flag' : 'fa-file-arrow-up') + '" aria-hidden="true"></i> ' + (isAct ? 'กิจกรรม' : 'กำหนดส่งงาน') + '</span>' + escapeHtml(ev.title) + roundBadge + ' ' + evOwnerBadge(ev) + '</div>' +
             (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
             '<div class="sub-item-meta evl-meta">' + meta.join(' · ') + '</div>' + by +
           '</div>' + acts + '</div>';
@@ -529,13 +593,24 @@
       document.querySelectorAll('#evlTabs [data-evl]').forEach(function (x) { x.classList.toggle('on', x === b); });
       renderEvents();
     });
-    document.getElementById('evlFlt').addEventListener('change', function () { evlShown = LIST_PAGE; renderEvents(); });
+    document.getElementById('evlFlt').addEventListener('change', function (e) { if (e.target.id === 'evlQ') return; evlShown = LIST_PAGE; renderEvents(); }); // 1.88: ช่องค้นหาแสดงผลตอนพิมพ์แล้ว — ไม่วาดใหม่ตอนออกจากช่อง (กดปุ่มในรายการครั้งแรกไม่ติด)
     document.getElementById('evlFlt').addEventListener('input', function (e) { if (e.target.id === 'evlQ') { evlShown = LIST_PAGE; renderEvents(); } });
     document.getElementById('eventListWrap').addEventListener('click', async function (e) {
       var more = e.target.closest('[data-more]');
       if (more) { evlShown = more.getAttribute('data-more') === 'all' ? 1e9 : evlShown + LIST_PAGE; renderEvents(); return; }
       var eb = e.target.closest('button[data-edit-id]');
       if (eb) { var ev = lastEvents.filter(function (x) { return x.id === eb.getAttribute('data-edit-id'); })[0]; if (ev) startEditEvent(ev); return; }
+      var ar = e.target.closest('button[data-add-round]');
+      if (ar) { openAddRound(ar.getAttribute('data-add-round')); return; }
+      var ds = e.target.closest('button[data-del-series]');
+      if (ds) {
+        var sid = ds.getAttribute('data-del-series');
+        var okS = await askConfirm('ลบทุกรอบของงานนี้? (รอบที่ครูส่งไฟล์แล้วจะไม่ถูกลบ)', 'ยืนยันการลบทั้งชุด');
+        if (!okS) return;
+        var rs = await withProgress('กำลังลบกำหนดการ', function () { return apiCall('adminDeleteEventSeries', { seriesId: sid }); }, { successLabel: 'ลบแล้ว' });
+        if (rs.ok) { if (rs.data && rs.data.kept) showToast('ลบแล้ว ' + rs.data.deleted + ' รอบ · คงไว้ ' + rs.data.kept + ' รอบที่มีไฟล์แล้ว'); loadEvents(); }
+        return;
+      }
       var db = e.target.closest('button[data-id]');
       if (db) {
         var ok = await askConfirm('ลบกำหนดการนี้?', 'ยืนยันการลบกำหนดการ');
@@ -639,6 +714,120 @@
       setActOwnerType('dept');
       currentAcademicTerm().then(function (t) { if (!document.getElementById('evEditId').value) { fillActYears(t.year); document.getElementById('evActSem').value = t.semester; } }).catch(function () { fillActYears(''); });
     }
+    // ---------- 1.88: ส่งกี่รอบ / การตรวจ / ลิงก์แนบ ----------
+    var evRMode = 'once', evRvMode = '', evEditing = null;
+    function ymNow(off) { var d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + off); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+    (function fillMonthSelects() {
+      var opts = '';
+      for (var i = -12; i <= 24; i++) { var ym = ymNow(i), y = Number(ym.slice(0, 4)), m = Number(ym.slice(5)); opts += '<option value="' + ym + '">' + TH_MONTHS_FULL[m - 1] + ' ' + (y + 543) + '</option>'; }
+      document.getElementById('evMFrom').innerHTML = opts; document.getElementById('evMTo').innerHTML = opts;
+      var due = '<option value="last">วันสุดท้ายของเดือน</option>';
+      for (var d = 1; d <= 31; d++) due += '<option value="' + d + '">วันที่ ' + d + ' ของเดือน</option>';
+      document.getElementById('evMDue').innerHTML = due;
+    })();
+    function evCat() { var id = document.getElementById('evCategory').value; return eventCategories.filter(function (c) { return c.id === id; })[0] || null; }
+    function custRow(v) { return '<div class="ev-cust-row"><b></b><input type="date" value="' + escapeHtml(v || '') + '" /><button type="button" class="ev-x" data-cust-rm aria-label="ลบรอบนี้"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>'; }
+    function custNumber() { Array.prototype.forEach.call(document.querySelectorAll('#evCustomList .ev-cust-row b'), function (b, i) { b.textContent = 'รอบ ' + (i + 1); }); }
+    function evRoundsSpec() {
+      if (evRMode === 'monthly') return { mode: 'monthly', fromMonth: document.getElementById('evMFrom').value, toMonth: document.getElementById('evMTo').value, dueDay: document.getElementById('evMDue').value };
+      if (evRMode === 'custom') return { mode: 'custom', dates: Array.prototype.map.call(document.querySelectorAll('#evCustomList input'), function (x) { return x.value; }).filter(Boolean) };
+      return { mode: 'once' };
+    }
+    function renderEvRounds() {
+      document.querySelectorAll('#evRoundSeg [data-rmode]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-rmode') === evRMode); });
+      document.getElementById('evMonthly').hidden = evRMode !== 'monthly';
+      document.getElementById('evCustom').hidden = evRMode !== 'custom';
+      document.getElementById('evOnceDates').hidden = evRMode === 'monthly';
+      document.getElementById('evEndDateField').hidden = evRMode === 'custom';
+      document.getElementById('evDateLbl').textContent = evRMode === 'custom' ? 'เริ่มส่งรอบแรกได้ตั้งแต่ (ไม่บังคับ)' : (evEditing && evEditing.seriesId ? 'เริ่มส่งได้' : 'วันที่เริ่มต้น');
+      var pv = document.getElementById('evRoundPreview');
+      var rs = previewRounds(evRoundsSpec(), document.getElementById('evDate').value);
+      if (evRMode === 'once' || !rs.length) { pv.hidden = true; pv.innerHTML = ''; }
+      else {
+        var c = evCat(), nm = c ? c.name : 'ชื่องาน';
+        pv.hidden = false;
+        pv.innerHTML = rs.map(function (r, i) { return '<span class="ev-rd"><b>รอบ ' + (i + 1) + '</b> ' + escapeHtml(formatDateThai(r.endDate)) + '</span>'; }).join('') +
+          '<div class="hint">รวม ' + rs.length + ' รอบ' + (rs.length > 24 ? ' (เกิน 24 รอบ — ลดช่วงเดือนลง)' : '') + ' · ในปฏิทินแสดงเป็น "' + escapeHtml(nm + ' (' + rs[0].label + ')') + '" … · ส่งหลังกำหนดได้ (ขึ้น "เกินกำหนด")</div>';
+      }
+      var multi = evRMode !== 'once' || (evEditing && evEditing.seriesId);
+      document.getElementById('evRvLbl').textContent = multi ? 'ตรวจทีละรอบ' : 'ตรวจงาน';
+      var c2 = evCat();
+      document.getElementById('evReviewField').hidden = !!(c2 && c2.noSubmission);
+      document.querySelectorAll('#evReviewSeg [data-rvmode]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-rvmode') === evRvMode); });
+    }
+    document.getElementById('evRoundSeg').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-rmode]'); if (!b) return;
+      evRMode = b.getAttribute('data-rmode');
+      if (evRMode === 'custom' && !document.querySelector('#evCustomList .ev-cust-row')) { document.getElementById('evCustomList').innerHTML = custRow('') + custRow(''); custNumber(); }
+      renderEvRounds();
+    });
+    document.getElementById('evReviewSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-rvmode]'); if (!b) return; evRvMode = b.getAttribute('data-rvmode'); renderEvRounds(); });
+    ['evMFrom', 'evMTo', 'evMDue', 'evCategory', 'evDate'].forEach(function (id) { document.getElementById(id).addEventListener('change', renderEvRounds); });
+    document.getElementById('evCustomList').addEventListener('change', renderEvRounds);
+    document.getElementById('evCustomList').addEventListener('click', function (e) { var b = e.target.closest('[data-cust-rm]'); if (!b) return; b.closest('.ev-cust-row').remove(); custNumber(); renderEvRounds(); });
+    document.getElementById('evCustomAdd').addEventListener('click', function () {
+      if (document.querySelectorAll('#evCustomList .ev-cust-row').length >= 24) { showToast('ตั้งได้ไม่เกิน 24 รอบ', true); return; }
+      document.getElementById('evCustomList').insertAdjacentHTML('beforeend', custRow('')); custNumber();
+    });
+    // ลิงก์แนบ
+    function linkRow(l) { return '<div class="ev-link-row"><input type="url" class="ev-link-url" placeholder="https://… (วางลิงก์ยาวได้)" value="' + escapeHtml((l && l.url) || '') + '" aria-label="ลิงก์" /><input type="text" class="ev-link-lbl" maxlength="60" placeholder="ข้อความบนปุ่ม เช่น ตอบแบบฟอร์ม" value="' + escapeHtml((l && l.label) || '') + '" aria-label="ข้อความบนปุ่ม" /><button type="button" class="ev-x" data-link-rm aria-label="ลบลิงก์"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>'; }
+    function setEvLinks(list) { document.getElementById('evLinks').innerHTML = (list || []).map(linkRow).join(''); syncLinkAdd(); }
+    function syncLinkAdd() { document.getElementById('evLinkAdd').hidden = document.querySelectorAll('#evLinks .ev-link-row').length >= 3; }
+    function getEvLinks() { return Array.prototype.map.call(document.querySelectorAll('#evLinks .ev-link-row'), function (r) { return { url: r.querySelector('.ev-link-url').value.trim(), label: r.querySelector('.ev-link-lbl').value.trim() }; }).filter(function (l) { return l.url || l.label; }); }
+    document.getElementById('evLinkAdd').addEventListener('click', function () { document.getElementById('evLinks').insertAdjacentHTML('beforeend', linkRow(null)); syncLinkAdd(); var ins = document.querySelectorAll('#evLinks .ev-link-url'); ins[ins.length - 1].focus(); });
+    document.getElementById('evLinks').addEventListener('click', function (e) { var b = e.target.closest('[data-link-rm]'); if (!b) return; b.closest('.ev-link-row').remove(); syncLinkAdd(); });
+    function resetEvRounds(ev) {
+      evEditing = ev || null;
+      evRMode = 'once'; evRvMode = ev && ev.reviewMode === 'none' ? 'none' : '';
+      document.getElementById('evMFrom').value = ymNow(0); document.getElementById('evMTo').value = ymNow(4); document.getElementById('evMDue').value = 'last';
+      document.getElementById('evCustomList').innerHTML = '';
+      setEvLinks(ev ? ev.links : []);
+      var series = !!(ev && ev.seriesId);
+      document.getElementById('evRoundsField').hidden = !!ev; // แก้ไขแล้วเปลี่ยนจำนวนรอบไม่ได้ (เพิ่มรอบได้จากรายการ)
+      var info = document.getElementById('evRoundInfo');
+      info.hidden = !series;
+      document.getElementById('evApplySeriesWrap').hidden = !series;
+      document.getElementById('evApplySeries').checked = false;
+      ['evCategory', 'evYear', 'evSemester'].forEach(function (id) { document.getElementById(id).disabled = series; });
+      if (series) {
+        var n = lastEvents.filter(function (x) { return x.seriesId === ev.seriesId; }).length;
+        info.innerHTML = '<i class="fa-solid fa-layer-group" aria-hidden="true"></i> <b>รอบที่ ' + ev.roundNo + '</b> ของงานนี้ (ทั้งหมด ' + n + ' รอบ) — เพิ่ม/ลบรอบได้จากรายการกำหนดการ' +
+          '<div class="field"><label for="evRoundLabel">ชื่อรอบ</label><input id="evRoundLabel" type="text" maxlength="40" value="' + escapeHtml(ev.roundLabel || '') + '" /></div>';
+      } else info.innerHTML = '';
+      renderEvRounds();
+    }
+    // 1.88: เพิ่มรอบ
+    var roundModalEl = document.getElementById('roundModal'), addRoundSeries = '';
+    function openAddRound(sid) {
+      addRoundSeries = sid;
+      var rounds = lastEvents.filter(function (x) { return x.seriesId === sid; }).sort(function (a, b) { return a.roundNo - b.roundNo; });
+      var last = rounds[rounds.length - 1];
+      var monthly = rounds.length && rounds.every(function (r) { return /^[^\s]+ \d{4}$/.test(r.roundLabel || '') && r.date.slice(8) === '01'; });
+      var start = '', end = '', label = 'ครั้งที่ ' + (rounds.length + 1);
+      if (last) {
+        if (monthly) {
+          var d = new Date(Date.parse(last.endDate.slice(0, 7) + '-01T00:00:00Z')); d.setUTCMonth(d.getUTCMonth() + 1);
+          var y = d.getUTCFullYear(), m = d.getUTCMonth() + 1, ld = new Date(Date.UTC(y, m, 0)).getUTCDate(), dueD = Math.min(Number(last.endDate.slice(8)), ld);
+          if (Number(last.endDate.slice(8)) === new Date(Date.UTC(Number(last.endDate.slice(0, 4)), Number(last.endDate.slice(5, 7)), 0)).getUTCDate()) dueD = ld;
+          start = y + '-' + String(m).padStart(2, '0') + '-01'; end = y + '-' + String(m).padStart(2, '0') + '-' + String(dueD).padStart(2, '0'); label = monthLabelTh(end);
+        } else { start = new Date(Date.parse(last.endDate + 'T00:00:00Z') + 86400000).toISOString().slice(0, 10); }
+      }
+      document.getElementById('rdLabel').value = label; document.getElementById('rdDate').value = start; document.getElementById('rdEnd').value = end;
+      document.getElementById('roundModalTitle').textContent = 'เพิ่มรอบ: ' + (last ? last.categoryName : '');
+      document.getElementById('roundModalError').hidden = true;
+      showModalEl(roundModalEl);
+    }
+    function closeAddRound() { hideModalEl(roundModalEl); }
+    document.getElementById('roundModalCloseX').addEventListener('click', closeAddRound);
+    document.getElementById('roundModalClose').addEventListener('click', closeAddRound);
+    document.getElementById('roundModalOk').addEventListener('click', async function () {
+      var eb = document.getElementById('roundModalError'); eb.hidden = true;
+      var pl = { seriesId: addRoundSeries, label: document.getElementById('rdLabel').value.trim(), date: document.getElementById('rdDate').value, endDate: document.getElementById('rdEnd').value };
+      if (!pl.endDate) { eb.textContent = 'กรุณาเลือกวันครบกำหนด'; eb.hidden = false; return; }
+      if (pl.date && pl.endDate < pl.date) { eb.textContent = 'วันครบกำหนดต้องไม่อยู่ก่อนวันเริ่มส่ง'; eb.hidden = false; return; }
+      var r = await withProgress('กำลังเพิ่มรอบ', function () { return apiCall('adminAddEventRound', pl); }, { successLabel: 'เพิ่มรอบแล้ว' });
+      if (r.ok) { closeAddRound(); loadEvents(); } else { eb.textContent = r.error.message; eb.hidden = false; }
+    });
     function openCreateEvent() {
       document.getElementById('evEditId').value = '';
       document.getElementById('createEventForm').reset();
@@ -649,6 +838,7 @@
       resetActivityForm();
       document.getElementById('evKindPick').hidden = false;
       setEvKind('deadline');
+      resetEvRounds(null); // 1.88
       document.getElementById('eventModalTitle').textContent = 'เพิ่มกำหนดการ';
       showModalEl(eventModalEl);
     }
@@ -676,6 +866,7 @@
         return;
       }
       setEvKind('deadline');
+      resetEvRounds(ev); // 1.88
       document.getElementById('evDate').value = ev.date;
       document.getElementById('evEndDate').value = (ev.endDate && ev.endDate !== ev.date) ? ev.endDate : '';
       evAud.set(ev.audience);
@@ -687,6 +878,7 @@
           document.getElementById('evYear').value = ev.academicYear;
           document.getElementById('evSemester').value = ev.semester;
         }
+        renderEvRounds();
         // กำหนดการเก่าก่อนอัปเดต (ทั่วไป ไม่ผูกประเภทงาน) จะไม่มี categoryId ให้ตั้งไว้ — ต้องเลือกประเภทงานใหม่ก่อนถึงจะบันทึกได้
       });
       document.getElementById('evSubmitBtn').textContent = 'บันทึกการแก้ไข';
@@ -696,6 +888,7 @@
     }
     function cancelEditEvent() {
       hideModalEl(eventModalEl);
+      ['evCategory', 'evYear', 'evSemester'].forEach(function (id) { document.getElementById(id).disabled = false; });
       document.getElementById('evEditId').value = '';
       document.getElementById('createEventForm').reset();
       document.getElementById('evSubmitBtn').textContent = 'เพิ่มกำหนดการ';
@@ -712,8 +905,14 @@
       var evDateVal = document.getElementById('evDate').value;
       var evEndDateVal = document.getElementById('evEndDate').value;
       var evCategoryVal = document.getElementById('evCategory').value;
-      if (!evDateVal) { errBox.textContent = 'กรุณาเลือกวันที่เริ่มต้น'; switchEvTab('period'); errBox.hidden = false; return; }
-      if (evEndDateVal && evEndDateVal < evDateVal) {
+      var editId0 = document.getElementById('evEditId').value;
+      var rspec = editId0 ? { mode: 'once' } : evRoundsSpec(); // 1.88
+      if (rspec.mode === 'monthly') { var nR = previewRounds(rspec).length; if (!nR) { errBox.textContent = 'เดือนสุดท้ายต้องไม่อยู่ก่อนเดือนเริ่มต้น'; errBox.hidden = false; switchEvTab(); return; } if (nR > 24) { errBox.textContent = 'ตั้งได้ไม่เกิน 24 รอบต่อครั้ง'; errBox.hidden = false; switchEvTab(); return; } }
+      if (rspec.mode === 'custom' && previewRounds(rspec).length < 2) { errBox.textContent = 'กำหนดเองต้องมีวันครบกำหนดอย่างน้อย 2 รอบ (ถ้ารอบเดียวให้เลือก "ครั้งเดียว")'; errBox.hidden = false; switchEvTab(); return; }
+      var badLink = getEvLinks().filter(function (l) { return !/^https:\/\/\S+$/i.test(l.url); })[0];
+      if (badLink) { errBox.textContent = 'ลิงก์ต้องขึ้นต้นด้วย https:// และไม่มีช่องว่าง' + (badLink.label ? ' (ปุ่ม "' + badLink.label + '")' : ''); errBox.hidden = false; switchEvTab(); return; }
+      if (!evDateVal && rspec.mode === 'once') { errBox.textContent = 'กรุณาเลือกวันที่เริ่มต้น'; switchEvTab('period'); errBox.hidden = false; return; }
+      if (rspec.mode === 'once' && evEndDateVal && evEndDateVal < evDateVal) {
         errBox.textContent = 'วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่มต้น';
         switchEvTab('period');
         errBox.hidden = false;
@@ -730,7 +929,7 @@
       if (audErr) { errBox.textContent = audErr; switchEvTab('period'); errBox.hidden = false; return; }
       var editId = document.getElementById('evEditId').value;
       var okEv = await askConfirm(
-        editId ? 'ยืนยันบันทึกการแก้ไขกำหนดการนี้?' : 'ยืนยันเพิ่มกำหนดการนี้ในปฏิทิน?',
+        editId ? 'ยืนยันบันทึกการแก้ไขกำหนดการนี้?' : (rspec.mode !== 'once' ? 'ยืนยันเพิ่มกำหนดการ ' + previewRounds(rspec, evDateVal).length + ' รอบในปฏิทิน?' : 'ยืนยันเพิ่มกำหนดการนี้ในปฏิทิน?'),
         editId ? 'ยืนยันการแก้ไขกำหนดการ' : 'ยืนยันการเพิ่มกำหนดการ'
       );
       if (!okEv) return;
@@ -741,9 +940,14 @@
         message: document.getElementById('evMessage').value.trim(),
         categoryId: evCategoryVal,
         academicYear: document.getElementById('evYear').value,
-        semester: document.getElementById('evSemester').value
+        semester: document.getElementById('evSemester').value,
+        links: getEvLinks(), reviewMode: evRvMode // 1.88
       };
-      if (editId) evPayload.eventId = editId;
+      if (rspec.mode !== 'once') { evPayload.rounds = rspec; if (rspec.mode === 'monthly') evPayload.date = ''; evPayload.endDate = ''; }
+      if (editId) {
+        evPayload.eventId = editId;
+        if (evEditing && evEditing.seriesId) { var rl = document.getElementById('evRoundLabel'); evPayload.roundLabel = rl ? rl.value.trim() : ''; evPayload.applySeries = document.getElementById('evApplySeries').checked; }
+      }
       var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเพิ่มกำหนดการ', function () {
         return apiCall(editId ? 'adminUpdateEvent' : 'adminCreateEvent', evPayload);
       }, { successLabel: editId ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มกำหนดการแล้ว' });

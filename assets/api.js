@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.87.2';
-var APP_VERSION = '1.87.2.261026';
+var WORKER_MIN_VERSION = '1.88.0';
+var APP_VERSION = '1.88.0.261026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -648,6 +648,7 @@ async function submitWorkFile(file, meta) {
     description: meta.description,
     customFieldValues: meta.customFieldValues,
     replacesId: meta.replacesId || '', // 1.85: อัปโหลดทับไฟล์ที่เจ้าหน้าที่ให้แก้ไข
+    eventId: meta.eventId || '', // 1.88: รอบที่ส่ง (งานแบบหลายรอบ)
     direct: 1, origin: location.origin // 1.86: ขอช่องส่งตรงเข้า Google Drive
   });
   // ชื่อไฟล์จริงที่จะใช้อัปโหลด (ตั้งแต่ V11.7): Worker คำนวณให้แล้วจากประเภทงาน/ภาคเรียน/ปีการศึกษา (ดู uploadFileName ที่
@@ -1082,6 +1083,43 @@ function formatDateThai(isoOrDateStr) {
   if (isNaN(d.getTime())) return String(isoOrDateStr);
   var months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   return d.getDate() + ' ' + months[d.getMonth()] + ' ' + (d.getFullYear() + 543);
+}
+// ---------- 1.88: กำหนดส่งหลายรอบ + ลิงก์แนบ (ใช้ร่วมกันหลายหน้า) ----------
+var TH_MONTHS_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+var TH_MONTHS_FULL = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+function monthLabelTh(ymd) { var m = /^(\d{4})-(\d{2})/.exec(String(ymd || '')); return m ? TH_MONTHS_SHORT[Number(m[2]) - 1] + ' ' + (Number(m[1]) + 543) : ''; }
+// เหมือน buildRounds ฝั่ง Worker (handlers/calendar.js) — ใช้แสดงตัวอย่างรอบในป็อปอัป · r = { mode, fromMonth, toMonth, dueDay, dates }
+function previewRounds(r, startDate) {
+  var out = [];
+  if (!r || r.mode === 'once') return out;
+  if (r.mode === 'monthly') {
+    var a = /^(\d{4})-(\d{2})$/.exec(r.fromMonth || ''), b = /^(\d{4})-(\d{2})$/.exec(r.toMonth || '');
+    if (!a || !b) return out;
+    var y = Number(a[1]), m = Number(a[2]), ey = Number(b[1]), em = Number(b[2]), day = r.dueDay === 'last' ? 0 : Number(r.dueDay);
+    while (y * 12 + m <= ey * 12 + em && out.length < 25) {
+      var ld = new Date(Date.UTC(y, m, 0)).getUTCDate(), mm = String(m).padStart(2, '0');
+      var end = y + '-' + mm + '-' + String(day ? Math.min(day, ld) : ld).padStart(2, '0');
+      out.push({ date: y + '-' + mm + '-01', endDate: end, label: monthLabelTh(end) });
+      m++; if (m > 12) { m = 1; y++; }
+    }
+  } else {
+    var ds = (r.dates || []).filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); }).filter(function (d, i, arr) { return arr.indexOf(d) === i; }).sort();
+    var prev = startDate && ds.length && startDate <= ds[0] ? startDate : ds[0];
+    ds.forEach(function (d, i) {
+      out.push({ date: prev, endDate: d, label: 'ครั้งที่ ' + (i + 1) });
+      var n = new Date(Date.parse(d + 'T00:00:00Z') + 86400000); prev = n.toISOString().slice(0, 10);
+    });
+  }
+  return out;
+}
+function linkHost(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
+// ปุ่มลิงก์แนบของกำหนดการ (withHost = แสดงชื่อเว็บต่อท้าย)
+function eventLinksHtml(links, withHost) {
+  if (!links || !links.length) return '';
+  return '<div class="ev-lbtns">' + links.map(function (l) {
+    var h = linkHost(l.url);
+    return '<a class="ev-lbtn" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> ' + escapeHtml(l.label || 'เปิดลิงก์') + (withHost && h ? ' <small>' + escapeHtml(h) + '</small>' : '') + '</a>';
+  }).join('') + '</div>';
 }
 // ---------- 1.87: สร้างไฟล์ Excel (.xlsx) ในเบราว์เซอร์ — ไม่ใช้ไลบรารีภายนอก (zip แบบไม่บีบอัด + XML ของ Office Open XML) ----------
 // header = ['คอลัมน์', ...] · rows = [[ค่า, ...], ...] (ข้อความ/ตัวเลข) · widths = ความกว้างคอลัมน์ (จำนวนตัวอักษร) · title = แถวหัวเรื่องบนสุด (ไม่บังคับ)
@@ -2217,52 +2255,77 @@ applyTheme(_isForcedLightPage() ? 'light' : getTheme());
 
 // ---------- 1.68: ตัวเลือกกลุ่มเป้าหมาย (สำหรับ) ของกำหนดการ/ประกาศ ----------
 // ค่าที่เก็บ: 'all' | 'g:กลุ่ม|กลุ่ม' | 'u:id|id' (ค่าเดิม = userId คนเดียว) — Worker ตรวจ/กรองด้วยรูปแบบเดียวกัน (lib/util.js)
+// 1.88: 's:กลุ่มสาระ|…' = กลุ่มสาระการเรียนรู้ (ทั้งกลุ่ม) · 'sh:กลุ่มสาระ|…' = เฉพาะหัวหน้ากลุ่มสาระ (คิดจากกลุ่มสาระ/หน้าที่ในบัญชีครู ณ ตอนที่เปิดดู)
+var AUD_SUBJECTS = Object.keys(SUBJECT_GROUP_COLORS);
+function subjectShort(s) { return s === 'สังคมศึกษา ศาสนา และวัฒนธรรม' ? 'สังคมศึกษาฯ' : s; }
+function isSubjectHeadUser(u) { return !!u && !!u.subjectGroup && (u.headRoles || []).indexOf('subject') !== -1; }
 function parseAudienceStr(a) {
   var s = String(a || 'all');
   if (s === 'all') return { type: 'all', ids: [] };
   if (s.indexOf('g:') === 0) return { type: 'groups', ids: s.slice(2).split('|').filter(Boolean) };
   if (s.indexOf('u:') === 0) return { type: 'people', ids: s.slice(2).split('|').filter(Boolean) };
+  if (s.indexOf('sh:') === 0) return { type: 'subjectHeads', ids: s.slice(3).split('|').filter(Boolean) };
+  if (s.indexOf('s:') === 0) return { type: 'subjects', ids: s.slice(2).split('|').filter(Boolean) };
   return { type: 'people', ids: [s] };
 }
 function audienceLabel(a, users) {
   var p = parseAudienceStr(a);
   if (p.type === 'all') return 'ทั้งหมด';
   if (p.type === 'groups') return p.ids.map(function (d) { return groupLabel(d); }).join(', ');
+  if (p.type === 'subjects' || p.type === 'subjectHeads') {
+    var allS = AUD_SUBJECTS.every(function (x) { return p.ids.indexOf(x) !== -1; });
+    var head = p.type === 'subjectHeads' ? 'หัวหน้ากลุ่มสาระ' : 'กลุ่มสาระ';
+    return allS ? (p.type === 'subjectHeads' ? 'หัวหน้ากลุ่มสาระทุกกลุ่ม' : 'ทุกกลุ่มสาระ') : head + ' ' + p.ids.map(subjectShort).join(', ');
+  }
   var names = p.ids.map(function (id) { var u = (users || []).filter(function (x) { return x.id === id; })[0]; return u ? u.name : ''; }).filter(Boolean);
   if (!names.length) return 'รายบุคคล ' + p.ids.length + ' คน';
   return names.length > 3 ? names.slice(0, 3).join(', ') + ' และอีก ' + (names.length - 3) + ' คน' : names.join(', ');
 }
-// สร้างตัวเลือกใน el (div ว่าง) — opts: { departments: [...], users: [{id,name,department}] } · คืน { get(), set(a), check() }
+// สร้างตัวเลือกใน el (div ว่าง) — opts: { departments: [...], users: [{id,name,department,subjectGroup,headRoles}] } · คืน { get(), set(a), check() }
 function createAudiencePicker(el, opts) {
   opts = opts || {};
-  var state = { type: 'all', groups: {}, people: {} };
+  var state = { type: 'all', groups: {}, people: {}, subjects: {} };
   var q = '';
   el.classList.add('aud-pick');
   el.innerHTML =
     '<div class="aud-seg" role="radiogroup" aria-label="สำหรับ">' +
       '<button type="button" role="radio" data-aud="all"><i class="fa-solid fa-users" aria-hidden="true"></i> ทั้งหมด</button>' +
       '<button type="button" role="radio" data-aud="groups"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> กลุ่มบริหารงาน</button>' +
+      '<button type="button" role="radio" data-aud="subjects"><i class="fa-solid fa-book" aria-hidden="true"></i> กลุ่มสาระฯ (ทั้งกลุ่ม)</button>' +
+      '<button type="button" role="radio" data-aud="subjectHeads"><i class="fa-solid fa-user-tie" aria-hidden="true"></i> กลุ่มสาระฯ (เฉพาะหัวหน้า)</button>' +
       '<button type="button" role="radio" data-aud="people"><i class="fa-solid fa-user-check" aria-hidden="true"></i> รายบุคคล</button>' +
     '</div>' +
     '<div class="aud-groups" hidden></div>' +
+    '<div class="aud-subjects" hidden></div>' +
     '<div class="aud-people" hidden><div class="aud-sel"></div><input type="search" class="aud-q" placeholder="ค้นหาชื่อ…" aria-label="ค้นหาชื่อ" /><div class="aud-list"></div></div>';
-  var seg = el.querySelector('.aud-seg'), gBox = el.querySelector('.aud-groups'), pBox = el.querySelector('.aud-people');
+  var seg = el.querySelector('.aud-seg'), gBox = el.querySelector('.aud-groups'), sBox = el.querySelector('.aud-subjects'), pBox = el.querySelector('.aud-people');
   function users() { return (typeof opts.users === 'function' ? opts.users() : opts.users) || []; }
   function depts() { return (typeof opts.departments === 'function' ? opts.departments() : opts.departments) || []; }
+  function isSubj() { return state.type === 'subjects' || state.type === 'subjectHeads'; }
   function render() {
     Array.prototype.forEach.call(seg.querySelectorAll('[data-aud]'), function (b) { var on = b.getAttribute('data-aud') === state.type; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
-    gBox.hidden = state.type !== 'groups'; pBox.hidden = state.type !== 'people';
+    gBox.hidden = state.type !== 'groups'; pBox.hidden = state.type !== 'people'; sBox.hidden = !isSubj();
     if (state.type === 'groups') {
       gBox.innerHTML = depts().map(function (d) {
         var c = deptThemeColor(d), on = !!state.groups[d];
         return '<label class="aud-g' + (on ? ' on' : '') + '"' + (c ? ' style="--g:' + c + '"' : '') + '><input type="checkbox" data-g="' + escapeHtml(d) + '"' + (on ? ' checked' : '') + ' /><span>' + escapeHtml(groupLabel(d)) + '</span></label>';
       }).join('') || '<div class="hint">ยังไม่มีกลุ่มบริหารงาน</div>';
     }
+    if (isSubj()) {
+      var heads = state.type === 'subjectHeads', us = users();
+      var allOn = AUD_SUBJECTS.every(function (x) { return state.subjects[x]; });
+      sBox.innerHTML = '<label class="aud-g aud-s-all' + (allOn ? ' on' : '') + '"><input type="checkbox" data-s-all' + (allOn ? ' checked' : '') + ' /><span>ทุกกลุ่มสาระ</span></label>' +
+        AUD_SUBJECTS.map(function (sg) {
+          var n = us.filter(function (u) { return u.subjectGroup === sg && (!heads || isSubjectHeadUser(u)); }).length, on = !!state.subjects[sg];
+          return '<label class="aud-g' + (on ? ' on' : '') + '" style="--g:' + SUBJECT_GROUP_COLORS[sg] + '"><input type="checkbox" data-s="' + escapeHtml(sg) + '"' + (on ? ' checked' : '') + ' /><span>' + escapeHtml(subjectShort(sg)) + ' <small class="aud-n">(' + n + ')</small></span></label>';
+        }).join('') +
+        '<div class="hint aud-s-hint">' + (heads ? 'เฉพาะครูที่ตั้งเป็นหัวหน้ากลุ่มสาระในทำเนียบ' : 'ครูทุกคนในกลุ่มสาระที่เลือก') + ' · รายชื่อเปลี่ยนตามข้อมูลในบัญชีครู (ย้ายกลุ่ม/เปลี่ยนหัวหน้า = เปลี่ยนตาม)</div>';
+    }
     if (state.type === 'people') {
-      var us = users(), sel = us.filter(function (u) { return state.people[u.id]; });
+      var us2 = users(), sel = us2.filter(function (u) { return state.people[u.id]; });
       pBox.querySelector('.aud-sel').innerHTML = sel.length ? sel.map(function (u) { return '<span class="aud-chip">' + escapeHtml(u.name) + '<button type="button" data-unp="' + escapeHtml(u.id) + '" aria-label="เอาออก">✕</button></span>'; }).join('') + '<span class="aud-count">เลือก ' + sel.length + ' คน</span>' : '<span class="hint">ยังไม่ได้เลือก — ติ๊กชื่อด้านล่าง</span>';
       var nq = q.replace(/\s+/g, '').toLowerCase();
-      var list = us.filter(function (u) { return !nq || String(u.name).replace(/\s+/g, '').toLowerCase().indexOf(nq) !== -1 || String(u.department || '').indexOf(q.trim()) !== -1; });
+      var list = us2.filter(function (u) { return !nq || String(u.name).replace(/\s+/g, '').toLowerCase().indexOf(nq) !== -1 || String(u.department || '').indexOf(q.trim()) !== -1 || String(u.subjectGroup || '').indexOf(q.trim()) !== -1; });
       pBox.querySelector('.aud-list').innerHTML = list.map(function (u) {
         return '<label class="aud-p"><input type="checkbox" data-p="' + escapeHtml(u.id) + '"' + (state.people[u.id] ? ' checked' : '') + ' /><span>' + escapeHtml(u.name) + '</span>' + (u.department ? '<small>' + escapeHtml(groupLabel(u.department)) + '</small>' : '') + '</label>';
       }).join('') || '<div class="hint" style="padding:8px">ไม่พบชื่อ</div>';
@@ -2270,6 +2333,12 @@ function createAudiencePicker(el, opts) {
   }
   seg.addEventListener('click', function (e) { var b = e.target.closest('[data-aud]'); if (!b) return; state.type = b.getAttribute('data-aud'); render(); });
   gBox.addEventListener('change', function (e) { var c = e.target.closest('[data-g]'); if (!c) return; if (c.checked) state.groups[c.getAttribute('data-g')] = true; else delete state.groups[c.getAttribute('data-g')]; render(); });
+  sBox.addEventListener('change', function (e) {
+    var a = e.target.closest('[data-s-all]');
+    if (a) { state.subjects = {}; if (a.checked) AUD_SUBJECTS.forEach(function (x) { state.subjects[x] = true; }); render(); return; }
+    var c = e.target.closest('[data-s]'); if (!c) return;
+    if (c.checked) state.subjects[c.getAttribute('data-s')] = true; else delete state.subjects[c.getAttribute('data-s')]; render();
+  });
   pBox.addEventListener('change', function (e) { var c = e.target.closest('[data-p]'); if (!c) return; if (c.checked) state.people[c.getAttribute('data-p')] = true; else delete state.people[c.getAttribute('data-p')]; render(); });
   pBox.addEventListener('click', function (e) { var b = e.target.closest('[data-unp]'); if (!b) return; delete state.people[b.getAttribute('data-unp')]; render(); });
   pBox.querySelector('.aud-q').addEventListener('input', function () { q = this.value; render(); });
@@ -2277,17 +2346,19 @@ function createAudiencePicker(el, opts) {
     get: function () {
       if (state.type === 'groups') return 'g:' + Object.keys(state.groups).join('|');
       if (state.type === 'people') return 'u:' + Object.keys(state.people).join('|');
+      if (isSubj()) return (state.type === 'subjectHeads' ? 'sh:' : 's:') + AUD_SUBJECTS.filter(function (x) { return state.subjects[x]; }).join('|');
       return 'all';
     },
     set: function (a) {
-      var p = parseAudienceStr(a); state = { type: p.type, groups: {}, people: {} }; q = ''; pBox.querySelector('.aud-q').value = '';
-      p.ids.forEach(function (id) { if (p.type === 'groups') state.groups[id] = true; else state.people[id] = true; });
+      var p = parseAudienceStr(a); state = { type: p.type, groups: {}, people: {}, subjects: {} }; q = ''; pBox.querySelector('.aud-q').value = '';
+      p.ids.forEach(function (id) { if (p.type === 'groups') state.groups[id] = true; else if (p.type === 'people') state.people[id] = true; else state.subjects[id] = true; });
       render();
     },
     // คืนข้อความผิดพลาด หรือ '' ถ้าใช้ได้
     check: function () {
       if (state.type === 'groups' && !Object.keys(state.groups).length) return 'กรุณาเลือกกลุ่มบริหารงานอย่างน้อย 1 กลุ่ม';
       if (state.type === 'people' && !Object.keys(state.people).length) return 'กรุณาเลือกบุคคลอย่างน้อย 1 คน';
+      if (isSubj() && !Object.keys(state.subjects).length) return 'กรุณาเลือกกลุ่มสาระการเรียนรู้อย่างน้อย 1 กลุ่ม';
       return '';
     },
     refresh: render
