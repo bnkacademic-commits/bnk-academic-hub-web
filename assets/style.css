@@ -3808,3 +3808,8 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 }
 /* 1.88.2: จอแคบ (รายการเรียงแนวตั้ง) — กล่องข้อความไม่ต้องสูง 220px ตาม flex-basis เดิม (เคยเว้นช่องว่างก่อนปุ่ม) */
 @media (max-width: 560px) { .cal-upcoming-grid .event-list-item > div { flex: 0 0 auto !important; min-width: 0 !important; } }
+
+/* 1.89: กิจกรรม "หยุดเรียน ไม่ต้องเช็คชื่อ" (เว็บเช็คชื่อถือเป็นวันหยุด) */
+.noclass-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #ffe4e6; color: #be123c; vertical-align: middle; }
+:root[data-theme="dark"] .noclass-tag { background: rgba(244, 63, 94, 0.18); color: #fda4af; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .noclass-tag { background: rgba(244, 63, 94, 0.18); color: #fda4af; } }

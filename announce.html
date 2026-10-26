@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.88.3.261026" />
+<link rel="stylesheet" href="assets/style.css?v=1.89.0.271026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -246,6 +246,7 @@
           <div class="hint" style="margin:2px 0 6px;">ระบบคำนวณปีการศึกษา/ภาคเรียนจากวันที่ให้อัตโนมัติ (แก้ได้) — ใช้สำหรับตัวกรอง</div>
           <label class="evk-chk"><input type="checkbox" id="evActNotify" /><span><b>แจ้งเตือนในกระดิ่ง</b><small>แจ้งทุกคนที่เกี่ยวข้องตอนเพิ่ม และเตือนอีกครั้ง 1 วันก่อนกิจกรรมและวันกิจกรรม</small></span></label>
           <label class="evk-chk"><input type="checkbox" id="evActRepeat" /><span><b>ทำซ้ำทุกปี</b><small>เช่น วันคริสต์มาส วันไหว้ครู — แสดงในปฏิทินปีถัดไปให้อัตโนมัติ</small></span></label>
+          <label class="evk-chk"><input type="checkbox" id="evActNoClass" /><span><b>หยุดเรียน ไม่ต้องเช็คชื่อ</b><small>เว็บเช็คชื่อนักเรียนถือเป็นวันหยุดทั้งวัน (ทุกวันในช่วงที่เลือก) · ใช้ได้เฉพาะกิจกรรมสำหรับ "ทั้งหมด"</small></span></label>
         </div>
 
         <div id="evDeadlineWrap">
@@ -365,7 +366,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.88.3.261026"></script>
+  <script src="assets/api.js?v=1.89.0.271026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -562,6 +563,7 @@
           if (ev.location) meta.push('<i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(ev.location));
           meta.push('สำหรับ: ' + escapeHtml(audienceLabel_(ev.audience)));
           if (ev.repeatYearly) meta.push('<i class="fa-solid fa-rotate" aria-hidden="true"></i> ทุกปี');
+          if (ev.noClass) meta.push('<span class="noclass-tag"><i class="fa-solid fa-school-circle-xmark" aria-hidden="true"></i> หยุดเรียน</span>'); // 1.89
           if (ev.notify) meta.push('<i class="fa-solid fa-bell" aria-hidden="true"></i> แจ้งเตือน');
         } else {
           meta.push((ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + ' ปีการศึกษา ' + escapeHtml(ev.academicYear));
@@ -709,6 +711,7 @@
       ['evActTitle', 'evActDate', 'evActEndDate', 'evActTimeStart', 'evActTimeEnd', 'evActLocation', 'evActMessage'].forEach(function (id) { document.getElementById(id).value = ''; });
       document.getElementById('evActNotify').checked = true;
       document.getElementById('evActRepeat').checked = false;
+      document.getElementById('evActNoClass').checked = false; // 1.89
       syncActDatesTh();
       evActAud.set('all');
       setActOwnerType('dept');
@@ -856,6 +859,7 @@
         document.getElementById('evActMessage').value = ev.message || '';
         document.getElementById('evActNotify').checked = !!ev.notify;
         document.getElementById('evActRepeat').checked = !!ev.repeatYearly;
+        document.getElementById('evActNoClass').checked = !!ev.noClass; // 1.89
         syncActDatesTh();
         evActAud.set(ev.audience);
         setActOwnerType(ev.ownerType, ev.ownerGroup);
@@ -970,6 +974,7 @@
       if (v('evActTimeStart') && v('evActTimeEnd') && v('evActTimeEnd') < v('evActTimeStart')) return fail('เวลาสิ้นสุดต้องไม่อยู่ก่อนเวลาเริ่ม');
       if (!v('evActOwnerGroup')) return fail('กรุณาเลือกเจ้าของกิจกรรม');
       var audErr = evActAud.check(); if (audErr) return fail(audErr);
+      if (document.getElementById('evActNoClass').checked && evActAud.get() !== 'all') return fail('"หยุดเรียน ไม่ต้องเช็คชื่อ" ใช้ได้เฉพาะกิจกรรมที่ส่งให้ "ทั้งหมด" — เปลี่ยน "สำหรับ" เป็นทั้งหมด หรือเอาเครื่องหมายออก');
       var editId = document.getElementById('evEditId').value;
       var ok = await askConfirm(editId ? 'ยืนยันบันทึกการแก้ไขกิจกรรมนี้?' : 'ยืนยันเพิ่มกิจกรรมนี้ในปฏิทิน?', editId ? 'ยืนยันการแก้ไขกิจกรรม' : 'ยืนยันการเพิ่มกิจกรรม');
       if (!ok) return;
@@ -978,7 +983,8 @@
         timeStart: v('evActTimeStart'), timeEnd: v('evActTimeEnd'), location: v('evActLocation'),
         ownerType: evActOwnerType, ownerGroup: v('evActOwnerGroup'), audience: evActAud.get(), message: v('evActMessage'),
         academicYear: v('evActYear'), semester: v('evActSem'),
-        notify: document.getElementById('evActNotify').checked, repeatYearly: document.getElementById('evActRepeat').checked
+        notify: document.getElementById('evActNotify').checked, repeatYearly: document.getElementById('evActRepeat').checked,
+        noClass: document.getElementById('evActNoClass').checked // 1.89: เว็บเช็คชื่อถือเป็นวันหยุด
       };
       if (editId) payload.eventId = editId;
       var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเพิ่มกิจกรรม', function () {
