@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.90.0';
-var APP_VERSION = '1.90.0.271026';
+var WORKER_MIN_VERSION = '1.91.0';
+var APP_VERSION = '1.91.0.271026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2378,7 +2378,8 @@ var NOTIF_KIND = {
   // 1.80: ตรวจผลงาน + เตือนกำหนดส่ง
   review_ok: ['fa-circle-check', '#16a34a'], review_fix: ['fa-pen-to-square', '#ca8a04'], review_resubmit: ['fa-file-arrow-up', '#0369a1'],
   due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626'],
-  activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'] // 1.81: กิจกรรม
+  activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'], // 1.81: กิจกรรม
+  att_missing: ['fa-clipboard-check', '#7c3aed'], hr_missing: ['fa-book-open', '#0891b2'] // 1.91: เว็บเช็คชื่อ
 };
 var _notifCovers = {}; // 1.85.2: รูปปกอัลบั้มในกระดิ่ง
 function applyTopBadges(r) {
@@ -2424,10 +2425,10 @@ function initNotifBell() {
   panel.className = 'notif-panel'; panel.id = 'notifPanel'; panel.hidden = true;
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'แจ้งเตือน');
   document.body.appendChild(panel);
-  var state = { items: [], due: [], soon: [], more: false, limit: 30, filter: 'all', loading: false };
+  var state = { items: [], due: [], soon: [], att: [], more: false, limit: 30, filter: 'all', loading: false };
   function itemHtml(n) {
     var k = NOTIF_KIND[n.kind] || ['fa-bell', '#64748b'];
-    var tm = n.activityDate ? formatDateThai(n.dueDate) : n.dueDate ? 'กำหนดส่ง ' + formatDateThai(n.dueDate) : notifTimeText(n.createdAt);
+    var tm = n.note ? n.note : n.activityDate ? formatDateThai(n.dueDate) : n.dueDate ? 'กำหนดส่ง ' + formatDateThai(n.dueDate) : notifTimeText(n.createdAt);
     // 1.85.2: อัลบั้ม = รูปปกแทนไอคอน + ชื่ออัลบั้มตัวหนา · ยังไม่อ่าน = ปุ่ม ✓ "อ่านแล้ว" ท้ายรายการ (ไม่ต้องเปิดหน้านั้น)
     var ic = '<span class="notif-ic" style="background:' + k[1] + '"><i class="fa-solid ' + k[0] + '" aria-hidden="true"></i></span>';
     if (n.kind === 'album' && n.album) {
@@ -2448,9 +2449,10 @@ function initNotifBell() {
       '<div class="notif-filter"><button type="button" data-nf="all" class="' + (state.filter === 'all' ? 'on' : '') + '">ทั้งหมด</button>' +
       '<button type="button" data-nf="unread" class="' + (state.filter === 'unread' ? 'on' : '') + '">ยังไม่อ่าน (' + unread + ')</button></div><div class="notif-list">';
     if (state.loading && !state.items.length) html += '<div class="notif-empty"><span class="loading">กำลังโหลด</span></div>';
-    else if (!list.length && !state.due.length && !state.soon.length) html += '<div class="notif-empty"><i class="fa-solid fa-bell-slash" aria-hidden="true"></i>' + (state.filter === 'unread' ? 'อ่านครบทุกรายการแล้ว' : 'ยังไม่มีแจ้งเตือนใหม่<br>เกียรติบัตร คำสั่ง และเรื่องที่แจ้ง จะแสดงที่นี่') + '</div>';
+    else if (!list.length && !state.due.length && !state.soon.length && !state.att.length) html += '<div class="notif-empty"><i class="fa-solid fa-bell-slash" aria-hidden="true"></i>' + (state.filter === 'unread' ? 'อ่านครบทุกรายการแล้ว' : 'ยังไม่มีแจ้งเตือนใหม่<br>เกียรติบัตร คำสั่ง และเรื่องที่แจ้ง จะแสดงที่นี่') + '</div>';
     else {
       // 1.80: "งานที่ต้องส่ง" ปักไว้บนสุดเสมอ (ทั้ง 2 ตัวกรอง) — หายเมื่อส่งงานแล้ว
+      if (state.att.length) html += '<div class="notif-group">เว็บเช็คชื่อ</div>' + state.att.map(itemHtml).join(''); // 1.91
       if (state.soon.length) html += '<div class="notif-group">กิจกรรมใกล้ถึง</div>' + state.soon.map(itemHtml).join(''); // 1.81
       if (state.due.length) html += '<div class="notif-group">งานที่ต้องส่ง</div>' + state.due.map(itemHtml).join('');
       var g = '';
@@ -2481,7 +2483,7 @@ function initNotifBell() {
   }
   async function load() {
     state.loading = true; render();
-    try { var r = await apiCall('notifList', { limit: state.limit }); state.items = r.items || []; state.due = r.due || []; state.soon = r.soon || []; state.more = !!r.more; applyTopBadges({ notifUnread: 0 }); } // 1.81: เปิดกระดิ่ง = เลขหาย (งานที่ต้องส่งเตือนใหม่พรุ่งนี้)
+    try { var r = await apiCall('notifList', { limit: state.limit }); state.items = r.items || []; state.due = r.due || []; state.soon = r.soon || []; state.att = r.att || []; state.more = !!r.more; applyTopBadges({ notifUnread: 0 }); } // 1.81: เปิดกระดิ่ง = เลขหาย (งานที่ต้องส่งเตือนใหม่พรุ่งนี้)
     catch (e) { panel.querySelector('.notif-list').innerHTML = '<div class="notif-empty">' + escapeHtml(e.message) + '</div>'; state.loading = false; return; }
     state.loading = false; render();
   }
@@ -2531,11 +2533,12 @@ function initNotifBell() {
     }
     var it = e.target.closest('[data-nid]');
     if (!it) return;
-    var n = state.items.concat(state.due, state.soon).filter(function (x) { return x.id === it.getAttribute('data-nid'); })[0];
+    var n = state.items.concat(state.due, state.soon, state.att).filter(function (x) { return x.id === it.getAttribute('data-nid'); })[0];
     if (!n) return;
     if (n.unread && !n.pinned) { n.unread = false; render(); try { await apiCall('notifRead', { id: n.id }); } catch (err) { /* ข้าม */ } }
     close();
     var link = n.link || '';
+    if (/^https:\/\//i.test(link)) { window.open(link, '_blank', 'noopener'); return; } // 1.91: เว็บเช็คชื่อ (เว็บอื่น) เปิดแท็บใหม่
     if (/^#report:/.test(link)) { openReportModal({ tab: 'mine', focus: link.slice(8) }); return; }
     var here = location.pathname.split('/').pop() || 'index.html';
     if (link.split('#')[0] === here) { location.hash = link.split('#')[1] || ''; if (window.__onHashTab) window.__onHashTab(); return; }
