@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.89.0.271026" />
+<link rel="stylesheet" href="assets/style.css?v=1.90.0.271026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -190,6 +190,23 @@
     </div>
   </div>
 
+  <!-- 1.90: ส่งสมุดโฮมรูม (งานตามห้อง) — ดึงบันทึกจากเว็บเช็คชื่อ แล้วทำ PDF -->
+  <div class="modal-backdrop" id="hrSendModal" hidden>
+    <div class="modal-box modal-box-wide">
+      <button type="button" class="modal-close-x" id="hrSendCloseX" aria-label="ปิด">✕</button>
+      <h3 id="hrSendTitle">ส่งสมุดโฮมรูม</h3>
+      <div class="field" style="text-align:left; max-width:260px;"><label for="hrMonth">เดือนของสมุด</label><input type="month" id="hrMonth" /></div>
+      <div id="hrSendErr" class="error-box" hidden></div>
+      <div id="hrSendBody" style="text-align:left;"></div>
+      <p class="hint" style="text-align:left; margin-top:10px;">ระบบทำ PDF จากบันทึกโฮมรูมในเว็บเช็คชื่อ (หน้าสรุป + รายละเอียดรายวันพร้อมรูป + บรรทัดลงชื่อครูที่ปรึกษา) · ครูที่ปรึกษาคนใดคนหนึ่งส่งก็ได้ · ส่งใหม่ = แทนฉบับเดิมจนกว่าเจ้าหน้าที่จะตรวจ</p>
+      <div class="modal-actions hr-actions">
+        <button type="button" class="btn btn-ghost btn-sm" data-hr-act="reload"><i class="fa-solid fa-rotate" aria-hidden="true"></i> ดึงข้อมูลใหม่</button>
+        <button type="button" class="btn btn-secondary" data-hr-act="preview"><i class="fa-solid fa-eye" aria-hidden="true"></i> ดูตัวอย่าง PDF</button>
+        <button type="button" class="btn btn-success" data-hr-act="send"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> ส่งสมุดเข้าระบบ</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ชุดผลงาน (1.49.121026): เปิดจากปุ่ม "ส่งงานเพิ่มหรือแก้ไข" ในกำหนดส่งงาน — เนื้อหาเดียวกับตอนขยายแถวในผลงานของฉันทั้งหมด -->
   <div class="modal-backdrop" id="groupModal" hidden>
     <div class="modal-box modal-box-wide group-modal-box">
@@ -230,8 +247,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.89.0.271026"></script>
+  <script src="assets/api.js?v=1.90.0.271026"></script>
   <script src="assets/qrcode.min.js"></script>
+  <script src="assets/homeroom.js?v=1.90.0.271026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -443,7 +461,7 @@
         uploadCategories = cats;
         categoryColorMap = buildCategoryColorMap(cats);
         // ตั้งแต่ V12.0: ตัดประเภทงาน "แจ้งเตือนอย่างเดียว" ออกจากตัวเลือกตอนส่งงาน — ไม่รับการส่งงานผ่านระบบอยู่แล้ว (Worker บล็อกไว้ชั้นหลังด้วย)
-        var selectableCats = cats.filter(function (c) { return !c.noSubmission; });
+        var selectableCats = cats.filter(function (c) { return !c.noSubmission && !c.roomBased; }); // 1.90: งานตามห้อง ส่งจากเช็คลิสต์ (ส่งสมุดโฮมรูม)
         if (selectableCats.length === 0) {
           sel.innerHTML = '<option value="">(ยังไม่มีประเภทงาน — ติดต่อกลุ่มบริหารงานวิชาการ)</option>';
           return;
@@ -999,6 +1017,7 @@
     // ย้ายออกมาเป็นฟังก์ชันกลาง (เดิมประกาศซ้อนอยู่ในตัว renderAssignmentChecklist เท่านั้น) เพราะ renderCalendar() ด้านล่าง
     // ก็ต้องใช้เกณฑ์เดียวกันนี้ด้วย เพื่อตัดสินว่ากำหนดการที่เกินกำหนดแล้วควรยังค้างอยู่ใน "กำหนดการ" ใต้ปฏิทินหรือไม่
     function isAssignmentSubmitted(e) {
+      if (e.roomBased) return !!(e.rooms && e.rooms.length) && e.rooms.every(function (r) { return !!r.submitted; }); // 1.90: งานตามห้อง = ทุกห้องที่เป็นครูที่ปรึกษาส่งแล้ว
       if (e.seriesId) return allSubmissions.some(function (s) { return s.eventId === e.id; }); // 1.88: รอบ = ไฟล์ที่ผูกรอบนี้
       return allSubmissions.some(function (s) {
         return s.categoryId === e.categoryId && s.academicYear === e.academicYear && s.semester === e.semester;
@@ -1033,7 +1052,7 @@
       }
       var yearSel = document.getElementById('clYear');
       // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ
-      var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission && !beforeMyJoin(e) && (!calGroup || evDept(e) === calGroup); });
+      var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission && !beforeMyJoin(e) && (!calGroup || evDept(e) === calGroup) && hrApplies(e); });
       var years = {};
       assignments.forEach(function (e) { years[String(e.academicYear)] = true; });
       years[String(checklistState.term.year)] = true;
@@ -1052,7 +1071,7 @@
       var tabs = document.getElementById('clTabs');
       if (tabs) {
         tabs.innerHTML = sems.map(function (sm) {
-          var pend = clItems(inYear.filter(function (e) { return e.semester === sm; })).filter(function (r) { return r.series ? seriesPending(r.series) : !r.done; }).length;
+          var pend = clItems(inYear.filter(function (e) { return e.semester === sm; })).filter(function (r) { return r.roomItem ? hrItemPending(r.series) : (r.series ? seriesPending(r.series) : !r.done); }).length;
           var on = sm === checklistState.sem;
           var cur = isCurYear && sm === String(checklistState.term.semester);
           return '<button type="button" role="tab" data-cl-sem="' + sm + '" class="' + (on ? 'on' : '') + (cur ? ' cur' : '') + '" aria-selected="' + on + '"' + (cur ? ' title="ภาคเรียนปัจจุบัน"' : '') + '>' +
@@ -1069,6 +1088,7 @@
         return new Date(a.ev.date) - new Date(b.ev.date);
       });
       wrap.innerHTML = rows.map(function (r) {
+        if (r.roomItem) return hrChecklistHtml(r); // 1.90
         if (r.series) return seriesChecklistHtml(r);
         var dotColor = categoryColorMap[r.ev.categoryId] || '';
         return '<div class="checklist-item">' +
@@ -1083,12 +1103,15 @@
     // ---------- 1.88: งานแบบหลายรอบในเช็คลิสต์ — 1 รายการต่อชุด + ป้ายรายรอบ ----------
     function clItems(evs) {
       var out = [], bySeries = {};
+      var byRoomSeries = {};
       evs.forEach(function (e) {
+        if (e.roomBased) { var k = e.seriesId || e.id; if (!byRoomSeries[k]) { byRoomSeries[k] = { roomItem: true, series: [], ev: e, done: false }; out.push(byRoomSeries[k]); } byRoomSeries[k].series.push(e); return; } // 1.90
         if (!e.seriesId) { out.push({ ev: e, done: isAssignmentSubmitted(e) }); return; }
         if (!bySeries[e.seriesId]) { bySeries[e.seriesId] = { series: [], ev: null, done: false }; out.push(bySeries[e.seriesId]); }
         bySeries[e.seriesId].series.push(e);
       });
       out.forEach(function (r) {
+        if (r.roomItem) { r.series.sort(function (a, b) { return (a.endDate || a.date).localeCompare(b.endDate || b.date) || a.roundNo - b.roundNo; }); r.done = r.series.every(isAssignmentSubmitted); r.ev = r.series[0]; return; }
         if (!r.series) return;
         r.series.sort(function (a, b) { return (a.endDate || a.date).localeCompare(b.endDate || b.date) || a.roundNo - b.roundNo; });
         r.done = r.series.every(isAssignmentSubmitted);
@@ -1138,6 +1161,110 @@
         '</div>' +
       '</div>';
     }
+    // ---------- 1.90: งานตามห้อง (สมุดโฮมรูมจากเว็บเช็คชื่อ) ----------
+    // แสดงเฉพาะครูที่ปรึกษา (มีห้อง) · เว็บเช็คชื่อติดต่อไม่ได้ = แสดงพร้อมข้อความ · 1 รายการต่อชุด → แถวละห้อง + ป้ายรายรอบ + ปุ่ม "ส่งสมุดรอบ …"
+    function hrApplies(e) { return !e.roomBased || (e.rooms && e.rooms.length > 0) || !!e.roomError; }
+    function hrRoomOf(e, roomId) { return (e.rooms || []).filter(function (r) { return r.roomId === roomId; })[0] || null; }
+    function hrRoundState(e, roomId) {
+      var t = todayYmd(), rs = hrRoomOf(e, roomId), end = e.endDate || e.date, rv = rs && rs.review && rs.review.status;
+      if (rs && rs.submitted) return rv === 'revise' ? 'fx' : (rv === 'reviewed' ? 'rv' : (String(rs.submitted.at).slice(0, 10) > end ? 'late' : 'ok'));
+      if (e.date > t) return 'wait';
+      return end < t ? 'no' : 'open';
+    }
+    function hrNeedsAction(st) { return st === 'fx' || st === 'no' || st === 'open'; }
+    function hrItemPending(rounds) { var rooms = (rounds[0].rooms || []); return rooms.some(function (r) { return rounds.some(function (e) { return hrNeedsAction(hrRoundState(e, r.roomId)) && e.date <= todayYmd(); }); }); }
+    function hrChecklistHtml(r) {
+      var rounds = r.series, first = rounds[0], name = first.categoryName || first.title.replace(/\s*\([^()]*\)\s*$/, '');
+      var dotColor = categoryColorMap[first.categoryId] || '';
+      var body;
+      if (first.roomError) body = '<div class="cl-msg fix"><b>เชื่อมเว็บเช็คชื่อไม่ได้</b>' + escapeHtml(first.roomError) + '</div>';
+      else body = (first.rooms || []).map(function (room) {
+        var focus = rounds.filter(function (e) { return hrRoundState(e, room.roomId) === 'fx'; })[0] || rounds.filter(function (e) { var s2 = hrRoundState(e, room.roomId); return (s2 === 'no' || s2 === 'open'); })[0] || null;
+        var sent = rounds.filter(function (e) { var rs = hrRoomOf(e, room.roomId); return rs && rs.submitted; }).length;
+        var chips = rounds.map(function (e) {
+          var st2 = hrRoundState(e, room.roomId), lab = rounds.length > 1 ? roundShort(e) : 'รอบนี้';
+          var txt = { ok: ' ส่งแล้ว <i class="fa-solid fa-check" aria-hidden="true"></i>', rv: ' ตรวจแล้ว <i class="fa-solid fa-check-double" aria-hidden="true"></i>', late: ' เกินกำหนด <i class="fa-solid fa-check" aria-hidden="true"></i>', fx: ' แก้ไข <i class="fa-solid fa-pen" aria-hidden="true"></i>', no: ' ยังไม่ส่ง', open: ' รอส่ง', wait: '' }[st2];
+          var rs = hrRoomOf(e, room.roomId);
+          var tip = (e.roundLabel || '') + ' · ครบกำหนด ' + formatDateThai(e.endDate || e.date) + (rs && rs.submitted ? ' · ส่งโดย ' + rs.submitted.by + ' ' + formatDateThai(rs.submitted.at) : '');
+          return '<span class="cl-rchip ' + ({ ok: 'ok', rv: 'ok', late: 'late', fx: 'fx', no: 'no', open: 'open', wait: 'wait' }[st2]) + '" title="' + escapeHtml(tip) + '">' + escapeHtml(lab) + txt + '</span>';
+        }).join('');
+        var fixMsg = rounds.map(function (e) { var rs = hrRoomOf(e, room.roomId); return rs && rs.review && rs.review.status === 'revise' && rs.review.comment ? '<div class="cl-msg fix"><b>' + (rounds.length > 1 ? 'รอบ ' + escapeHtml(e.roundLabel || e.roundNo) + ' · ' : '') + 'ข้อความจาก ' + escapeHtml(rs.review.by || 'เจ้าหน้าที่') + '</b>' + escapeHtml(rs.review.comment) + '</div>' : ''; }).join('');
+        var btn = focus ? '<button type="button" class="btn ' + (hrRoundState(focus, room.roomId) === 'open' ? 'btn-primary' : 'btn-danger') + ' btn-sm cl-round-btn" data-hr-send="' + escapeHtml(focus.id + '|' + room.roomId) + '"><i class="fa-solid fa-book-open" aria-hidden="true"></i> ส่งสมุด' + (rounds.length > 1 ? 'รอบ ' + escapeHtml(roundShort(focus)) : '') + '</button>' : '';
+        var co = (room.advisors || []).filter(function (n) { return n !== (session && session.name); });
+        return '<div class="hr-room"><div class="hr-room-h"><b>ห้อง ' + escapeHtml(room.roomName) + '</b>' + (co.length ? '<small> · ร่วมกับ ' + escapeHtml(co.join(', ')) + '</small>' : '') + '</div>' +
+          '<div class="cl-rchips">' + chips + '</div>' + (rounds.length > 1 ? '<div class="checklist-status ' + (sent === rounds.length ? 'done' : 'pending') + '">ส่งแล้ว ' + sent + '/' + rounds.length + ' รอบ</div>' : '') + fixMsg + btn + '</div>';
+      }).join('');
+      return '<div class="checklist-item cl-series cl-hr">' +
+        '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
+        '<div class="checklist-text"><div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(name) + ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> งานตามห้อง</span>' + categoryDeptBadgeHtml(first.categoryId) + '</div>' +
+        body + eventLinksHtml(first.links, false) + '</div></div>';
+    }
+    // ป็อปอัป "ส่งสมุดโฮมรูม": ดึงบันทึกจากเว็บเช็คชื่อ → สรุป → ดูตัวอย่าง PDF / ส่งเข้าระบบ
+    var hrState = null;
+    function hrMonthOf(e) { return String(e.endDate || e.date).slice(0, 7); }
+    async function openHrSend(eventId, roomId) {
+      var ev = calState.events.filter(function (x) { return x.id === eventId; })[0]; if (!ev) return;
+      var room = hrRoomOf(ev, roomId) || { roomId: roomId, roomName: roomId };
+      hrState = { ev: ev, room: room, month: hrMonthOf(ev), model: null, blob: null };
+      document.getElementById('hrSendTitle').textContent = 'ส่งสมุดโฮมรูม ห้อง ' + room.roomName + (ev.seriesId ? ' · รอบ ' + (ev.roundLabel || ev.roundNo) : '');
+      document.getElementById('hrMonth').value = hrState.month;
+      document.getElementById('hrSendErr').hidden = true;
+      showModalEl(document.getElementById('hrSendModal'));
+      await hrLoadModel();
+    }
+    async function hrLoadModel() {
+      var box = document.getElementById('hrSendBody'), btns = document.querySelectorAll('#hrSendModal [data-hr-act]');
+      hrState.model = null; hrState.blob = null; btns.forEach(function (b) { b.disabled = true; });
+      box.innerHTML = '<div class="loading">กำลังดึงบันทึกโฮมรูมจากเว็บเช็คชื่อ</div>';
+      try { hrState.model = await apiCall('hrMonthData', { roomId: hrState.room.roomId, month: hrState.month }); }
+      catch (err) { box.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>'; return; }
+      var st = hrModelStats(hrState.model), rs = hrRoomOf(hrState.ev, hrState.room.roomId);
+      var tile = function (n, t, cls) { return '<div class="hr-tile ' + cls + '"><b>' + n + '</b><span>' + t + '</span></div>'; };
+      box.innerHTML = '<div class="hr-tiles">' + tile(st.days, 'คาบตามตาราง', '') + tile(st.held, 'จัดกิจกรรม', 'ok') + tile(st.not, 'ไม่ได้จัด', 'no') + tile(st.override, 'สอนวิชาอื่นแทน', 'ov') + tile(st.none, 'ยังไม่บันทึก', 'wt') + '</div>' +
+        '<p class="hint" style="margin:8px 0 0;">ห้อง ' + escapeHtml(hrState.model.roomName) + ' · ' + escapeHtml(hrMonthLabel(hrState.model.month)) + ' · ภาคเรียนที่ ' + escapeHtml(hrState.model.term) + '/' + escapeHtml(hrState.model.year) + ' · รูปกิจกรรม ' + st.photos + ' รูป · ครูที่ปรึกษา: ' + escapeHtml(hrState.model.advisors.join(', ') || '-') + '</p>' +
+        (st.none ? '<div class="hr-warn"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> ยังไม่ได้บันทึกโฮมรูม ' + st.none + ' วัน — บันทึกในเว็บเช็คชื่อให้ครบก่อนก็ได้ แล้วกด "ดึงข้อมูลใหม่"</div>' : '') +
+        (rs && rs.submitted ? '<div class="hr-warn info"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ห้องนี้ส่งรอบนี้แล้วโดย ' + escapeHtml(rs.submitted.by) + ' (' + escapeHtml(formatDateThai(rs.submitted.at)) + ') — ส่งใหม่จะแทนฉบับเดิม</div>' : '');
+      btns.forEach(function (b) { b.disabled = false; });
+    }
+    async function hrMakePdf(p) {
+      if (hrState.blob) return hrState.blob;
+      var s0 = await getSiteSettings().catch(function () { return {}; });
+      hrState.blob = await hrBuildBookletPdf(hrState.model, { schoolName: s0.siteName || '', onProgress: function (pct, txt) { if (p) p.setProgress(pct * 0.6, txt); } });
+      return hrState.blob;
+    }
+    function hrFileName() { return 'สมุดโฮมรูม_' + hrState.model.roomName.replace(/\//g, '-') + '_' + hrState.model.month + '.pdf'; }
+    (function wireHrSend() {
+      var m = document.getElementById('hrSendModal'); if (!m) return;
+      document.getElementById('hrSendCloseX').addEventListener('click', function () { hideModalEl(m); });
+      document.getElementById('hrMonth').addEventListener('change', function () { if (!this.value) return; hrState.month = this.value; hrLoadModel(); });
+      m.addEventListener('click', async function (e) {
+        var b = e.target.closest('[data-hr-act]'); if (!b || b.disabled || !hrState || !hrState.model) return;
+        var act = b.getAttribute('data-hr-act'), err = document.getElementById('hrSendErr'); err.hidden = true;
+        if (act === 'reload') { hrLoadModel(); return; }
+        if (act === 'preview') {
+          var w = window.open('', '_blank');
+          var r0 = await withProgress('กำลังสร้างตัวอย่าง PDF', async function (p) { var bl = await hrMakePdf(p); p.setProgress(100, 'เสร็จแล้ว'); return bl; }, { successLabel: 'สร้างตัวอย่างแล้ว' });
+          if (r0.ok) { var url = URL.createObjectURL(r0.data || hrState.blob); if (w) w.location.href = url; else downloadBlob(hrState.blob, hrFileName()); }
+          else if (w) w.close();
+          return;
+        }
+        if (act === 'send') {
+          var ok = await askConfirm('ส่งสมุดโฮมรูมห้อง ' + hrState.room.roomName + ' (' + hrMonthLabel(hrState.month) + ') เข้าระบบ?', 'ยืนยันการส่งสมุดโฮมรูม');
+          if (!ok) return;
+          var ev = hrState.ev;
+          var r = await withProgress('กำลังส่งสมุดโฮมรูม', async function (p) {
+            var blob = await hrMakePdf(p);
+            var file = new File([blob], hrFileName(), { type: 'application/pdf' });
+            await submitWorkFile(file, { academicYear: ev.academicYear, semester: ev.semester, categoryId: ev.categoryId, eventId: ev.seriesId ? ev.id : '', roomId: hrState.room.roomId, title: 'สมุดโฮมรูม ห้อง ' + hrState.room.roomName + ' ' + hrMonthLabel(hrState.month),
+              onStage: function (stage) { if (stage === 'upload') p.setProgress(65, 'กำลังอัปโหลด'); else if (stage === 'finalize') p.setProgress(95, 'กำลังบันทึก'); },
+              onProgress: function (fr) { p.setProgress(65 + 28 * fr); } });
+            return true;
+          }, { successLabel: 'ส่งสมุดโฮมรูมแล้ว', upload: true });
+          if (r.ok) { hideModalEl(m); loadCalendar(); loadSubmissions(); }
+          else { err.textContent = r.error.message; err.hidden = false; }
+        }
+      });
+    })();
     // 1.80: ผลการตรวจผลงาน — ไม่มีคำว่าผ่าน/ไม่ผ่าน · ยังไม่ตรวจ = "ส่งแล้ว" ตามปกติ (ไม่มีป้ายรอตรวจ)
     // ส่งไฟล์เพิ่มเติมหลัง "แก้ไขเพิ่มเติม" = "ส่งแล้ว" เหมือนงานปกติ · ตรวจแล้วหลังแก้ไข = หมายเหตุเล็ก "แก้ไขเพิ่มเติมแล้ว"
     function checklistReviewHtml(ev) {
@@ -1188,6 +1315,7 @@
       if (r.ok) { loadCalendar(); loadSubmissions(); }
     });
     document.getElementById('assignmentChecklistBody').addEventListener('click', function (e) {
+      var hs = e.target.closest('[data-hr-send]'); if (hs) { var hp = hs.getAttribute('data-hr-send').split('|'); openHrSend(hp[0], hp[1]); return; } // 1.90
       var rp = e.target.closest('[data-cl-rep]');
       if (rp) { clReplaceId = rp.getAttribute('data-cl-rep'); document.getElementById('clReplaceFile').click(); return; }
       var b = e.target.closest('[data-cl-fix]'); if (!b) return;
@@ -1287,6 +1415,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       var now = new Date();
       var upcoming = calEvents().filter(function (e) {
         if (isActivityEv(e)) return false;
+        if (!hrApplies(e)) return false; // 1.90: งานตามห้อง — เฉพาะครูที่ปรึกษา
         var ed = new Date(e.endDate || e.date); // ใช้วันสิ้นสุดตัดสินว่ายังไม่ผ่านไป เผื่อเป็นกำหนดการช่วงหลายวัน
         var diffDays = (ed - now) / 86400000;
         // 1.88.1: งานช่วงยาว (เช่น 2 พ.ย. – 26 ก.พ.) ขึ้นตั้งแต่วันเริ่มเข้าช่วง 60 วัน จนถึงวันสุดท้าย — เดิมดูแค่วันสุดท้าย งานที่จบเกิน 60 วันจึงไม่ขึ้นเลย
@@ -1322,7 +1451,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           // ตั้งแต่ V12.0: ถ้าเป็นประเภทงาน "แจ้งเตือนอย่างเดียว" ไม่มีปุ่มส่งงานเลย ขึ้นป้ายแจ้งเตือนเฉยๆ แทน
           // 1.49.121026: ส่งแล้ว (มีผลงานประเภทนี้ในภาคเรียน/ปีนี้) -> ปุ่มเปลี่ยนเป็น "ส่งงานเพิ่มหรือแก้ไข" เปิดป็อปอัปชุดผลงาน (ดู/พรีวิว/ลบ/เพิ่มไฟล์)
           var isSubmitted = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
-          var submitBtn = isSubmitted
+          var submitBtn = e.roomBased ? hrUpcomingBtn(e, isOverdue) : isSubmitted
             ? '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ' + (e.seriesId ? 'ส่งไฟล์เพิ่มในรอบนี้' : 'ส่งงานเพิ่มหรือแก้ไข') + '</button>'
             : (e.categoryId && !e.noSubmission)
             ? '<button class="btn ' + (isOverdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
@@ -1348,6 +1477,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
             if (s0) openGroupModal(subGroupKey(s0)); else openUploadModal(evPreset(ev));
           });
         });
+        upcomingBox.querySelectorAll('button[data-hr-send]').forEach(function (btn) { btn.addEventListener('click', function () { var hp = btn.getAttribute('data-hr-send').split('|'); openHrSend(hp[0], hp[1]); }); }); // 1.90
         upcomingBox.querySelectorAll('button[data-submit-event]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var evId = btn.getAttribute('data-submit-event');
@@ -1360,8 +1490,16 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
 
     // ---------- 1.58: ป็อปอัปรายละเอียดวัน ----------
     var THAI_DOW_FULL = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+    // 1.90: ปุ่มของงานตามห้องในกำหนดส่งงาน/ป็อปอัปรายวัน — ห้องแรกที่ยังต้องส่ง (ส่งครบ = ป้ายส่งแล้ว)
+    function hrUpcomingBtn(e, overdue) {
+      if (e.roomError) return '<span class="hint day-ev-note">เชื่อมเว็บเช็คชื่อไม่ได้</span>';
+      var room = (e.rooms || []).filter(function (r) { return hrNeedsAction(hrRoundState(e, r.roomId)) || hrRoundState(e, r.roomId) === 'wait'; })[0];
+      if (!room) return '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งสมุดครบแล้ว</span>';
+      return '<button class="btn ' + (overdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-hr-send="' + escapeHtml(e.id + '|' + room.roomId) + '"><i class="fa-solid fa-book-open ui-icon" aria-hidden="true"></i> ส่งสมุด ' + escapeHtml(room.roomName) + '</button>';
+    }
     function eventActionHtml(e) {
       if (!e.categoryId) return '';
+      if (e.roomBased) return hrApplies(e) ? hrUpcomingBtn(e, false) : '<span class="hint day-ev-note">สำหรับครูที่ปรึกษา</span>';
       if (e.noSubmission) return '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>';
       if (beforeMyJoin(e)) return '<span class="hint day-ev-note">ก่อนเริ่มปฏิบัติงาน</span>';
       if (isAssignmentSubmitted(e)) return '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ' + (e.seriesId ? 'ส่งไฟล์เพิ่มในรอบนี้' : 'ส่งงานเพิ่มหรือแก้ไข') + '</button>';
@@ -1402,6 +1540,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       document.getElementById('dayModalCloseX').addEventListener('click', close);
       document.getElementById('dayModalCloseBtn').addEventListener('click', close);
       document.getElementById('dayModalBody').addEventListener('click', function (ev) {
+        var hsd = ev.target.closest('[data-hr-send]'); if (hsd) { var hpd = hsd.getAttribute('data-hr-send').split('|'); hideModalEl(document.getElementById('dayModal')); openHrSend(hpd[0], hpd[1]); return; } // 1.90
         var g = ev.target.closest('button[data-group-event]'), sbt = ev.target.closest('button[data-submit-event]');
         var id = (g || sbt) && (g || sbt).getAttribute(g ? 'data-group-event' : 'data-submit-event');
         if (!id) return;

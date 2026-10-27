@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.89.0';
-var APP_VERSION = '1.89.0.271026';
+var WORKER_MIN_VERSION = '1.90.0';
+var APP_VERSION = '1.90.0.271026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -649,6 +649,7 @@ async function submitWorkFile(file, meta) {
     customFieldValues: meta.customFieldValues,
     replacesId: meta.replacesId || '', // 1.85: อัปโหลดทับไฟล์ที่เจ้าหน้าที่ให้แก้ไข
     eventId: meta.eventId || '', // 1.88: รอบที่ส่ง (งานแบบหลายรอบ)
+    roomId: meta.roomId || '', // 1.90: งานตามห้อง (สมุดโฮมรูม)
     direct: 1, origin: location.origin // 1.86: ขอช่องส่งตรงเข้า Google Drive
   });
   // ชื่อไฟล์จริงที่จะใช้อัปโหลด (ตั้งแต่ V11.7): Worker คำนวณให้แล้วจากประเภทงาน/ภาคเรียน/ปีการศึกษา (ดู uploadFileName ที่

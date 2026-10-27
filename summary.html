@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.89.0.271026" />
+<link rel="stylesheet" href="assets/style.css?v=1.90.0.271026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.89.0.271026"></script>
+  <script src="assets/api.js?v=1.90.0.271026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -503,11 +503,11 @@
             (noRv ? ' <span class="badge asg-rvsum">ดูแค่ว่าส่งแล้ว</span>' : reviewSummaryChip(a)) +
           '</div>' + eventLinksHtml(a.links, true) +
           (canReview && !noRv ? reviewAllBtnHtml(a) : '') +
-          '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th>' + (noRv ? '' : '<th class="asg-rvh">การตรวจ</th>') + '</tr></thead><tbody>';
+          '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>' + (a.roomBased ? 'ห้อง' : 'ชื่อ-สกุล') + '</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th>' + (noRv ? '' : '<th class="asg-rvh">การตรวจ</th>') + '</tr></thead><tbody>';
         a.rows.forEach(function (r) {
           // 1.80: มือถือ = แถวละคน (ชื่อบรรทัดบน · สถานะ/วันที่ส่ง/การตรวจ/ปุ่มบรรทัดล่าง — ดู .asg-table ใน style.css)
           html += '<tr>' +
-            '<td class="asg-name">' + escapeHtml(r.userName) + '</td>' +
+            '<td class="asg-name">' + escapeHtml(r.userName) + (r.room && r.subjectGroup ? '<small class="hint" style="display:block; margin:0;">' + escapeHtml(r.subjectGroup) + '</small>' : '') + '</td>' +
             '<td class="asg-st">' + statusBadge(r.status) + '</td>' +
             '<td class="asg-time">' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '<span class="asg-none">-</span>') + '</td>' +
             // 1.85.2: ป้ายการตรวจ + หมายเหตุ + ปุ่ม อยู่ในช่องเดียว (ปุ่มกว้างเท่ากัน ชิดขวา)
@@ -555,11 +555,11 @@
       var h = '<div class="card asg-series" style="margin-bottom:16px; box-shadow:none; border:1px solid var(--border);">' +
         '<div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">' +
           '<span>' + icon('tag', 16) + ' ' + escapeHtml(a0.categoryName) + ' · ' + semLabel + '/' + escapeHtml(a0.academicYear) + ' · ' + rounds.length + ' รอบ</span>' +
-          '<span class="hint" style="margin:0;">ครบทุกรอบที่ถึงกำหนด ' + allDone + '/' + list.length + ' คน' + curTxt + '</span>' +
+          '<span class="hint" style="margin:0;">ครบทุกรอบที่ถึงกำหนด ' + allDone + '/' + list.length + (a0.roomBased ? ' ห้อง' : ' คน') + curTxt + '</span>' +
         '</div>' +
         '<div class="sub-item-meta" style="margin-bottom:10px;">' + categoryDotHtml(categoryColorMap[a0.categoryId]) + escapeHtml(a0.categoryName) + categoryDeptBadgeHtml(a0.categoryId) +
           (noRv ? ' · <span class="badge asg-rvsum">ดูแค่ว่าส่งแล้ว</span>' : ' · <span class="badge asg-rvsum">ตรวจทีละรอบ</span>') + '</div>' +
-        '<div class="table-wrap mx-wrap"><table class="mx-table"><thead><tr><th class="mx-name">ครู</th>' +
+        '<div class="table-wrap mx-wrap"><table class="mx-table"><thead><tr><th class="mx-name">' + (a0.roomBased ? 'ห้อง (ครูที่ปรึกษา)' : 'ครู') + '</th>' +
           rounds.map(function (a) { return '<th><div>' + escapeHtml(asgRoundShort(a)) + '</div><small>' + escapeHtml(formatDateThai(a.endDate || a.date).replace(/ \d{4}$/, '')) + '</small></th>'; }).join('') +
           '<th>รวม</th></tr></thead><tbody>' +
           list.map(function (p) {
