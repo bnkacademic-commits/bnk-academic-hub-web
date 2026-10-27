@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.92.3.271026" />
+<link rel="stylesheet" href="assets/style.css?v=1.92.4.271026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -249,9 +249,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.92.3.271026"></script>
+  <script src="assets/api.js?v=1.92.4.271026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.92.3.271026"></script>
+  <script src="assets/homeroom.js?v=1.92.4.271026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -1440,6 +1440,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
         if (diffDays <= -1 && e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && !beforeMyJoin(e)) return true;
         return false;
       });
+      upcoming = groupSeriesUpcoming(upcoming); // 1.92.4: งานส่งเป็นรอบ = แถวเดียว (รอบที่ใกล้ครบกำหนดที่สุด) + ปุ่มดูรอบทั้งหมด
       calUpState.all = upcoming; calUpState.now = now;
       var upcomingHeadingHtml = '<div class="cal-upcoming-heading"><i class="fas fa-bell ui-icon" aria-hidden="true"></i> กำหนดส่งงาน</div>';
       if (upcoming.length === 0) {
@@ -1451,10 +1452,115 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       bindUpToolbar(upcomingBox);
       renderUpList();
     }
+    // ---------- 1.92.4: งานที่ส่งเป็นรอบ (สมุดโฮมรูม / บันทึกรายเดือน ฯลฯ) — แถวเดียวในรายการกำหนดส่งงาน ----------
+    // แถวแสดงรอบที่ใกล้ครบกำหนดที่สุดที่ยังต้องทำ (เกินกำหนดก่อน) + ความคืบหน้า "ส่งแล้ว x/n รอบ" · ปุ่ม "ดูรอบทั้งหมด" → ป็อปอัปเส้นเวลา
+    function seriesRoundsOf(seriesId) {
+      return calState.events.filter(function (x) { return x.seriesId === seriesId && hrApplies(x) && !beforeMyJoin(x); })
+        .sort(function (a, b) { return (a.endDate || a.date).localeCompare(b.endDate || b.date) || a.roundNo - b.roundNo; });
+    }
+    function seriesRoundOpen(e) { // ยังต้องทำ: 0 = เกินกำหนด/แก้ไข · 1 = เปิดส่ง · 2 = ใกล้ถึง/ยังไม่ถึง · -1 = เสร็จแล้ว
+      var t = todayYmd();
+      if (e.roomBased) {
+        var sts = (e.rooms || []).map(function (r) { return hrRoundState(e, r.roomId); });
+        if (sts.some(function (x) { return x === 'no' || x === 'fx'; })) return 0;
+        if (sts.indexOf('open') !== -1) return 1;
+        if (sts.some(function (x) { return x === 'soon' || x === 'wait'; })) return 2;
+        return -1;
+      }
+      if (isAssignmentSubmitted(e)) return (e.review && e.review.status === 'revise') ? 0 : -1;
+      if (e.date > t) return 2;
+      return (e.endDate || e.date) < t ? 0 : 1;
+    }
+    function seriesRep(rounds) {
+      for (var lv = 0; lv <= 2; lv++) { var f = rounds.filter(function (e) { return seriesRoundOpen(e) === lv; })[0]; if (f) return f; }
+      return rounds[rounds.length - 1];
+    }
+    function groupSeriesUpcoming(list) {
+      var out = [], seen = {};
+      list.forEach(function (e) {
+        if (!e.seriesId) { out.push(e); return; }
+        if (seen[e.seriesId]) return;
+        seen[e.seriesId] = true;
+        var rounds = seriesRoundsOf(e.seriesId); if (!rounds.length) rounds = [e];
+        var rep = seriesRep(rounds), lv = seriesRoundOpen(rep);
+        var g = Object.assign({}, rep, { __series: rounds, __rep: rep, id: 'series:' + e.seriesId });
+        g.__status = lv === -1 ? 'submitted' : (lv === 0 ? 'overdue' : 'pending');
+        out.push(g);
+      });
+      return out;
+    }
+    function seriesName(e) { return e.categoryName || String(e.title || '').replace(/\s*\([^()]*\)\s*$/, ''); }
+    function seriesRowHtml(g, now) {
+      var rep = g.__rep, rounds = g.__series, sent = rounds.filter(isAssignmentSubmitted).length, lv = seriesRoundOpen(rep);
+      var end = rep.endDate || rep.date, dl = daysLeftInfo(end, now);
+      var dateChip = formatDateThai(end) + (dl && lv !== -1 ? '<span class="days-left ' + (lv === 0 ? 'late' : dl.cls) + '">(' + dl.text + ')</span>' : '');
+      var pct = Math.round(sent / rounds.length * 100);
+      var badge = lv === -1 ? '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งครบแล้ว</span>' : (lv === 0 ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> ' + (rep.review && rep.review.status === 'revise' ? 'ต้องแก้ไข' : 'เกินกำหนด') + '</span>' : '');
+      var rooms = rep.roomBased && rep.rooms && rep.rooms.length ? ' · ห้อง ' + rep.rooms.map(function (r) { return escapeHtml(r.roomName); }).join(', ') : '';
+      var btn = '<button class="btn ' + (lv === 0 ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-series-open="' + escapeHtml(rep.seriesId) + '"><i class="fa-solid fa-list-check ui-icon" aria-hidden="true"></i> ดูรอบทั้งหมด</button>';
+      return '<div class="event-list-item"><div class="event-date-chip' + (lv === 0 ? ' overdue' : '') + '">' + dateChip + '</div>' +
+        '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(seriesName(rep)) +
+          (rep.roomBased ? ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> งานตามห้อง</span>' : '') + categoryDeptBadgeHtml(rep.categoryId) + badge + '</div>' +
+          '<div class="sub-item-meta">' + (lv === -1 ? 'ทุกรอบ' : 'รอบ ' + escapeHtml(roundShort(rep))) + rooms +
+            ' <span class="up-prog"><span class="up-bar"><i style="width:' + pct + '%"></i></span> ส่งแล้ว ' + sent + '/' + rounds.length + ' รอบ</span></div>' +
+          (rep.message ? '<div class="sub-item-desc">' + escapeHtml(rep.message) + '</div>' : '') + '</div>' + evSideHtml(btn, rep.links) + '</div>';
+    }
+    var seriesModalState = { id: '', room: '' };
+    function ensureSeriesModal() {
+      var m = document.getElementById('seriesModal'); if (m) return m;
+      var w = document.createElement('div');
+      w.innerHTML = '<div class="modal-backdrop" id="seriesModal" hidden><div class="modal-box series-box"><button type="button" class="modal-close-x" id="seriesModalX" aria-label="ปิด">✕</button><div id="seriesModalBody"></div></div></div>';
+      m = w.firstChild; document.body.appendChild(m);
+      document.getElementById('seriesModalX').addEventListener('click', function () { hideModalEl(m); });
+      m.addEventListener('click', function (ev) {
+        var rt = ev.target.closest('[data-sr-room]'); if (rt) { seriesModalState.room = rt.getAttribute('data-sr-room'); renderSeriesModal(); return; }
+        var hs = ev.target.closest('[data-hr-send]'); if (hs && !hs.disabled) { var hp = hs.getAttribute('data-hr-send').split('|'); hideModalEl(m); openHrSend(hp[0], hp[1]); return; }
+        var sb = ev.target.closest('[data-submit-event]'); if (sb) { var e = calState.events.filter(function (x) { return x.id === sb.getAttribute('data-submit-event'); })[0]; if (e) { hideModalEl(m); openUploadModal(evPreset(e)); } }
+      });
+      return m;
+    }
+    function openSeriesModal(seriesId) {
+      var m = ensureSeriesModal(), rounds = seriesRoundsOf(seriesId); if (!rounds.length) return;
+      seriesModalState = { id: seriesId, room: (rounds[0].rooms && rounds[0].rooms[0] && rounds[0].rooms[0].roomId) || '' };
+      renderSeriesModal(); showModalEl(m);
+    }
+    function renderSeriesModal() {
+      var rounds = seriesRoundsOf(seriesModalState.id); if (!rounds.length) return;
+      var first = rounds[0], rep = seriesRep(rounds), t = todayYmd(), roomId = seriesModalState.room;
+      var tabs = first.roomBased && (first.rooms || []).length > 1 ? '<div class="tt-seg sr-tabs">' + first.rooms.map(function (r) { return '<button type="button" data-sr-room="' + escapeHtml(r.roomId) + '" class="' + (r.roomId === roomId ? 'on' : '') + '">ห้อง ' + escapeHtml(r.roomName) + '</button>'; }).join('') + '</div>' : '';
+      var room = first.roomBased ? ((first.rooms || []).filter(function (r) { return r.roomId === roomId; })[0] || null) : null;
+      var items = rounds.map(function (e) {
+        var end = e.endDate || e.date, chip = '', cls = '', small = 'ครบกำหนด ' + formatDateThai(end), act = '';
+        if (e.roomBased) {
+          var st = hrRoundState(e, roomId), rs = hrRoomOf(e, roomId);
+          chip = { ok: ['ok', 'ส่งแล้ว ✓'], rv: ['ok', 'ตรวจแล้ว ✓'], late: ['late', 'ส่งช้า ✓'], fx: ['fx', 'ต้องแก้ไข'], no: ['no', 'ยังไม่ส่ง (เกินกำหนด)'], open: ['open', 'ส่งได้แล้ว'], soon: ['wait', 'ยังส่งไม่ได้'], wait: ['wait', 'ยังไม่ถึง'] }[st];
+          cls = st === 'ok' || st === 'rv' || st === 'late' ? 'ok' : '';
+          if (rs && rs.submitted) small += ' · ส่งโดย ' + escapeHtml(rs.submitted.by) + ' ' + formatDateThai(String(rs.submitted.at).slice(0, 10));
+          else small += ' · ส่งได้ตั้งแต่ ' + formatDateThai(hrWin(e).open);
+          if (st === 'open' || st === 'no' || st === 'fx') act = '<button type="button" class="btn ' + (st === 'open' ? 'btn-primary' : 'btn-danger') + ' btn-sm" data-hr-send="' + escapeHtml(e.id + '|' + roomId) + '"><i class="fa-solid fa-book-open ui-icon" aria-hidden="true"></i> ' + (st === 'fx' ? 'ส่งใหม่' : 'ส่งสมุด') + '</button>';
+          else if (st === 'soon') act = hrSoonBtn(e, '');
+          else if (st === 'ok' || st === 'late') act = '<button type="button" class="btn btn-secondary btn-sm" data-hr-send="' + escapeHtml(e.id + '|' + roomId) + '"><i class="fa-solid fa-rotate ui-icon" aria-hidden="true"></i> ส่งแทนฉบับเดิม</button>';
+        } else {
+          var done = isAssignmentSubmitted(e), rv = e.review && e.review.status, lv = seriesRoundOpen(e);
+          if (done) { var sentAt = roundFirstSent(e), late = String(sentAt).slice(0, 10) > end; chip = rv === 'revise' ? ['fx', 'ต้องแก้ไข'] : (rv === 'reviewed' ? ['ok', 'ตรวจแล้ว ✓'] : [late ? 'late' : 'ok', late ? 'ส่งช้า ✓' : 'ส่งแล้ว ✓']); cls = 'ok'; if (sentAt) small += ' · ส่งเมื่อ ' + formatDateThai(String(sentAt).slice(0, 10)); }
+          else chip = lv === 2 ? ['wait', 'ยังไม่ถึง'] : (lv === 0 ? ['no', 'ยังไม่ส่ง (เกินกำหนด)'] : ['open', 'รอส่ง']);
+          if (!done && lv !== 2) act = '<button type="button" class="btn ' + (lv === 0 ? 'btn-danger' : 'btn-primary') + ' btn-sm" data-submit-event="' + escapeHtml(e.id) + '"><i class="fa-solid fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>';
+          else if (done) act = '<button type="button" class="btn btn-secondary btn-sm" data-submit-event="' + escapeHtml(e.id) + '"><i class="fa-solid fa-pen-to-square ui-icon" aria-hidden="true"></i> ' + (rv === 'revise' ? 'ส่งงานที่แก้ไข' : 'ส่งไฟล์เพิ่ม') + '</button>';
+        }
+        if (e.id === rep.id && cls !== 'ok') cls = 'next';
+        return '<li class="' + cls + '"><div class="h"><b>' + escapeHtml(roundShort(e)) + '</b><span class="cl-rchip ' + chip[0] + '">' + chip[1] + '</span>' + (e.id === rep.id && cls === 'next' ? '<span class="sr-next">รอบถัดไป</span>' : '') + act + '</div><small>' + small + '</small></li>';
+      }).join('');
+      var sent = rounds.filter(isAssignmentSubmitted).length;
+      document.getElementById('seriesModalBody').innerHTML = '<h3 class="sr-title">' + (first.roomBased ? '<i class="fa-solid fa-book-open" aria-hidden="true"></i> ' : '<i class="fa-solid fa-layer-group" aria-hidden="true"></i> ') + escapeHtml(seriesName(first)) + (room && !tabs ? ' · ห้อง ' + escapeHtml(room.roomName) : '') + '</h3>' +
+        '<div class="sr-sub">' + (first.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(first.semester)) + '/' + escapeHtml(first.academicYear) + ' · ส่งแล้ว ' + sent + '/' + rounds.length + ' รอบ' + (first.roomBased ? ' · ส่งได้ตั้งแต่วันที่ 1 ของเดือนถัดไป' : '') + '</div>' +
+        tabs + '<ul class="sr-tl">' + items + '</ul>';
+    }
+
     // ---------- 1.92: รายการกำหนดส่งงานใต้ปฏิทิน — ค้นหา / กรองประเภท / กรองสถานะ / เรียงตามวันครบกำหนด ----------
     var calUpState = { all: [], now: new Date(), q: '', type: 'all', status: 'all', sort: 'asc' };
     function upTypeOf(e) { return e.roomBased ? 'room' : (e.categoryId && !e.noSubmission ? 'submit' : (e.categoryId && e.noSubmission ? 'notice' : 'general')); }
     function upStatusOf(e, now) {
+      if (e.__series) return e.__status; // 1.92.4
       if (upTypeOf(e) === 'notice' || upTypeOf(e) === 'general') return 'none';
       if (e.roomBased) { var pend = (e.rooms || []).some(function (r) { return hrNeedsAction(hrRoundState(e, r.roomId)) || hrRoundState(e, r.roomId) === 'wait'; }); return !pend ? 'submitted' : (todayYmd() > hrWin(e).grace ? 'overdue' : 'pending'); }
       if (isAssignmentSubmitted(e)) return 'submitted';
@@ -1493,6 +1599,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       if (!list.length) { listBox.innerHTML = '<div class="empty-state">ไม่พบรายการที่ตรงกับตัวกรอง</div>'; return; }
       var upcomingBox = listBox;
       listBox.innerHTML = '<div class="cal-upcoming-grid">' + list.map(function (e) {
+          if (e.__series) return seriesRowHtml(e, now); // 1.92.4
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // 1.57: (เหลือ N วัน) นับถึงวันสุดท้ายของกำหนดส่ง · ส่งแล้วแสดงสีปกติ · เลยกำหนดแสดงเฉพาะงานที่ยังไม่ส่ง
           var dl = daysLeftInfo(e.endDate || e.date, now), submittedNow = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
@@ -1532,6 +1639,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           });
         });
         upcomingBox.querySelectorAll('button[data-hr-send]').forEach(function (btn) { btn.addEventListener('click', function () { var hp = btn.getAttribute('data-hr-send').split('|'); openHrSend(hp[0], hp[1]); }); }); // 1.90
+        upcomingBox.querySelectorAll('button[data-series-open]').forEach(function (btn) { btn.addEventListener('click', function () { openSeriesModal(btn.getAttribute('data-series-open')); }); }); // 1.92.4
         upcomingBox.querySelectorAll('button[data-submit-event]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var evId = btn.getAttribute('data-submit-event');

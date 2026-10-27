@@ -3905,3 +3905,22 @@ table.tt-grid td.tt-lunch { background: repeating-linear-gradient(45deg, transpa
 .dash-welcome-actions.has-tt .dash-tt-btn { grid-column: 1 / -1; justify-content: center; }
 html.memo-off .dash-welcome-actions.has-tt { grid-template-columns: auto; } /* ปิดบันทึกข้อความ = ปุ่มหน้าผลงานแถวเดียว */
 @media (max-width: 640px) { .dash-welcome-actions.has-tt { grid-template-columns: 1fr; } }
+/* 1.92.4: งานที่ส่งเป็นรอบ — แถวเดียว (แถบความคืบหน้า) + ป็อปอัปเส้นเวลา */
+.up-prog { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-left: 6px; white-space: nowrap; }
+.up-bar { width: 70px; height: 6px; border-radius: 99px; background: var(--border); overflow: hidden; display: inline-block; }
+.up-bar i { display: block; height: 100%; background: #22c55e; }
+.modal-box.series-box { width: min(560px, 96vw); max-width: 560px; text-align: left; }
+.sr-title { margin: 0 40px 4px 0; display: flex; align-items: center; gap: 8px; font-size: 1.1rem; }
+.sr-title i { color: #7c3aed; }
+.sr-sub { color: var(--text-muted); font-size: 0.86rem; margin-bottom: 12px; }
+.sr-tabs { margin-bottom: 12px; }
+ul.sr-tl { list-style: none; margin: 0; padding: 0 0 0 18px; border-left: 3px solid var(--border); max-height: 60vh; overflow-y: auto; }
+ul.sr-tl li { position: relative; padding: 0 0 14px 12px; }
+ul.sr-tl li::before { content: ''; position: absolute; left: -26px; top: 5px; width: 14px; height: 14px; border-radius: 999px; background: #cbd5e1; border: 3px solid var(--surface); box-shadow: 0 0 0 1px #cbd5e1; }
+ul.sr-tl li.ok::before { background: #22c55e; box-shadow: 0 0 0 1px #22c55e; }
+ul.sr-tl li.next::before { background: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+ul.sr-tl li .h { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+ul.sr-tl li .h b { font-size: 0.98rem; }
+ul.sr-tl li .h .btn { margin-left: auto; }
+ul.sr-tl li small { display: block; color: var(--text-muted); margin-top: 2px; }
+.sr-next { font-size: 0.72rem; font-weight: 800; color: #1d4ed8; background: #dbeafe; border-radius: 999px; padding: 2px 8px; }
