@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.91.0.271026" />
+<link rel="stylesheet" href="assets/style.css?v=1.92.0.271026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -48,7 +48,9 @@
       <!-- 1.85.2: แยกประกาศ (ป็อปอัป) กับประกาศ (ส่วนบน) — ป็อปอัปขึ้นก่อน -->
       <button class="tab-btn active" data-tab="popups">ประกาศ(ป็อปอัป)<span class="rpm-tabcount pop-tabcount" id="popTabCount" hidden></span></button>
       <button class="tab-btn" data-tab="announcements">ประกาศ(ส่วนบน)</button>
-      <button class="tab-btn" data-tab="calendar">ปฏิทิน</button>
+      <!-- 1.92: แยกปฏิทินส่งงาน / ปฏิทินกิจกรรม (ใช้แผงเดียวกัน กรองตามชนิด) -->
+      <button class="tab-btn" data-tab="calendar">ปฏิทินส่งงาน</button>
+      <button class="tab-btn" data-tab="calact">ปฏิทินกิจกรรม</button>
       <!-- 1.75: เรื่องที่แจ้ง (เจ้าหน้าที่ = กลุ่มตัวเอง · Super Admin = ทุกเรื่อง) — ผู้บริหารไม่เห็นแท็บนี้ -->
       <button class="tab-btn" data-tab="reports" id="reportsTabBtn" hidden>เรื่องที่แจ้ง<span class="rpm-tabcount" id="reportsTabCount" hidden></span></button>
     </div>
@@ -68,11 +70,11 @@
     <div class="tab-panel" id="tab-calendar">
       <div class="card">
         <div class="section-title" style="justify-content:space-between;">
-          <span><i class="fas fa-calendar-days ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการกำหนดการทั้งหมด</span>
-          <button class="btn btn-primary btn-sm" id="openCreateEventBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> เพิ่มกำหนดการ</button>
+          <span id="calPanelTitle"><i class="fas fa-calendar-days ui-icon" style="font-size:17px" aria-hidden="true"></i> ปฏิทินส่งงาน</span>
+          <button class="btn btn-primary btn-sm" id="openCreateEventBtn" type="button"><i class="fas fa-plus ui-icon" style="font-size:15px" aria-hidden="true"></i> <span id="calAddLabel">เพิ่มกำหนดส่งงาน</span></button>
         </div>
         <!-- 1.81: แยก 3 หมวด + ตัวกรองมาตรฐาน (ค่าเริ่มต้น = ปีการศึกษาปัจจุบัน ทุกภาคเรียน) + ผู้เพิ่ม -->
-        <div class="evl-tabs" id="evlTabs" role="tablist">
+        <div class="evl-tabs" id="evlTabs" role="tablist" style="display:none">
           <button type="button" class="on" data-evl="all" role="tab">ทั้งหมด <span class="n" id="evlN-all">0</span></button>
           <button type="button" data-evl="deadline" role="tab"><i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> กำหนดส่งงาน <span class="n" id="evlN-deadline">0</span></button>
           <button type="button" data-evl="activity" role="tab"><i class="fa-solid fa-flag" aria-hidden="true"></i> กิจกรรม <span class="n" id="evlN-activity">0</span></button>
@@ -246,7 +248,31 @@
           <div class="hint" style="margin:2px 0 6px;">ระบบคำนวณปีการศึกษา/ภาคเรียนจากวันที่ให้อัตโนมัติ (แก้ได้) — ใช้สำหรับตัวกรอง</div>
           <label class="evk-chk"><input type="checkbox" id="evActNotify" /><span><b>แจ้งเตือนในกระดิ่ง</b><small>แจ้งทุกคนที่เกี่ยวข้องตอนเพิ่ม และเตือนอีกครั้ง 1 วันก่อนกิจกรรมและวันกิจกรรม</small></span></label>
           <label class="evk-chk"><input type="checkbox" id="evActRepeat" /><span><b>ทำซ้ำทุกปี</b><small>เช่น วันคริสต์มาส วันไหว้ครู — แสดงในปฏิทินปีถัดไปให้อัตโนมัติ</small></span></label>
-          <label class="evk-chk"><input type="checkbox" id="evActNoClass" /><span><b>หยุดเรียน ไม่ต้องเช็คชื่อ</b><small>เว็บเช็คชื่อนักเรียนถือเป็นวันหยุดทั้งวัน (ทุกวันในช่วงที่เลือก) · ใช้ได้เฉพาะกิจกรรมสำหรับ "ทั้งหมด"</small></span></label>
+          <!-- 1.92: การเช็คชื่อในเว็บเช็คชื่อนักเรียน (แทนช่องติ๊ก "หยุดเรียน ไม่ต้องเช็คชื่อ" ของ 1.89) -->
+          <div class="field" id="evAttField" style="margin-top:8px;">
+            <label>การเช็คชื่อ (เว็บเช็คชื่อนักเรียน)</label>
+            <div class="att-seg" id="evAttMode" role="radiogroup" aria-label="การเช็คชื่อ">
+              <button type="button" data-att="" class="on" role="radio">ไม่เกี่ยวกับการเช็คชื่อ</button>
+              <button type="button" data-att="holiday" role="radio">วันหยุด</button>
+              <button type="button" data-att="noclass" role="radio">หยุดเรียนบางคาบ</button>
+              <button type="button" data-att="activity" role="radio">จัดกิจกรรม</button>
+            </div>
+            <div class="hint" id="evAttHint" style="margin-top:6px;">ไม่มีผลกับเว็บเช็คชื่อ</div>
+            <div id="evAttDetail" hidden>
+              <div class="att-box">
+                <b>นักเรียนที่เกี่ยวข้อง</b>
+                <div class="att-seg" id="evAttScope" role="radiogroup" aria-label="นักเรียนที่เกี่ยวข้อง">
+                  <button type="button" data-scope="all" class="on" role="radio">ทั้งโรงเรียน</button>
+                  <button type="button" data-scope="pick" role="radio">เลือกระดับชั้น / ห้อง</button>
+                </div>
+                <div id="evAttPick" hidden></div>
+              </div>
+              <div class="att-box" id="evAttDaysBox">
+                <b>คาบที่<span id="evAttDaysWord">จัดกิจกรรม</span> <small class="hint" style="font-weight:400;">(เลือกแยกรายวัน · A = เขตพื้นที่ · B = เข้าแถว)</small></b>
+                <div id="evAttDays"></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div id="evDeadlineWrap">
@@ -366,7 +392,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.91.0.271026"></script>
+  <script src="assets/api.js?v=1.92.0.271026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -422,8 +448,10 @@
         document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
         btn.classList.add('active');
         var tabKey = btn.getAttribute('data-tab');
-        document.getElementById('tab-' + tabKey).classList.add('active');
-        loadTabIfNeeded(tabKey);
+        var panelKey = tabKey === 'calact' ? 'calendar' : tabKey; // 1.92: ปฏิทินกิจกรรมใช้แผงเดียวกับปฏิทินส่งงาน
+        if (panelKey === 'calendar') setCalMode(tabKey === 'calact' ? 'activity' : 'deadline');
+        document.getElementById('tab-' + panelKey).classList.add('active');
+        loadTabIfNeeded(panelKey);
       });
     });
 
@@ -494,7 +522,14 @@
     var lastEvents = []; // เก็บรายการล่าสุดไว้ให้ปุ่ม "แก้ไข" ดึงข้อมูลเต็มมาเติมฟอร์ม (ตั้งแต่ V10.0)
     // ---------- 1.81: รายการกำหนดการ แยก ทั้งหมด / กำหนดส่งงาน / กิจกรรม + ตัวกรอง ----------
     var SUBJECT_GROUPS = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ'];
-    var evlKind = 'all', evlShown = LIST_PAGE, evlTerm = null;
+    var evlKind = 'deadline', evlShown = LIST_PAGE, evlTerm = null; // 1.92: แท็บปฏิทินส่งงาน = deadline · ปฏิทินกิจกรรม = activity
+    function setCalMode(kind) {
+      evlKind = kind === 'activity' ? 'activity' : 'deadline'; evlShown = LIST_PAGE;
+      var act = evlKind === 'activity';
+      document.getElementById('calPanelTitle').innerHTML = '<i class="fas ' + (act ? 'fa-flag' : 'fa-calendar-days') + ' ui-icon" style="font-size:17px" aria-hidden="true"></i> ' + (act ? 'ปฏิทินกิจกรรม' : 'ปฏิทินส่งงาน');
+      document.getElementById('calAddLabel').textContent = act ? 'เพิ่มกิจกรรม' : 'เพิ่มกำหนดส่งงาน';
+      if (typeof lastEvents !== 'undefined' && lastEvents && document.getElementById('eventListWrap')) { try { renderEvents(); } catch (e) { /* ยังไม่โหลด */ } }
+    }
     document.getElementById('evlFltHost').innerHTML = filterBarHtml({
       id: 'evlFlt', search: { id: 'evlQ', placeholder: 'ค้นหาชื่อกำหนดการ / สถานที่ / ผู้เพิ่ม' },
       fields: [
@@ -563,7 +598,7 @@
           if (ev.location) meta.push('<i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(ev.location));
           meta.push('สำหรับ: ' + escapeHtml(audienceLabel_(ev.audience)));
           if (ev.repeatYearly) meta.push('<i class="fa-solid fa-rotate" aria-hidden="true"></i> ทุกปี');
-          if (ev.noClass) meta.push('<span class="noclass-tag"><i class="fa-solid fa-school-circle-xmark" aria-hidden="true"></i> หยุดเรียน</span>'); // 1.89
+          if (attTagHtml(ev)) meta.push(attTagHtml(ev)); // 1.89 หยุดเรียน · 1.92 วันหยุด/หยุดเรียนบางคาบ/กิจกรรม
           if (ev.notify) meta.push('<i class="fa-solid fa-bell" aria-hidden="true"></i> แจ้งเตือน');
         } else {
           meta.push((ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + ' ปีการศึกษา ' + escapeHtml(ev.academicYear));
@@ -711,12 +746,105 @@
       ['evActTitle', 'evActDate', 'evActEndDate', 'evActTimeStart', 'evActTimeEnd', 'evActLocation', 'evActMessage'].forEach(function (id) { document.getElementById(id).value = ''; });
       document.getElementById('evActNotify').checked = true;
       document.getElementById('evActRepeat').checked = false;
-      document.getElementById('evActNoClass').checked = false; // 1.89
+      setAttFromEvent(null); // 1.92
       syncActDatesTh();
       evActAud.set('all');
       setActOwnerType('dept');
       currentAcademicTerm().then(function (t) { if (!document.getElementById('evEditId').value) { fillActYears(t.year); document.getElementById('evActSem').value = t.semester; } }).catch(function () { fillActYears(''); });
     }
+    // ---------- 1.92: กิจกรรมกับเว็บเช็คชื่อ — วันหยุด / หยุดเรียนบางคาบ / จัดกิจกรรม (เลือกคาบรายวัน + ระดับชั้น/ห้อง) ----------
+    var ATT_P = ['A', 'B', '1', '2', '3', '4', '5', '6', '7', '8'], ATT_MAX = 31;
+    var evAtt = { mode: '', all: true, grades: [], rooms: [], days: {} }, attRooms = null;
+    var ATT_HINT = {
+      '': 'ไม่มีผลกับเว็บเช็คชื่อ',
+      holiday: 'เว็บเช็คชื่อถือเป็นวันหยุดทั้งวัน (ทุกวันในช่วงที่เลือก) — ไม่ต้องเช็คชื่อ',
+      noclass: 'คาบที่เลือกหยุดเรียน ไม่ต้องเช็คชื่อ (ครูเช็คได้ถ้ามีการเรียนการสอน) · ไม่ขึ้นเตือนในกระดิ่ง',
+      activity: 'คาบที่เลือก ครูประจำวิชาเห็นป้ายกิจกรรม และปุ่ม "มา" เปลี่ยนเป็น "ร่วมกิจกรรม" · เช็คหรือไม่ก็ได้ (ไม่บังคับ) · ไม่ขึ้นเตือนในกระดิ่ง'
+    };
+    function attRangeDates() {
+      var a = document.getElementById('evActDate').value, b = document.getElementById('evActEndDate').value || a;
+      if (!a || b < a) return [];
+      var out = [], t = Date.parse(a + 'T00:00:00Z'), e = Date.parse(b + 'T00:00:00Z');
+      for (var i = 0; t <= e && i <= ATT_MAX; t += 864e5, i++) out.push(new Date(t).toISOString().slice(0, 10));
+      return out;
+    }
+    function attDayLabel(d) { var x = new Date(d + 'T12:00:00'); return ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'][x.getDay()] + ' ' + formatDateThai(d); }
+    function renderAttDays() {
+      var box = document.getElementById('evAttDays'); if (!box) return;
+      var ds = attRangeDates();
+      if (!ds.length) { box.innerHTML = '<div class="hint">เลือกวันที่เริ่มก่อน</div>'; return; }
+      if (ds.length > ATT_MAX) { box.innerHTML = '<div class="hint" style="color:#be123c;">ช่วงวันยาวเกิน ' + ATT_MAX + ' วัน — เลือกคาบได้ไม่เกิน ' + ATT_MAX + ' วันต่อกิจกรรม</div>'; return; }
+      box.innerHTML = ds.map(function (d, i) {
+        var set = evAtt.days[d] || [], wk = [0, 6].indexOf(new Date(d + 'T12:00:00').getDay()) !== -1;
+        return '<div class="att-day" data-day="' + d + '"><span class="att-dlabel' + (wk ? ' wknd' : '') + '">' + attDayLabel(d) + '</span><div class="att-chips">' +
+          ATT_P.map(function (p) { return '<button type="button" class="att-chip' + (set.indexOf(p) !== -1 ? ' on' : '') + '" data-ap="' + p + '" aria-pressed="' + (set.indexOf(p) !== -1) + '">' + p + '</button>'; }).join('') +
+          '</div><span class="att-tools"><button type="button" data-aday="all">ทั้งวัน</button><button type="button" data-aday="none">ล้าง</button>' + (i === 0 && ds.length > 1 ? '<button type="button" data-aday="copy">ใช้กับทุกวัน</button>' : '') + '</span></div>';
+      }).join('');
+    }
+    async function renderAttPick() {
+      var box = document.getElementById('evAttPick'); box.hidden = evAtt.all; if (evAtt.all) return;
+      var gChips = ['1', '2', '3', '4', '5', '6'].map(function (g) { return '<button type="button" class="att-chip' + (evAtt.grades.indexOf(g) !== -1 ? ' on' : '') + '" data-ag="' + g + '">ม.' + g + ' ทั้งระดับ</button>'; }).join('');
+      box.innerHTML = '<div class="att-chips" style="margin-top:8px;">' + gChips + '</div><div id="evAttRooms" style="margin-top:6px;"><div class="hint">กำลังโหลดรายชื่อห้องจากเว็บเช็คชื่อ</div></div>';
+      if (!attRooms) { try { var r = await apiCall('attRoomList', {}); attRooms = r.rooms || []; } catch (e) { attRooms = []; } }
+      var rb = document.getElementById('evAttRooms'); if (!rb) return;
+      if (!attRooms.length) { rb.innerHTML = '<div class="hint">เลือกรายห้องไม่ได้ (ยังไม่ได้เชื่อมเว็บเช็คชื่อ) — เลือกเป็นระดับชั้นได้</div>'; return; }
+      var byG = {}; attRooms.forEach(function (r) { var g = (/^m(\d)_/.exec(r.roomId) || [])[1] || '?'; (byG[g] = byG[g] || []).push(r); });
+      rb.innerHTML = Object.keys(byG).sort().map(function (g) {
+        var whole = evAtt.grades.indexOf(g) !== -1;
+        return '<div class="att-grade-row"><span>ม.' + g + '</span>' + byG[g].map(function (r) { var on = whole || evAtt.rooms.indexOf(r.roomId) !== -1; return '<button type="button" class="att-chip' + (on ? ' on' : '') + '" data-ar="' + r.roomId + '"' + (whole ? ' disabled' : '') + '>' + escapeHtml(r.roomName) + '</button>'; }).join('') + '</div>';
+      }).join('');
+    }
+    function renderAtt() {
+      document.querySelectorAll('#evAttMode [data-att]').forEach(function (b) { var on = b.getAttribute('data-att') === evAtt.mode; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
+      document.querySelectorAll('#evAttScope [data-scope]').forEach(function (b) { var on = (b.getAttribute('data-scope') === 'all') === evAtt.all; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
+      document.getElementById('evAttHint').textContent = ATT_HINT[evAtt.mode];
+      document.getElementById('evAttDetail').hidden = !evAtt.mode;
+      document.getElementById('evAttDaysBox').hidden = evAtt.mode !== 'noclass' && evAtt.mode !== 'activity';
+      document.getElementById('evAttDaysWord').textContent = evAtt.mode === 'noclass' ? 'หยุดเรียน' : 'จัดกิจกรรม';
+      if (evAtt.mode) { renderAttPick(); renderAttDays(); }
+    }
+    function setAttFromEvent(ev) {
+      var mode = ev ? (ev.attMode || (ev.noClass ? 'holiday' : '')) : '', pl = (ev && ev.attPlan) || {};
+      evAtt = { mode: mode, all: !(pl.grades || []).length && !(pl.rooms || []).length, grades: (pl.grades || []).slice(), rooms: (pl.rooms || []).slice(), days: {} };
+      if (ev && Array.isArray(pl.days)) { var t0 = Date.parse(ev.date + 'T00:00:00Z'); pl.days.forEach(function (d, i) { evAtt.days[new Date(t0 + i * 864e5).toISOString().slice(0, 10)] = (d || []).slice(); }); }
+      renderAtt();
+    }
+    function attPlanPayload() {
+      if (!evAtt.mode) return null;
+      var plan = { grades: evAtt.all ? [] : evAtt.grades.slice(), rooms: evAtt.all ? [] : evAtt.rooms.filter(function (r) { return evAtt.grades.indexOf((/^m(\d)_/.exec(r) || [])[1]) === -1; }) };
+      if (evAtt.mode !== 'holiday') plan.days = attRangeDates().map(function (d) { return (evAtt.days[d] || []).slice(); });
+      return plan;
+    }
+    function attCheck() {
+      if (!evAtt.mode) return '';
+      if (!evAtt.all && !evAtt.grades.length && !evAtt.rooms.length) return 'กรุณาเลือกระดับชั้นหรือห้องที่เกี่ยวข้อง (หรือเลือก "ทั้งโรงเรียน")';
+      if (evAtt.mode === 'holiday') return '';
+      var ds = attRangeDates();
+      if (ds.length > ATT_MAX) return 'เลือกคาบได้ไม่เกิน ' + ATT_MAX + ' วันต่อกิจกรรม — แบ่งเป็นหลายกิจกรรม';
+      if (!ds.some(function (d) { return (evAtt.days[d] || []).length; })) return 'กรุณาเลือกคาบที่' + (evAtt.mode === 'activity' ? 'จัดกิจกรรม' : 'หยุดเรียน') + 'อย่างน้อย 1 คาบ';
+      return '';
+    }
+    document.getElementById('evAttMode').addEventListener('click', function (e) { var b = e.target.closest('[data-att]'); if (!b) return; evAtt.mode = b.getAttribute('data-att'); renderAtt(); });
+    document.getElementById('evAttScope').addEventListener('click', function (e) { var b = e.target.closest('[data-scope]'); if (!b) return; evAtt.all = b.getAttribute('data-scope') === 'all'; renderAtt(); });
+    document.getElementById('evAttPick').addEventListener('click', function (e) {
+      var g = e.target.closest('[data-ag]'), r = e.target.closest('[data-ar]');
+      if (g) { var gv = g.getAttribute('data-ag'), i = evAtt.grades.indexOf(gv); if (i === -1) evAtt.grades.push(gv); else evAtt.grades.splice(i, 1); renderAttPick(); }
+      else if (r && !r.disabled) { var rv = r.getAttribute('data-ar'), j = evAtt.rooms.indexOf(rv); if (j === -1) evAtt.rooms.push(rv); else evAtt.rooms.splice(j, 1); r.classList.toggle('on', j === -1); }
+    });
+    document.getElementById('evAttDays').addEventListener('click', function (e) {
+      var row = e.target.closest('[data-day]'); if (!row) return;
+      var d = row.getAttribute('data-day'), set = evAtt.days[d] = evAtt.days[d] || [];
+      var c = e.target.closest('[data-ap]'), t = e.target.closest('[data-aday]');
+      if (c) { var p = c.getAttribute('data-ap'), k = set.indexOf(p); if (k === -1) set.push(p); else set.splice(k, 1); c.classList.toggle('on', k === -1); c.setAttribute('aria-pressed', k === -1 ? 'true' : 'false'); return; }
+      if (!t) return;
+      var a = t.getAttribute('data-aday');
+      if (a === 'all') evAtt.days[d] = ATT_P.slice();
+      else if (a === 'none') evAtt.days[d] = [];
+      else if (a === 'copy') attRangeDates().forEach(function (x) { evAtt.days[x] = set.slice(); });
+      renderAttDays();
+    });
+    ['evActDate', 'evActEndDate'].forEach(function (id) { document.getElementById(id).addEventListener('change', function () { if (evAtt.mode === 'noclass' || evAtt.mode === 'activity') renderAttDays(); }); });
+
     // ---------- 1.88: ส่งกี่รอบ / การตรวจ / ลิงก์แนบ ----------
     var evRMode = 'once', evRvMode = '', evEditing = null;
     function ymNow(off) { var d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + off); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
@@ -839,10 +967,10 @@
       setEvCurrentTerm(); // 1.61: ปีการศึกษา/ภาคเรียนเริ่มต้น = ภาคเรียนปัจจุบันของระบบ
       loadEventCategories(); // รีเฟรชรายชื่อประเภทงานทุกครั้งที่เปิด เผื่อเพิ่ม/ลบประเภทงานที่แท็บ "ทั่วไป" มาระหว่างนี้
       resetActivityForm();
-      document.getElementById('evKindPick').hidden = false;
-      setEvKind('deadline');
+      document.getElementById('evKindPick').hidden = true; // 1.92: ชนิดตามแท็บ (ปฏิทินส่งงาน / ปฏิทินกิจกรรม)
+      setEvKind(evlKind === 'activity' ? 'activity' : 'deadline');
       resetEvRounds(null); // 1.88
-      document.getElementById('eventModalTitle').textContent = 'เพิ่มกำหนดการ';
+      document.getElementById('eventModalTitle').textContent = evlKind === 'activity' ? 'เพิ่มกิจกรรม' : 'เพิ่มกำหนดส่งงาน';
       showModalEl(eventModalEl);
     }
     function startEditEvent(ev) {
@@ -859,7 +987,7 @@
         document.getElementById('evActMessage').value = ev.message || '';
         document.getElementById('evActNotify').checked = !!ev.notify;
         document.getElementById('evActRepeat').checked = !!ev.repeatYearly;
-        document.getElementById('evActNoClass').checked = !!ev.noClass; // 1.89
+        setAttFromEvent(ev); // 1.92
         syncActDatesTh();
         evActAud.set(ev.audience);
         setActOwnerType(ev.ownerType, ev.ownerGroup);
@@ -974,7 +1102,7 @@
       if (v('evActTimeStart') && v('evActTimeEnd') && v('evActTimeEnd') < v('evActTimeStart')) return fail('เวลาสิ้นสุดต้องไม่อยู่ก่อนเวลาเริ่ม');
       if (!v('evActOwnerGroup')) return fail('กรุณาเลือกเจ้าของกิจกรรม');
       var audErr = evActAud.check(); if (audErr) return fail(audErr);
-      if (document.getElementById('evActNoClass').checked && evActAud.get() !== 'all') return fail('"หยุดเรียน ไม่ต้องเช็คชื่อ" ใช้ได้เฉพาะกิจกรรมที่ส่งให้ "ทั้งหมด" — เปลี่ยน "สำหรับ" เป็นทั้งหมด หรือเอาเครื่องหมายออก');
+      var attErr = attCheck(); if (attErr) return fail(attErr); // 1.92
       var editId = document.getElementById('evEditId').value;
       var ok = await askConfirm(editId ? 'ยืนยันบันทึกการแก้ไขกิจกรรมนี้?' : 'ยืนยันเพิ่มกิจกรรมนี้ในปฏิทิน?', editId ? 'ยืนยันการแก้ไขกิจกรรม' : 'ยืนยันการเพิ่มกิจกรรม');
       if (!ok) return;
@@ -984,7 +1112,7 @@
         ownerType: evActOwnerType, ownerGroup: v('evActOwnerGroup'), audience: evActAud.get(), message: v('evActMessage'),
         academicYear: v('evActYear'), semester: v('evActSem'),
         notify: document.getElementById('evActNotify').checked, repeatYearly: document.getElementById('evActRepeat').checked,
-        noClass: document.getElementById('evActNoClass').checked // 1.89: เว็บเช็คชื่อถือเป็นวันหยุด
+        attMode: evAtt.mode, attPlan: attPlanPayload() // 1.92: เว็บเช็คชื่อ (วันหยุด / หยุดเรียนบางคาบ / จัดกิจกรรม)
       };
       if (editId) payload.eventId = editId;
       var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเพิ่มกิจกรรม', function () {

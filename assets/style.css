@@ -3832,3 +3832,34 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 :root[data-theme="dark"] .hr-tag { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
 :root[data-theme="dark"] .hr-warn { background: rgba(234, 88, 12, 0.15); color: #fdba74; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hr-tag { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; } :root:not([data-theme="light"]) .hr-warn { background: rgba(234, 88, 12, 0.15); color: #fdba74; } }
+
+/* 1.92: แถบค้นหา/กรอง/เรียง ของรายการกำหนดส่งงานใต้ปฏิทิน */
+.up-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.up-toolbar .up-search { flex: 1 1 220px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 10px; padding: 0 10px; background: var(--surface, #fff); min-width: 0; }
+.up-toolbar .up-search i { color: var(--text-muted); }
+.up-toolbar .up-search input { border: 0; outline: 0; background: transparent; padding: 8px 0; width: 100%; min-width: 0; font: inherit; color: inherit; }
+.up-toolbar select { flex: 0 1 auto; width: auto; min-width: 140px; }
+.up-toolbar .up-count { color: var(--text-muted); font-size: 0.9em; margin-left: auto; white-space: nowrap; }
+@media (max-width: 640px) { .up-toolbar select { flex: 1 1 45%; min-width: 0; } .up-toolbar .btn { flex: 1 1 100%; } .up-toolbar .up-count { margin-left: 0; } }
+/* 1.92: ป้ายกิจกรรมแทนคาบเรียน + ฟอร์มการเช็คชื่อของกิจกรรม */
+.noclass-tag.act { background: #cffafe; color: #0e7490; }
+:root[data-theme="dark"] .noclass-tag.act { background: rgba(6, 182, 212, 0.18); color: #67e8f9; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .noclass-tag.act { background: rgba(6, 182, 212, 0.18); color: #67e8f9; } }
+.att-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.att-seg button, .att-chip { border: 1.5px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.att-seg button.on { background: #0e7490; border-color: #0e7490; color: #fff; }
+.att-seg button[data-att="holiday"].on, .att-seg button[data-att="noclass"].on { background: #be123c; border-color: #be123c; }
+.att-chip { padding: 4px 10px; font-size: 0.85rem; min-width: 38px; }
+.att-chip.on { background: #0e7490; border-color: #0e7490; color: #fff; }
+.att-box { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-top: 10px; }
+.att-box > b { display: block; margin-bottom: 6px; font-size: 0.92rem; }
+.att-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.att-grade-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.att-grade-row > span { min-width: 34px; color: var(--text-muted); font-size: 0.85rem; font-weight: 700; }
+.att-day { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 0; border-top: 1px dashed var(--border); }
+.att-day:first-of-type { border-top: 0; }
+.att-day .att-dlabel { min-width: 120px; font-weight: 700; font-size: 0.88rem; }
+.att-day .att-dlabel.wknd { color: var(--text-muted); }
+.att-day .att-tools { margin-left: auto; display: flex; gap: 6px; }
+.att-day .att-tools button { border: 0; background: transparent; color: var(--primary, #3457d5); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; padding: 2px 4px; }
+@media (max-width: 640px) { .att-day .att-dlabel { min-width: 100%; } .att-day .att-tools { margin-left: 0; } }

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.91.0.271026" />
+<link rel="stylesheet" href="assets/style.css?v=1.92.0.271026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -247,9 +247,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.91.0.271026"></script>
+  <script src="assets/api.js?v=1.92.0.271026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.91.0.271026"></script>
+  <script src="assets/homeroom.js?v=1.92.0.271026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -1165,12 +1165,19 @@
     // แสดงเฉพาะครูที่ปรึกษา (มีห้อง) · เว็บเช็คชื่อติดต่อไม่ได้ = แสดงพร้อมข้อความ · 1 รายการต่อชุด → แถวละห้อง + ป้ายรายรอบ + ปุ่ม "ส่งสมุดรอบ …"
     function hrApplies(e) { return !e.roomBased || (e.rooms && e.rooms.length > 0) || !!e.roomError; }
     function hrRoomOf(e, roomId) { return (e.rooms || []).filter(function (r) { return r.roomId === roomId; })[0] || null; }
-    function hrRoundState(e, roomId) {
-      var t = todayYmd(), rs = hrRoomOf(e, roomId), end = e.endDate || e.date, rv = rs && rs.review && rs.review.status;
-      if (rs && rs.submitted) return rv === 'revise' ? 'fx' : (rv === 'reviewed' ? 'rv' : (String(rs.submitted.at).slice(0, 10) > end ? 'late' : 'ok'));
-      if (e.date > t) return 'wait';
-      return end < t ? 'no' : 'open';
+    // 1.92: สมุดต้องรอจบเดือน — ส่งได้ตั้งแต่วันที่ 1 ของเดือนถัดไป · เตือน 3 วันก่อนครบกำหนด ถึง 7 วันหลังสิ้นเดือน (ตรงกับ bookWindow ใน Worker)
+    function hrWin(e) {
+      var end = String(e.endDate || e.date), y = Number(end.slice(0, 4)), mo = Number(end.slice(5, 7));
+      var d = function (t) { return new Date(t).toISOString().slice(0, 10); }, endT = Date.parse(end + 'T00:00:00Z'), last = Date.UTC(y, mo, 0);
+      return { open: d(Date.UTC(y, mo, 1)), grace: d(Math.max(endT, last) + 7 * 864e5), remindFrom: d(endT - 3 * 864e5) };
     }
+    function hrRoundState(e, roomId) {
+      var t = todayYmd(), rs = hrRoomOf(e, roomId), w = hrWin(e), rv = rs && rs.review && rs.review.status;
+      if (rs && rs.submitted) return rv === 'revise' ? 'fx' : (rv === 'reviewed' ? 'rv' : (String(rs.submitted.at).slice(0, 10) > w.grace ? 'late' : 'ok'));
+      if (t < w.open) return t >= w.remindFrom ? 'soon' : 'wait';
+      return t > w.grace ? 'no' : 'open';
+    }
+    function hrSoonBtn(e, cls) { return '<button type="button" class="btn btn-secondary btn-sm ' + cls + '" disabled title="สมุดต้องรอให้จบเดือนก่อน"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> ส่งได้ตั้งแต่ ' + escapeHtml(formatDateThai(hrWin(e).open)) + '</button>'; }
     function hrNeedsAction(st) { return st === 'fx' || st === 'no' || st === 'open'; }
     function hrItemPending(rounds) { var rooms = (rounds[0].rooms || []); return rooms.some(function (r) { return rounds.some(function (e) { return hrNeedsAction(hrRoundState(e, r.roomId)) && e.date <= todayYmd(); }); }); }
     function hrChecklistHtml(r) {
@@ -1183,13 +1190,14 @@
         var sent = rounds.filter(function (e) { var rs = hrRoomOf(e, room.roomId); return rs && rs.submitted; }).length;
         var chips = rounds.map(function (e) {
           var st2 = hrRoundState(e, room.roomId), lab = rounds.length > 1 ? roundShort(e) : 'รอบนี้';
-          var txt = { ok: ' ส่งแล้ว <i class="fa-solid fa-check" aria-hidden="true"></i>', rv: ' ตรวจแล้ว <i class="fa-solid fa-check-double" aria-hidden="true"></i>', late: ' เกินกำหนด <i class="fa-solid fa-check" aria-hidden="true"></i>', fx: ' แก้ไข <i class="fa-solid fa-pen" aria-hidden="true"></i>', no: ' ยังไม่ส่ง', open: ' รอส่ง', wait: '' }[st2];
+          var txt = { ok: ' ส่งแล้ว <i class="fa-solid fa-check" aria-hidden="true"></i>', rv: ' ตรวจแล้ว <i class="fa-solid fa-check-double" aria-hidden="true"></i>', late: ' เกินกำหนด <i class="fa-solid fa-check" aria-hidden="true"></i>', fx: ' แก้ไข <i class="fa-solid fa-pen" aria-hidden="true"></i>', no: ' ยังไม่ส่ง', open: ' รอส่ง', soon: ' ยังส่งไม่ได้', wait: '' }[st2];
           var rs = hrRoomOf(e, room.roomId);
           var tip = (e.roundLabel || '') + ' · ครบกำหนด ' + formatDateThai(e.endDate || e.date) + (rs && rs.submitted ? ' · ส่งโดย ' + rs.submitted.by + ' ' + formatDateThai(rs.submitted.at) : '');
           return '<span class="cl-rchip ' + ({ ok: 'ok', rv: 'ok', late: 'late', fx: 'fx', no: 'no', open: 'open', wait: 'wait' }[st2]) + '" title="' + escapeHtml(tip) + '">' + escapeHtml(lab) + txt + '</span>';
         }).join('');
         var fixMsg = rounds.map(function (e) { var rs = hrRoomOf(e, room.roomId); return rs && rs.review && rs.review.status === 'revise' && rs.review.comment ? '<div class="cl-msg fix"><b>' + (rounds.length > 1 ? 'รอบ ' + escapeHtml(e.roundLabel || e.roundNo) + ' · ' : '') + 'ข้อความจาก ' + escapeHtml(rs.review.by || 'เจ้าหน้าที่') + '</b>' + escapeHtml(rs.review.comment) + '</div>' : ''; }).join('');
         var btn = focus ? '<button type="button" class="btn ' + (hrRoundState(focus, room.roomId) === 'open' ? 'btn-primary' : 'btn-danger') + ' btn-sm cl-round-btn" data-hr-send="' + escapeHtml(focus.id + '|' + room.roomId) + '"><i class="fa-solid fa-book-open" aria-hidden="true"></i> ส่งสมุด' + (rounds.length > 1 ? 'รอบ ' + escapeHtml(roundShort(focus)) : '') + '</button>' : '';
+        if (!focus) { var soonR = rounds.filter(function (e) { return hrRoundState(e, room.roomId) === 'soon'; })[0]; if (soonR) btn = hrSoonBtn(soonR, 'cl-round-btn'); } // 1.92
         var co = (room.advisors || []).filter(function (n) { return n !== (session && session.name); });
         return '<div class="hr-room"><div class="hr-room-h"><b>ห้อง ' + escapeHtml(room.roomName) + '</b>' + (co.length ? '<small> · ร่วมกับ ' + escapeHtml(co.join(', ')) + '</small>' : '') + '</div>' +
           '<div class="cl-rchips">' + chips + '</div>' + (rounds.length > 1 ? '<div class="checklist-status ' + (sent === rounds.length ? 'done' : 'pending') + '">ส่งแล้ว ' + sent + '/' + rounds.length + ' รอบ</div>' : '') + fixMsg + btn + '</div>';
@@ -1224,7 +1232,9 @@
         '<p class="hint" style="margin:8px 0 0;">ห้อง ' + escapeHtml(hrState.model.roomName) + ' · ' + escapeHtml(hrMonthLabel(hrState.model.month)) + ' · ภาคเรียนที่ ' + escapeHtml(hrState.model.term) + '/' + escapeHtml(hrState.model.year) + ' · รูปกิจกรรม ' + st.photos + ' รูป · ครูที่ปรึกษา: ' + escapeHtml(hrState.model.advisors.join(', ') || '-') + '</p>' +
         (st.none ? '<div class="hr-warn"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> ยังไม่ได้บันทึกโฮมรูม ' + st.none + ' วัน — บันทึกในเว็บเช็คชื่อให้ครบก่อนก็ได้ แล้วกด "ดึงข้อมูลใหม่"</div>' : '') +
         (rs && rs.submitted ? '<div class="hr-warn info"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ห้องนี้ส่งรอบนี้แล้วโดย ' + escapeHtml(rs.submitted.by) + ' (' + escapeHtml(formatDateThai(rs.submitted.at)) + ') — ส่งใหม่จะแทนฉบับเดิม</div>' : '');
-      btns.forEach(function (b) { b.disabled = false; });
+      var w0 = hrWin(hrState.ev), early = todayYmd() < w0.open;
+      if (early) box.insertAdjacentHTML('beforeend', '<div class="hr-warn info"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> สมุดรอบนี้ส่งได้ตั้งแต่ ' + escapeHtml(formatDateThai(w0.open)) + ' (รอให้จบเดือนก่อน) — ตอนนี้ดูตัวอย่าง PDF ได้</div>');
+      btns.forEach(function (b) { b.disabled = early && b.getAttribute('data-hr-act') === 'send'; });
     }
     async function hrMakePdf(p) {
       if (hrState.blob) return hrState.blob;
@@ -1427,25 +1437,67 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
         // ตั้งแต่ V12.0: ไม่ใช้กับ e.noSubmission (แจ้งเตือนอย่างเดียว ไม่มีอะไรให้ "ส่ง" จริง) ให้ตกไปใช้เพดาน 60 วันปกติเหมือนกำหนดการทั่วไปแทน
         if (diffDays <= -1 && e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && !beforeMyJoin(e)) return true;
         return false;
-      }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
-
-      // ตั้งแต่ 1.31.091026: หัวข้อ "กำหนดส่งงาน" ทำให้โดดเด่น (เดิมเป็นข้อความ hint เล็กๆ สีจาง จนผู้ใช้แจ้งว่าไม่เด่นเลย) — เป็นแถบหัวข้อขนาดใหญ่
-      // มีไอคอนและแถบสีด้านซ้าย (.cal-upcoming-heading) แสดงทั้งตอนมีและไม่มีรายการ
+      });
+      calUpState.all = upcoming; calUpState.now = now;
       var upcomingHeadingHtml = '<div class="cal-upcoming-heading"><i class="fas fa-bell ui-icon" aria-hidden="true"></i> กำหนดส่งงาน</div>';
       if (upcoming.length === 0) {
         upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="empty-state">' + (calGroup ? 'ไม่มีกำหนดการของ' + escapeHtml(groupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกำหนดการในช่วงนี้') + '</div>';
-      } else {
-        // ครอบรายการด้วย .cal-upcoming-grid ให้ยาวเต็มความกว้างการ์ด (ตั้งแต่ V10.0) — เรียงลงมาเป็นแถวเดียวตามลำดับวันที่เหมือนเดิม
-        // (V10.0 ตอนแรกทำเป็นกริดหลายคอลัมน์ ทำให้ลำดับดูสลับสับสน ผู้ใช้แจ้งว่าเป็นบั๊ก จึงแก้กลับมาเรียงแนวตั้งตามเดิม เหลือแค่ความกว้างที่ยังเต็มการ์ดอยู่)
-        // เปลี่ยนชื่อหัวข้อจาก "กำหนดการ" เป็น "กำหนดส่งงาน" และรูปแบบแต่ละแถวเป็น "ชื่อ(ประเภทงาน) ภาคเรียน ปีการศึกษา" (ตั้งแต่ V-ถัดไปหลัง V10.1)
-        upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="cal-upcoming-grid">' + upcoming.map(function (e) {
+        return;
+      }
+      // 1.92: แถบค้นหา/กรอง/เรียง (ค่าที่เลือกคงไว้เมื่อปฏิทินวาดใหม่ · พิมพ์ค้นหาแล้ววาดเฉพาะรายการ)
+      upcomingBox.innerHTML = upcomingHeadingHtml + upToolbarHtml() + '<div id="calUpList"></div>';
+      bindUpToolbar(upcomingBox);
+      renderUpList();
+    }
+    // ---------- 1.92: รายการกำหนดส่งงานใต้ปฏิทิน — ค้นหา / กรองประเภท / กรองสถานะ / เรียงตามวันครบกำหนด ----------
+    var calUpState = { all: [], now: new Date(), q: '', type: 'all', status: 'all', sort: 'asc' };
+    function upTypeOf(e) { return e.roomBased ? 'room' : (e.categoryId && !e.noSubmission ? 'submit' : (e.categoryId && e.noSubmission ? 'notice' : 'general')); }
+    function upStatusOf(e, now) {
+      if (upTypeOf(e) === 'notice' || upTypeOf(e) === 'general') return 'none';
+      if (e.roomBased) { var pend = (e.rooms || []).some(function (r) { return hrNeedsAction(hrRoundState(e, r.roomId)) || hrRoundState(e, r.roomId) === 'wait'; }); return !pend ? 'submitted' : (todayYmd() > hrWin(e).grace ? 'overdue' : 'pending'); }
+      if (isAssignmentSubmitted(e)) return 'submitted';
+      return new Date(e.endDate || e.date) < now ? 'overdue' : 'pending';
+    }
+    function upToolbarHtml() {
+      var o = function (v, cur, t) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + t + '</option>'; };
+      return '<div class="up-toolbar" role="search">' +
+        '<label class="up-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="upQ" placeholder="ค้นหาชื่องาน" value="' + escapeHtml(calUpState.q) + '" aria-label="ค้นหาชื่องาน" /></label>' +
+        '<select id="upType" aria-label="ประเภท">' + o('all', calUpState.type, 'ทุกประเภท') + o('submit', calUpState.type, 'งานที่ต้องส่ง') + o('room', calUpState.type, 'งานตามห้อง') + o('notice', calUpState.type, 'แจ้งเตือนอย่างเดียว') + o('general', calUpState.type, 'กำหนดการทั่วไป') + '</select>' +
+        '<select id="upStatus" aria-label="สถานะ">' + o('all', calUpState.status, 'ทุกสถานะ') + o('pending', calUpState.status, 'ยังไม่ส่ง') + o('overdue', calUpState.status, 'เกินกำหนด') + o('submitted', calUpState.status, 'ส่งแล้ว') + '</select>' +
+        '<button type="button" class="btn btn-secondary btn-sm" id="upSort" aria-label="สลับการเรียง"><i class="fa-solid ' + (calUpState.sort === 'asc' ? 'fa-arrow-down-short-wide' : 'fa-arrow-down-wide-short') + ' ui-icon" aria-hidden="true"></i> ' + (calUpState.sort === 'asc' ? 'ครบกำหนดใกล้สุดก่อน' : 'ครบกำหนดไกลสุดก่อน') + '</button>' +
+        '<span class="up-count" id="upCount"></span></div>';
+    }
+    function bindUpToolbar(box) {
+      var q = box.querySelector('#upQ');
+      q.addEventListener('input', function () { calUpState.q = q.value; renderUpList(); });
+      box.querySelector('#upType').addEventListener('change', function (ev) { calUpState.type = ev.target.value; renderUpList(); });
+      box.querySelector('#upStatus').addEventListener('change', function (ev) { calUpState.status = ev.target.value; renderUpList(); });
+      box.querySelector('#upSort').addEventListener('click', function (ev) {
+        calUpState.sort = calUpState.sort === 'asc' ? 'desc' : 'asc';
+        var b = ev.currentTarget; b.innerHTML = '<i class="fa-solid ' + (calUpState.sort === 'asc' ? 'fa-arrow-down-short-wide' : 'fa-arrow-down-wide-short') + ' ui-icon" aria-hidden="true"></i> ' + (calUpState.sort === 'asc' ? 'ครบกำหนดใกล้สุดก่อน' : 'ครบกำหนดไกลสุดก่อน');
+        renderUpList();
+      });
+    }
+    function renderUpList() {
+      var listBox = document.getElementById('calUpList'); if (!listBox) return;
+      var now = calUpState.now, q = calUpState.q.trim().toLowerCase();
+      var list = calUpState.all.filter(function (e) {
+        if (calUpState.type !== 'all' && upTypeOf(e) !== calUpState.type) return false;
+        if (calUpState.status !== 'all' && upStatusOf(e, now) !== calUpState.status) return false;
+        if (q && (String(e.title || '') + ' ' + String(e.categoryName || '') + ' ' + String(e.message || '')).toLowerCase().indexOf(q) === -1) return false;
+        return true;
+      }).sort(function (a, b) { var d = String(a.endDate || a.date).localeCompare(String(b.endDate || b.date)) || String(a.date).localeCompare(String(b.date)); return calUpState.sort === 'asc' ? d : -d; });
+      var cnt = document.getElementById('upCount'); if (cnt) cnt.textContent = list.length === calUpState.all.length ? list.length + ' รายการ' : list.length + ' จาก ' + calUpState.all.length + ' รายการ';
+      if (!list.length) { listBox.innerHTML = '<div class="empty-state">ไม่พบรายการที่ตรงกับตัวกรอง</div>'; return; }
+      var upcomingBox = listBox;
+      listBox.innerHTML = '<div class="cal-upcoming-grid">' + list.map(function (e) {
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // 1.57: (เหลือ N วัน) นับถึงวันสุดท้ายของกำหนดส่ง · ส่งแล้วแสดงสีปกติ · เลยกำหนดแสดงเฉพาะงานที่ยังไม่ส่ง
           var dl = daysLeftInfo(e.endDate || e.date, now), submittedNow = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
           if (dl && (dl.days >= 0 || (e.categoryId && !e.noSubmission && !submittedNow))) dateChip += '<span class="days-left ' + (submittedNow ? 'done' : dl.cls) + '">(' + dl.text + ')</span>';
           // เกินกำหนดส่งแล้ว + ยังไม่ส่ง (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) — แสดงป้าย "เกินกำหนด" สีแดงให้เห็นชัดเจน ไม่ใช่แค่หายเงียบๆ ไปจากรายการ
           // ตั้งแต่ V12.0: ไม่มีสถานะเกินกำหนดสำหรับ e.noSubmission เพราะไม่มีอะไรให้ "ส่ง" จริง
-          var isOverdue = e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && new Date(e.endDate || e.date) < now;
+          var isOverdue = e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && (e.roomBased ? todayYmd() > hrWin(e).grace : new Date(e.endDate || e.date) < now); // 1.92: สมุดโฮมรูมนับเกินเมื่อพ้น 7 วันหลังสิ้นเดือน
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัปส่งงานพร้อมเลือกปี/ภาคเรียน/ประเภทงานให้อัตโนมัติ
           // ยังกดได้ตามปกติแม้เกินกำหนดแล้ว (ระบบไม่เคยบล็อกการส่งงานย้อนหลังอยู่แล้ว เพียงแต่เดิมรายการหายไปก่อนจะมีโอกาสกด)
           // ตั้งแต่ V12.0: ถ้าเป็นประเภทงาน "แจ้งเตือนอย่างเดียว" ไม่มีปุ่มส่งงานเลย ขึ้นป้ายแจ้งเตือนเฉยๆ แทน
@@ -1485,7 +1537,6 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
             openUploadModal(evPreset(ev));
           });
         });
-      }
     }
 
     // ---------- 1.58: ป็อปอัปรายละเอียดวัน ----------
@@ -1493,9 +1544,10 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
     // 1.90: ปุ่มของงานตามห้องในกำหนดส่งงาน/ป็อปอัปรายวัน — ห้องแรกที่ยังต้องส่ง (ส่งครบ = ป้ายส่งแล้ว)
     function hrUpcomingBtn(e, overdue) {
       if (e.roomError) return '<span class="hint day-ev-note">เชื่อมเว็บเช็คชื่อไม่ได้</span>';
-      var room = (e.rooms || []).filter(function (r) { return hrNeedsAction(hrRoundState(e, r.roomId)) || hrRoundState(e, r.roomId) === 'wait'; })[0];
+      var room = (e.rooms || []).filter(function (r) { var st3 = hrRoundState(e, r.roomId); return hrNeedsAction(st3) || st3 === 'wait' || st3 === 'soon'; })[0];
       if (!room) return '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งสมุดครบแล้ว</span>';
-      return '<button class="btn ' + (overdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-hr-send="' + escapeHtml(e.id + '|' + room.roomId) + '"><i class="fa-solid fa-book-open ui-icon" aria-hidden="true"></i> ส่งสมุด ' + escapeHtml(room.roomName) + '</button>';
+      var st4 = hrRoundState(e, room.roomId); if (st4 === 'wait' || st4 === 'soon') return hrSoonBtn(e, 'event-submit-btn'); // 1.92: ยังไม่จบเดือน
+      return '<button class="btn ' + (hrRoundState(e, room.roomId) === 'no' ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-hr-send="' + escapeHtml(e.id + '|' + room.roomId) + '"><i class="fa-solid fa-book-open ui-icon" aria-hidden="true"></i> ส่งสมุด ' + escapeHtml(room.roomName) + '</button>';
     }
     function eventActionHtml(e) {
       if (!e.categoryId) return '';

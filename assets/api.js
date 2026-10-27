@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.91.0';
-var APP_VERSION = '1.91.0.271026';
+var WORKER_MIN_VERSION = '1.92.0';
+var APP_VERSION = '1.92.0.271026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1028,13 +1028,28 @@ function activityBarsHtml(acts) {
     return '<span class="cal-act" style="background:' + activityColor(e) + '" title="' + escapeHtml(e.title) + '">' + escapeHtml(e.title) + '</span>';
   }).join('') + (acts.length > 2 ? '<span class="cal-act-more">+' + (acts.length - 2) + '</span>' : '') + '</div>';
 }
+// 1.92: ป้ายการเช็คชื่อของกิจกรรม (วันหยุด / หยุดเรียนบางคาบ / จัดกิจกรรม) + นักเรียนที่เกี่ยวข้อง
+var ATT_MODE_LABEL = { holiday: 'วันหยุด', noclass: 'หยุดเรียนบางคาบ', activity: 'กิจกรรมแทนคาบเรียน' };
+function attScopeText(plan) {
+  if (!plan) return '';
+  var g = (plan.grades || []).map(function (x) { return 'ม.' + x; }), r = (plan.rooms || []).map(function (x) { var m = /^m(\d)_(\d+)$/.exec(x); return m ? 'ม.' + m[1] + '/' + m[2] : x; });
+  var all = g.concat(r);
+  return all.length ? (all.length > 6 ? all.slice(0, 6).join(', ') + ' และอีก ' + (all.length - 6) : all.join(', ')) : '';
+}
+function attTagHtml(e) {
+  var mode = e.attMode || (e.noClass ? 'holiday' : '');
+  if (!mode) return '';
+  var sc = attScopeText(e.attPlan);
+  var ic = mode === 'activity' ? 'fa-person-running' : 'fa-school-circle-xmark';
+  return '<span class="noclass-tag' + (mode === 'activity' ? ' act' : '') + '"><i class="fa-solid ' + ic + '" aria-hidden="true"></i> ' + ATT_MODE_LABEL[mode] + (sc ? ' · ' + escapeHtml(sc) : '') + '</span>';
+}
 // รายละเอียดกิจกรรมในป็อปอัปวันที่
 function activityDayHtml(e) {
   var c = activityColor(e), tt = activityTimeText(e);
   return '<div class="day-ev day-ev-act">' +
     '<span class="day-ev-bar" style="background:' + c + '"></span>' +
     '<div class="day-ev-main">' +
-      '<div class="day-ev-title"><i class="fa-solid fa-flag" style="color:' + c + '" aria-hidden="true"></i> ' + escapeHtml(e.title) + ' <span class="evl-tp ac">กิจกรรม</span>' + (e.noClass ? ' <span class="noclass-tag"><i class="fa-solid fa-school-circle-xmark" aria-hidden="true"></i> หยุดเรียน</span>' : '') + '</div>' +
+      '<div class="day-ev-title"><i class="fa-solid fa-flag" style="color:' + c + '" aria-hidden="true"></i> ' + escapeHtml(e.title) + ' <span class="evl-tp ac">กิจกรรม</span>' + (attTagHtml(e) ? ' ' + attTagHtml(e) : '') + '</div>' +
       '<div class="day-ev-meta"><i class="fas fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(eventRangeText(e)) + (e.repeatYearly ? ' · <i class="fa-solid fa-rotate" aria-hidden="true"></i> ทุกปี' : '') + '</div>' +
       (tt ? '<div class="day-ev-meta"><i class="fa-solid fa-clock" aria-hidden="true"></i> ' + escapeHtml(tt) + '</div>' : '') +
       (e.location ? '<div class="day-ev-meta"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(e.location) + '</div>' : '') +
