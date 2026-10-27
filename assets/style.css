@@ -3863,3 +3863,45 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 .att-day .att-tools { margin-left: auto; display: flex; gap: 6px; }
 .att-day .att-tools button { border: 0; background: transparent; color: var(--primary, #3457d5); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; padding: 2px 4px; }
 @media (max-width: 640px) { .att-day .att-dlabel { min-width: 100%; } .att-day .att-tools { margin-left: 0; } }
+
+/* 1.92.1: ตารางสอนรายสัปดาห์ (ป็อปอัปจากปุ่มบนแถบด้านบน) */
+.modal-box.tt-box { width: min(1100px, 96vw); max-width: 1100px; }
+table.tt-grid.room .tt-c span { font-size: 0.74rem; font-weight: 700; }
+.tt-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 40px 12px 0; }
+.tt-head h3 { margin: 0 auto 0 0; display: flex; align-items: center; gap: 8px; }
+.tt-head h3 i { color: var(--primary); }
+.tt-seg { display: inline-flex; flex-wrap: wrap; gap: 4px; background: var(--surface-2, #f1f5f9); border-radius: 999px; padding: 3px; }
+.tt-seg:empty { display: none; }
+.tt-seg button { border: 0; background: transparent; color: var(--text-muted); font: inherit; font-size: 0.86rem; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+.tt-seg button.on { background: var(--primary); color: #fff; }
+.tt-sheet { border: 2px solid var(--text); border-radius: 14px; padding: 8px; overflow-x: auto; }
+.tt-ttl { text-align: center; font-weight: 800; font-size: 1.12rem; padding: 4px 0 8px; }
+table.tt-grid { width: 100%; min-width: 760px; border-collapse: separate; border-spacing: 3px; table-layout: fixed; font-size: 0.84rem; }
+table.tt-grid th { background: var(--surface-2, #e2e8f0); color: var(--text); font-weight: 800; padding: 5px 2px; border-radius: 6px; text-align: center; }
+table.tt-grid th small { display: block; font-weight: 500; font-size: 0.68rem; color: var(--text-muted); }
+table.tt-grid th.tt-dh { width: 46px; background: transparent; }
+table.tt-grid th.tt-lunch-h { width: 42px; }
+table.tt-grid td { height: 56px; border-radius: 8px; padding: 3px; text-align: center; vertical-align: middle; border: 1px solid var(--border); background: var(--surface); line-height: 1.25; position: relative; }
+table.tt-grid td.tt-day { background: #0f172a; color: #fff; font-weight: 800; font-size: 1rem; border: 0; }
+table.tt-grid td.tt-lunch { background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(148, 163, 184, 0.25) 6px, rgba(148, 163, 184, 0.25) 12px); border: 0; color: var(--text-muted); font-size: 0.74rem; }
+.tt-c b { display: block; font-size: 0.82rem; word-break: break-word; }
+.tt-c i { display: block; font-style: normal; font-size: 0.7rem; opacity: 0.85; }
+.tt-c span { display: block; font-weight: 800; font-size: 0.9rem; }
+.tt-c em { position: absolute; top: 2px; right: 4px; font-style: normal; font-size: 0.68rem; font-weight: 800; color: #b91c1c; }
+.tt-c.clash { box-shadow: inset 0 0 0 2px #ef4444; }
+.tt-c.g1 { background: #fef3c7; border-color: #fcd34d; color: #78350f; }
+.tt-c.g2 { background: #ffedd5; border-color: #fdba74; color: #7c2d12; }
+.tt-c.g3 { background: #fce7f3; border-color: #f9a8d4; color: #831843; }
+.tt-c.g4 { background: #dbeafe; border-color: #93c5fd; color: #1e3a8a; }
+.tt-c.g5 { background: #dcfce7; border-color: #86efac; color: #14532d; }
+.tt-c.g6 { background: #ccfbf1; border-color: #5eead4; color: #134e4a; }
+.tt-c.sys, .tt-c.fixed { background: #ede9fe; border-color: #c4b5fd; color: #4c1d95; }
+.tt-c.fixed { border-style: dashed; }
+.tt-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; }
+:root[data-theme="dark"] table.tt-grid td.tt-day { background: #1e3a8a; }
+@media print { .tt-c, table.tt-grid td.tt-day { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+/* 1.92.2: ปุ่ม "ตารางสอนของฉัน" แถวที่ 2 กว้างเต็ม ใต้ปุ่มหน้าผลงานของฉัน / จัดทำบันทึกข้อความ */
+.dash-welcome-actions.has-tt { display: grid; grid-template-columns: repeat(2, auto); }
+.dash-welcome-actions.has-tt .dash-tt-btn { grid-column: 1 / -1; justify-content: center; }
+html.memo-off .dash-welcome-actions.has-tt { grid-template-columns: auto; } /* ปิดบันทึกข้อความ = ปุ่มหน้าผลงานแถวเดียว */
+@media (max-width: 640px) { .dash-welcome-actions.has-tt { grid-template-columns: 1fr; } }

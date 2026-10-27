@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.92.0';
-var APP_VERSION = '1.92.0.271026';
+var WORKER_MIN_VERSION = '1.92.1';
+var APP_VERSION = '1.92.2.271026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1973,6 +1973,7 @@ function mountChrome(activePage) {
     });
 
     initNotifBell(); // 1.75
+    initTimetable(); // 1.92.1
     document.getElementById('manualOpenBtn').addEventListener('click', function () { openManual(); });
     document.getElementById('ddReport').addEventListener('click', function () { dropdown.classList.remove('open'); openReportModal(); });
     document.getElementById('ddInstall').addEventListener('click', function () { dropdown.classList.remove('open'); startInstallApp(); });
@@ -2895,4 +2896,104 @@ function onReportModalChange(e) {
     st.files.push({ file: f, url: URL.createObjectURL(f) });
   });
   renderReportModal();
+}
+
+
+// ======================================================================
+// 1.92.1: ตารางสอนรายสัปดาห์ — ปุ่ม "ตารางสอนของฉัน" ในหน้าแรก (1.92.2: ย้ายจากแถบด้านบน ใต้ปุ่มหน้าผลงานของฉัน) → ป็อปอัปแบบใบตารางของโรงเรียน (ข้อมูลจากเว็บเช็คชื่อ BNKSA)
+// ช่องกิจกรรมประจำของโรงเรียน (คาบ 7 อ./พ./พฤ.) แสดงให้ทุกคน ถ้ามีวิชาในช่องนั้น วิชาทับ
+// ======================================================================
+var TT_TIMES = { 1: '08.30–09.20', 2: '09.20–10.10', 3: '10.20–11.10', 4: '11.10–12.00', 5: '13.00–13.50', 6: '13.50–14.40', 7: '14.40–15.30', 8: '15.30–16.20' };
+var TT_DAYS = ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.'];
+var TT_FIXED = [{ day: 2, period: 7, label: 'ชุมนุม' }, { day: 3, period: 7, label: 'พัฒนาผู้เรียน' }, { day: 4, period: 7, label: 'คุณธรรมจริยธรรม' }];
+var _tt = { data: null, view: 'me', loading: false };
+function ttGradeCls(roomId) { var g = (/^m(\d)_/.exec(roomId || '') || [])[1]; return g ? 'g' + g : ''; }
+function ttCellMap(slots) {
+  var m = {};
+  (slots || []).forEach(function (x) { if (x.period < 1 || x.period > 8 || x.day < 1 || x.day > 5) return; var k = x.day + '-' + x.period; (m[k] = m[k] || []).push(x); });
+  return m;
+}
+function ttGridHtml(slots, mode) {
+  var m = ttCellMap(slots);
+  var h = '<table class="tt-grid' + (mode === 'room' ? ' room' : '') + '"><thead><tr><th class="tt-dh"></th>';
+  for (var p = 1; p <= 8; p++) { h += '<th>' + p + '<small>' + TT_TIMES[p] + '</small></th>'; if (p === 4) h += '<th class="tt-lunch-h">พัก<small>12.00</small></th>'; }
+  h += '</tr></thead><tbody>';
+  for (var d = 1; d <= 5; d++) {
+    h += '<tr><td class="tt-day">' + TT_DAYS[d - 1] + '</td>';
+    for (var p2 = 1; p2 <= 8; p2++) {
+      var xs = m[d + '-' + p2] || [], fx = TT_FIXED.filter(function (f) { return f.day === d && f.period === p2; })[0];
+      if (xs.length) {
+        var x = xs[0], sys = !!x.system;
+        var top = sys ? x.subject : (x.code || x.subject), bottom = mode === 'room' ? (sys ? '' : (x.teachers || []).join(', ')) : x.room;
+        h += '<td class="tt-c ' + (sys ? 'sys' : ttGradeCls(x.roomId)) + (xs.length > 1 ? ' clash' : '') + '" title="' + escapeHtml((x.subject || '') + (x.code ? ' (' + x.code + ')' : '') + ' · ' + x.room + ((x.teachers || []).length ? ' · ' + x.teachers.join(', ') : '') + (xs.length > 1 ? ' · ซ้อน ' + xs.length + ' รายการ' : '')) + '">' +
+          '<b>' + escapeHtml(top) + '</b>' + (mode === 'room' && !sys && x.code ? '<i>' + escapeHtml(x.subject) + '</i>' : '') + (bottom ? '<span>' + escapeHtml(bottom) + '</span>' : '') + (xs.length > 1 ? '<em>+' + (xs.length - 1) + '</em>' : '') + '</td>';
+      } else if (fx) h += '<td class="tt-c fixed"><b>' + escapeHtml(fx.label) + '</b></td>';
+      else h += '<td></td>';
+      if (p2 === 4) h += d === 1 ? '<td class="tt-lunch" rowspan="5">พักเที่ยง</td>' : '';
+    }
+    h += '</tr>';
+  }
+  return h + '</tbody></table>';
+}
+function ttStats(slots) {
+  var cls = (slots || []).filter(function (x) { return !x.system && x.period >= 1 && x.period <= 8; });
+  var rooms = {}, subs = {}; cls.forEach(function (x) { rooms[x.roomId] = 1; subs[x.code || x.subject] = 1; });
+  return 'รวม ' + cls.length + ' คาบ/สัปดาห์ · สอน ' + Object.keys(rooms).length + ' ห้อง · ' + Object.keys(subs).length + ' รายวิชา';
+}
+function ttCurrent() {
+  var d = _tt.data; if (!d) return null;
+  if (_tt.view === 'me') return { title: (d.teacherName || session.name) + ' · ภาคเรียนที่ ' + d.term + '/' + d.year, slots: d.slots, mode: 'me', foot: ttStats(d.slots) };
+  var r = (d.rooms || []).filter(function (x) { return x.roomId === _tt.view; })[0];
+  return r ? { title: 'ชั้น ' + r.roomName + ' · ภาคเรียนที่ ' + d.term + '/' + d.year, slots: r.slots, mode: 'room', foot: 'ตารางเรียนของห้อง (ครูที่ปรึกษา)' } : null;
+}
+function ttRender() {
+  var body = document.getElementById('ttBody'), seg = document.getElementById('ttSeg'), pr = document.getElementById('ttPrint');
+  if (!body) return;
+  var d = _tt.data;
+  if (_tt.loading) { body.innerHTML = '<div class="loading">กำลังดึงตารางสอนจากเว็บเช็คชื่อ</div>'; seg.innerHTML = ''; pr.disabled = true; return; }
+  if (!d) return;
+  if (!d.linked) {
+    seg.innerHTML = ''; pr.disabled = true;
+    body.innerHTML = '<div class="empty-state">' + escapeHtml(d.reason || 'ยังไม่พบชื่อของคุณในเว็บเช็คชื่อ — ให้ผู้ดูแลเว็บเช็คชื่อผูกรายชื่อครูกับ AcademicHub ก่อน') + '</div>';
+    return;
+  }
+  seg.innerHTML = (d.rooms || []).length ? '<button type="button" data-ttv="me" class="' + (_tt.view === 'me' ? 'on' : '') + '">ตารางสอนของฉัน</button>' + d.rooms.map(function (r) { return '<button type="button" data-ttv="' + escapeHtml(r.roomId) + '" class="' + (_tt.view === r.roomId ? 'on' : '') + '">ห้อง ' + escapeHtml(r.roomName) + ' (ที่ปรึกษา)</button>'; }).join('') : '';
+  var c = ttCurrent(); pr.disabled = !c;
+  body.innerHTML = c ? '<div class="tt-sheet" id="ttSheet"><div class="tt-ttl">' + escapeHtml(c.title) + '</div>' + ttGridHtml(c.slots, c.mode) + '</div>' +
+    '<div class="tt-foot"><span>' + escapeHtml(c.foot) + '</span><span>ข้อมูลจากเว็บเช็คชื่อ' + (c.slots && c.slots.length ? '' : ' — ยังไม่มีคาบสอนในภาคเรียนนี้') + '</span></div>' : '';
+}
+function ttPrint() {
+  var sh = document.getElementById('ttSheet'); if (!sh) return;
+  var css = '';
+  var w = window.open('', '_blank'); if (!w) { showToast && showToast('เบราว์เซอร์บล็อกหน้าต่างใหม่ — อนุญาตป็อปอัปก่อน', 'error'); return; }
+  var styles = Array.prototype.map.call(document.querySelectorAll('link[rel="stylesheet"]'), function (l) { return '<link rel="stylesheet" href="' + l.href + '">'; }).join('');
+  w.document.write('<!doctype html><html lang="th" data-theme="light"><head><meta charset="utf-8"><title>ตารางสอน</title>' + styles + css +
+    '<style>@page{size:A4 landscape;margin:10mm}body{background:#fff;margin:0;padding:10mm}.tt-sheet{border-color:#000}</style></head><body>' + sh.outerHTML + '</body></html>');
+  w.document.close();
+  setTimeout(function () { try { w.focus(); w.print(); } catch (e) { /* ข้าม */ } }, 600);
+}
+function initTimetable() {
+  var btn = document.getElementById('ttOpenBtn'); if (!btn) return;
+  var wrap = document.createElement('div');
+  wrap.innerHTML = '<div class="modal-backdrop" id="ttModal" hidden><div class="modal-box modal-box-wide tt-box">' +
+    '<button type="button" class="modal-close-x" id="ttCloseX" aria-label="ปิด">✕</button>' +
+    '<div class="tt-head"><h3><i class="fa-solid fa-table-cells" aria-hidden="true"></i> ตารางสอน</h3><div class="tt-seg" id="ttSeg" role="tablist"></div>' +
+    '<button type="button" class="btn btn-secondary btn-sm" id="ttPrint"><i class="fa-solid fa-print ui-icon" aria-hidden="true"></i> พิมพ์ / PDF</button></div>' +
+    '<div id="ttBody"></div></div></div>';
+  document.body.appendChild(wrap.firstChild);
+  var modal = document.getElementById('ttModal');
+  document.getElementById('ttCloseX').addEventListener('click', function () { hideModalEl(modal); });
+  document.getElementById('ttPrint').addEventListener('click', ttPrint);
+  document.getElementById('ttSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-ttv]'); if (!b) return; _tt.view = b.getAttribute('data-ttv'); ttRender(); });
+  btn.addEventListener('click', async function () {
+    announceMenuOpen('tt');
+    showModalEl(modal);
+    if (_tt.data && Date.now() - (_tt.at || 0) < 5 * 60 * 1000) { ttRender(); return; }
+    _tt.loading = true; ttRender();
+    try { _tt.data = await apiCall('ttMine', {}); _tt.at = Date.now(); }
+    catch (err) { _tt.data = { linked: false, reason: err.message }; }
+    _tt.loading = false;
+    if (_tt.view !== 'me' && !(_tt.data.rooms || []).some(function (r) { return r.roomId === _tt.view; })) _tt.view = 'me';
+    ttRender();
+  });
 }

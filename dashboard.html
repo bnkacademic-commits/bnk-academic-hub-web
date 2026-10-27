@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.92.0.271026" />
+<link rel="stylesheet" href="assets/style.css?v=1.92.2.271026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -51,7 +51,7 @@
         <!-- 1.45.111026: คำอธิบายระบบสั้นๆ 1 บรรทัดใต้ข้อความต้อนรับ -->
         <p class="dash-welcome-sub">ส่งผลงาน ติดตามกำหนดการ และค้นหาคำสั่งของโรงเรียนได้ในที่เดียว</p>
       </div>
-      <div class="dash-welcome-actions">
+      <div class="dash-welcome-actions has-tt">
         <!-- ตั้งแต่ V11.7: ผู้ใช้ขอสลับปุ่มเด่น (.btn-cta) กลับมาไว้ที่ปุ่มนี้แทนปุ่ม "ส่งงาน (กำหนดเอง)" ด้านล่าง (ดูคอมเมนต์ตรงนั้น) -->
         <button class="btn btn-cta dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
         <!-- "จัดทำบันทึกข้อความ" (ตั้งแต่ 1.25.081026, เปลี่ยนชื่อปุ่มจาก "ปริ้นบันทึกข้อความส่งงาน" ตั้งแต่ 1.28.091026 ตามที่ผู้ใช้ขอ
@@ -59,6 +59,8 @@
              เจ้าหน้าที่ฝ่ายวิชาการที่มีหน้าฮับ (ทั้งคู่ส่งงานผ่านระบบเหมือนกัน — requireHubAccess() ด้านบนกรองให้แล้ว)
              ตั้งแต่ 1.29.091026: ไปหน้า memo.html ในแท็บเดิม (ไม่เด้งเปิดหน้าใหม่) เหมือนกดแท็บเมนูบนสุด + ตัวอักษรเล็กลงให้พอดีปุ่ม (.dash-memo-btn) -->
         <a class="btn btn-secondary dash-portfolio-btn dash-memo-btn memo-feature" id="btnOpenMemo" href="memo.html"><i class="fas fa-file-lines ui-icon" aria-hidden="true"></i> จัดทำบันทึกข้อความ</a>
+        <!-- 1.92.2: ตารางสอนของฉัน (ทั้งสัปดาห์ จากเว็บเช็คชื่อ) — แถวที่ 2 กว้างเต็ม ใต้ปุ่มหน้าผลงานของฉัน (ผู้ใช้เลือกแบบ 2) · ป็อปอัปอยู่ใน assets/api.js (initTimetable) -->
+        <button class="btn btn-secondary dash-portfolio-btn dash-tt-btn" id="ttOpenBtn" type="button"><i class="fa-solid fa-table-cells ui-icon" aria-hidden="true"></i> ตารางสอนของฉัน</button>
       </div>
     </div>
 
@@ -247,9 +249,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.92.0.271026"></script>
+  <script src="assets/api.js?v=1.92.2.271026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.92.0.271026"></script>
+  <script src="assets/homeroom.js?v=1.92.2.271026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
