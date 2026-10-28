@@ -166,7 +166,7 @@
       if (p.kind === 'executive') return sub;
       if (groupBy === 'dept') {
         if (hasHead(p, 'dept') && p.department) sub.push({ text: short ? 'หัวหน้ากลุ่มบริหารงาน' : 'หัวหน้า' + groupLabel(p.department) });
-        if (hasHead(p, 'subject')) sub.push({ text: short ? 'หัวหน้ากลุ่มสาระฯ' : 'หัวหน้ากลุ่มสาระการเรียนรู้' + (p.subjectGroup || '') });
+        if (hasHead(p, 'subject')) sub.push({ text: (short ? 'หัวหน้ากลุ่มสาระฯ' : 'หัวหน้ากลุ่มสาระการเรียนรู้') + (p.subjectGroup || '') }); // 1.92.5: บอกชื่อกลุ่มสาระฯ
         else if (p.subjectGroup) sub.push({ text: (short ? 'สาระฯ' : 'กลุ่มสาระการเรียนรู้') + p.subjectGroup });
       } else {
         if (p.department) sub.push({ text: (hasHead(p, 'dept') ? 'หัวหน้า' : '') + groupLabel(p.department), dept: p.department }); // 1.56: dept = ใช้สีของกลุ่ม
@@ -200,7 +200,7 @@
     // ---- มุมมองผังองค์กร ----
     function nodeHtml(p, extra) {
       var isExec = p.kind === 'executive';
-      var cls = 'tn' + (extra ? ' ' + extra : '') + ((p.headRoles || []).length ? ' head' : '') + (p.hasPage ? ' tn-link' : '');
+      var cls = 'tn' + (extra ? ' ' + extra : '') + (hasHead(p, groupBy === 'dept' ? 'dept' : 'subject') ? ' head' : '') + (p.hasPage ? ' tn-link' : '');
       var inner = '<div class="tav">' + avatarInnerHtml(p.avatarUrl) + '</div>' +
         '<div class="tname">' + escapeHtml(p.name) + '</div>' +
         '<div class="tpos">' + escapeHtml(p.position || (isExec ? 'ผู้บริหาร' : '')) + '</div>' +
