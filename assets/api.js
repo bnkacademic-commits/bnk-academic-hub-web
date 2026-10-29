@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '1.96.0';
-var APP_VERSION = '1.96.0.291026';
+var APP_VERSION = '1.96.2.291026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1035,6 +1035,31 @@ function expandRepeatEvents(events, fromYmd, toYmd) {
   return out;
 }
 // แถบกิจกรรมในช่องวัน (สูงสุด 2 แถบ + "+N")
+// 1.96.2: ปฏิทินแบบ C (หน้าแรก / ผู้บริหาร / ปฏิทินโรงเรียน) — กิจกรรม = ช่องวันระบายสีของกิจกรรม เลขวันวงกลมสีเข้ม ชื่ออยู่วันแรก
+// วันหยุด (กิจกรรมแบบ "วันหยุด") = ช่องเทา เลขวันตัวแดง ริบบิ้นแดง "หยุด" ที่มุม (ไม่ใช้สีที่เลือกไว้)
+// คืน { cls, style, num, label } ให้หน้าแต่ละหน้าเอาไปประกอบช่องเอง · opts.startOf(e) = วันเริ่มที่แสดง (ค่าเริ่มต้น e.date)
+function isHolidayEv(e) { return isActivityEv(e) && e.attMode === 'holiday'; }
+function calCellC(d, ds, acts, opts) {
+  opts = opts || {};
+  var startOf = opts.startOf || function (e) { return e.date; };
+  var dow = new Date(ds + 'T00:00:00').getDay(), isFirst = function (e) { return startOf(e) === ds || dow === 0 || d === 1; };
+  var hol = acts.filter(isHolidayEv), oth = acts.filter(function (e) { return !isHolidayEv(e); });
+  var lab = function (list, color) {
+    if (!list.length) return '';
+    var f = list.filter(isFirst)[0], more = list.length - (f ? 1 : 0);
+    if (!f) return more > 0 && list.length > 1 ? '<div class="cal-c-lab" style="color:' + color(list[0]) + '">+' + more + '</div>' : '';
+    return '<div class="cal-c-lab" style="color:' + color(f) + '">' + escapeHtml(f.title) + (list.length > 1 ? ' +' + (list.length - 1) : '') + '</div>';
+  };
+  if (hol.length || opts.holiday) {
+    return { cls: ' cal-hol', style: '', num: '<div class="day-num">' + d + '</div>', label: '<span class="cal-hol-rib" aria-hidden="true">หยุด</span>' + lab(hol.concat(oth), function (e) { return isHolidayEv(e) ? '#dc2626' : activityColor(e); }) };
+  }
+  if (oth.length) {
+    var c = activityColor(oth[0]);
+    return { cls: ' cal-act-c', style: '--ac:' + c, num: '<div class="day-num" style="background:' + c + ';color:#fff">' + d + '</div>', label: lab(oth, activityColor) };
+  }
+  return { cls: '', style: '', num: '<div class="day-num">' + d + '</div>', label: '' };
+}
+var CAL_C_LEGEND = '<span><i class="cal-c-sw" aria-hidden="true"></i>ช่องระบายสี = กิจกรรม</span><span><i class="cal-hol-sw" aria-hidden="true"></i>วันหยุด</span>';
 function activityBarsHtml(acts) {
   if (!acts.length) return '';
   return '<div class="cal-acts">' + acts.slice(0, 2).map(function (e) {
@@ -3015,12 +3040,27 @@ function ttReady(win) {
     if (win.document.readyState === 'complete') go(); else win.addEventListener('load', go);
   });
 }
+// 1.96.1: ดาวน์โหลด PDF ทันที (A4 แนวนอน 1 หน้า) — ไม่เปิดหน้าตัวอย่าง/หน้าพิมพ์
 async function ttPrint() {
   var html = ttSheetDoc('print'); if (!html) return;
-  var w = window.open('', '_blank'); if (!w) { showToast('เบราว์เซอร์บล็อกหน้าต่างใหม่ — อนุญาตป็อปอัปก่อน', true); return; }
-  w.document.open(); w.document.write(html); w.document.close();
-  await ttReady(w);
-  try { w.focus(); w.print(); } catch (e) { /* ข้าม */ }
+  var b = document.getElementById('ttPrint'); if (b) b.disabled = true;
+  var fr = document.createElement('iframe');
+  fr.setAttribute('aria-hidden', 'true');
+  fr.style.cssText = 'position:fixed;left:-20000px;top:0;width:' + (TT_PAGE_W + 40) + 'px;height:' + (TT_PAGE_H + 400) + 'px;border:0;';
+  document.body.appendChild(fr);
+  try {
+    var d = fr.contentWindow.document; d.open(); d.write(html); d.close();
+    await ttReady(fr.contentWindow);
+    await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js');
+    var canvas = await html2canvas(d.getElementById('pg'), { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: TT_PAGE_W + 40 });
+    var pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+    var w = 297 - 16, h = w * canvas.height / canvas.width; if (h > 210 - 16) { h = 210 - 16; w = h * canvas.width / canvas.height; }
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', (297 - w) / 2, 8, w, h);
+    var name = 'timetable-' + (_tt.view === 'me' ? 'teacher' : 'room-' + String(_tt.view).replace(/[^\w-]/g, '')) + '-' + (_tt.data ? _tt.data.term + '-' + _tt.data.year : '') + '.pdf';
+    downloadBlob(pdf.output('blob'), name);
+    showToast('ดาวน์โหลดไฟล์ PDF แล้ว');
+  } catch (err) { showToast('สร้างไฟล์ PDF ไม่สำเร็จ: ' + err.message, true); }
+  finally { fr.remove(); if (b) b.disabled = false; }
 }
 async function ttSaveImage() {
   var html = ttSheetDoc('image'); if (!html) return;
@@ -3050,7 +3090,7 @@ function initTimetable() {
     '<button type="button" class="modal-close-x" id="ttCloseX" aria-label="ปิด">✕</button>' +
     '<div class="tt-head"><h3><i class="fa-solid fa-table-cells" aria-hidden="true"></i> ตารางสอน</h3><div class="tt-seg" id="ttSeg" role="tablist"></div>' +
     '<span class="tt-acts"><button type="button" class="btn btn-secondary btn-sm" id="ttImg"><i class="fa-solid fa-image ui-icon" aria-hidden="true"></i> บันทึกเป็นรูป</button>' +
-    '<button type="button" class="btn btn-secondary btn-sm" id="ttPrint"><i class="fa-solid fa-print ui-icon" aria-hidden="true"></i> พิมพ์ / PDF</button></span></div>' +
+    '<button type="button" class="btn btn-secondary btn-sm" id="ttPrint"><i class="fa-solid fa-file-pdf ui-icon" aria-hidden="true"></i> ดาวน์โหลด PDF</button></span></div>' +
     '<div id="ttBody"></div></div></div>';
   document.body.appendChild(wrap.firstChild);
   var modal = document.getElementById('ttModal');
