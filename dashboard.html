@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.93.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.94.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -89,6 +89,8 @@
               <button class="btn btn-ghost btn-sm" id="calPrev" aria-label="เดือนก่อนหน้า">‹</button>
               <button type="button" class="month-label month-pick-btn" id="calLabel" aria-haspopup="dialog" aria-expanded="false" title="เลือกเดือนและปี">-</button>
               <button class="btn btn-ghost btn-sm" id="calNext" aria-label="เดือนถัดไป">›</button>
+              <!-- 1.93.1: เช็คลิสต์การส่งงานย่อเป็นปุ่ม → ป็อปอัป #clModal -->
+              <button type="button" class="btn btn-secondary btn-sm cl-open-btn" id="clOpenBtn" aria-haspopup="dialog" title="เช็คลิสต์การส่งงาน"><i class="fas fa-list-check" aria-hidden="true"></i> <span class="cl-open-tx">เช็คลิสต์การส่งงาน</span><span class="cl-open-n" id="clOpenN" hidden>0</span></button>
               <div class="cal-mpick" id="calMonthPicker" role="dialog" aria-label="เลือกเดือนและปี" hidden>
                 <div class="cal-mpick-head">
                   <button type="button" class="cal-mpick-arrow" data-mp-year="-1" aria-label="ปีก่อนหน้า"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
@@ -106,19 +108,6 @@
           <div class="cal-kinds" id="calKinds" role="group" aria-label="กรองชนิดกำหนดการ"></div>
           <div class="calendar-grid" id="calGrid"></div>
           <div class="cal-legend" id="calLegend"></div>
-        </div>
-        <div class="dash-cal-side">
-          <div class="dash-checklist">
-            <div class="dash-checklist-title">
-              <span class="dash-checklist-name"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> <span>เช็คลิสต์การส่งงาน</span></span>
-              <span class="dash-checklist-controls">
-                <select id="clYear" aria-label="เลือกปีการศึกษาของเช็คลิสต์"></select>
-                <button class="refresh-btn" id="clReset" type="button" title="กลับไปปีการศึกษา/ภาคเรียนปัจจุบัน" aria-label="กลับไปปีการศึกษาปัจจุบัน"><svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
-              </span>
-            </div>
-            <div class="cl-tabs" id="clTabs" role="tablist" aria-label="ภาคเรียน"></div>
-            <div class="dash-checklist-body" id="assignmentChecklistBody"><div class="loading">กำลังโหลด</div></div>
-          </div>
         </div>
       </div>
       <!-- "กำหนดส่งงาน" (เดิมชื่อ "กำหนดการใกล้ถึง" แล้วเปลี่ยนเป็น "กำหนดการ" ใน V10.0/V10.1 ก่อนเปลี่ยนมาเป็นชื่อนี้) ย้ายออกมานอกกริด 2 คอลัมน์ด้านบน ให้ยาวเต็มความกว้างของการ์ด แต่ยังเรียงลงมาเป็นแถวเดียวตามเดิม -->
@@ -219,6 +208,24 @@
     </div>
   </div>
 
+  <!-- 1.93.1: เช็คลิสต์การส่งงาน (ป็อปอัป — เดิมเป็นคอลัมน์ขวาของปฏิทิน) -->
+  <div class="modal-backdrop" id="clModal" hidden>
+    <div class="modal-box cl-modal-box">
+      <button type="button" class="modal-close-x" id="clModalX" aria-label="ปิด">✕</button>
+      <div class="dash-checklist">
+            <div class="dash-checklist-title">
+              <span class="dash-checklist-name"><i class="fas fa-list-check ui-icon" aria-hidden="true"></i> <span>เช็คลิสต์การส่งงาน</span></span>
+              <span class="dash-checklist-controls">
+                <select id="clYear" aria-label="เลือกปีการศึกษาของเช็คลิสต์"></select>
+                <button class="refresh-btn" id="clReset" type="button" title="กลับไปปีการศึกษา/ภาคเรียนปัจจุบัน" aria-label="กลับไปปีการศึกษาปัจจุบัน"><svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+              </span>
+            </div>
+            <div class="cl-tabs" id="clTabs" role="tablist" aria-label="ภาคเรียน"></div>
+            <div class="dash-checklist-body" id="assignmentChecklistBody"><div class="loading">กำลังโหลด</div></div>
+      </div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" id="clModalClose">ปิด</button></div>
+    </div>
+  </div>
   <!-- 1.58: ป็อปอัปรายละเอียดวัน — กดวันในปฏิทินแล้วแสดงงานทั้งหมดที่ครอบคลุมวันนั้น -->
   <div class="modal-backdrop" id="dayModal" hidden>
     <div class="modal-box day-modal-box">
@@ -249,9 +256,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.93.0.291026"></script>
+  <script src="assets/api.js?v=1.94.0.291026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.93.0.291026"></script>
+  <script src="assets/homeroom.js?v=1.94.0.291026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -1065,6 +1072,16 @@
       return '<div class="ev-side">' + (action || '') + eventLinksHtml(links, false) + '</div>';
     }
     var checklistState = { term: null, loading: false, year: '', sem: '', summerOn: true };
+    // 1.93.1: เช็คลิสต์การส่งงานเป็นป็อปอัป (ปุ่มข้างปุ่มเลื่อนเดือน)
+    (function wireChecklistModal() {
+      var m = document.getElementById('clModal');
+      var close = function () { hideModalEl(m); };
+      document.getElementById('clOpenBtn').addEventListener('click', function () { renderAssignmentChecklist(); showModalEl(m); });
+      document.getElementById('clModalX').addEventListener('click', close);
+      document.getElementById('clModalClose').addEventListener('click', close);
+      // กดส่งงาน/ดูรอบจากในเช็คลิสต์ → ปิดป็อปอัปเช็คลิสต์ก่อนเปิดหน้าต่างถัดไป
+      document.getElementById('assignmentChecklistBody').addEventListener('click', function (e) { if (e.target.closest('button[data-cl-fix], button[data-hr-send], button[data-submit-event], button[data-group-event]')) close(); }, true);
+    })();
     function renderAssignmentChecklist() {
       var wrap = document.getElementById('assignmentChecklistBody');
       if (!wrap) return;
@@ -1084,6 +1101,11 @@
       var yearSel = document.getElementById('clYear');
       // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ
       var assignments = calState.events.filter(function (e) { return !!e.categoryId && (!e.noSubmission || e.manualCheck) && !beforeMyJoin(e) && (!calGroup || evDept(e) === calGroup) && hrApplies(e); });
+      // 1.93.1: ตัวเลขบนปุ่ม "เช็คลิสต์การส่งงาน" = งานที่ยังไม่ส่งของภาคเรียนปัจจุบัน
+      var clPendOf = function (r) { return r.roomItem ? hrItemPending(r.series) : (r.series ? seriesPending(r.series) : !r.done); };
+      var curPend = clItems(assignments.filter(function (e) { return String(e.academicYear) === String(checklistState.term.year) && String(e.semester) === String(checklistState.term.semester || '1'); })).filter(clPendOf).length;
+      var nEl = document.getElementById('clOpenN');
+      if (nEl) { nEl.hidden = !curPend; nEl.textContent = curPend > 99 ? '99+' : curPend; document.getElementById('clOpenBtn').title = curPend ? 'ยังไม่ส่ง ' + curPend + ' งานในภาคเรียนนี้' : 'ส่งครบแล้วในภาคเรียนนี้'; }
       var years = {};
       assignments.forEach(function (e) { years[String(e.academicYear)] = true; });
       years[String(checklistState.term.year)] = true;
@@ -1593,7 +1615,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
     }
 
     // ---------- 1.92: รายการกำหนดส่งงานใต้ปฏิทิน — ค้นหา / กรองประเภท / กรองสถานะ / เรียงตามวันครบกำหนด ----------
-    var calUpState = { all: [], now: new Date(), q: '', type: 'all', status: 'all', sort: 'asc' };
+    var calUpState = { all: [], now: new Date(), q: '', type: 'all', status: 'all', sort: 'asc', group: '' }; // 1.93.1: + group = กลุ่มบริหารงาน
     function upTypeOf(e) { return e.roomBased ? 'room' : (e.categoryId && (!e.noSubmission || e.manualCheck) ? 'submit' : (e.categoryId && e.noSubmission ? 'notice' : 'general')); }
     function upStatusOf(e, now) {
       if (e.__series) return e.__status; // 1.92.4
@@ -1606,12 +1628,23 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       var o = function (v, cur, t) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + t + '</option>'; };
       return '<div class="up-toolbar" role="search">' +
         '<label class="up-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="upQ" placeholder="ค้นหาชื่องาน" value="' + escapeHtml(calUpState.q) + '" aria-label="ค้นหาชื่องาน" /></label>' +
+        upGroupSelectHtml() +
         '<select id="upType" aria-label="ประเภท">' + o('all', calUpState.type, 'ทุกประเภท') + o('submit', calUpState.type, 'งานที่ต้องส่ง') + o('room', calUpState.type, 'งานตามห้อง') + o('notice', calUpState.type, 'แจ้งเตือนอย่างเดียว') + o('general', calUpState.type, 'กำหนดการทั่วไป') + '</select>' +
         '<select id="upStatus" aria-label="สถานะ">' + o('all', calUpState.status, 'ทุกสถานะ') + o('pending', calUpState.status, 'ยังไม่ส่ง') + o('overdue', calUpState.status, 'เกินกำหนด') + o('submitted', calUpState.status, 'ส่งแล้ว') + '</select>' +
         '<button type="button" class="btn btn-secondary btn-sm" id="upSort" aria-label="สลับการเรียง"><i class="fa-solid ' + (calUpState.sort === 'asc' ? 'fa-arrow-down-short-wide' : 'fa-arrow-down-wide-short') + ' ui-icon" aria-hidden="true"></i> ' + (calUpState.sort === 'asc' ? 'ครบกำหนดใกล้สุดก่อน' : 'ครบกำหนดไกลสุดก่อน') + '</button>' +
         '<span class="up-count" id="upCount"></span></div>';
     }
+    // 1.93.1: กรองตามกลุ่มบริหารงาน (กลุ่มที่มีงานในรายการเท่านั้น · งานที่ไม่ผูกกลุ่ม = "ไม่ระบุกลุ่ม")
+    function upGroupSelectHtml() {
+      var gs = {}, none = false;
+      calUpState.all.forEach(function (e) { var d = evDept(e); if (d) gs[d] = 1; else none = true; });
+      var keys = Object.keys(gs).sort(function (a, b) { return a.localeCompare(b, 'th'); });
+      if (calUpState.group && calUpState.group !== '__none' && !gs[calUpState.group]) keys.push(calUpState.group);
+      var o = function (v, t) { return '<option value="' + escapeHtml(v) + '"' + (v === calUpState.group ? ' selected' : '') + '>' + escapeHtml(t) + '</option>'; };
+      return '<select id="upGroup" aria-label="กลุ่มบริหารงาน">' + o('', 'ทุกกลุ่มบริหารงาน') + keys.map(function (k) { return o(k, String(k).replace(/^กลุ่มบริหารงาน/, '')); }).join('') + (none ? o('__none', 'ไม่ระบุกลุ่ม') : '') + '</select>';
+    }
     function bindUpToolbar(box) {
+      box.querySelector('#upGroup').addEventListener('change', function (ev) { calUpState.group = ev.target.value; renderUpList(); });
       var q = box.querySelector('#upQ');
       q.addEventListener('input', function () { calUpState.q = q.value; renderUpList(); });
       box.querySelector('#upType').addEventListener('change', function (ev) { calUpState.type = ev.target.value; renderUpList(); });
@@ -1627,6 +1660,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       var now = calUpState.now, q = calUpState.q.trim().toLowerCase();
       var list = calUpState.all.filter(function (e) {
         if (calUpState.type !== 'all' && upTypeOf(e) !== calUpState.type) return false;
+        if (calUpState.group && (calUpState.group === '__none' ? !!evDept(e) : evDept(e) !== calUpState.group)) return false;
         if (calUpState.status !== 'all' && upStatusOf(e, now) !== calUpState.status) return false;
         if (q && (String(e.title || '') + ' ' + String(e.categoryName || '') + ' ' + String(e.message || '')).toLowerCase().indexOf(q) === -1) return false;
         return true;

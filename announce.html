@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.93.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.94.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -366,7 +366,13 @@
 
         </div><!-- /evDeadlineWrap -->
 
-        <!-- 1.93: ปฏิทินโรงเรียน — การแสดง + ผู้รับผิดชอบ (ใช้ทั้งกำหนดส่งงานและกิจกรรม) -->
+        <!-- 1.94: ผู้รับผิดชอบ (หลายคนได้) — แสดงในปฏิทินโรงเรียน · คนที่เลือกจากรายชื่อเข้าหน้าสรุปรวมการส่งงานเห็น/ตรวจงานนี้ได้ -->
+        <div class="field ev-resp-field">
+          <label><i class="fa-solid fa-user-check" aria-hidden="true"></i> ผู้รับผิดชอบ <span class="opt">(ไม่บังคับ · เลือกได้หลายคน)</span></label>
+          <div id="evRespPick"></div>
+          <div class="hint" id="evRespHint">ครูที่เลือกจากรายชื่อจะเห็นงานนี้ในหน้า "สรุปรวมการส่งงาน" (เฉพาะงานที่รับผิดชอบ) และตรวจงาน/ตรวจรับได้ · ช่องข้อความใช้แสดงในปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของงาน)</div>
+        </div>
+        <!-- 1.93: ปฏิทินโรงเรียน — การแสดง (ใช้ทั้งกำหนดส่งงานและกิจกรรม) -->
         <div class="ev-sc-box" id="evScBox">
           <b><i class="fa-solid fa-calendar-week" aria-hidden="true"></i> แสดงในปฏิทินโรงเรียน</b>
           <div class="evk-seg" id="evScSeg" role="radiogroup" aria-label="การแสดงในปฏิทินโรงเรียน">
@@ -375,9 +381,7 @@
             <button type="button" data-sc="last">วันสุดท้าย</button>
             <button type="button" data-sc="range">แสดงเป็นช่วง</button>
           </div>
-          <div class="hint" id="evScHint" style="margin-bottom:10px;"></div>
-          <label>ผู้รับผิดชอบ <span class="opt">(ไม่บังคับ · แสดงในคอลัมน์ผู้รับผิดชอบ)</span></label>
-          <div id="evRespPick"></div>
+          <div class="hint" id="evScHint"></div>
         </div>
 
         <div class="modal-actions">
@@ -408,7 +412,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.93.0.291026"></script>
+  <script src="assets/api.js?v=1.94.0.291026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -630,6 +634,7 @@
           else if (ev.reviewMode === 'none') meta.push('<i class="fa-solid fa-check" aria-hidden="true"></i> ดูแค่ว่าส่งแล้ว');
           if (ev.links && ev.links.length) meta.push('<i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์ ' + ev.links.length);
         }
+        if (ev.responsible && ev.responsible.users && ev.responsible.users.length) meta.push('<i class="fa-solid fa-user-check" aria-hidden="true"></i> ผู้รับผิดชอบ: ' + ev.responsible.users.map(function (u) { return escapeHtml(u.name); }).join(', ')); // 1.94
         if (ev.calShow === 'none') meta.push('<i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i> ไม่แสดงในปฏิทินโรงเรียน');
         var nSeries = ev.seriesId ? lastEvents.filter(function (x) { return x.seriesId === ev.seriesId; }).length : 0;
         var roundBadge = ev.seriesId ? '<span class="evl-round"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> รอบ ' + ev.roundNo + '/' + nSeries + '</span>' : '';
@@ -1039,6 +1044,7 @@
       else if (r.b === r.a) h = 'แสดงวันที่ ' + formatDateThai(r.a);
       else h = evScMode === 'first' ? 'แสดงวันที่ ' + formatDateThai(r.a) + ' (ช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) + ')' : evScMode === 'last' ? 'แสดงวันที่ ' + formatDateThai(r.b) + ' พร้อมวงเล็บบอกช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) : 'แสดงเป็นช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b);
       document.getElementById('evScHint').textContent = h;
+      document.getElementById('evRespHint').textContent = evIsAct() ? 'แสดงในคอลัมน์ผู้รับผิดชอบของปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของกิจกรรม)' : 'ครูที่เลือกจากรายชื่อจะเห็นงานนี้ในหน้า "สรุปรวมการส่งงาน" (เฉพาะงานที่รับผิดชอบ) และตรวจงาน/ตรวจรับได้ · ช่องข้อความใช้แสดงในปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของงาน)';
       var c = evCat();
       document.getElementById('evSelfReportWrap').hidden = evIsAct() || !(c && c.manualCheck);
       evResp.refresh();
@@ -1331,7 +1337,7 @@
       return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     }
     // 1.66: กลุ่มที่ประกาศในนาม
-    var annIsTop = !!session && session.role === 'admin' && !session.hasHub;
+    var annIsTop = !!session && session.role === 'admin' && (!session.hasHub || !!session.isSysAdmin); // 1.94: แอดมินระบบเลือกกลุ่มของประกาศได้เหมือน Super Admin
     async function setAnnGroup(dept) {
       var box = document.getElementById('annFromBox'), field = document.getElementById('annDeptField'), sel = document.getElementById('annDept');
       if (annIsTop) {
@@ -1486,7 +1492,7 @@
       rpm.items = rpm.data.items || [];
       setReportsTabCount(rpm.items.filter(function (r) { return r.status !== 'done'; }).length);
       var sc = document.getElementById('rpmScope');
-      if (rpm.data.isSuper && !sc.options.length) {
+      if ((rpm.data.isSuper || (session && session.isSysAdmin)) && !sc.options.length) { // 1.94: แอดมินระบบเห็นเรื่องของทุกกลุ่ม
         sc.innerHTML = '<option value="">ทุกเรื่อง</option><option value="system">การใช้งานระบบ</option>' + (rpm.data.departments || []).map(function (d) { return '<option value="' + escapeHtml(d) + '">' + escapeHtml(groupLabel(d)) + '</option>'; }).join('');
         sc.hidden = false;
       }

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.93.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.94.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.93.0.291026"></script>
+  <script src="assets/api.js?v=1.94.0.291026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -503,7 +503,7 @@
             ' · <span class="badge badge-ontime">ตามกำหนด ' + onTimeCount + '</span> <span class="badge badge-late">หลังกำหนด ' + lateCount + '</span> <span class="badge badge-missing">ยังไม่ส่ง ' + missingCount + '</span>' +
             (noRv ? ' <span class="badge asg-rvsum">ดูแค่ว่าส่งแล้ว</span>' : reviewSummaryChip(a)) +
           '</div>' + eventLinksHtml(a.links, true) +
-          (canReview && !noRv ? reviewAllBtnHtml(a) : '') +
+          ((canReview || a.respMine) && !noRv ? reviewAllBtnHtml(a) : '') + // 1.94: ผู้รับผิดชอบตรวจได้
           '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>' + (a.roomBased ? 'ห้อง' : 'ชื่อ-สกุล') + '</th><th>สถานะ</th><th>วันเวลาที่ส่ง (ครั้งแรก)</th>' + (noRv ? '' : '<th class="asg-rvh">การตรวจ</th>') + '</tr></thead><tbody>';
         a.rows.forEach(function (r) {
           // 1.80: มือถือ = แถวละคน (ชื่อบรรทัดบน · สถานะ/วันที่ส่ง/การตรวจ/ปุ่มบรรทัดล่าง — ดู .asg-table ใน style.css)
@@ -513,7 +513,7 @@
             '<td class="asg-time">' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : '<span class="asg-none">-</span>') + '</td>' +
             // 1.85.2: ป้ายการตรวจ + หมายเหตุ + ปุ่ม อยู่ในช่องเดียว (ปุ่มกว้างเท่ากัน ชิดขวา)
             (noRv ? '' : '<td class="asg-rv">' + (r.status === 'missing' ? '<span class="asg-none">—</span>' : '<div class="asg-rvc"><div class="asg-rvs">' + reviewCellHtml(r) + '</div>' +
-              (canReview ? '<button type="button" class="btn btn-sm rv-btn ' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'btn-secondary' : 'btn-primary') + '" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '">' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'ดู' : 'ตรวจ') + '</button>' : '') + '</div>') + '</td>') +
+              ((canReview || a.respMine) ? '<button type="button" class="btn btn-sm rv-btn ' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'btn-secondary' : 'btn-primary') + '" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '">' + (r.review && (r.review.status === 'reviewed' || r.review.status === 'revise') ? 'ดู' : 'ตรวจ') + '</button>' : '') + '</div>') + '</td>') +
           '</tr>';
         });
         html += '</tbody></table></div></div>';
@@ -575,7 +575,7 @@
       else { cls = 'mx-rv'; ic = 'fa-file-circle-check'; txt = 'ส่งแล้ว'; }
       var inner = '<i class="fa-solid ' + ic + '" aria-hidden="true"></i> ' + txt;
       var tip = (r.submittedAt ? 'ส่งเมื่อ ' + formatDateTimeThai(r.submittedAt) : '');
-      if (canReview && !noRv) return '<button type="button" class="mx-c ' + cls + ' mx-btn" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '" title="' + escapeHtml(tip + ' · กดเพื่อตรวจรอบนี้') + '">' + inner + '</button>';
+      if ((canReview || a.respMine) && !noRv) return '<button type="button" class="mx-c ' + cls + ' mx-btn" data-rv-ev="' + escapeHtml(a.eventId) + '" data-rv-u="' + escapeHtml(r.userId) + '" title="' + escapeHtml(tip + ' · กดเพื่อตรวจรอบนี้') + '">' + inner + '</button>';
       return '<span class="mx-c ' + cls + '" title="' + escapeHtml(tip) + '">' + inner + '</span>';
     }
     function seriesMatrixHtml(rounds) {
@@ -609,7 +609,7 @@
               '<td class="mx-tot">' + n + '/' + need + '</td></tr>';
           }).join('') +
         '</tbody></table></div>' +
-        (canReview && !noRv ? '<div class="hint" style="margin-top:6px;">กดช่องของรอบเพื่อเปิดหน้าต่างตรวจ (ไฟล์ของรอบนั้น)</div>' : '') +
+        ((canReview || a0.respMine) && !noRv ? '<div class="hint" style="margin-top:6px;">กดช่องของรอบเพื่อเปิดหน้าต่างตรวจ (ไฟล์ของรอบนั้น)</div>' : '') +
       '</div>';
       return h;
     }
@@ -677,7 +677,7 @@
       document.getElementById('rvExtraBox').hidden = true; document.getElementById('rvSum').hidden = true; document.getElementById('rvChoice').hidden = false;
       showModalEl(rvModal);
       try {
-        var d = await apiCall('reviewFiles', { teacherId: row.userId, categoryId: a.categoryId, academicYear: a.academicYear, semester: a.semester, eventId: a.seriesId ? a.eventId : '' });
+        var d = await apiCall('reviewFiles', { teacherId: row.userId, categoryId: a.categoryId, academicYear: a.academicYear, semester: a.semester, eventId: a.seriesId ? a.eventId : '', respEventId: a.respMine ? a.eventId : '' });
         if (!rvCur || rvCur.row !== row) return;
         rvCur.files = d.files; rvCur.since = d.revisedSince || ''; rvCur.perFile = !!d.perFile;
         // ไฟล์ใหม่ (ยังไม่เคยตรวจ) = ผ่านไว้ก่อน · ไฟล์ที่เคยให้แก้ไข = ต้องแก้ไข + ข้อความเดิม
@@ -753,7 +753,7 @@
     document.getElementById('rvSave').addEventListener('click', async function () {
       if (!rvCur) return;
       var st = rvStatus(), comment = document.getElementById('rvComment').value.trim();
-      var cur = rvCur, payload = { teacherIds: [cur.row.userId], categoryId: cur.a.categoryId, academicYear: cur.a.academicYear, semester: cur.a.semester, eventId: cur.a.seriesId ? cur.a.eventId : '', status: st, comment: comment };
+      var cur = rvCur, payload = { teacherIds: [cur.row.userId], categoryId: cur.a.categoryId, academicYear: cur.a.academicYear, semester: cur.a.semester, eventId: cur.a.seriesId ? cur.a.eventId : '', respEventId: cur.a.respMine ? cur.a.eventId : '', status: st, comment: comment };
       if (cur.perFile) {
         var miss = cur.files.filter(function (f) { return !f.replaced && cur.st[f.id].state === 'fix' && !cur.st[f.id].note.trim(); })[0];
         if (miss) { showToast('กรุณาใส่ข้อความว่าต้องแก้ไขอะไรในไฟล์ "' + (miss.title || miss.fileName) + '"', true); var inp = document.querySelector('[data-rv-note="' + miss.id + '"]'); if (inp) inp.focus(); return; }
@@ -784,7 +784,7 @@
         if (!(await askConfirm('บันทึกว่า "ตรวจแล้ว" ให้ครู ' + rows.length + ' คนที่ยังไม่ได้ตรวจในงานนี้ (ไม่รวมคนที่แจ้งแก้ไขเพิ่มเติมไว้หรือเพิ่งส่งไฟล์เพิ่มเติม) ครูแต่ละคนจะได้รับแจ้งเตือน', 'ตรวจแล้วทั้งหมด'))) return;
         var ids = rows.map(function (r) { return r.userId; });
         try {
-          await withProgress('กำลังบันทึกผลการตรวจ', function () { return apiCall('reviewSet', { teacherIds: ids, categoryId: a2.categoryId, academicYear: a2.academicYear, semester: a2.semester, eventId: a2.seriesId ? a2.eventId : '', status: 'reviewed', comment: '' }); });
+          await withProgress('กำลังบันทึกผลการตรวจ', function () { return apiCall('reviewSet', { teacherIds: ids, categoryId: a2.categoryId, academicYear: a2.academicYear, semester: a2.semester, eventId: a2.seriesId ? a2.eventId : '', respEventId: a2.respMine ? a2.eventId : '', status: 'reviewed', comment: '' }); });
           applyReviewLocal(a2, ids, 'reviewed', ''); renderAssignmentSummary(); showToast('บันทึกว่าตรวจแล้ว ' + ids.length + ' คน');
         } catch (err) { showToast(err.message); }
       }
@@ -1019,7 +1019,15 @@
     document.getElementById('exportAsPdfBtn').addEventListener('click', function () { exportReport('pdf'); });
     document.getElementById('exportAsImageBtn').addEventListener('click', function () { exportReport('image'); });
 
-    loadTabIfNeeded('all');
+    // 1.94: ผู้รับผิดชอบกำหนดการ (ครู) — เห็นเฉพาะแท็บ "สรุปแยกแต่ละงาน" และงานที่ตัวเองรับผิดชอบ
+    var respOnly = isRespOnlySession(session);
+    if (respOnly) {
+      var tAll = document.querySelector('.tab-btn[data-tab="all"]'), tBy = document.querySelector('.tab-btn[data-tab="byassignment"]');
+      tAll.hidden = true; tAll.classList.remove('active'); tBy.classList.add('active');
+      document.getElementById('tab-all').classList.remove('active'); document.getElementById('tab-byassignment').classList.add('active');
+      var sub = document.querySelector('.page-header p'); if (sub) sub.textContent = 'งานที่คุณเป็นผู้รับผิดชอบ — ดูว่าใครส่งแล้ว และตรวจงานได้';
+      loadTabIfNeeded('byassignment');
+    } else loadTabIfNeeded('all');
     refreshCategoryColors();
 
     // ---------- ปุ่มรีเฟรชข้อมูล (บนแท็บด้านบน) ----------

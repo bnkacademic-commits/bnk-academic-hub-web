@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.93.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.94.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -480,6 +480,16 @@
         <div id="teacherInfoTableWrap"><div class="loading">กำลังโหลด</div></div>
       </div>
 
+      <!-- 1.94: ตัวเลือกตำแหน่ง (Super Admin เท่านั้น) — เพิ่ม/ลบ/เรียงลำดับ เช่น เพิ่ม "พนักงานราชการ" · ลำดับ = ตำแหน่งเริ่มต้น → สูงสุด (ทำเนียบเรียงจากสูงสุดลงมา) -->
+      <div class="card super-admin-only" id="posOptCard">
+        <div class="section-title"><i class="fas fa-id-badge ui-icon" style="font-size:17px" aria-hidden="true"></i> ตัวเลือกตำแหน่ง</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:12px;">รายการตำแหน่งให้เลือกตอนแก้ไขตำแหน่งของครู/เจ้าหน้าที่ — เรียงจาก<b>ตำแหน่งเริ่มต้นไปสูงสุด</b> (ทำเนียบบุคลากรเรียงจากล่างขึ้นบน) · ลบตัวเลือกแล้ว บัญชีที่ใช้ตำแหน่งนั้นอยู่ยังเก็บค่าเดิมไว้</p>
+        <div id="posOptList" class="pos-opt-list"></div>
+        <div class="pos-opt-add"><input type="text" id="posOptNew" maxlength="60" placeholder="เช่น พนักงานราชการ" aria-label="ตำแหน่งใหม่" /><button type="button" class="btn btn-secondary btn-sm" id="posOptAdd"><i class="fas fa-plus" aria-hidden="true"></i> เพิ่ม</button></div>
+        <div id="posOptError" class="error-box" hidden style="margin-top:8px;"></div>
+        <div style="margin-top:10px; display:flex; gap:8px;"><button type="button" class="btn btn-primary btn-sm" id="posOptSave" disabled>บันทึกตัวเลือกตำแหน่ง</button><button type="button" class="btn btn-ghost btn-sm" id="posOptReset">คืนค่าเริ่มต้น</button></div>
+      </div>
+
     <!-- Display-order tab (ปรับแต่งการแสดงผลงาน — เฉพาะ Super Admin ตั้งแต่ V11.5)
          แทนที่หน้า "จัดการ Layout" เดิม (V11.1) ที่ตัดออกไปแล้ว — เดิมต้องจัดเรียงทีละครู ตอนนี้จัดลำดับ "ประเภทงาน" ครั้งเดียว
          มีผลกับผลงานทุกชิ้นของทุกครูโดยอัตโนมัติ (ใครส่งงานประเภทไหนไว้ ก็เรียงตามลำดับประเภทงานนี้เหมือนกันหมดทุกคน) -->
@@ -604,6 +614,7 @@
             <option value="">ทุกประเภทบัญชี</option>
             <option value="teacher">ครู</option>
             <option value="staff">เจ้าหน้าที่</option>
+            <option value="sysadmin">แอดมินระบบ</option>
             <option value="executive">ผู้บริหาร</option>
           </select>
           <select id="userStatusFilter" aria-label="กรองตามสถานะ">
@@ -908,6 +919,7 @@
             <label for="muType">ประเภทบัญชี</label>
             <select id="muType">
               <option value="teacher">ครู</option>
+              <option value="sysadmin">แอดมินระบบ</option>
               <option value="executive">ผู้บริหาร</option>
               <option value="superadmin">Super Admin</option>
             </select>
@@ -1255,8 +1267,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.93.0.291026"></script>
-  <script src="assets/gallery.js?v=1.93.0.291026"></script>
+  <script src="assets/api.js?v=1.94.0.291026"></script>
+  <script src="assets/gallery.js?v=1.94.0.291026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -2149,7 +2161,9 @@
     var teacherInfoEditTarget = null;
     // ตั้งแต่ 1.31.091026: "ตำแหน่ง" และ "กลุ่มสาระการเรียนรู้" เลือกจากดร็อปดาวน์แทนการพิมพ์เอง (เรียงตามลำดับวิทยฐานะ / 8 กลุ่มสาระฯ ตามหลักสูตรแกนกลาง)
     // ค่าเดิมที่เคยพิมพ์เองไว้ก่อนหน้า (ไม่อยู่ในรายการ) จะถูกเพิ่มเป็นตัวเลือกพิเศษ "(ค่าเดิม) …" เพื่อไม่ให้ค่าหายเงียบๆ ตอนเปิดแก้ไข
+    // 1.94: ตัวเลือกตำแหน่งมาจากตั้งค่า (settings.teacherPositions — Super Admin เพิ่ม/ลบ/เรียงได้ในการ์ด "ตัวเลือกตำแหน่ง")
     var TEACHER_POSITIONS = ['ครูผู้ช่วย', 'ครู', 'ครูชำนาญการ', 'ครูชำนาญการพิเศษ', 'ครูเชี่ยวชาญ', 'ครูเชี่ยวชาญพิเศษ'];
+    getSiteSettings().then(function (st) { if (st && Array.isArray(st.teacherPositions) && st.teacherPositions.length) TEACHER_POSITIONS = st.teacherPositions.slice(); }).catch(function () {});
     var SUBJECT_GROUPS = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ'];
     function fillSelectOptions(selectEl, options, current) {
       var html = '<option value="">— ยังไม่ระบุ —</option>' + options.map(function (o) { return '<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</option>'; }).join('');
@@ -2169,6 +2183,47 @@
       return out.length ? out.map(function (x) { return '<span class="badge badge-admin">' + x + '</span>'; }).join(' ') : '<span class="hint">—</span>';
     }
     var EXEC_POSITIONS = ['ผู้อำนวยการ', 'รองผู้อำนวยการ'];
+    // ---------- 1.94: การ์ด "ตัวเลือกตำแหน่ง" (Super Admin) ----------
+    (function posOptCard() {
+      if (!document.getElementById('posOptCard')) return; // ไม่ใช่ Super Admin (การ์ดถูกลบออกจาก DOM)
+      var DEF = ['ครูผู้ช่วย', 'ครู', 'ครูชำนาญการ', 'ครูชำนาญการพิเศษ', 'ครูเชี่ยวชาญ', 'ครูเชี่ยวชาญพิเศษ'];
+      var saved = DEF.slice(), cur = DEF.slice();
+      function inUse(p) { return (allUsers || []).filter(function (u) { return u.position === p && u.role !== 'executive'; }).length; }
+      function render() {
+        document.getElementById('posOptList').innerHTML = cur.map(function (p, i) {
+          var n = inUse(p);
+          return '<div class="pos-opt-row"><span class="pos-opt-no">' + (i + 1) + '</span><span class="pos-opt-name">' + escapeHtml(p) + (n ? ' <small class="hint">ใช้อยู่ ' + n + ' คน</small>' : '') + '</span>' +
+            '<button type="button" class="btn btn-ghost btn-sm" data-pos-mv="-1" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="เลื่อนขึ้น"><i class="fas fa-arrow-up" aria-hidden="true"></i></button>' +
+            '<button type="button" class="btn btn-ghost btn-sm" data-pos-mv="1" data-i="' + i + '"' + (i === cur.length - 1 ? ' disabled' : '') + ' aria-label="เลื่อนลง"><i class="fas fa-arrow-down" aria-hidden="true"></i></button>' +
+            '<button type="button" class="btn btn-danger btn-sm" data-pos-rm="' + i + '" aria-label="ลบ ' + escapeHtml(p) + '"><i class="fas fa-xmark" aria-hidden="true"></i></button></div>';
+        }).join('') || '<div class="hint">ยังไม่มีตัวเลือก</div>';
+        document.getElementById('posOptSave').disabled = JSON.stringify(cur) === JSON.stringify(saved);
+      }
+      getSiteSettings().then(function (st) { if (st && Array.isArray(st.teacherPositions) && st.teacherPositions.length) { saved = st.teacherPositions.slice(); cur = saved.slice(); } render(); }).catch(render);
+      document.getElementById('posOptList').addEventListener('click', function (e) {
+        var mv = e.target.closest('[data-pos-mv]'), rm = e.target.closest('[data-pos-rm]');
+        if (mv) { var i = +mv.getAttribute('data-i'), j = i + (+mv.getAttribute('data-pos-mv')); var t = cur[i]; cur[i] = cur[j]; cur[j] = t; render(); }
+        if (rm) { cur.splice(+rm.getAttribute('data-pos-rm'), 1); render(); }
+      });
+      function add() {
+        var inp = document.getElementById('posOptNew'), v = inp.value.replace(/\s+/g, ' ').trim(), eb = document.getElementById('posOptError');
+        eb.hidden = true;
+        if (!v) return;
+        if (cur.indexOf(v) !== -1) { eb.textContent = 'มีตำแหน่ง "' + v + '" อยู่แล้ว'; eb.hidden = false; return; }
+        cur.push(v); inp.value = ''; render();
+      }
+      document.getElementById('posOptAdd').addEventListener('click', add);
+      document.getElementById('posOptNew').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+      document.getElementById('posOptReset').addEventListener('click', function () { cur = DEF.slice(); render(); });
+      document.getElementById('posOptSave').addEventListener('click', async function () {
+        var eb = document.getElementById('posOptError'); eb.hidden = true;
+        if (!cur.length) { eb.textContent = 'ต้องมีตัวเลือกอย่างน้อย 1 รายการ'; eb.hidden = false; return; }
+        if (!(await askConfirm('บันทึกตัวเลือกตำแหน่ง ' + cur.length + ' รายการ?<br>' + cur.map(escapeHtml).join(' · '), 'ยืนยันตัวเลือกตำแหน่ง'))) return;
+        var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { teacherPositions: cur }); }, { successLabel: 'บันทึกตัวเลือกตำแหน่งแล้ว' });
+        if (r.ok) { saved = cur.slice(); TEACHER_POSITIONS = cur.slice(); resetSettingsCache(); render(); }
+        else { eb.textContent = r.error.message; eb.hidden = false; }
+      });
+    })();
     function canEditTeacherInfo(u) { return isSuperAdminSession || u.role === 'teacher' || u.id === session.id; }
     function renderTeacherInfoTable() {
       var wrap = document.getElementById('teacherInfoTableWrap');
@@ -2766,6 +2821,7 @@
           } else {
             html += '<div class="group-staff-title">ติ๊กคนที่เป็น <b>เจ้าหน้าที่</b> ของกลุ่ม (ได้สิทธิ์แอดมิน)</div><div class="group-staff-list">' +
               members.map(function (u) {
+                if (u.isSysAdmin) return '<label class="group-member" title="แอดมินระบบ — ตั้ง/ถอนที่ป็อปอัปจัดการบัญชี"><input type="checkbox" checked disabled /> <span class="gm-name">' + escapeHtml(u.name) + '</span> <span class="badge badge-sys">แอดมินระบบ</span></label>'; // 1.94
                 return '<label class="group-member"><input type="checkbox" data-grp-staff="' + escapeHtml(u.id) + '"' + (isStaffUser(u) ? ' checked data-was="1"' : ' data-was="0"') + ' /> <span class="gm-name">' + escapeHtml(u.name) + '</span> ' + groupPickerHtml(u) + '</label>';
               }).join('') + '</div>' +
               '<div class="group-foot"><span class="group-count hint" data-grp-count></span><button type="button" class="btn btn-primary btn-sm" data-grp-act="save-staff" disabled>บันทึกเจ้าหน้าที่</button></div>';
@@ -3366,6 +3422,7 @@
       // ครูที่ยังไม่ระบุกลุ่มบริหารงาน (1.44.111026: ไม่บังคับแล้ว) — ป้ายบอกเฉยๆ ไม่ใช่คำเตือน
       var noGroup = ' <span class="hint">ไม่ระบุกลุ่ม</span>';
       if (u.role === 'teacher') return '<span class="badge badge-teacher">ครู</span>' + (u.department ? ' <span class="hint dept-tag"' + deptColorAttr(u.department) + '>' + escapeHtml(groupLabel(u.department)) + '</span>' : noGroup);
+      if (u.isSysAdmin) return '<span class="badge badge-sys">แอดมินระบบ</span>' + (u.department ? ' <span class="hint dept-tag"' + deptColorAttr(u.department) + '>' + escapeHtml(groupLabel(u.department)) + '</span>' : ''); // 1.94
       if (u.hasHub) return '<span class="badge badge-admin"' + deptColorAttr(u.department) + '>เจ้าหน้าที่' + (u.department ? escapeHtml(groupLabel(u.department)) : '') + '</span>' + (u.department ? '' : noGroup);
       return '<span class="badge badge-super">Super Admin</span>';
     }
@@ -3382,7 +3439,7 @@
       var qEl = document.getElementById('userSearch'), tEl = document.getElementById('userTypeFilter'), stEl = document.getElementById('userStatusFilter');
       var q = qEl ? qEl.value.trim().toLowerCase() : '', ft = tEl ? tEl.value : '', fs = stEl ? stEl.value : '';
       var visibleUsers = allVisible.filter(function (u) {
-        var kind = u.role === 'executive' ? 'executive' : (u.role === 'teacher' ? 'teacher' : 'staff');
+        var kind = u.role === 'executive' ? 'executive' : (u.role === 'teacher' ? 'teacher' : (u.isSysAdmin ? 'sysadmin' : 'staff'));
         if (ft && kind !== ft) return false;
         if (fs && u.status !== fs) return false;
         if (q && (String(u.name) + ' ' + String(u.username)).toLowerCase().indexOf(q) < 0) return false;
@@ -3437,10 +3494,11 @@
     if (isSuperAdminSession && document.getElementById('manageUserModal')) {
     var manageUserModalEl = document.getElementById('manageUserModal');
     var muUser = null; // บัญชีที่กำลังเปิดอยู่ (อ้างอิงจาก allUsers ล่าสุดเสมอ)
-    var MU_KIND_LABEL = { teacher: 'ครู', staff: 'เจ้าหน้าที่', executive: 'ผู้บริหาร', superadmin: 'Super Admin' };
+    var MU_KIND_LABEL = { teacher: 'ครู', staff: 'เจ้าหน้าที่', sysadmin: 'แอดมินระบบ', executive: 'ผู้บริหาร', superadmin: 'Super Admin' };
     function muKindOf(u) {
       if (u.role === 'executive') return 'executive';
       if (u.role === 'teacher') return 'teacher';
+      if (u.isSysAdmin) return 'sysadmin'; // 1.94
       return u.hasHub ? 'staff' : 'superadmin';
     }
     function muFresh() { return muUser ? (allUsers.filter(function (x) { return x.id === muUser.id; })[0] || muUser) : null; }
@@ -3576,11 +3634,13 @@
     function syncMuTypeFields() {
       var v = document.getElementById('muType').value;
       var isTeacher = v === 'teacher';
-      document.getElementById('muTeacherFields').hidden = !isTeacher;
+      document.getElementById('muTeacherFields').hidden = !(isTeacher || v === 'sysadmin'); // 1.94: แอดมินระบบสังกัดกลุ่มได้ (ไม่บังคับ)
+      document.querySelector('#muTeacherFields .mu-staff-box').hidden = v === 'sysadmin';
       document.getElementById('muPosField').hidden = v !== 'executive';
       var staff = isTeacher && document.getElementById('muStaff').checked;
       document.getElementById('muTypeHint').textContent =
         v === 'executive' ? 'ผู้บริหารดูสรุป/ปฏิทิน/ประกาศได้อย่างเดียว ไม่ต้องส่งงาน และไม่สังกัดกลุ่มบริหารงาน — ผลงานเดิมของบัญชีนี้ยังอยู่ในระบบ แต่จะไม่แสดง' :
+        v === 'sysadmin' ? 'แอดมินระบบมีสิทธิ์เหมือนเจ้าหน้าที่ทุกอย่าง แต่จัดการได้ทุกกลุ่มบริหารงาน (ประเภทงาน กำหนดการ สรุปรวม/ตรวจงาน ประกาศ เรื่องที่แจ้ง) — สังกัดกลุ่มใดก็ได้ ส่งผลงานของตนเองได้เหมือนครู · ตั้งค่าระบบและจัดการบัญชียังเป็นของ Super Admin' :
         v === 'superadmin' ? 'ระวัง: บัญชี Super Admin จะไม่แสดงในตารางจัดการบัญชีนี้ (เป็นความลับ) จึงเปลี่ยนกลับผ่านหน้านี้ไม่ได้ และไม่มีหน้าฮับส่วนตัว' :
         staff ? 'เจ้าหน้าที่ส่งงานของตนเองได้เหมือนครู และจัดการงานของกลุ่มบริหารงานที่สังกัด' : 'ครูส่งงานและมีหน้าแสดงผลงานของตนเอง';
     }
@@ -3589,8 +3649,9 @@
       var kind = muKindOf(u);
       var known = (currentDepartments || []).indexOf(u.department) !== -1;
       document.getElementById('muTypeCurrent').innerHTML = 'ปัจจุบัน: <b>' + escapeHtml(MU_KIND_LABEL[kind]) + '</b>' +
-        ((kind === 'teacher' || kind === 'staff') ? (known ? ' · ' + escapeHtml(groupLabel(u.department)) : ' · ไม่ระบุกลุ่มบริหารงาน') : '');
+        ((kind === 'teacher' || kind === 'staff' || kind === 'sysadmin') ? (known ? ' · ' + escapeHtml(groupLabel(u.department)) : ' · ไม่ระบุกลุ่มบริหารงาน') : '');
       document.getElementById('muType').value = (kind === 'staff') ? 'teacher' : kind;
+      document.getElementById('muDept').setAttribute('data-sys', kind === 'sysadmin' ? '1' : '');
       renderDepartmentOptions(document.getElementById('muDept'), known ? u.department : '', 'ไม่ระบุ (ยังไม่ได้แต่งตั้งเข้ากลุ่ม)');
       document.getElementById('muStaff').checked = kind === 'staff';
       document.getElementById('muPos').value = kind === 'executive' && u.position ? u.position : 'ผู้อำนวยการ';
@@ -3606,13 +3667,13 @@
       errBox.hidden = true;
       var sel = document.getElementById('muType').value;
       var dept = document.getElementById('muDept').value;
-      var kind = sel === 'teacher' ? (document.getElementById('muStaff').checked ? 'staff' : 'teacher') : sel;
+      var kind = sel === 'teacher' ? (document.getElementById('muStaff').checked ? 'staff' : 'teacher') : sel; // 1.94: sel 'sysadmin' = แอดมินระบบ
       var pos = document.getElementById('muPos').value;
       if (kind === 'staff' && !dept) { errBox.textContent = 'เจ้าหน้าที่ต้องสังกัดกลุ่มบริหารงาน กรุณาเลือกกลุ่ม (หรือเอาติ๊ก "แต่งตั้งเป็นเจ้าหน้าที่" ออก)'; errBox.hidden = false; return; }
       var curKind = muKindOf(u);
-      var same = kind === curKind && (sel !== 'teacher' || dept === u.department) && (kind !== 'executive' || pos === u.position);
+      var same = kind === curKind && ((sel !== 'teacher' && sel !== 'sysadmin') || dept === u.department) && (kind !== 'executive' || pos === u.position);
       if (same) { errBox.textContent = 'ไม่มีอะไรเปลี่ยน — ประเภทบัญชี' + (sel === 'teacher' ? 'และกลุ่มบริหารงาน' : '') + 'ยังเหมือนเดิม'; errBox.hidden = false; return; }
-      var label = MU_KIND_LABEL[kind] + (sel === 'teacher' ? ' ' + (dept ? groupLabel(dept) : '(ไม่ระบุกลุ่มบริหารงาน)') : (kind === 'executive' ? ' (' + pos + ')' : ''));
+      var label = MU_KIND_LABEL[kind] + ((sel === 'teacher' || sel === 'sysadmin') ? ' ' + (dept ? groupLabel(dept) : '(ไม่ระบุกลุ่มบริหารงาน)') : (kind === 'executive' ? ' (' + pos + ')' : ''));
       var msg = 'ยืนยันตั้งประเภทบัญชีของ "' + u.name + '" เป็น "' + label + '"?' +
         (kind !== curKind ? ' ผู้ใช้ต้องออกจากระบบแล้วเข้าใหม่เพื่อให้เมนูตรงกับประเภทบัญชีใหม่' : '') +
         (kind === 'superadmin' ? ' — บัญชีนี้จะไม่แสดงในตารางจัดการบัญชีอีก และเปลี่ยนกลับผ่านหน้านี้ไม่ได้' : '');
