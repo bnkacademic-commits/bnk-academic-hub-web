@@ -4076,3 +4076,63 @@ ul.sr-tl li small { display: block; color: var(--text-muted); margin-top: 2px; }
 .pos-opt-name { flex: 1; font-weight: 600; }
 .pos-opt-add { display: flex; gap: 8px; margin-top: 10px; max-width: 560px; }
 .pos-opt-add input { flex: 1; }
+
+/* ===== 1.95 ===== */
+/* ตรวจรายคน: ปุ่ม ตรวจแล้ว / ส่งหลังกำหนด (สีเหลือง) */
+.mc-c { width: 84px; }
+.mc-pick { display: inline-flex; gap: 4px; }
+.mc-pk { width: 34px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: .9rem; }
+.mc-pk:hover:not(:disabled) { border-color: var(--text-muted); }
+.mc-pk:disabled { opacity: .5; cursor: default; }
+.mc-pk.ok.on { background: #16a34a; border-color: #16a34a; color: #fff; }
+.mc-pk.late.on { background: #eab308; border-color: #eab308; color: #422006; }
+.mc-table tr.is-late td { background: rgba(234, 179, 8, .1); }
+.mc-st.late, .mc-badge.late { background: #fef08a; color: #854d0e; }
+.mc-st.new.late { border-color: #eab308; }
+.mc-st.rep, .mc-badge.rep { background: #e0f2fe; color: #075985; }
+.mc-late-n, .mc-prog-t .mc-late-n { color: #a16207; font-weight: 700; font-size: .85em; }
+.checklist-status.late { color: #a16207; }
+:root[data-theme="dark"] .mc-st.late, :root[data-theme="dark"] .mc-badge.late { background: rgba(234,179,8,.22); color: #fde047; }
+:root[data-theme="dark"] .mc-st.rep, :root[data-theme="dark"] .mc-badge.rep { background: rgba(14,165,233,.18); color: #7dd3fc; }
+:root[data-theme="dark"] .mc-prog-t .mc-late-n, :root[data-theme="dark"] .checklist-status.late { color: #fde047; }
+/* สีของกิจกรรม */
+.ev-color { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ev-col-sw { width: 30px; height: 30px; border-radius: 50%; border: 3px solid var(--surface); background: var(--c); box-shadow: 0 0 0 1px var(--border); cursor: pointer; padding: 0; }
+.ev-col-sw.on { box-shadow: 0 0 0 2px var(--text); }
+.ev-col-rnd { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; font-size: .84rem; font-weight: 600; cursor: pointer; }
+.ev-col-rnd.on { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+.ev-col-own { position: relative; width: 30px; height: 30px; border-radius: 50%; border: 1px dashed var(--text-muted); display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; overflow: hidden; }
+.ev-col-own input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+#evScSeg { flex-wrap: wrap; }
+
+/* ธีมกลางคืน: ชิป/ป้ายที่ยังเป็นพื้นสีอ่อน */
+:root[data-theme="dark"] .sc-dow { filter: none; }
+:root[data-theme="dark"] .sc-dow.d0 { background: rgba(239,68,68,.18); color: #fca5a5; } :root[data-theme="dark"] .sc-dow.d1 { background: rgba(234,179,8,.18); color: #fde047; }
+:root[data-theme="dark"] .sc-dow.d2 { background: rgba(236,72,153,.18); color: #f9a8d4; } :root[data-theme="dark"] .sc-dow.d3 { background: rgba(34,197,94,.18); color: #86efac; }
+:root[data-theme="dark"] .sc-dow.d4 { background: rgba(249,115,22,.18); color: #fdba74; } :root[data-theme="dark"] .sc-dow.d5 { background: rgba(14,165,233,.18); color: #7dd3fc; }
+:root[data-theme="dark"] .sc-dow.d6 { background: rgba(139,92,246,.2); color: #c4b5fd; }
+:root[data-theme="dark"] .rp-status.st-open { background: rgba(245,158,11,.18); color: #fcd34d; }
+:root[data-theme="dark"] .rp-status.st-progress { background: rgba(59,130,246,.2); color: #93c5fd; }
+:root[data-theme="dark"] .rp-status.st-done { background: rgba(34,197,94,.18); color: #86efac; }
+:root[data-theme="dark"] .alb-pub.on { background: rgba(34,197,94,.2); color: #86efac; }
+:root[data-theme="dark"] .up-mode.direct, :root[data-theme="dark"] .up-stage-note { background: rgba(34,197,94,.15); color: #86efac; }
+:root[data-theme="dark"] .up-mode.relay, :root[data-theme="dark"] .up-warn { background: rgba(245,158,11,.15); color: #fcd34d; }
+:root[data-theme="dark"] .up-why, :root[data-theme="dark"] .cl-ffn small { color: #fcd34d; }
+:root[data-theme="dark"] .up-err, :root[data-theme="dark"] .up-st .bad, :root[data-theme="dark"] .cl-ffix > i { color: #fca5a5; }
+:root[data-theme="dark"] .up-st .ok, :root[data-theme="dark"] .cl-ffoot { color: #86efac; }
+:root[data-theme="dark"] .up-st-rm { background: rgba(239,68,68,.18); color: #fca5a5; }
+:root[data-theme="dark"] .sc-mini span.wk { color: #fca5a5; }
+:root[data-theme="dark"] .tt-c.g1 { background: rgba(245,158,11,.18); border-color: rgba(245,158,11,.45); color: #fde68a; }
+:root[data-theme="dark"] .tt-c.g2 { background: rgba(249,115,22,.18); border-color: rgba(249,115,22,.45); color: #fed7aa; }
+:root[data-theme="dark"] .tt-c.g3 { background: rgba(236,72,153,.18); border-color: rgba(236,72,153,.45); color: #fbcfe8; }
+:root[data-theme="dark"] .tt-c.g4 { background: rgba(59,130,246,.2); border-color: rgba(59,130,246,.45); color: #bfdbfe; }
+:root[data-theme="dark"] .tt-c.g5 { background: rgba(34,197,94,.18); border-color: rgba(34,197,94,.45); color: #bbf7d0; }
+:root[data-theme="dark"] .tt-c.g6 { background: rgba(20,184,166,.18); border-color: rgba(20,184,166,.45); color: #99f6e4; }
+:root[data-theme="dark"] .tt-c.sys, :root[data-theme="dark"] .tt-c.fixed { background: rgba(139,92,246,.2); border-color: rgba(139,92,246,.45); color: #ddd6fe; }
+:root[data-theme="dark"] .tt-c em { color: #fca5a5; }
+/* แผ่นบันทึกข้อความ (กระดาษขาว) — ใช้สีตัวหนังสือของกระดาษเสมอ ไม่ตามธีม */
+:root[data-theme="dark"] .memo-paper th, :root[data-theme="dark"] .memo-paper td { color: #1f2937; }
+/* ธีมถนอมตา: พื้นสีขาว/เขียวอ่อนที่ฝังไว้ให้กลืนกับกระดาษสีครีม */
+:root[data-theme="sepia"] .event-date-chip.act, :root[data-theme="sepia"] .cal-upcoming-heading.act { background: color-mix(in srgb, #16a34a 12%, var(--surface)); }
+:root[data-theme="sepia"] .alb-date { background: rgba(251, 245, 232, .94); }
+:root[data-theme="sepia"] .mc-pk, :root[data-theme="sepia"] .ev-col-sw { border-color: var(--surface); }

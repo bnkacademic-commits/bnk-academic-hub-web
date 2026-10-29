@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.94.0';
-var APP_VERSION = '1.94.0.291026';
+var WORKER_MIN_VERSION = '1.95.0';
+var APP_VERSION = '1.95.0.291026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1009,6 +1009,7 @@ function formatCertNo(format, digits, year, num, semester, beYear) {
 var SUBJECT_GROUP_COLORS = { 'ภาษาไทย': '#dc2626', 'คณิตศาสตร์': '#2563eb', 'วิทยาศาสตร์และเทคโนโลยี': '#0891b2', 'สังคมศึกษา ศาสนา และวัฒนธรรม': '#ca8a04', 'สุขศึกษาและพลศึกษา': '#ea580c', 'ศิลปะ': '#db2777', 'การงานอาชีพ': '#65a30d', 'ภาษาต่างประเทศ': '#c026d3' };
 function isActivityEv(e) { return !!e && e.kind === 'activity'; }
 function activityColor(e) {
+  if (e.color && /^#[0-9a-fA-F]{6}$/.test(e.color)) return e.color; // 1.95: สีที่เลือกเอง (หรือสุ่มตอนเพิ่ม)
   if (e.ownerType === 'subject') return SUBJECT_GROUP_COLORS[e.ownerGroup] || '#7c3aed';
   return deptThemeColor(e.ownerGroup) || '#16a34a';
 }
@@ -3073,12 +3074,12 @@ function _mcEnsure() {
     '<button type="button" class="modal-close-x" id="mcX" aria-label="ปิด">✕</button>' +
     '<h3 id="mcTitle" class="mc-title"></h3><div class="mc-sub" id="mcSub"></div>' +
     '<div id="mcHead"></div><div id="mcList" class="mc-list"></div>' +
-    '<div class="modal-actions mc-actions"><button type="button" class="btn btn-secondary" id="mcAll"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ติ๊กทุกคนในรายการ</button>' +
+    '<div class="modal-actions mc-actions"><button type="button" class="btn btn-secondary" id="mcAll"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ตรวจแล้วทุกคนในรายการ</button>' +
     '<span class="mc-gap"></span><button type="button" class="btn btn-ghost btn-close" id="mcClose">ปิด</button><button type="button" class="btn btn-success" id="mcSave"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> <span id="mcSaveTx">บันทึก</span></button></div>' +
     '</div></div>';
   m = w.firstChild; document.body.appendChild(m);
   var close = async function () {
-    if (_mc && _mcChanges().length && !(await askConfirm('ยังไม่ได้บันทึกการตรวจรับ ' + _mcChanges().length + ' คน ปิดโดยไม่บันทึก?', 'ปิดหน้าต่างตรวจรายคน'))) return;
+    if (_mc && _mcChanges().length && !(await askConfirm('ยังไม่ได้บันทึกการตรวจ ' + _mcChanges().length + ' คน ปิดโดยไม่บันทึก?', 'ปิดหน้าต่างตรวจรายคน'))) return;
     hideModalEl(m); _mc = null;
   };
   document.getElementById('mcX').addEventListener('click', close);
@@ -3089,8 +3090,12 @@ function _mcEnsure() {
   });
   document.getElementById('mcHead').addEventListener('input', function (e) { if (e.target.id === 'mcQ' && _mc) { _mc.q = e.target.value; _mc.keep = {}; _mcRenderList(); } });
   document.getElementById('mcList').addEventListener('change', function (e) {
-    var c = e.target.closest('[data-mcu]'); if (!c || !_mc) return;
-    _mc.draft[c.getAttribute('data-mcu')].received = c.checked; _mc.keep[c.getAttribute('data-mcu')] = 1; _mcRenderHead(); _mcRenderList(); // แถวที่เพิ่งติ๊กยังอยู่จนกว่าจะเปลี่ยนตัวกรอง
+    // (1.95: เปลี่ยนเป็นปุ่ม ตรวจแล้ว / ส่งหลังกำหนด — ดู click ด้านล่าง)
+  });
+  document.getElementById('mcList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-mcs]'); if (!b || !_mc || b.disabled) return;
+    var uid = b.getAttribute('data-mcu'), v = b.getAttribute('data-mcs'), d = _mc.draft[uid];
+    d.st = d.st === v ? '' : v; _mc.keep[uid] = 1; _mcRenderHead(); _mcRenderList(); // แถวที่เพิ่งกดยังอยู่จนกว่าจะเปลี่ยนตัวกรอง
   });
   document.getElementById('mcList').addEventListener('input', function (e) {
     var n = e.target.closest('[data-mcn]'); if (!n || !_mc) return;
@@ -3098,14 +3103,14 @@ function _mcEnsure() {
   });
   document.getElementById('mcAll').addEventListener('click', function () {
     if (!_mc) return;
-    _mcVisible().forEach(function (r) { _mc.draft[r.userId].received = true; _mc.keep[r.userId] = 1; });
+    _mcVisible().forEach(function (r) { if (!_mc.draft[r.userId].st) _mc.draft[r.userId].st = 'received'; _mc.keep[r.userId] = 1; });
     _mcRenderHead(); _mcRenderList();
   });
   document.getElementById('mcSave').addEventListener('click', async function () {
     if (!_mc) return;
     var ch = _mcChanges(); if (!ch.length) { hideModalEl(m); _mc = null; return; }
     var cur = _mc;
-    var r = await withProgress('กำลังบันทึกการตรวจรับ', function () { return apiCall('manualCheckSave', { eventId: cur.eventId, changes: ch }); }, { successLabel: 'บันทึกแล้ว' });
+    var r = await withProgress('กำลังบันทึกการตรวจ', function () { return apiCall('manualCheckSave', { eventId: cur.eventId, changes: ch }); }, { successLabel: 'บันทึกแล้ว' });
     if (!r.ok) return;
     hideModalEl(m); _mc = null;
     if (cur.onSaved) cur.onSaved();
@@ -3117,31 +3122,34 @@ function _mcVisible() {
   return _mc.rows.filter(function (r) {
     var d = _mc.draft[r.userId];
     if (_mc.keep[r.userId]) return true;
-    if (_mc.filter === 'todo' && d.received) return false;
-    if (_mc.filter === 'done' && !d.received) return false;
-    if (_mc.filter === 'reported' && !(r.status === 'reported' && !d.received)) return false;
+    if (_mc.filter === 'todo' && d.st) return false;
+    if (_mc.filter === 'done' && d.st !== 'received') return false;
+    if (_mc.filter === 'late' && d.st !== 'late') return false;
+    if (_mc.filter === 'reported' && !(r.status === 'reported' && !d.st)) return false;
     return !q || (String(r.name) + String(r.subjectGroup || '')).replace(/\s+/g, '').toLowerCase().indexOf(q) !== -1;
   });
 }
 function _mcChanges() {
   if (!_mc) return [];
-  return _mc.rows.filter(function (r) { var d = _mc.draft[r.userId]; return d.received !== (r.status === 'received') || d.note.trim() !== (r.note || ''); })
-    .map(function (r) { var d = _mc.draft[r.userId]; return { userId: r.userId, received: d.received, note: d.note.trim() }; });
+  return _mc.rows.filter(function (r) { var d = _mc.draft[r.userId]; return d.st !== _mcSt(r.status) || d.note.trim() !== (r.note || ''); })
+    .map(function (r) { var d = _mc.draft[r.userId]; return { userId: r.userId, status: d.st, received: !!d.st, note: d.note.trim() }; });
 }
+function _mcSt(st) { return st === 'received' || st === 'late' ? st : ''; } // 1.95: received = ตรวจแล้ว · late = ส่งหลังกำหนด
 function _mcSyncSave() {
   var n = _mcChanges().length;
   document.getElementById('mcSaveTx').textContent = n ? 'บันทึก (' + n + ' คน)' : 'บันทึก';
 }
 function _mcRenderHead() {
-  var rows = _mc.rows, done = rows.filter(function (r) { return _mc.draft[r.userId].received; }).length;
-  var rep = rows.filter(function (r) { return r.status === 'reported' && !_mc.draft[r.userId].received; }).length;
+  var rows = _mc.rows, done = rows.filter(function (r) { return _mc.draft[r.userId].st; }).length;
+  var late = rows.filter(function (r) { return _mc.draft[r.userId].st === 'late'; }).length;
+  var rep = rows.filter(function (r) { return r.status === 'reported' && !_mc.draft[r.userId].st; }).length;
   var pct = rows.length ? Math.round(done / rows.length * 100) : 0;
   var seg = function (k, t) { return '<button type="button" data-mcf="' + k + '" class="' + (_mc.filter === k ? 'on' : '') + '">' + t + '</button>'; };
   var q = document.getElementById('mcQ'), keep = q ? q.value : (_mc.q || '');
   var had = q && document.activeElement === q;
   document.getElementById('mcHead').innerHTML =
-    '<div class="mc-prog"><div class="mc-prog-t"><b>ตรวจรับแล้ว ' + done + ' / ' + rows.length + ' คน</b><span>' + pct + '%</span></div><div class="mc-bar"><i style="width:' + pct + '%"></i></div></div>' +
-    '<div class="mc-tools"><div class="evk-seg mc-seg">' + seg('all', 'ทั้งหมด ' + rows.length) + seg('todo', 'ยังไม่ได้รับ ' + (rows.length - done)) + (_mc.selfReport || rep ? seg('reported', 'ครูแจ้งแล้ว ' + rep) : '') + seg('done', 'ได้รับแล้ว ' + done) + '</div>' +
+    '<div class="mc-prog"><div class="mc-prog-t"><b>ตรวจแล้ว ' + done + ' / ' + rows.length + ' คน' + (late ? ' <span class="mc-late-n">(หลังกำหนด ' + late + ')</span>' : '') + '</b><span>' + pct + '%</span></div><div class="mc-bar"><i style="width:' + pct + '%"></i></div></div>' +
+    '<div class="mc-tools"><div class="evk-seg mc-seg">' + seg('all', 'ทั้งหมด ' + rows.length) + seg('todo', 'ยังไม่ตรวจ ' + (rows.length - done)) + (_mc.selfReport || rep ? seg('reported', 'ครูแจ้งแล้ว ' + rep) : '') + seg('done', 'ตรวจแล้ว ' + (done - late)) + seg('late', 'ส่งหลังกำหนด ' + late) + '</div>' +
     '<input type="search" id="mcQ" class="mc-q" placeholder="ค้นหาชื่อครู / กลุ่มสาระ" aria-label="ค้นหาชื่อครู" value="' + escapeHtml(keep) + '" /></div>';
   if (had) { var nq = document.getElementById('mcQ'); nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); }
   _mcSyncSave();
@@ -3151,11 +3159,16 @@ function _mcRenderList() {
   var box = document.getElementById('mcList');
   if (!list.length) { box.innerHTML = '<div class="empty-state" style="padding:18px 4px;">' + (_mc.rows.length ? 'ไม่พบรายชื่อตามตัวกรอง' : 'ไม่มีครูในกลุ่มเป้าหมายของงานนี้') + '</div>'; return; }
   box.innerHTML = '<table class="mc-table"><thead><tr><th class="mc-c"></th><th>ชื่อ</th><th class="mc-sg">กลุ่มสาระ</th><th>สถานะ</th><th>หมายเหตุ</th></tr></thead><tbody>' + list.map(function (r) {
-    var d = _mc.draft[r.userId], was = r.status === 'received';
-    var st = d.received
-      ? (was ? '<span class="mc-st ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ได้รับแล้ว</span><small>' + escapeHtml(formatDateThai(String(r.checkedAt).slice(0, 10))) + (r.checkedBy ? ' · ' + escapeHtml(r.checkedBy) : '') + '</small>' : '<span class="mc-st new"><i class="fa-solid fa-check" aria-hidden="true"></i> ได้รับ (ยังไม่บันทึก)</span>')
-      : (r.status === 'reported' ? '<span class="mc-st rep"><i class="fa-solid fa-hand" aria-hidden="true"></i> ครูแจ้งว่าส่งแล้ว</span><small>' + escapeHtml(formatDateThai(String(r.reportedAt).slice(0, 10))) + '</small>' : '<span class="mc-st no">ยังไม่ได้รับ</span>');
-    return '<tr class="' + (d.received ? 'is-ok' : '') + '"><td class="mc-c"><input type="checkbox" data-mcu="' + escapeHtml(r.userId) + '"' + (d.received ? ' checked' : '') + (ed ? '' : ' disabled') + ' aria-label="ได้รับงานของ ' + escapeHtml(r.name) + '" /></td>' +
+    var d = _mc.draft[r.userId], was = _mcSt(r.status), when = '<small>' + escapeHtml(formatDateThai(String(r.checkedAt).slice(0, 10))) + (r.checkedBy ? ' · ' + escapeHtml(r.checkedBy) : '') + '</small>';
+    var st = d.st
+      ? (d.st === was ? (d.st === 'late' ? '<span class="mc-st late"><i class="fa-solid fa-clock" aria-hidden="true"></i> ส่งหลังกำหนด</span>' : '<span class="mc-st ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ตรวจแล้ว</span>') + when
+        : '<span class="mc-st new' + (d.st === 'late' ? ' late' : '') + '"><i class="fa-solid fa-' + (d.st === 'late' ? 'clock' : 'check') + '" aria-hidden="true"></i> ' + (d.st === 'late' ? 'ส่งหลังกำหนด' : 'ตรวจแล้ว') + ' (ยังไม่บันทึก)</span>')
+      : (r.status === 'reported' ? '<span class="mc-st rep"><i class="fa-solid fa-hand" aria-hidden="true"></i> ครูแจ้งว่าส่งแล้ว</span><small>' + escapeHtml(formatDateThai(String(r.reportedAt).slice(0, 10))) + '</small>' : '<span class="mc-st no">ยังไม่ตรวจ</span>');
+    var uid = escapeHtml(r.userId), nm = escapeHtml(r.name), dis = ed ? '' : ' disabled';
+    return '<tr class="' + (d.st === 'late' ? 'is-late' : d.st ? 'is-ok' : '') + '"><td class="mc-c"><div class="mc-pick">' +
+      '<button type="button" class="mc-pk ok' + (d.st === 'received' ? ' on' : '') + '" data-mcs="received" data-mcu="' + uid + '"' + dis + ' aria-pressed="' + (d.st === 'received') + '" title="ตรวจแล้ว" aria-label="ตรวจแล้ว: ' + nm + '"><i class="fa-solid fa-check" aria-hidden="true"></i></button>' +
+      '<button type="button" class="mc-pk late' + (d.st === 'late' ? ' on' : '') + '" data-mcs="late" data-mcu="' + uid + '"' + dis + ' aria-pressed="' + (d.st === 'late') + '" title="ส่งหลังกำหนด" aria-label="ส่งหลังกำหนด: ' + nm + '"><i class="fa-solid fa-clock" aria-hidden="true"></i></button>' +
+      '</div></td>' +
       '<td class="mc-name">' + escapeHtml(r.name) + (r.left ? ' <span class="mc-left">ย้ายออก</span>' : '') + '</td>' +
       '<td class="mc-sg">' + escapeHtml(r.subjectGroup ? subjectShort(r.subjectGroup) : '-') + '</td>' +
       '<td class="mc-stc">' + st + '</td>' +
@@ -3172,7 +3185,7 @@ async function openManualCheck(eventId, opts) {
   try {
     var d = await apiCall('manualCheckList', { eventId: eventId });
     var ev = d.event, draft = {};
-    d.rows.forEach(function (r) { draft[r.userId] = { received: r.status === 'received', note: r.note || '' }; });
+    d.rows.forEach(function (r) { draft[r.userId] = { st: _mcSt(r.status), note: r.note || '' }; });
     _mc = { eventId: eventId, rows: d.rows, draft: draft, keep: {}, canEdit: !!d.canEdit, filter: 'all', q: '', selfReport: ev.selfReport, onSaved: opts.onSaved };
     document.getElementById('mcTitle').innerHTML = '<i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ตรวจรายคน: ' + escapeHtml(ev.title);
     var range = ev.endDate && ev.endDate !== ev.date ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate) : formatDateThai(ev.date);
@@ -3237,5 +3250,6 @@ function schoolCalSpan(e) {
   var mode = e.calShow || (e.kind === 'activity' ? 'range' : 'last'), end = e.endDate || e.date;
   if (mode === 'first') return { from: e.date, to: e.date, mode: mode };
   if (mode === 'last') return { from: end, to: end, mode: mode };
+  if (mode === 'ends') return end === e.date ? { from: end, to: end, mode: 'last' } : { from: e.date, to: end, mode: 'ends' }; // 1.95: วันแรก + วันสุดท้าย (2 แถว)
   return { from: e.date, to: end, mode: 'range' };
 }
