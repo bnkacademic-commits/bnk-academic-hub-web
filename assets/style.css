@@ -4051,3 +4051,28 @@ ul.sr-tl li small { display: block; color: var(--text-muted); margin-top: 2px; }
 
 #scKind button { white-space: nowrap; padding: 7px 12px; }
 .sc-legend i { border: 1px solid var(--border); }
+
+/* ---------- 1.93.1: เช็คลิสต์การส่งงาน = ปุ่มข้างปุ่มเลื่อนเดือน → ป็อปอัป (ปฏิทินกว้างเต็มการ์ด) ---------- */
+.dash-cal-layout { grid-template-columns: minmax(0, 1fr); }
+.cl-open-btn { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; margin-left: 4px; position: relative; }
+.cl-open-n { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 0.74rem; font-weight: 800; line-height: 1; }
+.cl-open-n[hidden] { display: none; }
+.cl-modal-box { max-width: 560px; width: min(560px, 94vw); text-align: left; }
+#clModal .dash-checklist { position: static; inset: auto; min-height: 0; }
+#clModal .dash-checklist-body { max-height: 60vh; overflow-y: auto; }
+#clModal .dash-checklist-title { padding-right: 34px; }
+@media (max-width: 560px) { .cl-open-btn .cl-open-tx { display: none; } .cl-open-btn { margin-left: 0; } }
+.tt-acts { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+/* 1.93.1: แถบกรองกำหนดส่งงาน + ตัวเลือกกลุ่มบริหารงาน (บรรทัดเดียวบนจอคอม) */
+.up-toolbar .up-search { flex: 1 1 160px; }
+.up-toolbar select { min-width: 120px; }
+.up-toolbar #upGroup { max-width: 230px; }
+/* 1.94: แอดมินระบบ + ตัวเลือกตำแหน่ง */
+.badge-sys { background: #ede9fe; color: #6d28d9; }
+:root[data-theme="dark"] .badge-sys { background: rgba(139,92,246,.22); color: #c4b5fd; }
+.pos-opt-list { display: flex; flex-direction: column; gap: 6px; max-width: 560px; }
+.pos-opt-row { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 10px; padding: 5px 8px; background: var(--surface); }
+.pos-opt-no { width: 24px; text-align: center; font-weight: 700; color: var(--text-muted); }
+.pos-opt-name { flex: 1; font-weight: 600; }
+.pos-opt-add { display: flex; gap: 8px; margin-top: 10px; max-width: 560px; }
+.pos-opt-add input { flex: 1; }

@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.93.0';
-var APP_VERSION = '1.93.0.291026';
+var WORKER_MIN_VERSION = '1.94.0';
+var APP_VERSION = '1.94.0.291026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -218,6 +218,7 @@ function startSessionWatch() {
       var r = await apiCall('checkSession', {});
       if (r && r.token && getToken()) { try { localStorage.setItem(SESSION_TOKEN_KEY, r.token); } catch (e) { /* ไม่เป็นไร */ } }
       applyTopBadges(r); // 1.75: ตัวเลขแดงบนกระดิ่ง
+      syncSessionFlags(r && r.user); // 1.94: สิทธิ์ผู้รับผิดชอบ/แอดมินระบบที่เปลี่ยนระหว่างใช้งาน
     } catch (err) {
       if (err && err.code === 'SESSION_REPLACED') {
         stopSessionWatch();
@@ -231,6 +232,15 @@ function startSessionWatch() {
   var wasIdle = false;
   setInterval(function () { if (isIdleFor(SESSION_WATCH_ACTIVE_MS)) wasIdle = true; }, 15000);
   ['mousedown', 'keydown', 'touchstart'].forEach(function (ev) { window.addEventListener(ev, function () { if (wasIdle && _sessionWatchHandle) { wasIdle = false; check(true); } }, { passive: true, capture: true }); });
+}
+// 1.94: อัปเดตค่าในเครื่องเมื่อสิทธิ์เปลี่ยน (เพิ่งถูกตั้งเป็นผู้รับผิดชอบกำหนดการ → เมนู "สรุปรวมการส่งงาน" ขึ้นทันที)
+function syncSessionFlags(u) {
+  if (!u) return;
+  var s = getSession(); if (!s || s.id !== u.id) return;
+  var before = (s.respCount > 0) + '|' + !!s.isSysAdmin;
+  s.respCount = u.respCount || 0; s.isSysAdmin = !!u.isSysAdmin;
+  updateCachedSessionUser(s);
+  void before; // เมนูข้างอัปเดตเมื่อเปิดหน้าถัดไป
 }
 function stopSessionWatch() {
   if (_sessionWatchHandle) { clearInterval(_sessionWatchHandle); _sessionWatchHandle = null; }
@@ -274,10 +284,12 @@ function requireViewerAccess() {
 }
 // 1.87.2: หัวหน้ากลุ่มบริหารงาน (บัญชีครูที่มีหน้าที่พิเศษ "หัวหน้ากลุ่มบริหารงาน" ในทำเนียบ) — เห็นสรุปรวมการส่งงาน + ตรวจงานของกลุ่มตัวเอง
 function isDeptHeadSession(s) { return !!s && s.role === 'teacher' && Array.isArray(s.headRoles) && s.headRoles.indexOf('dept') !== -1; }
+// 1.94: ผู้รับผิดชอบกำหนดการ (respCount > 0) — เข้าหน้าสรุปรวมได้ เห็นเฉพาะแท็บสรุปแยกแต่ละงาน + งานที่รับผิดชอบ
+function isRespOnlySession(s) { return !!s && s.role === 'teacher' && !isDeptHeadSession(s) && (s.respCount || 0) > 0; }
 function requireSummaryAccess() {
   var s = requireLogin();
   if (!s) return null;
-  if (s.role !== 'admin' && s.role !== 'executive' && !isDeptHeadSession(s)) { location.href = homePageFor(s); return null; }
+  if (s.role !== 'admin' && s.role !== 'executive' && !isDeptHeadSession(s) && !isRespOnlySession(s)) { location.href = homePageFor(s); return null; }
   return s;
 }
 function requireAdminAccess() {
@@ -295,7 +307,7 @@ function roleLabel(session) {
   if (session.role === 'teacher') return 'ครู';
   if (session.role === 'executive') return session.position || 'ผู้บริหาร';
   // 1.41.111026: เจ้าหน้าที่ = สมาชิกกลุ่มบริหารงานที่ได้สิทธิ์แอดมิน — ป้ายแสดงชื่อกลุ่มเต็ม เช่น "เจ้าหน้าที่กลุ่มบริหารงานวิชาการ"
-  if (session.role === 'admin') return session.hasHub ? ('เจ้าหน้าที่' + groupLabel(session.department)) : 'Super Admin';
+  if (session.role === 'admin') return session.hasHub ? (session.isSysAdmin ? 'แอดมินระบบ' : 'เจ้าหน้าที่' + groupLabel(session.department)) : 'Super Admin';
   return '';
 }
 
@@ -306,7 +318,7 @@ function accountInfoLines(session) {
   var lines = [];
   var isExec = session.role === 'executive';
   var isSuper = session.role === 'admin' && !session.hasHub;
-  var type = session.role === 'teacher' ? 'ครู' : isExec ? 'ผู้บริหาร' : (isSuper ? 'Super Admin' : 'เจ้าหน้าที่');
+  var type = session.role === 'teacher' ? 'ครู' : isExec ? 'ผู้บริหาร' : (isSuper ? 'Super Admin' : (session.isSysAdmin ? 'แอดมินระบบ' : 'เจ้าหน้าที่'));
   lines.push({ label: 'ประเภทบัญชี', value: type + (isExec && session.position ? ' (' + session.position + ')' : '') });
   if (!isExec && !isSuper) {
     lines.push({ label: 'กลุ่มบริหารงาน', value: session.department ? groupLabel(session.department) : 'ไม่ระบุ' });
@@ -1748,7 +1760,7 @@ function navLinksFor(session) {
     links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard', icon: 'home' });
     links.push({ href: 'memo.html', label: 'จัดทำบันทึกข้อความ', key: 'memo', icon: 'memo' });
   }
-  if (isDeptHeadSession(session)) links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary', icon: 'summary' }); // 1.87.2
+  if (isDeptHeadSession(session) || isRespOnlySession(session)) links.push({ href: 'summary.html', label: 'สรุปรวมการส่งงาน', key: 'summary', icon: 'summary' }); // 1.87.2 · 1.94: + ผู้รับผิดชอบกำหนดการ
   // ผู้บริหาร (ตั้งแต่ 1.32.101026): หน้าแรกของตัวเอง = ปฏิทิน + สรุปภาพรวม (executive.html) — ไม่มีหน้าฮับ ไม่ส่งงาน
   if (isExec) links.push({ href: 'executive.html', label: 'หน้าแรก', key: 'executive', icon: 'home' });
   // 1.79: Super Admin มีหน้าแรกของตัวเอง = ภาพรวมระบบ (overview.html)
@@ -2395,7 +2407,7 @@ var NOTIF_KIND = {
   report_new: ['fa-inbox', '#ef4444'], report_reply: ['fa-reply', '#7c3aed'], report_status: ['fa-headset', '#7c3aed'],
   report_done: ['fa-circle-check', '#16a34a'], report_forward: ['fa-share', '#0891b2'],
   // 1.80: ตรวจผลงาน + เตือนกำหนดส่ง
-  review_ok: ['fa-circle-check', '#16a34a'], review_fix: ['fa-pen-to-square', '#ca8a04'], review_resubmit: ['fa-file-arrow-up', '#0369a1'],
+  review_ok: ['fa-circle-check', '#16a34a'], review_fix: ['fa-pen-to-square', '#ca8a04'], review_resubmit: ['fa-file-arrow-up', '#0369a1'], resp_assigned: ['fa-user-check', '#7c3aed'], // 1.94: ได้รับมอบหมายเป็นผู้รับผิดชอบ
   due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626'],
   activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'], // 1.81: กิจกรรม
   att_missing: ['fa-clipboard-check', '#7c3aed'], hr_missing: ['fa-book-open', '#0891b2'] // 1.91: เว็บเช็คชื่อ
@@ -2950,30 +2962,77 @@ function ttCurrent() {
   return r ? { title: 'ชั้น ' + r.roomName + ' · ภาคเรียนที่ ' + d.term + '/' + d.year, slots: r.slots, mode: 'room', foot: 'ตารางเรียนของห้อง (ครูที่ปรึกษา)' } : null;
 }
 function ttRender() {
-  var body = document.getElementById('ttBody'), seg = document.getElementById('ttSeg'), pr = document.getElementById('ttPrint');
+  var body = document.getElementById('ttBody'), seg = document.getElementById('ttSeg'), pr = document.getElementById('ttPrint'), im = document.getElementById('ttImg');
   if (!body) return;
   var d = _tt.data;
-  if (_tt.loading) { body.innerHTML = '<div class="loading">กำลังดึงตารางสอนจากเว็บเช็คชื่อ</div>'; seg.innerHTML = ''; pr.disabled = true; return; }
+  if (_tt.loading) { body.innerHTML = '<div class="loading">กำลังดึงตารางสอนจากเว็บเช็คชื่อ</div>'; seg.innerHTML = ''; pr.disabled = true; if (im) im.disabled = true; return; }
   if (!d) return;
   if (!d.linked) {
-    seg.innerHTML = ''; pr.disabled = true;
+    seg.innerHTML = ''; pr.disabled = true; if (im) im.disabled = true;
     body.innerHTML = '<div class="empty-state">' + escapeHtml(d.reason || 'ยังไม่พบชื่อของคุณในเว็บเช็คชื่อ — ให้ผู้ดูแลเว็บเช็คชื่อผูกรายชื่อครูกับ AcademicHub ก่อน') + '</div>';
     return;
   }
   seg.innerHTML = (d.rooms || []).length ? '<button type="button" data-ttv="me" class="' + (_tt.view === 'me' ? 'on' : '') + '">ตารางสอนของฉัน</button>' + d.rooms.map(function (r) { return '<button type="button" data-ttv="' + escapeHtml(r.roomId) + '" class="' + (_tt.view === r.roomId ? 'on' : '') + '">ห้อง ' + escapeHtml(r.roomName) + ' (ที่ปรึกษา)</button>'; }).join('') : '';
-  var c = ttCurrent(); pr.disabled = !c;
+  var c = ttCurrent(); pr.disabled = !c; if (im) im.disabled = !c;
   body.innerHTML = c ? '<div class="tt-sheet" id="ttSheet"><div class="tt-ttl">' + escapeHtml(c.title) + '</div>' + ttGridHtml(c.slots, c.mode) + '</div>' +
     '<div class="tt-foot"><span>' + escapeHtml(c.foot) + '</span><span>ข้อมูลจากเว็บเช็คชื่อ' + (c.slots && c.slots.length ? '' : ' — ยังไม่มีคาบสอนในภาคเรียนนี้') + '</span></div>' : '';
 }
-function ttPrint() {
-  var sh = document.getElementById('ttSheet'); if (!sh) return;
-  var css = '';
-  var w = window.open('', '_blank'); if (!w) { showToast && showToast('เบราว์เซอร์บล็อกหน้าต่างใหม่ — อนุญาตป็อปอัปก่อน', 'error'); return; }
+// 1.93.1: พิมพ์ / PDF = A4 แนวนอน 1 หน้าเสมอ (ย่อให้พอดีหน้า) · บันทึกเป็นรูป PNG (ภาพเดียวกับหน้าที่พิมพ์)
+// ใช้เอกสารแยก (หน้าต่างใหม่ / iframe ซ่อน) ธีมสว่างเสมอ — ไม่ขึ้นกับโหมดมืดของหน้าเว็บ
+var TT_PAGE_W = 1062, TT_PAGE_H = 733; // A4 แนวนอน 297×210 มม. − ขอบ 8 มม. (96 dpi)
+function ttSheetDoc(mode) {
+  var sh = document.getElementById('ttSheet'); if (!sh) return '';
+  var base = location.href.replace(/[^/]*([?#].*)?$/, '');
   var styles = Array.prototype.map.call(document.querySelectorAll('link[rel="stylesheet"]'), function (l) { return '<link rel="stylesheet" href="' + l.href + '">'; }).join('');
-  w.document.write('<!doctype html><html lang="th" data-theme="light"><head><meta charset="utf-8"><title>ตารางสอน</title>' + styles + css +
-    '<style>@page{size:A4 landscape;margin:10mm}body{background:#fff;margin:0;padding:10mm}.tt-sheet{border-color:#000}</style></head><body>' + sh.outerHTML + '</body></html>');
-  w.document.close();
-  setTimeout(function () { try { w.focus(); w.print(); } catch (e) { /* ข้าม */ } }, 600);
+  var themeVars = document.getElementById('bnkahThemeVars');
+  var c = ttCurrent(), stamp = 'พิมพ์เมื่อ ' + formatDateThai(todayYmd()) + ' · ' + (c ? c.foot : '');
+  return '<!doctype html><html lang="th" data-theme="light"><head><meta charset="utf-8"><base href="' + base + '"><title>ตารางสอน</title>' + styles +
+    (themeVars ? '<style>' + themeVars.textContent + '</style>' : '') +
+    '<style>@page{size:A4 landscape;margin:8mm}html,body{margin:0;background:#fff}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    '.pg{width:' + TT_PAGE_W + 'px;height:' + TT_PAGE_H + 'px;overflow:hidden;background:#fff;box-sizing:border-box}' +
+    '.fit{width:1120px;transform-origin:top left;padding:6px}.tt-sheet{overflow:visible;border-color:#0f172a;animation:none}table.tt-grid{min-width:0}' +
+    '.tt-stamp{display:flex;justify-content:space-between;font-size:12px;color:#475569;margin-top:6px;padding:0 4px}' +
+    (mode === 'image' ? '.pg{height:auto}' : '') + '</style></head><body><div class="pg" id="pg"><div class="fit" id="fit">' + sh.outerHTML +
+    '<div class="tt-stamp"><span>' + escapeHtml(stamp) + '</span><span>BNKAcademicHub · ข้อมูลจากเว็บเช็คชื่อ</span></div></div></div>' +
+    '<script>function ttFit(){var f=document.getElementById("fit");f.style.transform="none";' +
+    // พิมพ์: ขยายความสูงแถวให้ตารางเต็มหน้า A4 (ไม่เหลือที่ว่างครึ่งหน้า) แล้วย่อทั้งใบให้พอดี 1 หน้า
+    (mode === 'print' ? 'var sw=' + TT_PAGE_W + '/f.scrollWidth,need=' + TT_PAGE_H + '/Math.min(sw,1)-f.scrollHeight-4;if(need>0){var rows=f.querySelectorAll("table.tt-grid tbody tr");var add=Math.floor(need/rows.length),hs=Array.prototype.map.call(rows,function(r){return r.getBoundingClientRect().height;});Array.prototype.forEach.call(rows,function(r,i){r.style.height=(hs[i]+add)+"px";Array.prototype.forEach.call(r.children,function(td){if(!td.classList.contains("tt-lunch"))td.style.height="auto";});});}' : '') +
+    'var s=Math.min(' + TT_PAGE_W + '/f.scrollWidth,' + TT_PAGE_H + '/f.scrollHeight,1);f.style.transform="scale("+s+")";' +
+    (mode === 'image' ? 'var pg=document.getElementById("pg");pg.style.width=Math.ceil(f.scrollWidth*s)+"px";pg.style.height=Math.ceil(f.scrollHeight*s)+"px";' : '') + 'return s;}<\/script></body></html>';
+}
+function ttReady(win) {
+  return new Promise(function (res) {
+    var go = function () { (win.document.fonts && win.document.fonts.ready ? win.document.fonts.ready : Promise.resolve()).then(function () { setTimeout(function () { try { win.ttFit(); } catch (e) { /* ข้าม */ } res(); }, 150); }); };
+    if (win.document.readyState === 'complete') go(); else win.addEventListener('load', go);
+  });
+}
+async function ttPrint() {
+  var html = ttSheetDoc('print'); if (!html) return;
+  var w = window.open('', '_blank'); if (!w) { showToast('เบราว์เซอร์บล็อกหน้าต่างใหม่ — อนุญาตป็อปอัปก่อน', true); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  await ttReady(w);
+  try { w.focus(); w.print(); } catch (e) { /* ข้าม */ }
+}
+async function ttSaveImage() {
+  var html = ttSheetDoc('image'); if (!html) return;
+  var b = document.getElementById('ttImg'); if (b) b.disabled = true;
+  var fr = document.createElement('iframe');
+  fr.setAttribute('aria-hidden', 'true');
+  fr.style.cssText = 'position:fixed;left:-20000px;top:0;width:' + (TT_PAGE_W + 40) + 'px;height:' + (TT_PAGE_H + 400) + 'px;border:0;';
+  document.body.appendChild(fr);
+  try {
+    var d = fr.contentWindow.document; d.open(); d.write(html); d.close();
+    await ttReady(fr.contentWindow);
+    await loadScriptOnce('assets/html2canvas.min.js');
+    var pg = d.getElementById('pg');
+    var canvas = await html2canvas(pg, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: TT_PAGE_W + 40 });
+    var c = ttCurrent();
+    var name = 'timetable-' + (_tt.view === 'me' ? 'teacher' : 'room-' + String(_tt.view).replace(/[^\w-]/g, '')) + '-' + (_tt.data ? _tt.data.term + '-' + _tt.data.year : '') + '.png';
+    var a = document.createElement('a'); a.href = canvas.toDataURL('image/png'); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    showToast('บันทึกรูปตารางสอนแล้ว' + (c ? ' (' + c.title + ')' : ''));
+  } catch (err) { showToast('บันทึกรูปไม่สำเร็จ: ' + err.message, true); }
+  finally { fr.remove(); if (b) b.disabled = false; }
 }
 function initTimetable() {
   var btn = document.getElementById('ttOpenBtn'); if (!btn) return;
@@ -2981,12 +3040,14 @@ function initTimetable() {
   wrap.innerHTML = '<div class="modal-backdrop" id="ttModal" hidden><div class="modal-box modal-box-wide tt-box">' +
     '<button type="button" class="modal-close-x" id="ttCloseX" aria-label="ปิด">✕</button>' +
     '<div class="tt-head"><h3><i class="fa-solid fa-table-cells" aria-hidden="true"></i> ตารางสอน</h3><div class="tt-seg" id="ttSeg" role="tablist"></div>' +
-    '<button type="button" class="btn btn-secondary btn-sm" id="ttPrint"><i class="fa-solid fa-print ui-icon" aria-hidden="true"></i> พิมพ์ / PDF</button></div>' +
+    '<span class="tt-acts"><button type="button" class="btn btn-secondary btn-sm" id="ttImg"><i class="fa-solid fa-image ui-icon" aria-hidden="true"></i> บันทึกเป็นรูป</button>' +
+    '<button type="button" class="btn btn-secondary btn-sm" id="ttPrint"><i class="fa-solid fa-print ui-icon" aria-hidden="true"></i> พิมพ์ / PDF</button></span></div>' +
     '<div id="ttBody"></div></div></div>';
   document.body.appendChild(wrap.firstChild);
   var modal = document.getElementById('ttModal');
   document.getElementById('ttCloseX').addEventListener('click', function () { hideModalEl(modal); });
   document.getElementById('ttPrint').addEventListener('click', ttPrint);
+  document.getElementById('ttImg').addEventListener('click', ttSaveImage); // 1.93.1
   document.getElementById('ttSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-ttv]'); if (!b) return; _tt.view = b.getAttribute('data-ttv'); ttRender(); });
   btn.addEventListener('click', async function () {
     announceMenuOpen('tt');
