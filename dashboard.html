@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.94.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.95.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -256,9 +256,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.94.0.291026"></script>
+  <script src="assets/api.js?v=1.95.0.291026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.94.0.291026"></script>
+  <script src="assets/homeroom.js?v=1.95.0.291026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -1026,26 +1026,26 @@
     // ย้ายออกมาเป็นฟังก์ชันกลาง (เดิมประกาศซ้อนอยู่ในตัว renderAssignmentChecklist เท่านั้น) เพราะ renderCalendar() ด้านล่าง
     // ก็ต้องใช้เกณฑ์เดียวกันนี้ด้วย เพื่อตัดสินว่ากำหนดการที่เกินกำหนดแล้วควรยังค้างอยู่ใน "กำหนดการ" ใต้ปฏิทินหรือไม่
     // ---------- 1.93: งาน "แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน" ----------
-    // received = เจ้าหน้าที่ตรวจรับแล้ว · reported = ครูกดแจ้งว่าส่งแล้ว (รอตรวจรับ) · ปุ่มแจ้ง/ยกเลิก เฉพาะกำหนดการที่เปิด "ให้ครูกดแจ้งได้"
+    // received = เจ้าหน้าที่ตรวจแล้ว · reported = ครูกดแจ้งว่าส่งแล้ว (รอตรวจ) · ปุ่มแจ้ง/ยกเลิก เฉพาะกำหนดการที่เปิด "ให้ครูกดแจ้งได้"
     function mcActionHtml(e, compact) {
       var m = e.manual || {}, st = m.status || '';
       var note = m.note ? '<span class="mc-note-t" title="หมายเหตุจากเจ้าหน้าที่"><i class="fa-solid fa-comment" aria-hidden="true"></i> ' + escapeHtml(m.note) + '</span>' : '';
-      if (st === 'received') return '<span class="mc-side"><span class="mc-badge ok" title="' + escapeHtml((m.by || 'เจ้าหน้าที่') + ' ตรวจรับ ' + formatDateThai(String(m.checkedAt).slice(0, 10))) + '"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> เจ้าหน้าที่ตรวจรับแล้ว</span>' + (compact ? '' : note) + '</span>';
-      if (st === 'reported') return '<span class="mc-side"><span class="mc-badge rep"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> แจ้งแล้ว รอตรวจรับ</span>' + (e.selfReport ? '<button type="button" class="linklike" data-mc-unreport="' + escapeHtml(e.id) + '">ยกเลิกการแจ้ง</button>' : '') + (compact ? '' : note) + '</span>';
+      if (st === 'received' || st === 'late') return '<span class="mc-side"><span class="mc-badge ' + (st === 'late' ? 'late' : 'ok') + '" title="' + escapeHtml((m.by || 'เจ้าหน้าที่') + ' ตรวจ ' + formatDateThai(String(m.checkedAt).slice(0, 10))) + '"><i class="fa-solid fa-' + (st === 'late' ? 'clock' : 'circle-check') + '" aria-hidden="true"></i> ' + (st === 'late' ? 'ตรวจแล้ว (ส่งหลังกำหนด)' : 'เจ้าหน้าที่ตรวจแล้ว') + '</span>' + (compact ? '' : note) + '</span>';
+      if (st === 'reported') return '<span class="mc-side"><span class="mc-badge rep"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> แจ้งแล้ว รอตรวจ</span>' + (e.selfReport ? '<button type="button" class="linklike" data-mc-unreport="' + escapeHtml(e.id) + '">ยกเลิกการแจ้ง</button>' : '') + (compact ? '' : note) + '</span>';
       if (e.selfReport && !beforeMyJoin(e)) return '<span class="mc-side"><button type="button" class="btn btn-primary btn-sm event-submit-btn" data-mc-report="' + escapeHtml(e.id) + '"><i class="fa-solid fa-hand" aria-hidden="true"></i> แจ้งว่าส่งแล้ว</button>' + (compact ? '' : note) + '</span>';
-      return '<span class="mc-side"><span class="mc-badge no"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> ยังไม่ได้รับ</span>' + (compact ? '' : note) + '</span>';
+      return '<span class="mc-side"><span class="mc-badge no"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> ยังไม่ตรวจ</span>' + (compact ? '' : note) + '</span>';
     }
     function mcChecklistHtml(e) {
       var m = e.manual || {}, st = m.status || '';
-      if (st === 'received') return '<div class="checklist-status done">เจ้าหน้าที่ตรวจรับแล้ว' + (m.checkedAt ? ' · ' + escapeHtml(formatDateThai(String(m.checkedAt).slice(0, 10))) : '') + '</div>' + (m.note ? '<div class="mc-note-t">' + escapeHtml(m.note) + '</div>' : '');
-      return '<div class="checklist-status pending">' + (st === 'reported' ? 'แจ้งแล้ว รอเจ้าหน้าที่ตรวจรับ' : 'ยังไม่ได้รับ (ส่งนอกระบบ)') + '</div>' + (m.note ? '<div class="mc-note-t">' + escapeHtml(m.note) + '</div>' : '') +
+      if (st === 'received' || st === 'late') return '<div class="checklist-status ' + (st === 'late' ? 'late' : 'done') + '">' + (st === 'late' ? 'ตรวจแล้ว (ส่งหลังกำหนด)' : 'เจ้าหน้าที่ตรวจแล้ว') + (m.checkedAt ? ' · ' + escapeHtml(formatDateThai(String(m.checkedAt).slice(0, 10))) : '') + '</div>' + (m.note ? '<div class="mc-note-t">' + escapeHtml(m.note) + '</div>' : '');
+      return '<div class="checklist-status pending">' + (st === 'reported' ? 'แจ้งแล้ว รอเจ้าหน้าที่ตรวจ' : 'ยังไม่ตรวจ (ส่งนอกระบบ)') + '</div>' + (m.note ? '<div class="mc-note-t">' + escapeHtml(m.note) + '</div>' : '') +
         (e.selfReport && st !== 'reported' && !beforeMyJoin(e) ? '<button type="button" class="btn btn-primary btn-sm cl-round-btn" data-mc-report="' + escapeHtml(e.id) + '"><i class="fa-solid fa-hand" aria-hidden="true"></i> แจ้งว่าส่งแล้ว</button>' : '');
     }
     document.addEventListener('click', async function (ev) {
       var b = ev.target.closest('[data-mc-report],[data-mc-unreport]'); if (!b) return;
       var on = b.hasAttribute('data-mc-report'), id = b.getAttribute(on ? 'data-mc-report' : 'data-mc-unreport');
       var e = calState.events.filter(function (x) { return x.id === id; })[0];
-      if (!(await askConfirm(on ? 'แจ้งเจ้าหน้าที่ว่าส่งงาน "' + (e ? e.title : '') + '" แล้ว? (เจ้าหน้าที่จะตรวจรับอีกครั้ง)' : 'ยกเลิกการแจ้งว่าส่งแล้ว?', on ? 'แจ้งว่าส่งแล้ว' : 'ยกเลิกการแจ้ง'))) return;
+      if (!(await askConfirm(on ? 'แจ้งเจ้าหน้าที่ว่าส่งงาน "' + (e ? e.title : '') + '" แล้ว? (เจ้าหน้าที่จะตรวจอีกครั้ง)' : 'ยกเลิกการแจ้งว่าส่งแล้ว?', on ? 'แจ้งว่าส่งแล้ว' : 'ยกเลิกการแจ้ง'))) return;
       var r = await withProgress(on ? 'กำลังแจ้ง' : 'กำลังยกเลิก', function () { return apiCall('teacherManualReport', { eventId: id, reported: on }); }, { successLabel: on ? 'แจ้งแล้ว' : 'ยกเลิกแล้ว' });
       if (!r.ok) return;
       calState.events.forEach(function (x) { if (x.id === id) x.manual = Object.assign({}, x.manual || {}, { status: on ? 'reported' : '', reportedAt: on ? new Date().toISOString() : '' }); });
@@ -1054,7 +1054,7 @@
       renderCalendar(); renderAssignmentChecklist();
     });
     function isAssignmentSubmitted(e) {
-      if (e.manualCheck) return !!(e.manual && e.manual.status === 'received'); // 1.93: ตรวจรายคน = เจ้าหน้าที่ตรวจรับแล้ว
+      if (e.manualCheck) return !!(e.manual && (e.manual.status === 'received' || e.manual.status === 'late')); // 1.93: ตรวจรายคน = เจ้าหน้าที่ตรวจแล้ว
       if (e.roomBased) return !!(e.rooms && e.rooms.length) && e.rooms.every(function (r) { return !!r.submitted; }); // 1.90: งานตามห้อง = ทุกห้องที่เป็นครูที่ปรึกษาส่งแล้ว
       if (e.seriesId) return allSubmissions.some(function (s) { return s.eventId === e.id; }); // 1.88: รอบ = ไฟล์ที่ผูกรอบนี้
       return allSubmissions.some(function (s) {
@@ -1594,9 +1594,9 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           else if (st === 'ok' || st === 'late') act = '<button type="button" class="btn btn-secondary btn-sm" data-hr-send="' + escapeHtml(e.id + '|' + roomId) + '"><i class="fa-solid fa-rotate ui-icon" aria-hidden="true"></i> ส่งแทนฉบับเดิม</button>';
         } else if (e.manualCheck) { // 1.93: ตรวจรายคน
           var mst = (e.manual && e.manual.status) || '', lvm = seriesRoundOpen(e);
-          chip = mst === 'received' ? ['ok', 'ได้รับแล้ว ✓'] : mst === 'reported' ? ['open', 'แจ้งแล้ว รอตรวจรับ'] : (lvm === 2 ? ['wait', 'ยังไม่ถึง'] : (lvm === 0 ? ['no', 'ยังไม่ได้รับ (เกินกำหนด)'] : ['open', 'ยังไม่ได้รับ']));
-          cls = mst === 'received' ? 'ok' : '';
-          if (mst === 'received' && e.manual.checkedAt) small += ' · ตรวจรับ ' + formatDateThai(String(e.manual.checkedAt).slice(0, 10));
+          chip = mst === 'received' ? ['ok', 'ตรวจแล้ว ✓'] : mst === 'late' ? ['fx', 'ตรวจแล้ว (หลังกำหนด)'] : mst === 'reported' ? ['open', 'แจ้งแล้ว รอตรวจ'] : (lvm === 2 ? ['wait', 'ยังไม่ถึง'] : (lvm === 0 ? ['no', 'ยังไม่ตรวจ (เกินกำหนด)'] : ['open', 'ยังไม่ตรวจ']));
+          cls = mst === 'received' || mst === 'late' ? 'ok' : '';
+          if ((mst === 'received' || mst === 'late') && e.manual.checkedAt) small += ' · ตรวจ ' + formatDateThai(String(e.manual.checkedAt).slice(0, 10));
           if (lvm !== 2) act = mcActionHtml(e, true);
         } else {
           var done = isAssignmentSubmitted(e), rv = e.review && e.review.status, lv = seriesRoundOpen(e);

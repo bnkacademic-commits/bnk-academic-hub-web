@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.94.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.95.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -194,6 +194,10 @@
             <label for="evActTitle">ชื่อกิจกรรม</label>
             <input id="evActTitle" type="text" maxlength="150" placeholder="เช่น กิจกรรมวันคริสต์มาส" />
           </div>
+          <div class="field">
+            <label>สีของกิจกรรม <span class="opt">(ไม่เลือก = สุ่มสีให้)</span></label>
+            <div class="ev-color" id="evActColor" role="radiogroup" aria-label="สีของกิจกรรม"></div>
+          </div>
           <div class="field-row">
             <div class="field">
               <label for="evActDate">วันที่เริ่ม <span class="opt" id="evActDateTh"></span></label>
@@ -221,7 +225,7 @@
               <button type="button" data-owner="subject"><i class="fa-solid fa-book" aria-hidden="true"></i> กลุ่มสาระการเรียนรู้</button>
             </div>
             <select id="evActOwnerGroup" aria-label="กลุ่มเจ้าของกิจกรรม"></select>
-            <div class="hint">สีในปฏิทินตามกลุ่มที่เลือก</div>
+            <div class="hint">สีในปฏิทินใช้ "สีของกิจกรรม" ด้านบน</div>
           </div>
           <div class="field">
             <label>สำหรับ</label>
@@ -379,6 +383,7 @@
             <button type="button" data-sc="none">ไม่แสดง</button>
             <button type="button" data-sc="first">วันแรก</button>
             <button type="button" data-sc="last">วันสุดท้าย</button>
+            <button type="button" data-sc="ends">วันแรก+สุดท้าย</button>
             <button type="button" data-sc="range">แสดงเป็นช่วง</button>
           </div>
           <div class="hint" id="evScHint"></div>
@@ -412,7 +417,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.94.0.291026"></script>
+  <script src="assets/api.js?v=1.95.0.291026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -1039,29 +1044,40 @@
       var r = evScRange(), h = '';
       var multi = !evIsAct() && (evRMode !== 'once' || (evEditing && evEditing.seriesId));
       if (evScMode === 'none') h = 'ไม่แสดงรายการนี้ในหน้าปฏิทินโรงเรียน (ยังแสดงในปฏิทินหน้าแรกตามเดิม)';
-      else if (multi) h = { first: 'แต่ละรอบแสดงในวันแรกที่ส่งได้', last: 'แต่ละรอบแสดงในวันครบกำหนด', range: 'แต่ละรอบแสดงเป็นช่วงวันที่ส่งได้' }[evScMode];
-      else if (!r.a) h = { first: 'แสดงเฉพาะวันแรก', last: 'แสดงเฉพาะวันสุดท้าย', range: 'แสดงทุกวันในช่วง (แถวเดียวในตาราง)' }[evScMode];
+      else if (multi) h = { first: 'แต่ละรอบแสดงในวันแรกที่ส่งได้', last: 'แต่ละรอบแสดงในวันครบกำหนด', ends: 'แต่ละรอบแสดงทั้งวันแรกที่ส่งได้และวันครบกำหนด', range: 'แต่ละรอบแสดงเป็นช่วงวันที่ส่งได้' }[evScMode];
+      else if (!r.a) h = { first: 'แสดงเฉพาะวันแรก', last: 'แสดงเฉพาะวันสุดท้าย', ends: 'แสดงวันแรกและวันสุดท้าย (2 แถวในตาราง)', range: 'แสดงทุกวันในช่วง (แถวเดียวในตาราง)' }[evScMode];
       else if (r.b === r.a) h = 'แสดงวันที่ ' + formatDateThai(r.a);
-      else h = evScMode === 'first' ? 'แสดงวันที่ ' + formatDateThai(r.a) + ' (ช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) + ')' : evScMode === 'last' ? 'แสดงวันที่ ' + formatDateThai(r.b) + ' พร้อมวงเล็บบอกช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) : 'แสดงเป็นช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b);
+      else h = evScMode === 'first' ? 'แสดงวันที่ ' + formatDateThai(r.a) + ' (ช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) + ')' : evScMode === 'last' ? 'แสดงวันที่ ' + formatDateThai(r.b) + ' พร้อมวงเล็บบอกช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) : evScMode === 'ends' ? 'แสดง 2 วัน: ' + formatDateThai(r.a) + ' (วันแรก) และ ' + formatDateThai(r.b) + ' (วันสุดท้าย)' : 'แสดงเป็นช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b);
       document.getElementById('evScHint').textContent = h;
       document.getElementById('evRespHint').textContent = evIsAct() ? 'แสดงในคอลัมน์ผู้รับผิดชอบของปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของกิจกรรม)' : 'ครูที่เลือกจากรายชื่อจะเห็นงานนี้ในหน้า "สรุปรวมการส่งงาน" (เฉพาะงานที่รับผิดชอบ) และตรวจงาน/ตรวจรับได้ · ช่องข้อความใช้แสดงในปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของงาน)';
       var c = evCat();
       document.getElementById('evSelfReportWrap').hidden = evIsAct() || !(c && c.manualCheck);
       evResp.refresh();
     }
+    // 1.95: สีของกิจกรรม — '' = สุ่ม (Worker สุ่มจากชุดสีเดียวกันตอนบันทึก)
+    var EV_COLORS = ['#e11d48', '#ea580c', '#ca8a04', '#16a34a', '#0d9488', '#0284c7', '#4f46e5', '#9333ea', '#db2777', '#64748b'], evColor = '';
+    function renderEvColor() {
+      var cs = EV_COLORS.slice(); if (evColor && cs.indexOf(evColor) === -1) cs.push(evColor);
+      document.getElementById('evActColor').innerHTML = '<button type="button" class="ev-col-rnd' + (evColor ? '' : ' on') + '" data-evc="" role="radio" aria-checked="' + !evColor + '"><i class="fa-solid fa-shuffle" aria-hidden="true"></i> สุ่ม</button>' +
+        cs.map(function (c) { return '<button type="button" class="ev-col-sw' + (c === evColor ? ' on' : '') + '" data-evc="' + c + '" style="--c:' + c + '" role="radio" aria-checked="' + (c === evColor) + '" aria-label="สี ' + c + '"></button>'; }).join('') +
+        '<label class="ev-col-own" title="เลือกสีเอง"><i class="fa-solid fa-eye-dropper" aria-hidden="true"></i><input type="color" id="evColorOwn" value="' + (evColor || '#4f46e5') + '" aria-label="เลือกสีเอง" /></label>';
+    }
+    document.getElementById('evActColor').addEventListener('click', function (e) { var b = e.target.closest('[data-evc]'); if (!b) return; evColor = b.getAttribute('data-evc'); renderEvColor(); });
+    document.getElementById('evActColor').addEventListener('change', function (e) { if (e.target.id === 'evColorOwn') { evColor = e.target.value.toLowerCase(); renderEvColor(); } });
     document.getElementById('evScSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-sc]'); if (!b) return; evScMode = b.getAttribute('data-sc'); renderEvSc(); });
     ['evDate', 'evEndDate', 'evActDate', 'evActEndDate', 'evCategory', 'evActOwnerGroup'].forEach(function (id) { ['change', 'input'].forEach(function (t) { document.getElementById(id).addEventListener(t, renderEvSc); }); });
     document.getElementById('evActOwnerSeg').addEventListener('click', function () { setTimeout(renderEvSc, 0); });
     document.getElementById('evRoundSeg').addEventListener('click', function () { setTimeout(renderEvSc, 0); });
     function setEvExtras(ev, kind) {
       evScMode = (ev && ev.calShow) || (kind === 'activity' ? 'range' : 'last');
+      evColor = (ev && ev.color) || ''; renderEvColor();
       evResp.set(ev && ev.responsible ? ev.responsible : null);
       document.getElementById('evSelfReport').checked = !!(ev && ev.selfReport);
       renderEvSc();
     }
     function evExtrasPayload() {
       var c = evCat();
-      return { calShow: evScMode, responsible: evResp.get(), selfReport: !evIsAct() && !!(c && c.manualCheck) && document.getElementById('evSelfReport').checked };
+      return { color: evIsAct() ? evColor : '', calShow: evScMode, responsible: evResp.get(), selfReport: !evIsAct() && !!(c && c.manualCheck) && document.getElementById('evSelfReport').checked };
     }
     function openCreateEvent() {
       document.getElementById('evEditId').value = '';

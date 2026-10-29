@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.94.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.95.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.94.0.291026"></script>
+  <script src="assets/api.js?v=1.95.0.291026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -523,15 +523,15 @@
     }
     // ---------- 1.93: งาน "แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน" ----------
     function manualStatusHtml(r) {
-      if (r.status !== 'missing') return '<span class="badge badge-ontime">' + (r.status === 'late' ? 'ได้รับ (หลังกำหนด)' : 'ได้รับแล้ว') + '</span>';
+      if (r.status !== 'missing') return '<span class="badge ' + (r.status === 'late' ? 'badge-late' : 'badge-ontime') + '">' + (r.status === 'late' ? 'ส่งหลังกำหนด' : 'ตรวจแล้ว') + '</span>';
       if (r.reported) return '<span class="badge mc-st rep">ครูแจ้งว่าส่งแล้ว</span>';
-      return '<span class="badge badge-missing">ยังไม่ได้รับ</span>';
+      return '<span class="badge badge-missing">ยังไม่ตรวจ</span>';
     }
     function manualBtnHtml(a, label) {
       return '<button type="button" class="btn btn-sm ' + (a.canCheck ? 'btn-success' : 'btn-secondary') + '" data-mc-ev="' + escapeHtml(a.eventId) + '"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ' + escapeHtml(label || (a.canCheck ? 'ตรวจรายคน' : 'ดูรายชื่อ')) + '</button>';
     }
     function manualCardHtml(a, dateRange, semLabel) {
-      var got = a.rows.filter(function (r) { return r.status !== 'missing'; }).length;
+      var got = a.rows.filter(function (r) { return r.status !== 'missing'; }).length, lateN = a.rows.filter(function (r) { return r.status === 'late'; }).length;
       var rep = a.rows.filter(function (r) { return r.status === 'missing' && r.reported; }).length;
       var h = '<div class="card" style="margin-bottom:16px; box-shadow:none; border:1px solid var(--border);">' +
         '<div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">' +
@@ -539,10 +539,10 @@
           '<span class="hint" style="margin:0;">กำหนดส่ง: ' + dateRange + '</span>' +
         '</div>' +
         '<div class="sub-item-meta" style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">ประเภทงาน: <b>' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.categoryName) + '</b>' + categoryDeptBadgeHtml(a.categoryId) + ' · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
-          ' · <span class="badge badge-ontime">ได้รับแล้ว ' + got + '</span>' + (rep ? ' <span class="badge mc-st rep">ครูแจ้งแล้ว ' + rep + '</span>' : '') + ' <span class="badge badge-missing">ยังไม่ได้รับ ' + (a.rows.length - got - rep) + '</span>' +
+          ' · <span class="badge badge-ontime">ตรวจแล้ว ' + (got - lateN) + '</span>' + (lateN ? ' <span class="badge badge-late">ส่งหลังกำหนด ' + lateN + '</span>' : '') + (rep ? ' <span class="badge mc-st rep">ครูแจ้งแล้ว ' + rep + '</span>' : '') + ' <span class="badge badge-missing">ยังไม่ตรวจ ' + (a.rows.length - got - rep) + '</span>' +
           '<span style="flex:1"></span>' + manualBtnHtml(a) +
         '</div>' +
-        '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันที่ตรวจรับ</th><th>หมายเหตุ</th></tr></thead><tbody>';
+        '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันที่ตรวจ</th><th>หมายเหตุ</th></tr></thead><tbody>';
       a.rows.forEach(function (r) {
         h += '<tr><td class="asg-name">' + escapeHtml(r.userName) + '</td><td class="asg-st">' + manualStatusHtml(r) + '</td>' +
           '<td class="asg-time">' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : (r.reported && r.reportedAt ? '<span class="hint" style="margin:0">แจ้งเมื่อ ' + escapeHtml(formatDateThai(String(r.reportedAt).slice(0, 10))) + '</span>' : '<span class="asg-none">-</span>')) + '</td>' +
@@ -560,7 +560,7 @@
       if (!r) return '<span class="mx-c mx-na">—</span>';
       var noRv = a.reviewMode === 'none', v = r.review || { status: 'none' }, cls, txt, ic;
       if (a.manual) { // 1.93: ตรวจรายคน
-        if (r.status !== 'missing') return '<span class="mx-c ' + (r.status === 'late' ? 'mx-late' : 'mx-ok') + '" title="ตรวจรับ ' + escapeHtml(formatDateTimeThai(r.submittedAt)) + '"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ได้รับแล้ว</span>';
+        if (r.status !== 'missing') return '<span class="mx-c ' + (r.status === 'late' ? 'mx-late' : 'mx-ok') + '" title="ตรวจ ' + escapeHtml(formatDateTimeThai(r.submittedAt)) + '"><i class="fa-solid fa-' + (r.status === 'late' ? 'clock' : 'circle-check') + '" aria-hidden="true"></i> ' + (r.status === 'late' ? 'หลังกำหนด' : 'ตรวจแล้ว') + '</span>';
         if (r.reported) return '<span class="mx-c mx-rv"><i class="fa-solid fa-hand" aria-hidden="true"></i> ครูแจ้งแล้ว</span>';
       }
       if (r.status === 'missing') {

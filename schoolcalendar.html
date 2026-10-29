@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.94.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.95.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -61,7 +61,7 @@
       </div>
     </div>
   </div>
-  <script src="assets/api.js?v=1.94.0.291026"></script>
+  <script src="assets/api.js?v=1.95.0.291026"></script>
   <script>
     var session = requireLogin();
     if (session) mountChrome('schoolcal');
@@ -79,7 +79,9 @@
     // รายการพร้อมช่วงที่แสดงในปฏิทินโรงเรียน
     function items(from, to) {
       var evs = expandRepeatEvents(data.events, from, to);
-      return evs.map(function (e) { var sp = schoolCalSpan(e); return { e: e, from: sp.from, to: sp.to, mode: sp.mode }; })
+      var out = [];
+      evs.forEach(function (e) { var sp = schoolCalSpan(e); if (sp.mode === 'ends') { out.push({ e: e, from: sp.from, to: sp.from, mode: 'ends', part: 'first' }); out.push({ e: e, from: sp.to, to: sp.to, mode: 'ends', part: 'last' }); } else out.push({ e: e, from: sp.from, to: sp.to, mode: sp.mode }); });
+      return out
         .filter(function (x) { return x.from <= to && x.to >= from && (!state.kind || (state.kind === 'activity') === isActivityEv(x.e)); });
     }
     function holidayDays(from, to) {
@@ -154,8 +156,9 @@
         var sub = [];
         if (act) { if (e.timeStart) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); if (e.attMode === 'holiday') sub.push('วันหยุด'); }
         var full = e.endDate && e.endDate !== e.date;
+        if (x.part) sub.unshift(x.part === 'first' ? 'วันแรก' : 'วันสุดท้าย');
         if (full && x.mode !== 'range') sub.push((act ? '' : 'ส่งได้ ') + (e.date.slice(0, 7) === e.endDate.slice(0, 7) ? +e.date.slice(8) + '–' + shortD(e.endDate) : shortD(e.date) + ' – ' + shortD(e.endDate)));
-        if (!act && e.manualCheck) sub.push('ส่งนอกระบบ · เจ้าหน้าที่ตรวจรับ');
+        if (!act && e.manualCheck) sub.push('ส่งนอกระบบ · เจ้าหน้าที่ตรวจรายคน');
         var kind = act ? '<span class="sc-kind ac"><i class="fa-solid fa-flag" aria-hidden="true"></i> กิจกรรม</span>' : '<span class="sc-kind dl"><i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> ' + (e.noSubmission && !e.manualCheck ? 'แจ้งเตือน' : 'ส่งงาน') + '</span>';
         var dot = act ? '<span class="sc-dot" style="background:' + activityColor(e) + '"></span>' : '<span class="sc-dot" style="background:' + (colorMap[e.categoryId] || '#9aa4b8') + '"></span>';
         var hl = state.day && state.day >= x.from && state.day <= x.to;

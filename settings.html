@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.94.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.95.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -1267,8 +1267,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.94.0.291026"></script>
-  <script src="assets/gallery.js?v=1.94.0.291026"></script>
+  <script src="assets/api.js?v=1.95.0.291026"></script>
+  <script src="assets/gallery.js?v=1.95.0.291026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -2664,7 +2664,7 @@
                 (c.hideFromPortfolio ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-eye-slash ui-icon" aria-hidden="true"></i> ไม่แสดงสาธารณะ</span>' : '') +
               '</div>' +
               (c.noSubmission
-                ? '<div class="sub-item-meta">' + (c.manualCheck ? 'ครูส่งนอกระบบ เจ้าหน้าที่ตรวจรับรายคน' : 'ไม่ส่งผ่านระบบ') + ' — ไม่มีรูปแบบการ์ดหรือข้อมูลที่ต้องกรอก</div>'
+                ? '<div class="sub-item-meta">' + (c.manualCheck ? 'ครูส่งนอกระบบ เจ้าหน้าที่ตรวจรายคน' : 'ไม่ส่งผ่านระบบ') + ' — ไม่มีรูปแบบการ์ดหรือข้อมูลที่ต้องกรอก</div>'
                 : '<div class="sub-item-meta">รูปแบบการ์ด: ' + escapeHtml(tplDef ? tplDef.label.split(' — ')[0] : 'ไฟล์เล็ก') + ' · ข้อมูลที่ต้องกรอก: ' + escapeHtml(fieldsLabel) + '</div>') + deptMeta + '</div>' +
               '<div style="display:flex; gap:6px; flex-shrink:0; align-items:center;">' +
                 '<button class="btn btn-secondary btn-sm" data-cat-edit="' + c.id + '">แก้ไข</button>' +
