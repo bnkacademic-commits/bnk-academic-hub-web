@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<!-- 1.80: PWA — ติดตั้งลงหน้าจอหลัก/คอมได้ (manifest + ไอคอน · sw.js ลงทะเบียนใน api.js) -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<title>ปฏิทินโรงเรียน — BNKAcademicHub</title>
+<!-- Font Awesome ฝังไฟล์ไว้ในเว็บเอง (ไม่พึ่ง CDN ภายนอก ตามแนวทางเดิมของโปรเจกต์ เหมือนฟอนต์ Sarabun) -->
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=1.93.0.291026" />
+<!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
+<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
+</head>
+<body>
+  <div id="app-topbar"></div>
+  <div class="container">
+    <!-- 1.93: ปฏิทินโรงเรียน — ภาพรวม 12 เดือนของปีการศึกษา → กดเดือน = ปฏิทินแบบหน้าแรก + ตาราง วัน / วันที่ / กิจกรรม / ผู้รับผิดชอบ -->
+    <div id="scYear">
+      <div class="page-header sc-head">
+        <div>
+          <h1><i class="fa-solid fa-calendar-week ui-icon" style="color:var(--primary)" aria-hidden="true"></i> ปฏิทินโรงเรียน</h1>
+          <p>กำหนดส่งงานและกิจกรรมทั้งหมดของโรงเรียน — เลือกเดือนเพื่อดูรายละเอียด</p>
+        </div>
+        <div class="sc-yearnav sc-noprint">
+          <button type="button" class="btn btn-secondary" id="scPrevY" aria-label="ปีการศึกษาก่อนหน้า"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
+          <span class="sc-ylabel" id="scYLabel">ปีการศึกษา</span>
+          <button type="button" class="btn btn-secondary" id="scNextY" aria-label="ปีการศึกษาถัดไป"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <div class="sc-grid" id="scGrid"><div class="loading">กำลังโหลด...</div></div>
+      <div class="sc-legend"><span><i style="background:var(--primary-light)"></i>มีกำหนดส่งงาน/กิจกรรม</span><span><i style="background:#fde68a"></i>วันนี้</span><span><b style="color:#dc2626">ตัวเลขแดง</b> = วันหยุด (กิจกรรมแบบวันหยุด)</span><span>เรียงตามปีการศึกษา พฤษภาคม – เมษายน</span></div>
+    </div>
+    <div id="scMonth" hidden>
+      <div class="sc-mhead">
+        <div class="l"><button type="button" class="btn btn-secondary sc-noprint" id="scBack"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i> ทั้ง 12 เดือน</button><h2 id="scMTitle"></h2><span id="scMTerm"></span></div>
+        <div class="r sc-noprint"><button type="button" class="btn btn-secondary" id="scPrevM"></button><button type="button" class="btn btn-secondary" id="scNextM"></button><button type="button" class="btn btn-secondary" id="scPrint"><i class="fa-solid fa-print" aria-hidden="true"></i> พิมพ์ / PDF</button></div>
+      </div>
+      <div class="sc-body">
+        <div class="card sc-cal-card" style="margin:0">
+          <div class="calendar-grid" id="scCal"></div>
+          <div class="cal-legend" id="scCalLegend"></div>
+        </div>
+        <div class="card" style="margin:0">
+          <div class="section-title" style="justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <span><i class="fa-solid fa-list-ul ui-icon" aria-hidden="true"></i> รายการเดือนนี้ <span class="hint" id="scCount" style="margin:0; font-weight:400;"></span></span>
+            <div class="evk-seg sc-noprint" id="scKind" style="margin:0;"><button type="button" data-k="" class="on">ทั้งหมด</button><button type="button" data-k="deadline">กำหนดส่งงาน</button><button type="button" data-k="activity">กิจกรรม</button></div>
+          </div>
+          <div class="sc-tbl-wrap" id="scTable"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="assets/api.js?v=1.93.0.291026"></script>
+  <script>
+    var session = requireLogin();
+    if (session) mountChrome('schoolcal');
+    var DOW = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+    var MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    var data = null, catMap = {}, catDept = {}, colorMap = {}, state = { year: 0, ym: '', kind: '', day: '' }, curYear = 0;
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function ymdOf(y, m, d) { return y + '-' + pad(m) + '-' + pad(d); }
+    function lastDay(y, m) { return new Date(y, m, 0).getDate(); }
+    function dowOf(ymd) { var p = ymd.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]).getDay(); }
+    function shortD(ymd) { var p = ymd.split('-'); return +p[2] + ' ' + MS[+p[1] - 1]; }
+    // ปีการศึกษา (พ.ศ.) → เดือน พ.ค. ปีแรก ถึง เม.ย. ปีถัดไป
+    function yearMonths(be) { var y = be - 543, out = []; for (var i = 0; i < 12; i++) { var m = 5 + i; out.push({ y: y + (m > 12 ? 1 : 0), m: ((m - 1) % 12) + 1 }); } return out; }
+    function beYearOfYm(y, m) { return m >= 5 ? y + 543 : y + 542; }
+    // รายการพร้อมช่วงที่แสดงในปฏิทินโรงเรียน
+    function items(from, to) {
+      var evs = expandRepeatEvents(data.events, from, to);
+      return evs.map(function (e) { var sp = schoolCalSpan(e); return { e: e, from: sp.from, to: sp.to, mode: sp.mode }; })
+        .filter(function (x) { return x.from <= to && x.to >= from && (!state.kind || (state.kind === 'activity') === isActivityEv(x.e)); });
+    }
+    function holidayDays(from, to) {
+      var out = {};
+      expandRepeatEvents(data.events, from, to).forEach(function (e) {
+        if (!isActivityEv(e) || e.attMode !== 'holiday') return;
+        for (var d = new Date(e.date + 'T00:00:00'); d <= new Date((e.endDate || e.date) + 'T00:00:00'); d.setDate(d.getDate() + 1)) out[d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())] = 1;
+      });
+      return out;
+    }
+    function renderYear() {
+      document.getElementById('scYear').hidden = false; document.getElementById('scMonth').hidden = true;
+      document.getElementById('scYLabel').textContent = 'ปีการศึกษา ' + state.year;
+      var today = todayYmd(), html = '';
+      yearMonths(state.year).forEach(function (mm) {
+        var from = ymdOf(mm.y, mm.m, 1), to = ymdOf(mm.y, mm.m, lastDay(mm.y, mm.m));
+        var list = items(from, to), hol = holidayDays(from, to), has = {};
+        list.forEach(function (x) { for (var d = new Date((x.from < from ? from : x.from) + 'T00:00:00'); d <= new Date((x.to > to ? to : x.to) + 'T00:00:00'); d.setDate(d.getDate() + 1)) has[d.getDate()] = 1; });
+        var c = '<div class="sc-mini">' + DOW.map(function (d) { return '<span class="h">' + d + '</span>'; }).join('');
+        for (var i = 0, f = new Date(mm.y, mm.m - 1, 1).getDay(); i < f; i++) c += '<span></span>';
+        for (var d = 1; d <= lastDay(mm.y, mm.m); d++) {
+          var ds = ymdOf(mm.y, mm.m, d), cl = [];
+          if (ds === today) cl.push('t'); else if (has[d]) cl.push('e');
+          if (hol[ds]) cl.push('wk');
+          c += '<span class="' + cl.join(' ') + '">' + d + '</span>';
+        }
+        c += '</div>';
+        var cur = today.slice(0, 7) === mm.y + '-' + pad(mm.m);
+        html += '<button type="button" class="sc-month' + (cur ? ' cur' : '') + '" data-ym="' + mm.y + '-' + pad(mm.m) + '"><div class="sc-mt"><b>' + TH_MONTHS_FULL[mm.m - 1] + ' ' + (mm.y + 543) + '</b><span>' + (list.length ? list.length + ' รายการ' : '—') + '</span></div>' + c + '</button>';
+      });
+      document.getElementById('scGrid').innerHTML = html;
+    }
+    function respHtml(e) {
+      var t = responsibleText(e, e.kind === 'activity' ? '' : (e.categoryDepartment || catDept[e.categoryId] || ''));
+      var us = e.responsible && e.responsible.users ? e.responsible.users : [];
+      return escapeHtml(t || (us.length ? '' : '-')) + (us.length ? '<small>' + us.map(function (u) { return escapeHtml(u.name); }).join(', ') + '</small>' : '');
+    }
+    function renderMonth() {
+      document.getElementById('scYear').hidden = true; document.getElementById('scMonth').hidden = false;
+      var y = +state.ym.slice(0, 4), m = +state.ym.slice(5, 7);
+      var from = ymdOf(y, m, 1), to = ymdOf(y, m, lastDay(y, m)), today = todayYmd();
+      document.getElementById('scMTitle').textContent = TH_MONTHS_FULL[m - 1] + ' ' + (y + 543);
+      var be = beYearOfYm(y, m);
+      document.getElementById('scMTerm').innerHTML = '<span class="year-tag" style="font-size:0.85rem">ปีการศึกษา ' + be + '</span>';
+      var pm = m === 1 ? 12 : m - 1, nm = m === 12 ? 1 : m + 1;
+      document.getElementById('scPrevM').innerHTML = '<i class="fa-solid fa-chevron-left" aria-hidden="true"></i> ' + MS[pm - 1];
+      document.getElementById('scNextM').innerHTML = MS[nm - 1] + ' <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>';
+      var list = items(from, to), hol = holidayDays(from, to);
+      // ปฏิทิน: กำหนดส่งงาน = จุดสี · กิจกรรม = แถบ (แบบหน้าแรก)
+      var g = DOW.map(function (d, i) { return '<div class="dow d' + i + '">' + d + '</div>'; }).join('');
+      for (var i = 0, f = new Date(y, m - 1, 1).getDay(); i < f; i++) g += '<div class="calendar-cell empty"></div>';
+      var legend = {}, hasAct = false;
+      for (var d = 1; d <= lastDay(y, m); d++) {
+        var ds = ymdOf(y, m, d), on = list.filter(function (x) { return ds >= x.from && ds <= x.to; });
+        var acts = on.filter(function (x) { return isActivityEv(x.e); }).map(function (x) { return x.e; }), dls = on.filter(function (x) { return !isActivityEv(x.e); }).map(function (x) { return x.e; });
+        if (acts.length) hasAct = true;
+        dls.forEach(function (e) { legend[e.categoryId || '_'] = e.categoryName || e.title; });
+        var dots = dls.slice(0, 4).map(function (e) { return '<i class="cal-dot" style="background:' + (colorMap[e.categoryId] || '#9aa4b8') + '" title="' + escapeHtml(e.title) + '"></i>'; }).join('') + (dls.length > 4 ? '<span class="cal-dot-more">+' + (dls.length - 4) + '</span>' : '');
+        g += '<div class="calendar-cell' + (ds === today ? ' is-today' : '') + (on.length ? ' has-event' : '') + (state.day === ds ? ' sc-hl' : '') + '"' + (on.length ? ' data-day="' + ds + '" role="button" tabindex="0" title="' + escapeHtml(on.map(function (x) { return x.e.title; }).join(', ')) + '"' : '') + '>' +
+          '<div class="day-num"' + (hol[ds] ? ' style="color:#dc2626"' : '') + '>' + d + '</div>' + (ds === today ? '<span class="cal-today-label">วันนี้</span>' : '') + activityBarsHtml(acts) + (dots ? '<div class="cal-dots">' + dots + '</div>' : '') + '</div>';
+      }
+      document.getElementById('scCal').innerHTML = g;
+      var lk = Object.keys(legend);
+      document.getElementById('scCalLegend').innerHTML = lk.slice(0, 10).map(function (k) { return '<span><i class="cal-dot" style="background:' + (colorMap[k] || '#9aa4b8') + ';"></i>' + escapeHtml(legend[k]) + '</span>'; }).join('') + (hasAct ? '<span><i class="cal-act-swatch" aria-hidden="true"></i>แถบ = กิจกรรม</span>' : '');
+      // ตาราง
+      list.sort(function (a, b) { return a.from.localeCompare(b.from) || (isActivityEv(a.e) === isActivityEv(b.e) ? 0 : isActivityEv(a.e) ? -1 : 1) || String(a.e.title).localeCompare(String(b.e.title), 'th'); });
+      document.getElementById('scCount').textContent = list.length + ' รายการ';
+      if (!list.length) { document.getElementById('scTable').innerHTML = '<div class="empty-state">ไม่มีกำหนดส่งงานหรือกิจกรรมในเดือนนี้</div>'; return; }
+      document.getElementById('scTable').innerHTML = '<table class="sc-tbl"><thead><tr><th style="width:60px">วัน</th><th style="width:110px">วันที่</th><th>กิจกรรม</th><th style="width:26%">ผู้รับผิดชอบ</th></tr></thead><tbody>' + list.map(function (x) {
+        var e = x.e, act = isActivityEv(e), dw = dowOf(x.from);
+        var dt = x.from === x.to ? shortD(x.from) : (x.from.slice(0, 7) === x.to.slice(0, 7) ? +x.from.slice(8) + '–' + shortD(x.to) : shortD(x.from) + ' – ' + shortD(x.to));
+        var sub = [];
+        if (act) { if (e.timeStart) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); if (e.attMode === 'holiday') sub.push('วันหยุด'); }
+        var full = e.endDate && e.endDate !== e.date;
+        if (full && x.mode !== 'range') sub.push((act ? '' : 'ส่งได้ ') + (e.date.slice(0, 7) === e.endDate.slice(0, 7) ? +e.date.slice(8) + '–' + shortD(e.endDate) : shortD(e.date) + ' – ' + shortD(e.endDate)));
+        if (!act && e.manualCheck) sub.push('ส่งนอกระบบ · เจ้าหน้าที่ตรวจรับ');
+        var kind = act ? '<span class="sc-kind ac"><i class="fa-solid fa-flag" aria-hidden="true"></i> กิจกรรม</span>' : '<span class="sc-kind dl"><i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> ' + (e.noSubmission && !e.manualCheck ? 'แจ้งเตือน' : 'ส่งงาน') + '</span>';
+        var dot = act ? '<span class="sc-dot" style="background:' + activityColor(e) + '"></span>' : '<span class="sc-dot" style="background:' + (colorMap[e.categoryId] || '#9aa4b8') + '"></span>';
+        var hl = state.day && state.day >= x.from && state.day <= x.to;
+        return '<tr' + (hl ? ' class="sc-row-hl"' : '') + ' data-from="' + x.from + '"><td><span class="sc-dow d' + dw + '">' + DOW[dw] + '</span></td><td class="sc-date">' + escapeHtml(dt) + '</td>' +
+          '<td>' + kind + dot + '<span class="sc-t">' + escapeHtml(e.title) + '</span>' + (sub.length ? '<span class="sc-small">' + escapeHtml(sub.join(' · ')) + '</span>' : '') + '</td>' +
+          '<td class="sc-resp">' + respHtml(e) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+    }
+    function render() { if (!data) return; if (state.ym) renderMonth(); else renderYear(); }
+    function go(hash) { if (location.hash !== hash) location.hash = hash; else fromHash(); }
+    function fromHash() {
+      var h = location.hash.replace(/^#/, ''), mm = /^m=(\d{4})-(\d{2})$/.exec(h), yy = /^y=(\d{4})$/.exec(h);
+      state.day = '';
+      if (mm) { state.ym = mm[1] + '-' + mm[2]; state.year = beYearOfYm(+mm[1], +mm[2]); }
+      else { state.ym = ''; state.year = yy ? +yy[1] : (state.year || curYear); }
+      render(); window.scrollTo(0, 0);
+    }
+    window.addEventListener('hashchange', fromHash);
+    document.getElementById('scGrid').addEventListener('click', function (e) { var b = e.target.closest('[data-ym]'); if (b) go('#m=' + b.getAttribute('data-ym')); });
+    document.getElementById('scPrevY').addEventListener('click', function () { go('#y=' + (state.year - 1)); });
+    document.getElementById('scNextY').addEventListener('click', function () { go('#y=' + (state.year + 1)); });
+    document.getElementById('scBack').addEventListener('click', function () { go('#y=' + state.year); });
+    function shiftM(n) { var y = +state.ym.slice(0, 4), m = +state.ym.slice(5, 7) + n; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } go('#m=' + y + '-' + pad(m)); }
+    document.getElementById('scPrevM').addEventListener('click', function () { shiftM(-1); });
+    document.getElementById('scNextM').addEventListener('click', function () { shiftM(1); });
+    document.getElementById('scPrint').addEventListener('click', function () { window.print(); });
+    document.getElementById('scKind').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-k]'); if (!b) return; state.kind = b.getAttribute('data-k');
+      document.querySelectorAll('#scKind [data-k]').forEach(function (x) { x.classList.toggle('on', x === b); }); render();
+    });
+    function pickDay(ds) {
+      state.day = state.day === ds ? '' : ds; renderMonth();
+      var r = document.querySelector('#scTable tr.sc-row-hl'); if (r) r.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    document.getElementById('scCal').addEventListener('click', function (e) { var c = e.target.closest('[data-day]'); if (c) pickDay(c.getAttribute('data-day')); });
+    document.getElementById('scCal').addEventListener('keydown', function (e) { if (e.key !== 'Enter' && e.key !== ' ') return; var c = e.target.closest('[data-day]'); if (c) { e.preventDefault(); pickDay(c.getAttribute('data-day')); } });
+    (async function load() {
+      if (!session) return;
+      try {
+        var r = await Promise.all([apiCall('schoolCalendar', {}), currentAcademicTerm().catch(function () { return null; }), getSiteSettings().catch(function () { return null; })]);
+        data = r[0];
+        colorMap = buildCategoryColorMap(data.categories || []);
+        (data.categories || []).forEach(function (c) { catDept[c.id] = c.department || ''; });
+        curYear = r[1] && r[1].year ? +r[1].year : beYearOfYm(new Date().getFullYear(), new Date().getMonth() + 1);
+        state.year = curYear;
+        fromHash();
+      } catch (err) {
+        document.getElementById('scGrid').innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+      }
+    })();
+  </script>
+</body>
+</html>

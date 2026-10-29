@@ -3924,3 +3924,130 @@ ul.sr-tl li .h b { font-size: 0.98rem; }
 ul.sr-tl li .h .btn { margin-left: auto; }
 ul.sr-tl li small { display: block; color: var(--text-muted); margin-top: 2px; }
 .sr-next { font-size: 0.72rem; font-weight: 800; color: #1d4ed8; background: #dbeafe; border-radius: 999px; padding: 2px 8px; }
+
+/* ---------- 1.93: ตรวจรายคน (ป็อปอัป #mcModal) ---------- */
+.mc-box { width: min(880px, 94vw) !important; max-width: min(880px, 94vw) !important; text-align: left; }
+.mc-title { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; padding-right: 28px; }
+.mc-title i { color: var(--primary); }
+.mc-sub { color: var(--text-muted); font-size: 0.86rem; margin-bottom: 12px; }
+.mc-prog { margin-bottom: 10px; }
+.mc-prog-t { display: flex; justify-content: space-between; font-size: 0.92rem; margin-bottom: 5px; }
+.mc-prog-t span { color: #16a34a; font-weight: 700; }
+.mc-bar { height: 9px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.mc-bar i { display: block; height: 100%; background: #16a34a; border-radius: 99px; transition: width .25s; }
+.mc-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.mc-seg { margin: 0; flex: 0 1 auto; }
+.mc-seg button { padding: 7px 12px; white-space: nowrap; }
+.mc-q { flex: 1 1 200px; min-width: 160px; }
+.mc-list { max-height: 46vh; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+.mc-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.mc-table th { position: sticky; top: 0; z-index: 1; background: var(--surface-2); text-align: left; padding: 8px 10px; font-size: 0.82rem; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.mc-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.mc-table tr:last-child td { border-bottom: 0; }
+.mc-table tr.is-ok td { background: rgba(22, 163, 74, .06); }
+.mc-c { width: 40px; text-align: center; }
+.mc-name { font-weight: 600; }
+.mc-left { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); border: 1px solid var(--border); border-radius: 6px; padding: 0 5px; }
+.mc-stc small { display: block; color: var(--text-muted); font-size: 0.76rem; }
+.mc-st { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: 700; border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+.mc-st.ok { background: #dcfce7; color: #15803d; }
+.mc-st.new { background: #d1fae5; color: #047857; border: 1px dashed #10b981; }
+.mc-st.rep { background: #fef3c7; color: #92400e; }
+.mc-st.no { background: var(--surface-2); color: var(--text-muted); }
+.mc-note input { width: 100%; min-width: 120px; padding: 5px 8px; font-size: 0.85rem; }
+.mc-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mc-gap { flex: 1; }
+:root[data-theme="dark"] .mc-st.ok { background: rgba(22,163,74,.2); color: #86efac; }
+:root[data-theme="dark"] .mc-st.new { background: rgba(16,185,129,.15); color: #6ee7b7; }
+:root[data-theme="dark"] .mc-st.rep { background: rgba(245,158,11,.18); color: #fcd34d; }
+@media (max-width: 640px) { .mc-sg { display: none; } .mc-note input { min-width: 90px; } }
+/* ป้ายสถานะงานตรวจรายคน (หน้าแรกครู / รายการ) */
+.mc-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; font-weight: 700; border-radius: 999px; padding: 4px 11px; white-space: nowrap; }
+.mc-badge.ok { background: #dcfce7; color: #15803d; }
+.mc-badge.rep { background: #fef3c7; color: #92400e; }
+.mc-badge.no { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+:root[data-theme="dark"] .mc-badge.ok { background: rgba(22,163,74,.2); color: #86efac; }
+:root[data-theme="dark"] .mc-badge.rep { background: rgba(245,158,11,.18); color: #fcd34d; }
+.mc-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.mc-side .linklike { font-size: 0.78rem; }
+.mc-note-t { font-size: 0.8rem; color: var(--text-muted); }
+.evl-mc { display: inline-flex; align-items: center; gap: 4px; font-size: 0.74rem; font-weight: 700; color: #0e7490; background: #cffafe; border-radius: 6px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }
+:root[data-theme="dark"] .evl-mc { background: rgba(8,145,178,.2); color: #67e8f9; }
+
+/* ---------- 1.93: ผู้รับผิดชอบ + การแสดงในปฏิทินโรงเรียน (ป็อปอัปกำหนดการ) ---------- */
+.rsp-row { display: flex; gap: 8px; align-items: center; }
+.rsp-row .rsp-text { flex: 1; min-width: 0; }
+.rsp-row .btn { white-space: nowrap; }
+.rsp-sel { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.rsp-sel:empty { display: none; }
+.rsp-box { margin-top: 6px; border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
+.ev-sc-box { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: var(--surface-2); margin: 6px 0 10px; }
+.ev-sc-box > b { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.ev-sc-box > b i { color: var(--primary); }
+.ev-sc-box .evk-seg { margin-bottom: 4px; }
+
+/* ---------- 1.93: หน้าปฏิทินโรงเรียน (schoolcalendar.html) ---------- */
+.sc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.sc-yearnav { display: flex; gap: 6px; align-items: center; }
+.sc-yearnav .sc-ylabel { font-weight: 700; padding: 8px 16px; border-radius: 10px; background: var(--primary); color: #fff; min-width: 160px; text-align: center; }
+.sc-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .sc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .sc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .sc-grid { grid-template-columns: minmax(0, 1fr); } }
+.sc-month { display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); cursor: pointer; text-align: left; font: inherit; color: inherit; transition: transform .12s, box-shadow .12s, border-color .12s; }
+.sc-month:hover, .sc-month:focus-visible { transform: translateY(-2px); border-color: var(--primary); outline: none; }
+.sc-month.cur { border: 2px solid var(--primary); }
+.sc-mt { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-bottom: 6px; }
+.sc-mt b { font-size: 1.02rem; }
+.sc-mt span { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+.sc-mini { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; text-align: center; font-size: 0.72rem; }
+.sc-mini .h { font-weight: 700; color: var(--text-muted); font-size: 0.68rem; }
+.sc-mini span { height: 20px; line-height: 20px; border-radius: 5px; }
+.sc-mini span.e { background: var(--primary-light); color: var(--primary-dark); font-weight: 700; }
+.sc-mini span.t { background: #fde68a; color: #78350f; font-weight: 700; }
+.sc-mini span.wk { color: #dc2626; }
+:root[data-theme="dark"] .sc-mini span.t { background: rgba(250,204,21,.3); color: #fde68a; }
+.sc-legend { margin-top: 12px; font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.sc-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -1px; margin-right: 4px; }
+.sc-mhead { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.sc-mhead h2 { margin: 0; font-size: 1.5rem; }
+.sc-mhead .l, .sc-mhead .r { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.sc-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 16px; align-items: start; }
+@media (max-width: 980px) { .sc-body { grid-template-columns: minmax(0, 1fr); } }
+.sc-body .calendar-cell { cursor: default; }
+.sc-body .calendar-cell.has-event { cursor: pointer; }
+.sc-body .calendar-cell.sc-hl { outline: 2px solid var(--primary); outline-offset: -2px; }
+.sc-tbl-wrap { overflow-x: auto; }
+.sc-tbl { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.sc-tbl th { text-align: left; background: var(--surface-2); color: var(--text-muted); font-size: 0.82rem; padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.sc-tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.sc-tbl tr.sc-row-hl td { background: var(--primary-light); }
+.sc-dow { display: inline-block; min-width: 34px; text-align: center; font-weight: 700; font-size: 0.8rem; border-radius: 7px; padding: 2px 6px; }
+.sc-dow.d0 { background: #fee2e2; color: #b91c1c; } .sc-dow.d1 { background: #fef9c3; color: #854d0e; } .sc-dow.d2 { background: #fce7f3; color: #9d174d; }
+.sc-dow.d3 { background: #dcfce7; color: #166534; } .sc-dow.d4 { background: #ffedd5; color: #9a3412; } .sc-dow.d5 { background: #e0f2fe; color: #075985; } .sc-dow.d6 { background: #ede9fe; color: #5b21b6; }
+:root[data-theme="dark"] .sc-dow { filter: saturate(.9) brightness(.85); }
+.sc-date { font-weight: 700; white-space: nowrap; }
+.sc-kind { display: inline-flex; align-items: center; gap: 4px; font-size: 0.74rem; font-weight: 700; border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 1px; white-space: nowrap; }
+.sc-kind.dl { background: #dbeafe; color: #1e40af; }
+.sc-kind.ac { background: #f3e8ff; color: #6b21a8; }
+:root[data-theme="dark"] .sc-kind.dl { background: rgba(59,130,246,.2); color: #93c5fd; }
+:root[data-theme="dark"] .sc-kind.ac { background: rgba(168,85,247,.2); color: #d8b4fe; }
+.sc-t { font-weight: 600; }
+.sc-small { display: block; font-size: 0.8rem; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+.sc-resp small { display: block; color: var(--text-muted); font-size: 0.8rem; }
+.sc-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+@media print {
+  .sc-noprint, #app-topbar, #app-sidenav, .site-footer { display: none !important; }
+  .sc-body { grid-template-columns: minmax(0, 1fr) !important; }
+  .sc-cal-card { display: none !important; }
+}
+/* 1.93: วิธีส่งงานของประเภทงาน (หน้าตั้งค่า) */
+.cat-mode { display: flex; flex-direction: column; gap: 8px; }
+.cat-mode-opt { display: flex; gap: 10px; align-items: flex-start; border: 1.5px solid var(--border); border-radius: 12px; padding: 10px 12px; cursor: pointer; font-weight: 400; }
+.cat-mode-opt input { width: auto; margin-top: 4px; flex: none; }
+.cat-mode-opt b { display: block; }
+.cat-mode-opt small { display: block; color: var(--text-muted); font-size: 0.82rem; line-height: 1.45; }
+.cat-mode-opt:has(input:checked) { border-color: var(--primary); background: var(--primary-light); }
+
+#scKind button { white-space: nowrap; padding: 7px 12px; }
+.sc-legend i { border: 1px solid var(--border); }

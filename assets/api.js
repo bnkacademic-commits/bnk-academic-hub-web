@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.92.3';
-var APP_VERSION = '1.92.6.291026';
+var WORKER_MIN_VERSION = '1.93.0';
+var APP_VERSION = '1.93.0.291026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -853,7 +853,7 @@ var ICON_FA = {
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
   sun: 'fa-sun', palette: 'fa-palette', layout: 'fa-table-cells-large', pin: 'fa-thumbtack', clock: 'fa-clock',
-  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images'
+  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images', schoolcal: 'fa-calendar-week'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -1705,6 +1705,7 @@ var NAV_SLOTS = [
   { slot: 'memo', label: 'จัดทำบันทึกข้อความ', icon: 'memo', who: ['teacher', 'staff'] },
   { slot: 'summary', label: 'สรุปรวมการส่งงาน', icon: 'summary', who: ['staff', 'exec', 'super'] },
   { slot: 'announce', label: 'ประกาศและปฏิทิน', icon: 'announce', who: ['staff', 'exec', 'super'] },
+  { slot: 'schoolcal', label: 'ปฏิทินโรงเรียน', icon: 'schoolcal', who: ['all'] }, // 1.93
   { slot: 'directory', label: 'ทำเนียบบุคลากร', icon: 'directory', who: ['all'] },
   { slot: 'orders', label: 'คลังคำสั่ง', icon: 'orders', who: ['all'] },
   { slot: 'certs', label: 'คลังเกียรติบัตร', icon: 'certs', who: ['all'] },
@@ -1759,6 +1760,8 @@ function navLinksFor(session) {
     links.push({ href: 'announce.html', label: 'ประกาศและปฏิทิน', key: 'announce', icon: 'announce' });
   }
   // "ทำเนียบบุคลากรโรงเรียน" (ตั้งแต่ 1.32.101026): ทุกบทบาทที่ล็อกอินเห็นแท็บนี้ — mountChrome ซ่อนให้เองถ้า Super Admin ตั้งไว้ว่า "ปิด" (settings.directoryMode)
+  // 1.93: "ปฏิทินโรงเรียน" — ทุกบัญชีที่ล็อกอินเห็น (กำหนดส่งงาน + กิจกรรมทั้งโรงเรียน รายเดือน)
+  if (session) links.push({ href: 'schoolcalendar.html', label: 'ปฏิทินโรงเรียน', key: 'schoolcal', icon: 'schoolcal' });
   if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
   // "คลังคำสั่ง" (ตั้งแต่ 1.41.111026 ชื่อเดิม "ไฟล์คำสั่ง"; เปลี่ยนชื่อใน 1.43.111026): ทุกบทบาทที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ — แก้ไข/ลบได้เฉพาะเจ้าของ
   if (session) links.push({ href: 'orders.html', label: 'คลังคำสั่ง', key: 'orders', icon: 'orders' });
@@ -2996,4 +2999,182 @@ function initTimetable() {
     if (_tt.view !== 'me' && !(_tt.data.rooms || []).some(function (r) { return r.roomId === _tt.view; })) _tt.view = 'me';
     ttRender();
   });
+}
+
+// ---------- 1.93: ตรวจรายคน (ประเภทงาน "แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน") — ใช้ร่วมกันในหน้าประกาศและปฏิทิน / สรุปรวมการส่งงาน ----------
+// openManualCheck(eventId, { onSaved }) — เจ้าหน้าที่กลุ่มเจ้าของงาน/ผู้ดูแลระบบติ๊ก "ได้รับแล้ว" ทีละคน (หลายคนแล้วบันทึกครั้งเดียว) · ผู้บริหาร/หัวหน้ากลุ่มดูอย่างเดียว
+var _mc = null;
+function _mcEnsure() {
+  var m = document.getElementById('mcModal');
+  if (m) return m;
+  var w = document.createElement('div');
+  w.innerHTML = '<div class="modal-backdrop" id="mcModal" hidden><div class="modal-box modal-box-wide mc-box">' +
+    '<button type="button" class="modal-close-x" id="mcX" aria-label="ปิด">✕</button>' +
+    '<h3 id="mcTitle" class="mc-title"></h3><div class="mc-sub" id="mcSub"></div>' +
+    '<div id="mcHead"></div><div id="mcList" class="mc-list"></div>' +
+    '<div class="modal-actions mc-actions"><button type="button" class="btn btn-secondary" id="mcAll"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ติ๊กทุกคนในรายการ</button>' +
+    '<span class="mc-gap"></span><button type="button" class="btn btn-ghost btn-close" id="mcClose">ปิด</button><button type="button" class="btn btn-success" id="mcSave"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> <span id="mcSaveTx">บันทึก</span></button></div>' +
+    '</div></div>';
+  m = w.firstChild; document.body.appendChild(m);
+  var close = async function () {
+    if (_mc && _mcChanges().length && !(await askConfirm('ยังไม่ได้บันทึกการตรวจรับ ' + _mcChanges().length + ' คน ปิดโดยไม่บันทึก?', 'ปิดหน้าต่างตรวจรายคน'))) return;
+    hideModalEl(m); _mc = null;
+  };
+  document.getElementById('mcX').addEventListener('click', close);
+  document.getElementById('mcClose').addEventListener('click', close);
+  document.getElementById('mcHead').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-mcf]'); if (!b || !_mc) return;
+    _mc.filter = b.getAttribute('data-mcf'); _mc.keep = {}; _mcRenderHead(); _mcRenderList();
+  });
+  document.getElementById('mcHead').addEventListener('input', function (e) { if (e.target.id === 'mcQ' && _mc) { _mc.q = e.target.value; _mc.keep = {}; _mcRenderList(); } });
+  document.getElementById('mcList').addEventListener('change', function (e) {
+    var c = e.target.closest('[data-mcu]'); if (!c || !_mc) return;
+    _mc.draft[c.getAttribute('data-mcu')].received = c.checked; _mc.keep[c.getAttribute('data-mcu')] = 1; _mcRenderHead(); _mcRenderList(); // แถวที่เพิ่งติ๊กยังอยู่จนกว่าจะเปลี่ยนตัวกรอง
+  });
+  document.getElementById('mcList').addEventListener('input', function (e) {
+    var n = e.target.closest('[data-mcn]'); if (!n || !_mc) return;
+    _mc.draft[n.getAttribute('data-mcn')].note = n.value; _mcSyncSave();
+  });
+  document.getElementById('mcAll').addEventListener('click', function () {
+    if (!_mc) return;
+    _mcVisible().forEach(function (r) { _mc.draft[r.userId].received = true; _mc.keep[r.userId] = 1; });
+    _mcRenderHead(); _mcRenderList();
+  });
+  document.getElementById('mcSave').addEventListener('click', async function () {
+    if (!_mc) return;
+    var ch = _mcChanges(); if (!ch.length) { hideModalEl(m); _mc = null; return; }
+    var cur = _mc;
+    var r = await withProgress('กำลังบันทึกการตรวจรับ', function () { return apiCall('manualCheckSave', { eventId: cur.eventId, changes: ch }); }, { successLabel: 'บันทึกแล้ว' });
+    if (!r.ok) return;
+    hideModalEl(m); _mc = null;
+    if (cur.onSaved) cur.onSaved();
+  });
+  return m;
+}
+function _mcVisible() {
+  var q = String(_mc.q || '').replace(/\s+/g, '').toLowerCase();
+  return _mc.rows.filter(function (r) {
+    var d = _mc.draft[r.userId];
+    if (_mc.keep[r.userId]) return true;
+    if (_mc.filter === 'todo' && d.received) return false;
+    if (_mc.filter === 'done' && !d.received) return false;
+    if (_mc.filter === 'reported' && !(r.status === 'reported' && !d.received)) return false;
+    return !q || (String(r.name) + String(r.subjectGroup || '')).replace(/\s+/g, '').toLowerCase().indexOf(q) !== -1;
+  });
+}
+function _mcChanges() {
+  if (!_mc) return [];
+  return _mc.rows.filter(function (r) { var d = _mc.draft[r.userId]; return d.received !== (r.status === 'received') || d.note.trim() !== (r.note || ''); })
+    .map(function (r) { var d = _mc.draft[r.userId]; return { userId: r.userId, received: d.received, note: d.note.trim() }; });
+}
+function _mcSyncSave() {
+  var n = _mcChanges().length;
+  document.getElementById('mcSaveTx').textContent = n ? 'บันทึก (' + n + ' คน)' : 'บันทึก';
+}
+function _mcRenderHead() {
+  var rows = _mc.rows, done = rows.filter(function (r) { return _mc.draft[r.userId].received; }).length;
+  var rep = rows.filter(function (r) { return r.status === 'reported' && !_mc.draft[r.userId].received; }).length;
+  var pct = rows.length ? Math.round(done / rows.length * 100) : 0;
+  var seg = function (k, t) { return '<button type="button" data-mcf="' + k + '" class="' + (_mc.filter === k ? 'on' : '') + '">' + t + '</button>'; };
+  var q = document.getElementById('mcQ'), keep = q ? q.value : (_mc.q || '');
+  var had = q && document.activeElement === q;
+  document.getElementById('mcHead').innerHTML =
+    '<div class="mc-prog"><div class="mc-prog-t"><b>ตรวจรับแล้ว ' + done + ' / ' + rows.length + ' คน</b><span>' + pct + '%</span></div><div class="mc-bar"><i style="width:' + pct + '%"></i></div></div>' +
+    '<div class="mc-tools"><div class="evk-seg mc-seg">' + seg('all', 'ทั้งหมด ' + rows.length) + seg('todo', 'ยังไม่ได้รับ ' + (rows.length - done)) + (_mc.selfReport || rep ? seg('reported', 'ครูแจ้งแล้ว ' + rep) : '') + seg('done', 'ได้รับแล้ว ' + done) + '</div>' +
+    '<input type="search" id="mcQ" class="mc-q" placeholder="ค้นหาชื่อครู / กลุ่มสาระ" aria-label="ค้นหาชื่อครู" value="' + escapeHtml(keep) + '" /></div>';
+  if (had) { var nq = document.getElementById('mcQ'); nq.focus(); nq.setSelectionRange(nq.value.length, nq.value.length); }
+  _mcSyncSave();
+}
+function _mcRenderList() {
+  var list = _mcVisible(), ed = _mc.canEdit;
+  var box = document.getElementById('mcList');
+  if (!list.length) { box.innerHTML = '<div class="empty-state" style="padding:18px 4px;">' + (_mc.rows.length ? 'ไม่พบรายชื่อตามตัวกรอง' : 'ไม่มีครูในกลุ่มเป้าหมายของงานนี้') + '</div>'; return; }
+  box.innerHTML = '<table class="mc-table"><thead><tr><th class="mc-c"></th><th>ชื่อ</th><th class="mc-sg">กลุ่มสาระ</th><th>สถานะ</th><th>หมายเหตุ</th></tr></thead><tbody>' + list.map(function (r) {
+    var d = _mc.draft[r.userId], was = r.status === 'received';
+    var st = d.received
+      ? (was ? '<span class="mc-st ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ได้รับแล้ว</span><small>' + escapeHtml(formatDateThai(String(r.checkedAt).slice(0, 10))) + (r.checkedBy ? ' · ' + escapeHtml(r.checkedBy) : '') + '</small>' : '<span class="mc-st new"><i class="fa-solid fa-check" aria-hidden="true"></i> ได้รับ (ยังไม่บันทึก)</span>')
+      : (r.status === 'reported' ? '<span class="mc-st rep"><i class="fa-solid fa-hand" aria-hidden="true"></i> ครูแจ้งว่าส่งแล้ว</span><small>' + escapeHtml(formatDateThai(String(r.reportedAt).slice(0, 10))) + '</small>' : '<span class="mc-st no">ยังไม่ได้รับ</span>');
+    return '<tr class="' + (d.received ? 'is-ok' : '') + '"><td class="mc-c"><input type="checkbox" data-mcu="' + escapeHtml(r.userId) + '"' + (d.received ? ' checked' : '') + (ed ? '' : ' disabled') + ' aria-label="ได้รับงานของ ' + escapeHtml(r.name) + '" /></td>' +
+      '<td class="mc-name">' + escapeHtml(r.name) + (r.left ? ' <span class="mc-left">ย้ายออก</span>' : '') + '</td>' +
+      '<td class="mc-sg">' + escapeHtml(r.subjectGroup ? subjectShort(r.subjectGroup) : '-') + '</td>' +
+      '<td class="mc-stc">' + st + '</td>' +
+      '<td class="mc-note">' + (ed ? '<input type="text" maxlength="300" data-mcn="' + escapeHtml(r.userId) + '" value="' + escapeHtml(d.note) + '" placeholder="—" aria-label="หมายเหตุ" />' : escapeHtml(d.note || '—')) + '</td></tr>';
+  }).join('') + '</tbody></table>';
+}
+async function openManualCheck(eventId, opts) {
+  opts = opts || {};
+  var m = _mcEnsure();
+  document.getElementById('mcTitle').innerHTML = '<i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ตรวจรายคน';
+  document.getElementById('mcSub').textContent = 'กำลังโหลด…';
+  document.getElementById('mcHead').innerHTML = ''; document.getElementById('mcList').innerHTML = '<div class="loading">กำลังโหลด</div>';
+  showModalEl(m);
+  try {
+    var d = await apiCall('manualCheckList', { eventId: eventId });
+    var ev = d.event, draft = {};
+    d.rows.forEach(function (r) { draft[r.userId] = { received: r.status === 'received', note: r.note || '' }; });
+    _mc = { eventId: eventId, rows: d.rows, draft: draft, keep: {}, canEdit: !!d.canEdit, filter: 'all', q: '', selfReport: ev.selfReport, onSaved: opts.onSaved };
+    document.getElementById('mcTitle').innerHTML = '<i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ตรวจรายคน: ' + escapeHtml(ev.title);
+    var range = ev.endDate && ev.endDate !== ev.date ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate) : formatDateThai(ev.date);
+    document.getElementById('mcSub').textContent = 'กำหนดส่ง ' + range + ' · ' + (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + ev.semester) + '/' + ev.academicYear + (ev.selfReport ? ' · ครูกดแจ้งว่าส่งแล้วได้' : '') + (d.canEdit ? '' : ' · ดูได้อย่างเดียว');
+    document.getElementById('mcAll').hidden = !d.canEdit; document.getElementById('mcSave').hidden = !d.canEdit;
+    _mcRenderHead(); _mcRenderList();
+  } catch (err) {
+    document.getElementById('mcSub').textContent = '';
+    document.getElementById('mcList').innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
+    document.getElementById('mcAll').hidden = true; document.getElementById('mcSave').hidden = true;
+  }
+}
+
+// ---------- 1.93: ช่องผู้รับผิดชอบ (ปฏิทินโรงเรียน) — ข้อความ + เลือกรายชื่อครู ----------
+// createResponsiblePicker(el, { users: fn, placeholder: fn }) → { get(), set(v), refresh() } · v = { text, users:[{id,name}] }
+function createResponsiblePicker(el, opts) {
+  opts = opts || {};
+  var state = { text: '', users: [], open: false, q: '' };
+  el.classList.add('rsp-pick');
+  el.innerHTML = '<div class="rsp-row"><input type="text" class="rsp-text" maxlength="150" aria-label="ผู้รับผิดชอบ" /><button type="button" class="btn btn-secondary btn-sm rsp-tg"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> เลือกรายชื่อครู</button></div>' +
+    '<div class="rsp-sel"></div><div class="aud-people rsp-box" hidden><input type="search" class="aud-q" placeholder="ค้นหาชื่อ…" aria-label="ค้นหาชื่อ" /><div class="aud-list"></div></div>';
+  var tx = el.querySelector('.rsp-text'), box = el.querySelector('.rsp-box'), sel = el.querySelector('.rsp-sel');
+  function users() { return (typeof opts.users === 'function' ? opts.users() : opts.users) || []; }
+  function render() {
+    tx.placeholder = (typeof opts.placeholder === 'function' ? opts.placeholder() : opts.placeholder) || 'ว่าง = กลุ่มเจ้าของงาน';
+    sel.innerHTML = state.users.map(function (u) { return '<span class="aud-chip">' + escapeHtml(u.name) + '<button type="button" data-rsp-rm="' + escapeHtml(u.id) + '" aria-label="เอาออก">✕</button></span>'; }).join('');
+    box.hidden = !state.open;
+    if (!state.open) return;
+    var on = {}; state.users.forEach(function (u) { on[u.id] = 1; });
+    var nq = state.q.replace(/\s+/g, '').toLowerCase();
+    box.querySelector('.aud-list').innerHTML = users().filter(function (u) { return !nq || String(u.name).replace(/\s+/g, '').toLowerCase().indexOf(nq) !== -1; }).map(function (u) {
+      return '<label class="aud-p"><input type="checkbox" data-rsp="' + escapeHtml(u.id) + '"' + (on[u.id] ? ' checked' : '') + ' /><span>' + escapeHtml(u.name) + '</span>' + (u.department ? '<small>' + escapeHtml(groupLabel(u.department)) + '</small>' : '') + '</label>';
+    }).join('') || '<div class="hint" style="padding:8px">ไม่พบชื่อ</div>';
+  }
+  tx.addEventListener('input', function () { state.text = tx.value; });
+  el.querySelector('.rsp-tg').addEventListener('click', function () { state.open = !state.open; render(); });
+  box.querySelector('.aud-q').addEventListener('input', function () { state.q = this.value; render(); });
+  box.addEventListener('change', function (e) {
+    var c = e.target.closest('[data-rsp]'); if (!c) return;
+    var id = c.getAttribute('data-rsp');
+    if (c.checked) { var u = users().filter(function (x) { return x.id === id; })[0]; if (u && state.users.length < 30) state.users.push({ id: u.id, name: u.name }); }
+    else state.users = state.users.filter(function (x) { return x.id !== id; });
+    render();
+  });
+  sel.addEventListener('click', function (e) { var b = e.target.closest('[data-rsp-rm]'); if (!b) return; state.users = state.users.filter(function (x) { return x.id !== b.getAttribute('data-rsp-rm'); }); render(); });
+  render();
+  return {
+    get: function () { return { text: state.text.trim(), users: state.users.slice() }; },
+    set: function (v) { state.text = (v && v.text) || ''; state.users = (v && Array.isArray(v.users) ? v.users : []).slice(); state.open = false; state.q = ''; tx.value = state.text; box.querySelector('.aud-q').value = ''; render(); },
+    refresh: render
+  };
+}
+// ป้ายผู้รับผิดชอบ (ข้อความที่ตั้งไว้ ไม่งั้นกลุ่มเจ้าของงาน) — ใช้ในปฏิทินโรงเรียน
+function responsibleText(e, catDept) {
+  var r = e.responsible || null;
+  if (r && r.text) return r.text;
+  if (e.kind === 'activity') return e.ownerGroup ? (e.ownerType === 'subject' ? 'กลุ่มสาระการเรียนรู้' + e.ownerGroup : groupLabel(e.ownerGroup)) : '';
+  return catDept ? groupLabel(catDept) : '';
+}
+// วันที่แสดงในปฏิทินโรงเรียนตาม calShow ('' = กำหนดส่งงาน → วันสุดท้าย · กิจกรรม → ช่วง)
+function schoolCalSpan(e) {
+  var mode = e.calShow || (e.kind === 'activity' ? 'range' : 'last'), end = e.endDate || e.date;
+  if (mode === 'first') return { from: e.date, to: e.date, mode: mode };
+  if (mode === 'last') return { from: end, to: end, mode: mode };
+  return { from: e.date, to: end, mode: 'range' };
 }
