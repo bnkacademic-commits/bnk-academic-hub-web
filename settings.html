@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.95.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -808,6 +808,9 @@
             <input type="hidden" id="catColor" value="#3457d5" />
           </div>
           <div class="field">
+            <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;"><input type="checkbox" id="catSendPrefix" style="width:auto; margin-top:3px;" /><span><span style="display:block;">เติมคำว่า "ส่ง" นำหน้าชื่อในกำหนดส่งงาน</span><span class="hint" style="margin:0;">เช่น "ส่งแผนการจัดการเรียนรู้" — กำหนดส่งงานเดิมของประเภทนี้เปลี่ยนตามด้วย (ชื่อที่ขึ้นต้นด้วย "ส่ง" อยู่แล้วไม่เติมซ้ำ)</span></span></label>
+          </div>
+          <div class="field">
             <label for="catTemplate">รูปแบบการ์ดที่ใช้แสดงผลงาน</label>
             <select id="catTemplate"></select>
             <div class="hint" style="margin-top:4px;">มีผลกับผลงานทุกชิ้นของทุกครูที่ส่งในประเภทงานนี้ — เปลี่ยนทีหลังได้เสมอที่รายการด้านล่าง</div>
@@ -816,27 +819,31 @@
           <div class="field">
             <label>วิธีส่งงานของประเภทนี้</label>
             <div class="cat-mode" id="catSubMode">
-              <label class="cat-mode-opt"><input type="radio" name="catSubMode" value="system" checked /><span><b>ส่งผ่านระบบ (อัปโหลดไฟล์)</b><small>ครูกดปุ่ม "ส่งงาน" แนบไฟล์ — ขึ้นในเช็คลิสต์และสรุปรวมการส่งงาน</small></span></label>
+              <label class="cat-mode-opt"><input type="radio" name="catSubMode" value="system" checked /><span><b>ส่งผ่านระบบ (อัปโหลดไฟล์)</b><small>ครูกดปุ่ม "ส่งงาน" แนบไฟล์ — ขึ้นในเช็คลิสต์และสรุปการส่งงาน</small></span></label>
               <label class="cat-mode-opt"><input type="radio" name="catSubMode" value="notice" /><span><b>แจ้งเตือนอย่างเดียว</b><small>ไม่มีปุ่มส่งงาน ไม่มีการตรวจ — เป็นแค่การ์ดแจ้งเตือนในปฏิทิน/กำหนดการ</small></span></label>
-              <label class="cat-mode-opt"><input type="radio" name="catSubMode" value="check" /><span><b>แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน</b><small>ครูส่งงานนอกระบบ (เช่น ส่งเล่มที่ห้องกลุ่มบริหารงาน) แล้วเจ้าหน้าที่ติ๊ก "ได้รับแล้ว" ทีละคน — ขึ้นในเช็คลิสต์ของครูและนับในสรุปรวมการส่งงาน · ตั้งให้ครูกด "แจ้งว่าส่งแล้ว" ได้ที่กำหนดการแต่ละรายการ</small></span></label>
+              <label class="cat-mode-opt"><input type="radio" name="catSubMode" value="check" /><span><b>แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน</b><small>ครูส่งงานนอกระบบ (เช่น ส่งเล่มที่ห้องกลุ่มบริหารงาน) แล้วเจ้าหน้าที่กด "ตรวจแล้ว" ทีละคน — ขึ้นในเช็คลิสต์ของครูและนับในสรุปการส่งงาน · ตั้งให้ครูกด "แจ้งว่าส่งแล้ว" ได้ที่กำหนดการแต่ละรายการ</small></span></label>
             </div>
           </div>
           <div class="field">
-            <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
-              <input type="checkbox" id="catRoomBased" style="width:auto; margin-top:3px;" />
-              <span><span style="display:block;">งานตามห้อง (สมุดโฮมรูมจากเว็บเช็คชื่อ)</span><span class="hint" style="margin:0;">ส่ง 1 ชุดต่อห้องต่อรอบ ครูที่ปรึกษาคนใดคนหนึ่งกดส่งได้ · ระบบทำ PDF จากบันทึกโฮมรูมในเว็บเช็คชื่อให้ · ตรวจรายห้อง (ต้องเชื่อมเว็บเช็คชื่อและผูกรายชื่อครูแล้ว)</span></span>
-            </label>
+            <label for="catRoomMode">งานตามห้อง</label>
+            <select id="catRoomMode">
+              <option value="0">ไม่ใช่ — ส่งรายคนตามปกติ</option>
+              <option value="1">สมุดโฮมรูม (ดึงบันทึกจากเว็บเช็คชื่อ ทำ PDF ให้)</option>
+              <option value="2">ส่งไฟล์รายห้อง (ครูที่ปรึกษาอัปโหลดไฟล์ของห้อง)</option>
+              <option value="3">ตรวจรายห้อง (ส่งนอกระบบ เจ้าหน้าที่ติ๊กว่าห้องไหนส่งแล้ว)</option>
+            </select>
+            <div class="hint" style="margin-top:4px;">ส่ง/ตรวจ 1 ครั้งต่อห้องต่อรอบ ครูที่ปรึกษาคนใดคนหนึ่งของห้องส่งได้ · เจ้าหน้าที่เห็นในสรุปการส่งงานว่าห้องไหนส่งแล้ว · ใช้รายชื่อห้องและครูที่ปรึกษาจากเว็บเช็คชื่อ (ต้องเชื่อมและผูกรายชื่อครูแล้ว) · งานตามห้องต้องเลือกวิธีส่งงานเป็น "ส่งผ่านระบบ"</div>
           </div>
           <!-- ฝ่ายที่ดูแล + การแสดงผลในหน้าสาธารณะ (ตั้งแต่ 1.26.081026) -->
           <div class="field">
             <label for="catDepartment">กลุ่มบริหารงานที่ดูแล</label>
             <select id="catDepartment"><option value="">ทุกกลุ่มบริหารงาน (ไม่ระบุ)</option></select>
-            <div class="hint" style="margin-top:4px;">ถ้าเลือกกลุ่มบริหารงาน เฉพาะเจ้าหน้าที่ของกลุ่มนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้ — ปล่อยเป็น "ทุกกลุ่มบริหารงาน" ให้เจ้าหน้าที่ทุกกลุ่มจัดการได้เหมือนเดิม</div>
+            <div class="hint" style="margin-top:4px;">ถ้าเลือกกลุ่มบริหารงาน เฉพาะเจ้าหน้าที่ของกลุ่มนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปการส่งงานของประเภทงานนี้ — ปล่อยเป็น "ทุกกลุ่มบริหารงาน" ให้เจ้าหน้าที่ทุกกลุ่มจัดการได้เหมือนเดิม</div>
           </div>
           <div class="field">
             <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
               <input type="checkbox" id="catHideFromPortfolio" style="width:auto; margin-top:3px;" />
-              <span><span style="display:block;">ไม่แสดงในหน้าแสดงผลงานครู (view.html)</span><span class="hint" style="margin:0;">เผื่อผลงานประเภทนี้ไม่ควรเปิดเผยต่อสาธารณะ — ยังส่งงาน/เห็นในแดชบอร์ด/บันทึกข้อความ/สรุปรวมได้ตามปกติ แค่ไม่ขึ้นหน้าแสดงผลงานสาธารณะเท่านั้น</span></span>
+              <span><span style="display:block;">ไม่แสดงในหน้าแสดงผลงานครู (view.html)</span><span class="hint" style="margin:0;">เผื่อผลงานประเภทนี้ไม่ควรเปิดเผยต่อสาธารณะ — ยังส่งงาน/เห็นในแดชบอร์ด/บันทึกข้อความ/สรุปการส่งงานได้ตามปกติ แค่ไม่ขึ้นหน้าแสดงผลงานสาธารณะเท่านั้น</span></span>
             </label>
           </div>
         </div>
@@ -933,7 +940,7 @@
             <div class="field mu-staff-box">
               <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
                 <input type="checkbox" id="muStaff" style="width:auto; margin-top:3px;" />
-                <span><span style="display:block;">แต่งตั้งเป็นเจ้าหน้าที่ของกลุ่มบริหารงานนี้</span><span class="hint" style="margin:0;">เจ้าหน้าที่ได้สิทธิ์แอดมินเฉพาะงานของกลุ่มที่สังกัด (ประเภทงาน กำหนดการ สรุปรวม ไฟล์คำสั่ง) และยังส่งผลงานของตนเองได้เหมือนครู</span></span>
+                <span><span style="display:block;">แต่งตั้งเป็นเจ้าหน้าที่ของกลุ่มบริหารงานนี้</span><span class="hint" style="margin:0;">เจ้าหน้าที่ได้สิทธิ์แอดมินเฉพาะงานของกลุ่มที่สังกัด (ประเภทงาน กำหนดการ สรุปการส่งงาน ไฟล์คำสั่ง) และยังส่งผลงานของตนเองได้เหมือนครู</span></span>
               </label>
             </div>
           </div>
@@ -1026,10 +1033,14 @@
         <div class="ev-tab-panel active" id="ecTab-basic">
           <div class="field-row">
             <div class="field" style="flex:1;">
-              <label>ชื่อประเภทงาน</label>
-              <div id="editCatNameText" style="padding:9px 0; font-weight:600;"></div>
+              <label for="editCatNameInput">ชื่อประเภทงาน</label>
+              <input id="editCatNameInput" maxlength="100" />
+              <div class="hint" style="margin-top:4px;">แก้ชื่อแล้ว ชื่อในกำหนดส่งงานเดิมและไฟล์ที่ส่งแล้วของประเภทนี้เปลี่ยนตามทั้งหมด</div>
             </div>
             <input type="hidden" id="editCatColor" value="#3457d5" />
+          </div>
+          <div class="field">
+            <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;"><input type="checkbox" id="editCatSendPrefix" style="width:auto; margin-top:3px;" /><span><span style="display:block;">เติมคำว่า "ส่ง" นำหน้าชื่อในกำหนดส่งงาน</span><span class="hint" style="margin:0;">เช่น "ส่งแผนการจัดการเรียนรู้" — กำหนดส่งงานเดิมของประเภทนี้เปลี่ยนตามด้วย (ชื่อที่ขึ้นต้นด้วย "ส่ง" อยู่แล้วไม่เติมซ้ำ)</span></span></label>
           </div>
           <div class="field">
             <label for="editCatTemplate">รูปแบบการ์ดที่ใช้แสดงผลงาน</label>
@@ -1040,26 +1051,30 @@
           <div class="field">
             <label>วิธีส่งงานของประเภทนี้</label>
             <div class="cat-mode" id="editCatSubMode">
-              <label class="cat-mode-opt"><input type="radio" name="editCatSubMode" value="system" checked /><span><b>ส่งผ่านระบบ (อัปโหลดไฟล์)</b><small>ครูกดปุ่ม "ส่งงาน" แนบไฟล์ — ขึ้นในเช็คลิสต์และสรุปรวมการส่งงาน</small></span></label>
+              <label class="cat-mode-opt"><input type="radio" name="editCatSubMode" value="system" checked /><span><b>ส่งผ่านระบบ (อัปโหลดไฟล์)</b><small>ครูกดปุ่ม "ส่งงาน" แนบไฟล์ — ขึ้นในเช็คลิสต์และสรุปการส่งงาน</small></span></label>
               <label class="cat-mode-opt"><input type="radio" name="editCatSubMode" value="notice" /><span><b>แจ้งเตือนอย่างเดียว</b><small>ไม่มีปุ่มส่งงาน ไม่มีการตรวจ — เป็นแค่การ์ดแจ้งเตือนในปฏิทิน/กำหนดการ</small></span></label>
-              <label class="cat-mode-opt"><input type="radio" name="editCatSubMode" value="check" /><span><b>แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน</b><small>ครูส่งงานนอกระบบ (เช่น ส่งเล่มที่ห้องกลุ่มบริหารงาน) แล้วเจ้าหน้าที่ติ๊ก "ได้รับแล้ว" ทีละคน — ขึ้นในเช็คลิสต์ของครูและนับในสรุปรวมการส่งงาน · ตั้งให้ครูกด "แจ้งว่าส่งแล้ว" ได้ที่กำหนดการแต่ละรายการ</small></span></label>
+              <label class="cat-mode-opt"><input type="radio" name="editCatSubMode" value="check" /><span><b>แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน</b><small>ครูส่งงานนอกระบบ (เช่น ส่งเล่มที่ห้องกลุ่มบริหารงาน) แล้วเจ้าหน้าที่กด "ตรวจแล้ว" ทีละคน — ขึ้นในเช็คลิสต์ของครูและนับในสรุปการส่งงาน · ตั้งให้ครูกด "แจ้งว่าส่งแล้ว" ได้ที่กำหนดการแต่ละรายการ</small></span></label>
             </div>
           </div>
           <div class="field">
-            <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
-              <input type="checkbox" id="editCatRoomBased" style="width:auto; margin-top:3px;" />
-              <span><span style="display:block;">งานตามห้อง (สมุดโฮมรูมจากเว็บเช็คชื่อ)</span><span class="hint" style="margin:0;">ส่ง 1 ชุดต่อห้องต่อรอบ ครูที่ปรึกษาคนใดคนหนึ่งกดส่งได้ · ระบบทำ PDF จากบันทึกโฮมรูมในเว็บเช็คชื่อให้ · ตรวจรายห้อง (ต้องเชื่อมเว็บเช็คชื่อและผูกรายชื่อครูแล้ว)</span></span>
-            </label>
+            <label for="editCatRoomMode">งานตามห้อง</label>
+            <select id="editCatRoomMode">
+              <option value="0">ไม่ใช่ — ส่งรายคนตามปกติ</option>
+              <option value="1">สมุดโฮมรูม (ดึงบันทึกจากเว็บเช็คชื่อ ทำ PDF ให้)</option>
+              <option value="2">ส่งไฟล์รายห้อง (ครูที่ปรึกษาอัปโหลดไฟล์ของห้อง)</option>
+              <option value="3">ตรวจรายห้อง (ส่งนอกระบบ เจ้าหน้าที่ติ๊กว่าห้องไหนส่งแล้ว)</option>
+            </select>
+            <div class="hint" style="margin-top:4px;">ส่ง/ตรวจ 1 ครั้งต่อห้องต่อรอบ ครูที่ปรึกษาคนใดคนหนึ่งของห้องส่งได้ · เจ้าหน้าที่เห็นในสรุปการส่งงานว่าห้องไหนส่งแล้ว · ใช้รายชื่อห้องและครูที่ปรึกษาจากเว็บเช็คชื่อ (ต้องเชื่อมและผูกรายชื่อครูแล้ว) · งานตามห้องต้องเลือกวิธีส่งงานเป็น "ส่งผ่านระบบ"</div>
           </div>
           <div class="field">
             <label for="editCatDepartment">กลุ่มบริหารงานที่ดูแล</label>
             <select id="editCatDepartment"><option value="">ทุกกลุ่มบริหารงาน (ไม่ระบุ)</option></select>
-            <div class="hint" style="margin-top:4px;">ถ้าเลือกกลุ่มบริหารงาน เฉพาะเจ้าหน้าที่ของกลุ่มนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปรวมของประเภทงานนี้</div>
+            <div class="hint" style="margin-top:4px;">ถ้าเลือกกลุ่มบริหารงาน เฉพาะเจ้าหน้าที่ของกลุ่มนั้นเท่านั้นที่จะเห็น/จัดการกำหนดการและสรุปการส่งงานของประเภทงานนี้</div>
           </div>
           <div class="field">
             <label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; cursor:pointer;">
               <input type="checkbox" id="editCatHideFromPortfolio" style="width:auto; margin-top:3px;" />
-              <span><span style="display:block;">ไม่แสดงในหน้าแสดงผลงานครู (view.html)</span><span class="hint" style="margin:0;">ยังส่งงาน/เห็นในแดชบอร์ด/บันทึกข้อความ/สรุปรวมได้ตามปกติ แค่ไม่ขึ้นหน้าแสดงผลงานสาธารณะ</span></span>
+              <span><span style="display:block;">ไม่แสดงในหน้าแสดงผลงานครู (view.html)</span><span class="hint" style="margin:0;">ยังส่งงาน/เห็นในแดชบอร์ด/บันทึกข้อความ/สรุปการส่งงานได้ตามปกติ แค่ไม่ขึ้นหน้าแสดงผลงานสาธารณะ</span></span>
             </label>
           </div>
         </div>
@@ -1267,8 +1282,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.95.0.291026"></script>
-  <script src="assets/gallery.js?v=1.95.0.291026"></script>
+  <script src="assets/api.js?v=1.96.0.291026"></script>
+  <script src="assets/gallery.js?v=1.96.0.291026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -2660,7 +2675,7 @@
               '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(c.name) +
                 (c.department ? ' <span class="cat-dept-badge"' + deptColorAttr(c.department) + '>' + escapeHtml(groupLabel(c.department)) + '</span>' : ' <span class="cat-dept-badge cat-dept-none">ยังไม่ผูกกลุ่มบริหารงาน</span>') +
                 (c.manualCheck ? ' <span class="notice-badge" style="margin-left:6px; background:#cffafe; color:#0e7490;"><i class="fas fa-clipboard-check ui-icon" aria-hidden="true"></i> แจ้งเตือน + ตรวจรายคน</span>' : (c.noSubmission ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือนอย่างเดียว</span>' : '')) +
-                (c.roomBased ? ' <span class="notice-badge" style="margin-left:6px; background:#ede9fe; color:#6d28d9;"><i class="fas fa-door-open ui-icon" aria-hidden="true"></i> งานตามห้อง</span>' : '') +
+                (c.roomBased ? ' <span class="notice-badge" style="margin-left:6px; background:#ede9fe; color:#6d28d9;"><i class="fas fa-door-open ui-icon" aria-hidden="true"></i> ' + (['', 'งานตามห้อง · สมุดโฮมรูม', 'งานตามห้อง · ส่งไฟล์', 'งานตามห้อง · ตรวจรายห้อง'][c.roomMode || 1]) + '</span>' : '') + (c.sendPrefix ? ' <span class="notice-badge" style="margin-left:6px;">ขึ้นต้นด้วย "ส่ง"</span>' : '') +
                 (c.hideFromPortfolio ? ' <span class="notice-badge" style="margin-left:6px;"><i class="fas fa-eye-slash ui-icon" aria-hidden="true"></i> ไม่แสดงสาธารณะ</span>' : '') +
               '</div>' +
               (c.noSubmission
@@ -3123,14 +3138,14 @@
         var catFieldsVal = readCheckedFields('catFields');
         var catModeVal = catSubMode('cat'); // 1.93
         var catNoSubmissionVal = catModeVal !== 'system';
-        var catRoomBasedVal = document.getElementById('catRoomBased').checked; // 1.90
+        var catRoomBasedVal = Number(document.getElementById('catRoomMode').value); // 1.90 · 1.96: 0–3
         if (catRoomBasedVal && catNoSubmissionVal) { errBox.textContent = 'งานตามห้องต้องเลือกวิธีส่งงานเป็น "ส่งผ่านระบบ"'; errBox.hidden = false; return; }
         var catDepartmentVal = document.getElementById('catDepartment').value;
         var catHideFromPortfolioVal = document.getElementById('catHideFromPortfolio').checked;
         var ok = await askConfirm('ยืนยันเพิ่มประเภทงาน "' + catNameVal + '"?', 'ยืนยันการเพิ่มประเภทงาน');
         if (!ok) return;
         var r = await withProgress('กำลังเพิ่มประเภทงาน', function () {
-          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, displayTemplate: catTemplateVal, customFields: catFieldsVal, noSubmission: catNoSubmissionVal, manualCheck: catModeVal === 'check', roomBased: catRoomBasedVal, department: catDepartmentVal, hideFromPortfolio: catHideFromPortfolioVal });
+          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, displayTemplate: catTemplateVal, customFields: catFieldsVal, noSubmission: catNoSubmissionVal, manualCheck: catModeVal === 'check', roomMode: catRoomBasedVal, sendPrefix: document.getElementById('catSendPrefix').checked, department: catDepartmentVal, hideFromPortfolio: catHideFromPortfolioVal });
         }, { successLabel: 'เพิ่มประเภทงานแล้ว' });
         if (r.ok) {
           hideModalEl(createCatModalEl);
@@ -3153,17 +3168,18 @@
       document.getElementById('ecTabBtn-fields').addEventListener('click', function () { switchEditCatTab('fields'); });
       openEditCatModal = function (cat) {
         editCatOriginal = {
-          color: cat.color || '#3457d5', template: normalizeTemplate(cat.displayTemplate), noSubmission: !!cat.noSubmission, manualCheck: !!cat.manualCheck, roomBased: !!cat.roomBased,
+          color: cat.color || '#3457d5', template: normalizeTemplate(cat.displayTemplate), noSubmission: !!cat.noSubmission, manualCheck: !!cat.manualCheck, roomMode: Number(cat.roomMode != null ? cat.roomMode : (cat.roomBased ? 1 : 0)), name: cat.name, sendPrefix: !!cat.sendPrefix,
           department: cat.department || '', hideFromPortfolio: !!cat.hideFromPortfolio,
           fields: (cat.customFields || []).slice().sort().join(',')
         };
         document.getElementById('editCatId').value = cat.id;
         document.getElementById('editCatTitle').textContent = 'แก้ไขประเภทงาน';
-        document.getElementById('editCatNameText').textContent = cat.name;
+        document.getElementById('editCatNameInput').value = cat.name; // 1.96: แก้ชื่อได้
+        document.getElementById('editCatSendPrefix').checked = editCatOriginal.sendPrefix;
         document.getElementById('editCatColor').value = editCatOriginal.color;
         renderTemplateOptions(document.getElementById('editCatTemplate'), editCatOriginal.template);
         setCatSubMode('editCat', editCatOriginal.manualCheck ? 'check' : (editCatOriginal.noSubmission ? 'notice' : 'system')); // 1.93
-        document.getElementById('editCatRoomBased').checked = editCatOriginal.roomBased; // 1.90
+        document.getElementById('editCatRoomMode').value = String(editCatOriginal.roomMode); // 1.90 · 1.96: 3 แบบ
         renderDepartmentOptions(document.getElementById('editCatDepartment'), editCatOriginal.department);
         document.getElementById('editCatHideFromPortfolio').checked = editCatOriginal.hideFromPortfolio;
         renderFieldCheckboxes('editCatFieldsCheckboxes', 'editCat', cat.customFields || []);
@@ -3184,7 +3200,9 @@
           template: document.getElementById('editCatTemplate').value,
           noSubmission: catSubMode('editCat') !== 'system',
           manualCheck: catSubMode('editCat') === 'check',
-          roomBased: document.getElementById('editCatRoomBased').checked,
+          roomMode: Number(document.getElementById('editCatRoomMode').value),
+          name: document.getElementById('editCatNameInput').value.replace(/\s+/g, ' ').trim(),
+          sendPrefix: document.getElementById('editCatSendPrefix').checked,
           department: document.getElementById('editCatDepartment').value,
           hideFromPortfolio: document.getElementById('editCatHideFromPortfolio').checked,
           fields: readCheckedFields('editCat')
@@ -3192,10 +3210,12 @@
         var calls = [];
         if (next.color !== o.color) calls.push(['adminSetWorkCategoryColor', { categoryId: catId, color: next.color }]);
         if (next.template !== o.template) calls.push(['adminSetWorkCategoryTemplate', { categoryId: catId, template: next.template }]);
-        if (next.roomBased && next.noSubmission) { errBox.textContent = 'งานตามห้องต้องเป็นงานที่ส่งผ่านระบบ'; errBox.hidden = false; return; }
-        if (next.roomBased !== o.roomBased && !next.roomBased) calls.push(['adminSetWorkCategoryRoomBased', { categoryId: catId, roomBased: false }]);
+        if (!next.name) { errBox.textContent = 'กรุณากรอกชื่อประเภทงาน'; errBox.hidden = false; return; }
+        if (next.name !== o.name || next.sendPrefix !== o.sendPrefix) calls.unshift(['adminRenameWorkCategory', { categoryId: catId, name: next.name, sendPrefix: next.sendPrefix }]); // 1.96
+        if (next.roomMode && next.noSubmission) { errBox.textContent = 'งานตามห้องต้องเป็นงานที่ส่งผ่านระบบ'; errBox.hidden = false; return; }
+        if (next.roomMode !== o.roomMode && !next.roomMode) calls.push(['adminSetWorkCategoryRoomBased', { categoryId: catId, roomMode: 0 }]);
         if (next.noSubmission !== o.noSubmission || next.manualCheck !== o.manualCheck) calls.push(['adminSetWorkCategoryNoSubmission', { categoryId: catId, noSubmission: next.noSubmission, manualCheck: next.manualCheck }]);
-        if (next.roomBased !== o.roomBased && next.roomBased) calls.push(['adminSetWorkCategoryRoomBased', { categoryId: catId, roomBased: true }]);
+        if (next.roomMode !== o.roomMode && next.roomMode) calls.push(['adminSetWorkCategoryRoomBased', { categoryId: catId, roomMode: next.roomMode }]);
         if (next.department !== o.department) calls.push(['adminSetWorkCategoryDepartment', { categoryId: catId, department: next.department }]);
         if (next.hideFromPortfolio !== o.hideFromPortfolio) calls.push(['adminSetWorkCategoryPortfolioVisibility', { categoryId: catId, hideFromPortfolio: next.hideFromPortfolio }]);
         if (next.fields.slice().sort().join(',') !== o.fields) calls.push(['adminUpdateWorkCategoryFields', { categoryId: catId, customFields: next.fields }]);
@@ -3640,7 +3660,7 @@
       var staff = isTeacher && document.getElementById('muStaff').checked;
       document.getElementById('muTypeHint').textContent =
         v === 'executive' ? 'ผู้บริหารดูสรุป/ปฏิทิน/ประกาศได้อย่างเดียว ไม่ต้องส่งงาน และไม่สังกัดกลุ่มบริหารงาน — ผลงานเดิมของบัญชีนี้ยังอยู่ในระบบ แต่จะไม่แสดง' :
-        v === 'sysadmin' ? 'แอดมินระบบมีสิทธิ์เหมือนเจ้าหน้าที่ทุกอย่าง แต่จัดการได้ทุกกลุ่มบริหารงาน (ประเภทงาน กำหนดการ สรุปรวม/ตรวจงาน ประกาศ เรื่องที่แจ้ง) — สังกัดกลุ่มใดก็ได้ ส่งผลงานของตนเองได้เหมือนครู · ตั้งค่าระบบและจัดการบัญชียังเป็นของ Super Admin' :
+        v === 'sysadmin' ? 'แอดมินระบบมีสิทธิ์เหมือนเจ้าหน้าที่ทุกอย่าง แต่จัดการได้ทุกกลุ่มบริหารงาน (ประเภทงาน กำหนดการ สรุปการส่งงาน/ตรวจงาน ประกาศ เรื่องที่แจ้ง) — สังกัดกลุ่มใดก็ได้ ส่งผลงานของตนเองได้เหมือนครู · ตั้งค่าระบบและจัดการบัญชียังเป็นของ Super Admin' :
         v === 'superadmin' ? 'ระวัง: บัญชี Super Admin จะไม่แสดงในตารางจัดการบัญชีนี้ (เป็นความลับ) จึงเปลี่ยนกลับผ่านหน้านี้ไม่ได้ และไม่มีหน้าฮับส่วนตัว' :
         staff ? 'เจ้าหน้าที่ส่งงานของตนเองได้เหมือนครู และจัดการงานของกลุ่มบริหารงานที่สังกัด' : 'ครูส่งงานและมีหน้าแสดงผลงานของตนเอง';
     }

@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="BNK Hub" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
-<title>สรุปรวมการส่งงาน — BNKAcademicHub</title>
+<title>สรุปการส่งงาน — BNKAcademicHub</title>
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
      ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
      getComputedStyle(...).paddingLeft = "0px" จริง ทั้งที่ style.css ที่เซิร์ฟเวอร์ส่งออกมาตรงกับซอร์สทุกตัวอักษร:
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.95.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -43,7 +43,7 @@
 
   <div class="container">
     <div class="page-header">
-      <h1>สรุปรวมการส่งงาน</h1>
+      <h1>สรุปการส่งงาน</h1>
       <p>ภาพรวมว่าใครส่งผลงานแล้วบ้าง ส่งเรื่องอะไร และส่งเมื่อไหร่</p>
     </div>
 
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.95.0.291026"></script>
+  <script src="assets/api.js?v=1.96.0.291026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -535,16 +535,16 @@
       var rep = a.rows.filter(function (r) { return r.status === 'missing' && r.reported; }).length;
       var h = '<div class="card" style="margin-bottom:16px; box-shadow:none; border:1px solid var(--border);">' +
         '<div class="section-title" style="justify-content:space-between; flex-wrap:wrap;">' +
-          '<span>' + icon('tag', 16) + ' ' + escapeHtml(a.title) + ' <span class="evl-mc"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ตรวจรายคน</span></span>' +
+          '<span>' + icon('tag', 16) + ' ' + escapeHtml(a.title) + ' <span class="evl-mc"><i class="fa-solid fa-' + (a.roomBased ? 'door-open' : 'clipboard-check') + '" aria-hidden="true"></i> ' + (a.roomBased ? 'ตรวจรายห้อง' : 'ตรวจรายคน') + '</span></span>' +
           '<span class="hint" style="margin:0;">กำหนดส่ง: ' + dateRange + '</span>' +
         '</div>' +
         '<div class="sub-item-meta" style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">ประเภทงาน: <b>' + categoryDotHtml(categoryColorMap[a.categoryId]) + escapeHtml(a.categoryName) + '</b>' + categoryDeptBadgeHtml(a.categoryId) + ' · ปีการศึกษา ' + escapeHtml(a.academicYear) + ' · ' + semLabel +
           ' · <span class="badge badge-ontime">ตรวจแล้ว ' + (got - lateN) + '</span>' + (lateN ? ' <span class="badge badge-late">ส่งหลังกำหนด ' + lateN + '</span>' : '') + (rep ? ' <span class="badge mc-st rep">ครูแจ้งแล้ว ' + rep + '</span>' : '') + ' <span class="badge badge-missing">ยังไม่ตรวจ ' + (a.rows.length - got - rep) + '</span>' +
           '<span style="flex:1"></span>' + manualBtnHtml(a) +
         '</div>' +
-        '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>ชื่อ-สกุล</th><th>สถานะ</th><th>วันที่ตรวจ</th><th>หมายเหตุ</th></tr></thead><tbody>';
+        '<div class="table-wrap asg-wrap"><table class="asg-table"><thead><tr><th>' + (a.roomBased ? 'ห้อง (ครูที่ปรึกษา)' : 'ชื่อ-สกุล') + '</th><th>สถานะ</th><th>วันที่ตรวจ</th><th>หมายเหตุ</th></tr></thead><tbody>';
       a.rows.forEach(function (r) {
-        h += '<tr><td class="asg-name">' + escapeHtml(r.userName) + '</td><td class="asg-st">' + manualStatusHtml(r) + '</td>' +
+        h += '<tr><td class="asg-name">' + escapeHtml(r.userName) + (r.room && r.subjectGroup ? '<small class="hint" style="display:block;margin:0">' + escapeHtml(r.subjectGroup) + '</small>' : '') + '</td><td class="asg-st">' + manualStatusHtml(r) + '</td>' +
           '<td class="asg-time">' + (r.submittedAt ? formatDateTimeThai(r.submittedAt) : (r.reported && r.reportedAt ? '<span class="hint" style="margin:0">แจ้งเมื่อ ' + escapeHtml(formatDateThai(String(r.reportedAt).slice(0, 10))) + '</span>' : '<span class="asg-none">-</span>')) + '</td>' +
           '<td>' + (r.note ? escapeHtml(r.note) : '<span class="asg-none">-</span>') + '</td></tr>';
       });

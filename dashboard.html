@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.95.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -186,10 +186,10 @@
     <div class="modal-box modal-box-wide">
       <button type="button" class="modal-close-x" id="hrSendCloseX" aria-label="ปิด">✕</button>
       <h3 id="hrSendTitle">ส่งสมุดโฮมรูม</h3>
-      <div class="field" style="text-align:left; max-width:260px;"><label for="hrMonth">เดือนของสมุด</label><input type="month" id="hrMonth" /></div>
+      <div class="field" id="hrMonthField" style="text-align:left; max-width:260px;"><label for="hrMonth">เดือนของสมุด</label><input type="month" id="hrMonth" /></div>
       <div id="hrSendErr" class="error-box" hidden></div>
       <div id="hrSendBody" style="text-align:left;"></div>
-      <p class="hint" style="text-align:left; margin-top:10px;">ระบบทำ PDF จากบันทึกโฮมรูมในเว็บเช็คชื่อ (หน้าสรุป + รายละเอียดรายวันพร้อมรูป + บรรทัดลงชื่อครูที่ปรึกษา) · ครูที่ปรึกษาคนใดคนหนึ่งส่งก็ได้ · ส่งใหม่ = แทนฉบับเดิมจนกว่าเจ้าหน้าที่จะตรวจ</p>
+      <p class="hint" id="hrSendHint" style="text-align:left; margin-top:10px;">ระบบทำ PDF จากบันทึกโฮมรูมในเว็บเช็คชื่อ (หน้าสรุป + รายละเอียดรายวันพร้อมรูป + บรรทัดลงชื่อครูที่ปรึกษา) · ครูที่ปรึกษาคนใดคนหนึ่งส่งก็ได้ · ส่งใหม่ = แทนฉบับเดิมจนกว่าเจ้าหน้าที่จะตรวจ</p>
       <div class="modal-actions hr-actions">
         <button type="button" class="btn btn-ghost btn-sm" data-hr-act="reload"><i class="fa-solid fa-rotate" aria-hidden="true"></i> ดึงข้อมูลใหม่</button>
         <button type="button" class="btn btn-secondary" data-hr-act="preview"><i class="fa-solid fa-eye" aria-hidden="true"></i> ดูตัวอย่าง PDF</button>
@@ -256,9 +256,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.95.0.291026"></script>
+  <script src="assets/api.js?v=1.96.0.291026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.95.0.291026"></script>
+  <script src="assets/homeroom.js?v=1.96.0.291026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -1022,7 +1022,7 @@
 
     // ---------- เช็คลิสต์สถานะการส่งงาน (ข้างปฏิทิน, ตั้งแต่ V9.9) ----------
     // เทียบกำหนดการในปฏิทินที่ผูกประเภทงานไว้ กับผลงานที่เคยส่งแล้ว (categoryId+ปี+ภาคเรียนตรงกัน = นับว่าส่งแล้ว
-    // เป็นเกณฑ์แบบเดียวกับที่หน้าสรุปรวม "สรุปแยกแต่ละงาน" ใช้ — ไม่ได้ผูกกับ eventId เจาะจง เพราะระบบไม่มีฟิลด์นั้นในตาราง submissions)
+    // เป็นเกณฑ์แบบเดียวกับที่หน้าสรุปการส่งงาน "สรุปแยกแต่ละงาน" ใช้ — ไม่ได้ผูกกับ eventId เจาะจง เพราะระบบไม่มีฟิลด์นั้นในตาราง submissions)
     // ย้ายออกมาเป็นฟังก์ชันกลาง (เดิมประกาศซ้อนอยู่ในตัว renderAssignmentChecklist เท่านั้น) เพราะ renderCalendar() ด้านล่าง
     // ก็ต้องใช้เกณฑ์เดียวกันนี้ด้วย เพื่อตัดสินว่ากำหนดการที่เกินกำหนดแล้วควรยังค้างอยู่ใน "กำหนดการ" ใต้ปฏิทินหรือไม่
     // ---------- 1.93: งาน "แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน" ----------
@@ -1221,13 +1221,14 @@
     function hrRoomOf(e, roomId) { return (e.rooms || []).filter(function (r) { return r.roomId === roomId; })[0] || null; }
     // 1.92: สมุดต้องรอจบเดือน — ส่งได้ตั้งแต่วันที่ 1 ของเดือนถัดไป · เตือน 3 วันก่อนครบกำหนด ถึง 7 วันหลังสิ้นเดือน (ตรงกับ bookWindow ใน Worker)
     function hrWin(e) {
+      if (e.roomMode >= 2) { var en = String(e.endDate || e.date); return { open: String(e.date), grace: en, remindFrom: new Date(Date.parse(en + 'T00:00:00Z') - 3 * 864e5).toISOString().slice(0, 10) }; } // 1.96: ส่งไฟล์/ตรวจรายห้อง = ตามช่วงกำหนดส่ง
       var end = String(e.endDate || e.date), y = Number(end.slice(0, 4)), mo = Number(end.slice(5, 7));
       var d = function (t) { return new Date(t).toISOString().slice(0, 10); }, endT = Date.parse(end + 'T00:00:00Z'), last = Date.UTC(y, mo, 0);
       return { open: d(Date.UTC(y, mo, 1)), grace: d(Math.max(endT, last) + 7 * 864e5), remindFrom: d(endT - 3 * 864e5) };
     }
     function hrRoundState(e, roomId) {
       var t = todayYmd(), rs = hrRoomOf(e, roomId), w = hrWin(e), rv = rs && rs.review && rs.review.status;
-      if (rs && rs.submitted) return rv === 'revise' ? 'fx' : (rv === 'reviewed' ? 'rv' : (String(rs.submitted.at).slice(0, 10) > w.grace ? 'late' : 'ok'));
+      if (rs && rs.submitted) return rs.submitted.checked ? (rs.submitted.late ? 'late' : 'ok') : rv === 'revise' ? 'fx' : (rv === 'reviewed' ? 'rv' : (String(rs.submitted.at).slice(0, 10) > w.grace ? 'late' : 'ok'));
       if (t < w.open) return t >= w.remindFrom ? 'soon' : 'wait';
       return t > w.grace ? 'no' : 'open';
     }
@@ -1250,7 +1251,7 @@
           return '<span class="cl-rchip ' + ({ ok: 'ok', rv: 'ok', late: 'late', fx: 'fx', no: 'no', open: 'open', wait: 'wait' }[st2]) + '" title="' + escapeHtml(tip) + '">' + escapeHtml(lab) + txt + '</span>';
         }).join('');
         var fixMsg = rounds.map(function (e) { var rs = hrRoomOf(e, room.roomId); return rs && rs.review && rs.review.status === 'revise' && rs.review.comment ? '<div class="cl-msg fix"><b>' + (rounds.length > 1 ? 'รอบ ' + escapeHtml(e.roundLabel || e.roundNo) + ' · ' : '') + 'ข้อความจาก ' + escapeHtml(rs.review.by || 'เจ้าหน้าที่') + '</b>' + escapeHtml(rs.review.comment) + '</div>' : ''; }).join('');
-        var btn = focus ? '<button type="button" class="btn ' + (hrRoundState(focus, room.roomId) === 'open' ? 'btn-primary' : 'btn-danger') + ' btn-sm cl-round-btn" data-hr-send="' + escapeHtml(focus.id + '|' + room.roomId) + '"><i class="fa-solid fa-book-open" aria-hidden="true"></i> ส่งสมุด' + (rounds.length > 1 ? 'รอบ ' + escapeHtml(roundShort(focus)) : '') + '</button>' : '';
+        var btn = focus && first.roomMode !== 3 ? '<button type="button" class="btn ' + (hrRoundState(focus, room.roomId) === 'open' ? 'btn-primary' : 'btn-danger') + ' btn-sm cl-round-btn" data-hr-send="' + escapeHtml(focus.id + '|' + room.roomId) + '"><i class="fa-solid fa-' + (first.roomMode === 2 ? 'file-arrow-up' : 'book-open') + '" aria-hidden="true"></i> ' + hrVerb(first) + (rounds.length > 1 ? 'รอบ ' + escapeHtml(roundShort(focus)) : '') + '</button>' : '';
         if (!focus) { var soonR = rounds.filter(function (e) { return hrRoundState(e, room.roomId) === 'soon'; })[0]; if (soonR) btn = hrSoonBtn(soonR, 'cl-round-btn'); } // 1.92
         var co = (room.advisors || []).filter(function (n) { return n !== (session && session.name); });
         return '<div class="hr-room"><div class="hr-room-h"><b>ห้อง ' + escapeHtml(room.roomName) + '</b>' + (co.length ? '<small> · ร่วมกับ ' + escapeHtml(co.join(', ')) + '</small>' : '') + '</div>' +
@@ -1258,16 +1259,41 @@
       }).join('');
       return '<div class="checklist-item cl-series cl-hr">' +
         '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
-        '<div class="checklist-text"><div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(name) + ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> งานตามห้อง</span>' + categoryDeptBadgeHtml(first.categoryId) + '</div>' +
+        '<div class="checklist-text"><div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(name) + ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> ' + hrModeTag(first) + '</span>' + categoryDeptBadgeHtml(first.categoryId) + '</div>' +
         body + eventLinksHtml(first.links, false) + '</div></div>';
     }
     // ป็อปอัป "ส่งสมุดโฮมรูม": ดึงบันทึกจากเว็บเช็คชื่อ → สรุป → ดูตัวอย่าง PDF / ส่งเข้าระบบ
     var hrState = null;
     function hrMonthOf(e) { return String(e.endDate || e.date).slice(0, 7); }
+    // 1.96: งานตามห้อง 3 แบบ — 1 สมุดโฮมรูม (ดึงจากเว็บเช็คชื่อ) · 2 ส่งไฟล์รายห้อง · 3 ตรวจรายห้อง (ส่งนอกระบบ เจ้าหน้าที่ตรวจ)
+    function hrVerb(e) { return e.roomMode === 2 ? 'ส่งไฟล์' : e.roomMode === 3 ? 'ดูสถานะ' : 'ส่งสมุด'; }
+    function hrModeTag(e) { return e.roomMode === 2 ? 'งานตามห้อง · ส่งไฟล์' : e.roomMode === 3 ? 'งานตามห้อง · เจ้าหน้าที่ตรวจ' : 'งานตามห้อง'; }
+    function hrSetupModal(ev, room) {
+      var m3 = ev.roomMode === 3, m2 = ev.roomMode === 2, rs = hrRoomOf(ev, room.roomId);
+      document.getElementById('hrMonthField').hidden = m2 || m3;
+      document.getElementById('hrSendHint').hidden = m2 || m3;
+      document.querySelectorAll('#hrSendModal [data-hr-act]').forEach(function (b) { var a = b.getAttribute('data-hr-act'); b.hidden = m3 || (m2 && a !== 'send'); b.disabled = m2; });
+      var sendB = document.querySelector('#hrSendModal [data-hr-act="send"]'); sendB.innerHTML = '<i class="fa-solid fa-paper-plane" aria-hidden="true"></i> ' + (m2 ? 'ส่งไฟล์เข้าระบบ' : 'ส่งสมุดเข้าระบบ');
+      document.getElementById('hrSendTitle').textContent = (m2 ? 'ส่งไฟล์ ' : m3 ? '' : 'ส่งสมุดโฮมรูม ') + 'ห้อง ' + room.roomName + ' · ' + (ev.categoryName || ev.title) + (ev.seriesId ? ' · รอบ ' + (ev.roundLabel || ev.roundNo) : '');
+      var box = document.getElementById('hrSendBody'), w = hrWin(ev), st = hrRoundState(ev, room.roomId);
+      var due = 'กำหนดส่ง ' + escapeHtml(ev.endDate && ev.endDate !== ev.date ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate) : formatDateThai(ev.endDate || ev.date));
+      if (m3) {
+        var s3 = rs && rs.submitted ? '<span class="mc-badge ' + (rs.submitted.late ? 'late' : 'ok') + '"><i class="fa-solid fa-' + (rs.submitted.late ? 'clock' : 'circle-check') + '" aria-hidden="true"></i> ' + (rs.submitted.late ? 'ตรวจแล้ว (ส่งหลังกำหนด)' : 'เจ้าหน้าที่ตรวจแล้ว') + '</span> <small>' + escapeHtml(formatDateThai(String(rs.submitted.at).slice(0, 10)) + (rs.submitted.by ? ' · ' + rs.submitted.by : '')) + '</small>' : '<span class="mc-badge no">ยังไม่ตรวจ</span>';
+        box.innerHTML = '<p style="margin:0 0 8px;">' + due + '</p><p style="margin:0 0 8px;">' + s3 + '</p>' + (rs && rs.note ? '<div class="cl-msg"><b>หมายเหตุจากเจ้าหน้าที่</b>' + escapeHtml(rs.note) + '</div>' : '') + '<p class="hint">งานนี้ส่งนอกระบบ (เช่น ส่งเอกสารที่ห้องกลุ่มบริหารงาน) — เจ้าหน้าที่จะบันทึกว่าห้องไหนส่งแล้วในระบบเอง</p>';
+      } else if (m2) {
+        box.innerHTML = '<p style="margin:0 0 8px;">' + due + '</p><div class="field"><label for="hrFile">ไฟล์ของห้อง ' + escapeHtml(room.roomName) + '</label><input type="file" id="hrFile" /></div>' +
+          (rs && rs.submitted ? '<div class="hr-warn info"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ห้องนี้ส่งแล้วโดย ' + escapeHtml(rs.submitted.by) + ' (' + escapeHtml(formatDateThai(rs.submitted.at)) + ') — ส่งใหม่จะแทนฉบับเดิม</div>' : '') +
+          (todayYmd() < w.open ? '<div class="hr-warn info"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> ส่งได้ตั้งแต่ ' + escapeHtml(formatDateThai(w.open)) + '</div>' : '') +
+          '<p class="hint">ครูที่ปรึกษาของห้องคนใดคนหนึ่งส่งก็ได้ · ส่งใหม่ = แทนฉบับเดิมจนกว่าเจ้าหน้าที่จะตรวจ</p>';
+        document.getElementById('hrFile').addEventListener('change', function () { sendB.disabled = !this.files.length; });
+      }
+    }
     async function openHrSend(eventId, roomId) {
       var ev = calState.events.filter(function (x) { return x.id === eventId; })[0]; if (!ev) return;
       var room = hrRoomOf(ev, roomId) || { roomId: roomId, roomName: roomId };
       hrState = { ev: ev, room: room, month: hrMonthOf(ev), model: null, blob: null };
+      if (ev.roomMode >= 2) { document.getElementById('hrSendErr').hidden = true; hrSetupModal(ev, room); showModalEl(document.getElementById('hrSendModal')); return; }
+      hrSetupModal(ev, room);
       document.getElementById('hrSendTitle').textContent = 'ส่งสมุดโฮมรูม ห้อง ' + room.roomName + (ev.seriesId ? ' · รอบ ' + (ev.roundLabel || ev.roundNo) : '');
       document.getElementById('hrMonth').value = hrState.month;
       document.getElementById('hrSendErr').hidden = true;
@@ -1302,8 +1328,22 @@
       document.getElementById('hrSendCloseX').addEventListener('click', function () { hideModalEl(m); });
       document.getElementById('hrMonth').addEventListener('change', function () { if (!this.value) return; hrState.month = this.value; hrLoadModel(); });
       m.addEventListener('click', async function (e) {
-        var b = e.target.closest('[data-hr-act]'); if (!b || b.disabled || !hrState || !hrState.model) return;
+        var b = e.target.closest('[data-hr-act]'); if (!b || b.disabled || !hrState) return;
         var act = b.getAttribute('data-hr-act'), err = document.getElementById('hrSendErr'); err.hidden = true;
+        if (hrState.ev.roomMode === 2 && act === 'send') { // 1.96: ส่งไฟล์รายห้อง
+          var f2 = document.getElementById('hrFile').files[0]; if (!f2) return;
+          var ev2 = hrState.ev;
+          if (!(await askConfirm('ส่งไฟล์ "' + escapeHtml(f2.name) + '" ของห้อง ' + escapeHtml(hrState.room.roomName) + ' เข้าระบบ?', 'ยืนยันการส่งงานตามห้อง'))) return;
+          var r2 = await withProgress('กำลังส่งไฟล์', async function (p) {
+            await submitWorkFile(f2, { academicYear: ev2.academicYear, semester: ev2.semester, categoryId: ev2.categoryId, eventId: ev2.seriesId ? ev2.id : '', roomId: hrState.room.roomId, title: (ev2.categoryName || ev2.title) + ' ห้อง ' + hrState.room.roomName,
+              onStage: function (stage) { if (stage === 'upload') p.setProgress(10, 'กำลังอัปโหลด'); else if (stage === 'finalize') p.setProgress(95, 'กำลังบันทึก'); },
+              onProgress: function (fr) { p.setProgress(10 + 83 * fr); } });
+            return true;
+          }, { successLabel: 'ส่งไฟล์แล้ว', upload: true });
+          if (r2.ok) { hideModalEl(m); loadCalendar(); loadSubmissions(); } else { err.textContent = r2.error.message; err.hidden = false; }
+          return;
+        }
+        if (!hrState.model) return;
         if (act === 'reload') { hrLoadModel(); return; }
         if (act === 'preview') {
           var w = window.open('', '_blank');
@@ -1552,7 +1592,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
       var btn = '<button class="btn ' + (lv === 0 ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-series-open="' + escapeHtml(rep.seriesId) + '"><i class="fa-solid fa-list-check ui-icon" aria-hidden="true"></i> ดูรอบทั้งหมด</button>';
       return '<div class="event-list-item"><div class="event-date-chip' + (lv === 0 ? ' overdue' : '') + '">' + dateChip + '</div>' +
         '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(seriesName(rep)) +
-          (rep.roomBased ? ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> งานตามห้อง</span>' : '') + categoryDeptBadgeHtml(rep.categoryId) + badge + '</div>' +
+          (rep.roomBased ? ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> ' + hrModeTag(rep) + '</span>' : '') + categoryDeptBadgeHtml(rep.categoryId) + badge + '</div>' +
           '<div class="sub-item-meta">' + (lv === -1 ? 'ทุกรอบ' : 'รอบ ' + escapeHtml(roundShort(rep))) + rooms +
             ' <span class="up-prog"><span class="up-bar"><i style="width:' + pct + '%"></i></span> ส่งแล้ว ' + sent + '/' + rounds.length + ' รอบ</span></div>' +
           (rep.message ? '<div class="sub-item-desc">' + escapeHtml(rep.message) + '</div>' : '') + '</div>' + evSideHtml(btn, rep.links) + '</div>';
@@ -1587,11 +1627,12 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           var st = hrRoundState(e, roomId), rs = hrRoomOf(e, roomId);
           chip = { ok: ['ok', 'ส่งแล้ว ✓'], rv: ['ok', 'ตรวจแล้ว ✓'], late: ['late', 'ส่งช้า ✓'], fx: ['fx', 'ต้องแก้ไข'], no: ['no', 'ยังไม่ส่ง (เกินกำหนด)'], open: ['open', 'ส่งได้แล้ว'], soon: ['wait', 'ยังส่งไม่ได้'], wait: ['wait', 'ยังไม่ถึง'] }[st];
           cls = st === 'ok' || st === 'rv' || st === 'late' ? 'ok' : '';
-          if (rs && rs.submitted) small += ' · ส่งโดย ' + escapeHtml(rs.submitted.by) + ' ' + formatDateThai(String(rs.submitted.at).slice(0, 10));
-          else small += ' · ส่งได้ตั้งแต่ ' + formatDateThai(hrWin(e).open);
-          if (st === 'open' || st === 'no' || st === 'fx') act = '<button type="button" class="btn ' + (st === 'open' ? 'btn-primary' : 'btn-danger') + ' btn-sm" data-hr-send="' + escapeHtml(e.id + '|' + roomId) + '"><i class="fa-solid fa-book-open ui-icon" aria-hidden="true"></i> ' + (st === 'fx' ? 'ส่งใหม่' : 'ส่งสมุด') + '</button>';
+          if (rs && rs.submitted) small += (e.roomMode === 3 ? ' · ตรวจโดย ' : ' · ส่งโดย ') + escapeHtml(rs.submitted.by) + ' ' + formatDateThai(String(rs.submitted.at).slice(0, 10));
+          else if (e.roomMode !== 3) small += ' · ส่งได้ตั้งแต่ ' + formatDateThai(hrWin(e).open);
+          if (st === 'open' || st === 'no' || st === 'fx') act = '<button type="button" class="btn ' + (st === 'open' ? 'btn-primary' : 'btn-danger') + ' btn-sm" data-hr-send="' + escapeHtml(e.id + '|' + roomId) + '"><i class="fa-solid fa-book-open ui-icon" aria-hidden="true"></i> ' + (st === 'fx' ? 'ส่งใหม่' : hrVerb(e)) + '</button>';
+          if (e.roomMode === 3) act = '<span class="mc-badge ' + (st === 'ok' ? 'ok' : st === 'late' ? 'late' : 'no') + '">' + (st === 'ok' ? 'เจ้าหน้าที่ตรวจแล้ว' : st === 'late' ? 'ตรวจแล้ว (หลังกำหนด)' : 'รอเจ้าหน้าที่ตรวจ') + '</span>'; // 1.96
           else if (st === 'soon') act = hrSoonBtn(e, '');
-          else if (st === 'ok' || st === 'late') act = '<button type="button" class="btn btn-secondary btn-sm" data-hr-send="' + escapeHtml(e.id + '|' + roomId) + '"><i class="fa-solid fa-rotate ui-icon" aria-hidden="true"></i> ส่งแทนฉบับเดิม</button>';
+          else if ((st === 'ok' || st === 'late') && e.roomMode !== 3) act = '<button type="button" class="btn btn-secondary btn-sm" data-hr-send="' + escapeHtml(e.id + '|' + roomId) + '"><i class="fa-solid fa-rotate ui-icon" aria-hidden="true"></i> ส่งแทนฉบับเดิม</button>';
         } else if (e.manualCheck) { // 1.93: ตรวจรายคน
           var mst = (e.manual && e.manual.status) || '', lvm = seriesRoundOpen(e);
           chip = mst === 'received' ? ['ok', 'ตรวจแล้ว ✓'] : mst === 'late' ? ['fx', 'ตรวจแล้ว (หลังกำหนด)'] : mst === 'reported' ? ['open', 'แจ้งแล้ว รอตรวจ'] : (lvm === 2 ? ['wait', 'ยังไม่ถึง'] : (lvm === 0 ? ['no', 'ยังไม่ตรวจ (เกินกำหนด)'] : ['open', 'ยังไม่ตรวจ']));
@@ -1726,9 +1767,10 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
     function hrUpcomingBtn(e, overdue) {
       if (e.roomError) return '<span class="hint day-ev-note">เชื่อมเว็บเช็คชื่อไม่ได้</span>';
       var room = (e.rooms || []).filter(function (r) { var st3 = hrRoundState(e, r.roomId); return hrNeedsAction(st3) || st3 === 'wait' || st3 === 'soon'; })[0];
-      if (!room) return '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งสมุดครบแล้ว</span>';
+      if (!room) return '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ' + (e.roomMode === 3 ? 'ตรวจครบแล้ว' : e.roomMode === 2 ? 'ส่งครบทุกห้องแล้ว' : 'ส่งสมุดครบแล้ว') + '</span>';
+      if (e.roomMode === 3) return '<span class="mc-badge no">รอเจ้าหน้าที่ตรวจ ห้อง ' + escapeHtml(room.roomName) + '</span>'; // 1.96
       var st4 = hrRoundState(e, room.roomId); if (st4 === 'wait' || st4 === 'soon') return hrSoonBtn(e, 'event-submit-btn'); // 1.92: ยังไม่จบเดือน
-      return '<button class="btn ' + (hrRoundState(e, room.roomId) === 'no' ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-hr-send="' + escapeHtml(e.id + '|' + room.roomId) + '"><i class="fa-solid fa-book-open ui-icon" aria-hidden="true"></i> ส่งสมุด ' + escapeHtml(room.roomName) + '</button>';
+      return '<button class="btn ' + (hrRoundState(e, room.roomId) === 'no' ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-hr-send="' + escapeHtml(e.id + '|' + room.roomId) + '"><i class="fa-solid fa-' + (e.roomMode === 2 ? 'file-arrow-up' : 'book-open') + ' ui-icon" aria-hidden="true"></i> ' + hrVerb(e) + ' ' + escapeHtml(room.roomName) + '</button>';
     }
     function eventActionHtml(e) {
       if (!e.categoryId) return '';

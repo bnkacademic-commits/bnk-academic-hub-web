@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.95.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -285,7 +285,7 @@
           <div class="field">
             <label for="evCategory">ประเภทงาน</label>
             <select id="evCategory"></select>
-            <div class="hint">ใช้ "ชื่อประเภทงาน" เป็นหัวข้อกำหนดการ และคำนวณสถานะการส่งงานในหน้า "สรุปรวมการส่งงาน"</div>
+            <div class="hint">ใช้ "ชื่อประเภทงาน" เป็นหัวข้อกำหนดการ และคำนวณสถานะการส่งงานในหน้า "สรุปการส่งงาน"</div>
             <div class="hint" id="evNoCategoryHint" hidden>ยังไม่มีประเภทงานในระบบ — ไปเพิ่มที่หน้า "ตั้งค่าระบบ" แท็บ "ข้อมูลหลัก" ก่อน ถึงจะเพิ่มกำหนดการได้</div>
           </div>
           <!-- 1.88: ส่งกี่รอบ — ครั้งเดียว / ทุกเดือน / กำหนดเอง (แต่ละรอบเป็นกำหนดการแยกในปฏิทิน) -->
@@ -370,11 +370,11 @@
 
         </div><!-- /evDeadlineWrap -->
 
-        <!-- 1.94: ผู้รับผิดชอบ (หลายคนได้) — แสดงในปฏิทินโรงเรียน · คนที่เลือกจากรายชื่อเข้าหน้าสรุปรวมการส่งงานเห็น/ตรวจงานนี้ได้ -->
+        <!-- 1.94: ผู้รับผิดชอบ (หลายคนได้) — แสดงในปฏิทินโรงเรียน · คนที่เลือกจากรายชื่อเข้าหน้าสรุปการส่งงานเห็น/ตรวจงานนี้ได้ -->
         <div class="field ev-resp-field">
           <label><i class="fa-solid fa-user-check" aria-hidden="true"></i> ผู้รับผิดชอบ <span class="opt">(ไม่บังคับ · เลือกได้หลายคน)</span></label>
           <div id="evRespPick"></div>
-          <div class="hint" id="evRespHint">ครูที่เลือกจากรายชื่อจะเห็นงานนี้ในหน้า "สรุปรวมการส่งงาน" (เฉพาะงานที่รับผิดชอบ) และตรวจงาน/ตรวจรับได้ · ช่องข้อความใช้แสดงในปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของงาน)</div>
+          <div class="hint" id="evRespHint">ครูที่เลือกจากรายชื่อจะเห็นงานนี้ในหน้า "สรุปการส่งงาน" (เฉพาะงานที่รับผิดชอบ) และตรวจงาน/ตรวจรับได้ · ช่องข้อความใช้แสดงในปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของงาน)</div>
         </div>
         <!-- 1.93: ปฏิทินโรงเรียน — การแสดง (ใช้ทั้งกำหนดส่งงานและกิจกรรม) -->
         <div class="ev-sc-box" id="evScBox">
@@ -417,7 +417,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.95.0.291026"></script>
+  <script src="assets/api.js?v=1.96.0.291026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -1049,7 +1049,7 @@
       else if (r.b === r.a) h = 'แสดงวันที่ ' + formatDateThai(r.a);
       else h = evScMode === 'first' ? 'แสดงวันที่ ' + formatDateThai(r.a) + ' (ช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) + ')' : evScMode === 'last' ? 'แสดงวันที่ ' + formatDateThai(r.b) + ' พร้อมวงเล็บบอกช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) : evScMode === 'ends' ? 'แสดง 2 วัน: ' + formatDateThai(r.a) + ' (วันแรก) และ ' + formatDateThai(r.b) + ' (วันสุดท้าย)' : 'แสดงเป็นช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b);
       document.getElementById('evScHint').textContent = h;
-      document.getElementById('evRespHint').textContent = evIsAct() ? 'แสดงในคอลัมน์ผู้รับผิดชอบของปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของกิจกรรม)' : 'ครูที่เลือกจากรายชื่อจะเห็นงานนี้ในหน้า "สรุปรวมการส่งงาน" (เฉพาะงานที่รับผิดชอบ) และตรวจงาน/ตรวจรับได้ · ช่องข้อความใช้แสดงในปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของงาน)';
+      document.getElementById('evRespHint').textContent = evIsAct() ? 'แสดงในคอลัมน์ผู้รับผิดชอบของปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของกิจกรรม)' : 'ครูที่เลือกจากรายชื่อจะเห็นงานนี้ในหน้า "สรุปการส่งงาน" (เฉพาะงานที่รับผิดชอบ) และตรวจงาน/ตรวจรับได้ · ช่องข้อความใช้แสดงในปฏิทินโรงเรียน (ว่าง = กลุ่มเจ้าของงาน)';
       var c = evCat();
       document.getElementById('evSelfReportWrap').hidden = evIsAct() || !(c && c.manualCheck);
       evResp.refresh();
