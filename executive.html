@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.0.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.2.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -112,7 +112,7 @@
     </div>
   </div>
 
-<script src="assets/api.js?v=1.96.0.291026"></script>
+<script src="assets/api.js?v=1.96.2.291026"></script>
   <script>
     var session = requireViewerAccess();
     // ผู้บริหารเท่านั้นที่ใช้หน้านี้เป็นหน้าแรก (เจ้าหน้าที่/Super Admin มีหน้าแรกของตัวเองอยู่แล้ว) — ส่งกลับหน้าแรกของบทบาทนั้น
@@ -191,7 +191,8 @@
           return '<i class="cal-dot" style="background:' + c + ';" title="' + escapeHtml(e.title) + '"></i>';
         }).join('') + (dls.length > 4 ? '<span class="cal-dot-more">+' + (dls.length - 4) + '</span>' : '');
         dls.forEach(function (e) { if (e.categoryId) legendCats[e.categoryId] = e.categoryName || e.title; else legendCats['__none'] = 'กำหนดการทั่วไป'; });
-cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr ? '<span class="cal-today-label">วันนี้</span>' : '') + activityBarsHtml(acts) + (dotsHtml ? '<div class="cal-dots">' + dotsHtml + '</div>' : '');
+var cc = calCellC(d, dateStr, acts); cell.className += cc.cls; if (cc.style) cell.style.cssText = cc.style; // 1.96.2: แบบ C + วันหยุด
+cell.innerHTML = cc.num + (dateStr === todayStr ? '<span class="cal-today-label">วันนี้</span>' : '') + cc.label + (dotsHtml ? '<div class="cal-dots">' + dotsHtml + '</div>' : '');
         grid.appendChild(cell);
       }
       var legend = document.getElementById('calLegend');
@@ -200,7 +201,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (dateStr === todayStr 
         var c = k === '__none' ? '#9aa4b8' : (categoryColorMap[k] || '#3457d5');
         return '<span><i class="cal-dot" style="background:' + c + ';"></i>' + escapeHtml(legendCats[k]) + '</span>';
       }).join('') + (lk.length > 8 ? '<span>และอีก ' + (lk.length - 8) + ' ประเภท (กดที่วันเพื่อดู)</span>' : '') // แสดงสูงสุด 8 ประเภท
-        + (hasActs ? '<span><i class="cal-act-swatch" aria-hidden="true"></i>แถบ = กิจกรรม (สีตามกลุ่มเจ้าของ)</span>' : '');
+        + (hasActs ? CAL_C_LEGEND : '');
       renderUpcoming();
       var actsBox = document.getElementById('calActsUpcoming');
       actsBox.hidden = calKind === 'deadline' || (!calState.events.some(isActivityEv) && calKind !== 'activity');
