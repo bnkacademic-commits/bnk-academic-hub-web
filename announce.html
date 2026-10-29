@@ -585,6 +585,13 @@
     function renderEvents() {
       var wrap = document.getElementById('eventListWrap');
       var list = evlFiltered();
+      // 1.92.6: งานที่ส่งเป็นรอบ (ทุกเดือน/กำหนดเอง) รวมเป็น 1 รายการ — แสดงรอบที่ยังไม่ครบกำหนดที่ใกล้ที่สุด กด "ดูทุกรอบ" เพื่อแก้ไขทีละรอบ
+      var srToday = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10), srSeen = {};
+      list = list.filter(function (ev) { if (!ev.seriesId) return true; if (srSeen[ev.seriesId]) return false; srSeen[ev.seriesId] = 1; return true; }).map(function (ev) {
+        if (!ev.seriesId) return ev;
+        var rs = srRounds(ev.seriesId);
+        return rs.filter(function (r) { return (r.endDate || r.date) >= srToday; })[0] || rs[rs.length - 1];
+      });
       evlBar.update(list.length);
       if (!lastEvents.length) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการ</div>'; return; }
       if (!list.length) { wrap.innerHTML = '<div class="empty-state">ไม่พบกำหนดการตามตัวกรอง</div>'; return; }
@@ -608,11 +615,11 @@
         }
         var nSeries = ev.seriesId ? lastEvents.filter(function (x) { return x.seriesId === ev.seriesId; }).length : 0;
         var roundBadge = ev.seriesId ? '<span class="evl-round"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> รอบ ' + ev.roundNo + '/' + nSeries + '</span>' : '';
-        var seriesActs = ev.seriesId ? '<button class="btn btn-secondary btn-sm" data-add-round="' + ev.seriesId + '"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มรอบ</button><button class="btn btn-danger btn-sm" data-del-series="' + ev.seriesId + '">ลบทั้งชุด</button>' : '';
+        var seriesActs = ev.seriesId ? '<button class="btn btn-primary btn-sm" data-series-view="' + ev.seriesId + '"><i class="fa-solid fa-list" aria-hidden="true"></i> ดูทุกรอบ (' + nSeries + ')</button><button class="btn btn-secondary btn-sm" data-add-round="' + ev.seriesId + '"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มรอบ</button><button class="btn btn-danger btn-sm" data-del-series="' + ev.seriesId + '">ลบทั้งชุด</button>' : '';
         var by = ev.createdByName ? '<div class="evl-by"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> เพิ่มโดย ' + escapeHtml(ev.createdByName) + (ev.createdAt ? ' · ' + formatDateThai(String(ev.createdAt).slice(0, 10)) : '') + '</div>' : '';
         var acts = canManage && ev.canEdit
-          ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">' + (ev.seriesId ? 'ลบรอบนี้' : 'ลบ') + '</button>' + seriesActs + '</div>'
-          : (canManage ? '<div class="evl-lock" title="แก้ไขได้เฉพาะผู้เพิ่ม เจ้าหน้าที่กลุ่มเจ้าของ และผู้ดูแลระบบ"><i class="fa-solid fa-lock" aria-hidden="true"></i> ดูได้อย่างเดียว</div>' : '');
+          ? '<div class="evl-acts">' + (ev.seriesId ? seriesActs : '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>') + '</div>'
+          : (ev.seriesId ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-series-view="' + ev.seriesId + '"><i class="fa-solid fa-list" aria-hidden="true"></i> ดูทุกรอบ (' + nSeries + ')</button></div>' : '') + (canManage ? '<div class="evl-lock" title="แก้ไขได้เฉพาะผู้เพิ่ม เจ้าหน้าที่กลุ่มเจ้าของ และผู้ดูแลระบบ"><i class="fa-solid fa-lock" aria-hidden="true"></i> ดูได้อย่างเดียว</div>' : '');
         html += '<div class="event-list-item evl-item">' +
           '<div class="event-date-chip' + (isAct ? ' act' : '') + '">' + dateChip + '</div>' +
           '<div class="evl-body">' +
@@ -623,6 +630,33 @@
       });
       html += listMoreHtml(Math.min(evlShown, list.length), list.length);
       wrap.innerHTML = html;
+      if (srOpenId) renderSeriesAdm();
+    }
+    // ---- 1.92.6 ป็อปอัปรายการรอบของงานชุดเดียวกัน (แก้ไข/ลบทีละรอบ) ----
+    var srOpenId = '', srModalEl = null;
+    function srRounds(sid) { return lastEvents.filter(function (x) { return x.seriesId === sid; }).sort(function (a, b) { return a.roundNo - b.roundNo; }); }
+    function openSeriesAdm(sid) {
+      if (!srModalEl) {
+        srModalEl = document.createElement('div'); srModalEl.className = 'modal-backdrop'; srModalEl.id = 'seriesAdmModal'; srModalEl.hidden = true;
+        srModalEl.innerHTML = '<div class="modal-box" style="max-width:640px"><button type="button" class="modal-close-x" id="sraCloseX" aria-label="ปิด">✕</button><h3 id="sraTitle"></h3><div id="sraList"></div></div>';
+        document.body.appendChild(srModalEl);
+        document.getElementById('sraCloseX').addEventListener('click', closeSeriesAdm);
+        document.getElementById('sraList').addEventListener('click', evListClick);
+      }
+      srOpenId = sid; renderSeriesAdm(); showModalEl(srModalEl);
+    }
+    function closeSeriesAdm() { srOpenId = ''; if (srModalEl) hideModalEl(srModalEl); }
+    function renderSeriesAdm() {
+      var rs = srRounds(srOpenId);
+      if (!rs.length) { closeSeriesAdm(); return; }
+      var today = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
+      document.getElementById('sraTitle').textContent = rs[0].title + ' · ' + rs.length + ' รอบ';
+      document.getElementById('sraList').innerHTML = rs.map(function (r) {
+        var d = r.endDate && r.endDate !== r.date ? formatDateThai(r.date) + ' – ' + formatDateThai(r.endDate) : formatDateThai(r.date);
+        var past = (r.endDate || r.date) < today;
+        var b = canManage && r.canEdit ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-edit-id="' + r.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + r.id + '">ลบรอบนี้</button></div>' : '';
+        return '<div class="event-list-item evl-item"' + (past ? ' style="opacity:.6"' : '') + '><div class="event-date-chip">' + d + '</div><div class="evl-body"><div class="sub-item-title">รอบ ' + r.roundNo + (r.roundLabel ? ' · ' + escapeHtml(r.roundLabel) : '') + (past ? ' <span class="evl-gb">ครบกำหนดแล้ว</span>' : '') + '</div></div>' + b + '</div>';
+      }).join('');
     }
     document.getElementById('evlTabs').addEventListener('click', function (e) {
       var b = e.target.closest('[data-evl]'); if (!b) return;
@@ -632,11 +666,14 @@
     });
     document.getElementById('evlFlt').addEventListener('change', function (e) { if (e.target.id === 'evlQ') return; evlShown = LIST_PAGE; renderEvents(); }); // 1.88: ช่องค้นหาแสดงผลตอนพิมพ์แล้ว — ไม่วาดใหม่ตอนออกจากช่อง (กดปุ่มในรายการครั้งแรกไม่ติด)
     document.getElementById('evlFlt').addEventListener('input', function (e) { if (e.target.id === 'evlQ') { evlShown = LIST_PAGE; renderEvents(); } });
-    document.getElementById('eventListWrap').addEventListener('click', async function (e) {
+    document.getElementById('eventListWrap').addEventListener('click', evListClick);
+    async function evListClick(e) {
+      var sv = e.target.closest('button[data-series-view]');
+      if (sv) { openSeriesAdm(sv.getAttribute('data-series-view')); return; }
       var more = e.target.closest('[data-more]');
       if (more) { evlShown = more.getAttribute('data-more') === 'all' ? 1e9 : evlShown + LIST_PAGE; renderEvents(); return; }
       var eb = e.target.closest('button[data-edit-id]');
-      if (eb) { var ev = lastEvents.filter(function (x) { return x.id === eb.getAttribute('data-edit-id'); })[0]; if (ev) startEditEvent(ev); return; }
+      if (eb) { var ev = lastEvents.filter(function (x) { return x.id === eb.getAttribute('data-edit-id'); })[0]; if (ev) { closeSeriesAdm(); startEditEvent(ev); } return; }
       var ar = e.target.closest('button[data-add-round]');
       if (ar) { openAddRound(ar.getAttribute('data-add-round')); return; }
       var ds = e.target.closest('button[data-del-series]');
@@ -656,7 +693,7 @@
         var r = await withProgress('กำลังลบกำหนดการ', function () { return apiCall('adminDeleteEvent', { eventId: evId }); }, { successLabel: 'ลบกำหนดการแล้ว' });
         if (r.ok) { loadEvents(); }
       }
-    });
+    }
     async function loadEvents() {
       var wrap = document.getElementById('eventListWrap');
       try {
