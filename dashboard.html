@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.92.4.271026" />
+<link rel="stylesheet" href="assets/style.css?v=1.93.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -249,9 +249,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.92.4.271026"></script>
+  <script src="assets/api.js?v=1.93.0.291026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.92.4.271026"></script>
+  <script src="assets/homeroom.js?v=1.93.0.291026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -1018,7 +1018,36 @@
     // เป็นเกณฑ์แบบเดียวกับที่หน้าสรุปรวม "สรุปแยกแต่ละงาน" ใช้ — ไม่ได้ผูกกับ eventId เจาะจง เพราะระบบไม่มีฟิลด์นั้นในตาราง submissions)
     // ย้ายออกมาเป็นฟังก์ชันกลาง (เดิมประกาศซ้อนอยู่ในตัว renderAssignmentChecklist เท่านั้น) เพราะ renderCalendar() ด้านล่าง
     // ก็ต้องใช้เกณฑ์เดียวกันนี้ด้วย เพื่อตัดสินว่ากำหนดการที่เกินกำหนดแล้วควรยังค้างอยู่ใน "กำหนดการ" ใต้ปฏิทินหรือไม่
+    // ---------- 1.93: งาน "แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน" ----------
+    // received = เจ้าหน้าที่ตรวจรับแล้ว · reported = ครูกดแจ้งว่าส่งแล้ว (รอตรวจรับ) · ปุ่มแจ้ง/ยกเลิก เฉพาะกำหนดการที่เปิด "ให้ครูกดแจ้งได้"
+    function mcActionHtml(e, compact) {
+      var m = e.manual || {}, st = m.status || '';
+      var note = m.note ? '<span class="mc-note-t" title="หมายเหตุจากเจ้าหน้าที่"><i class="fa-solid fa-comment" aria-hidden="true"></i> ' + escapeHtml(m.note) + '</span>' : '';
+      if (st === 'received') return '<span class="mc-side"><span class="mc-badge ok" title="' + escapeHtml((m.by || 'เจ้าหน้าที่') + ' ตรวจรับ ' + formatDateThai(String(m.checkedAt).slice(0, 10))) + '"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> เจ้าหน้าที่ตรวจรับแล้ว</span>' + (compact ? '' : note) + '</span>';
+      if (st === 'reported') return '<span class="mc-side"><span class="mc-badge rep"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> แจ้งแล้ว รอตรวจรับ</span>' + (e.selfReport ? '<button type="button" class="linklike" data-mc-unreport="' + escapeHtml(e.id) + '">ยกเลิกการแจ้ง</button>' : '') + (compact ? '' : note) + '</span>';
+      if (e.selfReport && !beforeMyJoin(e)) return '<span class="mc-side"><button type="button" class="btn btn-primary btn-sm event-submit-btn" data-mc-report="' + escapeHtml(e.id) + '"><i class="fa-solid fa-hand" aria-hidden="true"></i> แจ้งว่าส่งแล้ว</button>' + (compact ? '' : note) + '</span>';
+      return '<span class="mc-side"><span class="mc-badge no"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> ยังไม่ได้รับ</span>' + (compact ? '' : note) + '</span>';
+    }
+    function mcChecklistHtml(e) {
+      var m = e.manual || {}, st = m.status || '';
+      if (st === 'received') return '<div class="checklist-status done">เจ้าหน้าที่ตรวจรับแล้ว' + (m.checkedAt ? ' · ' + escapeHtml(formatDateThai(String(m.checkedAt).slice(0, 10))) : '') + '</div>' + (m.note ? '<div class="mc-note-t">' + escapeHtml(m.note) + '</div>' : '');
+      return '<div class="checklist-status pending">' + (st === 'reported' ? 'แจ้งแล้ว รอเจ้าหน้าที่ตรวจรับ' : 'ยังไม่ได้รับ (ส่งนอกระบบ)') + '</div>' + (m.note ? '<div class="mc-note-t">' + escapeHtml(m.note) + '</div>' : '') +
+        (e.selfReport && st !== 'reported' && !beforeMyJoin(e) ? '<button type="button" class="btn btn-primary btn-sm cl-round-btn" data-mc-report="' + escapeHtml(e.id) + '"><i class="fa-solid fa-hand" aria-hidden="true"></i> แจ้งว่าส่งแล้ว</button>' : '');
+    }
+    document.addEventListener('click', async function (ev) {
+      var b = ev.target.closest('[data-mc-report],[data-mc-unreport]'); if (!b) return;
+      var on = b.hasAttribute('data-mc-report'), id = b.getAttribute(on ? 'data-mc-report' : 'data-mc-unreport');
+      var e = calState.events.filter(function (x) { return x.id === id; })[0];
+      if (!(await askConfirm(on ? 'แจ้งเจ้าหน้าที่ว่าส่งงาน "' + (e ? e.title : '') + '" แล้ว? (เจ้าหน้าที่จะตรวจรับอีกครั้ง)' : 'ยกเลิกการแจ้งว่าส่งแล้ว?', on ? 'แจ้งว่าส่งแล้ว' : 'ยกเลิกการแจ้ง'))) return;
+      var r = await withProgress(on ? 'กำลังแจ้ง' : 'กำลังยกเลิก', function () { return apiCall('teacherManualReport', { eventId: id, reported: on }); }, { successLabel: on ? 'แจ้งแล้ว' : 'ยกเลิกแล้ว' });
+      if (!r.ok) return;
+      calState.events.forEach(function (x) { if (x.id === id) x.manual = Object.assign({}, x.manual || {}, { status: on ? 'reported' : '', reportedAt: on ? new Date().toISOString() : '' }); });
+      var dm = document.getElementById('dayModal'); if (dm && !dm.hidden) hideModalEl(dm);
+      var sm = document.getElementById('seriesModal'); if (sm && !sm.hidden && typeof renderSeriesModal === 'function') renderSeriesModal();
+      renderCalendar(); renderAssignmentChecklist();
+    });
     function isAssignmentSubmitted(e) {
+      if (e.manualCheck) return !!(e.manual && e.manual.status === 'received'); // 1.93: ตรวจรายคน = เจ้าหน้าที่ตรวจรับแล้ว
       if (e.roomBased) return !!(e.rooms && e.rooms.length) && e.rooms.every(function (r) { return !!r.submitted; }); // 1.90: งานตามห้อง = ทุกห้องที่เป็นครูที่ปรึกษาส่งแล้ว
       if (e.seriesId) return allSubmissions.some(function (s) { return s.eventId === e.id; }); // 1.88: รอบ = ไฟล์ที่ผูกรอบนี้
       return allSubmissions.some(function (s) {
@@ -1054,7 +1083,7 @@
       }
       var yearSel = document.getElementById('clYear');
       // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ
-      var assignments = calState.events.filter(function (e) { return !!e.categoryId && !e.noSubmission && !beforeMyJoin(e) && (!calGroup || evDept(e) === calGroup) && hrApplies(e); });
+      var assignments = calState.events.filter(function (e) { return !!e.categoryId && (!e.noSubmission || e.manualCheck) && !beforeMyJoin(e) && (!calGroup || evDept(e) === calGroup) && hrApplies(e); });
       var years = {};
       assignments.forEach(function (e) { years[String(e.academicYear)] = true; });
       years[String(checklistState.term.year)] = true;
@@ -1097,7 +1126,7 @@
           '<div class="checklist-mark ' + (r.done ? 'done' : 'pending') + '">' + (r.done ? '<i class="fas fa-check" aria-hidden="true"></i>' : '<i class="fas fa-exclamation" aria-hidden="true"></i>') + '</div>' +
           '<div class="checklist-text">' +
             '<div class="checklist-title">' + categoryDotHtml(dotColor) + escapeHtml(r.ev.title) + (r.ev.categoryId ? categoryDeptBadgeHtml(r.ev.categoryId) : '') + '</div>' +
-            (r.done ? checklistReviewHtml(r.ev) : '<div class="checklist-status pending">ยังไม่ส่ง</div>') +
+            (r.ev.manualCheck ? mcChecklistHtml(r.ev) : (r.done ? checklistReviewHtml(r.ev) : '<div class="checklist-status pending">ยังไม่ส่ง</div>')) +
           '</div>' +
         '</div>';
       }).join('');
@@ -1139,6 +1168,7 @@
         if (done) {
           var late = String(roundFirstSent(e)).slice(0, 10) > end;
           cls = rv === 'revise' ? 'fx' : (late ? 'late' : 'ok');
+          if (e.manualCheck) { late = String((e.manual && e.manual.checkedAt) || '').slice(0, 10) > end; rv = ''; cls = late ? 'late' : 'ok'; }
           ic = rv === 'revise' ? ' แก้ไข <i class="fa-solid fa-pen" aria-hidden="true"></i>' : (late ? ' เกินกำหนด <i class="fa-solid fa-check" aria-hidden="true"></i>' : (rv === 'reviewed' ? ' ตรวจแล้ว <i class="fa-solid fa-check-double" aria-hidden="true"></i>' : ' ส่งแล้ว <i class="fa-solid fa-check" aria-hidden="true"></i>'));
         } else if (e.date > t) { cls = 'wait'; }
         else if (end < t) { cls = 'no'; ic = ' ยังไม่ส่ง'; }
@@ -1147,7 +1177,7 @@
       }).join('');
       var meta = '';
       if (f) { var dl = daysLeftInfo(f.endDate || f.date); meta = 'รอบ ' + escapeHtml(f.roundLabel || f.roundNo) + ' ครบกำหนด ' + escapeHtml(formatDateThai(f.endDate || f.date)) + (dl ? ' · <span class="days-left ' + dl.cls + '">' + escapeHtml(dl.text) + '</span>' : ''); }
-      var btn = f && !beforeMyJoin(f) ? '<button type="button" class="btn ' + ((f.endDate || f.date) < t ? 'btn-danger' : 'btn-primary') + ' btn-sm cl-round-btn" data-cl-fix="' + escapeHtml(f.id) + '"><i class="fa-solid fa-upload" aria-hidden="true"></i> ส่งงานรอบ ' + escapeHtml(roundShort(f)) + '</button>' : '';
+      var btn = f && f.manualCheck ? '<div class="cl-round-mc">' + mcActionHtml(f) + '</div>' : f && !beforeMyJoin(f) ? '<button type="button" class="btn ' + ((f.endDate || f.date) < t ? 'btn-danger' : 'btn-primary') + ' btn-sm cl-round-btn" data-cl-fix="' + escapeHtml(f.id) + '"><i class="fa-solid fa-upload" aria-hidden="true"></i> ส่งงานรอบ ' + escapeHtml(roundShort(f)) + '</button>' : '';
       var rvBlocks = rounds.filter(function (e) { return e.review && e.review.status === 'revise'; }).map(function (e) {
         return '<div class="cl-round-rv"><div class="cl-round-rv-h">รอบ ' + escapeHtml(e.roundLabel || e.roundNo) + '</div>' + checklistReviewHtml(e) + '</div>';
       }).join('');
@@ -1437,7 +1467,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
         // (ไม่มีเพดาน 60 วันเหมือนกำหนดการทั่วไป) เพื่อให้ยังกดปุ่ม "ส่งงาน" ได้จากตรงนี้เสมอ — เคยหายไปจากรายการทันทีที่เกินกำหนดเกิน 1 วัน
         // ซึ่งผู้ใช้แจ้งว่าไม่สะดวก เพราะหาไม่เจอว่าจะกดส่งงานที่ค้างได้จากไหน พองานถูกส่งแล้วจะหลุดออกจากรายการตามปกติเหมือนเดิม
         // ตั้งแต่ V12.0: ไม่ใช้กับ e.noSubmission (แจ้งเตือนอย่างเดียว ไม่มีอะไรให้ "ส่ง" จริง) ให้ตกไปใช้เพดาน 60 วันปกติเหมือนกำหนดการทั่วไปแทน
-        if (diffDays <= -1 && e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && !beforeMyJoin(e)) return true;
+        if (diffDays <= -1 && e.categoryId && (!e.noSubmission || e.manualCheck) && !isAssignmentSubmitted(e) && !beforeMyJoin(e)) return true;
         return false;
       });
       upcoming = groupSeriesUpcoming(upcoming); // 1.92.4: งานส่งเป็นรอบ = แถวเดียว (รอบที่ใกล้ครบกำหนดที่สุด) + ปุ่มดูรอบทั้งหมด
@@ -1540,6 +1570,12 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           if (st === 'open' || st === 'no' || st === 'fx') act = '<button type="button" class="btn ' + (st === 'open' ? 'btn-primary' : 'btn-danger') + ' btn-sm" data-hr-send="' + escapeHtml(e.id + '|' + roomId) + '"><i class="fa-solid fa-book-open ui-icon" aria-hidden="true"></i> ' + (st === 'fx' ? 'ส่งใหม่' : 'ส่งสมุด') + '</button>';
           else if (st === 'soon') act = hrSoonBtn(e, '');
           else if (st === 'ok' || st === 'late') act = '<button type="button" class="btn btn-secondary btn-sm" data-hr-send="' + escapeHtml(e.id + '|' + roomId) + '"><i class="fa-solid fa-rotate ui-icon" aria-hidden="true"></i> ส่งแทนฉบับเดิม</button>';
+        } else if (e.manualCheck) { // 1.93: ตรวจรายคน
+          var mst = (e.manual && e.manual.status) || '', lvm = seriesRoundOpen(e);
+          chip = mst === 'received' ? ['ok', 'ได้รับแล้ว ✓'] : mst === 'reported' ? ['open', 'แจ้งแล้ว รอตรวจรับ'] : (lvm === 2 ? ['wait', 'ยังไม่ถึง'] : (lvm === 0 ? ['no', 'ยังไม่ได้รับ (เกินกำหนด)'] : ['open', 'ยังไม่ได้รับ']));
+          cls = mst === 'received' ? 'ok' : '';
+          if (mst === 'received' && e.manual.checkedAt) small += ' · ตรวจรับ ' + formatDateThai(String(e.manual.checkedAt).slice(0, 10));
+          if (lvm !== 2) act = mcActionHtml(e, true);
         } else {
           var done = isAssignmentSubmitted(e), rv = e.review && e.review.status, lv = seriesRoundOpen(e);
           if (done) { var sentAt = roundFirstSent(e), late = String(sentAt).slice(0, 10) > end; chip = rv === 'revise' ? ['fx', 'ต้องแก้ไข'] : (rv === 'reviewed' ? ['ok', 'ตรวจแล้ว ✓'] : [late ? 'late' : 'ok', late ? 'ส่งช้า ✓' : 'ส่งแล้ว ✓']); cls = 'ok'; if (sentAt) small += ' · ส่งเมื่อ ' + formatDateThai(String(sentAt).slice(0, 10)); }
@@ -1558,7 +1594,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
 
     // ---------- 1.92: รายการกำหนดส่งงานใต้ปฏิทิน — ค้นหา / กรองประเภท / กรองสถานะ / เรียงตามวันครบกำหนด ----------
     var calUpState = { all: [], now: new Date(), q: '', type: 'all', status: 'all', sort: 'asc' };
-    function upTypeOf(e) { return e.roomBased ? 'room' : (e.categoryId && !e.noSubmission ? 'submit' : (e.categoryId && e.noSubmission ? 'notice' : 'general')); }
+    function upTypeOf(e) { return e.roomBased ? 'room' : (e.categoryId && (!e.noSubmission || e.manualCheck) ? 'submit' : (e.categoryId && e.noSubmission ? 'notice' : 'general')); }
     function upStatusOf(e, now) {
       if (e.__series) return e.__status; // 1.92.4
       if (upTypeOf(e) === 'notice' || upTypeOf(e) === 'general') return 'none';
@@ -1602,17 +1638,18 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           if (e.__series) return seriesRowHtml(e, now); // 1.92.4
           var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
           // 1.57: (เหลือ N วัน) นับถึงวันสุดท้ายของกำหนดส่ง · ส่งแล้วแสดงสีปกติ · เลยกำหนดแสดงเฉพาะงานที่ยังไม่ส่ง
-          var dl = daysLeftInfo(e.endDate || e.date, now), submittedNow = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
-          if (dl && (dl.days >= 0 || (e.categoryId && !e.noSubmission && !submittedNow))) dateChip += '<span class="days-left ' + (submittedNow ? 'done' : dl.cls) + '">(' + dl.text + ')</span>';
+          var trk = e.categoryId && (!e.noSubmission || e.manualCheck); // 1.93: งานตรวจรายคนนับเหมือนงานที่ต้องส่ง
+          var dl = daysLeftInfo(e.endDate || e.date, now), submittedNow = trk && isAssignmentSubmitted(e);
+          if (dl && (dl.days >= 0 || (trk && !submittedNow))) dateChip += '<span class="days-left ' + (submittedNow ? 'done' : dl.cls) + '">(' + dl.text + ')</span>';
           // เกินกำหนดส่งแล้ว + ยังไม่ส่ง (ตั้งแต่เวอร์ชันถัดจาก V11.9.1) — แสดงป้าย "เกินกำหนด" สีแดงให้เห็นชัดเจน ไม่ใช่แค่หายเงียบๆ ไปจากรายการ
           // ตั้งแต่ V12.0: ไม่มีสถานะเกินกำหนดสำหรับ e.noSubmission เพราะไม่มีอะไรให้ "ส่ง" จริง
-          var isOverdue = e.categoryId && !e.noSubmission && !isAssignmentSubmitted(e) && (e.roomBased ? todayYmd() > hrWin(e).grace : new Date(e.endDate || e.date) < now); // 1.92: สมุดโฮมรูมนับเกินเมื่อพ้น 7 วันหลังสิ้นเดือน
+          var isOverdue = trk && !isAssignmentSubmitted(e) && (e.roomBased ? todayYmd() > hrWin(e).grace : new Date(e.endDate || e.date) < now); // 1.92: สมุดโฮมรูมนับเกินเมื่อพ้น 7 วันหลังสิ้นเดือน
           // ปุ่ม "ส่งงาน" ทางขวาสุด เฉพาะกำหนดการที่ผูกกับประเภทงานไว้ (มีอะไรให้ส่งจริง) — กดแล้วเปิดป็อปอัปส่งงานพร้อมเลือกปี/ภาคเรียน/ประเภทงานให้อัตโนมัติ
           // ยังกดได้ตามปกติแม้เกินกำหนดแล้ว (ระบบไม่เคยบล็อกการส่งงานย้อนหลังอยู่แล้ว เพียงแต่เดิมรายการหายไปก่อนจะมีโอกาสกด)
           // ตั้งแต่ V12.0: ถ้าเป็นประเภทงาน "แจ้งเตือนอย่างเดียว" ไม่มีปุ่มส่งงานเลย ขึ้นป้ายแจ้งเตือนเฉยๆ แทน
           // 1.49.121026: ส่งแล้ว (มีผลงานประเภทนี้ในภาคเรียน/ปีนี้) -> ปุ่มเปลี่ยนเป็น "ส่งงานเพิ่มหรือแก้ไข" เปิดป็อปอัปชุดผลงาน (ดู/พรีวิว/ลบ/เพิ่มไฟล์)
-          var isSubmitted = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
-          var submitBtn = e.roomBased ? hrUpcomingBtn(e, isOverdue) : isSubmitted
+          var isSubmitted = trk && isAssignmentSubmitted(e);
+          var submitBtn = e.manualCheck ? mcActionHtml(e) : e.roomBased ? hrUpcomingBtn(e, isOverdue) : isSubmitted
             ? '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ' + (e.seriesId ? 'ส่งไฟล์เพิ่มในรอบนี้' : 'ส่งงานเพิ่มหรือแก้ไข') + '</button>'
             : (e.categoryId && !e.noSubmission)
             ? '<button class="btn ' + (isOverdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
@@ -1621,7 +1658,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
           // ตั้งแต่เวอร์ชันถัดจาก V11.1 หัวข้อกำหนดการที่ผูกประเภทงานจะเป็นชื่อประเภทงานเป๊ะๆ อยู่แล้ว (กรอกเองไม่ได้อีกต่อไป) — ไม่ต้องต่อท้าย "(ชื่อประเภทงาน)" ซ้ำอีกถ้าซ้ำกับหัวข้ออยู่แล้ว (กำหนดการเก่าก่อนอัปเดตที่หัวข้อเคยพิมพ์เองไว้ต่างจากชื่อประเภทงาน ยังโชว์วงเล็บต่อท้ายตามเดิม)
           var showCategorySuffix = e.categoryName && e.categoryName !== e.title;
           var overdueBadge = isOverdue ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> เกินกำหนด</span>' : '';
-          if (isSubmitted) overdueBadge = '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>';
+          if (isSubmitted) overdueBadge = e.manualCheck ? '' : '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>';
           return '<div class="event-list-item"><div class="event-date-chip' + (isOverdue ? ' overdue' : '') + '">' + dateChip + '</div>' +
             '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(e.title) +
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
@@ -1662,6 +1699,7 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
     function eventActionHtml(e) {
       if (!e.categoryId) return '';
       if (e.roomBased) return hrApplies(e) ? hrUpcomingBtn(e, false) : '<span class="hint day-ev-note">สำหรับครูที่ปรึกษา</span>';
+      if (e.manualCheck) return mcActionHtml(e); // 1.93
       if (e.noSubmission) return '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>';
       if (beforeMyJoin(e)) return '<span class="hint day-ev-note">ก่อนเริ่มปฏิบัติงาน</span>';
       if (isAssignmentSubmitted(e)) return '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ' + (e.seriesId ? 'ส่งไฟล์เพิ่มในรอบนี้' : 'ส่งงานเพิ่มหรือแก้ไข') + '</button>';
@@ -1679,13 +1717,14 @@ cell.innerHTML = '<div class="day-num">' + d + '</div>' + (isToday ? '<span clas
         if (isActivityEv(e)) return activityDayHtml(e);
         var color = e.categoryId ? (categoryColorMap[e.categoryId] || '#3457d5') : '#9aa4b8';
         var range = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
-        var dl = daysLeftInfo(e.endDate || e.date), done = e.categoryId && !e.noSubmission && isAssignmentSubmitted(e);
-        var dlHtml = dl && (dl.days >= 0 || (e.categoryId && !e.noSubmission && !done && !beforeMyJoin(e))) ? ' <span class="days-left ' + (done ? 'done' : dl.cls) + '">(' + escapeHtml(dl.text) + ')</span>' : '';
+        var trk2 = e.categoryId && (!e.noSubmission || e.manualCheck);
+        var dl = daysLeftInfo(e.endDate || e.date), done = trk2 && isAssignmentSubmitted(e);
+        var dlHtml = dl && (dl.days >= 0 || (trk2 && !done && !beforeMyJoin(e))) ? ' <span class="days-left ' + (done ? 'done' : dl.cls) + '">(' + escapeHtml(dl.text) + ')</span>' : '';
         var isEnd = (e.endDate || e.date) === dateStr;
         return '<div class="day-ev">' +
           '<span class="day-ev-bar" style="background:' + color + '"></span>' +
           '<div class="day-ev-main">' +
-            '<div class="day-ev-title">' + escapeHtml(e.title) + (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + (isEnd && e.categoryId && !e.noSubmission ? ' <span class="day-ev-end"><i class="fas fa-flag" aria-hidden="true"></i> ครบกำหนดวันนี้</span>' : '') + (done ? ' <span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>' : '') + '</div>' +
+            '<div class="day-ev-title">' + escapeHtml(e.title) + (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + (isEnd && trk2 ? ' <span class="day-ev-end"><i class="fas fa-flag" aria-hidden="true"></i> ครบกำหนดวันนี้</span>' : '') + (done && !e.manualCheck ? ' <span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>' : '') + '</div>' +
             '<div class="day-ev-meta"><i class="fas fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(range) + dlHtml + '</div>' +
             (e.categoryId ? '<div class="term-tags-row">' + termTagsHtml(e.semester, e.academicYear) + '</div>' : '') +
             (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') +

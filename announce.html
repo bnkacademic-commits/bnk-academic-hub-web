@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.92.4.271026" />
+<link rel="stylesheet" href="assets/style.css?v=1.93.0.291026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -359,10 +359,26 @@
               <button type="button" data-rvmode="none"><i class="fa-solid fa-check" aria-hidden="true"></i> ดูแค่ว่าส่งแล้ว</button>
             </div>
           </div>
-          <label class="evk-chk" id="evApplySeriesWrap" hidden><input type="checkbox" id="evApplySeries" /><span><b>ใช้กับทุกรอบของงานนี้</b><small>สำหรับ · รายละเอียด · ลิงก์แนบ · การตรวจ (วันที่แก้เฉพาะรอบนี้)</small></span></label>
+          <!-- 1.93: งานตรวจรายคน — ให้ครูกด "แจ้งว่าส่งแล้ว" ได้ (ตั้งต่อกำหนดการ) -->
+          <label class="evk-chk" id="evSelfReportWrap" hidden><input type="checkbox" id="evSelfReport" /><span><b>ให้ครูกด "แจ้งว่าส่งแล้ว" ได้</b><small>ประเภทงานนี้เจ้าหน้าที่ตรวจรับรายคน — ถ้าเปิด ครูกดแจ้งในหน้าแรกได้ (เจ้าหน้าที่ยังต้องติ๊ก "ได้รับแล้ว" เอง)</small></span></label>
+          <label class="evk-chk" id="evApplySeriesWrap" hidden><input type="checkbox" id="evApplySeries" /><span><b>ใช้กับทุกรอบของงานนี้</b><small>สำหรับ · รายละเอียด · ลิงก์แนบ · การตรวจ · การแสดงในปฏิทินโรงเรียน · ผู้รับผิดชอบ (วันที่แก้เฉพาะรอบนี้)</small></span></label>
         </div>
 
         </div><!-- /evDeadlineWrap -->
+
+        <!-- 1.93: ปฏิทินโรงเรียน — การแสดง + ผู้รับผิดชอบ (ใช้ทั้งกำหนดส่งงานและกิจกรรม) -->
+        <div class="ev-sc-box" id="evScBox">
+          <b><i class="fa-solid fa-calendar-week" aria-hidden="true"></i> แสดงในปฏิทินโรงเรียน</b>
+          <div class="evk-seg" id="evScSeg" role="radiogroup" aria-label="การแสดงในปฏิทินโรงเรียน">
+            <button type="button" data-sc="none">ไม่แสดง</button>
+            <button type="button" data-sc="first">วันแรก</button>
+            <button type="button" data-sc="last">วันสุดท้าย</button>
+            <button type="button" data-sc="range">แสดงเป็นช่วง</button>
+          </div>
+          <div class="hint" id="evScHint" style="margin-bottom:10px;"></div>
+          <label>ผู้รับผิดชอบ <span class="opt">(ไม่บังคับ · แสดงในคอลัมน์ผู้รับผิดชอบ)</span></label>
+          <div id="evRespPick"></div>
+        </div>
 
         <div class="modal-actions">
           <button class="btn btn-success" type="submit" id="evSubmitBtn">เพิ่มกำหนดการ</button>
@@ -392,7 +408,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.92.4.271026"></script>
+  <script src="assets/api.js?v=1.93.0.291026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -610,15 +626,18 @@
         } else {
           meta.push((ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + ' ปีการศึกษา ' + escapeHtml(ev.academicYear));
           meta.push('สำหรับ: ' + escapeHtml(audienceLabel_(ev.audience)));
-          if (ev.reviewMode === 'none') meta.push('<i class="fa-solid fa-check" aria-hidden="true"></i> ดูแค่ว่าส่งแล้ว');
+          if (ev.manualCheck) meta.push('<i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> เจ้าหน้าที่ตรวจรายคน' + (ev.selfReport ? ' · ครูกดแจ้งได้' : ''));
+          else if (ev.reviewMode === 'none') meta.push('<i class="fa-solid fa-check" aria-hidden="true"></i> ดูแค่ว่าส่งแล้ว');
           if (ev.links && ev.links.length) meta.push('<i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์ ' + ev.links.length);
         }
+        if (ev.calShow === 'none') meta.push('<i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i> ไม่แสดงในปฏิทินโรงเรียน');
         var nSeries = ev.seriesId ? lastEvents.filter(function (x) { return x.seriesId === ev.seriesId; }).length : 0;
         var roundBadge = ev.seriesId ? '<span class="evl-round"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> รอบ ' + ev.roundNo + '/' + nSeries + '</span>' : '';
         var seriesActs = ev.seriesId ? '<button class="btn btn-primary btn-sm" data-series-view="' + ev.seriesId + '"><i class="fa-solid fa-list" aria-hidden="true"></i> ดูทุกรอบ (' + nSeries + ')</button><button class="btn btn-secondary btn-sm" data-add-round="' + ev.seriesId + '"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มรอบ</button><button class="btn btn-danger btn-sm" data-del-series="' + ev.seriesId + '">ลบทั้งชุด</button>' : '';
         var by = ev.createdByName ? '<div class="evl-by"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> เพิ่มโดย ' + escapeHtml(ev.createdByName) + (ev.createdAt ? ' · ' + formatDateThai(String(ev.createdAt).slice(0, 10)) : '') + '</div>' : '';
+        var mcBtn = ev.manualCheck && !ev.seriesId ? '<button class="btn btn-success btn-sm" data-mc-ev="' + ev.id + '"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ตรวจรายคน</button>' : ''; // 1.93
         var acts = canManage && ev.canEdit
-          ? '<div class="evl-acts">' + (ev.seriesId ? seriesActs : '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>') + '</div>'
+          ? '<div class="evl-acts">' + mcBtn + (ev.seriesId ? seriesActs : '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>') + '</div>'
           : (ev.seriesId ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-series-view="' + ev.seriesId + '"><i class="fa-solid fa-list" aria-hidden="true"></i> ดูทุกรอบ (' + nSeries + ')</button></div>' : '') + (canManage ? '<div class="evl-lock" title="แก้ไขได้เฉพาะผู้เพิ่ม เจ้าหน้าที่กลุ่มเจ้าของ และผู้ดูแลระบบ"><i class="fa-solid fa-lock" aria-hidden="true"></i> ดูได้อย่างเดียว</div>' : '');
         html += '<div class="event-list-item evl-item">' +
           '<div class="event-date-chip' + (isAct ? ' act' : '') + '">' + dateChip + '</div>' +
@@ -654,7 +673,7 @@
       document.getElementById('sraList').innerHTML = rs.map(function (r) {
         var d = r.endDate && r.endDate !== r.date ? formatDateThai(r.date) + ' – ' + formatDateThai(r.endDate) : formatDateThai(r.date);
         var past = (r.endDate || r.date) < today;
-        var b = canManage && r.canEdit ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-edit-id="' + r.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + r.id + '">ลบรอบนี้</button></div>' : '';
+        var b = canManage && r.canEdit ? '<div class="evl-acts">' + (r.manualCheck ? '<button class="btn btn-success btn-sm" data-mc-ev="' + r.id + '"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ตรวจรายคน</button>' : '') + '<button class="btn btn-secondary btn-sm" data-edit-id="' + r.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + r.id + '">ลบรอบนี้</button></div>' : '';
         return '<div class="event-list-item evl-item"' + (past ? ' style="opacity:.6"' : '') + '><div class="event-date-chip">' + d + '</div><div class="evl-body"><div class="sub-item-title">รอบ ' + r.roundNo + (r.roundLabel ? ' · ' + escapeHtml(r.roundLabel) : '') + (past ? ' <span class="evl-gb">ครบกำหนดแล้ว</span>' : '') + '</div></div>' + b + '</div>';
       }).join('');
     }
@@ -668,6 +687,8 @@
     document.getElementById('evlFlt').addEventListener('input', function (e) { if (e.target.id === 'evlQ') { evlShown = LIST_PAGE; renderEvents(); } });
     document.getElementById('eventListWrap').addEventListener('click', evListClick);
     async function evListClick(e) {
+      var mcb = e.target.closest('button[data-mc-ev]'); // 1.93: ตรวจรายคน
+      if (mcb) { openManualCheck(mcb.getAttribute('data-mc-ev')); return; }
       var sv = e.target.closest('button[data-series-view]');
       if (sv) { openSeriesAdm(sv.getAttribute('data-series-view')); return; }
       var more = e.target.closest('[data-more]');
@@ -996,6 +1017,46 @@
       var r = await withProgress('กำลังเพิ่มรอบ', function () { return apiCall('adminAddEventRound', pl); }, { successLabel: 'เพิ่มรอบแล้ว' });
       if (r.ok) { closeAddRound(); loadEvents(); } else { eb.textContent = r.error.message; eb.hidden = false; }
     });
+    // ---------- 1.93: ปฏิทินโรงเรียน (การแสดง + ผู้รับผิดชอบ) + งานตรวจรายคน ----------
+    var evScMode = 'last';
+    var evResp = createResponsiblePicker(document.getElementById('evRespPick'), { users: audUsers, placeholder: function () { return 'ว่าง = ' + (evRespDefault() || 'กลุ่มเจ้าของงาน'); } });
+    function evIsAct() { return document.getElementById('evKind').value === 'activity'; }
+    function evRespDefault() {
+      if (evIsAct()) { var g = document.getElementById('evActOwnerGroup').value; return g ? (evActOwnerType === 'subject' ? 'กลุ่มสาระการเรียนรู้' + g : groupLabel(g)) : ''; }
+      var c = evCat(); return c && c.department ? groupLabel(c.department) : '';
+    }
+    function evScRange() {
+      if (evIsAct()) return { a: document.getElementById('evActDate').value, b: document.getElementById('evActEndDate').value || document.getElementById('evActDate').value };
+      return { a: document.getElementById('evDate').value, b: document.getElementById('evEndDate').value || document.getElementById('evDate').value };
+    }
+    function renderEvSc() {
+      document.querySelectorAll('#evScSeg [data-sc]').forEach(function (b) { var on = b.getAttribute('data-sc') === evScMode; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
+      var r = evScRange(), h = '';
+      var multi = !evIsAct() && (evRMode !== 'once' || (evEditing && evEditing.seriesId));
+      if (evScMode === 'none') h = 'ไม่แสดงรายการนี้ในหน้าปฏิทินโรงเรียน (ยังแสดงในปฏิทินหน้าแรกตามเดิม)';
+      else if (multi) h = { first: 'แต่ละรอบแสดงในวันแรกที่ส่งได้', last: 'แต่ละรอบแสดงในวันครบกำหนด', range: 'แต่ละรอบแสดงเป็นช่วงวันที่ส่งได้' }[evScMode];
+      else if (!r.a) h = { first: 'แสดงเฉพาะวันแรก', last: 'แสดงเฉพาะวันสุดท้าย', range: 'แสดงทุกวันในช่วง (แถวเดียวในตาราง)' }[evScMode];
+      else if (r.b === r.a) h = 'แสดงวันที่ ' + formatDateThai(r.a);
+      else h = evScMode === 'first' ? 'แสดงวันที่ ' + formatDateThai(r.a) + ' (ช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) + ')' : evScMode === 'last' ? 'แสดงวันที่ ' + formatDateThai(r.b) + ' พร้อมวงเล็บบอกช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b) : 'แสดงเป็นช่วง ' + formatDateThai(r.a) + ' – ' + formatDateThai(r.b);
+      document.getElementById('evScHint').textContent = h;
+      var c = evCat();
+      document.getElementById('evSelfReportWrap').hidden = evIsAct() || !(c && c.manualCheck);
+      evResp.refresh();
+    }
+    document.getElementById('evScSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-sc]'); if (!b) return; evScMode = b.getAttribute('data-sc'); renderEvSc(); });
+    ['evDate', 'evEndDate', 'evActDate', 'evActEndDate', 'evCategory', 'evActOwnerGroup'].forEach(function (id) { ['change', 'input'].forEach(function (t) { document.getElementById(id).addEventListener(t, renderEvSc); }); });
+    document.getElementById('evActOwnerSeg').addEventListener('click', function () { setTimeout(renderEvSc, 0); });
+    document.getElementById('evRoundSeg').addEventListener('click', function () { setTimeout(renderEvSc, 0); });
+    function setEvExtras(ev, kind) {
+      evScMode = (ev && ev.calShow) || (kind === 'activity' ? 'range' : 'last');
+      evResp.set(ev && ev.responsible ? ev.responsible : null);
+      document.getElementById('evSelfReport').checked = !!(ev && ev.selfReport);
+      renderEvSc();
+    }
+    function evExtrasPayload() {
+      var c = evCat();
+      return { calShow: evScMode, responsible: evResp.get(), selfReport: !evIsAct() && !!(c && c.manualCheck) && document.getElementById('evSelfReport').checked };
+    }
     function openCreateEvent() {
       document.getElementById('evEditId').value = '';
       document.getElementById('createEventForm').reset();
@@ -1007,6 +1068,7 @@
       document.getElementById('evKindPick').hidden = true; // 1.92: ชนิดตามแท็บ (ปฏิทินส่งงาน / ปฏิทินกิจกรรม)
       setEvKind(evlKind === 'activity' ? 'activity' : 'deadline');
       resetEvRounds(null); // 1.88
+      setEvExtras(null, evlKind === 'activity' ? 'activity' : 'deadline'); // 1.93
       document.getElementById('eventModalTitle').textContent = evlKind === 'activity' ? 'เพิ่มกิจกรรม' : 'เพิ่มกำหนดส่งงาน';
       showModalEl(eventModalEl);
     }
@@ -1030,12 +1092,14 @@
         setActOwnerType(ev.ownerType, ev.ownerGroup);
         fillActYears(ev.academicYear);
         document.getElementById('evActSem').value = ev.semester || '1';
+        setEvExtras(ev, 'activity'); // 1.93
         document.getElementById('eventModalTitle').textContent = 'แก้ไขกิจกรรม: ' + ev.title;
         showModalEl(eventModalEl);
         return;
       }
       setEvKind('deadline');
       resetEvRounds(ev); // 1.88
+      setEvExtras(ev, 'deadline'); // 1.93
       document.getElementById('evDate').value = ev.date;
       document.getElementById('evEndDate').value = (ev.endDate && ev.endDate !== ev.date) ? ev.endDate : '';
       evAud.set(ev.audience);
@@ -1048,6 +1112,7 @@
           document.getElementById('evSemester').value = ev.semester;
         }
         renderEvRounds();
+        setEvExtras(ev, 'deadline'); // 1.93 (หลังโหลดประเภทงาน — รู้ว่าเป็นงานตรวจรายคนหรือไม่)
         // กำหนดการเก่าก่อนอัปเดต (ทั่วไป ไม่ผูกประเภทงาน) จะไม่มี categoryId ให้ตั้งไว้ — ต้องเลือกประเภทงานใหม่ก่อนถึงจะบันทึกได้
       });
       document.getElementById('evSubmitBtn').textContent = 'บันทึกการแก้ไข';
@@ -1112,6 +1177,7 @@
         semester: document.getElementById('evSemester').value,
         links: getEvLinks(), reviewMode: evRvMode // 1.88
       };
+      Object.assign(evPayload, evExtrasPayload()); // 1.93
       if (rspec.mode !== 'once') { evPayload.rounds = rspec; if (rspec.mode === 'monthly') evPayload.date = ''; evPayload.endDate = ''; }
       if (editId) {
         evPayload.eventId = editId;
@@ -1151,6 +1217,7 @@
         notify: document.getElementById('evActNotify').checked, repeatYearly: document.getElementById('evActRepeat').checked,
         attMode: evAtt.mode, attPlan: attPlanPayload() // 1.92: เว็บเช็คชื่อ (วันหยุด / หยุดเรียนบางคาบ / จัดกิจกรรม)
       };
+      Object.assign(payload, evExtrasPayload()); // 1.93
       if (editId) payload.eventId = editId;
       var r = await withProgress(editId ? 'กำลังบันทึกการแก้ไข' : 'กำลังเพิ่มกิจกรรม', function () {
         return apiCall(editId ? 'adminUpdateEvent' : 'adminCreateEvent', payload);
