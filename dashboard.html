@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.2.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.3.301026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -109,10 +109,12 @@
           <div class="calendar-grid" id="calGrid"></div>
           <div class="cal-legend" id="calLegend"></div>
         </div>
+        <!-- 1.96.3: แผง "กิจกรรมที่จะถึง" ข้างปฏิทิน — กดรายการ = รายละเอียด + ปฏิทินเลื่อนไปวันนั้น -->
+        <aside class="dash-cal-side2" id="calActSide" hidden><div class="cas-head"><i class="fa-solid fa-flag ui-icon" aria-hidden="true"></i> กิจกรรมที่จะถึง</div><div id="calActDetail"></div><div id="calActList"></div><div class="hint" style="margin:6px 0 0;font-size:.74rem">กดที่กิจกรรมเพื่อดูรายละเอียดในปฏิทิน</div></aside>
       </div>
       <!-- "กำหนดส่งงาน" (เดิมชื่อ "กำหนดการใกล้ถึง" แล้วเปลี่ยนเป็น "กำหนดการ" ใน V10.0/V10.1 ก่อนเปลี่ยนมาเป็นชื่อนี้) ย้ายออกมานอกกริด 2 คอลัมน์ด้านบน ให้ยาวเต็มความกว้างของการ์ด แต่ยังเรียงลงมาเป็นแถวเดียวตามเดิม -->
       <div id="calEventsUpcoming" style="margin-top:18px;"></div>
-      <div id="calActsUpcoming" style="margin-top:18px;"></div>
+      <div id="calActsUpcoming" style="margin-top:18px;" hidden></div>
     </div>
 
     <div class="card">
@@ -256,9 +258,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.96.2.291026"></script>
+  <script src="assets/api.js?v=1.96.3.301026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.96.2.291026"></script>
+  <script src="assets/homeroom.js?v=1.96.3.301026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -1496,7 +1498,7 @@
           return '<i class="cal-dot" style="background:' + c + ';" title="' + escapeHtml(e.title) + '"></i>';
         }).join('') + (dls.length > 4 ? '<span class="cal-dot-more">+' + (dls.length - 4) + '</span>' : '');
         dls.forEach(function (e) { if (e.categoryId) legendCats[e.categoryId] = e.categoryName || e.title; else legendCats['__none'] = 'กำหนดการทั่วไป'; });
-var cc = calCellC(d, dateStr, acts); cell.className += cc.cls; if (cc.style) cell.style.cssText = cc.style; // 1.96.2: แบบ C + วันหยุด
+var cc = calCellC(d, dateStr, acts); cell.className += cc.cls + (calSelDate === dateStr ? ' is-sel' : ''); if (cc.style) cell.style.cssText = cc.style; // 1.96.2: แบบ C + วันหยุด
 cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันนี้</span>' : '') + cc.label + (dotsHtml ? '<div class="cal-dots">' + dotsHtml + '</div>' : '');
         grid.appendChild(cell);
       }
@@ -1509,7 +1511,8 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
         + (hasActs ? CAL_C_LEGEND : '');
 
       // 1.81: "กิจกรรมที่จะถึง" แยกจาก "กำหนดส่งงาน"
-      var actsBox = document.getElementById('calActsUpcoming');
+      renderActSide(); // 1.96.3: กิจกรรมที่จะถึง = แผงข้างปฏิทิน
+      var actsBox = null;
       if (actsBox) {
         var hasAnyAct = calState.events.some(isActivityEv);
         actsBox.hidden = calKind === 'deadline' || (!hasAnyAct && calKind !== 'activity');
@@ -1545,6 +1548,39 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       bindUpToolbar(upcomingBox);
       renderUpList();
     }
+    // ---------- 1.96.3: แผงกิจกรรมที่จะถึง (ข้างปฏิทิน) ----------
+    var calSelDate = ''; // วันที่เลือกจากแผง (ไม่จำข้ามการเข้าหน้า — เข้าใหม่ = เดือนปัจจุบัน)
+    function renderActSide() {
+      var side = document.getElementById('calActSide'); if (!side) return;
+      var today = todayYmd(), lim = new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
+      var list = calEvents().filter(function (e) { return isActivityEv(e) && (e.endDate || e.date) >= today && e.date <= lim; })
+        .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }).slice(0, 12);
+      side.hidden = calKind === 'deadline';
+      var TM = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+      document.getElementById('calActList').innerHTML = list.length ? list.map(function (e) {
+        var c = isHolidayEv(e) ? '#dc2626' : activityColor(e), dw = DW[new Date(e.date + 'T00:00:00').getDay()];
+        var sub = [dw + (e.endDate && e.endDate !== e.date ? ' ' + eventRangeText(e) : '')]; if (isHolidayEv(e)) sub.push('วันหยุด'); else { if (e.timeStart) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); }
+        return '<button type="button" class="cas-item' + (calSelDate && calSelDate === e.date ? ' on' : '') + '" data-cas="' + escapeHtml(e.id) + '"><span class="cas-dt" style="background:' + c + '">' + (+e.date.slice(8)) + '<small>' + TM[+e.date.slice(5, 7) - 1] + '</small></span><span class="cas-tx"><b>' + escapeHtml(e.title) + '</b><small>' + escapeHtml(sub.join(' · ')) + '</small></span></button>';
+      }).join('') : '<div class="empty-state" style="padding:12px 4px">' + (calGroup ? 'ไม่มีกิจกรรมของ' + escapeHtml(groupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกิจกรรมใน 90 วันข้างหน้า') + '</div>';
+    }
+    function showActDetail(e) {
+      var box = document.getElementById('calActDetail');
+      if (!e) { box.innerHTML = ''; return; }
+      var rs = typeof responsibleText === 'function' ? responsibleText(e, '') : '', us = e.responsible && e.responsible.users ? e.responsible.users.map(function (u) { return u.name; }) : [];
+      box.innerHTML = '<div class="cas-det"' + (isHolidayEv(e) ? ' style="--cc:#dc2626"' : ' style="--cc:' + activityColor(e) + '"') + '><button type="button" class="cas-x" aria-label="ปิด">✕</button><b>' + escapeHtml(e.title) + '</b>' +
+        '<div>' + escapeHtml(eventRangeText(e)) + (e.timeStart ? ' · ' + escapeHtml(activityTimeText(e)) : '') + '</div>' + (isHolidayEv(e) ? '<div class="cas-hol">วันหยุด</div>' : '') +
+        (e.location ? '<div><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(e.location) + '</div>' : '') +
+        (rs || us.length ? '<div>ผู้รับผิดชอบ: ' + escapeHtml([rs].concat(us).filter(Boolean).join(', ')) + '</div>' : '') +
+        (e.message ? '<div class="cas-msg">' + escapeHtml(e.message) + '</div>' : '') + '</div>';
+      box.querySelector('.cas-x').addEventListener('click', function () { calSelDate = ''; showActDetail(null); renderCalendar(); });
+    }
+    document.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-cas]'); if (!b) return;
+      var e = calState.events.filter(function (x) { return x.id === b.getAttribute('data-cas'); })[0]; if (!e) return;
+      calSelDate = e.date; calState.year = +e.date.slice(0, 4); calState.month = +e.date.slice(5, 7) - 1;
+      renderCalendar(); showActDetail(e);
+      var cell = document.querySelector('#calGrid [data-date="' + e.date + '"]'); if (cell && cell.scrollIntoView) cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
     // ---------- 1.92.4: งานที่ส่งเป็นรอบ (สมุดโฮมรูม / บันทึกรายเดือน ฯลฯ) — แถวเดียวในรายการกำหนดส่งงาน ----------
     // แถวแสดงรอบที่ใกล้ครบกำหนดที่สุดที่ยังต้องทำ (เกินกำหนดก่อน) + ความคืบหน้า "ส่งแล้ว x/n รอบ" · ปุ่ม "ดูรอบทั้งหมด" → ป็อปอัปเส้นเวลา
     function seriesRoundsOf(seriesId) {

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.2.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.3.301026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -417,7 +417,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.96.2.291026"></script>
+  <script src="assets/api.js?v=1.96.3.301026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -1055,7 +1055,7 @@
       evResp.refresh();
     }
     // 1.95: สีของกิจกรรม — '' = สุ่ม (Worker สุ่มจากชุดสีเดียวกันตอนบันทึก)
-    var EV_COLORS = ['#e11d48', '#ea580c', '#ca8a04', '#16a34a', '#0d9488', '#0284c7', '#4f46e5', '#9333ea', '#db2777', '#64748b'], evColor = '';
+    var EV_COLORS = ['#0891b2', '#ea580c', '#ca8a04', '#16a34a', '#0d9488', '#0284c7', '#4f46e5', '#9333ea', '#db2777', '#64748b'], evColor = '';
     function renderEvColor() {
       var cs = EV_COLORS.slice(); if (evColor && cs.indexOf(evColor) === -1) cs.push(evColor);
       document.getElementById('evActColor').innerHTML = '<button type="button" class="ev-col-rnd' + (evColor ? '' : ' on') + '" data-evc="" role="radio" aria-checked="' + !evColor + '"><i class="fa-solid fa-shuffle" aria-hidden="true"></i> สุ่ม</button>' +
@@ -1063,7 +1063,7 @@
         '<label class="ev-col-own" title="เลือกสีเอง"><i class="fa-solid fa-eye-dropper" aria-hidden="true"></i><input type="color" id="evColorOwn" value="' + (evColor || '#4f46e5') + '" aria-label="เลือกสีเอง" /></label>';
     }
     document.getElementById('evActColor').addEventListener('click', function (e) { var b = e.target.closest('[data-evc]'); if (!b) return; evColor = b.getAttribute('data-evc'); renderEvColor(); });
-    document.getElementById('evActColor').addEventListener('change', function (e) { if (e.target.id === 'evColorOwn') { evColor = e.target.value.toLowerCase(); renderEvColor(); } });
+    document.getElementById('evActColor').addEventListener('change', function (e) { if (e.target.id === 'evColorOwn') { evColor = e.target.value.toLowerCase(); if (isReddish(evColor)) { evColor = '#b45309'; showToast('สีแดงสงวนไว้สำหรับวันหยุด — เปลี่ยนเป็นสีส้มอิฐแทน'); } renderEvColor(); } });
     document.getElementById('evScSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-sc]'); if (!b) return; evScMode = b.getAttribute('data-sc'); renderEvSc(); });
     ['evDate', 'evEndDate', 'evActDate', 'evActEndDate', 'evCategory', 'evActOwnerGroup'].forEach(function (id) { ['change', 'input'].forEach(function (t) { document.getElementById(id).addEventListener(t, renderEvSc); }); });
     document.getElementById('evActOwnerSeg').addEventListener('click', function () { setTimeout(renderEvSc, 0); });

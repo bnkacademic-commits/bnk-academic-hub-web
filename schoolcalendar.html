@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.2.291026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.3.301026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -74,7 +74,7 @@
     </div>
   </div>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.96.2.291026"></script>
+  <script src="assets/api.js?v=1.96.3.301026"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('schoolcal'); if (typeof mountFooter === 'function') mountFooter(); } // 1.96: + footer
@@ -168,15 +168,16 @@
         var e = x.e, act = isActivityEv(e), dw = dowOf(x.from);
         var dt = x.from === x.to ? shortD(x.from) : (x.from.slice(0, 7) === x.to.slice(0, 7) ? +x.from.slice(8) + '–' + shortD(x.to) : shortD(x.from) + ' – ' + shortD(x.to));
         var sub = [];
-        if (act) { if (e.timeStart) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); if (e.attMode === 'holiday') sub.push('วันหยุด'); }
+        if (act) { if (e.timeStart) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); }
         var full = e.endDate && e.endDate !== e.date;
         if (x.part) sub.unshift(x.part === 'first' ? 'วันแรก' : 'วันสุดท้าย');
         if (full && x.mode !== 'range') sub.push((act ? '' : 'ส่งได้ ') + (e.date.slice(0, 7) === e.endDate.slice(0, 7) ? +e.date.slice(8) + '–' + shortD(e.endDate) : shortD(e.date) + ' – ' + shortD(e.endDate)));
         if (!act && e.manualCheck) sub.push('ส่งนอกระบบ · เจ้าหน้าที่ตรวจรายคน');
-        var kind = act ? '<span class="sc-kind ac"><i class="fa-solid fa-flag" aria-hidden="true"></i> กิจกรรม</span>' : '<span class="sc-kind dl"><i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> ' + (e.noSubmission && !e.manualCheck ? 'แจ้งเตือน' : 'ส่งงาน') + '</span>';
-        var dot = act ? '<span class="sc-dot" style="background:' + activityColor(e) + '"></span>' : '<span class="sc-dot" style="background:' + (colorMap[e.categoryId] || '#9aa4b8') + '"></span>';
+        var kind = act ? (isHolidayEv(e) ? '<span class="sc-kind hol"><i class="fa-solid fa-umbrella-beach" aria-hidden="true"></i> วันหยุด</span>' : '<span class="sc-kind ac"><i class="fa-solid fa-flag" aria-hidden="true"></i> กิจกรรม</span>') : '<span class="sc-kind dl"><i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> ' + (e.noSubmission && !e.manualCheck ? 'แจ้งเตือน' : 'ส่งงาน') + '</span>';
+        var dot = act ? '<span class="sc-dot" style="background:' + (isHolidayEv(e) ? '#dc2626' : activityColor(e)) + '"></span>' : '<span class="sc-dot" style="background:' + (colorMap[e.categoryId] || '#9aa4b8') + '"></span>';
         var hl = state.day && state.day >= x.from && state.day <= x.to;
-        return '<tr' + (hl ? ' class="sc-row-hl"' : '') + ' data-from="' + x.from + '"><td><span class="sc-dow d' + dw + '">' + DOW[dw] + '</span></td><td class="sc-date">' + escapeHtml(dt) + '</td>' +
+        var rc = act ? (isHolidayEv(e) ? ' sc-r-hol' : ' sc-r-act') : '', rs = act && !isHolidayEv(e) ? ' style="--rc:' + activityColor(e) + '"' : ''; // 1.96.3: แถวกิจกรรมปูพื้นสีกิจกรรม · วันหยุดสีแดง
+        return '<tr class="' + (hl ? 'sc-row-hl' : '') + rc + '"' + rs + ' data-from="' + x.from + '"><td><span class="sc-dow d' + dw + '">' + DOW[dw] + '</span></td><td class="sc-date">' + escapeHtml(dt) + '</td>' +
           '<td>' + kind + dot + '<span class="sc-t">' + escapeHtml(e.title) + '</span>' + (sub.length ? '<span class="sc-small">' + escapeHtml(sub.join(' · ')) + '</span>' : '') + '</td>' +
           '<td class="sc-resp">' + respHtml(e) + '</td></tr>';
       }).join('') + '</tbody></table>';
@@ -255,7 +256,7 @@
         if (x.part) sub.push(x.part === 'first' ? 'วันแรก' : 'วันสุดท้าย');
         if (act) { if (e.timeStart) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); if (e.attMode === 'holiday') sub.push('วันหยุด'); }
         if (e.endDate && e.endDate !== e.date && x.mode !== 'range') sub.push((act ? '' : 'ส่งได้ ') + (e.date.slice(0, 7) === e.endDate.slice(0, 7) ? +e.date.slice(8) + '–' + shortD(e.endDate) : shortD(e.date) + ' – ' + shortD(e.endDate)));
-        return '<tr><td><span class="sd d' + dw + '">' + DOW[dw] + '</span></td><td><b>' + escapeHtml(dt) + '</b></td><td><span class="k ' + (act ? 'ac">กิจกรรม' : 'dl">' + (e.noSubmission && !e.manualCheck ? 'แจ้งเตือน' : 'ส่งงาน')) + '</span><i class="dt" style="background:' + (act ? activityColor(e) : (colorMap[e.categoryId] || '#9aa4b8')) + '"></i><b>' + escapeHtml(e.title) + '</b>' + (sub.length ? '<span class="sm">' + escapeHtml(sub.join(' · ')) + '</span>' : '') + '</td><td class="rs">' + respHtml(e) + '</td></tr>';
+        return '<tr' + (act ? (isHolidayEv(e) ? ' style="background:#fee2e2"' : ' style="background:' + activityColor(e) + '1a"') : '') + '><td' + (act ? ' style="box-shadow:inset 4px 0 0 ' + (isHolidayEv(e) ? '#dc2626' : activityColor(e)) + '"' : '') + '><span class="sd d' + dw + '">' + DOW[dw] + '</span></td><td><b>' + escapeHtml(dt) + '</b></td><td><span class="k ' + (act ? 'ac">กิจกรรม' : 'dl">' + (e.noSubmission && !e.manualCheck ? 'แจ้งเตือน' : 'ส่งงาน')) + '</span><i class="dt" style="background:' + (act ? activityColor(e) : (colorMap[e.categoryId] || '#9aa4b8')) + '"></i><b>' + escapeHtml(e.title) + '</b>' + (sub.length ? '<span class="sm">' + escapeHtml(sub.join(' · ')) + '</span>' : '') + '</td><td class="rs">' + respHtml(e) + '</td></tr>';
       });
       return { title: title, n: list.length, head: hd(false) + '<div class="g">' + g + '</div>' + '<div class="lg">' + lk.slice(0, 14).map(function (k) { return '<span><i style="background:' + (colorMap[k] || '#9aa4b8') + '"></i>' + escapeHtml(legend[k]) + '</span>'; }).join('') + (hasAct ? '<span><u></u>ช่องระบายสี = กิจกรรม</span><span><u class="hl"></u>วันหยุด</span>' : '') + '</div>', contHead: hd(true), rows: rows };
     }
