@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '1.96.0';
-var APP_VERSION = '1.96.2.291026';
+var APP_VERSION = '1.96.3.301026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -425,7 +425,7 @@ var THEME_CSS_KEY = 'bnkah_theme_css';
 var THEME_CSS_LOGIN_KEY = 'bnkah_theme_css_login';
 var THEME_PRESETS = [
   { name: 'ฟ้า', c: '#0b6fcc' }, { name: 'น้ำเงิน', c: '#2563eb' }, { name: 'คราม (สีเดิม)', c: '#4f46e5' }, { name: 'ม่วง', c: '#7c3aed' },
-  { name: 'ชมพู', c: '#db2777' }, { name: 'แดง', c: '#dc2626' }, { name: 'ส้ม', c: '#c2410c' }, { name: 'เขียว', c: '#15803d' }, { name: 'เขียวอมฟ้า', c: '#0f766e' }
+  { name: 'ชมพู', c: '#db2777' }, { name: 'แดง', c: '#dc2626' }, { name: 'ส้ม', c: '#b45309' }, { name: 'เขียว', c: '#15803d' }, { name: 'เขียวอมฟ้า', c: '#0f766e' }
 ];
 function themeHexOk(h) { return /^#[0-9a-f]{6}$/i.test(String(h || '')); }
 function themeRgb(h) { h = String(h).replace('#', ''); return [0, 2, 4].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
@@ -1009,9 +1009,8 @@ function formatCertNo(format, digits, year, num, semester, beYear) {
 var SUBJECT_GROUP_COLORS = { 'ภาษาไทย': '#dc2626', 'คณิตศาสตร์': '#2563eb', 'วิทยาศาสตร์และเทคโนโลยี': '#0891b2', 'สังคมศึกษา ศาสนา และวัฒนธรรม': '#ca8a04', 'สุขศึกษาและพลศึกษา': '#ea580c', 'ศิลปะ': '#db2777', 'การงานอาชีพ': '#65a30d', 'ภาษาต่างประเทศ': '#c026d3' };
 function isActivityEv(e) { return !!e && e.kind === 'activity'; }
 function activityColor(e) {
-  if (e.color && /^#[0-9a-fA-F]{6}$/.test(e.color)) return e.color; // 1.95: สีที่เลือกเอง (หรือสุ่มตอนเพิ่ม)
-  if (e.ownerType === 'subject') return SUBJECT_GROUP_COLORS[e.ownerGroup] || '#7c3aed';
-  return deptThemeColor(e.ownerGroup) || '#16a34a';
+  var c = e.color && /^#[0-9a-fA-F]{6}$/.test(e.color) ? e.color : (e.ownerType === 'subject' ? SUBJECT_GROUP_COLORS[e.ownerGroup] || '#7c3aed' : deptThemeColor(e.ownerGroup) || '#16a34a');
+  return isReddish(c) ? '#b45309' : c; // 1.96.3: สีแดงสงวนไว้ให้วันหยุด — กิจกรรมสีแดงแสดงเป็นส้มอิฐ
 }
 function activityOwnerLabel(e) { return e.ownerType === 'subject' ? 'กลุ่มสาระการเรียนรู้' + e.ownerGroup : groupLabel(e.ownerGroup); }
 function activityOwnerBadgeHtml(e) {
@@ -1038,6 +1037,13 @@ function expandRepeatEvents(events, fromYmd, toYmd) {
 // 1.96.2: ปฏิทินแบบ C (หน้าแรก / ผู้บริหาร / ปฏิทินโรงเรียน) — กิจกรรม = ช่องวันระบายสีของกิจกรรม เลขวันวงกลมสีเข้ม ชื่ออยู่วันแรก
 // วันหยุด (กิจกรรมแบบ "วันหยุด") = ช่องเทา เลขวันตัวแดง ริบบิ้นแดง "หยุด" ที่มุม (ไม่ใช้สีที่เลือกไว้)
 // คืน { cls, style, num, label } ให้หน้าแต่ละหน้าเอาไปประกอบช่องเอง · opts.startOf(e) = วันเริ่มที่แสดง (ค่าเริ่มต้น e.date)
+function isReddish(hex) {
+  var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || '')); if (!m) return false;
+  var r = parseInt(m[1], 16) / 255, g = parseInt(m[2], 16) / 255, b = parseInt(m[3], 16) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  if (!d || mx < 0.35) return false;
+  var s = d / (1 - Math.abs(mx + mn - 1)), h = mx === r ? ((g - b) / d + 6) % 6 * 60 : mx === g ? ((b - r) / d + 2) * 60 : ((r - g) / d + 4) * 60;
+  return s > 0.45 && (h < 14 || h > 340);
+}
 function isHolidayEv(e) { return isActivityEv(e) && e.attMode === 'holiday'; }
 function calCellC(d, ds, acts, opts) {
   opts = opts || {};

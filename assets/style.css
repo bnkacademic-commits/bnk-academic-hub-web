@@ -4179,3 +4179,38 @@ table.tt-grid.room .tt-in span { font-size: 0.88em; }
   .calendar-cell.cal-act-c .day-num { width: 21px; height: 21px; font-size: 0.74rem; }
   .cal-hol-rib { top: auto; bottom: 3px; right: 3px; transform: none; padding: 0 4px; border-radius: 4px; font-size: 0.56rem; }
 }
+
+/* 1.96.3: วันนี้ = ขอบเรืองแสงตามสีธีม (แบบ B) · วันที่เลือก = ขอบสีธีม 2px ไม่เรืองแสง */
+.calendar-cell.is-today, .calendar-cell.cal-act-c.is-today, .calendar-cell.cal-hol.is-today { box-shadow: 0 0 0 3px var(--primary), 0 0 14px 3px color-mix(in srgb, var(--primary) 50%, transparent) !important; z-index: 3; overflow: visible; }
+.calendar-cell.is-today .day-num { background: var(--primary) !important; color: #fff !important; transform: scale(1.12); }
+.calendar-cell.is-today .cal-today-label { position: absolute; top: -9px; left: 50%; right: auto; transform: translateX(-50%); background: var(--primary); color: #fff; font-size: 0.6rem; font-weight: 800; padding: 1px 8px; border-radius: 999px; white-space: nowrap; z-index: 4; display: inline-block !important; }
+.calendar-cell.cal-hol.is-today .cal-hol-rib { display: none; }
+.calendar-cell.is-sel, .sc-body .calendar-cell.sc-hl { box-shadow: 0 0 0 2px var(--primary) !important; outline: none !important; z-index: 2; }
+.calendar-cell.is-today.is-sel, .sc-body .calendar-cell.is-today.sc-hl { box-shadow: 0 0 0 3px var(--primary), 0 0 14px 3px color-mix(in srgb, var(--primary) 50%, transparent) !important; }
+.calendar-grid { overflow: visible; padding-top: 4px; }
+/* ปฏิทินโรงเรียน: เมนูหลักขยาย = ปฏิทินเต็มความกว้าง รายการอยู่ด้านล่าง · ย่อ = ซ้าย/ขวา */
+body.nav-pinned .sc-body { grid-template-columns: minmax(0, 1fr); }
+body.nav-pinned #scCal .calendar-cell { min-height: 92px; }
+.sc-tbl tr.sc-r-act td { background: color-mix(in srgb, var(--rc) 11%, var(--surface)); }
+.sc-tbl tr.sc-r-act td:first-child { box-shadow: inset 4px 0 0 var(--rc); }
+.sc-tbl tr.sc-r-hol td { background: color-mix(in srgb, #dc2626 12%, var(--surface)); }
+.sc-tbl tr.sc-r-hol td:first-child { box-shadow: inset 4px 0 0 #dc2626; }
+.sc-kind.hol { background: #dc2626; color: #fff; }
+/* หน้าแรก: แผงกิจกรรมที่จะถึงข้างปฏิทิน */
+.dash-cal-layout:has(#calActSide:not([hidden])) { grid-template-columns: minmax(0, 1fr) 260px; }
+.dash-cal-side2 { border: 1px solid var(--border); border-radius: 14px; padding: 10px; background: var(--surface); align-self: start; max-height: 760px; overflow: auto; }
+.cas-head { font-weight: 800; font-size: 0.92rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.cas-item { display: flex; gap: 8px; width: 100%; text-align: left; padding: 7px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; margin-bottom: 6px; }
+.cas-item:hover { border-color: var(--primary); }
+.cas-item.on { box-shadow: 0 0 0 2px var(--primary); border-color: transparent; }
+.cas-dt { width: 40px; flex-shrink: 0; border-radius: 8px; color: #fff; font-weight: 800; text-align: center; line-height: 1.1; padding: 4px 0; font-size: 1rem; }
+.cas-dt small { display: block; font-size: 0.62rem; font-weight: 600; }
+.cas-tx { min-width: 0; display: flex; flex-direction: column; font-size: 0.82rem; }
+.cas-tx b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cas-tx small { color: var(--text-muted); font-size: 0.72rem; }
+.cas-det { position: relative; border: 1.5px solid var(--cc, var(--primary)); background: color-mix(in srgb, var(--cc, var(--primary)) 9%, var(--surface)); border-radius: 12px; padding: 8px 28px 8px 10px; font-size: 0.8rem; margin-bottom: 8px; line-height: 1.5; }
+.cas-det b { display: block; font-size: 0.9rem; }
+.cas-hol { display: inline-block; background: #dc2626; color: #fff; font-size: 0.68rem; font-weight: 800; border-radius: 999px; padding: 0 8px; }
+.cas-msg { color: var(--text-muted); margin-top: 3px; white-space: pre-wrap; }
+.cas-x { position: absolute; top: 4px; right: 6px; border: 0; background: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; }
+@media (max-width: 1100px) { .dash-cal-layout:has(#calActSide:not([hidden])) { grid-template-columns: minmax(0, 1fr); } .dash-cal-side2 { max-height: none; } }
