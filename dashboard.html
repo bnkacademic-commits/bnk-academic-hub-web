@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.4.301026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.5.301026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -101,10 +101,10 @@
               </div>
             </div>
           </div>
+          <div id="calActDetail"></div><!-- 1.96.5: รายละเอียดกิจกรรมที่เลือกจากแผงขวา -->
           <!-- 1.65: ป้ายกรองตามกลุ่มบริหารงาน (สีของกลุ่ม) — กรองจุดในปฏิทิน คำอธิบายสี ป็อปอัปรายวัน กำหนดส่งงาน และเช็คลิสต์ -->
-          <div class="cal-groups" id="calGroups" role="tablist" aria-label="กรองตามกลุ่มบริหารงาน" hidden></div>
           <!-- 1.81: กรองชนิด ทั้งหมด / กำหนดส่ง / กิจกรรม -->
-          <div class="cal-kinds-row"><div class="cal-kinds" id="calKinds" role="group" aria-label="กรองชนิดกำหนดการ"></div><span class="cal-kinds-sep" aria-hidden="true"></span>
+          <div class="cal-kinds-row"><div class="cal-gdd" id="calGroups" hidden></div><span class="cal-kinds-sep" aria-hidden="true"></span><div class="cal-kinds" id="calKinds" role="group" aria-label="กรองชนิดกำหนดการ"></div><span class="cal-kinds-sep" aria-hidden="true"></span>
               <!-- 1.93.1: เช็คลิสต์การส่งงานย่อเป็นปุ่ม → ป็อปอัป #clModal -->
               <button type="button" class="cl-open-btn cal-cl-chip" id="clOpenBtn" aria-haspopup="dialog" title="เช็คลิสต์การส่งงาน"><i class="fas fa-list-check" aria-hidden="true"></i> <span class="cl-open-tx">เช็คลิสต์การส่งงาน</span><span class="cl-open-n" id="clOpenN" hidden>0</span></button>
           </div>
@@ -112,7 +112,7 @@
           <div class="cal-legend" id="calLegend"></div>
         </div>
         <!-- 1.96.3: แผง "กิจกรรมที่จะถึง" ข้างปฏิทิน — กดรายการ = รายละเอียด + ปฏิทินเลื่อนไปวันนั้น -->
-        <aside class="dash-cal-side2" id="calActSide" hidden><div class="cas-strip" id="calActStrip"><button type="button" class="cas-tg" data-cas-tg title="ขยายแผงกิจกรรมที่จะถึง" aria-label="ขยายแผงกิจกรรมที่จะถึง">«</button><span class="cas-sic"><i class="fa-solid fa-flag" aria-hidden="true"></i><b id="calActN">0</b></span><div id="calActMini"></div><span class="cas-vt">กิจกรรมที่จะถึง</span></div><div class="cas-full"><div class="cas-head"><span><i class="fa-solid fa-flag ui-icon" aria-hidden="true"></i> กิจกรรมที่จะถึง</span><button type="button" class="cas-tg" data-cas-tg title="ย่อแผง" aria-label="ย่อแผงกิจกรรมที่จะถึง">»</button></div><div id="calActDetail"></div><div id="calActList"></div><div class="hint" style="margin:6px 0 0;font-size:.74rem">กดที่กิจกรรมเพื่อดูรายละเอียดในปฏิทิน</div></div></aside>
+        <aside class="dash-cal-side2" id="calActSide" hidden><div class="cas-strip" id="calActStrip"><button type="button" class="cas-tg" data-cas-tg title="ขยายแผงกิจกรรมที่จะถึง" aria-label="ขยายแผงกิจกรรมที่จะถึง">«</button><span class="cas-sic"><i class="fa-solid fa-flag" aria-hidden="true"></i><b id="calActN">0</b></span><div id="calActMini"></div><span class="cas-vt">กิจกรรมที่จะถึง</span></div><div class="cas-full"><div class="cas-head"><span><i class="fa-solid fa-flag ui-icon" aria-hidden="true"></i> กิจกรรมที่จะถึง</span><button type="button" class="cas-tg" data-cas-tg title="ย่อแผง" aria-label="ย่อแผงกิจกรรมที่จะถึง">»</button></div><div id="calActList"></div><div class="hint" style="margin:6px 0 0;font-size:.74rem">กดที่กิจกรรมเพื่อดูรายละเอียดในปฏิทิน</div></div></aside>
       </div>
       <!-- "กำหนดส่งงาน" (เดิมชื่อ "กำหนดการใกล้ถึง" แล้วเปลี่ยนเป็น "กำหนดการ" ใน V10.0/V10.1 ก่อนเปลี่ยนมาเป็นชื่อนี้) ย้ายออกมานอกกริด 2 คอลัมน์ด้านบน ให้ยาวเต็มความกว้างของการ์ด แต่ยังเรียงลงมาเป็นแถวเดียวตามเดิม -->
       <div id="calEventsUpcoming" style="margin-top:18px;"></div>
@@ -260,9 +260,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.96.4.301026"></script>
+  <script src="assets/api.js?v=1.96.5.301026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.96.4.301026"></script>
+  <script src="assets/homeroom.js?v=1.96.5.301026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -948,9 +948,13 @@
     var calGroup = ''; // 1.70: เปิดหน้าแรกทุกครั้งเริ่มที่ "ทั้งหมด" เสมอ (ไม่จำกลุ่มที่เลือกไว้ — กันครูลืมกลับมาดูงานทุกกลุ่ม)
     try { localStorage.removeItem(CAL_GROUP_KEY); } catch (e) { /* ไม่เป็นไร */ }
     function evDept(e) { if (isActivityEv(e)) return e.ownerType === 'dept' ? e.ownerGroup : ''; return e && e.categoryId ? (_catDeptMap[e.categoryId] || '') : ''; }
+    // 1.96.5: ตัวกรองกลุ่ม = กลุ่มบริหารงาน (d:) หรือกลุ่มสาระการเรียนรู้ (s: — เฉพาะกิจกรรม)
+    function evGroupKey(e) { if (isActivityEv(e) && e.ownerType === 'subject' && e.ownerGroup) return 's:' + e.ownerGroup; var d = evDept(e); return d ? 'd:' + d : ''; }
+    function calGroupLabel(k) { k = String(k || ''); return k.indexOf('s:') === 0 ? 'กลุ่มสาระการเรียนรู้' + k.slice(2) : groupLabel(k.slice(2)); }
+    function calGroupShort(k) { k = String(k || ''); return k.indexOf('s:') === 0 ? k.slice(2) : k.slice(2).replace(/^กลุ่มบริหารงาน/, ''); }
     // 1.81: กรองชนิด ('' ทั้งหมด / deadline / activity) + กิจกรรม "ทำซ้ำทุกปี" ฉายซ้ำในปีที่ดูอยู่และปีถัดไป
     var calKind = '';
-    function calVisible(e) { return (!calGroup || evDept(e) === calGroup) && (!calKind || (calKind === 'activity') === isActivityEv(e)); }
+    function calVisible(e) { return (!calGroup || evGroupKey(e) === calGroup) && (!calKind || (calKind === 'activity') === isActivityEv(e)); }
     function calExpanded() {
       var y0 = Math.min(calState.year, new Date().getFullYear()), y1 = Math.max(calState.year, new Date().getFullYear()) + 1;
       return expandRepeatEvents(calState.events, y0 + '-01-01', y1 + '-12-31');
@@ -965,27 +969,24 @@
     function renderCalGroups(monthStartStr, monthEndStr) {
       var box = document.getElementById('calGroups');
       if (!box) return;
-      var seen = {};
-      calState.events.forEach(function (e) { var d = evDept(e); if (d) seen[d] = true; });
+      var kb = document.getElementById('calKinds'); if (kb) kb.innerHTML = calKindChipsHtml(calKind);
+      // 1.96.5: ดร็อปดาวน์ — แสดงเฉพาะกลุ่มที่มีรายการในเดือนนี้ (กลุ่มบริหารงาน + กลุ่มสาระการเรียนรู้)
+      var inMonth = calExpanded().filter(function (e) { return (e.endDate || e.date) >= monthStartStr && e.date <= monthEndStr && (!calKind || (calKind === 'activity') === isActivityEv(e)); });
+      var cnt = {}; inMonth.forEach(function (e) { var k = evGroupKey(e); if (k) cnt[k] = (cnt[k] || 0) + 1; });
+      if (calGroup && !cnt[calGroup]) cnt[calGroup] = 0;
       var s = (typeof _settingsCache !== 'undefined' && _settingsCache) || cachedBrand() || {};
       var order = (s.departments || []);
-      var depts = Object.keys(seen).sort(function (a, b) {
-        var ia = order.indexOf(a), ib = order.indexOf(b);
-        if (ia === -1) ia = 9999; if (ib === -1) ib = 9999;
-        return ia - ib || a.localeCompare(b, 'th');
-      });
-      if (calGroup && !seen[calGroup] && calState.events.length && Object.keys(_catDeptMap).length) { calGroup = ''; try { localStorage.removeItem(CAL_GROUP_KEY); } catch (e) { /* ไม่เป็นไร */ } }
-      var kb = document.getElementById('calKinds'); if (kb) kb.innerHTML = calKindChipsHtml(calKind);
-      if (!depts.length) { box.hidden = true; box.innerHTML = ''; return; }
-      var inMonth = calExpanded().filter(function (e) { return (e.endDate || e.date) >= monthStartStr && e.date <= monthEndStr && (!calKind || (calKind === 'activity') === isActivityEv(e)); });
-      var chip = function (d, label, n, color) {
-        var on = calGroup === d;
-        return '<button type="button" role="tab" data-cal-group="' + escapeHtml(d) + '" class="' + (on ? 'on' : '') + '" aria-selected="' + on + '"' + (color ? ' style="--g:' + color + '"' : '') + '>' +
-          (d ? '' : '<i class="fa-solid fa-layer-group" aria-hidden="true"></i> ') + escapeHtml(label) + ' <b class="n">' + n + '</b></button>';
-      };
-      box.innerHTML = chip('', 'ทั้งหมด', inMonth.length, '') + depts.map(function (d) {
-        return chip(d, String(d).replace(/^กลุ่มบริหารงาน/, ''), inMonth.filter(function (e) { return evDept(e) === d; }).length, deptThemeColor(d) || '#64748b');
-      }).join('');
+      var keys = Object.keys(cnt), dk = keys.filter(function (k) { return k.indexOf('d:') === 0; }), sk = keys.filter(function (k) { return k.indexOf('s:') === 0; });
+      dk.sort(function (a, b) { var ia = order.indexOf(a.slice(2)), ib = order.indexOf(b.slice(2)); if (ia === -1) ia = 9999; if (ib === -1) ib = 9999; return ia - ib || a.localeCompare(b, 'th'); });
+      sk.sort(function (a, b) { return a.localeCompare(b, 'th'); });
+      var color = function (k) { return k.indexOf('s:') === 0 ? (SUBJECT_GROUP_COLORS[k.slice(2)] || '#64748b') : (deptThemeColor(k.slice(2)) || '#64748b'); };
+      var opt = function (k, label, n) { return '<button type="button" role="option" class="cgd-o' + (calGroup === k ? ' on' : '') + '" data-cal-group="' + escapeHtml(k) + '" aria-selected="' + (calGroup === k) + '"><span>' + (k ? '<i class="cgd-dot" style="background:' + color(k) + '"></i>' : '') + escapeHtml(label) + '</span><b>' + n + '</b></button>'; };
+      var open = box.classList.contains('open');
+      box.innerHTML = '<button type="button" class="cgd-btn' + (calGroup ? ' sel' : '') + '" aria-haspopup="listbox" aria-expanded="' + open + '">' + (calGroup ? '<i class="cgd-dot" style="background:' + color(calGroup) + '"></i>' + escapeHtml(calGroupShort(calGroup)) + ' <b>' + cnt[calGroup] + '</b>' : '<i class="fa-solid fa-layer-group" aria-hidden="true"></i> ทั้งหมด <b>' + inMonth.length + '</b>') + ' <i class="fa-solid fa-chevron-down cgd-ch" aria-hidden="true"></i></button>' +
+        '<div class="cgd-menu" role="listbox">' + opt('', 'ทั้งหมด', inMonth.length) +
+        (dk.length ? '<div class="cgd-h">กลุ่มบริหารงาน</div>' + dk.map(function (k) { return opt(k, calGroupShort(k), cnt[k]); }).join('') : '') +
+        (sk.length ? '<div class="cgd-h">กลุ่มสาระการเรียนรู้</div>' + sk.map(function (k) { return opt(k, calGroupShort(k), cnt[k]); }).join('') : '') +
+        '<div class="cgd-note">แสดงเฉพาะกลุ่มที่มีรายการในเดือนนี้</div></div>';
       box.hidden = false;
     }
     document.getElementById('calKinds').addEventListener('click', function (ev) {
@@ -993,11 +994,14 @@
       calKind = b.getAttribute('data-cal-kind') || '';
       renderCalendar();
     });
+    document.addEventListener('click', function (ev) { var bx = document.getElementById('calGroups'); if (bx && bx.classList.contains('open') && !ev.target.closest('#calGroups')) { bx.classList.remove('open'); var bb = bx.querySelector('.cgd-btn'); if (bb) bb.setAttribute('aria-expanded', 'false'); } });
     (function wireCalGroups() {
       var box = document.getElementById('calGroups');
       if (!box) return;
       box.addEventListener('click', function (ev) {
+        if (ev.target.closest('.cgd-btn')) { box.classList.toggle('open'); box.querySelector('.cgd-btn').setAttribute('aria-expanded', box.classList.contains('open')); return; }
         var b = ev.target.closest('[data-cal-group]'); if (!b) return;
+        box.classList.remove('open');
         calGroup = b.getAttribute('data-cal-group') || '';
         renderCalendar();
         renderAssignmentChecklist();
@@ -1105,7 +1109,7 @@
       }
       var yearSel = document.getElementById('clYear');
       // ตั้งแต่ V12.0: ตัดงานประเภท "แจ้งเตือนอย่างเดียว ไม่ส่งผ่านระบบ" (e.noSubmission) ออกจากเช็คลิสต์เสมอ
-      var assignments = calState.events.filter(function (e) { return !!e.categoryId && (!e.noSubmission || e.manualCheck) && !beforeMyJoin(e) && (!calGroup || evDept(e) === calGroup) && hrApplies(e); });
+      var assignments = calState.events.filter(function (e) { return !!e.categoryId && (!e.noSubmission || e.manualCheck) && !beforeMyJoin(e) && (!calGroup || evGroupKey(e) === calGroup) && hrApplies(e); });
       // 1.93.1: ตัวเลขบนปุ่ม "เช็คลิสต์การส่งงาน" = งานที่ยังไม่ส่งของภาคเรียนปัจจุบัน
       var clPendOf = function (r) { return r.roomItem ? hrItemPending(r.series) : (r.series ? seriesPending(r.series) : !r.done); };
       var curPend = clItems(assignments.filter(function (e) { return String(e.academicYear) === String(checklistState.term.year) && String(e.semester) === String(checklistState.term.semester || '1'); })).filter(clPendOf).length;
@@ -1519,7 +1523,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       if (actsBox) {
         var hasAnyAct = calState.events.some(isActivityEv);
         actsBox.hidden = calKind === 'deadline' || (!hasAnyAct && calKind !== 'activity');
-        if (!actsBox.hidden) actsBox.innerHTML = activityUpcomingHtml(calEvents().filter(isActivityEv), calGroup ? 'ไม่มีกิจกรรมของ' + groupLabel(calGroup) + 'ในช่วงนี้' : '');
+        if (!actsBox.hidden) actsBox.innerHTML = activityUpcomingHtml(calEvents().filter(isActivityEv), calGroup ? 'ไม่มีกิจกรรมของ' + calGroupLabel(calGroup) + 'ในช่วงนี้' : '');
       }
       var upcomingBox = document.getElementById('calEventsUpcoming');
       upcomingBox.hidden = calKind === 'activity';
@@ -1543,7 +1547,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       calUpState.all = upcoming; calUpState.now = now;
       var upcomingHeadingHtml = '<div class="cal-upcoming-heading"><i class="fas fa-bell ui-icon" aria-hidden="true"></i> กำหนดส่งงาน</div>';
       if (upcoming.length === 0) {
-        upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="empty-state">' + (calGroup ? 'ไม่มีกำหนดการของ' + escapeHtml(groupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกำหนดการในช่วงนี้') + '</div>';
+        upcomingBox.innerHTML = upcomingHeadingHtml + '<div class="empty-state">' + (calGroup ? 'ไม่มีกำหนดการของ' + escapeHtml(calGroupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกำหนดการในช่วงนี้') + '</div>';
         return;
       }
       // 1.92: แถบค้นหา/กรอง/เรียง (ค่าที่เลือกคงไว้เมื่อปฏิทินวาดใหม่ · พิมพ์ค้นหาแล้ววาดเฉพาะรายการ)
@@ -1566,8 +1570,9 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       document.getElementById('calActList').innerHTML = list.length ? list.map(function (e) {
         var c = isHolidayEv(e) ? '#dc2626' : activityColor(e), dw = DW[new Date(e.date + 'T00:00:00').getDay()];
         var sub = [dw + (e.endDate && e.endDate !== e.date ? ' ' + eventRangeText(e) : '')]; if (isHolidayEv(e)) sub.push('วันหยุด'); else { if (e.timeStart) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); }
-        return '<button type="button" class="cas-item' + (calSelDate && calSelDate === e.date ? ' on' : '') + '" data-cas="' + escapeHtml(e.id) + '"><span class="cas-dt" style="background:' + c + '">' + (+e.date.slice(8)) + '<small>' + TM[+e.date.slice(5, 7) - 1] + '</small></span><span class="cas-tx"><b>' + escapeHtml(e.title) + '</b><small>' + escapeHtml(sub.join(' · ')) + '</small></span></button>';
-      }).join('') : '<div class="empty-state" style="padding:12px 4px">' + (calGroup ? 'ไม่มีกิจกรรมของ' + escapeHtml(groupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกิจกรรมใน 90 วันข้างหน้า') + '</div>';
+        var tl = String(e.title || ''), fs = tl.length > 44 ? ' style="font-size:.72rem"' : tl.length > 30 ? ' style="font-size:.78rem"' : '';
+        return '<button type="button" class="cas-item' + (calSelDate && calSelDate === e.date ? ' on' : '') + '" data-cas="' + escapeHtml(e.id) + '" title="' + escapeHtml(tl) + '"><span class="cas-dt" style="background:' + c + '">' + (+e.date.slice(8)) + '<small>' + TM[+e.date.slice(5, 7) - 1] + '</small></span><span class="cas-t2"' + fs + '>' + escapeHtml(tl) + (isHolidayEv(e) ? ' <span class="cas-hb">หยุด</span>' : '') + '</span></button>'; // 1.96.5: แบบ A + ป้ายหยุด
+      }).join('') : '<div class="empty-state" style="padding:12px 4px">' + (calGroup ? 'ไม่มีกิจกรรมของ' + escapeHtml(calGroupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกิจกรรมใน 90 วันข้างหน้า') + '</div>';
     }
     var CAS_KEY = 'bnkah_cas_collapsed'; // 1.96.4: ย่อ/ขยายแผง (จำไว้เหมือนเมนูหลัก)
     function casCollapsed() { try { return localStorage.getItem(CAS_KEY) === '1'; } catch (e) { return false; } }
@@ -1583,11 +1588,13 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       var box = document.getElementById('calActDetail');
       if (!e) { box.innerHTML = ''; return; }
       var rs = typeof responsibleText === 'function' ? responsibleText(e, '') : '', us = e.responsible && e.responsible.users ? e.responsible.users.map(function (u) { return u.name; }) : [];
-      box.innerHTML = '<div class="cas-det"' + (isHolidayEv(e) ? ' style="--cc:#dc2626"' : ' style="--cc:' + activityColor(e) + '"') + '><button type="button" class="cas-x" aria-label="ปิด">✕</button><b>' + escapeHtml(e.title) + '</b>' +
+      var dd = Math.round((Date.parse(e.date + 'T00:00:00') - Date.parse(todayYmd() + 'T00:00:00')) / 864e5), de = Math.round((Date.parse((e.endDate || e.date) + 'T00:00:00') - Date.parse(todayYmd() + 'T00:00:00')) / 864e5);
+      var cdTxt = dd > 0 ? 'อีก ' + dd + ' วัน' : dd === 0 ? 'วันนี้' : de >= 0 ? 'กำลังดำเนินอยู่' : 'ผ่านมาแล้ว ' + (-de) + ' วัน';
+      box.innerHTML = '<div class="cas-det"' + (isHolidayEv(e) ? ' style="--cc:#dc2626"' : ' style="--cc:' + activityColor(e) + '"') + '><button type="button" class="cas-x" aria-label="ปิด">✕</button><span class="cas-ddt">' + (+e.date.slice(8)) + '<small>' + ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][+e.date.slice(5, 7) - 1] + '</small></span><div class="cas-dbody"><b>' + escapeHtml(e.title) + ' <span class="cas-cd' + (dd === 0 || (dd < 0 && de >= 0) ? ' now' : '') + '">' + cdTxt + '</span></b>' +
         '<div>' + escapeHtml(eventRangeText(e)) + (e.timeStart ? ' · ' + escapeHtml(activityTimeText(e)) : '') + '</div>' + (isHolidayEv(e) ? '<div class="cas-hol">วันหยุด</div>' : '') +
         (e.location ? '<div><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(e.location) + '</div>' : '') +
         (rs || us.length ? '<div>ผู้รับผิดชอบ: ' + escapeHtml([rs].concat(us).filter(Boolean).join(', ')) + '</div>' : '') +
-        (e.message ? '<div class="cas-msg">' + escapeHtml(e.message) + '</div>' : '') + '</div>';
+        (e.message ? '<div class="cas-msg">' + escapeHtml(e.message) + '</div>' : '') + '</div></div>';
       box.querySelector('.cas-x').addEventListener('click', function () { calSelDate = ''; showActDetail(null); renderCalendar(); });
     }
     document.addEventListener('click', function (ev) {
