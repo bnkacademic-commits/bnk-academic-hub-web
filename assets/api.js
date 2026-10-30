@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '1.96.0';
-var APP_VERSION = '1.96.3.301026';
+var APP_VERSION = '1.96.4.301026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1009,8 +1009,8 @@ function formatCertNo(format, digits, year, num, semester, beYear) {
 var SUBJECT_GROUP_COLORS = { 'ภาษาไทย': '#dc2626', 'คณิตศาสตร์': '#2563eb', 'วิทยาศาสตร์และเทคโนโลยี': '#0891b2', 'สังคมศึกษา ศาสนา และวัฒนธรรม': '#ca8a04', 'สุขศึกษาและพลศึกษา': '#ea580c', 'ศิลปะ': '#db2777', 'การงานอาชีพ': '#65a30d', 'ภาษาต่างประเทศ': '#c026d3' };
 function isActivityEv(e) { return !!e && e.kind === 'activity'; }
 function activityColor(e) {
-  var c = e.color && /^#[0-9a-fA-F]{6}$/.test(e.color) ? e.color : (e.ownerType === 'subject' ? SUBJECT_GROUP_COLORS[e.ownerGroup] || '#7c3aed' : deptThemeColor(e.ownerGroup) || '#16a34a');
-  return isReddish(c) ? '#b45309' : c; // 1.96.3: สีแดงสงวนไว้ให้วันหยุด — กิจกรรมสีแดงแสดงเป็นส้มอิฐ
+  if (e.color && /^#[0-9a-fA-F]{6}$/.test(e.color)) return isReddish(e.color) ? '#b45309' : e.color; // 1.96.3: สีแดงสงวนไว้ให้วันหยุด
+  return autoActColor(e); // 1.96.4: ไม่เลือกสี = จัดสีอัตโนมัติ ไม่ผูกกลุ่มงาน ไม่ซ้ำกับกิจกรรมใกล้กัน
 }
 function activityOwnerLabel(e) { return e.ownerType === 'subject' ? 'กลุ่มสาระการเรียนรู้' + e.ownerGroup : groupLabel(e.ownerGroup); }
 function activityOwnerBadgeHtml(e) {
@@ -1037,6 +1037,32 @@ function expandRepeatEvents(events, fromYmd, toYmd) {
 // 1.96.2: ปฏิทินแบบ C (หน้าแรก / ผู้บริหาร / ปฏิทินโรงเรียน) — กิจกรรม = ช่องวันระบายสีของกิจกรรม เลขวันวงกลมสีเข้ม ชื่ออยู่วันแรก
 // วันหยุด (กิจกรรมแบบ "วันหยุด") = ช่องเทา เลขวันตัวแดง ริบบิ้นแดง "หยุด" ที่มุม (ไม่ใช้สีที่เลือกไว้)
 // คืน { cls, style, num, label } ให้หน้าแต่ละหน้าเอาไปประกอบช่องเอง · opts.startOf(e) = วันเริ่มที่แสดง (ค่าเริ่มต้น e.date)
+// 1.96.4: สีกิจกรรมอัตโนมัติ — หน้าเว็บส่งรายการกิจกรรมทั้งหมดมาที่ setActPool() ครั้งเดียว แล้วจัดสีเรียงตามวันที่
+// ให้แต่ละกิจกรรม (ที่ไม่ได้เลือกสี) ได้สีที่ไม่ซ้ำกับกิจกรรมอื่นในช่วง ±30 วัน (เริ่มจากสีตาม id ให้คงที่) · ทำซ้ำทุกปี = สีเดียวกันทุกปี
+var ACT_AUTO_COLORS = ['#0891b2', '#ea580c', '#ca8a04', '#16a34a', '#0d9488', '#0284c7', '#4f46e5', '#9333ea', '#db2777', '#64748b'];
+var _actAuto = {}, _actPool = [];
+function _actKey(e) { return String(e.id || '').split('@')[0]; }
+function _actHash(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
+function setActPool(evs) {
+  _actPool = (evs || []).filter(function (e) { return isActivityEv(e) && e.attMode !== 'holiday'; }).slice().sort(function (a, b) { return String(a.date).localeCompare(String(b.date)) || _actKey(a).localeCompare(_actKey(b)); });
+  _actAuto = {};
+  var placed = []; // { t: เวลา(ms), c: สี }
+  var tOf = function (d) { return Date.parse(String(d) + 'T00:00:00Z') || 0; };
+  _actPool.forEach(function (e) {
+    var t = tOf(e.date), te = tOf(e.endDate || e.date);
+    if (e.color && /^#[0-9a-fA-F]{6}$/.test(e.color)) { placed.push({ t: t, te: te, c: isReddish(e.color) ? '#b45309' : e.color.toLowerCase() }); return; }
+    var k = _actKey(e);
+    if (_actAuto[k]) { placed.push({ t: t, te: te, c: _actAuto[k] }); return; }
+    var near = {}; placed.forEach(function (p) { if (p.te >= t - 30 * 864e5 && p.t <= te + 30 * 864e5) near[p.c] = (near[p.c] || 0) + 1; });
+    var start = _actHash(k) % ACT_AUTO_COLORS.length, pick = null, best = null;
+    for (var i = 0; i < ACT_AUTO_COLORS.length; i++) { var c = ACT_AUTO_COLORS[(start + i) % ACT_AUTO_COLORS.length]; if (!near[c]) { pick = c; break; } if (best === null || near[c] < near[best]) best = c; }
+    _actAuto[k] = pick || best; placed.push({ t: t, te: te, c: _actAuto[k] });
+  });
+}
+function autoActColor(e) {
+  var k = _actKey(e);
+  return _actAuto[k] || ACT_AUTO_COLORS[_actHash(k) % ACT_AUTO_COLORS.length];
+}
 function isReddish(hex) {
   var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || '')); if (!m) return false;
   var r = parseInt(m[1], 16) / 255, g = parseInt(m[2], 16) / 255, b = parseInt(m[3], 16) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
@@ -3296,6 +3322,7 @@ function createResponsiblePicker(el, opts) {
 function responsibleText(e, catDept) {
   var r = e.responsible || null;
   if (r && r.text) return r.text;
+  if (e.kind === 'activity' && e.attMode === 'holiday' && !e.ownerGroup) return 'วันหยุด'; // 1.96.4
   if (e.kind === 'activity') return e.ownerGroup ? (e.ownerType === 'subject' ? 'กลุ่มสาระการเรียนรู้' + e.ownerGroup : groupLabel(e.ownerGroup)) : '';
   return catDept ? groupLabel(catDept) : '';
 }

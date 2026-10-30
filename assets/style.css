@@ -4214,3 +4214,31 @@ body.nav-pinned #scCal .calendar-cell { min-height: 92px; }
 .cas-msg { color: var(--text-muted); margin-top: 3px; white-space: pre-wrap; }
 .cas-x { position: absolute; top: 4px; right: 6px; border: 0; background: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; }
 @media (max-width: 1100px) { .dash-cal-layout:has(#calActSide:not([hidden])) { grid-template-columns: minmax(0, 1fr); } .dash-cal-side2 { max-height: none; } }
+/* 1.96.4: ปุ่มเลือกเดือนเด่นขึ้น + ปุ่มวันนี้ · เช็คลิสต์อยู่แถวปุ่มกรอง · แผงกิจกรรมที่จะถึงย่อ/ขยายได้ */
+.cal-rb { width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--primary-light); color: var(--primary-dark); font-size: 1.25rem; font-weight: 800; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cal-rb:hover { background: var(--primary); color: #fff; }
+.month-pick-btn[data-big] { background: var(--primary); color: #fff; border-radius: 999px; padding: 7px 18px; font-size: 1.12rem; font-weight: 800; box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 35%, transparent); border: 0; }
+.month-pick-btn[data-big]:hover, .month-pick-btn[data-big][aria-expanded="true"] { background: var(--primary-dark); color: #fff; border: 0; }
+:root[data-theme="dark"] .month-pick-btn[data-big]:hover, :root[data-theme="dark"] .month-pick-btn[data-big][aria-expanded="true"] { background: color-mix(in srgb, var(--primary) 80%, #fff); }
+.cal-today-btn { border: 2px solid var(--primary); background: var(--surface); color: var(--primary-dark); border-radius: 999px; padding: 5px 14px; font: inherit; font-weight: 800; font-size: 0.88rem; cursor: pointer; white-space: nowrap; }
+.cal-today-btn:hover { background: var(--primary); color: #fff; }
+.cal-kinds-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.cal-kinds-row .cal-kinds { margin-bottom: 0; }
+.cal-kinds-sep { width: 1px; height: 26px; background: var(--border); }
+.cal-cl-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border)); background: var(--primary-light); color: var(--primary-dark); border-radius: 999px; padding: 5px 12px; font: inherit; font-weight: 800; font-size: 0.86rem; cursor: pointer; margin-left: 0; }
+.cal-cl-chip:hover { border-color: var(--primary); }
+.dash-cal-side2 .cas-strip { display: none; }
+.dash-cal-side2.collapsed { padding: 8px 4px; }
+.dash-cal-side2.collapsed .cas-full { display: none; }
+.dash-cal-side2.collapsed .cas-strip { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.dash-cal-layout:has(#calActSide.collapsed:not([hidden])) { grid-template-columns: minmax(0, 1fr) 56px; }
+.cas-head { justify-content: space-between; }
+.cas-tg { border: 0; background: var(--surface-2); color: var(--text); width: 30px; height: 30px; border-radius: 8px; font-size: 1rem; font-weight: 800; cursor: pointer; flex-shrink: 0; }
+.cas-tg:hover { background: var(--primary-light); color: var(--primary-dark); }
+.cas-sic { position: relative; width: 36px; height: 36px; border-radius: 10px; background: var(--primary-light); color: var(--primary-dark); display: flex; align-items: center; justify-content: center; }
+.cas-sic b { position: absolute; top: -6px; right: -6px; background: var(--primary); color: #fff; font-size: 0.62rem; border-radius: 999px; padding: 0 5px; }
+#calActMini { display: flex; flex-direction: column; gap: 6px; }
+.cas-mini { width: 36px; height: 36px; border-radius: 9px; border: 0; color: #fff; font-weight: 800; font-size: 0.9rem; cursor: pointer; }
+.cas-vt { writing-mode: vertical-rl; font-size: 0.74rem; font-weight: 700; color: var(--text-muted); }
+@media (max-width: 1100px) { .dash-cal-layout:has(#calActSide.collapsed:not([hidden])) { grid-template-columns: minmax(0, 1fr); } .dash-cal-side2.collapsed .cas-strip { flex-direction: row; flex-wrap: wrap; } .dash-cal-side2.collapsed #calActMini { flex-direction: row; } .cas-vt { writing-mode: horizontal-tb; } }
+@media (max-width: 560px) { .cal-today-btn { padding: 4px 9px; font-size: 0.8rem; } .month-pick-btn[data-big] { padding: 6px 12px; font-size: 0.98rem; } .cal-rb { width: 32px; height: 32px; } }
