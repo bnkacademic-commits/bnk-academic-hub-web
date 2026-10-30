@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.3.301026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.4.301026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -195,7 +195,7 @@
             <input id="evActTitle" type="text" maxlength="150" placeholder="เช่น กิจกรรมวันคริสต์มาส" />
           </div>
           <div class="field">
-            <label>สีของกิจกรรม <span class="opt">(ไม่เลือก = สุ่มสีให้)</span></label>
+            <label>สีของกิจกรรม <span class="opt">(อัตโนมัติ = ระบบจัดสีให้ไม่ซ้ำกับกิจกรรมใกล้กัน)</span></label>
             <div class="ev-color" id="evActColor" role="radiogroup" aria-label="สีของกิจกรรม"></div>
           </div>
           <div class="field-row">
@@ -218,7 +218,7 @@
               <input id="evActLocation" type="text" maxlength="150" placeholder="เช่น หอประชุมโรงเรียน" />
             </div>
           </div>
-          <div class="field">
+          <div class="field" id="evActOwnerField">
             <label>เจ้าของกิจกรรม</label>
             <div class="evk-seg" id="evActOwnerSeg">
               <button type="button" class="on" data-owner="dept"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> กลุ่มบริหารงาน</button>
@@ -417,7 +417,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.96.3.301026"></script>
+  <script src="assets/api.js?v=1.96.4.301026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -863,6 +863,7 @@
       }).join('');
     }
     function renderAtt() {
+      var of = document.getElementById('evActOwnerField'); if (of) of.hidden = evAtt.mode === 'holiday'; // 1.96.4
       document.querySelectorAll('#evAttMode [data-att]').forEach(function (b) { var on = b.getAttribute('data-att') === evAtt.mode; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
       document.querySelectorAll('#evAttScope [data-scope]').forEach(function (b) { var on = (b.getAttribute('data-scope') === 'all') === evAtt.all; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
       document.getElementById('evAttHint').textContent = ATT_HINT[evAtt.mode];
@@ -1058,7 +1059,7 @@
     var EV_COLORS = ['#0891b2', '#ea580c', '#ca8a04', '#16a34a', '#0d9488', '#0284c7', '#4f46e5', '#9333ea', '#db2777', '#64748b'], evColor = '';
     function renderEvColor() {
       var cs = EV_COLORS.slice(); if (evColor && cs.indexOf(evColor) === -1) cs.push(evColor);
-      document.getElementById('evActColor').innerHTML = '<button type="button" class="ev-col-rnd' + (evColor ? '' : ' on') + '" data-evc="" role="radio" aria-checked="' + !evColor + '"><i class="fa-solid fa-shuffle" aria-hidden="true"></i> สุ่ม</button>' +
+      document.getElementById('evActColor').innerHTML = '<button type="button" class="ev-col-rnd' + (evColor ? '' : ' on') + '" data-evc="" role="radio" aria-checked="' + !evColor + '"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> อัตโนมัติ</button>' +
         cs.map(function (c) { return '<button type="button" class="ev-col-sw' + (c === evColor ? ' on' : '') + '" data-evc="' + c + '" style="--c:' + c + '" role="radio" aria-checked="' + (c === evColor) + '" aria-label="สี ' + c + '"></button>'; }).join('') +
         '<label class="ev-col-own" title="เลือกสีเอง"><i class="fa-solid fa-eye-dropper" aria-hidden="true"></i><input type="color" id="evColorOwn" value="' + (evColor || '#4f46e5') + '" aria-label="เลือกสีเอง" /></label>';
     }
@@ -1225,7 +1226,7 @@
       if (v('evActEndDate') && v('evActEndDate') < v('evActDate')) return fail('วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่ม');
       if (!v('evActTimeStart') && v('evActTimeEnd')) return fail('กรุณาใส่เวลาเริ่มด้วย');
       if (v('evActTimeStart') && v('evActTimeEnd') && v('evActTimeEnd') < v('evActTimeStart')) return fail('เวลาสิ้นสุดต้องไม่อยู่ก่อนเวลาเริ่ม');
-      if (!v('evActOwnerGroup')) return fail('กรุณาเลือกเจ้าของกิจกรรม');
+      if (!v('evActOwnerGroup') && evAtt.mode !== 'holiday') return fail('กรุณาเลือกเจ้าของกิจกรรม'); // 1.96.4: วันหยุดเป็นของระบบ ไม่ต้องมีเจ้าของ
       var audErr = evActAud.check(); if (audErr) return fail(audErr);
       var attErr = attCheck(); if (attErr) return fail(attErr); // 1.92
       var editId = document.getElementById('evEditId').value;
@@ -1234,7 +1235,7 @@
       var payload = {
         kind: 'activity', title: v('evActTitle'), date: v('evActDate'), endDate: v('evActEndDate'),
         timeStart: v('evActTimeStart'), timeEnd: v('evActTimeEnd'), location: v('evActLocation'),
-        ownerType: evActOwnerType, ownerGroup: v('evActOwnerGroup'), audience: evActAud.get(), message: v('evActMessage'),
+        ownerType: evActOwnerType, ownerGroup: evAtt.mode === 'holiday' ? '' : v('evActOwnerGroup'), audience: evActAud.get(), message: v('evActMessage'),
         academicYear: v('evActYear'), semester: v('evActSem'),
         notify: document.getElementById('evActNotify').checked, repeatYearly: document.getElementById('evActRepeat').checked,
         attMode: evAtt.mode, attPlan: attPlanPayload() // 1.92: เว็บเช็คชื่อ (วันหยุด / หยุดเรียนบางคาบ / จัดกิจกรรม)

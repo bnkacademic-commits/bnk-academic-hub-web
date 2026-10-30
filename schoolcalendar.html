@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.3.301026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.4.301026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -45,7 +45,7 @@
     <div id="scMonth" hidden>
       <div class="sc-mhead">
         <div class="l"><button type="button" class="btn btn-secondary sc-noprint" id="scBack"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i> ทั้ง 12 เดือน</button><h2 id="scMTitle"></h2><span id="scMTerm"></span></div>
-        <div class="r sc-noprint"><button type="button" class="btn btn-secondary" id="scPrevM"></button><button type="button" class="btn btn-secondary" id="scNextM"></button><button type="button" class="btn btn-secondary" id="scPrint"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> ดาวน์โหลด PDF</button><button type="button" class="btn btn-primary" data-sc-export><i class="fa-solid fa-book" aria-hidden="true"></i> ส่งออกภาคเรียน</button></div>
+        <div class="r sc-noprint"><button type="button" class="btn btn-secondary" id="scPrevM"></button><button type="button" class="btn btn-secondary" id="scNextM"></button><button type="button" class="cal-today-btn" id="scToday" title="ไปเดือนปัจจุบัน"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i> วันนี้</button><button type="button" class="btn btn-secondary" id="scPrint"><i class="fa-solid fa-file-pdf" aria-hidden="true"></i> ดาวน์โหลด PDF</button><button type="button" class="btn btn-primary" data-sc-export><i class="fa-solid fa-book" aria-hidden="true"></i> ส่งออกภาคเรียน</button></div>
       </div>
       <div class="sc-body">
         <div class="card sc-cal-card" style="margin:0">
@@ -74,7 +74,7 @@
     </div>
   </div>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.96.3.301026"></script>
+  <script src="assets/api.js?v=1.96.4.301026"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('schoolcal'); if (typeof mountFooter === 'function') mountFooter(); } // 1.96: + footer
@@ -349,6 +349,7 @@
     function shiftM(n) { var y = +state.ym.slice(0, 4), m = +state.ym.slice(5, 7) + n; if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } go('#m=' + y + '-' + pad(m)); }
     document.getElementById('scPrevM').addEventListener('click', function () { shiftM(-1); });
     document.getElementById('scNextM').addEventListener('click', function () { shiftM(1); });
+    document.getElementById('scToday').addEventListener('click', function () { var t = todayYmd(); go('#m=' + t.slice(0, 7)); }); // 1.96.4
     document.getElementById('scPrint').addEventListener('click', function () { var y = +state.ym.slice(0, 4), m = +state.ym.slice(5, 7); exportPdf([monthData(y, m, null)], null, 'ปฏิทินโรงเรียน_' + (y + 543) + '-' + (m < 10 ? '0' : '') + m + '.pdf'); }); // 1.96.1: ดาวน์โหลด PDF ทันที
     document.getElementById('scKind').addEventListener('click', function (e) {
       var b = e.target.closest('[data-k]'); if (!b) return; state.kind = b.getAttribute('data-k');
@@ -364,7 +365,7 @@
       if (!session) return;
       try {
         var r = await Promise.all([apiCall('schoolCalendar', {}), currentAcademicTerm().catch(function () { return null; }), getSiteSettings().catch(function () { return null; })]);
-        data = r[0];
+        data = r[0]; setActPool(data.events); // 1.96.4
         colorMap = buildCategoryColorMap(data.categories || []);
         (data.categories || []).forEach(function (c) { catDept[c.id] = c.department || ''; });
         summerOn = !r[2] || r[2].summerEnabled !== false; // 1.96.1

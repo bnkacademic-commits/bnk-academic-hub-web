@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.3.301026" />
+<link rel="stylesheet" href="assets/style.css?v=1.96.4.301026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -86,11 +86,10 @@
               <div class="term-badge" id="currentTermBadge">-</div>
             </div>
             <div class="cal-nav">
-              <button class="btn btn-ghost btn-sm" id="calPrev" aria-label="เดือนก่อนหน้า">‹</button>
-              <button type="button" class="month-label month-pick-btn" id="calLabel" aria-haspopup="dialog" aria-expanded="false" title="เลือกเดือนและปี">-</button>
-              <button class="btn btn-ghost btn-sm" id="calNext" aria-label="เดือนถัดไป">›</button>
-              <!-- 1.93.1: เช็คลิสต์การส่งงานย่อเป็นปุ่ม → ป็อปอัป #clModal -->
-              <button type="button" class="btn btn-secondary btn-sm cl-open-btn" id="clOpenBtn" aria-haspopup="dialog" title="เช็คลิสต์การส่งงาน"><i class="fas fa-list-check" aria-hidden="true"></i> <span class="cl-open-tx">เช็คลิสต์การส่งงาน</span><span class="cl-open-n" id="clOpenN" hidden>0</span></button>
+              <button class="cal-rb" id="calPrev" aria-label="เดือนก่อนหน้า">‹</button>
+              <button type="button" class="month-label month-pick-btn" id="calLabel" data-big="1" aria-haspopup="dialog" aria-expanded="false" title="เลือกเดือนและปี">-</button>
+              <button class="cal-rb" id="calNext" aria-label="เดือนถัดไป">›</button>
+              <button type="button" class="cal-today-btn" id="calToday" title="กลับมาเดือนปัจจุบัน"><i class="fa-solid fa-calendar-day" aria-hidden="true"></i> วันนี้</button>
               <div class="cal-mpick" id="calMonthPicker" role="dialog" aria-label="เลือกเดือนและปี" hidden>
                 <div class="cal-mpick-head">
                   <button type="button" class="cal-mpick-arrow" data-mp-year="-1" aria-label="ปีก่อนหน้า"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
@@ -105,12 +104,15 @@
           <!-- 1.65: ป้ายกรองตามกลุ่มบริหารงาน (สีของกลุ่ม) — กรองจุดในปฏิทิน คำอธิบายสี ป็อปอัปรายวัน กำหนดส่งงาน และเช็คลิสต์ -->
           <div class="cal-groups" id="calGroups" role="tablist" aria-label="กรองตามกลุ่มบริหารงาน" hidden></div>
           <!-- 1.81: กรองชนิด ทั้งหมด / กำหนดส่ง / กิจกรรม -->
-          <div class="cal-kinds" id="calKinds" role="group" aria-label="กรองชนิดกำหนดการ"></div>
+          <div class="cal-kinds-row"><div class="cal-kinds" id="calKinds" role="group" aria-label="กรองชนิดกำหนดการ"></div><span class="cal-kinds-sep" aria-hidden="true"></span>
+              <!-- 1.93.1: เช็คลิสต์การส่งงานย่อเป็นปุ่ม → ป็อปอัป #clModal -->
+              <button type="button" class="cl-open-btn cal-cl-chip" id="clOpenBtn" aria-haspopup="dialog" title="เช็คลิสต์การส่งงาน"><i class="fas fa-list-check" aria-hidden="true"></i> <span class="cl-open-tx">เช็คลิสต์การส่งงาน</span><span class="cl-open-n" id="clOpenN" hidden>0</span></button>
+          </div>
           <div class="calendar-grid" id="calGrid"></div>
           <div class="cal-legend" id="calLegend"></div>
         </div>
         <!-- 1.96.3: แผง "กิจกรรมที่จะถึง" ข้างปฏิทิน — กดรายการ = รายละเอียด + ปฏิทินเลื่อนไปวันนั้น -->
-        <aside class="dash-cal-side2" id="calActSide" hidden><div class="cas-head"><i class="fa-solid fa-flag ui-icon" aria-hidden="true"></i> กิจกรรมที่จะถึง</div><div id="calActDetail"></div><div id="calActList"></div><div class="hint" style="margin:6px 0 0;font-size:.74rem">กดที่กิจกรรมเพื่อดูรายละเอียดในปฏิทิน</div></aside>
+        <aside class="dash-cal-side2" id="calActSide" hidden><div class="cas-strip" id="calActStrip"><button type="button" class="cas-tg" data-cas-tg title="ขยายแผงกิจกรรมที่จะถึง" aria-label="ขยายแผงกิจกรรมที่จะถึง">«</button><span class="cas-sic"><i class="fa-solid fa-flag" aria-hidden="true"></i><b id="calActN">0</b></span><div id="calActMini"></div><span class="cas-vt">กิจกรรมที่จะถึง</span></div><div class="cas-full"><div class="cas-head"><span><i class="fa-solid fa-flag ui-icon" aria-hidden="true"></i> กิจกรรมที่จะถึง</span><button type="button" class="cas-tg" data-cas-tg title="ย่อแผง" aria-label="ย่อแผงกิจกรรมที่จะถึง">»</button></div><div id="calActDetail"></div><div id="calActList"></div><div class="hint" style="margin:6px 0 0;font-size:.74rem">กดที่กิจกรรมเพื่อดูรายละเอียดในปฏิทิน</div></div></aside>
       </div>
       <!-- "กำหนดส่งงาน" (เดิมชื่อ "กำหนดการใกล้ถึง" แล้วเปลี่ยนเป็น "กำหนดการ" ใน V10.0/V10.1 ก่อนเปลี่ยนมาเป็นชื่อนี้) ย้ายออกมานอกกริด 2 คอลัมน์ด้านบน ให้ยาวเต็มความกว้างของการ์ด แต่ยังเรียงลงมาเป็นแถวเดียวตามเดิม -->
       <div id="calEventsUpcoming" style="margin-top:18px;"></div>
@@ -258,9 +260,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.96.3.301026"></script>
+  <script src="assets/api.js?v=1.96.4.301026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.96.3.301026"></script>
+  <script src="assets/homeroom.js?v=1.96.4.301026"></script>
   <script>
     // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js) โดยเจตนา (ไม่ได้ดึงผ่าน API)
     var CUSTOM_FIELD_DEFS = [
@@ -935,6 +937,7 @@
 
     async function loadCalendar() {
       try { calState.events = await apiCall('teacherListCalendar', {}); } catch (err) { calState.events = []; }
+      setActPool(calState.events); // 1.96.4
       renderCalendar();
       renderAssignmentChecklist();
     }
@@ -1557,12 +1560,25 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
         .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }).slice(0, 12);
       side.hidden = calKind === 'deadline';
       var TM = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+      document.getElementById('calActN').textContent = list.length;
+      document.getElementById('calActMini').innerHTML = list.slice(0, 6).map(function (e) { return '<button type="button" class="cas-mini" data-cas="' + escapeHtml(e.id) + '" data-cas-open="1" style="background:' + (isHolidayEv(e) ? '#dc2626' : activityColor(e)) + '" title="' + escapeHtml(e.title) + '">' + (+e.date.slice(8)) + '</button>'; }).join('');
+      side.classList.toggle('collapsed', casCollapsed());
       document.getElementById('calActList').innerHTML = list.length ? list.map(function (e) {
         var c = isHolidayEv(e) ? '#dc2626' : activityColor(e), dw = DW[new Date(e.date + 'T00:00:00').getDay()];
         var sub = [dw + (e.endDate && e.endDate !== e.date ? ' ' + eventRangeText(e) : '')]; if (isHolidayEv(e)) sub.push('วันหยุด'); else { if (e.timeStart) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); }
         return '<button type="button" class="cas-item' + (calSelDate && calSelDate === e.date ? ' on' : '') + '" data-cas="' + escapeHtml(e.id) + '"><span class="cas-dt" style="background:' + c + '">' + (+e.date.slice(8)) + '<small>' + TM[+e.date.slice(5, 7) - 1] + '</small></span><span class="cas-tx"><b>' + escapeHtml(e.title) + '</b><small>' + escapeHtml(sub.join(' · ')) + '</small></span></button>';
       }).join('') : '<div class="empty-state" style="padding:12px 4px">' + (calGroup ? 'ไม่มีกิจกรรมของ' + escapeHtml(groupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกิจกรรมใน 90 วันข้างหน้า') + '</div>';
     }
+    var CAS_KEY = 'bnkah_cas_collapsed'; // 1.96.4: ย่อ/ขยายแผง (จำไว้เหมือนเมนูหลัก)
+    function casCollapsed() { try { return localStorage.getItem(CAS_KEY) === '1'; } catch (e) { return false; } }
+    function casSet(v) { try { localStorage.setItem(CAS_KEY, v ? '1' : '0'); } catch (e) { /* ข้าม */ } var sd = document.getElementById('calActSide'); if (sd) sd.classList.toggle('collapsed', v); }
+    document.addEventListener('click', function (ev) {
+      if (ev.target.closest('[data-cas-tg]')) { casSet(!casCollapsed()); return; }
+      if (ev.target.closest('[data-cas-open]')) casSet(false);
+    }, true);
+    document.getElementById('calToday').addEventListener('click', function () { // 1.96.4: ปุ่มวันนี้
+      var n = new Date(); calSelDate = ''; showActDetail(null); calState.year = n.getFullYear(); calState.month = n.getMonth(); renderCalendar();
+    });
     function showActDetail(e) {
       var box = document.getElementById('calActDetail');
       if (!e) { box.innerHTML = ''; return; }
