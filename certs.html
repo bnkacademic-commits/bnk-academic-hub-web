@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.97.1.311026" />
+<link rel="stylesheet" href="assets/style.css?v=1.97.2.311026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -208,7 +208,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.97.1.311026"></script>
+  <script src="assets/api.js?v=1.97.2.311026"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -729,7 +729,7 @@
       var links = '';
       if (mKind !== 'school') links += '<button type="button" class="cert-add-link" data-p-add="' + gi + '"><i class="fa-solid fa-plus"></i> เพิ่ม' + (mKind === 'teacher' ? 'ครู' : 'นักเรียน') + '</button>';
       if (mKind !== 'school') links += '<button type="button" class="cert-add-link" data-p-paste="' + gi + '"><i class="fa-solid fa-paste"></i> วางรายชื่อจาก Excel</button>';
-      if (internal && mKind !== 'school') links += '<span class="cert-res"><i class="fa-solid fa-user-clock"></i> จองเลขไว้ก่อน (ยังไม่ใส่ชื่อ) <input type="number" min="1" max="100" value="1" data-res-n="' + gi + '" aria-label="จำนวนแถวว่าง" /> ใบ <button type="button" class="btn btn-sm" data-res-add="' + gi + '"><i class="fa-solid fa-plus"></i> เพิ่มแถวว่าง</button></span>';
+      // 1.97.2: ยกเลิก "จองเลขไว้ก่อน (ยังไม่ใส่ชื่อ)" — ต้องใส่ชื่อก่อนจองเลขเสมอ
       if (g.people.length > 1) links += '<button type="button" class="cert-add-link" data-f-multi="' + gi + '"><i class="fa-solid fa-folder-open"></i> เลือกไฟล์ทีเดียวหลายไฟล์ (เรียงตามลำดับรายชื่อ)</button>';
       if (mKind === 'student' && gi === 0) links += '<span class="cls-hint">ชั้น/ห้อง พิมพ์ 51 หรือ 5/1 ก็ได้</span>'; // 1.86.3
       var paste = '';
@@ -1162,7 +1162,6 @@
           pasteMatch.forEach(function (m) {
             if (m.userId && have[m.userId]) { dup++; return; } // มีในรายการแล้ว — ไม่เพิ่มซ้ำ
             if (m.userId) { have[m.userId] = 1; addM.push({ userId: m.userId, name: '', cls: '' }); }
-            else if (mScope === 'internal') addM.push({ blank: true, name: '', cls: '', userId: '' });
           });
           groups[gm].people = groups[gm].people.filter(personFilled).concat(addM);
           if (!groups[gm].people.length) groups[gm].people = [newPerson()];

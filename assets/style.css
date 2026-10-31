@@ -4315,3 +4315,11 @@ body.nav-pinned #scCal .calendar-cell { min-height: 92px; }
 .smp-item .t { flex: 1; min-width: 0; font-weight: 600; }
 .smp-item .t small { display: block; font-weight: 400; color: var(--text-muted); }
 .smp-item .b { display: flex; gap: 6px; flex: none; }
+/* 1.97.2: ป็อปอัปรายการรอบ (ปฏิทินส่งงาน) — กว้างขึ้น ปุ่มอยู่แถวเดียวกับรอบ */
+.modal-box.sra-box { max-width: 860px; width: 100%; text-align: left; }
+.sra-box #sraTitle { text-align: left; padding-right: 40px; }
+.sra-box .evl-item { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; }
+.sra-box .evl-item .event-date-chip { flex: none; min-width: 120px; text-align: center; }
+.sra-box .evl-item .evl-body { flex: 1; min-width: 0; text-align: left; }
+.sra-box .evl-item .evl-acts { flex: none; display: flex; gap: 6px; }
+@media (max-width: 560px) { .sra-box .evl-item { flex-wrap: wrap; } .sra-box .evl-item .evl-acts { width: 100%; justify-content: flex-end; } }
