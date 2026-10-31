@@ -30,7 +30,7 @@ async function hrBuildBookletPdf(model, opts) {
   // รูปของวันที่จัดกิจกรรม (วันละ 1 รูปแรก)
   var jobs = []; model.rows.forEach(function (r) { if (r.log && r.log.held && r.log.photos && r.log.photos[0]) jobs.push(r); });
   var photo = {};
-  for (var i = 0; i < jobs.length; i++) { prog(Math.round(i / Math.max(1, jobs.length) * 40), 'กำลังโหลดรูปกิจกรรม ' + (i + 1) + '/' + jobs.length); photo[jobs[i].date] = await hrFetchPhoto(model.roomId, jobs[i].log.photos[0].id); }
+  for (var i = 0; i < jobs.length; i++) { prog(Math.round(i / Math.max(1, jobs.length) * 40), 'กำลังโหลดรูปกิจกรรม ' + (i + 1) + '/' + jobs.length); photo[jobs[i].date] = await hrCropCover(await hrFetchPhoto(model.roomId, jobs[i].log.photos[0].id)); } // 1.97.3: ตัดกลางภาพ 4:3 (html2canvas ไม่รองรับ object-fit)
   var head = '<div style="text-align:center; border-bottom:2px solid #334155; padding-bottom:12px; margin-bottom:14px;">' +
     '<div style="font-size:13px; color:#64748b; font-weight:600;">' + esc(opts.schoolName || model.school || '') + '</div>' +
     '<div style="font-size:24px; font-weight:800; line-height:1.7;">สมุดบันทึกกิจกรรมโฮมรูม</div>' +
@@ -89,4 +89,23 @@ async function hrBuildBookletPdf(model, opts) {
     prog(100, 'สร้างไฟล์แล้ว');
     return pdf.output('blob');
   } finally { box.remove(); }
+}
+
+// 1.97.3: ตัดกลางภาพให้เป็นอัตราส่วน 4:3 ก่อนวางใน PDF — html2canvas ไม่รองรับ object-fit:cover จึงบีบ/ยืดรูป (รูปต้นฉบับใน Drive ไม่ถูกแก้)
+function hrCropCover(url) {
+  if (!url) return Promise.resolve(url);
+  return new Promise(function (resolve) {
+    var img = new Image();
+    img.onload = function () {
+      var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height, r = 4 / 3;
+      if (!iw || !ih) { resolve(url); return; }
+      var sw = iw, sh = Math.round(iw / r); if (sh > ih) { sh = ih; sw = Math.round(ih * r); }
+      var W = Math.min(1200, sw), H = Math.round(W / r), c = document.createElement('canvas'); c.width = W; c.height = H;
+      var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+      ctx.drawImage(img, Math.round((iw - sw) / 2), Math.round((ih - sh) / 2), sw, sh, 0, 0, W, H);
+      try { resolve(c.toDataURL('image/jpeg', 0.88)); } catch (e) { resolve(url); }
+    };
+    img.onerror = function () { resolve(url); };
+    img.src = url;
+  });
 }

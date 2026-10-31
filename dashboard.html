@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.97.2.311026" />
+<link rel="stylesheet" href="assets/style.css?v=1.97.3.311026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -260,9 +260,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.97.2.311026"></script>
+  <script src="assets/api.js?v=1.97.3.311026"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.97.2.311026"></script>
+  <script src="assets/homeroom.js?v=1.97.3.311026"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -1095,6 +1095,8 @@
     // 1.61: เช็คลิสต์แยกเป็นแท็บย่อย "ภาคเรียนที่ 1 / ภาคเรียนที่ 2" (+ "ภาคฤดูร้อน" เมื่อเปิดใช้) อยู่แถวเดียวกันใต้ช่องเลือกปีการศึกษา — แทนการย่อ/ขยายเดิม
     // ค่าเริ่มต้น = ภาคเรียนปัจจุบัน (ถ้าดูปีปัจจุบัน) ไม่งั้นภาคเรียนที่ 1 · แต่ละแท็บมีตัวเลขงานที่ยังไม่ส่ง · ปุ่ม ↻ = กลับไปปี/ภาคเรียนปัจจุบัน
     // 1.88.2: ลิงก์แนบอยู่ใต้ปุ่มส่งงาน/ป้ายแจ้งเตือน (คอลัมน์ขวา) ให้มองเห็นง่าย
+    // 1.97.3: สีช่องวันที่ของกำหนดส่งงาน = สีกลุ่มบริหารงานเจ้าของประเภทงาน (เกินกำหนดยังเป็นสีแดง)
+    function chipDeptAttr(catId) { var d = catId && typeof _catDeptMap !== 'undefined' ? _catDeptMap[catId] : ''; return d ? deptColorAttr(d) : ''; }
     function evSideHtml(action, links) {
       if (!links || !links.length) return action;
       return '<div class="ev-side">' + (action || '') + eventLinksHtml(links, false) + '</div>';
@@ -1669,7 +1671,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       var badge = lv === -1 ? '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งครบแล้ว</span>' : (lv === 0 ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> ' + (rep.review && rep.review.status === 'revise' ? 'ต้องแก้ไข' : 'เกินกำหนด') + '</span>' : '');
       var rooms = rep.roomBased && rep.rooms && rep.rooms.length ? ' · ห้อง ' + rep.rooms.map(function (r) { return escapeHtml(r.roomName); }).join(', ') : '';
       var btn = '<button class="btn ' + (lv === 0 ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-series-open="' + escapeHtml(rep.seriesId) + '"><i class="fa-solid fa-list-check ui-icon" aria-hidden="true"></i> ดูรอบทั้งหมด</button>';
-      return '<div class="event-list-item"><div class="event-date-chip' + (lv === 0 ? ' overdue' : '') + '">' + dateChip + '</div>' +
+      return '<div class="event-list-item"><div class="event-date-chip' + (lv === 0 ? ' overdue' : '') + '"' + (lv === 0 ? '' : chipDeptAttr(rep.categoryId)) + '>' + dateChip + '</div>' +
         '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(seriesName(rep)) +
           (rep.roomBased ? ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> ' + hrModeTag(rep) + '</span>' : '') + categoryDeptBadgeHtml(rep.categoryId) + badge + '</div>' +
           '<div class="sub-item-meta">' + (lv === -1 ? 'ทุกรอบ' : 'รอบ ' + escapeHtml(roundShort(rep))) + rooms +
@@ -1813,7 +1815,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
           var showCategorySuffix = e.categoryName && e.categoryName !== e.title;
           var overdueBadge = isOverdue ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> เกินกำหนด</span>' : '';
           if (isSubmitted) overdueBadge = e.manualCheck ? '' : '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>';
-          return '<div class="event-list-item"><div class="event-date-chip' + (isOverdue ? ' overdue' : '') + '">' + dateChip + '</div>' +
+          return '<div class="event-list-item"><div class="event-date-chip' + (isOverdue ? ' overdue' : '') + '"' + (isOverdue ? '' : chipDeptAttr(e.categoryId)) + '>' + dateChip + '</div>' +
             '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(e.title) +
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
               (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + overdueBadge + '</div>' +
