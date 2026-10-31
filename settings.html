@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.5.301026" />
+<link rel="stylesheet" href="assets/style.css?v=1.97.1.311026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -1081,7 +1081,7 @@
         <div class="ev-tab-panel" id="ecTab-fields">
           <div class="field">
             <label>ข้อมูลที่ครูผู้ส่งต้องกรอกเพิ่มเติม (ถ้ามี)</label>
-            <div class="hint" style="margin-top:-2px; margin-bottom:8px;">เลือกเฉพาะที่จำเป็นสำหรับประเภทงานนี้</div>
+            <div class="hint" style="margin-top:-2px; margin-bottom:8px;">กด "เพิ่มรายการ" แล้วตั้งชื่อหัวข้อเอง (สูงสุด 10 หัวข้อ) — ประเภทงานที่มีอยู่แล้ว ครูกด "แก้ไขข้อมูลที่กรอก" เพิ่มเองได้จากหน้าผลงานของฉัน</div>
             <div id="editCatFieldsCheckboxes"></div>
           </div>
         </div>
@@ -1282,17 +1282,11 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.96.5.301026"></script>
-  <script src="assets/gallery.js?v=1.96.5.301026"></script>
+  <script src="assets/api.js?v=1.97.1.311026"></script>
+  <script src="assets/gallery.js?v=1.97.1.311026"></script>
   <script>
-    // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน (ตั้งแต่ V-ถัดไปหลัง V10.1) — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker (worker/src/handlers/admin.js)
+    // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
-    var CUSTOM_FIELD_DEFS = [
-      { key: 'eventDate', label: 'วันที่', hint: 'เผื่อไว้สำหรับเกียรติบัตรการอบรม วันที่เข้าร่วม' },
-      { key: 'location', label: 'สถานที่อบรม', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่บอกสถานที่อบรม' },
-      { key: 'award', label: 'รางวัล', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นรางวัล' },
-      { key: 'studentName', label: 'ชื่อนักเรียน', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นผลงานนักเรียนแต่ครูเป็นผู้สอน' }
-    ];
     // รูปแบบการ์ดพรีวิวของ "ประเภทงาน" — ตั้งแต่เวอร์ชันถัดจาก V11.3 กำหนดที่ประเภทงานครั้งเดียว มีผลกับทุกครูอัตโนมัติ
     // (คัดลอกมาจาก DISPLAY_TEMPLATES ฝั่ง Worker — worker/src/handlers/admin.js — ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา)
     // ตั้งแต่ V12.0: เพิ่ม 'bookInline' (เล่มหนังสือแสดงไฟล์ในตัวการ์ด ไม่ต้องกดเปิดป๊อปอัป) และ 'compact' (รายการย่อ เหมาะกับ
@@ -1318,18 +1312,71 @@
       });
       selectEl.innerHTML = opts;
     }
-    function renderFieldCheckboxes(containerId, namePrefix, checkedKeys) {
+    // 1.97: ข้อมูลที่ต้องกรอก — กด "เพิ่มรายการ" แล้วตั้งชื่อหัวข้อ/ชนิดช่องเอง (เดิมเลือกได้แค่ 4 ช่องสำเร็จรูป ซึ่งยังกดเพิ่มได้จากแถว "เพิ่มแบบสำเร็จรูป")
+    var CFE_MAX = 10, cfeBoxes = {};
+    function cfeNewId() { return 'f' + Math.random().toString(36).slice(2, 8); }
+    function renderFieldCheckboxes(containerId, namePrefix, defs) {
       var box = document.getElementById(containerId);
-      box.innerHTML = CUSTOM_FIELD_DEFS.map(function (f) {
-        var checked = checkedKeys && checkedKeys.indexOf(f.key) !== -1 ? ' checked' : '';
-        return '<label style="display:flex; align-items:flex-start; gap:8px; font-weight:500; padding:6px 2px;">' +
-          '<input type="checkbox" class="' + namePrefix + '-field-cb" value="' + f.key + '" style="width:auto; margin-top:3px;"' + checked + ' />' +
-          '<span><span style="display:block;">' + escapeHtml(f.label) + '</span><span class="hint" style="margin:0;">' + escapeHtml(f.hint) + '</span></span>' +
-        '</label>';
-      }).join('');
+      cfeBoxes[namePrefix] = box;
+      box.__defs = (defs || []).map(function (d) { return Object.assign({}, d, { options: (d.options || []).slice() }); });
+      if (!box.__cfeBound) { box.__cfeBound = true; cfeBind(box); }
+      cfeRender(box);
     }
+    function cfeRowHtml(d, i, n) {
+      var types = Object.keys(FIELD_TYPE_LABEL).map(function (t) { return '<option value="' + t + '"' + (t === d.type ? ' selected' : '') + '>' + FIELD_TYPE_LABEL[t] + '</option>'; }).join('');
+      var chk = function (k, t) { return '<label><input type="checkbox" data-cfe="' + k + '"' + (d[k] ? ' checked' : '') + ' /> ' + t + '</label>'; };
+      var extra = '';
+      if (d.type === 'numlist') extra = '<div class="cfe-sub">ชื่อช่องรายละเอียด <input type="text" data-cfe="detailLabel" maxlength="40" style="width:150px" value="' + escapeHtml(d.detailLabel || '') + '" placeholder="เช่น ชื่อวิชา" /> สูงสุด <input type="number" data-cfe="max" min="1" max="30" style="width:70px" value="' + escapeHtml(d.max || 10) + '" /> รายการ</div>';
+      if (d.type === 'select') extra = '<div class="cfe-sub" style="display:block">ตัวเลือก (บรรทัดละ 1 ตัวเลือก)<textarea data-cfe="options" rows="3" placeholder="ม.1&#10;ม.2&#10;ม.3">' + escapeHtml((d.options || []).join('\n')) + '</textarea></div>';
+      return '<div class="cfe-row" data-cfe-i="' + i + '"><div class="cfe-top">' +
+        '<button type="button" class="cfe-ib" data-cfe-mv="-1" title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น"' + (i === 0 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-up"></i></button>' +
+        '<button type="button" class="cfe-ib" data-cfe-mv="1" title="เลื่อนลง" aria-label="เลื่อนลง"' + (i === n - 1 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-down"></i></button>' +
+        '<input type="text" data-cfe="label" maxlength="80" placeholder="ชื่อหัวข้อ เช่น วิชา" value="' + escapeHtml(d.label || '') + '" aria-label="ชื่อหัวข้อ" />' +
+        '<select data-cfe="type" aria-label="ชนิดช่อง">' + types + '</select>' +
+        '<button type="button" class="cfe-ib del" data-cfe-del title="ลบหัวข้อนี้" aria-label="ลบหัวข้อนี้"><i class="fa-solid fa-trash"></i></button></div>' + extra +
+        '<div class="cfe-sub">คำอธิบายใต้ช่อง <input type="text" data-cfe="hint" maxlength="120" style="flex:1;min-width:160px" value="' + escapeHtml(d.hint || '') + '" placeholder="(ไม่บังคับ)" /></div>' +
+        '<div class="cfe-sub">' + chk('required', 'บังคับกรอก') + chk('excel', 'แสดงใน Excel') + chk('pub', 'แสดงในหน้าผลงานครู') + '</div></div>';
+    }
+    function cfeRender(box) {
+      var defs = box.__defs, n = defs.length;
+      var pre = FIELD_PRESETS.map(function (p) { var has = defs.some(function (d) { return d.id === p.id; }); return '<button type="button" data-cfe-pre="' + p.id + '"' + (has || n >= CFE_MAX ? ' disabled' : '') + '>+ ' + escapeHtml(p.label) + '</button>'; }).join('');
+      box.innerHTML = '<div class="cfe-list">' + (n ? defs.map(function (d, i) { return cfeRowHtml(d, i, n); }).join('') : '<div class="hint" style="margin:0">ยังไม่มีหัวข้อ — ครูส่งงานได้โดยไม่ต้องกรอกอะไรเพิ่ม</div>') + '</div>' +
+        '<button type="button" class="cfe-add" data-cfe-add' + (n >= CFE_MAX ? ' disabled' : '') + '><i class="fa-solid fa-plus"></i> เพิ่มรายการ' + (n >= CFE_MAX ? ' (ครบ ' + CFE_MAX + ' หัวข้อแล้ว)' : '') + '</button>' +
+        '<div class="cfe-pre">เพิ่มแบบสำเร็จรูป: ' + pre + '</div>';
+    }
+    function cfeSync(box) {
+      box.querySelectorAll('[data-cfe-i]').forEach(function (row) {
+        var d = box.__defs[Number(row.getAttribute('data-cfe-i'))]; if (!d) return;
+        row.querySelectorAll('[data-cfe]').forEach(function (el) {
+          var k = el.getAttribute('data-cfe');
+          if (el.type === 'checkbox') d[k] = el.checked;
+          else if (k === 'options') d.options = el.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+          else if (k === 'max') d.max = Number(el.value) || 10;
+          else d[k] = el.value;
+        });
+      });
+    }
+    function cfeBind(box) {
+      box.addEventListener('change', function (e) { if (e.target.getAttribute('data-cfe') === 'type') { cfeSync(box); var d = box.__defs[Number(e.target.closest('[data-cfe-i]').getAttribute('data-cfe-i'))]; if (d.type === 'numlist' && !d.detailLabel) d.detailLabel = 'รายละเอียด'; if (d.type === 'numlist' && !d.max) d.max = 10; cfeRender(box); } });
+      box.addEventListener('click', function (e) {
+        var t;
+        if ((t = e.target.closest('[data-cfe-add]'))) { cfeSync(box); box.__defs.push({ id: cfeNewId(), label: '', type: 'text', required: true, excel: true, pub: false, hint: '' }); cfeRender(box); var ins = box.querySelectorAll('[data-cfe="label"]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+        if ((t = e.target.closest('[data-cfe-pre]'))) { cfeSync(box); var p = FIELD_PRESETS.filter(function (x) { return x.id === t.getAttribute('data-cfe-pre'); })[0]; box.__defs.push({ id: p.id, label: p.label, type: p.type, required: true, excel: true, pub: false, hint: p.hint }); cfeRender(box); return; }
+        var row = e.target.closest('[data-cfe-i]'); if (!row) return; var i = Number(row.getAttribute('data-cfe-i'));
+        if ((t = e.target.closest('[data-cfe-del]'))) { cfeSync(box); box.__defs.splice(i, 1); cfeRender(box); return; }
+        if ((t = e.target.closest('[data-cfe-mv]'))) { cfeSync(box); var j = i + Number(t.getAttribute('data-cfe-mv')); if (j < 0 || j >= box.__defs.length) return; var x = box.__defs[i]; box.__defs[i] = box.__defs[j]; box.__defs[j] = x; cfeRender(box); }
+      });
+    }
+    // คืนรายการหัวข้อ (ตัดหัวข้อที่ยังไม่ตั้งชื่อทิ้ง) · โยนข้อผิดพลาดถ้าตั้งไม่ครบ
     function readCheckedFields(namePrefix) {
-      return Array.from(document.querySelectorAll('.' + namePrefix + '-field-cb:checked')).map(function (cb) { return cb.value; });
+      var box = cfeBoxes[namePrefix]; if (!box) return [];
+      cfeSync(box);
+      return box.__defs.filter(function (d) { return String(d.label || '').trim(); }).map(function (d) {
+        var o = { id: d.id, label: d.label.trim(), type: d.type, required: !!d.required, excel: !!d.excel, pub: !!d.pub, hint: String(d.hint || '').trim() };
+        if (d.type === 'numlist') { o.detailLabel = String(d.detailLabel || '').trim() || 'รายละเอียด'; o.max = Math.min(30, Math.max(1, Math.trunc(Number(d.max) || 10))); }
+        if (d.type === 'select') { o.options = d.options || []; if (!o.options.length) throw new Error('หัวข้อ "' + o.label + '" ต้องมีตัวเลือกอย่างน้อย 1 ตัว'); }
+        return o;
+      });
     }
 
     // 1.45.111026: ทุกบัญชีเข้าหน้านี้ได้ (เพื่อดูเครดิต) — 1.46: ครู/ผู้บริหารเห็นเฉพาะแท็บ "ข้อมูลระบบ" (มีแค่การ์ดเครดิต)
@@ -2666,7 +2713,7 @@
           // เพราะเดิมแต่ละแถวมี dropdown 2 ตัว + checkbox 2 ตัว + ปุ่ม 2 ปุ่มวางเรียงกันจนดูรก
           rows.forEach(function (c) {
             var fieldsLabel = (c.customFields && c.customFields.length > 0)
-              ? c.customFields.map(function (k) { var def = CUSTOM_FIELD_DEFS.filter(function (d) { return d.key === k; })[0]; return def ? def.label : k; }).join(', ')
+              ? c.customFields.map(function (d) { return d.label; }).join(', ')
               : 'ไม่มี';
             var tplDef = TEMPLATE_OPTIONS.filter(function (o) { return o.key === normalizeTemplate(c.displayTemplate); })[0];
             var deptMeta = '';
@@ -3135,7 +3182,7 @@
         var catNameVal = document.getElementById('catName').value.trim();
         var catColorVal = document.getElementById('catColor').value;
         var catTemplateVal = document.getElementById('catTemplate').value;
-        var catFieldsVal = readCheckedFields('catFields');
+        var catFieldsVal; try { catFieldsVal = readCheckedFields('catFields'); } catch (fe) { errBox.textContent = fe.message; errBox.hidden = false; return; } // 1.97
         var catModeVal = catSubMode('cat'); // 1.93
         var catNoSubmissionVal = catModeVal !== 'system';
         var catRoomBasedVal = Number(document.getElementById('catRoomMode').value); // 1.90 · 1.96: 0–3
@@ -3170,7 +3217,7 @@
         editCatOriginal = {
           color: cat.color || '#3457d5', template: normalizeTemplate(cat.displayTemplate), noSubmission: !!cat.noSubmission, manualCheck: !!cat.manualCheck, roomMode: Number(cat.roomMode != null ? cat.roomMode : (cat.roomBased ? 1 : 0)), name: cat.name, sendPrefix: !!cat.sendPrefix,
           department: cat.department || '', hideFromPortfolio: !!cat.hideFromPortfolio,
-          fields: (cat.customFields || []).slice().sort().join(',')
+          fields: JSON.stringify(cat.customFields || [])
         };
         document.getElementById('editCatId').value = cat.id;
         document.getElementById('editCatTitle').textContent = 'แก้ไขประเภทงาน';
@@ -3195,6 +3242,7 @@
         errBox.hidden = true;
         var catId = document.getElementById('editCatId').value;
         var o = editCatOriginal;
+        var nextFields; try { nextFields = readCheckedFields('editCat'); } catch (fe) { errBox.textContent = fe.message; errBox.hidden = false; return; } // 1.97
         var next = {
           color: document.getElementById('editCatColor').value,
           template: document.getElementById('editCatTemplate').value,
@@ -3205,7 +3253,7 @@
           sendPrefix: document.getElementById('editCatSendPrefix').checked,
           department: document.getElementById('editCatDepartment').value,
           hideFromPortfolio: document.getElementById('editCatHideFromPortfolio').checked,
-          fields: readCheckedFields('editCat')
+          fields: nextFields
         };
         var calls = [];
         if (next.color !== o.color) calls.push(['adminSetWorkCategoryColor', { categoryId: catId, color: next.color }]);
@@ -3218,7 +3266,7 @@
         if (next.roomMode !== o.roomMode && next.roomMode) calls.push(['adminSetWorkCategoryRoomBased', { categoryId: catId, roomMode: next.roomMode }]);
         if (next.department !== o.department) calls.push(['adminSetWorkCategoryDepartment', { categoryId: catId, department: next.department }]);
         if (next.hideFromPortfolio !== o.hideFromPortfolio) calls.push(['adminSetWorkCategoryPortfolioVisibility', { categoryId: catId, hideFromPortfolio: next.hideFromPortfolio }]);
-        if (next.fields.slice().sort().join(',') !== o.fields) calls.push(['adminUpdateWorkCategoryFields', { categoryId: catId, customFields: next.fields }]);
+        if (JSON.stringify(next.fields) !== o.fields) calls.push(['adminUpdateWorkCategoryFields', { categoryId: catId, customFields: next.fields }]);
         if (calls.length === 0) { hideModalEl(editCatModalEl); return; }
         var ok = await askConfirm('ยืนยันบันทึกการแก้ไขประเภทงานนี้? (' + calls.length + ' รายการที่เปลี่ยน)', 'ยืนยันการบันทึก');
         if (!ok) return;

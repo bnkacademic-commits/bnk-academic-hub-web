@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.5.301026" />
+<link rel="stylesheet" href="assets/style.css?v=1.97.1.311026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -64,7 +64,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.96.5.301026"></script>
+  <script src="assets/api.js?v=1.97.1.311026"></script>
   <script>
     mountFooter();
     applyBranding();
@@ -72,17 +72,8 @@
 
     function getParam(name) { return new URLSearchParams(location.search).get(name); }
 
-    // รายการ "ข้อมูลที่ต้องกรอกเพิ่มเติม" ต่อประเภทงาน — คัดลอกมาจาก CUSTOM_FIELD_DEFS ฝั่ง Worker ใช้แปลง key เป็นชื่อภาษาไทยตอนแสดงผล
-    var CUSTOM_FIELD_DEFS = [
-      { key: 'eventDate', label: 'วันที่' },
-      { key: 'location', label: 'สถานที่อบรม' },
-      { key: 'award', label: 'รางวัล' },
-      { key: 'studentName', label: 'ชื่อนักเรียน' }
-    ];
-    function customFieldsText(values) {
-      if (!values) return '';
-      return CUSTOM_FIELD_DEFS.filter(function (d) { return values[d.key]; }).map(function (d) { return d.label + ': ' + values[d.key]; }).join(' · ');
-    }
+    // 1.97: Worker ส่งมาเฉพาะหัวข้อที่เปิด "แสดงในหน้าผลงานครู" — แสดงด้วยชื่อหัวข้อที่เก็บไว้กับงาน (api.js)
+    function customFieldsText(values) { return fieldsLineText(values); }
 
     // ---------- 1.71: รูปแบบการแสดงผลงานเหลือ 3 แบบ (ตั้งที่ "ประเภทงาน" ในหน้าตั้งค่า — ค่าเดิมแปลงด้วย normalizeTemplate) ----------
     //  'bookInline' = ไฟล์ใหญ่: เล่มเอกสารสัดส่วน A4 เต็มกล่อง ทีละเล่ม + ตัวเลื่อน "เล่มที่ x จาก N" + ปุ่ม "เต็มจอ"

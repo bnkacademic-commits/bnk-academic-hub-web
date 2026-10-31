@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.5.301026" />
+<link rel="stylesheet" href="assets/style.css?v=1.97.1.311026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.96.5.301026"></script>
+  <script src="assets/api.js?v=1.97.1.311026"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -207,10 +207,12 @@
     // ใช้ calendarListWorkCategories แทน adminListWorkCategories เพราะหน้านี้เข้าได้ทั้ง Super Admin และเจ้าหน้าที่ฝ่ายวิชาการ
     // (adminListWorkCategories จำกัดเฉพาะ Super Admin เท่านั้น ใช้ตรงนี้จะพังสำหรับบัญชีเจ้าหน้าที่)
     var categoryColorMap = {};
+    var summaryCats = []; function catById(id) { return summaryCats.filter(function (c) { return c.id === id; })[0] || null; } // 1.97
     async function refreshCategoryColors() {
       try {
         var cats = await apiCall('calendarListWorkCategories', {});
         categoryColorMap = buildCategoryColorMap(cats);
+        summaryCats = cats; // 1.97
         renderTable();
         renderAssignmentSummary();
       } catch (err) { /* ไม่ต้องแจ้ง error — แค่ตกไปใช้สีเริ่มต้นแทน */ }
@@ -633,9 +635,44 @@
       return ' <span class="badge asg-rvsum">ตรวจแล้ว ' + ok + ' · รอตรวจ ' + (sent.length - ok - fix) + (fix ? ' · แก้ไข ' + fix : '') + '</span>';
     }
     function unreviewedRows(a) { return a.rows.filter(function (r) { return r.status !== 'missing' && (!r.review || r.review.status === 'none'); }); }
+    // 1.97: ข้อมูลที่ครูกรอกตอนส่ง (ใต้ชื่อไฟล์ในป็อปอัปตรวจ)
+    function rvCfHtml(vals) {
+      var es = fieldEntries(vals); if (!es.length) return '';
+      return '<div class="rv-cf">' + es.map(function (e) {
+        if (e.value && typeof e.value === 'object') return '<div>' + escapeHtml(e.label) + ': <b>' + escapeHtml(e.value.n) + '</b><ol>' + (e.value.items || []).map(function (x) { return '<li>' + escapeHtml(x) + '</li>'; }).join('') + '</ol></div>';
+        return '<div>' + escapeHtml(e.label) + ': <b>' + escapeHtml(e.text) + '</b></div>';
+      }).join('') + '</div>';
+    }
+    // 1.97: ส่งออก Excel ข้อมูลที่ครูกรอก (เฉพาะประเภทงานที่มีหัวข้อ)
+    function fieldsExportBtnHtml(a) {
+      var c = (typeof catById === 'function') ? catById(a.categoryId) : null;
+      if (!a.rows.some(function (r) { return r.status !== 'missing'; })) return '';
+      if (c && !(c.customFields || []).length) return '';
+      return '<button type="button" class="btn btn-sm btn-secondary" data-cf-export="' + escapeHtml(a.eventId) + '"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> ส่งออก Excel ข้อมูลที่ครูกรอก</button>';
+    }
+    async function exportFieldsXlsx(a) {
+      var r = await withProgress('กำลังเตรียมไฟล์ Excel', function () { return apiCall('reviewFieldsExport', { categoryId: a.categoryId, academicYear: a.academicYear, semester: a.semester, eventId: a.seriesId ? a.eventId : '', respEventId: a.respMine ? a.eventId : '' }); }, { successLabel: 'ดาวน์โหลดแล้ว' });
+      if (!r.ok) return;
+      var d = r.data, cols = [], seen = {};
+      // หัวข้อปัจจุบันก่อน แล้วตามด้วยหัวข้อเดิมที่อยู่ในงานที่ส่งไว้ (เปลี่ยนชื่อ/ลบภายหลัง)
+      (d.fields || []).forEach(function (f) { if (f.excel) { seen[f.id] = 1; cols.push({ id: f.id, label: f.label, numlist: f.type === 'numlist', detail: f.detailLabel }); } });
+      d.rows.forEach(function (row) { fieldEntries(row.values).forEach(function (e) { if (!seen[e.id] && e.x) { seen[e.id] = 1; cols.push({ id: e.id, label: e.label, numlist: !!(e.value && typeof e.value === 'object') }); } }); });
+      var header = ['ลำดับ', 'ชื่อครู', 'ไฟล์', 'วันที่ส่ง'], widths = [7, 28, 34, 14];
+      cols.forEach(function (c) { header.push(c.label); widths.push(c.numlist ? 10 : 24); if (c.numlist) { header.push(c.label + ' (' + (c.detail || 'รายละเอียด') + ')'); widths.push(44); } });
+      var rows = d.rows.map(function (row, i) {
+        var out = [i + 1, row.teacherName + (row.roomId ? ' (' + row.roomId.replace(/^m(\d+)_(\d+)$/, 'ม.$1/$2') + ')' : ''), row.title, formatDateThai(String(row.uploadedAt).slice(0, 10))];
+        var es = {}; fieldEntries(row.values).forEach(function (e) { es[e.id] = e; });
+        cols.forEach(function (c) { var e = es[c.id]; if (c.numlist) { out.push(e && e.value && typeof e.value === 'object' ? e.value.n : (e ? e.text : '')); out.push(e && e.value && typeof e.value === 'object' ? e.value.items.join(' / ') : ''); } else out.push(e ? e.text : ''); });
+        return out;
+      });
+      var ttl = d.categoryName + (a.seriesId ? ' (รอบ ' + (a.roundLabel || a.roundNo) + ')' : '') + ' · ' + (a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester) + ' ปีการศึกษา ' + a.academicYear;
+      downloadBlob(buildXlsx('ข้อมูลที่ครูกรอก', header, rows, widths, ttl), 'bnk-fields-' + a.academicYear + '-' + a.semester + '.xlsx');
+    }
     function reviewAllBtnHtml(a) {
       var n = unreviewedRows(a).length;
-      return n ? '<div class="rv-allrow"><button type="button" class="btn btn-sm rv-all" data-rv-all="' + escapeHtml(a.eventId) + '"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ตรวจแล้วทั้งหมด (' + n + ')</button></div>' : '';
+      var ex = fieldsExportBtnHtml(a);
+      if (!n) return ex ? '<div class="rv-allrow">' + ex + '</div>' : '';
+      return n ? '<div class="rv-allrow">' + ex + ' <button type="button" class="btn btn-sm rv-all" data-rv-all="' + escapeHtml(a.eventId) + '"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ตรวจแล้วทั้งหมด (' + n + ')</button></div>' : '';
     }
     var RV_CHIPS = { reviewed: ['ขอบคุณค่ะ', 'ขอบคุณครับ', 'เรียบร้อยดีมาก'], revise: ['รบกวนเพิ่มลายเซ็น', 'รบกวนแนบไฟล์ให้ครบ', 'รบกวนตรวจสอบภาคเรียนอีกครั้ง'] };
     var rvModal = document.getElementById('reviewModal'), rvCur = null;
@@ -708,6 +745,7 @@
           '<div class="rv-fh"><button type="button" class="rv-file" data-rv-file="' + i + '" title="ดูไฟล์"><span class="rv-th">' + th + '</span><span class="rv-fn">' + escapeHtml(f.title || f.fileName) + (isNew ? ' <em class="rv-new">ใหม่</em>' : '') + '</span><span class="rv-fd">' + escapeHtml(formatDateThai(f.uploadedAt)) + '</span></button>' +
           (pf ? '<span class="rv-seg" role="group" aria-label="ผลการตรวจไฟล์นี้"><button type="button" data-rv-st="ok" data-rv-id="' + escapeHtml(f.id) + '" class="' + (st.state !== 'fix' ? 'on ok' : '') + '"><i class="fa-solid fa-check" aria-hidden="true"></i> ผ่าน</button><button type="button" data-rv-st="fix" data-rv-id="' + escapeHtml(f.id) + '" class="' + (st.state === 'fix' ? 'on fix' : '') + '"><i class="fa-solid fa-pen" aria-hidden="true"></i> ต้องแก้ไข</button></span>' : '') + '</div>' +
           (pf && st.state === 'fix' ? '<input type="text" class="rv-note" data-rv-note="' + escapeHtml(f.id) + '" maxlength="300" placeholder="ต้องแก้ไขอะไร เช่น รบกวนเพิ่มลายเซ็นผู้บริหาร" value="' + escapeHtml(st.note) + '" />' : '') +
+          rvCfHtml(f.fields) + // 1.97: ข้อมูลที่ครูกรอก
           old.map(function (o) { return '<div class="rv-old"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> <button type="button" class="linklike" data-rv-file="' + files.indexOf(o) + '">ไฟล์เดิม ' + escapeHtml(formatDateThai(o.uploadedAt)) + '</button>' + (o.note ? ' · เคยแจ้ง: ' + escapeHtml(o.note) : '') + ' · <span>ลบเมื่อบันทึกว่าไฟล์ใหม่ผ่าน</span></div>'; }).join('') +
           '</div>';
       }).join('');
@@ -772,6 +810,8 @@
     document.getElementById('assignmentSummaryWrap').addEventListener('click', async function (e) {
       var b = e.target.closest('[data-rv-ev]'), all = e.target.closest('[data-rv-all]');
       var find = function (id) { return allAssignments.filter(function (x) { return x.eventId === id; })[0]; };
+      var cx = e.target.closest('[data-cf-export]'); // 1.97
+      if (cx) { var ax = find(cx.getAttribute('data-cf-export')); if (ax) exportFieldsXlsx(ax); return; }
       if (b) {
         var a = find(b.getAttribute('data-rv-ev')); if (!a) return;
         var row = a.rows.filter(function (r) { return r.userId === b.getAttribute('data-rv-u'); })[0];

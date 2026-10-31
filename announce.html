@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.96.5.301026" />
+<link rel="stylesheet" href="assets/style.css?v=1.97.1.311026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -348,6 +348,14 @@
             <label for="evMessage">รายละเอียดเพิ่มเติม <span class="opt">(ไม่บังคับ)</span></label>
             <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
           </div>
+          <!-- 1.97: ฟอร์ม/ไฟล์ตัวอย่าง (สูงสุด 3) — อัปโหลดเข้า Google Drive ครูดาวน์โหลด/เปิดดูได้ -->
+          <div class="field">
+            <label>ฟอร์ม / ไฟล์ตัวอย่าง <span class="opt">(ไม่บังคับ · สูงสุด 3 ไฟล์)</span></label>
+            <div id="evSamples" class="ev-samples"></div>
+            <button type="button" class="ev-add-btn" id="evSampleAdd"><i class="fa-solid fa-upload" aria-hidden="true"></i> อัปโหลดไฟล์</button>
+            <input type="file" id="evSampleInput" hidden />
+            <div class="hint">เช่น แบบฟอร์มให้ครูดาวน์โหลดไปกรอก หรือตัวอย่างงานที่ทำเสร็จแล้ว · เก็บใน Google Drive ของโรงเรียน (โฟลเดอร์ "ฟอร์มตัวอย่าง")</div>
+          </div>
           <!-- 1.88: ลิงก์แนบ (สูงสุด 3) — ครูเห็นเป็นปุ่ม -->
           <div class="field">
             <label>ลิงก์แนบ <span class="opt">(ไม่บังคับ · สูงสุด 3 ลิงก์)</span></label>
@@ -387,6 +395,8 @@
             <button type="button" data-sc="range">แสดงเป็นช่วง</button>
           </div>
           <div class="hint" id="evScHint"></div>
+          <!-- 1.97: แสดงเฉพาะปฏิทินโรงเรียน (ไม่ขึ้นในรายการ/เช็คลิสต์/กระดิ่งของครู) -->
+          <label class="evk-chk" style="margin-top:8px"><input type="checkbox" id="evCalOnly" /><span><b>แสดงในปฏิทินโรงเรียนเท่านั้น</b><small>ไม่ขึ้นในรายการกำหนดส่งงาน เช็คลิสต์ และกระดิ่งแจ้งเตือนของครู — เหมาะกับงานที่ผู้รับผิดชอบคนเดียวทำ เช่น รายงานวันลาประจำเดือน</small></span></label>
         </div>
 
         <div class="modal-actions">
@@ -417,7 +427,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.96.5.301026"></script>
+  <script src="assets/api.js?v=1.97.1.311026"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -640,6 +650,8 @@
           if (ev.links && ev.links.length) meta.push('<i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์ ' + ev.links.length);
         }
         if (ev.responsible && ev.responsible.users && ev.responsible.users.length) meta.push('<i class="fa-solid fa-user-check" aria-hidden="true"></i> ผู้รับผิดชอบ: ' + ev.responsible.users.map(function (u) { return escapeHtml(u.name); }).join(', ')); // 1.94
+        if (ev.sampleFiles && ev.sampleFiles.length) meta.push('<i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> ไฟล์ตัวอย่าง ' + ev.sampleFiles.length); // 1.97
+        if (ev.calOnly) meta.push('<i class="fa-solid fa-calendar-check" aria-hidden="true"></i> แสดงเฉพาะปฏิทินโรงเรียน'); // 1.97
         if (ev.calShow === 'none') meta.push('<i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i> ไม่แสดงในปฏิทินโรงเรียน');
         var nSeries = ev.seriesId ? lastEvents.filter(function (x) { return x.seriesId === ev.seriesId; }).length : 0;
         var roundBadge = ev.seriesId ? '<span class="evl-round"><i class="fa-solid fa-layer-group" aria-hidden="true"></i> รอบ ' + ev.roundNo + '/' + nSeries + '</span>' : '';
@@ -1074,11 +1086,43 @@
       evColor = (ev && ev.color) || ''; renderEvColor();
       evResp.set(ev && ev.responsible ? ev.responsible : null);
       document.getElementById('evSelfReport').checked = !!(ev && ev.selfReport);
+      document.getElementById('evCalOnly').checked = !!(ev && ev.calOnly); // 1.97
+      evSamples = ev && ev.sampleFiles ? ev.sampleFiles.map(function (f) { return Object.assign({}, f); }) : []; renderEvSamples(); evCalOnlySync();
       renderEvSc();
     }
+    // ---- 1.97: ฟอร์ม/ไฟล์ตัวอย่าง ----
+    var evSamples = [], evSampleBusy = false;
+    function sampleIcon(f) { return fileTypeIconHtml(f.name, f.mime, 'sm'); }
+    function renderEvSamples() {
+      var box = document.getElementById('evSamples');
+      box.innerHTML = evSamples.map(function (f, i) {
+        return '<div class="ev-sample">' + sampleIcon(f) + '<div class="ev-sample-t"><a href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener">' + escapeHtml(f.name) + '</a>' +
+          '<input type="text" maxlength="80" data-smp-note="' + i + '" placeholder="คำอธิบายสั้น เช่น ฟอร์มให้ดาวน์โหลดไปกรอก (ไม่บังคับ)" value="' + escapeHtml(f.note || '') + '" /></div>' +
+          '<button type="button" class="ev-x" data-smp-del="' + i + '" title="เอาไฟล์นี้ออก" aria-label="เอาไฟล์นี้ออก"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>';
+      }).join('') + (evSampleBusy ? '<div class="hint"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> กำลังอัปโหลด…</div>' : '');
+      document.getElementById('evSampleAdd').hidden = evSamples.length >= 3 || evSampleBusy;
+    }
+    document.getElementById('evSamples').addEventListener('input', function (e) { var n = e.target.closest('[data-smp-note]'); if (n) evSamples[Number(n.getAttribute('data-smp-note'))].note = n.value; });
+    document.getElementById('evSamples').addEventListener('click', function (e) { var d = e.target.closest('[data-smp-del]'); if (!d) return; evSamples.splice(Number(d.getAttribute('data-smp-del')), 1); renderEvSamples(); });
+    document.getElementById('evSampleAdd').addEventListener('click', function () { document.getElementById('evSampleInput').click(); });
+    document.getElementById('evSampleInput').addEventListener('change', async function (e) {
+      var file = e.target.files && e.target.files[0]; e.target.value = '';
+      if (!file) return;
+      evSampleBusy = true; renderEvSamples();
+      try {
+        var prep = await apiCall('sampleUploadPrepare', { fileName: file.name, mimeType: file.type, fileSize: file.size, academicYear: document.getElementById('evYear').value, direct: 1, origin: location.origin });
+        var res = await sendPreparedFile(prep, file, { filename: prep.uploadFileName || file.name, mimeType: file.type });
+        var f = await apiCall('sampleUploadFinalize', { sampleId: prep.sampleId, fileId: res.fileId, fileUrl: res.url, directUrl: res.directUrl, fileName: prep.uploadFileName || file.name, mimeType: file.type, via: res.via, fallbackReason: res.fallbackReason || '' });
+        evSamples.push(f);
+      } catch (err) { showToast('อัปโหลดไม่สำเร็จ: ' + err.message); }
+      evSampleBusy = false; renderEvSamples();
+    });
+    function evCalOnlySync() { var on = document.getElementById('evCalOnly').checked, n = document.getElementById('evActNotify'); if (n) { if (on) n.checked = false; n.disabled = on; } }
+    document.getElementById('evCalOnly').addEventListener('change', evCalOnlySync);
     function evExtrasPayload() {
       var c = evCat();
-      return { color: evIsAct() ? evColor : '', calShow: evScMode, responsible: evResp.get(), selfReport: !evIsAct() && !!(c && c.manualCheck) && document.getElementById('evSelfReport').checked };
+      return { color: evIsAct() ? evColor : '', calShow: evScMode, responsible: evResp.get(), selfReport: !evIsAct() && !!(c && c.manualCheck) && document.getElementById('evSelfReport').checked,
+        calOnly: document.getElementById('evCalOnly').checked, sampleFiles: evIsAct() ? [] : evSamples.map(function (f) { return { id: f.id, note: f.note || '' }; }) }; // 1.97
     }
     function openCreateEvent() {
       document.getElementById('evEditId').value = '';
