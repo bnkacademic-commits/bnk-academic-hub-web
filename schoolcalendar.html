@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.97.3.311026" />
+<link rel="stylesheet" href="assets/style.css?v=1.97.4.311026" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -74,7 +74,7 @@
     </div>
   </div>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.97.3.311026"></script>
+  <script src="assets/api.js?v=1.97.4.311026"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('schoolcal'); if (typeof mountFooter === 'function') mountFooter(); } // 1.96: + footer
@@ -185,6 +185,8 @@
     // 1.96: แบบ C — ช่องวันระบายสีของกิจกรรม เลขวันเป็นวงกลมสีเข้ม ชื่อกิจกรรมอยู่วันแรก (หรือวันอาทิตย์ที่ต่อสัปดาห์ใหม่)
     function schoolCalSpanFrom(e) { return schoolCalSpan(e).from; }
     // ---------- 1.96.1: ส่งออก PDF (ดาวน์โหลดไฟล์ทันที ไม่เปิดหน้าตัวอย่าง) — รายเดือน / รายภาคเรียน (นับตามแท็กปีการศึกษา + ภาคเรียนของรายการ) ----------
+    // 1.97.4: ฟอนต์ Sarabun จากไฟล์ในเว็บเอง (ไม่พึ่ง Google Fonts — ส่งออกได้แม้เน็ตโรงเรียนบล็อก)
+    var SARABUN_FACES = [400, 600, 700].map(function (w) { var u = new URL('assets/fonts/', location.href).href; return '@font-face{font-family:Sarabun;font-weight:' + w + ';src:url(' + u + 'sarabun-thai-' + w + '-normal.woff2) format("woff2");unicode-range:U+0E00-0E7F}@font-face{font-family:Sarabun;font-weight:' + w + ';src:url(' + u + 'sarabun-latin-' + w + '-normal.woff2) format("woff2")}'; }).join('');
     var PCSS = '*{box-sizing:border-box}body{margin:0;font-family:Sarabun,sans-serif;color:#0f172a;background:#fff}' +
       '.pg{position:relative;width:794px;height:1123px;padding:42px 44px 56px;background:#fff;overflow:hidden}.ft{position:absolute;left:44px;right:44px;bottom:22px;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:5px}' +
       '.cover{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.cover img{width:160px;height:160px;object-fit:contain;margin-bottom:28px}' +
@@ -199,7 +201,19 @@
       '.lg{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:10px;margin:6px 0 8px;color:#475569}.lg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px}.lg u{display:inline-block;width:11px;height:8px;border-radius:2px;margin-right:3px;background:#e11d4833;box-shadow:inset 0 0 0 1px #e11d48}' +
       'table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f1f5f9;text-align:left;padding:4px 5px;font-size:10.5px}td{padding:4px 5px;border-bottom:1px solid #e2e8f0;vertical-align:top}' +
       '.sd{display:inline-block;padding:0 5px;border-radius:4px;font-weight:700;font-size:10px}.k{display:inline-block;font-size:9.5px;padding:0 4px;border-radius:3px;margin-right:3px;font-weight:700}.k.dl{background:#dbeafe;color:#1e40af}.k.ac{background:#f3e8ff;color:#6b21a8}' +
-      '.dt{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px}.sm{display:block;color:#64748b;font-size:9.5px}.rs small{display:block;color:#64748b;font-size:9.5px}.em{color:#64748b;font-size:13px;padding:10px 0}';
+      '.dt{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px}.sm{display:block;color:#64748b;font-size:9.5px}.rs small{display:block;color:#64748b;font-size:9.5px}.em{color:#64748b;font-size:13px;padding:10px 0}' +
+      // 1.97.4: แบบ A — แถบหัวสีน้ำเงิน + โลโก้ในระบบ · ช่องวันมีแถบชื่องานตามสีกลุ่ม · ตารางหัวน้ำเงิน
+      '.band{margin:-42px -44px 14px;background:linear-gradient(120deg,#0b4fa3,#1d7fe0);color:#fff;padding:24px 44px 20px;display:flex;align-items:center;gap:18px}.band img{width:64px;height:64px;object-fit:contain;background:#fff;border-radius:50%;padding:5px;flex:none}' +
+      '.band .t1{font-size:14px;opacity:.92}.band .t2{font-size:38px;font-weight:700;line-height:1.15}.band .t3{font-size:14px;opacity:.92}' +
+      '.hd{border-bottom-color:#0b4fa3}.hd b{color:#0b4fa3}' +
+      '.g{gap:4px}.dw{font-size:13px;padding:3px 0;border-radius:6px;background:#eef4fc;color:#0b4fa3}.dw.d0,.dw.d6{background:#fef2f2;color:#dc2626}' +
+      '.c{border:1px solid #e2e8f0;background:#fff;border-radius:7px;padding:3px 4px}.c.x{background:#f8fafc;border-color:#f1f5f9}.c.hol{background:#fff1f2;border-color:#fecaca;box-shadow:none}.c.td{outline:2px solid #1d7fe0}' +
+      '.c .n{font-size:14px;min-width:0;height:auto;display:block;border-radius:0;line-height:1.2}.c .n.h{color:#dc2626}' +
+      '.bar{display:block;border-radius:4px;padding:0 4px;margin-top:2px;font-size:10px;font-weight:600;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}.more{font-size:9.5px;color:#64748b;font-weight:700;margin-top:1px}' +
+      '.lg{font-size:11.5px;gap:5px 14px;margin:10px 0}.lg i{width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px}' +
+      'table{font-size:12px}th{background:#0b4fa3;color:#fff;font-size:12px;padding:5px 6px}tbody tr:nth-child(even) td{background-color:#f8fafc}td{padding:4px 6px}' +
+      '.cover .cband{position:absolute;left:0;right:0;top:0;height:150px;background:linear-gradient(120deg,#0b4fa3,#1d7fe0)}.cover .cband2{position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(120deg,#0b4fa3,#1d7fe0)}' +
+      '.cover img{position:relative;width:170px;height:170px;background:#fff;border-radius:50%;padding:10px;box-shadow:0 6px 24px rgba(15,23,42,.18)}.cover h1{font-size:44px;color:#0b4fa3}.toc{position:relative}.toc b{color:#0b4fa3;font-size:16px}';
     var THEAD = '<table><thead><tr><th style="width:36px">วัน</th><th style="width:76px">วันที่</th><th>กิจกรรม</th><th style="width:30%">ผู้รับผิดชอบ</th></tr></thead><tbody></tbody></table>';
     function pad2(n) { return n < 10 ? '0' + n : '' + n; }
     // รายการ (พร้อมช่วงที่แสดง) ในช่วง from–to — filter(e) = กรองตามแท็กภาคเรียน · null = ทุกรายการ
@@ -236,19 +250,26 @@
     }
     function monthParts(md, termTxt) {
       var y = md.y, m = md.m, list = md.list, g = DOW.map(function (d, i) { return '<div class="dw d' + i + '">' + d + '</div>'; }).join(''), legend = {};
-      for (var i = 0, f = new Date(y, m - 1, 1).getDay(); i < f; i++) g += '<div class="c x"></div>';
+      var first = new Date(y, m - 1, 1).getDay(), weeks = Math.ceil((first + lastDay(y, m)) / 7), ch = weeks > 5 ? 74 : 90, maxBars = weeks > 5 ? 3 : 4, nHol = 0;
+      for (var i = 0; i < first; i++) g += '<div class="c x" style="height:' + ch + 'px"></div>';
       for (var d = 1; d <= lastDay(y, m); d++) {
-        var ds = ymdOf(y, m, d), on = list.filter(function (x) { return ds >= x.from && ds <= x.to; });
-        var acts = on.filter(function (x) { return isActivityEv(x.e); }).map(function (x) { return x.e; }), dls = on.filter(function (x) { return !isActivityEv(x.e); }).map(function (x) { return x.e; });
-        dls.forEach(function (e) { legend[e.categoryId || '_'] = e.categoryName || e.title; });
-        var cc = calCellC(d, ds, acts, { startOf: schoolCalSpanFrom, holiday: !!md.hol[ds] }), ac = cc.cls === ' cal-act-c' ? activityColor(acts.filter(function (e) { return !isHolidayEv(e); })[0]) : '';
-        g += '<div class="c' + (cc.cls === ' cal-hol' ? ' hol' : '') + '"' + (ac ? ' style="background:' + ac + '1f;box-shadow:inset 0 0 0 1.2px ' + ac + '66"' : '') + '><span class="n"' + (ac ? ' style="background:' + ac + ';color:#fff"' : '') + '>' + d + '</span>' +
-          cc.label.replace(/class="cal-c-lab"/g, 'class="lb"').replace('class="cal-hol-rib"', 'class="rib"') +
-          (dls.length ? '<div class="ds">' + dls.slice(0, 10).map(function (e) { return '<i style="background:' + (colorMap[e.categoryId] || '#9aa4b8') + '"></i>'; }).join('') + '</div>' : '') + '</div>';
+        var ds = ymdOf(y, m, d), on = list.filter(function (x) { return ds >= x.from && ds <= x.to; }), dw0 = (first + d - 1) % 7;
+        var hol = !!md.hol[ds]; if (hol) nHol++;
+        on.forEach(function (x) { if (!isActivityEv(x.e)) legend[x.e.categoryId || '_'] = x.e.categoryName || x.e.title; });
+        var ord = on.slice().sort(function (a, b) { var r = function (x) { return isActivityEv(x.e) ? (isHolidayEv(x.e) ? 0 : 1) : 2; }; return r(a) - r(b); });
+        var bars = ord.slice(0, maxBars).map(function (x) {
+          var e = x.e, act = isActivityEv(e), c = act ? (isHolidayEv(e) ? '#dc2626' : activityColor(e)) : (colorMap[e.categoryId] || '#64748b');
+          return '<span class="bar" style="background:' + c + '">' + escapeHtml(e.title) + '</span>';
+        }).join('') + (ord.length > maxBars ? '<div class="more">+' + (ord.length - maxBars) + ' รายการ</div>' : '');
+        g += '<div class="c' + (hol ? ' hol' : '') + '" style="height:' + ch + 'px"><span class="n' + (hol || dw0 === 0 || dw0 === 6 ? ' h' : '') + '">' + d + '</span>' + bars + '</div>';
       }
+      var pdfSt = window.__scPdfSt || {}, logo = pdfSt.logoDataUrl || pdfSt.iconDataUrl || '';
       var lk = Object.keys(legend), hasAct = list.some(function (x) { return isActivityEv(x.e); });
       var title = TH_MONTHS_FULL[m - 1] + ' ' + (y + 543);
-      var hd = function (cont) { return '<div class="hd"><b>' + title + (cont ? ' (ต่อ)' : '') + '</b><span>ปฏิทินโรงเรียน' + (termTxt ? ' · ' + escapeHtml(termTxt) : '') + ' · ' + list.length + ' รายการ</span></div>'; };
+      var hd = function (cont) {
+        if (cont) return '<div class="hd"><b>' + title + ' (ต่อ)</b><span>ปฏิทินโรงเรียน' + (termTxt ? ' · ' + escapeHtml(termTxt) : '') + ' · ' + list.length + ' รายการ</span></div>';
+        return '<div class="band">' + (logo ? '<img src="' + logo + '" alt="">' : '') + '<div><div class="t1">ปฏิทิน' + escapeHtml(pdfSt.schoolName || 'โรงเรียน') + (termTxt ? ' · ' + escapeHtml(termTxt) : '') + '</div><div class="t2">' + title + '</div><div class="t3">' + list.length + ' รายการ' + (nHol ? ' · วันหยุด ' + nHol + ' วัน' : '') + '</div></div></div>';
+      };
       var rows = list.map(function (x) {
         var e = x.e, act = isActivityEv(e), dw = dowOf(x.from);
         var dt = x.from === x.to ? shortD(x.from) : (x.from.slice(0, 7) === x.to.slice(0, 7) ? +x.from.slice(8) + '–' + shortD(x.to) : shortD(x.from) + ' – ' + shortD(x.to));
@@ -258,11 +279,12 @@
         if (e.endDate && e.endDate !== e.date && x.mode !== 'range') sub.push((act ? '' : 'ส่งได้ ') + (e.date.slice(0, 7) === e.endDate.slice(0, 7) ? +e.date.slice(8) + '–' + shortD(e.endDate) : shortD(e.date) + ' – ' + shortD(e.endDate)));
         return '<tr' + (act ? (isHolidayEv(e) ? ' style="background:#fee2e2"' : ' style="background:' + activityColor(e) + '1a"') : '') + '><td' + (act ? ' style="box-shadow:inset 4px 0 0 ' + (isHolidayEv(e) ? '#dc2626' : activityColor(e)) + '"' : '') + '><span class="sd d' + dw + '">' + DOW[dw] + '</span></td><td><b>' + escapeHtml(dt) + '</b></td><td><span class="k ' + (act ? 'ac">กิจกรรม' : 'dl">' + (e.noSubmission && !e.manualCheck ? 'แจ้งเตือน' : 'ส่งงาน')) + '</span><i class="dt" style="background:' + (act ? activityColor(e) : (colorMap[e.categoryId] || '#9aa4b8')) + '"></i><b>' + escapeHtml(e.title) + '</b>' + (sub.length ? '<span class="sm">' + escapeHtml(sub.join(' · ')) + '</span>' : '') + '</td><td class="rs">' + respHtml(e) + '</td></tr>';
       });
-      return { title: title, n: list.length, head: hd(false) + '<div class="g">' + g + '</div>' + '<div class="lg">' + lk.slice(0, 14).map(function (k) { return '<span><i style="background:' + (colorMap[k] || '#9aa4b8') + '"></i>' + escapeHtml(legend[k]) + '</span>'; }).join('') + (hasAct ? '<span><u></u>ช่องระบายสี = กิจกรรม</span><span><u class="hl"></u>วันหยุด</span>' : '') + '</div>', contHead: hd(true), rows: rows };
+      return { title: title, n: list.length, head: hd(false) + '<div class="g">' + g + '</div>' + '<div class="lg">' + lk.slice(0, 14).map(function (k) { return '<span><i style="background:' + (colorMap[k] || '#9aa4b8') + '"></i>' + escapeHtml(legend[k]) + '</span>'; }).join('') + (hasAct ? '<span><i style="background:linear-gradient(90deg,#0891b2,#ea580c,#9333ea)"></i>กิจกรรม (สีตามกิจกรรม)</span>' : '') + (nHol ? '<span><i style="background:#dc2626"></i>วันหยุด</span>' : '') + '</div>', contHead: hd(true), rows: rows };
     }
     // สร้างหน้า A4 ใน iframe ซ่อน → แบ่งหน้าตามความสูงจริง → html2canvas ทีละหน้า → jsPDF → ดาวน์โหลด
     async function exportPdf(months, cover, fileName) {
       var st = await getSiteSettings().catch(function () { return {}; }) || {};
+      window.__scPdfSt = st; // 1.97.4: โลโก้ + ชื่อโรงเรียนในแถบหัวแต่ละเดือน
       var termTxt = cover ? cover.term : '', parts = months.map(function (md) { return monthParts(md, termTxt); });
       var r = await withProgress('กำลังสร้างไฟล์ PDF', async function (p) {
         await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js');
@@ -271,14 +293,14 @@
         document.body.appendChild(fr);
         try {
           var d = fr.contentWindow.document; d.open();
-          d.write('<!doctype html><html lang="th"><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet"><style>' + PCSS + '</style></head><body></body></html>'); d.close();
+          d.write('<!doctype html><html lang="th"><head><meta charset="utf-8"><style>' + SARABUN_FACES + PCSS + '</style></head><body></body></html>'); d.close();
           await new Promise(function (res) { if (d.readyState === 'complete') res(); else fr.contentWindow.addEventListener('load', res); });
           if (d.fonts && d.fonts.ready) await d.fonts.ready;
           var pages = [], newPage = function (html) { var pg = d.createElement('div'); pg.className = 'pg'; pg.innerHTML = html; d.body.appendChild(pg); pages.push(pg); return pg; };
           if (cover) {
             var logo = st.logoDataUrl || st.iconDataUrl || '';
             newPage('').classList.add('cover');
-            pages[0].innerHTML = (logo ? '<img src="' + logo + '" alt="">' : '') + '<h1>ปฏิทินโรงเรียน</h1><h2>' + escapeHtml(cover.term) + '</h2><h2 style="font-size:16px">' + escapeHtml(cover.range) + '</h2>' +
+            pages[0].innerHTML = '<div class="cband"></div>' + (logo ? '<img src="' + logo + '" alt="">' : '') + '<h1>ปฏิทินโรงเรียน</h1><h2>' + escapeHtml(cover.term) + '</h2><h2 style="font-size:16px">' + escapeHtml(cover.range) + '</h2>' +
               (st.schoolName ? '<div class="sch">' + escapeHtml(st.schoolName) + '</div>' : '') +
               '<div class="toc"><b>สารบัญ</b>' + parts.map(function (x) { return '<div><span>' + x.title + '</span><span>' + x.n + ' รายการ</span></div>'; }).join('') + '</div>';
           }
@@ -295,8 +317,11 @@
           });
           var ft = 'BNKAcademicHub · ปฏิทินโรงเรียน' + (termTxt ? ' ' + termTxt : '') + ' · ส่งออกเมื่อ ' + formatDateThai(todayYmd());
           pages.forEach(function (pg, i) { pg.insertAdjacentHTML('beforeend', '<div class="ft"><span>' + escapeHtml(ft) + '</span><span>' + (i + 1) + ' / ' + pages.length + '</span></div>'); });
+          // 1.97.4: โหลดฟอนต์ Sarabun ให้ครบทุกน้ำหนักก่อนแปลงเป็นรูป (fonts.ready คืนค่าทันทีถ้ายังไม่มีตัวหนังสือ — เดิมได้ฟอนต์สำรอง)
+          if (d.fonts && d.fonts.load) { try { await Promise.all(['400', '600', '700'].map(function (w) { return d.fonts.load(w + ' 16px Sarabun', 'กขค ABC 123'); })); await d.fonts.ready; } catch (fe) { /* ใช้ฟอนต์สำรอง */ } }
           await Promise.all(Array.prototype.map.call(d.images, function (im) { return im.complete ? 0 : new Promise(function (res) { im.onload = im.onerror = res; }); }));
           var pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+          try { await html2canvas(pages[0], { scale: 0.3, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: 820 }); } catch (we) { /* 1.97.4: รอบอุ่นเครื่อง — ให้ฟอนต์ในสำเนาของ html2canvas โหลดครบก่อน หน้าแรกจะได้ไม่ใช้ฟอนต์สำรอง */ }
           for (var i = 0; i < pages.length; i++) {
             p.setProgress(Math.round(i / pages.length * 95), 'หน้า ' + (i + 1) + '/' + pages.length);
             var cv = await html2canvas(pages[i], { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: 820 });
