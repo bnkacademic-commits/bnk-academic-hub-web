@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.96.0';
-var APP_VERSION = '1.96.6.301026';
+var WORKER_MIN_VERSION = '1.97.0';
+var APP_VERSION = '1.97.1.311026';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1203,6 +1203,7 @@ function linkHost(u) { try { return new URL(u).hostname.replace(/^www\./, ''); }
 function eventLinksHtml(links, withHost) {
   if (!links || !links.length) return '';
   return '<div class="ev-lbtns">' + links.map(function (l) {
+    if (l.sample) return '<a class="ev-lbtn smp" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(l.name || '') + '"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> ' + escapeHtml(l.label) + '</a>'; // 1.97: ฟอร์ม/ไฟล์ตัวอย่าง
     var h = linkHost(l.url);
     return '<a class="ev-lbtn" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> ' + escapeHtml(l.label || 'เปิดลิงก์') + (withHost && h ? ' <small>' + escapeHtml(h) + '</small>' : '') + '</a>';
   }).join('') + '</div>';
@@ -3333,4 +3334,114 @@ function schoolCalSpan(e) {
   if (mode === 'last') return { from: end, to: end, mode: mode };
   if (mode === 'ends') return end === e.date ? { from: end, to: end, mode: 'last' } : { from: e.date, to: end, mode: 'ends' }; // 1.95: วันแรก + วันสุดท้าย (2 แถว)
   return { from: e.date, to: end, mode: 'range' };
+}
+
+// ===== 1.97: ข้อมูลที่ครูต้องกรอกตอนส่งงาน (ตั้งหัวข้อเองได้) — ใช้ร่วมกันทุกหน้า (ดู worker/src/lib/fields.js) =====
+var FIELD_PRESETS = [
+  { id: 'eventDate', label: 'วันที่', type: 'date', hint: 'เผื่อไว้สำหรับเกียรติบัตรการอบรม วันที่เข้าร่วม' },
+  { id: 'location', label: 'สถานที่อบรม', type: 'text', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่บอกสถานที่อบรม' },
+  { id: 'award', label: 'รางวัล', type: 'text', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นรางวัล' },
+  { id: 'studentName', label: 'ชื่อนักเรียน', type: 'text', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นผลงานนักเรียนแต่ครูเป็นผู้สอน' }
+];
+var FIELD_TYPE_LABEL = { text: 'ข้อความสั้น', textarea: 'ข้อความยาว', number: 'ตัวเลข', numlist: 'ตัวเลข + รายละเอียด', date: 'วันที่', select: 'เลือกจากรายการ' };
+// ค่า 1 ช่อง → ข้อความ (numlist = "4 (ก / ข / ค / ง)")
+function fieldValueText(v, t) {
+  if (v && typeof v === 'object') return v.n + ((v.items || []).length ? ' (' + v.items.join(' / ') + ')' : '');
+  if (t === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''))) return formatDateThai(v);
+  return String(v == null ? '' : v);
+}
+// ค่าที่ครูกรอกไว้ → [{ id, label, type, value, text, x, p }] (ใช้ชื่อหัวข้อที่เก็บไว้กับงาน — ค่าแบบเดิมใช้ชื่อสำเร็จรูป)
+function fieldEntries(values) {
+  var out = [];
+  if (!values || typeof values !== 'object') return out;
+  var meta = values.__meta;
+  Object.keys(values).forEach(function (k) {
+    if (k === '__meta') return;
+    var v = values[k]; if (v == null || v === '') return;
+    var m = meta && meta[k], pre = FIELD_PRESETS.filter(function (x) { return x.id === k; })[0];
+    if (!m && !pre) return;
+    var t = m ? m.t : pre.type;
+    out.push({ id: k, label: m ? m.l : pre.label, type: t, value: v, text: fieldValueText(v, t), x: m ? !!m.x : true, p: m ? !!m.p : true });
+  });
+  return out;
+}
+function fieldsLineText(values) { return fieldEntries(values).map(function (e) { return e.label + ': ' + e.text; }).join(' · '); }
+// ฟอร์มกรอก (ป็อปอัปส่งงาน / แก้ไขข้อมูลที่กรอก)
+function fieldsFormHtml(defs, values) {
+  values = values || {};
+  return (defs || []).map(function (d) {
+    var v = values[d.id], id = 'cf_' + d.id, req = d.required ? ' <span class="cf-req">*</span>' : ' <span class="opt">(ไม่บังคับ)</span>', inp;
+    if (d.type === 'numlist') {
+      var o = v && typeof v === 'object' ? v : { n: '', items: [] };
+      inp = '<input id="' + id + '" type="number" min="1" max="' + d.max + '" inputmode="numeric" class="cf-n" data-cf="' + escapeHtml(d.id) + '" data-cf-type="numlist" value="' + escapeHtml(o.n) + '" style="max-width:120px" />' +
+        '<div class="cf-items" data-cf-items="' + escapeHtml(d.id) + '" data-cf-dl="' + escapeHtml(d.detailLabel || 'รายละเอียด') + '" data-cf-max="' + d.max + '">' + cfItemsHtml(d, o.n, o.items || []) + '</div>';
+    } else if (d.type === 'select') {
+      inp = '<select id="' + id + '" data-cf="' + escapeHtml(d.id) + '"><option value="">— เลือก —</option>' + d.options.map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + escapeHtml(o) + '</option>'; }).join('') + '</select>';
+    } else if (d.type === 'textarea') {
+      inp = '<textarea id="' + id + '" rows="3" maxlength="2000" data-cf="' + escapeHtml(d.id) + '">' + escapeHtml(v || '') + '</textarea>';
+    } else {
+      var ty = d.type === 'date' ? 'date' : (d.type === 'number' ? 'number' : 'text');
+      inp = '<input id="' + id + '" type="' + ty + '"' + (ty === 'number' ? ' inputmode="decimal" step="any"' : ' maxlength="300"') + ' data-cf="' + escapeHtml(d.id) + '" value="' + escapeHtml(v || '') + '" />';
+    }
+    return '<div class="field cf-field"><label for="' + id + '">' + escapeHtml(d.label) + req + '</label>' + inp + (d.hint ? '<div class="hint">' + escapeHtml(d.hint) + '</div>' : '') + '</div>';
+  }).join('');
+}
+function cfItemsHtml(d, n, items) {
+  n = Math.min(Number(d.max) || 10, Math.max(0, Math.trunc(Number(n) || 0)));
+  var h = '';
+  for (var i = 0; i < n; i++) h += '<div class="cf-item"><b>' + (i + 1) + '.</b><input type="text" maxlength="200" data-cf-item="' + i + '" placeholder="' + escapeHtml(d.detailLabel || 'รายละเอียด') + '" value="' + escapeHtml(items[i] || '') + '" /></div>';
+  return h;
+}
+// จำนวนเปลี่ยน → ช่องรายละเอียดเพิ่ม/ลดตาม (เก็บที่พิมพ์ไว้แล้ว)
+function bindFieldsForm(box) {
+  if (!box || box.__cfBound) return; box.__cfBound = true;
+  box.addEventListener('input', function (e) {
+    var n = e.target.closest('input[data-cf-type="numlist"]'); if (!n) return;
+    var wrap = box.querySelector('[data-cf-items="' + n.getAttribute('data-cf') + '"]'); if (!wrap) return;
+    var old = Array.prototype.map.call(wrap.querySelectorAll('[data-cf-item]'), function (x) { return x.value; });
+    wrap.innerHTML = cfItemsHtml({ max: Number(wrap.getAttribute('data-cf-max')), detailLabel: wrap.getAttribute('data-cf-dl') }, n.value, old);
+  });
+}
+function readFieldsForm(box) {
+  var out = {};
+  if (!box) return out;
+  box.querySelectorAll('[data-cf]').forEach(function (el) {
+    var k = el.getAttribute('data-cf');
+    if (el.getAttribute('data-cf-type') === 'numlist') {
+      var wrap = box.querySelector('[data-cf-items="' + k + '"]');
+      out[k] = { n: el.value.trim(), items: wrap ? Array.prototype.map.call(wrap.querySelectorAll('[data-cf-item]'), function (x) { return x.value.trim(); }) : [] };
+    } else out[k] = el.value.trim();
+  });
+  return out;
+}
+// ตรวจในหน้าเว็บก่อนส่ง (Worker ตรวจซ้ำ) — คืนข้อความผิดพลาด หรือ ''
+function checkFieldsForm(defs, vals) {
+  for (var i = 0; i < (defs || []).length; i++) {
+    var d = defs[i], v = vals[d.id], name = '"' + d.label + '"';
+    if (d.type === 'numlist') {
+      var n = String((v && v.n) || '').trim();
+      if (!n) { if (d.required) return 'กรุณากรอก ' + name; continue; }
+      if (!/^\d+$/.test(n) || Number(n) < 1) return name + ' ต้องเป็นตัวเลขจำนวนเต็มตั้งแต่ 1 ขึ้นไป';
+      if (Number(n) > d.max) return name + ' ใส่ได้ไม่เกิน ' + d.max;
+      if (v.items.length < Number(n) || v.items.some(function (x) { return !x; })) return 'กรุณากรอก' + (d.detailLabel || 'รายละเอียด') + 'ของ ' + name + ' ให้ครบ ' + n + ' รายการ';
+    } else {
+      if (!v) { if (d.required) return 'กรุณากรอก ' + name; continue; }
+      if (d.type === 'number' && !/^-?\d+(\.\d+)?$/.test(v)) return name + ' ต้องเป็นตัวเลข';
+    }
+  }
+  return '';
+}
+
+// 1.97: ลิงก์ของกำหนดการ = ฟอร์ม/ไฟล์ตัวอย่าง (ก่อน) + ลิงก์แนบ
+function evLinksOf(e) {
+  if (!e) return [];
+  return (e.sampleFiles || []).map(function (f) { return { url: f.url, label: f.note || f.name, name: f.name, sample: true }; }).concat(e.links || []);
+}
+function samplesListHtml(list) {
+  if (!list || !list.length) return '';
+  return '<div class="field"><label>ฟอร์ม / ไฟล์ตัวอย่างของงานนี้</label><div class="smp-list">' + list.map(function (f) {
+    return '<div class="smp-item">' + fileTypeIconHtml(f.name, f.mime, 'sm') + '<div class="t">' + escapeHtml(f.name) + (f.note ? '<small>' + escapeHtml(f.note) + '</small>' : '') + '</div><div class="b">' +
+      '<a class="btn btn-sm btn-secondary" href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-eye" aria-hidden="true"></i> เปิดดู</a>' +
+      '<a class="btn btn-sm btn-primary" href="' + escapeHtml(driveDownloadUrl(f.url) || f.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-download" aria-hidden="true"></i> ดาวน์โหลด</a></div></div>';
+  }).join('') + '</div></div>';
 }

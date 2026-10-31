@@ -3812,7 +3812,7 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 /* 1.89: กิจกรรม "หยุดเรียน ไม่ต้องเช็คชื่อ" (เว็บเช็คชื่อถือเป็นวันหยุด) */
 .noclass-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #ffe4e6; color: #be123c; vertical-align: middle; }
 :root[data-theme="dark"] .noclass-tag { background: rgba(244, 63, 94, 0.18); color: #fda4af; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .noclass-tag { background: rgba(244, 63, 94, 0.18); color: #fda4af; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="sepia"]) .noclass-tag { background: rgba(244, 63, 94, 0.18); color: #fda4af; } }
 
 /* 1.90: งานตามห้อง (สมุดโฮมรูม) */
 .hr-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #ede9fe; color: #6d28d9; vertical-align: middle; margin-left: 4px; }
@@ -3831,7 +3831,7 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 @media (max-width: 560px) { .hr-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } .hr-actions .btn { flex: 1 1 100%; } }
 :root[data-theme="dark"] .hr-tag { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
 :root[data-theme="dark"] .hr-warn { background: rgba(234, 88, 12, 0.15); color: #fdba74; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hr-tag { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; } :root:not([data-theme="light"]) .hr-warn { background: rgba(234, 88, 12, 0.15); color: #fdba74; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="sepia"]) .hr-tag { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; } :root:not([data-theme="light"]):not([data-theme="sepia"]) .hr-warn { background: rgba(234, 88, 12, 0.15); color: #fdba74; } }
 
 /* 1.92: แถบค้นหา/กรอง/เรียง ของรายการกำหนดส่งงานใต้ปฏิทิน */
 .up-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 12px; }
@@ -3844,7 +3844,7 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 /* 1.92: ป้ายกิจกรรมแทนคาบเรียน + ฟอร์มการเช็คชื่อของกิจกรรม */
 .noclass-tag.act { background: #cffafe; color: #0e7490; }
 :root[data-theme="dark"] .noclass-tag.act { background: rgba(6, 182, 212, 0.18); color: #67e8f9; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .noclass-tag.act { background: rgba(6, 182, 212, 0.18); color: #67e8f9; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="sepia"]) .noclass-tag.act { background: rgba(6, 182, 212, 0.18); color: #67e8f9; } }
 .att-seg { display: flex; flex-wrap: wrap; gap: 6px; }
 .att-seg button, .att-chip { border: 1.5px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
 .att-seg button.on { background: #0e7490; border-color: #0e7490; color: #fff; }
@@ -4277,3 +4277,41 @@ body.nav-pinned #scCal .calendar-cell { min-height: 92px; }
 .cgd-note { font-size: 0.7rem; color: var(--text-muted); padding: 4px 8px 2px; }
 .sc-tbl tr.sc-row-hl.sc-r-act td:first-child { box-shadow: inset 4px 0 0 var(--rc), inset 6px 0 0 var(--primary), inset 0 2px 0 var(--primary), inset 0 -2px 0 var(--primary) !important; }
 .sc-tbl tr.sc-row-hl.sc-r-hol td:first-child { box-shadow: inset 4px 0 0 #dc2626, inset 6px 0 0 var(--primary), inset 0 2px 0 var(--primary), inset 0 -2px 0 var(--primary) !important; }
+
+/* ===== 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเอง) ===== */
+.cf-req { color: var(--danger, #dc2626); }
+.cf-items { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.cf-item { display: flex; align-items: center; gap: 6px; }
+.cf-item b { width: 24px; text-align: right; color: var(--text-muted); font-weight: 700; flex: none; }
+.cf-item input { flex: 1; }
+.cfe-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.cfe-row { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: color-mix(in srgb, var(--text-muted) 7%, transparent); text-align: left; }
+.cfe-top { display: flex; gap: 6px; align-items: center; }
+.cfe-top input { flex: 1; min-width: 0; margin: 0; }
+.cfe-top select { width: 170px; flex: none; margin: 0; }
+.cfe-ib { width: 34px; height: 34px; flex: none; border: 0; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; background: color-mix(in srgb, var(--text-muted) 18%, transparent); color: var(--text); }
+.cfe-ib:disabled { opacity: .35; cursor: default; }
+.cfe-ib.del { background: #fee2e2; color: #dc2626; }
+.cfe-sub { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-top: 8px; font-size: .86rem; }
+.cfe-sub label { display: inline-flex; gap: 5px; align-items: center; font-weight: 500; margin: 0; cursor: pointer; }
+.cfe-sub input[type=checkbox] { width: auto; margin: 0; }
+.cfe-sub input[type=text], .cfe-sub input[type=number] { margin: 0; }
+.cfe-sub textarea { width: 100%; margin: 4px 0 0; }
+.cfe-add { width: 100%; border: 1.5px dashed var(--primary); background: color-mix(in srgb, var(--primary) 8%, transparent); color: var(--primary); border-radius: 10px; padding: 9px; font-weight: 700; cursor: pointer; font: inherit; font-weight: 700; }
+.cfe-add:disabled { opacity: .4; cursor: default; }
+.cfe-pre { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; font-size: .82rem; color: var(--text-muted); }
+.cfe-pre button { border: 0; border-radius: 999px; padding: 3px 10px; background: color-mix(in srgb, var(--text-muted) 16%, transparent); color: var(--text); cursor: pointer; font: inherit; font-size: .82rem; }
+.cfe-pre button:disabled { opacity: .4; cursor: default; }
+.rv-cf { margin: 4px 0 0 2px; font-size: .84rem; color: var(--text-muted); }
+.rv-cf b { color: var(--text); font-weight: 600; }
+.rv-cf ol { margin: 2px 0 0; padding-left: 20px; }
+.ev-samples { display: flex; flex-direction: column; gap: 6px; }
+.ev-sample { display: flex; align-items: center; gap: 10px; border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent); background: color-mix(in srgb, var(--primary) 7%, transparent); border-radius: 12px; padding: 8px 10px; }
+.ev-sample-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ev-sample-t a { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev-sample-t input { margin: 0; font-size: .85rem; padding: 4px 8px; }
+.smp-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+.smp-item { display: flex; align-items: center; gap: 10px; border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent); background: color-mix(in srgb, var(--primary) 7%, transparent); border-radius: 12px; padding: 8px 10px; text-align: left; }
+.smp-item .t { flex: 1; min-width: 0; font-weight: 600; }
+.smp-item .t small { display: block; font-weight: 400; color: var(--text-muted); }
+.smp-item .b { display: flex; gap: 6px; flex: none; }
