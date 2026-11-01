@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '1.97.0';
-var APP_VERSION = '1.97.4.311026';
+var APP_VERSION = '1.97.5.011126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2071,7 +2071,7 @@ function mountFooter(opts) {
   var yearBE = new Date().getFullYear() + 543;
   // 1.75: กดเลขเวอร์ชัน = เมนู "โหลดหน้าใหม่" / "ล้างแคชแล้วโหลดใหม่"
   var verHtml = '<span class="ver-wrap"><button type="button" class="ver-btn" id="verBtn" aria-haspopup="true" aria-expanded="false" title="โหลดหน้าใหม่ / ล้างแคช">v' + escapeHtml(APP_VERSION) + ' <i class="fa-solid fa-caret-up" aria-hidden="true"></i></button>' +
-    '<span class="ver-menu" id="verMenu" hidden><button type="button" data-ver="reload"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> โหลดหน้าใหม่</button>' +
+    '<span class="ver-menu" id="verMenu" hidden><button type="button" data-ver="check"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> ตรวจหาอัปเดต</button><button type="button" data-ver="reload"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> โหลดหน้าใหม่</button>' +
     '<button type="button" data-ver="hard"><i class="fa-solid fa-broom" aria-hidden="true"></i> ล้างแคชแล้วโหลดใหม่</button></span></span>';
   var reportLink = '<a href="mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('แจ้งปัญหาการใช้งาน BNKAcademicHub') + '">';
   if (opts && opts.compact) {
@@ -2109,9 +2109,56 @@ function mountFooter(opts) {
   vm.addEventListener('click', function (e) {
     var b = e.target.closest('[data-ver]'); if (!b) return;
     vm.hidden = true;
-    if (b.getAttribute('data-ver') === 'reload') location.reload();
+    if (b.getAttribute('data-ver') === 'check') checkForUpdate(true);
+    else if (b.getAttribute('data-ver') === 'reload') location.reload();
     else hardReloadPage();
   });
+  startUpdateWatch();
+}
+// ===== 1.97.5: แจ้งเวอร์ชันใหม่ (แบบ C — การ์ดมุมขวาล่าง ไม่แสดงรายละเอียด) =====
+// อ่านเลขรุ่นจากไฟล์ version.json บน GitHub โดยตรง (ไม่ผ่าน Worker = ไม่ใช้โควต้า) · ตอนเปิดหน้า + ทุก 30 นาทีที่เปิดหน้าค้าง + กลับมาที่แท็บ
+// "ภายหลัง" = ซ่อนรุ่นนั้น 2 ชั่วโมง · "อัปเดตเลย" = ล้างแคชแล้วโหลดใหม่
+var _updLastCheck = 0, _updShownFor = '';
+function verParts(v) { return String(v || '').split('.').slice(0, 3).map(function (x) { return parseInt(x, 10) || 0; }); }
+function isNewerVersion(remote, local) {
+  if (!remote || remote === local) return false;
+  var a = verParts(remote), b = verParts(local);
+  for (var i = 0; i < 3; i++) { if (a[i] !== b[i]) return a[i] > b[i]; }
+  return true; // เลขรุ่นเท่ากันแต่วันที่ต่าง = แพ็กใหม่
+}
+async function checkForUpdate(manual) {
+  _updLastCheck = Date.now();
+  var remote = '';
+  try {
+    var r = await fetch(new URL('version.json', location.href).href + '?t=' + Date.now(), { cache: 'no-store' });
+    if (r.ok) remote = String(((await r.json()) || {}).v || '');
+  } catch (e) { remote = ''; }
+  if (!remote) { if (manual) showToast('ตรวจหาอัปเดตไม่ได้ (เชื่อมต่อไม่ได้) — ลองใหม่อีกครั้ง'); return; }
+  if (isNewerVersion(remote, APP_VERSION)) {
+    if (!manual) { try { var sn = JSON.parse(localStorage.getItem('bnkah_upd_snooze') || 'null'); if (sn && sn.v === remote && Date.now() - sn.at < 2 * 3600e3) return; } catch (e) { /* ข้าม */ } }
+    showUpdateCard(remote);
+  } else if (manual) showToast('ใช้เวอร์ชันล่าสุดแล้ว (v' + APP_VERSION + ')');
+}
+function showUpdateCard(v) {
+  if (_updShownFor === v && document.getElementById('updCard')) return;
+  _updShownFor = v;
+  var old = document.getElementById('updCard'); if (old) old.remove();
+  var c = document.createElement('div'); c.id = 'updCard'; c.className = 'upd-card'; c.setAttribute('role', 'status');
+  c.innerHTML = '<button type="button" class="upd-x" aria-label="ปิด" data-upd="later">✕</button><div class="upd-h"><i class="fa-solid fa-circle-arrow-up" aria-hidden="true"></i> มีเวอร์ชันใหม่ ' + escapeHtml(v) + '</div>' +
+    '<div class="upd-t">โหลดหน้าใหม่เพื่อใช้งานเวอร์ชันล่าสุด</div><div class="upd-a"><button type="button" class="btn btn-secondary btn-sm" data-upd="later">ภายหลัง</button><button type="button" class="btn btn-success btn-sm" data-upd="go"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> อัปเดตเลย</button></div>';
+  c.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-upd]'); if (!b) return;
+    if (b.getAttribute('data-upd') === 'go') { hardReloadPage(); return; }
+    try { localStorage.setItem('bnkah_upd_snooze', JSON.stringify({ v: v, at: Date.now() })); } catch (e2) { /* ข้าม */ }
+    c.remove();
+  });
+  document.body.appendChild(c);
+}
+function startUpdateWatch() {
+  if (window.__updWatch) return; window.__updWatch = true;
+  setTimeout(function () { checkForUpdate(false); }, 4000);
+  setInterval(function () { if (!document.hidden) checkForUpdate(false); }, 30 * 60e3);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && Date.now() - _updLastCheck > 10 * 60e3) checkForUpdate(false); });
 }
 // ล้างแคชแล้วโหลดใหม่: ลบ Cache Storage/Service Worker (ถ้ามี) + ข้อมูลชั่วคราวของหน้า (sessionStorage) แล้วดึงไฟล์หน้าเว็บ (HTML/JS/CSS)
 // ใหม่จากเซิร์ฟเวอร์ทับแคชของเบราว์เซอร์ก่อนโหลดหน้าใหม่ — ไม่ออกจากระบบ ไม่ลบธีม/การตั้งค่าที่จำไว้

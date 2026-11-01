@@ -4323,3 +4323,12 @@ body.nav-pinned #scCal .calendar-cell { min-height: 92px; }
 .sra-box .evl-item .evl-body { flex: 1; min-width: 0; text-align: left; }
 .sra-box .evl-item .evl-acts { flex: none; display: flex; gap: 6px; }
 @media (max-width: 560px) { .sra-box .evl-item { flex-wrap: wrap; } .sra-box .evl-item .evl-acts { width: 100%; justify-content: flex-end; } }
+/* 1.97.5: การ์ดแจ้งเวอร์ชันใหม่ (มุมขวาล่าง) */
+.upd-card { position: fixed; right: 18px; bottom: 18px; z-index: 9000; width: 320px; max-width: calc(100vw - 32px); background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 14px 40px rgba(15, 23, 42, .22); padding: 14px 16px; text-align: left; animation: updIn .25s ease-out; }
+@keyframes updIn { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+.upd-h { font-weight: 700; font-size: 1rem; display: flex; gap: 8px; align-items: center; padding-right: 30px; }
+.upd-h i { color: var(--primary); }
+.upd-t { color: var(--text-muted); font-size: .88rem; margin: 4px 0 10px; }
+.upd-a { display: flex; gap: 8px; justify-content: flex-end; }
+.upd-x { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 7px; border: 0; background: #dc2626; color: #fff; font-weight: 700; cursor: pointer; }
+@media (max-width: 560px) { .upd-card { left: 16px; right: 16px; width: auto; bottom: 12px; } }
