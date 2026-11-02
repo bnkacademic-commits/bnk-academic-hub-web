@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.98.1.021126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.2.021126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -75,6 +75,7 @@
     </div>
 
 
+    <div class="card sup-up-card" id="supUpCard" hidden></div><!-- 1.98.2: การนิเทศที่จะถึง -->
     <div class="card">
       <!-- ปฏิทิน (ซ้าย) + ปุ่ม "หน้าผลงานของฉัน" + เช็คลิสต์การส่งงาน (ขวา) วางติดกัน (ตั้งแต่ V9.8, ปรับคอลัมน์ขวาใน V9.9) -->
       <div class="dash-cal-layout">
@@ -260,9 +261,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.98.1.021126"></script>
+  <script src="assets/api.js?v=1.98.2.021126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.98.1.021126"></script>
+  <script src="assets/homeroom.js?v=1.98.2.021126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -989,6 +990,7 @@
       setActPool(calState.events); // 1.96.4
       renderCalendar();
       renderAssignmentChecklist();
+      renderSupUpcoming('supUpCard', calState.events); // 1.98.2
     }
     // ครอบคลุมทั้งช่วงวันที่ (date ถึง endDate) ไม่ใช่แค่วันเริ่มต้น — เผื่อกำหนดการนี้เป็นช่วงระยะเวลาส่งงานหลายวัน
     function eventsOnDate(dateStr) { return calEvents().filter(function (e) { return dateStr >= e.date && dateStr <= (e.endDate || e.date); }); }

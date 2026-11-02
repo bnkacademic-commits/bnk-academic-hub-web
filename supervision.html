@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.98.1.021126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.2.021126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -45,7 +45,7 @@
   </div>
   <input type="file" id="spPlanFile" hidden />
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.98.1.021126"></script>
+  <script src="assets/api.js?v=1.98.2.021126"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('supervision'); if (typeof mountFooter === 'function') mountFooter(); }
@@ -54,6 +54,10 @@
     var B = null;               // ผลจาก supBoot
     var st = { tab: '', roundId: '', D: null, busy: null, evals: null, sats: null, tt: null, picks: {}, sel: '', pickDate: '', schedView: 'day', dutySel: '', extend: 0, onlyWait: true, filterGroup: '', q: '', formKind: 'eval', all: null, allRound: '', allQ: '', allG: '' };
     var body = document.getElementById('spBody');
+    // 1.98.2: กันกระพริบ — คงความสูงเดิมระหว่างวาดใหม่ (ไม่ให้หน้ากระตุก/เลื่อน) · โหลดนานเกิน 300 ms ค่อยขึ้น "กำลังโหลด"
+    function setBody(html) { var h = body.offsetHeight; body.style.minHeight = h + 'px'; body.innerHTML = html; requestAnimationFrame(function () { body.style.minHeight = ''; }); }
+    function lockH() { body.style.minHeight = body.offsetHeight + 'px'; return function () { requestAnimationFrame(function () { body.style.minHeight = ''; }); }; }
+    function lazyLoading(msg) { var t = setTimeout(function () { setBody('<div class="loading">' + (msg || 'กำลังโหลด...') + '</div>'); }, 300); return function () { clearTimeout(t); }; }
 
     // ---------- ตัวช่วย ----------
     function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -129,23 +133,27 @@
       try {
         if (['sup', 'form', 'dates', 'sched'].indexOf(st.tab) !== -1) {
           if (!B.rounds.length) { body.innerHTML = '<div class="card sp-empty"><i class="fa-solid fa-layer-group"></i><p>ยังไม่มีรอบนิเทศ' + (B.manager ? ' — สร้างรอบที่แท็บ "รอบนิเทศ"' : '') + '</p></div>'; return; }
-          if (!st.D || st.D.round.id !== st.roundId) body.innerHTML = '<div class="loading">กำลังโหลด...</div>';
-          await needDetail();
+          var stop = (!st.D || st.D.round.id !== st.roundId) ? lazyLoading() : function () {};
+          try { await needDetail(); } finally { stop(); }
         }
-        await fn();
+        var un = lockH(); try { await fn(); } finally { un(); }
       } catch (e) { body.innerHTML = err(e.message); }
     }
 
     // ---------- แบบประเมิน: หัวข้อใหญ่ (section) / ข้อย่อย + เลขข้อพิมพ์เอง (ใช้ทั้งแบบนิเทศและความพึงพอใจ) ----------
-    function qNum(f, i) { return f.num || String(i + 1); }
+    function qNum(f) { return f.num || ''; } // 1.98.2: เลขไม่บังคับ — ไม่ใส่ = ว่าง
+    function qText(f) { return ((f.num ? f.num + ' ' : '') + f.label); }
+    function isHead(f) { return f.type === 'section' || !!f.head; }
+    function subMap(form) { var seen = false, m = {}; (form || []).forEach(function (f) { if (isHead(f)) seen = true; else if (seen || /\./.test(f.num || '')) m[f.id] = 1; }); return m; }
     function formFillHtml(form, ans, can, id) {
-      ans = ans || {};
-      return '<div class="sp-evf" id="' + id + '">' + (form || []).map(function (f, i) {
-        if (f.type === 'section') return '<div class="sp-sec">' + escapeHtml(qNum(f, i)) + ' ' + escapeHtml(f.label) + '</div>';
-        var v = ans[f.id], sub = /\./.test(f.num || '');
-        if (f.type === 'rating') return '<div class="sp-qi' + (sub ? ' sub' : '') + '"><span><b>' + escapeHtml(qNum(f, i)) + '</b> ' + escapeHtml(f.label) + (f.required ? ' <span class="cf-req">*</span>' : '') + '</span>' +
-          '<div class="sp-rate" data-q="' + escapeHtml(f.id) + '">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-rate="' + n + '" title="' + n + ' = ' + SUP_LEVELS[n] + '" class="' + (String(v) === String(n) ? 'on' : '') + '"' + (can ? '' : ' disabled') + '>' + n + '</button>'; }).join('') + '</div></div>';
-        return '<div class="sp-evq' + (sub ? ' sub' : '') + '"><div class="q"><b>' + escapeHtml(qNum(f, i)) + '</b> ' + escapeHtml(f.label) + (f.required ? ' <span class="cf-req">*</span>' : '') + '</div><textarea rows="3" maxlength="2000" data-qt="' + escapeHtml(f.id) + '"' + (can ? '' : ' disabled') + '>' + escapeHtml(v || '') + '</textarea></div>';
+      ans = ans || {}; var sm = subMap(form);
+      var rate = function (f, v) { return '<div class="sp-rate" data-q="' + escapeHtml(f.id) + '">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-rate="' + n + '" title="' + n + ' = ' + SUP_LEVELS[n] + '" class="' + (String(v) === String(n) ? 'on' : '') + '"' + (can ? '' : ' disabled') + '>' + n + '</button>'; }).join('') + '</div>'; };
+      var lab = function (f) { return (f.num ? '<b>' + escapeHtml(f.num) + '</b> ' : '') + escapeHtml(f.label) + (f.required ? ' <span class="cf-req">*</span>' : ''); };
+      return '<div class="sp-evf" id="' + id + '">' + (form || []).map(function (f) {
+        if (f.type === 'section') return '<div class="sp-sec">' + escapeHtml(qText(f)) + '</div>';
+        var v = ans[f.id], cls = f.head ? ' head' : (sm[f.id] ? ' sub' : '');
+        if (f.type === 'rating') return '<div class="sp-qi' + cls + '"><span>' + lab(f) + '</span>' + rate(f, v) + '</div>';
+        return '<div class="sp-evq' + cls + '"><div class="q">' + lab(f) + '</div><textarea rows="3" maxlength="2000" data-qt="' + escapeHtml(f.id) + '"' + (can ? '' : ' disabled') + '>' + escapeHtml(v || '') + '</textarea></div>';
       }).join('') + '<div class="sp-scale">' + [5, 4, 3, 2, 1].map(function (n) { return n + ' = ' + SUP_LEVELS[n]; }).join(' · ') + '</div></div>';
     }
     function readFormAnswers(id) {
@@ -155,7 +163,7 @@
       return a;
     }
     function checkForm(form, a) {
-      for (var i = 0; i < (form || []).length; i++) { var f = form[i]; if (f.type !== 'section' && f.required && (a[f.id] == null || a[f.id] === '')) return (f.type === 'rating' ? 'กรุณาให้คะแนน ' : 'กรุณากรอก ') + qNum(f, i) + ' ' + f.label; }
+      for (var i = 0; i < (form || []).length; i++) { var f = form[i]; if (f.type !== 'section' && f.required && (a[f.id] == null || a[f.id] === '')) return (f.type === 'rating' ? 'กรุณาให้คะแนน ' : 'กรุณากรอก ') + qText(f); }
       return '';
     }
 
@@ -207,8 +215,8 @@
         '<div class="sp-evact"><span class="mut"><i class="fa-solid fa-lock"></i> ผู้นิเทศไม่เห็นคำตอบนี้ · ผู้มีสิทธิ์ดูผลเห็นสรุป</span><button type="button" class="btn btn-success" data-sat-save="' + escapeHtml(r.id) + '"><i class="fa-solid fa-paper-plane"></i> ' + (m.sat ? 'บันทึกการแก้ไข' : 'ส่งแบบประเมิน') + '</button></div></div>';
     }
     async function renderMine() {
-      if (!st.tt) body.innerHTML = '<div class="loading">กำลังโหลดตารางสอน...</div>';
-      var tt = null; try { tt = await loadMyTT(); } catch (e) { tt = { linked: false, reason: e.message, slots: [] }; }
+      var stopL = st.tt ? function () {} : lazyLoading('กำลังโหลดตารางสอน...');
+      var tt = null; try { tt = await loadMyTT(); } catch (e) { tt = { linked: false, reason: e.message, slots: [] }; } stopL();
       var html = B.mine.map(function (m) {
         var r = roundOf(m.roundId); if (!r) return '';
         var dated = m.slots.some(function (s) { return s.date; }), today = todayYmd();
@@ -231,7 +239,7 @@
           (late ? '<div class="sp-warn"><i class="fa-solid fa-lock"></i> หมดเวลาเลือกคาบแล้ว' + (m.slots.length ? '' : ' — ติดต่อผู้จัดการงานนิเทศ') + '</div>' : '<p class="mut" style="margin:6px 0 8px">แตะคาบในตารางสอนที่ต้องการรับการนิเทศ ' + r.perTeacher + ' คาบ (เลือกวันในสัปดาห์ + คาบ — วันที่จริงเจ้าหน้าที่จะลงให้ภายหลัง)</p>') +
           grid + pickBarHtml(m, r, tt, late) + '</div>';
       }).join('');
-      body.innerHTML = html || '<div class="card sp-empty"><p>ไม่มีรอบนิเทศ</p></div>';
+      setBody(html || '<div class="card sp-empty"><p>ไม่มีรอบนิเทศ</p></div>');
       if (typeof ttShrink === 'function') ttShrink(body);
     }
     // 1.98.1: เลือกคาบ = เปลี่ยนเฉพาะช่องที่แตะ + แถบด้านล่าง (ไม่วาดทั้งหน้า — ไม่กระพริบ)
@@ -271,7 +279,7 @@
         try { await apiCall('supPlanRemove', { roundId: t.getAttribute('data-plan-del') }); await boot(true); } catch (x) { showToast(x.message, true); }
         return;
       }
-      var h = handlers[st.tab]; if (h) h(e);
+      var h = handlers[st.tab]; if (h) { var un = lockH(); try { await h(e); } finally { un(); } }
     });
     body.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-pick],[data-cal]')) { e.preventDefault(); e.target.click(); } });
     document.getElementById('spPlanFile').addEventListener('change', async function () {
@@ -287,16 +295,16 @@
 
     // ---------- แท็บ: ตารางนิเทศรวม (ทุกคน · ไม่มีผลประเมิน) ----------
     async function renderAll() {
-      if (!st.all || (st.allRound && st.all.roundId !== st.allRound)) { body.innerHTML = '<div class="loading">กำลังโหลด...</div>'; st.all = await apiCall('supSchedule', { roundId: st.allRound || '' }); }
+      if (!st.all || (st.allRound && st.all.roundId !== st.allRound)) { var stopA = lazyLoading(); try { st.all = await apiCall('supSchedule', { roundId: st.allRound || '' }); } finally { stopA(); } }
       var d = st.all, groups = {}; d.rows.forEach(function (x) { groups[x.subjectGroup || 'ไม่ระบุ'] = 1; });
       var q = st.allQ || '', g = st.allG || '';
       var rows = d.rows.filter(function (x) { return (!g || (x.subjectGroup || 'ไม่ระบุ') === g) && (!q || (x.teacherName + ' ' + x.supervisors.join(' ')).indexOf(q) !== -1); });
-      body.innerHTML = '<div class="sp-toolbar">' + (d.rounds.length > 1 ? '<select data-all-round>' + d.rounds.map(function (r) { return '<option value="' + escapeHtml(r.id) + '"' + (r.id === d.roundId ? ' selected' : '') + '>' + escapeHtml(r.title) + '</option>'; }).join('') + '</select>' : '<b>' + escapeHtml((d.rounds[0] || {}).title || '') + '</b>') +
+      setBody('<div class="sp-toolbar">' + (d.rounds.length > 1 ? '<select data-all-round>' + d.rounds.map(function (r) { return '<option value="' + escapeHtml(r.id) + '"' + (r.id === d.roundId ? ' selected' : '') + '>' + escapeHtml(r.title) + '</option>'; }).join('') + '</select>' : '<b>' + escapeHtml((d.rounds[0] || {}).title || '') + '</b>') +
         '<select data-all-g><option value="">ทุกกลุ่มสาระ</option>' + Object.keys(groups).sort(function (a, b) { return a.localeCompare(b, 'th'); }).map(function (x) { return '<option' + (x === g ? ' selected' : '') + '>' + escapeHtml(x) + '</option>'; }).join('') + '</select>' +
         '<input type="search" data-all-q placeholder="ค้นหาชื่อครู / ผู้นิเทศ" value="' + escapeHtml(q) + '" /></div>' +
         '<div class="card sp-tbl-wrap"><table class="sp-tbl"><thead><tr><th>วันที่</th><th>คาบ</th><th>ครูผู้รับการนิเทศ</th><th>กลุ่มสาระฯ</th><th>วิชา / ห้อง</th><th>ผู้นิเทศ</th></tr></thead><tbody>' +
         rows.map(function (x) { var me = x.teacherId === B.me.id || x.supervisors.indexOf(B.me.name) !== -1; return '<tr' + (me ? ' class="sp-me"' : '') + '><td class="nw"><b>' + thD(x.date, true) + '</b></td><td>' + x.period + '</td><td>' + escapeHtml(x.teacherName) + '</td><td>' + escapeHtml(x.subjectGroup || '-') + '</td><td>' + escapeHtml((x.code || x.subject) + ' · ' + x.room) + '</td><td>' + escapeHtml(x.supervisors.join(', ')) + '</td></tr>'; }).join('') +
-        (rows.length ? '' : '<tr><td colspan="6" class="mut">ยังไม่มีวันนิเทศ</td></tr>') + '</tbody></table><p class="mut" style="margin:8px 0 0">ครูทุกคนเห็นตารางนี้ · ไม่แสดงผลประเมิน · แถวสีม่วง = เกี่ยวกับคุณ</p></div>';
+        (rows.length ? '' : '<tr><td colspan="6" class="mut">ยังไม่มีวันนิเทศ</td></tr>') + '</tbody></table><p class="mut" style="margin:8px 0 0">ครูทุกคนเห็นตารางนี้ · แถวสีม่วง = เกี่ยวกับคุณ</p></div>');
     }
     body.addEventListener('change', function (e) {
       if (st.tab !== 'all') return;
@@ -328,19 +336,21 @@
           formFillHtml((r && r.form) || [], cur.myEval && cur.myEval.answers, can, 'spEvf') +
           '<div class="sp-evact">' + (cur.myEval ? '<span class="mut">บันทึกล่าสุด ' + escapeHtml(formatDateTimeThai(cur.myEval.savedAt)) + '</span>' : '') + '<button type="button" class="btn btn-success" data-ev-save' + (can ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> บันทึกผลประเมิน</button></div>' +
           '<p class="mut sp-note"><i class="fa-solid fa-lock"></i> ผลประเมินเห็นได้เฉพาะผู้นิเทศ และผู้มีสิทธิ์ดูผลการนิเทศ</p></div>' +
-          (can ? '<div class="card"><h3><i class="fa-solid fa-camera"></i> รูปการนิเทศ <span class="mut">(สูงสุด 2 รูป · ใช้ในรายงาน PDF)</span></h3><div class="sp-photos" id="spPhotos"><div class="loading">กำลังโหลด...</div></div><p class="mut" style="margin:8px 0 0">ผู้นิเทศของคาบนี้ทุกคน และผู้จัดการงานนิเทศ อัปโหลดได้ · ระบบย่อรูปให้อัตโนมัติ</p></div>' : '');
+          (can && B.photosEnabled !== false ? '<div class="card"><h3><i class="fa-solid fa-camera"></i> รูปการนิเทศ <span class="mut">(สูงสุด 2 รูป · ใช้ในรายงาน PDF)</span></h3><div class="sp-photos" id="spPhotos"><div class="loading">กำลังโหลด...</div></div><p class="mut" style="margin:8px 0 0">ผู้นิเทศของคาบนี้ทุกคน และผู้จัดการงานนิเทศ อัปโหลดได้ · ระบบย่อรูปให้อัตโนมัติ</p></div>' : '');
       }
-      body.innerHTML = '<div class="sp-two">' + left + right + '</div></div>';
-      if (cur && cur.slot && cur.slot.date) loadPhotos(cur.slot.id, true);
+      setBody('<div class="sp-two">' + left + right + '</div></div>');
+      if (cur && cur.slot && cur.slot.date && B.photosEnabled !== false) loadPhotos(cur.slot.id, true);
     }
     // ---------- รูปการนิเทศ (2 รูป) ----------
     async function loadPhotos(slotId, canEdit) {
       var box = document.getElementById('spPhotos'); if (!box) return;
-      var ph = []; try { ph = (await apiCall('supPhotos', { slotId: slotId })).photos || []; } catch (e) { box.innerHTML = err(e.message); return; }
+      st.phc = st.phc || {};
+      var ph = st.phc[slotId]; // 1.98.2: จำไว้ — เปลี่ยนรายการไปมาไม่ต้องโหลด/ไม่กระพริบ
+      if (!ph) { try { ph = st.phc[slotId] = (await apiCall('supPhotos', { slotId: slotId })).photos || []; } catch (e) { box.innerHTML = err(e.message); return; } }
       if (!document.getElementById('spPhotos')) return;
       box.innerHTML = [0, 1].map(function (i) {
         var p = ph.filter(function (x) { return x.idx === i; })[0];
-        return p ? '<div class="sp-ph f"><img src="' + p.data + '" alt="รูปการนิเทศ ' + (i + 1) + '" />' + (canEdit ? '<button type="button" class="sp-x" data-ph-del="' + i + '" data-slot="' + escapeHtml(slotId) + '" aria-label="ลบรูป"><i class="fa-solid fa-xmark"></i></button>' : '') + '</div>'
+        return p ? '<div class="sp-ph f"><img src="' + escapeHtml(p.src) + '" alt="รูปการนิเทศ ' + (i + 1) + '" referrerpolicy="no-referrer" loading="lazy" />' + (canEdit ? '<button type="button" class="sp-x" data-ph-del="' + i + '" data-slot="' + escapeHtml(slotId) + '" aria-label="ลบรูป"><i class="fa-solid fa-xmark"></i></button>' : '') + '</div>'
           : (canEdit ? '<label class="sp-ph"><input type="file" accept="image/*" data-ph-add="' + i + '" data-slot="' + escapeHtml(slotId) + '" hidden /><i class="fa-solid fa-camera"></i><b>เพิ่มรูปที่ ' + (i + 1) + '</b><span>ถ่าย / เลือกจากเครื่อง</span></label>' : '<div class="sp-ph"><span>ไม่มีรูป</span></div>');
       }).join('');
     }
@@ -363,17 +373,26 @@
       var inp = e.target.closest('[data-ph-add]'); if (!inp) return;
       var file = inp.files && inp.files[0]; if (!file) return;
       var sid = inp.getAttribute('data-slot'), idx = +inp.getAttribute('data-ph-add');
-      var r = await withProgress('กำลังอัปโหลดรูป', async function () { var d = await shrinkImage(file); return apiCall('supPhotoSave', { slotId: sid, idx: idx, data: d }); }, { successLabel: 'เพิ่มรูปแล้ว' });
+      // 1.98.2: ย่อรูป แล้วส่งเข้า Google Drive (โฟลเดอร์นิเทศการสอน)
+      var r = await withProgress('กำลังอัปโหลดรูป', async function (p) {
+        var d = await shrinkImage(file), bin = atob(d.split(',')[1]), u8 = new Uint8Array(bin.length);
+        for (var k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+        var jf = new File([u8], 'photo.jpg', { type: 'image/jpeg' });
+        var prep = await apiCall('supPhotoPrepare', { slotId: sid, idx: idx, fileName: 'photo.jpg', mimeType: 'image/jpeg', fileSize: jf.size, direct: 1, origin: location.origin });
+        var res = await sendPreparedFileProgress(prep, jf, p, 10, 92, 'กำลังอัปโหลดรูป', { filename: prep.uploadFileName, mimeType: 'image/jpeg' });
+        return apiCall('supPhotoFinalize', { slotId: sid, idx: idx, pid: prep.pid, fileId: res.fileId, fileUrl: res.url, directUrl: res.directUrl, fileName: prep.uploadFileName, via: res.via, fallbackReason: res.fallbackReason || '' });
+      }, { successLabel: 'เพิ่มรูปแล้ว', upload: true });
+      if (st.phc) delete st.phc[sid];
       if (r.ok) loadPhotos(sid, true);
     });
     var handlers = {};
     handlers.duty = async function (e) {
       var t;
-      if ((t = e.target.closest('[data-duty]'))) { st.dutySel = t.getAttribute('data-duty'); renderDuty(); return; }
+      if ((t = e.target.closest('[data-duty]'))) { st.dutySel = t.getAttribute('data-duty'); renderDuty(); if (window.innerWidth < 900) { var fc = body.querySelector('.sp-two > .sp-col:nth-child(2)'); if (fc) fc.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; } // 1.98.2: มือถือ = เลื่อนไปที่แบบประเมิน
       if ((t = e.target.closest('[data-rate]'))) { t.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); }); return; }
       if ((t = e.target.closest('[data-ph-del]'))) {
         if (!(await askConfirm('ลบรูปนี้?', 'ลบรูป'))) return;
-        try { await apiCall('supPhotoDelete', { slotId: t.getAttribute('data-slot'), idx: +t.getAttribute('data-ph-del') }); loadPhotos(t.getAttribute('data-slot'), true); } catch (x) { showToast(x.message, true); }
+        try { await apiCall('supPhotoDelete', { slotId: t.getAttribute('data-slot'), idx: +t.getAttribute('data-ph-del') }); if (st.phc) delete st.phc[t.getAttribute('data-slot')]; loadPhotos(t.getAttribute('data-slot'), true); } catch (x) { showToast(x.message, true); }
         return;
       }
       if (e.target.closest('[data-ev-save]')) {
@@ -491,7 +510,6 @@
         if (x.matches('[data-t-add]') && x.value) { try { await apiCall('supTeachersEdit', { roundId: st.roundId, add: [x.value] }); st.D = null; await show(); } catch (er) { showToast(er.message, true); } return; }
       }
       if (st.tab === 'dates' && x.matches('[data-only-wait]')) { st.onlyWait = x.checked; renderDates(); return; }
-      if (st.tab === 'form' && x.matches('[data-fi="type"]')) { syncForm(); renderForm(); }
     });
     body.addEventListener('input', function (e) { if (st.tab === 'sup' && e.target.matches('[data-f-q]')) { st.q = e.target.value.trim(); var pos = e.target.selectionStart; renderSup(); var n = body.querySelector('[data-f-q]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } });
     // เลือกผู้นิเทศ (ค้นหาชื่อ + ติ๊ก สูงสุด 6 คน)
@@ -539,47 +557,69 @@
       };
     }
 
-    // ---------- แท็บ: แบบประเมิน (ผู้จัดการ) — 2 แบบ: การนิเทศ (ผู้นิเทศกรอก) / ความพึงพอใจ (ครูกรอก) · หัวข้อใหญ่ + ข้อย่อย + เลขข้อ ----------
+    // ---------- แท็บ: แบบประเมิน (ผู้จัดการ) — 2 แบบ (การนิเทศ / ความพึงพอใจ) · หัวข้อใหญ่ (ไม่มีคะแนน / ลงคะแนน / ข้อความ) + ข้อย่อย · เลขไม่บังคับ · แบบฟอร์มถาวร ----------
     function curForm() { return st.formKind === 'sat' ? (st.D.round.satForm || (st.D.round.satForm = [])) : st.D.round.form; }
     function setCurForm(f) { if (st.formKind === 'sat') st.D.round.satForm = f; else st.D.round.form = f; }
     function syncForm() {
       setCurForm(Array.prototype.map.call(body.querySelectorAll('[data-fi-row]'), function (row) {
-        var ty = row.getAttribute('data-fi-type'), o = { id: row.getAttribute('data-fi-row'), num: row.querySelector('[data-fi="num"]').value.trim(), label: row.querySelector('[data-fi="label"]').value, type: ty === 'section' ? 'section' : row.querySelector('[data-fi="type"]').value };
-        if (o.type !== 'section') o.required = row.querySelector('[data-fi="required"]').checked;
+        var head = row.getAttribute('data-fi-head') === '1', ty = row.querySelector('[data-fi="type"]').value;
+        var o = { id: row.getAttribute('data-fi-row'), num: row.querySelector('[data-fi="num"]').value.trim(), label: row.querySelector('[data-fi="label"]').value, type: ty };
+        if (ty !== 'section') { o.required = row.querySelector('[data-fi="required"]').checked; if (head) o.head = true; }
         return o;
       }));
     }
     function renderForm() {
       var f = curForm(), n = f.length, used = st.formKind === 'sat' ? Object.keys(st.D.satDone || {}).length : st.D.evals.length;
       var others = B.rounds.filter(function (r) { return r.id !== st.roundId; });
+      var tpls = (st.tpls || []).filter(function (t) { return t.kind === (st.formKind === 'sat' ? 'sat' : 'eval'); });
       body.innerHTML = '<div class="sp-toolbar"><div class="sp-seg"><button type="button" data-fk="eval" class="' + (st.formKind !== 'sat' ? 'on' : '') + '">แบบประเมินการนิเทศ (ผู้นิเทศกรอก)</button><button type="button" data-fk="sat" class="' + (st.formKind === 'sat' ? 'on' : '') + '">แบบประเมินความพึงพอใจ (ครูผู้รับการนิเทศกรอก)</button></div></div>' +
         '<div class="card">' + (used ? '<div class="sp-warn"><i class="fa-solid fa-circle-info"></i> มีคนตอบแล้ว ' + used + ' รายการ — แก้ชื่อหัวข้อได้ · ลบหัวข้อแล้วคะแนนของหัวข้อนั้นจะไม่แสดง</div>' : '') +
+        '<div class="sp-tplbar"><i class="fa-solid fa-bookmark"></i> <select data-fi-tpl><option value="">ใช้แบบฟอร์มถาวร…' + (tpls.length ? ' (' + tpls.length + ')' : ' (ยังไม่มี)') + '</option>' + tpls.map(function (t) { return '<option value="' + escapeHtml(t.id) + '">' + escapeHtml(t.name) + '</option>'; }).join('') + '</select>' +
+        '<button type="button" class="btn btn-secondary btn-sm" data-fi-tplsave><i class="fa-solid fa-floppy-disk"></i> บันทึกเป็นแบบฟอร์มถาวร</button>' + (tpls.length ? '<button type="button" class="btn btn-ghost btn-sm" data-fi-tplman>จัดการ</button>' : '') +
+        (others.length ? '<select data-fi-copy><option value="">คัดลอกจากรอบก่อน…</option>' + others.map(function (r) { return '<option value="' + escapeHtml(r.id) + '">' + escapeHtml(r.title) + '</option>'; }).join('') + '</select>' : '') + '</div>' +
         '<div class="sp-flist">' + f.map(function (x, i) {
-          var sec = x.type === 'section', sub = !sec && /\./.test(x.num || '');
-          return '<div class="sp-frow' + (sec ? ' sec' : '') + (sub ? ' sub' : '') + '" data-fi-row="' + escapeHtml(x.id) + '" data-fi-type="' + (sec ? 'section' : 'q') + '"><span class="sp-fmv"><button type="button" data-fi-mv="-1"' + (i ? '' : ' disabled') + ' aria-label="เลื่อนขึ้น"><i class="fa-solid fa-arrow-up"></i></button><button type="button" data-fi-mv="1"' + (i < n - 1 ? '' : ' disabled') + ' aria-label="เลื่อนลง"><i class="fa-solid fa-arrow-down"></i></button></span>' +
-            '<input data-fi="num" class="sp-num" maxlength="12" value="' + escapeHtml(x.num || '') + '" placeholder="เลข" aria-label="เลขข้อ" />' +
-            '<input data-fi="label" maxlength="200" value="' + escapeHtml(x.label) + '" placeholder="' + (sec ? 'ชื่อหัวข้อใหญ่' : 'ชื่อหัวข้อ') + '" />' +
-            (sec ? '<span class="sp-sectag">หัวข้อใหญ่ (ไม่มีคะแนน)</span>' : '<select data-fi="type"><option value="rating"' + (x.type === 'rating' ? ' selected' : '') + '>ระดับคะแนน 1–5</option><option value="text"' + (x.type === 'text' ? ' selected' : '') + '>ข้อความยาว</option></select>' +
-            '<label class="sp-req"><input type="checkbox" data-fi="required"' + (x.required ? ' checked' : '') + ' /> บังคับ</label>') +
+          var head = isHead(x), sub = !head && subMap(f)[x.id];
+          var types = head ? [['section', 'หัวข้อใหญ่ (ไม่มีคะแนน)'], ['rating', 'หัวข้อใหญ่ · คะแนน 1–5'], ['text', 'หัวข้อใหญ่ · ข้อความยาว']] : [['rating', 'ระดับคะแนน 1–5'], ['text', 'ข้อความยาว']];
+          return '<div class="sp-frow' + (head ? ' sec' : '') + (sub ? ' sub' : '') + '" data-fi-row="' + escapeHtml(x.id) + '" data-fi-head="' + (head ? 1 : 0) + '"><span class="sp-fmv"><button type="button" data-fi-mv="-1"' + (i ? '' : ' disabled') + ' aria-label="เลื่อนขึ้น"><i class="fa-solid fa-arrow-up"></i></button><button type="button" data-fi-mv="1"' + (i < n - 1 ? '' : ' disabled') + ' aria-label="เลื่อนลง"><i class="fa-solid fa-arrow-down"></i></button></span>' +
+            '<input data-fi="num" class="sp-num" maxlength="12" value="' + escapeHtml(x.num || '') + '" placeholder="เลข" aria-label="เลขข้อ (ไม่บังคับ)" />' +
+            '<input data-fi="label" maxlength="200" value="' + escapeHtml(x.label) + '" placeholder="' + (head ? 'ชื่อหัวข้อใหญ่' : 'ชื่อหัวข้อย่อย') + '" />' +
+            '<select data-fi="type">' + types.map(function (t) { return '<option value="' + t[0] + '"' + (x.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') + '</select>' +
+            '<label class="sp-req"' + (x.type === 'section' ? ' hidden' : '') + '><input type="checkbox" data-fi="required"' + (x.required ? ' checked' : '') + ' /> บังคับ</label>' +
             '<button type="button" class="sp-x" data-fi-del aria-label="ลบหัวข้อ"><i class="fa-solid fa-xmark"></i></button></div>';
         }).join('') + '</div>' +
         '<div class="sp-formact" style="justify-content:flex-start"><button type="button" class="btn btn-secondary" data-fi-sec' + (n >= 60 ? ' disabled' : '') + '><i class="fa-solid fa-heading"></i> เพิ่มหัวข้อใหญ่</button><button type="button" class="btn btn-secondary" data-fi-add' + (n >= 60 ? ' disabled' : '') + '><i class="fa-solid fa-plus"></i> เพิ่มหัวข้อย่อย</button>' +
-        (others.length ? '<select data-fi-copy><option value="">คัดลอกจากรอบก่อน…</option>' + others.map(function (r) { return '<option value="' + escapeHtml(r.id) + '">' + escapeHtml(r.title) + '</option>'; }).join('') + '</select>' : '') +
-        '<span class="sp-sp"></span><button type="button" class="btn btn-success" data-fi-save><i class="fa-solid fa-check"></i> บันทึก</button></div>' +
-        '<p class="mut">เลขข้อพิมพ์เองได้ (1 / 1.1 / ก.) · เลขที่มีจุด (เช่น 1.1) แสดงเยื้องเป็นข้อย่อย · ค่าเฉลี่ยในรายงานคิดแยกตามหัวข้อใหญ่และรวมทั้งหมด · ระดับ: ' + [5, 4, 3, 2, 1].map(function (k) { return k + ' = ' + SUP_LEVELS[k]; }).join(' · ') + '</p></div>';
+        '<span class="sp-sp"></span><button type="button" class="btn btn-success" data-fi-save><i class="fa-solid fa-check"></i> บันทึกใช้กับรอบนี้</button></div>' +
+        '<p class="mut">เลขข้อไม่บังคับ (ไม่ใส่ = ว่าง) · หัวข้อใหญ่เลือกได้ว่าไม่มีคะแนน / ให้คะแนน / ข้อความ · หัวข้อย่อยแสดงเยื้องใต้หัวข้อใหญ่ · แบบฟอร์มถาวรใช้ซ้ำได้ทุกรอบ (แก้บางข้อแล้วบันทึกทับชื่อเดิมได้) · ระดับ: ' + [5, 4, 3, 2, 1].map(function (k) { return k + ' = ' + SUP_LEVELS[k]; }).join(' · ') + '</p></div>';
     }
-    function nextNum(f, sec) {
-      var last = f.filter(function (x) { return x.type === 'section'; }).pop(), top = f.filter(function (x) { return x.type === 'section' || !/\./.test(x.num || ''); }).length;
-      if (sec || !last) return String(top + 1);
-      var subs = f.filter(function (x) { return x.type !== 'section' && String(x.num || '').indexOf((last.num || '') + '.') === 0; }).length;
-      return (last.num || '') + '.' + (subs + 1);
-    }
+    async function loadTpls(force) { if (!st.tpls || force) { try { st.tpls = (await apiCall('supTemplates', {})).templates || []; } catch (e) { st.tpls = []; } } return st.tpls; }
+    var _renderFormBase = renderForm;
+    renderForm = async function () { await loadTpls(); _renderFormBase(); };
     handlers.form = async function (e) {
       var b;
-      if ((b = e.target.closest('[data-fk]'))) { syncForm(); st.formKind = b.getAttribute('data-fk'); renderForm(); return; }
-      if (e.target.closest('[data-fi-add]') || e.target.closest('[data-fi-sec]')) { syncForm(); var sec = !!e.target.closest('[data-fi-sec]'), f0 = curForm(); f0.push(sec ? { id: 's' + Math.random().toString(36).slice(2, 8), num: nextNum(f0, true), label: '', type: 'section' } : { id: 'q' + Math.random().toString(36).slice(2, 8), num: nextNum(f0, false), label: '', type: 'rating', required: true }); renderForm(); var ins = body.querySelectorAll('[data-fi="label"]'); ins[ins.length - 1].focus(); return; }
-      if ((b = e.target.closest('[data-fi-del]'))) { syncForm(); var id = b.closest('[data-fi-row]').getAttribute('data-fi-row'); setCurForm(curForm().filter(function (x) { return x.id !== id; })); renderForm(); return; }
-      if ((b = e.target.closest('[data-fi-mv]'))) { syncForm(); var f = curForm(), i = f.map(function (x) { return x.id; }).indexOf(b.closest('[data-fi-row]').getAttribute('data-fi-row')), j = i + (+b.getAttribute('data-fi-mv')); if (j < 0 || j >= f.length) return; var tmp = f[i]; f[i] = f[j]; f[j] = tmp; renderForm(); return; }
+      if ((b = e.target.closest('[data-fk]'))) { syncForm(); st.formKind = b.getAttribute('data-fk'); _renderFormBase(); return; }
+      if (e.target.closest('[data-fi-add]') || e.target.closest('[data-fi-sec]')) { syncForm(); var sec = !!e.target.closest('[data-fi-sec]'), f0 = curForm(); f0.push(sec ? { id: 's' + Math.random().toString(36).slice(2, 8), num: '', label: '', type: 'section' } : { id: 'q' + Math.random().toString(36).slice(2, 8), num: '', label: '', type: 'rating', required: true }); _renderFormBase(); var ins = body.querySelectorAll('[data-fi="label"]'); ins[ins.length - 1].focus(); return; }
+      if ((b = e.target.closest('[data-fi-del]'))) { syncForm(); var id = b.closest('[data-fi-row]').getAttribute('data-fi-row'); setCurForm(curForm().filter(function (x) { return x.id !== id; })); _renderFormBase(); return; }
+      if ((b = e.target.closest('[data-fi-mv]'))) { syncForm(); var f = curForm(), i = f.map(function (x) { return x.id; }).indexOf(b.closest('[data-fi-row]').getAttribute('data-fi-row')), j = i + (+b.getAttribute('data-fi-mv')); if (j < 0 || j >= f.length) return; var tmp = f[i]; f[i] = f[j]; f[j] = tmp; _renderFormBase(); return; }
+      if (e.target.closest('[data-fi-tplsave]')) {
+        syncForm(); var form0 = curForm().filter(function (x) { return x.label.trim(); }), kind0 = st.formKind === 'sat' ? 'sat' : 'eval';
+        if (!form0.some(function (x) { return x.type !== 'section'; })) { showToast('ต้องมีอย่างน้อย 1 ข้อที่ให้คะแนนหรือกรอกข้อความ', true); return; }
+        modal('บันทึกเป็นแบบฟอร์มถาวร', '<div class="field"><label for="spTplName">ชื่อแบบฟอร์ม</label><input id="spTplName" maxlength="80" placeholder="เช่น แบบประเมินการนิเทศ มาตรฐานโรงเรียน" list="spTplNames" /><datalist id="spTplNames">' + (st.tpls || []).filter(function (t) { return t.kind === kind0; }).map(function (t) { return '<option value="' + escapeHtml(t.name) + '"></option>'; }).join('') + '</datalist><div class="hint">ใช้ชื่อเดิม = บันทึกทับแบบฟอร์มเดิม</div></div>', '<button type="button" class="btn btn-success" id="spTplOk"><i class="fa-solid fa-check"></i> บันทึก</button>');
+        document.getElementById('spTplOk').onclick = async function () {
+          var nm = document.getElementById('spTplName').value.trim(); if (!nm) { showToast('กรุณาตั้งชื่อแบบฟอร์ม', true); return; }
+          try { var rr = await apiCall('supTemplateSave', { name: nm, kind: kind0, form: form0 }); closeModal(); showToast(rr.replaced ? 'บันทึกทับแบบฟอร์มเดิมแล้ว' : 'บันทึกแบบฟอร์มถาวรแล้ว'); await loadTpls(true); _renderFormBase(); } catch (x) { showToast(x.message, true); }
+        };
+        return;
+      }
+      if (e.target.closest('[data-fi-tplman]')) {
+        var list = (st.tpls || []).filter(function (t) { return t.kind === (st.formKind === 'sat' ? 'sat' : 'eval'); });
+        modal('แบบฟอร์มถาวร', '<div class="sp-mgrs">' + list.map(function (t) { return '<div class="sp-mgr"><div><b>' + escapeHtml(t.name) + '</b><div class="mut">' + t.form.length + ' หัวข้อ · บันทึก ' + escapeHtml(formatDateTimeThai(t.at)) + '</div></div><button type="button" class="sp-x" data-tpl-del="' + escapeHtml(t.id) + '" aria-label="ลบแบบฟอร์ม"><i class="fa-solid fa-xmark"></i></button></div>'; }).join('') + '</div>');
+        document.getElementById('spModalBody').onclick = async function (ev) {
+          var d = ev.target.closest('[data-tpl-del]'); if (!d) return;
+          if (!(await askConfirm('ลบแบบฟอร์มถาวรนี้? (รอบนิเทศที่ใช้ไปแล้วไม่เปลี่ยน)', 'ลบแบบฟอร์ม'))) return;
+          try { await apiCall('supTemplateDelete', { id: d.getAttribute('data-tpl-del') }); closeModal(); await loadTpls(true); _renderFormBase(); showToast('ลบแล้ว'); } catch (x) { showToast(x.message, true); }
+        };
+        return;
+      }
       if (e.target.closest('[data-fi-save]')) {
         syncForm();
         var form = curForm().filter(function (x) { return x.label.trim(); });
@@ -590,11 +630,14 @@
       }
     };
     body.addEventListener('change', function (e) {
-      if (st.tab !== 'form' || !e.target.matches('[data-fi-copy]') || !e.target.value) return;
-      var src = roundOf(e.target.value); if (!src) return;
-      var f = st.formKind === 'sat' ? (src.satForm || []) : (src.form || []);
-      if (!f.length) { showToast('รอบนั้นยังไม่มีแบบประเมินนี้', true); e.target.value = ''; return; }
-      setCurForm(JSON.parse(JSON.stringify(f))); renderForm(); showToast('คัดลอกแล้ว — กด "บันทึก" เพื่อใช้กับรอบนี้');
+      if (st.tab !== 'form') return;
+      if (e.target.matches('[data-fi="type"]')) { syncForm(); _renderFormBase(); return; }
+      var f = null;
+      if (e.target.matches('[data-fi-copy]') && e.target.value) { var src = roundOf(e.target.value); if (src) f = st.formKind === 'sat' ? (src.satForm || []) : (src.form || []); }
+      if (e.target.matches('[data-fi-tpl]') && e.target.value) { var t = (st.tpls || []).filter(function (x) { return x.id === e.target.value; })[0]; if (t) f = t.form; }
+      if (!f) return;
+      if (!f.length) { showToast('ยังไม่มีแบบประเมินนี้', true); e.target.value = ''; return; }
+      setCurForm(JSON.parse(JSON.stringify(f))); _renderFormBase(); showToast('ใส่แบบฟอร์มแล้ว — แก้บางข้อได้ แล้วกด "บันทึกใช้กับรอบนี้"');
     });
 
     // ---------- แท็บ: ลงวันนิเทศ (ผู้จัดการ) ----------
@@ -646,7 +689,7 @@
           '<div class="sp-bar">' + (st.pickDate ? '<span>ลงวันที่: <b class="ok">' + thD(st.pickDate, true) + ' คาบ ' + cur.s.period + '</b> · ' + escapeHtml(cur.t.name) + '</span><button type="button" class="btn btn-success" data-date-save><i class="fa-solid fa-check"></i> บันทึกวันนิเทศ</button>' :
             '<span class="mut">' + (cur.s.date ? 'ลงไว้แล้ว: <b>' + thD(cur.s.date, true) + '</b> — แตะวันอื่นเพื่อเปลี่ยน' : 'แตะวันที่ในปฏิทินเพื่อเลือก') + '</span>' + (cur.s.date ? '<button type="button" class="btn btn-ghost" data-date-clear>ยกเลิกวันนี้</button>' : '')) + '</div>';
       }
-      body.innerHTML = '<div class="sp-two sp-two-dates">' + left + right + '</div>';
+      setBody('<div class="sp-two sp-two-dates">' + left + right + '</div>');
     }
     function calHtml(cur) {
       var r = st.D.round, start = addD(r.startDate, -((dowOf(r.startDate) + 6) % 7)), end = addD(r.endDate, st.extend ? 28 : 0);
@@ -728,7 +771,7 @@
       return st.evals;
     }
     function satOf(tid) { return (st.sats || []).filter(function (x) { return x.teacherId === tid; })[0] || null; }
-    function qLabel(f, form) { return (f.num || String(form.indexOf(f) + 1)) + ' ' + f.label; }
+    function qLabel(f) { return qText(f); }
     function ratedItems(form) { return (form || []).filter(function (f) { return f.type === 'rating'; }); }
     function schedRows() {
       var ev = {}; (st.evals || []).forEach(function (e) { (ev[e.slotId] = ev[e.slotId] || []).push(e); });
@@ -778,9 +821,9 @@
     function avgAll(evs, form) { var xs = []; evs.forEach(function (e) { form.forEach(function (f) { if (f.type === 'rating' && e.answers[f.id]) xs.push(+e.answers[f.id]); }); }); return xs.length ? xs.reduce(function (a, b) { return a + b; }, 0) / xs.length : null; }
     function answersHtml(form, ans) {
       return form.map(function (f, i) {
-        if (f.type === 'section') return '<div class="sp-sec">' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</div>';
+        if (f.type === 'section') return '<div class="sp-sec">' + escapeHtml(qText(f)) + '</div>';
         var v = ans[f.id]; if (v == null || v === '') return '';
-        return '<div class="ans-row' + (/\./.test(f.num || '') ? ' sub' : '') + '"><div class="q">' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</div><div class="a">' + escapeHtml(f.type === 'rating' ? v + ' (' + SUP_LEVELS[v] + ')' : v) + '</div></div>';
+        return '<div class="ans-row' + (f.head ? ' head' : '') + '"><div class="q">' + escapeHtml(qText(f)) + '</div><div class="a">' + escapeHtml(f.type === 'rating' ? v + ' (' + SUP_LEVELS[v] + ')' : v) + '</div></div>';
       }).join('');
     }
     handlers.sched = async function (e) {
@@ -792,7 +835,7 @@
           var a = avgOf(ev, form);
           return '<div class="sp-evview"><h4>' + escapeHtml(nameOf(ev.supervisorId)) + (a != null ? ' <span class="sp-st ok">เฉลี่ย ' + a.toFixed(2) + ' · ' + supLevelOf(a) + '</span>' : '') + '</h4>' + answersHtml(form, ev.answers) + '<div class="mut">บันทึก ' + escapeHtml(formatDateTimeThai(ev.savedAt)) + '</div></div>';
         }).join('') + '<div id="spEvPh" class="sp-photos ro"></div>');
-        apiCall('supPhotos', { slotId: x.s.id }).then(function (d) { var el = document.getElementById('spEvPh'); if (el) el.innerHTML = (d.photos || []).map(function (p) { return '<div class="sp-ph f"><img src="' + p.data + '" alt="รูปการนิเทศ" /></div>'; }).join(''); }).catch(function () { /* ข้าม */ });
+        apiCall('supPhotos', { slotId: x.s.id }).then(function (d) { var el = document.getElementById('spEvPh'); if (el) el.innerHTML = (d.photos || []).map(function (p) { return '<div class="sp-ph f"><img src="' + escapeHtml(p.src) + '" alt="รูปการนิเทศ" referrerpolicy="no-referrer" /></div>'; }).join(''); }).catch(function () { /* ข้าม */ });
         return;
       }
       if ((b = e.target.closest('[data-sat-view]'))) {
@@ -879,10 +922,10 @@
         var secItems = [];
         var flush = function () { if (o.avg && secItems.length) { var v = secItems.map(avgItem).filter(function (n) { return n != null; }); if (v.length) { var a = v.reduce(function (p, q) { return p + q; }, 0) / v.length; h += '<tr class="rp-secavg"><td>เฉลี่ยหัวข้อนี้</td>' + evs.map(function () { return '<td></td>'; }).join('') + '<td class="c">' + a.toFixed(2) + '</td></tr>'; } } secItems = []; };
         form.forEach(function (f, i) {
-          if (f.type === 'section') { flush(); h += '<tr class="rp-sec"><td colspan="' + (evs.length + 2) + '">' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</td></tr>'; return; }
+          if (f.type === 'section') { flush(); h += '<tr class="rp-sec"><td colspan="' + (evs.length + 2) + '">' + escapeHtml(qText(f)) + '</td></tr>'; return; }
           if (f.type !== 'rating') return;
-          secItems.push(f); var a = avgItem(f);
-          h += '<tr><td' + (/\./.test(f.num || '') ? ' class="sub"' : '') + '>' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</td>' + evs.map(function (e) { return '<td class="c">' + escapeHtml(e.answers[f.id] || '-') + '</td>'; }).join('') + '<td class="c">' + (a != null ? a.toFixed(2) : '-') + '</td></tr>';
+          if (f.head) flush(); else secItems.push(f); var a = avgItem(f), smp = subMap(form);
+          h += '<tr' + (f.head ? ' class="rp-sec"' : '') + '><td' + (smp[f.id] ? ' class="sub"' : '') + '>' + escapeHtml(qText(f)) + '</td>' + evs.map(function (e) { return '<td class="c">' + escapeHtml(e.answers[f.id] || '-') + '</td>'; }).join('') + '<td class="c">' + (a != null ? a.toFixed(2) : '-') + '</td></tr>';
         });
         flush(); h += '</tbody></table>';
       }
@@ -894,7 +937,7 @@
       }
       if (o.sat) {
         var sa = satOf(x.t.id), sf = r.satForm || [];
-        if (sa) { var sav = avgOf(sa, sf); h += '<div class="rp-box"><b>ความพึงพอใจของผู้รับการนิเทศ</b>' + (sav != null ? ' — เฉลี่ย ' + sav.toFixed(2) + ' (' + supLevelOf(sav) + ')' : '') + '<ul>' + sf.map(function (f, i) { var v = sa.answers[f.id]; return f.type === 'section' ? '<li class="sec">' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</li>' : (v ? '<li>' + escapeHtml(qNum(f, i) + ' ' + f.label) + ': <b>' + escapeHtml(f.type === 'rating' ? v + ' (' + SUP_LEVELS[v] + ')' : v) + '</b></li>' : ''); }).join('') + '</ul></div>'; }
+        if (sa) { var sav = avgOf(sa, sf); h += '<div class="rp-box"><b>ความพึงพอใจของผู้รับการนิเทศ</b>' + (sav != null ? ' — เฉลี่ย ' + sav.toFixed(2) + ' (' + supLevelOf(sav) + ')' : '') + '<ul>' + sf.map(function (f, i) { var v = sa.answers[f.id]; return f.type === 'section' ? '<li class="sec">' + escapeHtml(qText(f)) + '</li>' : (v ? '<li>' + escapeHtml(qText(f)) + ': <b>' + escapeHtml(f.type === 'rating' ? v + ' (' + SUP_LEVELS[v] + ')' : v) + '</b></li>' : ''); }).join('') + '</ul></div>'; }
       }
       if (o.photos) { var ph = repState.photos[x.s.id] || []; if (ph.length) h += '<div class="rp-ph">' + ph.map(function (p) { return '<img src="' + p.data + '" alt="">'; }).join('') + '</div>'; }
       if (o.sigSup || o.sigExec) {
@@ -912,7 +955,7 @@
       '.rp-total{margin:8px 0;padding:8px 12px;border:2px solid #0b6fcc;border-radius:8px}.rp-total span{display:block;font-size:12px;color:#64748b}.rp-box{margin:8px 0}.rp-box ul{margin:4px 0;padding-left:22px}.rp-box li.sec{list-style:none;margin-left:-18px;font-weight:700}' +
       '.rp-ph{display:flex;gap:10px;margin:10px 0}.rp-ph img{flex:1;max-width:50%;height:220px;object-fit:cover;border-radius:6px}.rp-sig{display:flex;flex-wrap:wrap;justify-content:space-around;gap:18px 10px;margin-top:26px;text-align:center}.rp-sig div{min-width:42%}';
     async function repEnsurePhotos(rows) {
-      for (var i = 0; i < rows.length; i++) { var id = rows[i].s.id; if (repState.photos[id]) continue; try { repState.photos[id] = (st.D.photos && st.D.photos[id]) ? (await apiCall('supPhotos', { slotId: id })).photos || [] : []; } catch (e) { repState.photos[id] = []; } }
+      for (var i = 0; i < rows.length; i++) { var id = rows[i].s.id; if (repState.photos[id]) continue; try { repState.photos[id] = (st.D.photos && st.D.photos[id]) ? (await apiCall('supPhotoData', { slotId: id })).photos || [] : []; } catch (e) { repState.photos[id] = []; } }
     }
     async function openReport() {
       await ensureEvals();

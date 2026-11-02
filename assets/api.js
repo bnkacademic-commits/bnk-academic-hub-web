@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.98.1';
-var APP_VERSION = '1.98.1.021126';
+var WORKER_MIN_VERSION = '1.98.2';
+var APP_VERSION = '1.98.2.021126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1346,6 +1346,17 @@ function applySupVisibility(st) {
   var off = !!(st && st.supEnabled === false);
   try { if (off) localStorage.setItem('bnkah_sup_off', '1'); else localStorage.removeItem('bnkah_sup_off'); } catch (e) { /* ข้าม */ }
   document.documentElement.classList.toggle('sup-off', off);
+}
+// 1.98.2: การ์ด "การนิเทศที่จะถึง" (หน้าแรกครู / ผู้บริหาร) — จากรายการนิเทศในปฏิทินส่วนตัว (e.supervision = 'teacher' | 'sup')
+function renderSupUpcoming(elId, events) {
+  var el = document.getElementById(elId); if (!el) return;
+  var today = todayYmd(), MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+  var list = (events || []).filter(function (e) { return e.supervision && e.date >= today; }).sort(function (a, b) { return a.date.localeCompare(b.date); }).slice(0, 6);
+  el.hidden = !list.length; if (!list.length) return;
+  el.innerHTML = '<div class="section-title" style="justify-content:space-between"><span><i class="fa-solid fa-chalkboard-user ui-icon" aria-hidden="true"></i> การนิเทศที่จะถึง</span><a class="btn btn-ghost btn-sm" href="supervision.html">ดูทั้งหมด</a></div>' + list.map(function (e) {
+    var p = e.date.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]), left = Math.round((d - new Date(today.replace(/-/g, '/'))) / 864e5), sup = e.supervision === 'sup';
+    return '<a class="sup-up-item" href="supervision.html' + (sup ? '#duty' : '#mine') + '"><span class="d">' + DW[d.getDay()] + '<b>' + (+p[2]) + '</b>' + MS[+p[1] - 1] + '</span><span class="t"><b>' + (sup ? 'ไปนิเทศ' : 'รับการนิเทศ') + '</b> ' + escapeHtml(e.title.replace(/^(ไปนิเทศ|รับการนิเทศ)\s*/, '')) + '<small>' + escapeHtml(e.message || '') + ' · ' + (left === 0 ? 'วันนี้' : left === 1 ? 'พรุ่งนี้' : 'อีก ' + left + ' วัน') + '</small></span>' + (sup ? '<span class="btn btn-sm btn-secondary">ทำแบบประเมิน</span>' : '') + '</a>';
+  }).join('');
 }
 // 1.98.1: เกณฑ์ระดับคุณภาพของโรงเรียน (5 ดีมาก · 4 ดี · 3 พอใช้ · 2 ควรปรับปรุง · 1 ไม่ผ่าน) — ค่าเฉลี่ยปัดตามช่วง .50
 var SUP_LEVELS = ['', 'ไม่ผ่าน', 'ควรปรับปรุง', 'พอใช้', 'ดี', 'ดีมาก'];

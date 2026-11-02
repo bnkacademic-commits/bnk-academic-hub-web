@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.98.1.021126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.2.021126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -649,6 +649,10 @@
         <div class="sup-onrow">
           <div><div class="section-title" style="margin:0"><span><i class="fa-solid fa-chalkboard-user ui-icon" aria-hidden="true"></i> ระบบนิเทศการสอน</span></div><p class="hint" style="margin:2px 0 0">ปิด = ซ่อนเมนู "นิเทศการสอน" จากทุกคน (ข้อมูลเดิมยังอยู่ เปิดใหม่ได้ทุกเมื่อ)</p></div>
           <label class="sup-switch"><input type="checkbox" id="supOnSwitch" /><i></i><span id="supOnLabel">เปิดใช้งาน</span></label>
+        </div>
+        <div class="sup-onrow" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div><b><i class="fa-solid fa-camera ui-icon" aria-hidden="true"></i> บันทึกรูปการนิเทศ</b><p class="hint" style="margin:2px 0 0">ผู้นิเทศอัปรูปได้คาบละ 2 รูป (เก็บใน Google Drive โฟลเดอร์ "นิเทศการสอน") · ปิด = ซ่อนช่องรูป รูปเดิมยังอยู่</p></div>
+          <label class="sup-switch"><input type="checkbox" id="supPhSwitch" /><i></i><span id="supPhLabel">เปิดใช้งาน</span></label>
         </div>
       </div>
       <div class="card">
@@ -1302,8 +1306,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.98.1.021126"></script>
-  <script src="assets/gallery.js?v=1.98.1.021126"></script>
+  <script src="assets/api.js?v=1.98.2.021126"></script>
+  <script src="assets/gallery.js?v=1.98.2.021126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1408,6 +1412,7 @@
         supPerm.list = d.managers.map(function (m) { return { id: m.id, name: m.name, sub: [m.department ? groupLabel(m.department) : '', m.subjectGroup, m.executive ? 'ผู้บริหาร' : ''].filter(Boolean).join(' · '), manage: !!m.manage, view: !!m.view }; });
         supPerm.people = d.people;
         document.getElementById('supOnSwitch').checked = d.enabled !== false; supOnPaint();
+        document.getElementById('supPhSwitch').checked = d.photosEnabled !== false; document.getElementById('supPhLabel').textContent = d.photosEnabled !== false ? 'เปิดใช้งาน' : 'ปิดอยู่';
         document.getElementById('supPermList').innerHTML = d.people.map(function (p) { return '<option value="' + escapeHtml(p.name) + '"></option>'; }).join('');
         renderSupPerms();
       } catch (e) { wrap.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; }
@@ -1425,6 +1430,12 @@
       var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { supEnabled: on }); }, { successLabel: on ? 'เปิดระบบนิเทศแล้ว' : 'ปิดระบบนิเทศแล้ว' });
       if (!r.ok) sw.checked = !on; else { try { resetSettingsCache(); } catch (e) { /* ข้าม */ } applySupVisibility({ supEnabled: on }); }
       supOnPaint();
+    });
+    document.getElementById('supPhSwitch').addEventListener('change', async function () {
+      var on = this.checked, sw = this;
+      var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { supPhotosEnabled: on }); }, { successLabel: on ? 'เปิดการบันทึกรูปแล้ว' : 'ปิดการบันทึกรูปแล้ว' });
+      if (!r.ok) sw.checked = !on;
+      document.getElementById('supPhLabel').textContent = sw.checked ? 'เปิดใช้งาน' : 'ปิดอยู่';
     });
     document.getElementById('supPermWrap').addEventListener('change', function (e) { var c = e.target.closest('[data-sp-i]'); if (c) supPerm.list[+c.getAttribute('data-sp-i')][c.getAttribute('data-sp-k')] = c.checked; });
     document.getElementById('supPermWrap').addEventListener('click', function (e) { var b = e.target.closest('[data-sp-del]'); if (b) { supPerm.list.splice(+b.getAttribute('data-sp-del'), 1); renderSupPerms(); } });

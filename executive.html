@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.98.1.021126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.2.021126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -70,6 +70,7 @@
       <div class="stat-tile"><div class="stat-value" id="exStatRate">-</div><div class="stat-label">ส่งครบตามกำหนดงานที่เปิดอยู่</div></div>
     </div>
 
+    <div class="card sup-up-card" id="supUpCard" hidden></div><!-- 1.98.2 -->
     <div class="card">
       <div class="dash-cal-layout">
         <div class="dash-cal-main">
@@ -112,7 +113,7 @@
     </div>
   </div>
 
-<script src="assets/api.js?v=1.98.1.021126"></script>
+<script src="assets/api.js?v=1.98.2.021126"></script>
   <script>
     var session = requireViewerAccess();
     // ผู้บริหารเท่านั้นที่ใช้หน้านี้เป็นหน้าแรก (เจ้าหน้าที่/Super Admin มีหน้าแรกของตัวเองอยู่แล้ว) — ส่งกลับหน้าแรกของบทบาทนั้น
@@ -305,7 +306,7 @@ cell.innerHTML = cc.num + (dateStr === todayStr ? '<span class="cal-today-label"
       assignments = results[1];
       categoryColorMap = buildCategoryColorMap(results[4]);
       var people = results[3].filter(function (u) { return u.status === 'active' && (u.role === 'teacher' || u.hasHub); }).length;
-      renderCalendar();
+      renderCalendar(); renderSupUpcoming('supUpCard', calState.events); // 1.98.2
       renderSummary(Number(results[2] && results[2].total) || 0, people);
     }
 
