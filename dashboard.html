@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.97.5.011126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.0.021126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -171,7 +171,7 @@
           <div class="hint">งานนี้ส่งเป็นรอบ — ส่งหลังกำหนดได้ (ขึ้น "เกินกำหนด")</div>
         </div>
         <div id="upCustomFields"></div>
-        <div class="field">
+        <div class="field" id="upFileField">
           <label>ไฟล์ผลงาน (สูงสุด 20 ไฟล์ต่อครั้ง ไม่เกิน <span data-upmax>25MB</span> ต่อไฟล์)</label>
           <div class="dropzone" id="dropzone" tabindex="0">
             <div><i class="fas fa-paperclip ui-icon" aria-hidden="true"></i> ลากไฟล์มาวางที่นี่ หรือกดเพื่อเลือกไฟล์</div>
@@ -260,9 +260,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.97.5.011126"></script>
+  <script src="assets/api.js?v=1.98.0.021126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=1.97.5.011126"></script>
+  <script src="assets/homeroom.js?v=1.98.0.021126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -481,9 +481,21 @@
       var yy = document.getElementById('upYear').value, ss = document.getElementById('upSemester').value, smp = [], seenS = {};
       ((typeof calState !== 'undefined' && calState.events) || []).forEach(function (e) { if (e.categoryId === catId && String(e.academicYear) === String(yy) && String(e.semester) === String(ss)) (e.sampleFiles || []).forEach(function (f) { if (!seenS[f.id]) { seenS[f.id] = 1; smp.push(f); } }); });
       var keep = box.__cat === catId ? readFieldsForm(box) : {}; box.__cat = catId; // เปลี่ยนแค่ปี/ภาคเรียน = คงค่าที่พิมพ์ไว้
-      box.innerHTML = samplesListHtml(smp) + fieldsFormHtml(defs, keep); // 1.97
+      // 1.98: แบบสำรวจ — ไม่แนบไฟล์ · ตอบแล้ว = แก้คำตอบเดิม (ดึงคำตอบเดิมมาใส่)
+      var surv = !!(cat && cat.survey);
+      document.getElementById('upFileField').hidden = surv;
+      document.getElementById('uploadConfirmBtn').textContent = surv ? 'ส่งคำตอบ' : 'ยืนยันส่ง';
+      document.querySelector('#uploadModal h3').textContent = surv ? 'ตอบแบบสำรวจ' : 'ส่งงาน';
+      var prevAns = surv ? surveyAnswerOf(catId, yy, ss, upRoundCurrent()) : null;
+      if (surv && prevAns && !Object.keys(keep).length) keep = prevAns.customFieldValues || {};
+      box.innerHTML = samplesListHtml(smp) + (prevAns ? '<div class="hint" style="margin:0 0 8px">ตอบแล้วเมื่อ ' + escapeHtml(formatDateTimeThai(prevAns.uploadedAt)) + ' — ส่งอีกครั้ง = แก้คำตอบเดิม</div>' : '') + fieldsFormHtml(defs, keep); // 1.97
       bindFieldsForm(box);
     }
+    function upRoundCurrent() { var f = document.getElementById('upRoundField'); return f && !f.hidden ? document.getElementById('upRound').value : ''; }
+    function surveyAnswerOf(catId, year, sem, eventId) {
+      return (allSubmissions || []).filter(function (x) { return isSurveySub(x) && x.categoryId === catId && String(x.academicYear) === String(year) && String(x.semester) === String(sem) && (x.eventId || '') === (eventId || ''); })[0] || null;
+    }
+    function isSurveyCat(catId) { var c = uploadCategories.filter(function (x) { return x.id === catId; })[0]; return !!(c && c.survey); }
     function catFieldDefs(catId) { var c = uploadCategories.filter(function (x) { return x.id === catId; })[0]; return (c && c.customFields) || []; }
     document.getElementById('upCategory').addEventListener('change', renderUploadCustomFields);
     ['upYear', 'upSemester'].forEach(function (id) { document.getElementById(id).addEventListener('change', renderUploadCustomFields); }); // 1.97: ไฟล์ตัวอย่างตามปี/ภาคเรียน
@@ -499,7 +511,7 @@
       var f = document.getElementById('upRoundField'), sel = document.getElementById('upRound');
       var rs = roundsOf(document.getElementById('upCategory').value, document.getElementById('upYear').value, document.getElementById('upSemester').value);
       f.hidden = !rs.length;
-      if (!rs.length) { sel.innerHTML = ''; return; }
+      if (!rs.length) { sel.innerHTML = ''; if (isSurveyCat(document.getElementById('upCategory').value)) { document.getElementById('upCustomFields').__cat = ''; renderUploadCustomFields(); } return; }
       var today = todayYmd(), cur = upRoundWant || sel.value;
       sel.innerHTML = rs.map(function (e) {
         var done = isAssignmentSubmitted(e), late = !done && (e.endDate || e.date) < today, wait = e.date > today;
@@ -508,7 +520,9 @@
       if (cur && rs.some(function (e) { return e.id === cur; })) sel.value = cur;
       else { var first = rs.filter(function (e) { return !isAssignmentSubmitted(e) && e.date <= today; })[0] || rs.filter(function (e) { return !isAssignmentSubmitted(e); })[0] || rs[rs.length - 1]; sel.value = first.id; }
       upRoundWant = '';
+      if (isSurveyCat(document.getElementById('upCategory').value)) { document.getElementById('upCustomFields').__cat = ''; renderUploadCustomFields(); } // 1.98: คำตอบเดิมของรอบที่เลือก
     }
+    document.getElementById('upRound').addEventListener('change', function () { if (isSurveyCat(document.getElementById('upCategory').value)) { document.getElementById('upCustomFields').__cat = ''; renderUploadCustomFields(); } });
     ['upCategory', 'upYear', 'upSemester'].forEach(function (id) { document.getElementById(id).addEventListener('change', refreshUploadRounds); });
     // preset (ไม่บังคับ): { categoryId, academicYear, semester } — ใช้ตอนกดปุ่ม "ส่งงาน" จากรายการแจ้งเตือนกำหนดส่งในปฏิทิน (V9.5)
     // เพื่อเลือกภาคเรียน/ปีการศึกษา/ประเภทงานของกำหนดการนั้นให้อัตโนมัติ ไม่ต้องเลือกเองซ้ำ
@@ -562,6 +576,7 @@
       var semester = document.getElementById('upSemester').value;
 
       if (!categoryId) { errBox.textContent = 'กรุณาเลือกประเภทงาน'; errBox.hidden = false; return; }
+      if (isSurveyCat(categoryId)) { await submitSurvey(categoryId, academicYear, semester, errBox); return; } // 1.98
       if (selectedFiles.length === 0) { errBox.textContent = 'กรุณาเลือกไฟล์อย่างน้อย 1 ไฟล์'; errBox.hidden = false; return; }
 
       // เก็บค่าข้อมูลเพิ่มเติมตามที่ประเภทงานนี้กำหนด (ตั้งแต่ V-ถัดไปหลัง V10.1) — required ที่ input บังคับกรอกไว้แล้วในหน้าเว็บ (HTML5 validation), Worker เช็กซ้ำอีกชั้นด้วย
@@ -631,6 +646,19 @@
       }
       loadSubmissions();
     });
+
+    // 1.98: ส่งคำตอบแบบสำรวจ
+    async function submitSurvey(categoryId, academicYear, semester, errBox) {
+      var answers = readFieldsForm(document.getElementById('upCustomFields'));
+      var cfErr = checkFieldsForm(catFieldDefs(categoryId), answers);
+      if (cfErr) { errBox.textContent = cfErr; errBox.hidden = false; return; }
+      var roundId = upRoundCurrent();
+      var r = await withProgress('กำลังส่งคำตอบ', function () { return apiCall('teacherSurveySubmit', { categoryId: categoryId, academicYear: academicYear, semester: semester, eventId: roundId, answers: answers }); }, { successLabel: 'ส่งคำตอบแล้ว' });
+      if (!r.ok) { errBox.textContent = r.error.message; errBox.hidden = false; return; }
+      hideModalEl(uploadModal);
+      if (reopenGroupAfterUpload) { var rk = reopenGroupAfterUpload; reopenGroupAfterUpload = null; openGroupModal(rk); }
+      loadCalendar(); loadSubmissions();
+    }
 
     // ---------- Submissions list (ค้นหา + กรองปีการศึกษา/ภาคเรียน — ค่าเริ่มต้นคือภาคเรียนปัจจุบันตามเวลาจริง) ----------
     var allSubmissions = [];
@@ -772,15 +800,16 @@
             '<td class="dt">' + escapeHtml(formatDateTimeThai(s.uploadedAt)) + '</td>' +
             // 1.50.121026: Word/Excel/PowerPoint ไม่พรีวิว (รูปแบบเพี้ยน) — ปุ่มเป็น "ดาวน์โหลด" ตรงๆ แทน
             // 1.51.121026: ทุกไฟล์มีปุ่มดาวน์โหลด (Word/Excel/PowerPoint มีแค่ดาวน์โหลด ไม่มีพรีวิว)
-            '<td class="a">' + (false ? '' // 1.72: ทุกชนิดไฟล์พรีวิวได้ (Word/Excel/PowerPoint ผ่านตัวพรีวิวของ Drive)
+            '<td class="a">' + (isSurveySub(s) ? '<button type="button" class="icon-btn" data-file-preview="' + escapeHtml(s.id) + '" title="ดูคำตอบ" aria-label="ดูคำตอบ"><i class="fa-solid fa-eye"></i></button><button type="button" class="icon-btn del" data-file-del="' + escapeHtml(s.id) + '" title="ลบ" aria-label="ลบคำตอบ"><i class="fa-solid fa-trash"></i></button></td></tr>' : '') + (isSurveySub(s) ? '' : (false ? '' // 1.72: ทุกชนิดไฟล์พรีวิวได้ (Word/Excel/PowerPoint ผ่านตัวพรีวิวของ Drive)
               : '<button type="button" class="icon-btn" data-file-preview="' + escapeHtml(s.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i></button>') +
               '<a class="icon-btn" href="' + escapeHtml(driveDownloadUrl(s.fileUrl) || s.fileUrl) + '" target="_blank" rel="noopener" download title="ดาวน์โหลด" aria-label="ดาวน์โหลด ' + escapeHtml(s.title) + '"><i class="fa-solid fa-download"></i></a>' +
-            '<button type="button" class="icon-btn del" data-file-del="' + escapeHtml(s.id) + '" title="ลบ" aria-label="ลบ ' + escapeHtml(s.title) + '"><i class="fa-solid fa-trash"></i></button></td></tr>';
+            '<button type="button" class="icon-btn del" data-file-del="' + escapeHtml(s.id) + '" title="ลบ" aria-label="ลบ ' + escapeHtml(s.title) + '"><i class="fa-solid fa-trash"></i></button></td></tr>');
         }).join('') + '</tbody></table>' +
         '<div class="sub-group-bar">' +
+          (g.items.every(isSurveySub) ? '<button type="button" class="btn btn-primary btn-sm" data-grp-add="' + k + '"><i class="fa-solid fa-pen-to-square"></i> แก้คำตอบ</button>' :
           '<button type="button" class="btn btn-primary btn-sm" data-grp-step="' + k + '"><i class="fa-solid fa-images"></i> พรีวิวทีละไฟล์</button>' +
-          '<button type="button" class="btn btn-secondary btn-sm" data-grp-add="' + k + '"><i class="fa-solid fa-plus"></i> เพิ่มไฟล์ในชุดนี้</button>' +
-          (catFieldDefs(g.categoryId).length ? '<button type="button" class="btn btn-secondary btn-sm" data-grp-fields="' + k + '"><i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูลที่กรอก</button>' : '') + // 1.97
+          '<button type="button" class="btn btn-secondary btn-sm" data-grp-add="' + k + '"><i class="fa-solid fa-plus"></i> เพิ่มไฟล์ในชุดนี้</button>') +
+          (catFieldDefs(g.categoryId).length && !g.items.every(isSurveySub) ? '<button type="button" class="btn btn-secondary btn-sm" data-grp-fields="' + k + '"><i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูลที่กรอก</button>' : '') + // 1.97
           '<button type="button" class="btn btn-danger btn-sm" data-grp-delall="' + k + '"><i class="fa-solid fa-trash"></i> ลบทั้งชุด</button>' +
         '</div>';
     }
@@ -833,6 +862,7 @@
       if (t.hasAttribute('data-file-preview')) {
         var s0 = findSub(t.getAttribute('data-file-preview'));
         if (!s0) return;
+        if (isSurveySub(s0)) { showAnswersModal(s0.categoryName, s0.customFieldValues, 'ตอบเมื่อ ' + formatDateTimeThai(s0.uploadedAt)); return; } // 1.98
         var g0 = groupFromAll(subGroupKey(s0));
         previewGroup(g0, g0.items.findIndex(function (x) { return x.id === s0.id; }));
         return;
@@ -843,7 +873,7 @@
         if (!ga) return;
         var fromModal = !groupModal.hidden;
         if (fromModal) hideModalEl(groupModal); // ไม่ซ้อนป็อปอัป — ส่งเสร็จ/ปิดแล้วจะกลับมาที่ชุดนี้ถ้ามาจากป็อปอัป
-        openUploadModal({ categoryId: ga.categoryId, academicYear: ga.academicYear, semester: ga.semester, reopenGroup: fromModal ? ga.key : null });
+        openUploadModal({ categoryId: ga.categoryId, academicYear: ga.academicYear, semester: ga.semester, eventId: (ga.items[0] && isSurveySub(ga.items[0]) && ga.items[0].eventId) || '', reopenGroup: fromModal ? ga.key : null });
         return;
       }
       if (t.hasAttribute('data-grp-fields')) { var gf = groupFromAll(t.getAttribute('data-grp-fields')); if (gf) openFieldsEdit(gf); return; } // 1.97

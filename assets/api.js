@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.97.0';
-var APP_VERSION = '1.97.5.011126';
+var WORKER_MIN_VERSION = '1.98.0';
+var APP_VERSION = '1.98.0.021126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -865,7 +865,7 @@ var ICON_FA = {
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
   sun: 'fa-sun', palette: 'fa-palette', layout: 'fa-table-cells-large', pin: 'fa-thumbtack', clock: 'fa-clock',
-  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images', schoolcal: 'fa-calendar-week'
+  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images', schoolcal: 'fa-calendar-week', supervision: 'fa-chalkboard-user'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -1777,6 +1777,7 @@ var NAV_SLOTS = [
   { slot: 'summary', label: 'สรุปการส่งงาน', icon: 'summary', who: ['staff', 'exec', 'super'] },
   { slot: 'announce', label: 'ประกาศและปฏิทิน', icon: 'announce', who: ['staff', 'exec', 'super'] },
   { slot: 'schoolcal', label: 'ปฏิทินโรงเรียน', icon: 'schoolcal', who: ['all'] }, // 1.93
+  { slot: 'supervision', label: 'นิเทศการสอน', icon: 'supervision', who: ['all'] }, // 1.98
   { slot: 'directory', label: 'ทำเนียบบุคลากร', icon: 'directory', who: ['all'] },
   { slot: 'orders', label: 'คลังคำสั่ง', icon: 'orders', who: ['all'] },
   { slot: 'certs', label: 'คลังเกียรติบัตร', icon: 'certs', who: ['all'] },
@@ -1833,6 +1834,7 @@ function navLinksFor(session) {
   // "ทำเนียบบุคลากรโรงเรียน" (ตั้งแต่ 1.32.101026): ทุกบทบาทที่ล็อกอินเห็นแท็บนี้ — mountChrome ซ่อนให้เองถ้า Super Admin ตั้งไว้ว่า "ปิด" (settings.directoryMode)
   // 1.93: "ปฏิทินโรงเรียน" — ทุกบัญชีที่ล็อกอินเห็น (กำหนดส่งงาน + กิจกรรมทั้งโรงเรียน รายเดือน)
   if (session) links.push({ href: 'schoolcalendar.html', label: 'ปฏิทินโรงเรียน', key: 'schoolcal', icon: 'schoolcal' });
+  if (session) links.push({ href: 'supervision.html', label: 'นิเทศการสอน', key: 'supervision', icon: 'supervision' }); // 1.98
   if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
   // "คลังคำสั่ง" (ตั้งแต่ 1.41.111026 ชื่อเดิม "ไฟล์คำสั่ง"; เปลี่ยนชื่อใน 1.43.111026): ทุกบทบาทที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ — แก้ไข/ลบได้เฉพาะเจ้าของ
   if (session) links.push({ href: 'orders.html', label: 'คลังคำสั่ง', key: 'orders', icon: 'orders' });
@@ -2516,7 +2518,8 @@ var NOTIF_KIND = {
   review_ok: ['fa-circle-check', '#16a34a'], review_fix: ['fa-pen-to-square', '#ca8a04'], review_resubmit: ['fa-file-arrow-up', '#0369a1'], resp_assigned: ['fa-user-check', '#7c3aed'], // 1.94: ได้รับมอบหมายเป็นผู้รับผิดชอบ
   due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626'],
   activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'], // 1.81: กิจกรรม
-  att_missing: ['fa-clipboard-check', '#7c3aed'], hr_missing: ['fa-book-open', '#0891b2'] // 1.91: เว็บเช็คชื่อ
+  att_missing: ['fa-clipboard-check', '#7c3aed'], hr_missing: ['fa-book-open', '#0891b2'], // 1.91: เว็บเช็คชื่อ
+  sup_date: ['fa-chalkboard-user', '#7c3aed'], sup_duty: ['fa-clipboard-check', '#7c3aed'] // 1.98: นิเทศการสอน
 };
 var _notifCovers = {}; // 1.85.2: รูปปกอัลบั้มในกระดิ่ง
 function applyTopBadges(r) {
@@ -3390,9 +3393,11 @@ var FIELD_PRESETS = [
   { id: 'award', label: 'รางวัล', type: 'text', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นรางวัล' },
   { id: 'studentName', label: 'ชื่อนักเรียน', type: 'text', hint: 'เผื่อไว้สำหรับเกียรติบัตรที่เป็นผลงานนักเรียนแต่ครูเป็นผู้สอน' }
 ];
-var FIELD_TYPE_LABEL = { text: 'ข้อความสั้น', textarea: 'ข้อความยาว', number: 'ตัวเลข', numlist: 'ตัวเลข + รายละเอียด', date: 'วันที่', select: 'เลือกจากรายการ' };
+var FIELD_TYPE_LABEL = { text: 'ข้อความสั้น', textarea: 'ข้อความยาว', number: 'ตัวเลข', numlist: 'ตัวเลข + รายละเอียด', date: 'วันที่', select: 'เลือกจากรายการ', radio: 'เลือกได้ข้อเดียว', checks: 'เลือกได้หลายข้อ', rating: 'คะแนน 1–5' }; // 1.98: + 3 ชนิดสำหรับแบบสำรวจ
+var FIELD_HAS_OPTIONS = { select: 1, radio: 1, checks: 1 };
 // ค่า 1 ช่อง → ข้อความ (numlist = "4 (ก / ข / ค / ง)")
 function fieldValueText(v, t) {
+  if (Array.isArray(v)) return v.join(', '); // 1.98: เลือกได้หลายข้อ
   if (v && typeof v === 'object') return v.n + ((v.items || []).length ? ' (' + v.items.join(' / ') + ')' : '');
   if (t === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''))) return formatDateThai(v);
   return String(v == null ? '' : v);
@@ -3404,7 +3409,7 @@ function fieldEntries(values) {
   var meta = values.__meta;
   Object.keys(values).forEach(function (k) {
     if (k === '__meta') return;
-    var v = values[k]; if (v == null || v === '') return;
+    var v = values[k]; if (v == null || v === '' || (Array.isArray(v) && !v.length)) return;
     var m = meta && meta[k], pre = FIELD_PRESETS.filter(function (x) { return x.id === k; })[0];
     if (!m && !pre) return;
     var t = m ? m.t : pre.type;
@@ -3422,6 +3427,15 @@ function fieldsFormHtml(defs, values) {
       var o = v && typeof v === 'object' ? v : { n: '', items: [] };
       inp = '<input id="' + id + '" type="number" min="1" max="' + d.max + '" inputmode="numeric" class="cf-n" data-cf="' + escapeHtml(d.id) + '" data-cf-type="numlist" value="' + escapeHtml(o.n) + '" style="max-width:120px" />' +
         '<div class="cf-items" data-cf-items="' + escapeHtml(d.id) + '" data-cf-dl="' + escapeHtml(d.detailLabel || 'รายละเอียด') + '" data-cf-max="' + d.max + '">' + cfItemsHtml(d, o.n, o.items || []) + '</div>';
+    } else if (d.type === 'radio' || d.type === 'checks') { // 1.98: แบบสำรวจ
+      var picked = Array.isArray(v) ? v : (v ? [v] : []);
+      inp = '<div class="cf-opts" id="' + id + '" data-cf="' + escapeHtml(d.id) + '" data-cf-type="' + d.type + '">' + d.options.map(function (o) {
+        return '<label class="cf-opt"><input type="' + (d.type === 'radio' ? 'radio' : 'checkbox') + '" name="' + id + '" value="' + escapeHtml(o) + '"' + (picked.indexOf(o) !== -1 ? ' checked' : '') + ' /> <span>' + escapeHtml(o) + '</span></label>';
+      }).join('') + '</div>';
+    } else if (d.type === 'rating') {
+      inp = '<div class="cf-rate" id="' + id + '" data-cf="' + escapeHtml(d.id) + '" data-cf-type="rating">' + [1, 2, 3, 4, 5].map(function (n) {
+        return '<label><input type="radio" name="' + id + '" value="' + n + '"' + (String(v) === String(n) ? ' checked' : '') + ' /><span>' + n + '</span></label>';
+      }).join('') + '</div>';
     } else if (d.type === 'select') {
       inp = '<select id="' + id + '" data-cf="' + escapeHtml(d.id) + '"><option value="">— เลือก —</option>' + d.options.map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + escapeHtml(o) + '</option>'; }).join('') + '</select>';
     } else if (d.type === 'textarea') {
@@ -3454,7 +3468,10 @@ function readFieldsForm(box) {
   if (!box) return out;
   box.querySelectorAll('[data-cf]').forEach(function (el) {
     var k = el.getAttribute('data-cf');
-    if (el.getAttribute('data-cf-type') === 'numlist') {
+    var ct = el.getAttribute('data-cf-type');
+    if (ct === 'radio' || ct === 'rating') { var c1 = el.querySelector('input:checked'); out[k] = c1 ? c1.value : ''; }
+    else if (ct === 'checks') out[k] = Array.prototype.map.call(el.querySelectorAll('input:checked'), function (x) { return x.value; });
+    else if (ct === 'numlist') {
       var wrap = box.querySelector('[data-cf-items="' + k + '"]');
       out[k] = { n: el.value.trim(), items: wrap ? Array.prototype.map.call(wrap.querySelectorAll('[data-cf-item]'), function (x) { return x.value.trim(); }) : [] };
     } else out[k] = el.value.trim();
@@ -3471,13 +3488,32 @@ function checkFieldsForm(defs, vals) {
       if (!/^\d+$/.test(n) || Number(n) < 1) return name + ' ต้องเป็นตัวเลขจำนวนเต็มตั้งแต่ 1 ขึ้นไป';
       if (Number(n) > d.max) return name + ' ใส่ได้ไม่เกิน ' + d.max;
       if (v.items.length < Number(n) || v.items.some(function (x) { return !x; })) return 'กรุณากรอก' + (d.detailLabel || 'รายละเอียด') + 'ของ ' + name + ' ให้ครบ ' + n + ' รายการ';
+    } else if (d.type === 'checks') {
+      if (!v || !v.length) { if (d.required) return 'กรุณาเลือก ' + name + ' อย่างน้อย 1 ข้อ'; continue; }
     } else {
-      if (!v) { if (d.required) return 'กรุณากรอก ' + name; continue; }
+      if (!v) { if (d.required) return (FIELD_HAS_OPTIONS[d.type] || d.type === 'rating' ? 'กรุณาเลือก ' : 'กรุณากรอก ') + name; continue; }
       if (d.type === 'number' && !/^-?\d+(\.\d+)?$/.test(v)) return name + ' ต้องเป็นตัวเลข';
     }
   }
   return '';
 }
+
+// 1.98: ดูคำตอบแบบสำรวจ (ป็อปอัปอ่านอย่างเดียว)
+function showAnswersModal(title, values, sub) {
+  var m = document.getElementById('answersModal');
+  if (!m) {
+    m = document.createElement('div'); m.className = 'modal-backdrop'; m.id = 'answersModal'; m.hidden = true;
+    m.innerHTML = '<div class="modal-box modal-box-wide"><button type="button" class="modal-close-x" data-ans-x aria-label="ปิด">✕</button><h3 id="answersTitle"></h3><div class="hint" id="answersSub" style="margin-top:-6px"></div><div id="answersBody" class="ans-list"></div><div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" data-ans-x>ปิด</button></div></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click', function (e) { if (e.target.closest('[data-ans-x]')) hideModalEl(m); });
+  }
+  document.getElementById('answersTitle').textContent = title || 'คำตอบ';
+  document.getElementById('answersSub').textContent = sub || '';
+  var es = fieldEntries(values);
+  document.getElementById('answersBody').innerHTML = es.length ? es.map(function (e, i) { return '<div class="ans-row"><div class="q">' + (i + 1) + '. ' + escapeHtml(e.label) + '</div><div class="a">' + escapeHtml(e.type === 'rating' ? e.text + ' / 5' : e.text) + '</div></div>'; }).join('') : '<div class="hint">ไม่มีคำตอบ</div>';
+  showModalEl(m);
+}
+function isSurveySub(s) { return !!s && s.mimeType === 'survey'; }
 
 // 1.97: ลิงก์ของกำหนดการ = ฟอร์ม/ไฟล์ตัวอย่าง (ก่อน) + ลิงก์แนบ
 function evLinksOf(e) {

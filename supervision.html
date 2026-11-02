@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<title>นิเทศการสอน — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.0.021126" />
+<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
+</head>
+<body>
+  <div id="app-topbar"></div>
+  <!-- 1.98: นิเทศการสอน — ครูเลือกคาบ (วันในสัปดาห์ + คาบ) · ผู้จัดการงานนิเทศลงวันในปฏิทิน · ผู้นิเทศทำแบบประเมิน -->
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1><i class="fa-solid fa-chalkboard-user ui-icon" style="color:var(--primary)" aria-hidden="true"></i> นิเทศการสอน</h1>
+        <p id="spIntro">เลือกคาบรับการนิเทศ · ดูวันนิเทศ · ทำแบบประเมิน</p>
+      </div>
+      <div class="sp-roundpick" id="spRoundPick" hidden><label for="spRoundSel">รอบนิเทศ</label><select id="spRoundSel"></select></div>
+    </div>
+    <div class="sp-tabs" id="spTabs" role="tablist"></div>
+    <div id="spBody"><div class="loading">กำลังโหลด...</div></div>
+  </div>
+
+  <!-- เลือกผู้นิเทศ / เปลี่ยนคาบแทนครู / ดูผลประเมิน (ใช้ป็อปอัปเดียว) -->
+  <div class="modal-backdrop" id="spModal" hidden>
+    <div class="modal-box modal-box-wide sp-modal-box">
+      <button type="button" class="modal-close-x" data-sp-close aria-label="ปิด">✕</button>
+      <h3 id="spModalTitle"></h3>
+      <div id="spModalBody" style="text-align:left"></div>
+      <div class="modal-actions" id="spModalActions"></div>
+    </div>
+  </div>
+  <input type="file" id="spPlanFile" hidden />
+  <div id="app-footer"></div>
+  <script src="assets/api.js?v=1.98.0.021126"></script>
+  <script>
+    var session = requireLogin();
+    if (session) { mountChrome('supervision'); if (typeof mountFooter === 'function') mountFooter(); }
+    var DAYS = ['', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์'], DAYS_S = ['', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.'];
+    var MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    var B = null;               // ผลจาก supBoot
+    var st = { tab: '', roundId: '', D: null, busy: null, evals: null, tt: null, picks: {}, sel: '', pickDate: '', schedView: 'day', dutySel: '', mgrIds: null, extend: 0, onlyWait: true, filterGroup: '', q: '' };
+    var body = document.getElementById('spBody');
+
+    // ---------- ตัวช่วย ----------
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function ymdParts(s) { var p = String(s).split('-'); return { y: +p[0], m: +p[1], d: +p[2] }; }
+    function dowOf(s) { var p = ymdParts(s); return new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay(); }
+    function addD(s, n) { var p = ymdParts(s), d = new Date(Date.UTC(p.y, p.m - 1, p.d + n)); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
+    function thD(s, withDay) { if (!s) return ''; var p = ymdParts(s); return (withDay ? DAYS_S[dowOf(s)] + ' ' : '') + p.d + ' ' + MS[p.m - 1] + ' ' + (p.y + 543); }
+    function thDS(s) { var p = ymdParts(s); return p.d + ' ' + MS[p.m - 1]; }
+    function semTxt(r) { return r.semester === 'summer' ? 'ภาคฤดูร้อน ' + r.academicYear : 'ภาคเรียนที่ ' + r.semester + '/' + r.academicYear; }
+    function slotLabel(s) { return (s.code || s.subject || '') + (s.room ? ' ' + s.room : ''); }
+    function roundOf(id) { return (B.rounds || []).filter(function (r) { return r.id === id; })[0] || null; }
+    function nameOf(id) { var p = st.D && st.D.people.filter(function (x) { return x.id === id; })[0]; return p ? p.name : ''; }
+    function err(msg) { return '<div class="error-box">' + escapeHtml(msg) + '</div>'; }
+    function gradeOf(roomId) { return (/^m(\d)_/.exec(roomId || '') || [])[1] || ''; }
+    function modal(title, html, actions) {
+      document.getElementById('spModalTitle').innerHTML = title;
+      document.getElementById('spModalBody').innerHTML = html;
+      document.getElementById('spModalActions').innerHTML = (actions || '') + '<button type="button" class="btn btn-ghost btn-close" data-sp-close>ปิด</button>';
+      showModalEl(document.getElementById('spModal'));
+    }
+    function closeModal() { hideModalEl(document.getElementById('spModal')); }
+    document.getElementById('spModal').addEventListener('click', function (e) { if (e.target.closest('[data-sp-close]')) closeModal(); });
+
+    // ---------- โหลด ----------
+    async function boot(keepTab) {
+      try { B = await apiCall('supBoot', {}); }
+      catch (e) { body.innerHTML = err(e.message); return; }
+      if (!B.sqlReady) { document.getElementById('spTabs').innerHTML = ''; body.innerHTML = '<div class="card">' + err('ยังใช้หน้านี้ไม่ได้ — ผู้ดูแลระบบต้องรัน SQL ชุดที่สามสิบสามก่อน (ดู README)') + '</div>'; return; }
+      if (B.manager && (!st.roundId || !roundOf(st.roundId))) st.roundId = B.rounds[0] ? B.rounds[0].id : '';
+      renderTabs(keepTab);
+    }
+    function tabList() {
+      var t = [];
+      if (B.mine.length) t.push(['mine', 'fa-user-check', 'คาบของฉัน']);
+      if (B.duties.length) t.push(['duty', 'fa-clipboard-check', 'คาบที่ฉันต้องนิเทศ']);
+      if (B.manager) t.push(['rounds', 'fa-layer-group', 'รอบนิเทศ'], ['sup', 'fa-users', 'ผู้นิเทศ'], ['form', 'fa-list-check', 'แบบประเมิน'], ['dates', 'fa-calendar-days', 'ลงวันนิเทศ'], ['sched', 'fa-table-list', 'ตารางนิเทศ']);
+      if (B.superAdmin) t.push(['mgr', 'fa-user-shield', 'ผู้จัดการงานนิเทศ']);
+      return t;
+    }
+    function renderTabs(keepTab) {
+      var t = tabList();
+      if (!t.length) { document.getElementById('spTabs').innerHTML = ''; body.innerHTML = '<div class="card sp-empty"><i class="fa-solid fa-chalkboard-user"></i><p>ยังไม่มีรอบนิเทศที่เกี่ยวกับคุณ</p></div>'; return; }
+      if (!keepTab || !t.some(function (x) { return x[0] === st.tab; })) {
+        var h = (location.hash || '').replace('#', '');
+        st.tab = t.some(function (x) { return x[0] === h; }) ? h : t[0][0];
+      }
+      document.getElementById('spTabs').innerHTML = t.map(function (x) { return '<button type="button" role="tab" data-sp-tab="' + x[0] + '" class="' + (x[0] === st.tab ? 'on' : '') + '"><i class="fa-solid ' + x[1] + '" aria-hidden="true"></i> ' + x[2] + '</button>'; }).join('');
+      renderRoundPick();
+      show();
+    }
+    function renderRoundPick() {
+      var mgrTab = ['sup', 'form', 'dates', 'sched'].indexOf(st.tab) !== -1, box = document.getElementById('spRoundPick');
+      box.hidden = !(mgrTab && B.rounds.length);
+      if (!box.hidden) document.getElementById('spRoundSel').innerHTML = B.rounds.map(function (r) { return '<option value="' + escapeHtml(r.id) + '"' + (r.id === st.roundId ? ' selected' : '') + '>' + escapeHtml(r.title) + '</option>'; }).join('');
+    }
+    document.getElementById('spRoundSel').addEventListener('change', function () { st.roundId = this.value; st.D = null; st.busy = null; st.evals = null; st.sel = ''; show(); });
+    document.getElementById('spTabs').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-sp-tab]'); if (!b) return;
+      st.tab = b.getAttribute('data-sp-tab'); try { history.replaceState(null, '', '#' + st.tab); } catch (x) { /* ข้าม */ }
+      document.querySelectorAll('#spTabs [data-sp-tab]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      renderRoundPick(); show();
+    });
+    async function needDetail() {
+      if (!st.roundId) return false;
+      if (!st.D || st.D.round.id !== st.roundId) st.D = await apiCall('supRoundDetail', { roundId: st.roundId });
+      return true;
+    }
+    async function show() {
+      var fn = { mine: renderMine, duty: renderDuty, rounds: renderRounds, sup: renderSup, form: renderForm, dates: renderDates, sched: renderSched, mgr: renderMgr }[st.tab];
+      try {
+        if (['sup', 'form', 'dates', 'sched'].indexOf(st.tab) !== -1) {
+          if (!B.rounds.length) { body.innerHTML = '<div class="card sp-empty"><i class="fa-solid fa-layer-group"></i><p>ยังไม่มีรอบนิเทศ — สร้างรอบที่แท็บ "รอบนิเทศ"</p></div>'; return; }
+          if (!st.D || st.D.round.id !== st.roundId) body.innerHTML = '<div class="loading">กำลังโหลด...</div>';
+          await needDetail();
+        }
+        await fn();
+      } catch (e) { body.innerHTML = err(e.message); }
+    }
+
+    // ---------- ตารางสอน (เลือกคาบ) ----------
+    function ttHtml(slots, picks, locked, opt) {
+      opt = opt || {};
+      var m = {}; (slots || []).forEach(function (x) { m[x.day + '-' + x.period] = x; });
+      var h = '<div class="sp-tt-wrap"><table class="tt-grid sp-tt"><thead><tr><th class="tt-dh"></th>';
+      for (var p = 1; p <= 8; p++) h += '<th>คาบ ' + p + '<small>' + (TT_TIMES[p] || '') + '</small></th>';
+      h += '</tr></thead><tbody>';
+      for (var d = 1; d <= 5; d++) {
+        h += '<tr><td class="tt-day">' + DAYS_S[d] + '</td>';
+        for (var p2 = 1; p2 <= 8; p2++) {
+          var k = d + '-' + p2, x = m[k], on = picks[k];
+          if (!x) { h += '<td></td>'; continue; }
+          var g = gradeOf(x.roomId);
+          h += '<td class="tt-c ' + (g ? 'g' + g : '') + (on ? (locked ? ' sp-lock' : ' sp-on') : '') + (locked ? '' : ' sp-can') + '"' + (locked ? '' : ' data-pick="' + k + '" role="button" tabindex="0"') + ' title="' + escapeHtml((x.subject || '') + ' ' + (x.room || '')) + '">' +
+            '<div class="tt-in"><b>' + escapeHtml(x.code || x.subject) + '</b><span>' + escapeHtml(x.room || '') + '</span></div>' + (on ? '<span class="sp-badge">' + (locked ? escapeHtml(on === true ? 'คาบนิเทศ' : on) : 'เลือกแล้ว') + '</span>' : '') + '</td>';
+        }
+        h += '</tr>';
+      }
+      return h + '</tbody></table></div>';
+    }
+    async function loadMyTT() {
+      if (st.tt) return st.tt;
+      st.tt = await apiCall('supTimetable', {});
+      return st.tt;
+    }
+
+    // ---------- แท็บ: คาบของฉัน (ครูผู้รับการนิเทศ) ----------
+    async function renderMine() {
+      body.innerHTML = '<div class="loading">กำลังโหลดตารางสอน...</div>';
+      var tt = null; try { tt = await loadMyTT(); } catch (e) { tt = { linked: false, reason: e.message, slots: [] }; }
+      var html = B.mine.map(function (m) {
+        var r = roundOf(m.roundId); if (!r) return '';
+        var dated = m.slots.some(function (s) { return s.date; }), today = todayYmd();
+        var late = r.pickUntil && today > r.pickUntil;
+        var head = '<div class="sp-rhead"><div><h2>' + escapeHtml(r.title) + '</h2><div class="mut">' + escapeHtml(semTxt(r)) + ' · ช่วงนิเทศ ' + thD(r.startDate) + ' – ' + thD(r.endDate) + (r.pickUntil ? ' · เลือกคาบได้ถึง ' + thD(r.pickUntil) : '') +
+          ' · ผู้นิเทศ: ' + (m.supervisors.length ? m.supervisors.map(function (x) { return escapeHtml(x.name); }).join(', ') : '<i>รอกำหนด</i>') + '</div></div></div>';
+        var planBox = '<div class="sp-plan">' + (m.plan ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(m.plan.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> ' + escapeHtml(m.plan.name) + '</a> <button type="button" class="btn btn-ghost btn-sm" data-plan-del="' + escapeHtml(r.id) + '">ลบไฟล์</button>' :
+          '<button type="button" class="btn btn-secondary btn-sm" data-plan-add="' + escapeHtml(r.id) + '"' + (m.slots.length ? '' : ' disabled title="เลือกคาบก่อน"') + '><i class="fa-solid fa-paperclip"></i> แนบแผนการสอน (ไม่บังคับ)</button>') + '</div>';
+        if (dated) {
+          var picks = {}; m.slots.forEach(function (s) { picks[s.day + '-' + s.period] = s.date ? 'นิเทศ ' + thDS(s.date) : 'รอลงวัน'; });
+          return '<div class="card sp-round">' + head +
+            '<div class="sp-info"><i class="fa-solid fa-bell"></i> เจ้าหน้าที่ลงวันนิเทศให้แล้ว — เปลี่ยนวันหรือคาบ ติดต่อผู้จัดการงานนิเทศ</div>' +
+            '<div class="sp-bigs">' + m.slots.map(function (s) {
+              return '<div class="sp-big' + (s.date ? '' : ' wait') + '"><span>' + (s.date ? 'วัน' + DAYS[dowOf(s.date)] : 'ทุกวัน' + DAYS[s.day]) + '</span><b>' + (s.date ? thDS(s.date) : 'รอลงวัน') + '</b><span>' + (s.date ? (ymdParts(s.date).y + 543) + ' · ' : '') + 'คาบ ' + s.period + '</span><small>' + escapeHtml(slotLabel(s)) + '</small></div>';
+            }).join('') + '<div class="sp-bigside">' + planBox + '</div></div>' +
+            (tt && tt.linked ? '<h3 class="sp-h3">ตารางสอนของคุณ</h3>' + ttHtml(tt.slots, picks, true) : '') + '</div>';
+        }
+        // ยังไม่ลงวัน: เลือก/เปลี่ยนคาบได้ (จนถึงวันที่กำหนด)
+        if (!st.picks[r.id]) { st.picks[r.id] = {}; m.slots.forEach(function (s) { st.picks[r.id][s.day + '-' + s.period] = true; }); }
+        var pk = st.picks[r.id], keys = Object.keys(pk), saved = m.slots.length > 0;
+        var savedSame = saved && keys.length === m.slots.length && m.slots.every(function (s) { return pk[s.day + '-' + s.period]; });
+        var desc = keys.map(function (k) { var x = (tt && tt.slots || []).filter(function (y) { return y.day + '-' + y.period === k; })[0], d = +k.split('-')[0], p = +k.split('-')[1]; return 'ทุกวัน' + DAYS[d] + ' คาบ ' + p + (x ? ' · ' + slotLabel(x) : ''); }).join(' / ');
+        var grid = !tt || !tt.linked ? err((tt && tt.reason) || 'ยังไม่พบตารางสอนของคุณในเว็บเช็คชื่อ — ติดต่อผู้ดูแลเว็บเช็คชื่อให้ผูกรายชื่อครูกับ AcademicHub') : ttHtml(tt.slots, pk, late);
+        return '<div class="card sp-round" data-round="' + escapeHtml(r.id) + '">' + head +
+          (late ? '<div class="sp-warn"><i class="fa-solid fa-lock"></i> หมดเวลาเลือกคาบแล้ว' + (saved ? '' : ' — ติดต่อผู้จัดการงานนิเทศ') + '</div>' : '<p class="mut" style="margin:6px 0 8px">แตะคาบในตารางสอนที่ต้องการรับการนิเทศ ' + r.perTeacher + ' คาบ (เลือกวันในสัปดาห์ + คาบ — วันที่จริงเจ้าหน้าที่จะลงให้ภายหลัง)</p>') +
+          grid +
+          '<div class="sp-bar"><span>คาบที่เลือก: <b class="ok">' + (keys.length ? escapeHtml(desc) : '—') + '</b> <small class="mut">(' + keys.length + '/' + r.perTeacher + ')</small>' + (savedSame ? ' <span class="sp-st ok">ส่งแล้ว · รอเจ้าหน้าที่ลงวันที่</span>' : '') + '</span>' +
+          planBox + (late ? '' : '<button type="button" class="btn btn-success" data-pick-save="' + escapeHtml(r.id) + '"' + (keys.length === r.perTeacher && !savedSame ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> ' + (saved ? 'บันทึกคาบที่เปลี่ยน' : 'ส่งคาบที่เลือก') + '</button>') + '</div></div>';
+      }).join('');
+      body.innerHTML = html || '<div class="card sp-empty"><p>ไม่มีรอบนิเทศ</p></div>';
+      if (typeof ttShrink === 'function') ttShrink(body);
+    }
+    function togglePick(roundId, k) {
+      var r = roundOf(roundId), pk = st.picks[roundId] || (st.picks[roundId] = {});
+      if (pk[k]) delete pk[k];
+      else { if (r.perTeacher === 1) { st.picks[roundId] = {}; pk = st.picks[roundId]; } else if (Object.keys(pk).length >= r.perTeacher) { showToast('เลือกได้ ' + r.perTeacher + ' คาบ — แตะคาบเดิมเพื่อยกเลิกก่อน', true); return; } pk[k] = true; }
+      renderMine();
+    }
+    body.addEventListener('click', async function (e) {
+      var t;
+      if (st.tab === 'mine' && (t = e.target.closest('[data-pick]'))) { togglePick(t.closest('[data-round]').getAttribute('data-round'), t.getAttribute('data-pick')); return; }
+      if ((t = e.target.closest('[data-pick-save]'))) {
+        var rid = t.getAttribute('data-pick-save'), picks = Object.keys(st.picks[rid] || {}).map(function (k) { return { day: +k.split('-')[0], period: +k.split('-')[1] }; });
+        var r = await withProgress('กำลังบันทึกคาบที่เลือก', function () { return apiCall('supPickSave', { roundId: rid, picks: picks }); }, { successLabel: 'ส่งคาบที่เลือกแล้ว — รอเจ้าหน้าที่ลงวันที่' });
+        if (r.ok) { delete st.picks[rid]; await boot(true); }
+        return;
+      }
+      if ((t = e.target.closest('[data-plan-add]'))) { var f = document.getElementById('spPlanFile'); f.__round = t.getAttribute('data-plan-add'); f.click(); return; }
+      if ((t = e.target.closest('[data-plan-del]'))) {
+        if (!(await askConfirm('ลบไฟล์แผนการสอนที่แนบไว้?', 'ลบไฟล์'))) return;
+        try { await apiCall('supPlanRemove', { roundId: t.getAttribute('data-plan-del') }); await boot(true); } catch (x) { showToast(x.message, true); }
+        return;
+      }
+      var h = handlers[st.tab]; if (h) h(e);
+    });
+    body.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-pick],[data-cal]')) { e.preventDefault(); e.target.click(); } });
+    document.getElementById('spPlanFile').addEventListener('change', async function () {
+      var file = this.files && this.files[0], rid = this.__round; this.value = '';
+      if (!file || !rid) return;
+      var r = await withProgress('กำลังแนบแผนการสอน', async function (p) {
+        var prep = await apiCall('supPlanPrepare', { roundId: rid, fileName: file.name, mimeType: file.type, fileSize: file.size, direct: 1, origin: location.origin });
+        var res = await sendPreparedFileProgress(prep, file, p, 5, 92, 'กำลังอัปโหลด ' + file.name, { filename: prep.uploadFileName || file.name, mimeType: file.type });
+        return apiCall('supPlanFinalize', { roundId: rid, planId: prep.planId, fileId: res.fileId, fileUrl: res.url, directUrl: res.directUrl, fileName: prep.uploadFileName || file.name, mimeType: file.type, via: res.via, fallbackReason: res.fallbackReason || '' });
+      }, { successLabel: 'แนบแผนการสอนแล้ว', upload: true });
+      if (r.ok) await boot(true);
+    });
+
+    // ---------- แท็บ: คาบที่ฉันต้องนิเทศ (ผู้นิเทศ) ----------
+    function dutyKey(d) { return d.slot ? d.slot.id : 'n:' + d.roundId + ':' + d.teacherId; }
+    function renderDuty() {
+      var list = B.duties.slice().sort(function (a, b) { return ((a.slot && a.slot.date) || '9999').localeCompare((b.slot && b.slot.date) || '9999') || String(a.teacherName).localeCompare(String(b.teacherName), 'th'); });
+      if (!st.dutySel || !list.some(function (d) { return dutyKey(d) === st.dutySel; })) { var f = list.filter(function (d) { return d.slot && d.slot.date && !d.myEval; })[0] || list[0]; st.dutySel = f ? dutyKey(f) : ''; }
+      var cur = list.filter(function (d) { return dutyKey(d) === st.dutySel; })[0];
+      var stOf = function (d) { return !d.slot ? ['wait', 'ครูยังไม่เลือกคาบ'] : !d.slot.date ? ['wait', 'รอลงวันนิเทศ'] : d.myEval ? ['ok', 'ประเมินแล้ว'] : ['no', 'ยังไม่ประเมิน']; };
+      var left = '<div class="card sp-col"><h3>รายการ (' + list.length + ')</h3><table class="sp-tbl"><thead><tr><th>วันที่ / คาบ</th><th>ครู</th><th></th></tr></thead><tbody>' + list.map(function (d) {
+        var s = d.slot, x = stOf(d), r = roundOf(d.roundId);
+        return '<tr class="sp-row' + (dutyKey(d) === st.dutySel ? ' sel' : '') + '" data-duty="' + escapeHtml(dutyKey(d)) + '"><td class="nw">' + (s && s.date ? '<b>' + DAYS_S[dowOf(s.date)] + ' ' + thDS(s.date) + '</b><div class="mut">คาบ ' + s.period + '</div>' : (s ? '<span class="mut">ทุกวัน' + DAYS[s.day] + ' คาบ ' + s.period + '</span>' : '-')) + '</td>' +
+          '<td>' + escapeHtml(d.teacherName) + '<div class="mut">' + escapeHtml(s ? slotLabel(s) : '') + (d.plan ? ' · <i class="fa-solid fa-paperclip"></i> แผนการสอน' : '') + (r && B.rounds.length > 1 ? ' · ' + escapeHtml(r.title) : '') + '</div></td><td><span class="sp-st ' + x[0] + '">' + x[1] + '</span></td></tr>';
+      }).join('') + '</tbody></table></div>';
+      var right = '<div class="card sp-col">';
+      if (!cur) right += '<p class="mut">เลือกรายการทางซ้าย</p>';
+      else {
+        var r = roundOf(cur.roundId), form = (r && r.form) || [], ans = (cur.myEval && cur.myEval.answers) || {}, can = cur.slot && cur.slot.date;
+        right += '<h3>แบบประเมิน · ' + escapeHtml(cur.teacherName) + '</h3><div class="mut" style="margin:-6px 0 10px">' + (cur.slot ? (cur.slot.date ? thD(cur.slot.date, true) : 'ทุกวัน' + DAYS[cur.slot.day]) + ' คาบ ' + cur.slot.period + ' · ' + escapeHtml(slotLabel(cur.slot)) : '') +
+          (cur.coSupervisors.length ? ' · นิเทศร่วมกับ ' + escapeHtml(cur.coSupervisors.join(', ')) : '') + '</div>' +
+          (cur.plan ? '<p><a class="btn btn-secondary btn-sm" href="' + escapeHtml(cur.plan.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> เปิดแผนการสอน</a></p>' : '') +
+          (!can ? '<div class="sp-warn"><i class="fa-solid fa-hourglass-half"></i> ' + (cur.slot ? 'รอเจ้าหน้าที่ลงวันนิเทศ — ทำแบบประเมินได้หลังลงวันแล้ว' : 'ครูยังไม่เลือกคาบ') + '</div>' : '') +
+          '<div class="sp-evf" id="spEvf">' + form.map(function (f) {
+            var v = ans[f.id];
+            return '<div class="sp-evq"><div class="q">' + escapeHtml(f.label) + (f.required ? ' <span class="cf-req">*</span>' : '') + '</div>' + (f.type === 'rating' ?
+              '<div class="sp-rate" data-q="' + escapeHtml(f.id) + '">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-rate="' + n + '" class="' + (String(v) === String(n) ? 'on' : '') + '"' + (can ? '' : ' disabled') + '>' + n + '</button>'; }).join('') + '</div>' :
+              '<textarea rows="3" maxlength="2000" data-qt="' + escapeHtml(f.id) + '"' + (can ? '' : ' disabled') + '>' + escapeHtml(v || '') + '</textarea>') + '</div>';
+          }).join('') + '</div>' +
+          '<div class="sp-evact">' + (cur.myEval ? '<span class="mut">บันทึกล่าสุด ' + escapeHtml(formatDateTimeThai(cur.myEval.savedAt)) + '</span>' : '') + '<button type="button" class="btn btn-success" data-ev-save' + (can ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> บันทึกผลประเมิน</button></div>' +
+          '<p class="mut sp-note"><i class="fa-solid fa-lock"></i> ผลประเมินเห็นได้เฉพาะผู้นิเทศ และผู้จัดการงานนิเทศ</p>';
+      }
+      body.innerHTML = '<div class="sp-two">' + left + right + '</div>';
+    }
+    var handlers = {};
+    handlers.duty = async function (e) {
+      var t;
+      if ((t = e.target.closest('[data-duty]'))) { st.dutySel = t.getAttribute('data-duty'); renderDuty(); return; }
+      if ((t = e.target.closest('[data-rate]'))) { t.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); }); return; }
+      if (e.target.closest('[data-ev-save]')) {
+        var cur = B.duties.filter(function (d) { return dutyKey(d) === st.dutySel; })[0]; if (!cur || !cur.slot) return;
+        var answers = {};
+        document.querySelectorAll('#spEvf [data-q]').forEach(function (g) { var on = g.querySelector('button.on'); if (on) answers[g.getAttribute('data-q')] = +on.getAttribute('data-rate'); });
+        document.querySelectorAll('#spEvf [data-qt]').forEach(function (x) { if (x.value.trim()) answers[x.getAttribute('data-qt')] = x.value.trim(); });
+        var r = await withProgress('กำลังบันทึกผลประเมิน', function () { return apiCall('supEvalSave', { slotId: cur.slot.id, answers: answers }); }, { successLabel: 'บันทึกผลประเมินแล้ว' });
+        if (r.ok) await boot(true);
+      }
+    };
+
+    // ---------- แท็บ: รอบนิเทศ (ผู้จัดการ) ----------
+    async function renderRounds() {
+      var term = await currentAcademicTerm().catch(function () { return { year: String(new Date().getFullYear() + 543), semester: '1' }; });
+      var y0 = +term.year, years = [y0 - 1, y0, y0 + 1];
+      var form = function (r) {
+        r = r || { title: '', academicYear: term.year, semester: term.semester, startDate: '', endDate: '', pickUntil: '', perTeacher: 1 };
+        return '<div class="sp-rform" data-rform="' + escapeHtml(r.id || '') + '"><div class="sp-g4">' +
+          '<div class="field"><label>ชื่อรอบ</label><input data-rf="title" maxlength="150" value="' + escapeHtml(r.title) + '" placeholder="เช่น นิเทศการสอน ภาคเรียนที่ 2/' + escapeHtml(term.year) + '" /></div>' +
+          '<div class="field"><label>ปีการศึกษา / ภาคเรียน</label><div class="sp-inl"><select data-rf="academicYear">' + years.map(function (y) { return '<option' + (String(y) === String(r.academicYear) ? ' selected' : '') + '>' + y + '</option>'; }).join('') + '</select>' +
+          '<select data-rf="semester">' + [['1', 'ภาคเรียนที่ 1'], ['2', 'ภาคเรียนที่ 2'], ['summer', 'ภาคฤดูร้อน']].map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === String(r.semester) ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div></div>' +
+          '<div class="field"><label>ช่วงวันที่นิเทศ</label><div class="sp-inl"><input type="date" data-rf="startDate" value="' + escapeHtml(r.startDate) + '" /><span>–</span><input type="date" data-rf="endDate" value="' + escapeHtml(r.endDate) + '" /></div></div>' +
+          '<div class="field"><label>ครูเลือกคาบได้ถึง</label><input type="date" data-rf="pickUntil" value="' + escapeHtml(r.pickUntil) + '" /></div>' +
+          '<div class="field"><label>จำนวนคาบต่อครู</label><select data-rf="perTeacher">' + [1, 2, 3, 4, 5].map(function (n) { return '<option value="' + n + '"' + (n === +r.perTeacher ? ' selected' : '') + '>' + n + ' คาบ</option>'; }).join('') + '</select></div>' +
+          '</div><div class="sp-formact">' + (r.id ? '<button type="button" class="btn btn-ghost" data-rf-cancel>ยกเลิก</button>' : '') + '<button type="button" class="btn btn-success" data-rf-save><i class="fa-solid fa-check"></i> ' + (r.id ? 'บันทึก' : 'สร้างรอบนิเทศ') + '</button></div>' +
+          '<p class="mut">ครูผู้รับการนิเทศ = ครูทุกคน (รวมหัวหน้ากลุ่มบริหารงาน เจ้าหน้าที่ และแอดมินระบบ) ยกเว้นผู้บริหาร — นำบางคนออกได้ที่แท็บ "ผู้นิเทศ" · ช่วงวันที่ใช้แนะนำวันตอนลงวัน (ลงวันเกินช่วงได้)</p></div>';
+      };
+      var html = '<div class="card"><h3><i class="fa-solid fa-plus"></i> สร้างรอบนิเทศ</h3>' + form(null) + '</div>';
+      html += B.rounds.map(function (r) {
+        return '<div class="card sp-rcard' + (r.id === st.roundId ? ' cur' : '') + '" data-rcard="' + escapeHtml(r.id) + '"><div class="sp-rhead"><div><h2>' + escapeHtml(r.title) + '</h2><div class="mut">' + escapeHtml(semTxt(r)) + ' · ' + thD(r.startDate) + ' – ' + thD(r.endDate) + (r.pickUntil ? ' · ครูเลือกคาบได้ถึง ' + thD(r.pickUntil) : '') + ' · ' + r.perTeacher + ' คาบต่อครู</div></div>' +
+          '<div class="sp-acts"><button type="button" class="btn btn-primary btn-sm" data-r-open="' + escapeHtml(r.id) + '"><i class="fa-solid fa-arrow-right"></i> จัดการรอบนี้</button><button type="button" class="btn btn-secondary btn-sm" data-r-edit="' + escapeHtml(r.id) + '"><i class="fa-solid fa-pen"></i> แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-r-del="' + escapeHtml(r.id) + '"><i class="fa-solid fa-trash"></i></button></div></div>' +
+          '<div class="sp-redit" hidden>' + form(r) + '</div></div>';
+      }).join('');
+      body.innerHTML = html;
+    }
+    handlers.rounds = async function (e) {
+      var t;
+      if ((t = e.target.closest('[data-r-edit]'))) { var c = t.closest('[data-rcard]').querySelector('.sp-redit'); c.hidden = !c.hidden; return; }
+      if (e.target.closest('[data-rf-cancel]')) { e.target.closest('.sp-redit').hidden = true; return; }
+      if ((t = e.target.closest('[data-r-open]'))) { st.roundId = t.getAttribute('data-r-open'); st.D = null; st.busy = null; st.evals = null; st.tab = 'sup'; renderTabs(true); return; }
+      if ((t = e.target.closest('[data-r-del]'))) {
+        var r0 = roundOf(t.getAttribute('data-r-del'));
+        if (!(await askConfirm('ลบรอบนิเทศ "' + r0.title + '" ทั้งรอบ? (คาบที่ครูเลือก วันนิเทศ และผลประเมินของรอบนี้จะถูกลบทั้งหมด กู้คืนไม่ได้)', 'ลบรอบนิเทศ'))) return;
+        var rd = await withProgress('กำลังลบรอบนิเทศ', function () { return apiCall('supRoundDelete', { roundId: r0.id }); }, { successLabel: 'ลบรอบนิเทศแล้ว' });
+        if (rd.ok) { if (st.roundId === r0.id) { st.roundId = ''; st.D = null; } await boot(true); }
+        return;
+      }
+      if ((t = e.target.closest('[data-rf-save]'))) {
+        var f = t.closest('[data-rform]'), p = { id: f.getAttribute('data-rform') || '' };
+        f.querySelectorAll('[data-rf]').forEach(function (x) { p[x.getAttribute('data-rf')] = x.value.trim(); });
+        if (!p.title) { showToast('กรุณาใส่ชื่อรอบนิเทศ', true); return; }
+        if (!p.startDate || !p.endDate) { showToast('กรุณาเลือกช่วงวันที่นิเทศ', true); return; }
+        var rs = await withProgress(p.id ? 'กำลังบันทึก' : 'กำลังสร้างรอบนิเทศ', function () { return apiCall('supRoundSave', p); }, { successLabel: p.id ? 'บันทึกแล้ว' : 'สร้างรอบนิเทศแล้ว — กำหนดผู้นิเทศต่อที่แท็บ "ผู้นิเทศ"' });
+        if (rs.ok) { st.roundId = rs.data.id; st.D = null; await boot(true); }
+      }
+    };
+
+    // ---------- แท็บ: ผู้นิเทศ (ผู้จัดการ) ----------
+    function teacherStatus(t) {
+      if (!t.slots.length) return ['wait', 'ยังไม่เลือกคาบ'];
+      var nd = t.slots.filter(function (s) { return s.date; }).length;
+      return nd === t.slots.length ? ['ok', 'ลงวันแล้ว'] : nd ? ['wait', 'ลงวันแล้ว ' + nd + '/' + t.slots.length] : ['info', 'เลือกแล้ว · รอลงวัน'];
+    }
+    function renderSup() {
+      var D = st.D, groups = {}; D.teachers.forEach(function (t) { groups[t.subjectGroup || 'ไม่ระบุกลุ่มสาระ'] = 1; });
+      var list = D.teachers.filter(function (t) { return (!st.filterGroup || (t.subjectGroup || 'ไม่ระบุกลุ่มสาระ') === st.filterGroup) && (!st.q || String(t.name).indexOf(st.q) !== -1); });
+      var ppl = D.people.slice().sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'th'); });
+      var inRound = {}; D.teachers.forEach(function (t) { inRound[t.id] = 1; });
+      var addable = ppl.filter(function (p) { return p.eligible && !inRound[p.id]; });
+      var nPick = D.teachers.filter(function (t) { return t.slots.length; }).length, nSup = D.teachers.filter(function (t) { return t.supervisors.length; }).length;
+      body.innerHTML = '<div class="card"><div class="sp-toolbar"><h3 style="margin:0">กำหนดผู้นิเทศให้ครูแต่ละคน <span class="mut">(เลือกได้หลายคน · คัดลอกให้ทั้งกลุ่มสาระได้)</span></h3>' +
+        '<span class="mut">ครู ' + D.teachers.length + ' คน · มีผู้นิเทศแล้ว ' + nSup + ' · เลือกคาบแล้ว ' + nPick + '</span></div>' +
+        '<div class="sp-toolbar"><select data-f-group><option value="">ทุกกลุ่มสาระ</option>' + Object.keys(groups).sort(function (a, b) { return a.localeCompare(b, 'th'); }).map(function (g) { return '<option' + (g === st.filterGroup ? ' selected' : '') + '>' + escapeHtml(g) + '</option>'; }).join('') + '</select>' +
+        '<input type="search" data-f-q placeholder="ค้นหาชื่อครู" value="' + escapeHtml(st.q) + '" />' +
+        (addable.length ? '<select data-t-add><option value="">+ เพิ่มครูเข้ารอบ…</option>' + addable.map(function (p) { return '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name) + '</option>'; }).join('') + '</select>' : '') + '</div>' +
+        '<div class="sp-tbl-wrap"><table class="sp-tbl"><thead><tr><th>ครูผู้รับการนิเทศ</th><th>กลุ่มสาระฯ</th><th>ผู้นิเทศ</th><th>คาบที่เลือก</th><th>สถานะ</th><th></th></tr></thead><tbody>' +
+        list.map(function (t) {
+          var s = teacherStatus(t);
+          return '<tr data-t="' + escapeHtml(t.id) + '"><td><b>' + escapeHtml(t.name) + '</b></td><td>' + escapeHtml(t.subjectGroup || '-') + '</td>' +
+            '<td class="sp-chips">' + t.supervisors.map(function (id) { return '<span class="sp-chip">' + escapeHtml(nameOf(id)) + '<button type="button" data-sv-del="' + escapeHtml(id) + '" aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button></span>'; }).join('') +
+            '<button type="button" class="sp-chip-add" data-sv-pick>+ เพิ่ม</button></td>' +
+            '<td>' + (t.slots.length ? t.slots.map(function (x) { return '<div class="sp-slotln">' + DAYS_S[x.day] + ' คาบ ' + x.period + ' · ' + escapeHtml(slotLabel(x)) + (x.date ? ' · <b>' + thD(x.date) + '</b>' : '') + '</div>'; }).join('') : '<span class="mut">-</span>') + '</td>' +
+            '<td><span class="sp-st ' + s[0] + '">' + s[1] + '</span></td>' +
+            '<td class="sp-tdacts"><button type="button" class="btn btn-ghost btn-sm" data-sv-copy title="ใช้ผู้นิเทศชุดนี้กับครูทุกคนในกลุ่มสาระเดียวกัน"' + (t.supervisors.length ? '' : ' disabled') + '><i class="fa-solid fa-copy"></i> ทั้งกลุ่มสาระ</button>' +
+            '<button type="button" class="btn btn-ghost btn-sm" data-t-pick title="เปลี่ยนคาบแทนครู"><i class="fa-solid fa-table-cells"></i> คาบ</button>' +
+            '<button type="button" class="btn btn-ghost btn-sm sp-del" data-t-rem title="นำออกจากรอบนี้"><i class="fa-solid fa-user-minus"></i></button></td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    }
+    async function setSupervisors(teacherIds, supIds, label) {
+      try { await apiCall('supSetSupervisors', { roundId: st.roundId, teacherIds: teacherIds, supervisorIds: supIds }); if (label) showToast(label); }
+      catch (e) { showToast(e.message, true); }
+      teacherIds.forEach(function (id) { var t = st.D.teachers.filter(function (x) { return x.id === id; })[0]; if (t) t.supervisors = supIds.filter(function (s) { return s !== id; }); });
+      renderSup();
+    }
+    handlers.sup = async function (e) {
+      var tr = e.target.closest('[data-t]'), t = tr && st.D.teachers.filter(function (x) { return x.id === tr.getAttribute('data-t'); })[0], b;
+      if ((b = e.target.closest('[data-sv-del]')) && t) { await setSupervisors([t.id], t.supervisors.filter(function (id) { return id !== b.getAttribute('data-sv-del'); })); return; }
+      if (e.target.closest('[data-sv-copy]') && t) {
+        var same = st.D.teachers.filter(function (x) { return (x.subjectGroup || '') === (t.subjectGroup || ''); });
+        if (!(await askConfirm('ใช้ผู้นิเทศ ' + t.supervisors.map(nameOf).join(', ') + ' กับครูทุกคนในกลุ่มสาระ "' + (t.subjectGroup || 'ไม่ระบุ') + '" (' + same.length + ' คน)? ผู้นิเทศเดิมของครูเหล่านั้นจะถูกแทนที่', 'คัดลอกให้ทั้งกลุ่มสาระ'))) return;
+        await setSupervisors(same.map(function (x) { return x.id; }), t.supervisors.slice(), 'คัดลอกให้ ' + same.length + ' คนแล้ว'); return;
+      }
+      if (e.target.closest('[data-t-rem]') && t) {
+        if (!(await askConfirm('นำ "' + t.name + '" ออกจากรอบนิเทศนี้? (คาบที่เลือกและผลประเมินของครูคนนี้ในรอบนี้จะถูกลบ)', 'นำออกจากรอบ'))) return;
+        try { await apiCall('supTeachersEdit', { roundId: st.roundId, remove: [t.id] }); st.D = null; await show(); } catch (x) { showToast(x.message, true); }
+        return;
+      }
+      if (e.target.closest('[data-t-pick]') && t) { openPickModal(t); }
+      if (e.target.closest('[data-sv-pick]') && t) openSupPicker(t);
+    };
+    body.addEventListener('change', async function (e) {
+      var x = e.target;
+      if (st.tab === 'sup') {
+        if (x.matches('[data-f-group]')) { st.filterGroup = x.value; renderSup(); return; }
+        if (x.matches('[data-t-add]') && x.value) { try { await apiCall('supTeachersEdit', { roundId: st.roundId, add: [x.value] }); st.D = null; await show(); } catch (er) { showToast(er.message, true); } return; }
+      }
+      if (st.tab === 'dates' && x.matches('[data-only-wait]')) { st.onlyWait = x.checked; renderDates(); return; }
+      if (st.tab === 'form' && x.matches('[data-fi="type"]')) { syncForm(); renderForm(); }
+    });
+    body.addEventListener('input', function (e) { if (st.tab === 'sup' && e.target.matches('[data-f-q]')) { st.q = e.target.value.trim(); var pos = e.target.selectionStart; renderSup(); var n = body.querySelector('[data-f-q]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } });
+    // เลือกผู้นิเทศ (ค้นหาชื่อ + ติ๊ก สูงสุด 6 คน)
+    function openSupPicker(t) {
+      var sel = t.supervisors.slice(), q = '';
+      var ppl = st.D.people.filter(function (p) { return p.id !== t.id; }).sort(function (a, b) { return (b.executive ? 1 : 0) - (a.executive ? 1 : 0) || String(a.name).localeCompare(String(b.name), 'th'); });
+      var draw = function () {
+        var list = ppl.filter(function (p) { return !q || String(p.name).indexOf(q) !== -1 || String(p.subjectGroup).indexOf(q) !== -1; }).slice(0, 80);
+        document.getElementById('spPickList').innerHTML = list.map(function (p) { return '<label class="sp-pp"><input type="checkbox" value="' + escapeHtml(p.id) + '"' + (sel.indexOf(p.id) !== -1 ? ' checked' : '') + ' /> <span><b>' + escapeHtml(p.name) + '</b>' + (p.executive ? ' <span class="sp-st info">ผู้บริหาร</span>' : '') + '<small>' + escapeHtml(p.subjectGroup || (p.department ? groupLabel(p.department) : '')) + '</small></span></label>'; }).join('') || '<p class="mut">ไม่พบ</p>';
+        document.getElementById('spPickSel').textContent = sel.length ? 'เลือกแล้ว ' + sel.length + ' คน: ' + sel.map(nameOf).join(', ') : 'ยังไม่ได้เลือก';
+      };
+      modal('ผู้นิเทศของ ' + escapeHtml(t.name), '<input type="search" id="spPickQ" placeholder="ค้นหาชื่อ / กลุ่มสาระ" style="width:100%;margin-bottom:8px" /><div class="mut" id="spPickSel" style="margin-bottom:6px"></div><div class="sp-pplist" id="spPickList"></div>',
+        '<button type="button" class="btn btn-success" id="spPickSv"><i class="fa-solid fa-check"></i> บันทึก</button>');
+      draw();
+      document.getElementById('spPickQ').oninput = function () { q = this.value.trim(); draw(); };
+      document.getElementById('spPickList').onchange = function (e) {
+        var c = e.target; if (!c.value) return;
+        if (c.checked) { if (sel.length >= 6) { c.checked = false; showToast('ผู้นิเทศได้สูงสุด 6 คน', true); return; } sel.push(c.value); } else sel = sel.filter(function (x) { return x !== c.value; });
+        draw();
+      };
+      document.getElementById('spPickSv').onclick = async function () { closeModal(); await setSupervisors([t.id], sel); };
+    }
+    // เปลี่ยนคาบแทนครู (ผู้จัดการ — ลงวันแล้วก็เปลี่ยนได้ วันที่ของคาบที่เปลี่ยนจะถูกล้างเพื่อลงใหม่)
+    async function openPickModal(t) {
+      modal('เปลี่ยนคาบแทน · ' + escapeHtml(t.name), '<div class="loading">กำลังโหลดตารางสอน...</div>');
+      var tt; try { tt = await apiCall('supTimetable', { teacherId: t.id }); } catch (e) { document.getElementById('spModalBody').innerHTML = err(e.message); return; }
+      if (!tt.linked) { document.getElementById('spModalBody').innerHTML = err(tt.reason || 'ยังไม่พบตารางสอนของครูคนนี้ในเว็บเช็คชื่อ'); return; }
+      var pk = {}; t.slots.forEach(function (s) { pk[s.day + '-' + s.period] = true; });
+      var draw = function () {
+        document.getElementById('spModalBody').innerHTML = '<p class="mut" style="margin-top:0">แตะเลือก ' + st.D.round.perTeacher + ' คาบ · คาบที่เปลี่ยนต้องลงวันใหม่ (ครูได้รับแจ้งในกระดิ่ง)</p>' + ttHtml(tt.slots, pk, false);
+        if (typeof ttShrink === 'function') ttShrink(document.getElementById('spModalBody'));
+      };
+      draw();
+      document.getElementById('spModalBody').onclick = function (e) {
+        var c = e.target.closest('[data-pick]'); if (!c) return; var k = c.getAttribute('data-pick'), n = st.D.round.perTeacher;
+        if (pk[k]) delete pk[k]; else { if (n === 1) pk = {}; else if (Object.keys(pk).length >= n) { showToast('เลือกได้ ' + n + ' คาบ', true); return; } pk[k] = true; }
+        draw();
+      };
+      document.getElementById('spModalActions').innerHTML = '<button type="button" class="btn btn-success" id="spPickOk"><i class="fa-solid fa-check"></i> บันทึกคาบ</button><button type="button" class="btn btn-ghost btn-close" data-sp-close>ปิด</button>';
+      document.getElementById('spPickOk').onclick = async function () {
+        var picks = Object.keys(pk).map(function (k) { return { day: +k.split('-')[0], period: +k.split('-')[1] }; });
+        if (picks.length !== st.D.round.perTeacher) { showToast('ต้องเลือก ' + st.D.round.perTeacher + ' คาบ', true); return; }
+        try { await apiCall('supManagerSetPicks', { roundId: st.roundId, teacherId: t.id, picks: picks }); closeModal(); showToast('บันทึกคาบแล้ว'); st.D = null; await show(); }
+        catch (e) { showToast(e.message, true); }
+      };
+    }
+
+    // ---------- แท็บ: แบบประเมิน (ผู้จัดการ) ----------
+    function syncForm() {
+      st.D.round.form = Array.prototype.map.call(body.querySelectorAll('[data-fi-row]'), function (row) {
+        return { id: row.getAttribute('data-fi-row'), label: row.querySelector('[data-fi="label"]').value, type: row.querySelector('[data-fi="type"]').value, required: row.querySelector('[data-fi="required"]').checked };
+      });
+    }
+    function renderForm() {
+      var f = st.D.round.form, n = f.length, used = st.D.evals.length;
+      body.innerHTML = '<div class="card"><h3>แบบประเมิน (ตั้งหัวข้อเอง) <span class="mut">· ' + escapeHtml(st.D.round.title) + '</span></h3>' +
+        (used ? '<div class="sp-warn"><i class="fa-solid fa-circle-info"></i> มีผลประเมินแล้ว ' + used + ' รายการ — แก้ชื่อหัวข้อได้ · ลบหัวข้อแล้วคะแนนของหัวข้อนั้นจะไม่แสดง</div>' : '') +
+        '<div class="sp-flist">' + f.map(function (x, i) {
+          return '<div class="sp-frow" data-fi-row="' + escapeHtml(x.id) + '"><span class="sp-fmv"><button type="button" data-fi-mv="-1"' + (i ? '' : ' disabled') + ' aria-label="เลื่อนขึ้น"><i class="fa-solid fa-arrow-up"></i></button><button type="button" data-fi-mv="1"' + (i < n - 1 ? '' : ' disabled') + ' aria-label="เลื่อนลง"><i class="fa-solid fa-arrow-down"></i></button></span>' +
+            '<input data-fi="label" maxlength="150" value="' + escapeHtml(x.label) + '" placeholder="ชื่อหัวข้อ" />' +
+            '<select data-fi="type"><option value="rating"' + (x.type === 'rating' ? ' selected' : '') + '>ระดับคะแนน 1–5</option><option value="text"' + (x.type === 'text' ? ' selected' : '') + '>ข้อความยาว</option></select>' +
+            '<label class="sp-req"><input type="checkbox" data-fi="required"' + (x.required ? ' checked' : '') + ' /> บังคับ</label>' +
+            '<button type="button" class="sp-x" data-fi-del aria-label="ลบหัวข้อ"><i class="fa-solid fa-xmark"></i></button></div>';
+        }).join('') + '</div>' +
+        '<div class="sp-formact"><button type="button" class="btn btn-secondary" data-fi-add' + (n >= 30 ? ' disabled' : '') + '><i class="fa-solid fa-plus"></i> เพิ่มหัวข้อ</button><button type="button" class="btn btn-success" data-fi-save><i class="fa-solid fa-check"></i> บันทึกแบบประเมิน</button></div></div>';
+    }
+    handlers.form = async function (e) {
+      var b;
+      if (e.target.closest('[data-fi-add]')) { syncForm(); st.D.round.form.push({ id: 'q' + Math.random().toString(36).slice(2, 8), label: '', type: 'rating', required: true }); renderForm(); var ins = body.querySelectorAll('[data-fi="label"]'); ins[ins.length - 1].focus(); return; }
+      if ((b = e.target.closest('[data-fi-del]'))) { syncForm(); var id = b.closest('[data-fi-row]').getAttribute('data-fi-row'); st.D.round.form = st.D.round.form.filter(function (x) { return x.id !== id; }); renderForm(); return; }
+      if ((b = e.target.closest('[data-fi-mv]'))) { syncForm(); var f = st.D.round.form, i = f.map(function (x) { return x.id; }).indexOf(b.closest('[data-fi-row]').getAttribute('data-fi-row')), j = i + (+b.getAttribute('data-fi-mv')); if (j < 0 || j >= f.length) return; var tmp = f[i]; f[i] = f[j]; f[j] = tmp; renderForm(); return; }
+      if (e.target.closest('[data-fi-save]')) {
+        syncForm();
+        var form = st.D.round.form.filter(function (x) { return x.label.trim(); });
+        if (!form.length) { showToast('ต้องมีอย่างน้อย 1 หัวข้อ', true); return; }
+        var r = await withProgress('กำลังบันทึกแบบประเมิน', function () { return apiCall('supFormSave', { roundId: st.roundId, form: form }); }, { successLabel: 'บันทึกแบบประเมินแล้ว' });
+        if (r.ok) { st.D.round.form = r.data.form; await boot(true); }
+      }
+    };
+
+    // ---------- แท็บ: ลงวันนิเทศ (ผู้จัดการ) ----------
+    async function ensureBusy() { if (!st.busy) { try { st.busy = (await apiCall('supBusy', { roundId: st.roundId })).busy || {}; } catch (e) { st.busy = {}; } } return st.busy; }
+    function allSlots() { var out = []; st.D.teachers.forEach(function (t) { t.slots.forEach(function (s) { out.push({ t: t, s: s }); }); }); return out; }
+    function blockOf(date, s) {
+      var hits = (st.D.blocks || []).filter(function (b) { if (b.date !== date) return false; var aff = (!b.grades.length && !b.rooms.length) || b.grades.indexOf(gradeOf(s.roomId)) !== -1 || b.rooms.indexOf(s.roomId) !== -1; return aff; });
+      var hol = hits.filter(function (b) { return b.kind === 'holiday'; })[0];
+      if (hol) return { hard: true, text: 'หยุด: ' + hol.title };
+      var act = hits.filter(function (b) { return !b.periods || b.periods.indexOf(String(s.period)) !== -1; })[0];
+      return act ? { hard: false, text: 'คาบ ' + s.period + ' มีกิจกรรม: ' + act.title } : null;
+    }
+    function clashOf(date, item, extra) {
+      var sups = item.t.supervisors, out = [];
+      allSlots().concat(extra || []).forEach(function (o) {
+        if (o.s.id === item.s.id) return;
+        var d = o.newDate !== undefined ? o.newDate : o.s.date;
+        if (d !== date || o.s.period !== item.s.period) return;
+        o.t.supervisors.forEach(function (id) { if (sups.indexOf(id) !== -1) out.push(nameOf(id) + ' นิเทศ ' + o.t.name + ' คาบเดียวกัน'); });
+      });
+      return out;
+    }
+    function teachClash(item) {
+      var out = []; if (!st.busy) return out;
+      item.t.supervisors.forEach(function (id) { (st.busy[id] || []).forEach(function (x) { var k = x.split('|')[0]; if (k === item.s.day + '-' + item.s.period) out.push(nameOf(id) + ' มีคาบสอน' + (x.split('|')[1] ? ' (' + x.split('|')[1] + ')' : '')); }); });
+      return out;
+    }
+    async function renderDates() {
+      await ensureBusy();
+      var D = st.D, r = D.round, items = allSlots();
+      var wait = items.filter(function (x) { return !x.s.date; }).length;
+      var list = items.filter(function (x) { return !st.onlyWait || !x.s.date || x.s.id === st.sel; }).sort(function (a, b) { return (a.s.date ? 1 : 0) - (b.s.date ? 1 : 0) || String(a.t.name).localeCompare(String(b.t.name), 'th') || a.s.seq - b.s.seq; });
+      if (!st.sel || !items.some(function (x) { return x.s.id === st.sel; })) { st.sel = list[0] ? list[0].s.id : ''; st.pickDate = ''; }
+      var cur = items.filter(function (x) { return x.s.id === st.sel; })[0];
+      var left = '<div class="card sp-col"><div class="sp-toolbar"><h3 style="margin:0">คาบที่ครูเลือก</h3><span class="mut">รอลงวัน ' + wait + ' · ลงแล้ว ' + (items.length - wait) + '</span></div>' +
+        '<label class="sp-chk"><input type="checkbox" data-only-wait' + (st.onlyWait ? ' checked' : '') + ' /> แสดงเฉพาะที่รอลงวัน</label>' +
+        '<table class="sp-tbl"><thead><tr><th>ครู</th><th>วัน / คาบ</th><th>สถานะ</th></tr></thead><tbody>' + list.map(function (x) {
+          return '<tr class="sp-row' + (x.s.id === st.sel ? ' sel' : '') + '" data-dsel="' + escapeHtml(x.s.id) + '"><td><b>' + escapeHtml(x.t.name) + '</b><div class="mut">' + escapeHtml(slotLabel(x.s)) + ' · ' + escapeHtml(x.t.supervisors.map(nameOf).join(', ') || 'ยังไม่มีผู้นิเทศ') + '</div></td>' +
+            '<td class="nw"><b>' + DAYS_S[x.s.day] + ' คาบ ' + x.s.period + '</b></td><td>' + (x.s.date ? '<span class="sp-st ok">' + thDS(x.s.date) + '</span>' : '<span class="sp-st wait">รอลงวันที่</span>') + '</td></tr>';
+        }).join('') + (list.length ? '' : '<tr><td colspan="3" class="mut">' + (items.length ? 'ลงวันครบแล้ว' : 'ยังไม่มีครูเลือกคาบ') + '</td></tr>') + '</tbody></table>' +
+        '<div class="sp-formact" style="justify-content:flex-start"><button type="button" class="btn btn-secondary" data-auto' + (wait ? '' : ' disabled') + '><i class="fa-solid fa-wand-magic-sparkles"></i> จัดวันให้อัตโนมัติ (ที่เหลือ ' + wait + ')</button></div></div>';
+      var right = '<div class="card sp-col">';
+      if (!cur) right += '<p class="mut">ยังไม่มีคาบให้ลงวัน</p>';
+      else {
+        var tcl = teachClash(cur);
+        right += '<h3>' + escapeHtml(cur.t.name) + ' · วัน' + DAYS[cur.s.day] + ' คาบ ' + cur.s.period + ' <span class="mut">(' + thD(r.startDate) + ' – ' + thD(r.endDate) + ')</span></h3>' +
+          (tcl.length ? '<div class="sp-warn"><i class="fa-solid fa-triangle-exclamation"></i> ผู้นิเทศชนคาบสอนทุกสัปดาห์: ' + escapeHtml(tcl.join(' · ')) + ' — ควรเปลี่ยนผู้นิเทศหรือเปลี่ยนคาบ</div>' : '') + calHtml(cur) +
+          '<div class="sp-legend"><span><i class="lg ok"></i> ลงได้</span><span><i class="lg bad"></i> ชน (ผู้นิเทศไม่ว่าง / กิจกรรม)</span><span><i class="lg off"></i> วันหยุด</span><span><i class="lg ev"></i> นิเทศที่ลงไว้แล้ว</span><button type="button" class="linklike" data-extend>' + (st.extend ? 'ซ่อนวันที่เกินช่วง' : 'แสดงวันที่เกินช่วง (+4 สัปดาห์)') + '</button></div>' +
+          '<div class="sp-bar">' + (st.pickDate ? '<span>ลงวันที่: <b class="ok">' + thD(st.pickDate, true) + ' คาบ ' + cur.s.period + '</b> · ' + escapeHtml(cur.t.name) + '</span><button type="button" class="btn btn-success" data-date-save><i class="fa-solid fa-check"></i> บันทึกวันนิเทศ</button>' :
+            '<span class="mut">' + (cur.s.date ? 'ลงไว้แล้ว: <b>' + thD(cur.s.date, true) + '</b> — แตะวันอื่นเพื่อเปลี่ยน' : 'แตะวันที่ในปฏิทินเพื่อเลือก') + '</span>' + (cur.s.date ? '<button type="button" class="btn btn-ghost" data-date-clear>ยกเลิกวันนี้</button>' : '')) + '</div>';
+      }
+      body.innerHTML = '<div class="sp-two sp-two-dates">' + left + right + '</div>';
+    }
+    function calHtml(cur) {
+      var r = st.D.round, start = addD(r.startDate, -((dowOf(r.startDate) + 6) % 7)), end = addD(r.endDate, st.extend ? 28 : 0);
+      var evs = {}; allSlots().forEach(function (x) { if (x.s.date && x.s.id !== cur.s.id) (evs[x.s.date] = evs[x.s.date] || []).push('ค.' + x.s.period + ' ' + x.t.name); });
+      var h = '<div class="sp-cal"><div class="h">สัปดาห์</div>' + DAYS.slice(1).map(function (d) { return '<div class="h">' + d + '</div>'; }).join('');
+      for (var w = start; w <= end; w = addD(w, 7)) {
+        h += '<div class="w">' + thDS(w) + '–' + thDS(addD(w, 4)) + '</div>';
+        for (var i = 0; i < 5; i++) {
+          var d = addD(w, i), cls = '', hint = '', clickable = false, bl = blockOf(d, cur.s), out = d < r.startDate || d > r.endDate;
+          var hol = (st.D.blocks || []).filter(function (b) { return b.date === d && b.kind === 'holiday' && !b.grades.length && !b.rooms.length; })[0];
+          if (hol) { cls = 'off'; hint = '<span class="hint2">หยุด ' + escapeHtml(hol.title) + '</span>'; }
+          else if (i + 1 === cur.s.day) {
+            var cl = clashOf(d, cur);
+            if (bl && bl.hard) { cls = 'bad'; hint = '<span class="hint2"><i class="fa-solid fa-xmark"></i> ' + escapeHtml(bl.text) + '</span>'; }
+            else if (cl.length || bl) { cls = 'bad'; clickable = true; hint = '<span class="hint2"><i class="fa-solid fa-xmark"></i> ' + escapeHtml((bl ? [bl.text] : []).concat(cl).join(' · ')) + '</span>'; }
+            else { cls = 'ok'; clickable = true; hint = '<span class="hint2">' + (out ? 'เกินช่วง · ' : '') + 'ว่าง · แตะเพื่อลง</span>'; }
+            if (d === st.pickDate) { cls = 'on'; hint = '<span class="hint2"><i class="fa-solid fa-check"></i> เลือกวันนี้</span>'; }
+            else if (d === cur.s.date) { cls += ' cur'; hint = '<span class="hint2"><i class="fa-solid fa-thumbtack"></i> วันที่ลงไว้</span>'; }
+          }
+          if (d < r.startDate && !(i + 1 === cur.s.day)) cls += ' dim';
+          h += '<div class="c ' + cls + (out ? ' out' : '') + '"' + (clickable ? ' data-cal="' + d + '" role="button" tabindex="0"' : '') + '><span class="n">' + ymdParts(d).d + '</span>' + (evs[d] || []).slice(0, 3).map(function (x) { return '<span class="ev">' + escapeHtml(x) + '</span>'; }).join('') + ((evs[d] || []).length > 3 ? '<span class="ev">+' + ((evs[d] || []).length - 3) + '</span>' : '') + hint + '</div>';
+        }
+      }
+      return h + '</div>';
+    }
+    handlers.dates = async function (e) {
+      var b;
+      if ((b = e.target.closest('[data-dsel]'))) { st.sel = b.getAttribute('data-dsel'); st.pickDate = ''; renderDates(); return; }
+      if ((b = e.target.closest('[data-cal]'))) { st.pickDate = b.getAttribute('data-cal'); renderDates(); return; }
+      if (e.target.closest('[data-extend]')) { st.extend = st.extend ? 0 : 1; renderDates(); return; }
+      var cur = allSlots().filter(function (x) { return x.s.id === st.sel; })[0];
+      if (e.target.closest('[data-date-save]') && cur && st.pickDate) {
+        var cl = clashOf(st.pickDate, cur), bl = blockOf(st.pickDate, cur.s);
+        if ((cl.length || bl) && !(await askConfirm('วันนี้มีรายการชน: ' + (bl ? [bl.text] : []).concat(cl).join(' · ') + ' — ยืนยันลงวันนี้?', 'ยืนยันลงวัน'))) return;
+        await saveDates([{ slotId: cur.s.id, date: st.pickDate }]); return;
+      }
+      if (e.target.closest('[data-date-clear]') && cur) { if (!(await askConfirm('ยกเลิกวันนิเทศของ ' + cur.t.name + ' (' + thD(cur.s.date) + ')? ครูจะได้รับแจ้ง และกลับไปเปลี่ยนคาบเองได้', 'ยกเลิกวันนิเทศ'))) return; await saveDates([{ slotId: cur.s.id, date: '' }]); return; }
+      if (e.target.closest('[data-auto]')) await autoAssign();
+    };
+    async function saveDates(items) {
+      var r = await withProgress('กำลังบันทึกวันนิเทศ', function () { return apiCall('supAssignDates', { items: items }); }, { successLabel: 'บันทึกวันนิเทศแล้ว — ครูและผู้นิเทศได้รับแจ้งในกระดิ่ง' });
+      if (!r.ok) return;
+      var map = {}; items.forEach(function (x) { map[x.slotId] = x.date; });
+      allSlots().forEach(function (x) { if (x.s.id in map) x.s.date = map[x.s.id]; });
+      st.pickDate = ''; st.evals = null;
+      var next = allSlots().filter(function (x) { return !x.s.date; }).sort(function (a, b) { return String(a.t.name).localeCompare(String(b.t.name), 'th'); })[0];
+      if (next && items.length === 1 && items[0].date) st.sel = next.s.id;
+      renderDates();
+    }
+    // จัดวันอัตโนมัติ: วันแรกในช่วงที่ไม่หยุด ไม่มีกิจกรรมคาบนั้น และผู้นิเทศไม่ชน (นับรายการที่จัดในรอบนี้ด้วย) · ไม่มีวันว่าง = ข้าม
+    async function autoAssign() {
+      var r = st.D.round, todo = allSlots().filter(function (x) { return !x.s.date; }).sort(function (a, b) { return String(a.t.subjectGroup).localeCompare(String(b.t.subjectGroup), 'th') || String(a.t.name).localeCompare(String(b.t.name), 'th'); });
+      var planned = [], items = [], skipped = [], perDay = {};
+      allSlots().forEach(function (x) { if (x.s.date) perDay[x.s.date] = (perDay[x.s.date] || 0) + 1; });
+      todo.forEach(function (x) {
+        var first = r.startDate, best = '', bestN = 1e9;
+        while (dowOf(first) !== x.s.day) first = addD(first, 1);
+        for (var d = first; d <= r.endDate; d = addD(d, 7)) {
+          var bl = blockOf(d, x.s); if (bl) continue;
+          var hol = (st.D.blocks || []).some(function (b) { return b.date === d && b.kind === 'holiday'; }); if (hol) continue;
+          if (clashOf(d, x, planned).length) continue;
+          if ((perDay[d] || 0) < bestN) { best = d; bestN = perDay[d] || 0; if (!bestN) break; } // กระจายวัน: เลือกวันที่ยังว่างที่สุด (เจอวันที่ยังไม่มีเลย = ใช้ทันที)
+        }
+        if (!best) { skipped.push(x.t.name); return; }
+        perDay[best] = (perDay[best] || 0) + 1;
+        planned.push({ t: x.t, s: x.s, newDate: best }); items.push({ slotId: x.s.id, date: best });
+      });
+      if (!items.length) { showToast('ไม่พบวันว่างให้จัดอัตโนมัติ' + (skipped.length ? ' (' + skipped.length + ' คน)' : ''), true); return; }
+      if (!(await askConfirm('จะลงวันนิเทศให้อัตโนมัติ ' + items.length + ' คาบ (เลือกวันที่ว่าง ไม่ชนกับผู้นิเทศ/วันหยุด/กิจกรรม)' + (skipped.length ? ' · หาวันว่างไม่ได้ ' + skipped.length + ' คน: ' + skipped.join(', ') : '') + ' — แก้ทีละคนได้ภายหลัง', 'จัดวันอัตโนมัติ'))) return;
+      await saveDates(items);
+    }
+
+    // ---------- แท็บ: ตารางนิเทศ (ผู้จัดการ) ----------
+    async function ensureEvals() { if (!st.evals) st.evals = (await apiCall('supEvalList', { roundId: st.roundId })).evals || []; return st.evals; }
+    function schedRows() {
+      var ev = {}; (st.evals || []).forEach(function (e) { (ev[e.slotId] = ev[e.slotId] || []).push(e); });
+      return allSlots().map(function (x) { return { t: x.t, s: x.s, evs: ev[x.s.id] || [] }; });
+    }
+    function schedWarnings(rows) {
+      var w = [], seen = {};
+      rows.forEach(function (a) {
+        if (!a.s.date) return;
+        rows.forEach(function (b) {
+          if (a === b || b.s.date !== a.s.date || b.s.period !== a.s.period) return;
+          a.t.supervisors.forEach(function (id) { if (b.t.supervisors.indexOf(id) !== -1) { var k = a.s.date + a.s.period + id; if (!seen[k]) { seen[k] = 1; w.push(thD(a.s.date) + ' คาบ ' + a.s.period + ': ' + nameOf(id) + ' ถูกจัดนิเทศ 2 คาบพร้อมกัน'); } } });
+        });
+        teachClash(a).forEach(function (x) { var k = a.s.id + x; if (!seen[k]) { seen[k] = 1; w.push(thD(a.s.date) + ' คาบ ' + a.s.period + ': ' + x + ' ชนกับนิเทศ ' + a.t.name); } });
+      });
+      return w;
+    }
+    async function renderSched() {
+      await Promise.all([ensureEvals(), ensureBusy()]);
+      var rows = schedRows(), dated = rows.filter(function (x) { return x.s.date; }).sort(function (a, b) { return a.s.date.localeCompare(b.s.date) || a.s.period - b.s.period; }), und = rows.filter(function (x) { return !x.s.date; });
+      var w = schedWarnings(rows);
+      var evCell = function (x) { var n = x.evs.length, m = x.t.supervisors.length; return n ? '<button type="button" class="sp-st ' + (n >= m ? 'ok' : 'wait') + ' sp-evbtn" data-ev-view="' + escapeHtml(x.s.id) + '">ประเมินแล้ว ' + n + '/' + m + '</button>' : '<span class="sp-st wait">ยังไม่ประเมิน</span>'; };
+      var tbl;
+      if (st.schedView === 'day') {
+        tbl = '<table class="sp-tbl"><thead><tr><th>วันที่</th><th>คาบ</th><th>ครูผู้รับการนิเทศ</th><th>วิชา / ห้อง</th><th>ผู้นิเทศ</th><th>ผลประเมิน</th></tr></thead><tbody>' + dated.map(function (x) {
+          return '<tr><td class="nw"><b>' + thD(x.s.date, true) + '</b></td><td>' + x.s.period + '</td><td>' + escapeHtml(x.t.name) + '</td><td>' + escapeHtml((x.s.code ? x.s.code + ' ' : '') + (x.s.subject && x.s.subject !== x.s.code ? x.s.subject : '') + ' · ' + x.s.room) + '</td><td>' + escapeHtml(x.t.supervisors.map(nameOf).join(', ')) + '</td><td>' + evCell(x) + '</td></tr>';
+        }).join('') + (dated.length ? '' : '<tr><td colspan="6" class="mut">ยังไม่มีวันนิเทศ</td></tr>') + '</tbody></table>';
+      } else {
+        var by = {}; dated.forEach(function (x) { x.t.supervisors.forEach(function (id) { (by[id] = by[id] || []).push(x); }); });
+        tbl = Object.keys(by).sort(function (a, b) { return nameOf(a).localeCompare(nameOf(b), 'th'); }).map(function (id) {
+          return '<h4 class="sp-h4"><i class="fa-solid fa-user-tie"></i> ' + escapeHtml(nameOf(id)) + ' <span class="mut">(' + by[id].length + ' คาบ)</span></h4><table class="sp-tbl"><tbody>' + by[id].map(function (x) {
+            var mine = x.evs.some(function (e) { return e.supervisorId === id; });
+            return '<tr><td class="nw" style="width:170px"><b>' + thD(x.s.date, true) + '</b></td><td style="width:60px">คาบ ' + x.s.period + '</td><td>' + escapeHtml(x.t.name) + '</td><td>' + escapeHtml(slotLabel(x.s)) + '</td><td style="width:120px"><span class="sp-st ' + (mine ? 'ok' : 'wait') + '">' + (mine ? 'ประเมินแล้ว' : 'ยังไม่ประเมิน') + '</span></td></tr>';
+          }).join('') + '</tbody></table>';
+        }).join('') || '<p class="mut">ยังไม่มีวันนิเทศ</p>';
+      }
+      body.innerHTML = '<div class="sp-toolbar"><div class="sp-seg"><button type="button" data-view="day" class="' + (st.schedView === 'day' ? 'on' : '') + '">เรียงตามวัน</button><button type="button" data-view="sup" class="' + (st.schedView === 'sup' ? 'on' : '') + '">แยกตามผู้นิเทศ</button></div>' +
+        '<span class="sp-sp"></span><button type="button" class="btn btn-secondary btn-sm" data-x-pdf><i class="fa-solid fa-file-pdf"></i> PDF</button><button type="button" class="btn btn-secondary btn-sm" data-x-xls><i class="fa-solid fa-file-excel"></i> Excel ตารางนิเทศ</button><button type="button" class="btn btn-secondary btn-sm" data-x-evx><i class="fa-solid fa-file-excel"></i> Excel ผลประเมิน</button></div>' +
+        (w.length ? '<div class="sp-warn"><i class="fa-solid fa-triangle-exclamation"></i> ' + w.map(escapeHtml).join(' · ') + '</div>' : '') +
+        '<div class="card sp-tbl-wrap">' + tbl + '</div>' +
+        (und.length ? '<div class="card"><h3>ยังไม่ลงวันที่ (' + und.length + ')</h3><div class="sp-und">' + und.map(function (x) { return '<span class="sp-chip">' + escapeHtml(x.t.name) + ' · ' + DAYS_S[x.s.day] + ' คาบ ' + x.s.period + '</span>'; }).join('') + '</div></div>' : '') +
+        (function () { var no = st.D.teachers.filter(function (t) { return !t.slots.length; }); return no.length ? '<div class="card"><h3>ยังไม่เลือกคาบ (' + no.length + ')</h3><div class="sp-und">' + no.slice(0, 150).map(function (t) { return '<span class="sp-chip">' + escapeHtml(t.name) + '</span>'; }).join('') + (no.length > 150 ? '<span class="mut">และอีก ' + (no.length - 150) + ' คน</span>' : '') + '</div></div>' : ''; })();
+    }
+    function avgOf(e, form) { var xs = form.filter(function (f) { return f.type === 'rating' && e.answers[f.id]; }).map(function (f) { return +e.answers[f.id]; }); return xs.length ? xs.reduce(function (a, b) { return a + b; }, 0) / xs.length : null; }
+    handlers.sched = async function (e) {
+      var b;
+      if ((b = e.target.closest('[data-view]'))) { st.schedView = b.getAttribute('data-view'); renderSched(); return; }
+      if ((b = e.target.closest('[data-ev-view]'))) {
+        var x = schedRows().filter(function (y) { return y.s.id === b.getAttribute('data-ev-view'); })[0], form = st.D.round.form;
+        modal('ผลประเมิน · ' + escapeHtml(x.t.name), '<p class="mut" style="margin-top:0">' + thD(x.s.date, true) + ' คาบ ' + x.s.period + ' · ' + escapeHtml(slotLabel(x.s)) + '</p>' + x.evs.map(function (ev) {
+          var a = avgOf(ev, form);
+          return '<div class="sp-evview"><h4>' + escapeHtml(nameOf(ev.supervisorId)) + (a != null ? ' <span class="sp-st ok">เฉลี่ย ' + a.toFixed(2) + '</span>' : '') + '</h4>' + form.map(function (f) { var v = ev.answers[f.id]; return v == null || v === '' ? '' : '<div class="ans-row"><div class="q">' + escapeHtml(f.label) + '</div><div class="a">' + escapeHtml(f.type === 'rating' ? v + ' / 5' : v) + '</div></div>'; }).join('') + '<div class="mut">บันทึก ' + escapeHtml(formatDateTimeThai(ev.savedAt)) + '</div></div>';
+        }).join(''));
+        return;
+      }
+      if (e.target.closest('[data-x-xls]')) { exportSchedXlsx(); return; }
+      if (e.target.closest('[data-x-evx]')) { exportEvalXlsx(); return; }
+      if (e.target.closest('[data-x-pdf]')) { exportPdf(); }
+    };
+    function fileStem() { return 'นิเทศ-' + st.D.round.title.replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 60); }
+    function exportSchedXlsx() {
+      var rows = schedRows().sort(function (a, b) { return (a.s.date || '9999').localeCompare(b.s.date || '9999') || a.s.period - b.s.period; });
+      var data = rows.map(function (x, i) { return [i + 1, x.s.date ? thD(x.s.date, true) : 'ยังไม่ลงวัน', x.s.period, x.t.name, x.t.subjectGroup || '', x.s.code || '', x.s.subject || '', x.s.room || '', x.t.supervisors.map(nameOf).join(', '), x.evs.length + '/' + x.t.supervisors.length]; });
+      downloadBlob(buildXlsx('ตารางนิเทศ', ['ลำดับ', 'วันที่', 'คาบ', 'ครูผู้รับการนิเทศ', 'กลุ่มสาระฯ', 'รหัสวิชา', 'ชื่อวิชา', 'ห้อง', 'ผู้นิเทศ', 'ประเมินแล้ว'], data, [7, 18, 6, 28, 22, 10, 26, 8, 40, 11], 'ตารางนิเทศ · ' + st.D.round.title + ' (' + semTxt(st.D.round) + ')'), fileStem() + '.xlsx');
+    }
+    function exportEvalXlsx() {
+      var form = st.D.round.form, rows = [];
+      schedRows().forEach(function (x) { x.evs.forEach(function (ev) { var a = avgOf(ev, form); rows.push([x.s.date ? thD(x.s.date) : '', x.s.period, x.t.name, x.t.subjectGroup || '', slotLabel(x.s), nameOf(ev.supervisorId)].concat(form.map(function (f) { var v = ev.answers[f.id]; return f.type === 'rating' && v ? +v : (v || ''); })).concat([a != null ? Math.round(a * 100) / 100 : ''])); }); });
+      if (!rows.length) { showToast('ยังไม่มีผลประเมิน', true); return; }
+      rows = rows.map(function (r, i) { return [i + 1].concat(r); });
+      downloadBlob(buildXlsx('ผลประเมิน', ['ลำดับ', 'วันที่', 'คาบ', 'ครูผู้รับการนิเทศ', 'กลุ่มสาระฯ', 'วิชา / ห้อง', 'ผู้นิเทศ'].concat(form.map(function (f) { return f.label; })).concat(['ค่าเฉลี่ย']), rows, [7, 14, 6, 28, 20, 22, 26].concat(form.map(function (f) { return f.type === 'rating' ? 14 : 40; })).concat([10]), 'ผลประเมินการนิเทศ · ' + st.D.round.title), fileStem() + '-ผลประเมิน.xlsx');
+    }
+    async function exportPdf() {
+      var r = st.D.round, rows = schedRows().filter(function (x) { return x.s.date; }).sort(function (a, b) { return a.s.date.localeCompare(b.s.date) || a.s.period - b.s.period; });
+      if (!rows.length) { showToast('ยังไม่มีวันนิเทศ', true); return; }
+      var stg = await getSiteSettings().catch(function () { return {}; }) || {};
+      await withProgress('กำลังสร้างไฟล์ PDF', async function (p) {
+        await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js');
+        var u = new URL('assets/fonts/', location.href).href;
+        var faces = [400, 700].map(function (w) { return '@font-face{font-family:Sarabun;font-weight:' + w + ';src:url(' + u + 'sarabun-thai-' + w + '-normal.woff2) format("woff2");unicode-range:U+0E00-0E7F}@font-face{font-family:Sarabun;font-weight:' + w + ';src:url(' + u + 'sarabun-latin-' + w + '-normal.woff2) format("woff2")}'; }).join('');
+        var css = 'body{margin:0;font-family:Sarabun,sans-serif;color:#0f172a}.pg{width:1123px;height:794px;box-sizing:border-box;padding:30px 36px;background:#fff;position:relative}' +
+          '.hd{display:flex;align-items:center;gap:14px;background:#0b6fcc;color:#fff;border-radius:12px;padding:10px 16px;margin-bottom:12px}.hd img{width:46px;height:46px;object-fit:contain;background:#fff;border-radius:50%}.hd b{font-size:22px;display:block}.hd span{font-size:15px}' +
+          'table{width:100%;border-collapse:collapse;font-size:15px}th{background:#0b6fcc;color:#fff;padding:6px 8px;text-align:left}td{padding:5px 8px;border-bottom:1px solid #cbd5e1;vertical-align:top}tr:nth-child(even) td{background:#f1f5f9}.ft{position:absolute;left:36px;right:36px;bottom:16px;display:flex;justify-content:space-between;font-size:12px;color:#64748b}';
+        var fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;left:-20000px;top:0;width:1140px;height:820px;border:0;'; document.body.appendChild(fr);
+        try {
+          var d = fr.contentWindow.document; d.open(); d.write('<!doctype html><html lang="th"><head><meta charset="utf-8"><style>' + faces + css + '</style></head><body></body></html>'); d.close();
+          await new Promise(function (res) { if (d.readyState === 'complete') res(); else fr.contentWindow.addEventListener('load', res); });
+          var logo = stg.logoDataUrl || stg.iconDataUrl || '', per = 16, pages = [];
+          for (var i = 0; i < rows.length; i += per) {
+            var pg = d.createElement('div'); pg.className = 'pg';
+            pg.innerHTML = '<div class="hd">' + (logo ? '<img src="' + logo + '" alt="">' : '') + '<div><b>ตารางนิเทศการสอน · ' + escapeHtml(r.title) + '</b><span>' + escapeHtml(semTxt(r)) + (stg.schoolName ? ' · ' + escapeHtml(stg.schoolName) : '') + '</span></div></div>' +
+              '<table><thead><tr><th style="width:150px">วันที่</th><th style="width:50px">คาบ</th><th style="width:220px">ครูผู้รับการนิเทศ</th><th>วิชา / ห้อง</th><th style="width:300px">ผู้นิเทศ</th></tr></thead><tbody>' +
+              rows.slice(i, i + per).map(function (x) { return '<tr><td>' + thD(x.s.date, true) + '</td><td>' + x.s.period + '</td><td>' + escapeHtml(x.t.name) + '</td><td>' + escapeHtml((x.s.code || '') + ' ' + (x.s.subject && x.s.subject !== x.s.code ? x.s.subject : '') + ' · ' + x.s.room) + '</td><td>' + escapeHtml(x.t.supervisors.map(nameOf).join(', ')) + '</td></tr>'; }).join('') + '</tbody></table>';
+            d.body.appendChild(pg); pages.push(pg);
+          }
+          pages.forEach(function (pg, i) { pg.insertAdjacentHTML('beforeend', '<div class="ft"><span>BNKAcademicHub · ส่งออกเมื่อ ' + thD(todayYmd()) + '</span><span>' + (i + 1) + ' / ' + pages.length + '</span></div>'); });
+          if (d.fonts && d.fonts.load) { try { await Promise.all(['400', '700'].map(function (w) { return d.fonts.load(w + ' 16px Sarabun', 'กขค ABC 123'); })); await d.fonts.ready; } catch (fe) { /* ฟอนต์สำรอง */ } }
+          await Promise.all(Array.prototype.map.call(d.images, function (im) { return im.complete ? 0 : new Promise(function (res) { im.onload = im.onerror = res; }); }));
+          var pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+          try { await html2canvas(pages[0], { scale: 0.3, backgroundColor: '#ffffff', logging: false, windowWidth: 1140 }); } catch (we) { /* อุ่นเครื่อง */ }
+          for (var k = 0; k < pages.length; k++) {
+            p.setProgress(Math.round(k / pages.length * 95), 'หน้า ' + (k + 1) + '/' + pages.length);
+            var cv = await html2canvas(pages[k], { scale: 2, backgroundColor: '#ffffff', logging: false, windowWidth: 1140 });
+            if (k) pdf.addPage();
+            pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 297, 210);
+          }
+          downloadBlob(pdf.output('blob'), fileStem() + '.pdf');
+        } finally { fr.remove(); }
+      }, { successLabel: 'ดาวน์โหลดไฟล์ PDF แล้ว' });
+    }
+
+    // ---------- แท็บ: ผู้จัดการงานนิเทศ (Super Admin) ----------
+    async function renderMgr() {
+      body.innerHTML = '<div class="loading">กำลังโหลด...</div>';
+      var d = await apiCall('supManagersGet', {});
+      if (!st.mgrIds) st.mgrIds = d.managers.map(function (m) { return m.id; });
+      var byId = {}; d.people.forEach(function (p) { byId[p.id] = p; });
+      var ppl = d.people.slice().sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'th'); });
+      body.innerHTML = '<div class="card"><h3>ผู้จัดการงานนิเทศ <span class="mut">(สิทธิ์เดียว — สร้างรอบ กำหนดผู้นิเทศ ตั้งแบบประเมิน ลงวันนิเทศ ดูตารางและผลประเมินทั้งหมด)</span></h3>' +
+        '<div class="sp-mgrs">' + (st.mgrIds.length ? st.mgrIds.map(function (id) { var p = byId[id] || { name: '?' }; return '<div class="sp-mgr"><div><b>' + escapeHtml(p.name) + '</b><div class="mut">' + escapeHtml([p.department ? groupLabel(p.department) : '', p.subjectGroup].filter(Boolean).join(' · ')) + '</div></div><button type="button" class="sp-x" data-mgr-del="' + escapeHtml(id) + '" aria-label="ลบ"><i class="fa-solid fa-xmark"></i></button></div>'; }).join('') : '<p class="mut">ยังไม่มี — ผู้ดูแลระบบจัดการได้คนเดียว</p>') + '</div>' +
+        '<div class="sp-toolbar"><select data-mgr-add><option value="">+ เพิ่มผู้จัดการงานนิเทศ…</option>' + ppl.filter(function (p) { return st.mgrIds.indexOf(p.id) === -1; }).map(function (p) { return '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name) + '</option>'; }).join('') + '</select>' +
+        '<span class="sp-sp"></span><button type="button" class="btn btn-success" data-mgr-save><i class="fa-solid fa-check"></i> บันทึก</button></div>' +
+        '<p class="mut">คนที่ไม่มีชื่อในรายการนี้ เห็นเฉพาะหน้าของตัวเอง (เลือกคาบ / คาบที่ต้องไปนิเทศ) · ผู้นิเทศเห็นผลที่ตัวเองประเมินเสมอ</p></div>';
+      body.querySelector('[data-mgr-add]').onchange = function () { if (this.value) { st.mgrIds.push(this.value); renderMgr(); } };
+    }
+    handlers.mgr = async function (e) {
+      var b;
+      if ((b = e.target.closest('[data-mgr-del]'))) { st.mgrIds = st.mgrIds.filter(function (id) { return id !== b.getAttribute('data-mgr-del'); }); renderMgr(); return; }
+      if (e.target.closest('[data-mgr-save]')) {
+        var r = await withProgress('กำลังบันทึก', function () { return apiCall('supManagersSave', { userIds: st.mgrIds }); }, { successLabel: 'บันทึกผู้จัดการงานนิเทศแล้ว' });
+        if (r.ok) { st.mgrIds = null; renderMgr(); }
+      }
+    };
+
+    if (session) boot();
+  </script>
+</body>
+</html>

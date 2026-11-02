@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.97.5.011126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.0.021126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.97.5.011126"></script>
+  <script src="assets/api.js?v=1.98.0.021126"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -333,8 +333,8 @@
         var office = false; // 1.72: ทุกชนิดไฟล์พรีวิวได้
         return '<tr><td class="n">' + (i + 1) + '</td><td><div class="sub-file-name">' + sumFileIcon(s) + '<span class="sub-file-title">' + escapeHtml(s.title || s.fileName) + '</span></div></td>' +
           '<td class="dt">' + escapeHtml(formatDateTimeThai(s.uploadedAt)) + '</td>' +
-          '<td class="a">' + (office ? '' : '<button type="button" class="icon-btn" data-sum-preview="' + escapeHtml(s.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i></button>') +
-          '<a class="icon-btn" href="' + escapeHtml(driveDownloadUrl(s.fileUrl) || s.fileUrl) + '" target="_blank" rel="noopener" download title="ดาวน์โหลด" aria-label="ดาวน์โหลด ' + escapeHtml(s.title) + '"><i class="fa-solid fa-download"></i></a></td></tr>';
+          '<td class="a">' + (isSurveySub(s) ? '<button type="button" class="icon-btn" data-sum-preview="' + escapeHtml(s.id) + '" title="ดูคำตอบ" aria-label="ดูคำตอบ"><i class="fa-solid fa-eye"></i></button></td></tr>' : (office ? '' : '<button type="button" class="icon-btn" data-sum-preview="' + escapeHtml(s.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i></button>') +
+          '<a class="icon-btn" href="' + escapeHtml(driveDownloadUrl(s.fileUrl) || s.fileUrl) + '" target="_blank" rel="noopener" download title="ดาวน์โหลด" aria-label="ดาวน์โหลด ' + escapeHtml(s.title) + '"><i class="fa-solid fa-download"></i></a></td></tr>');
       }).join('') + '</tbody></table></td></tr>';
     }
     function sumGroupHtml(g) {
@@ -388,6 +388,7 @@
         var sid = t.getAttribute('data-sum-preview');
         var s0 = allSubs.filter(function (x) { return x.id === sid; })[0];
         if (!s0) return;
+        if (isSurveySub(s0)) { showAnswersModal(s0.teacherName + ' — ' + s0.categoryName, s0.customFieldValues, 'ตอบเมื่อ ' + formatDateTimeThai(s0.uploadedAt)); return; } // 1.98
         var g = _sumGroups[sumGroupKey(s0)], tch = g && g.teachers[s0.teacherId];
         var list = (tch ? tch.items : [s0]);
         var show = function (i) {
@@ -648,6 +649,7 @@
       var c = (typeof catById === 'function') ? catById(a.categoryId) : null;
       if (!a.rows.some(function (r) { return r.status !== 'missing'; })) return '';
       if (c && !(c.customFields || []).length) return '';
+      if (c && c.survey) return '<button type="button" class="btn btn-sm btn-primary" data-sv-sum="' + escapeHtml(a.eventId) + '"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i> สรุปผลแบบสำรวจ</button> <button type="button" class="btn btn-sm btn-secondary" data-cf-export="' + escapeHtml(a.eventId) + '"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> ส่งออก Excel คำตอบ</button>'; // 1.98
       return '<button type="button" class="btn btn-sm btn-secondary" data-cf-export="' + escapeHtml(a.eventId) + '"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> ส่งออก Excel ข้อมูลที่ครูกรอก</button>';
     }
     async function exportFieldsXlsx(a) {
@@ -667,6 +669,39 @@
       });
       var ttl = d.categoryName + (a.seriesId ? ' (รอบ ' + (a.roundLabel || a.roundNo) + ')' : '') + ' · ' + (a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester) + ' ปีการศึกษา ' + a.academicYear;
       downloadBlob(buildXlsx('ข้อมูลที่ครูกรอก', header, rows, widths, ttl), 'bnk-fields-' + a.academicYear + '-' + a.semester + '.xlsx');
+    }
+    // 1.98: สรุปผลแบบสำรวจ — จำนวน/ร้อยละของแต่ละตัวเลือก · ค่าเฉลี่ยคะแนน · คำตอบข้อความ
+    async function openSurveySummary(a) {
+      var r = { ok: true };
+      try { r.data = await apiCall('reviewFieldsExport', { categoryId: a.categoryId, academicYear: a.academicYear, semester: a.semester, eventId: a.seriesId ? a.eventId : '', respEventId: a.respMine ? a.eventId : '' }); }
+      catch (err) { showToast(err.message, true); return; }
+      var d = r.data, rows = d.rows || [], n = rows.length, total = a.rows.length;
+      var bar = function (k, cnt, base) { var pc = base ? Math.round(cnt / base * 1000) / 10 : 0; return '<div class="sv-bar"><span class="l">' + escapeHtml(k) + '</span><span class="t"><i style="width:' + pc + '%"></i></span><span class="v">' + cnt + ' (' + pc + '%)</span></div>'; };
+      var html = '<p class="hint" style="margin-top:0">ตอบแล้ว ' + n + ' จาก ' + total + ' คน</p>' + (d.fields || []).map(function (f, qi) {
+        var vals = rows.map(function (x) { return (x.values || {})[f.id]; }).filter(function (v) { return v != null && v !== '' && !(Array.isArray(v) && !v.length); });
+        var body = '';
+        if (f.type === 'radio' || f.type === 'select' || f.type === 'checks') {
+          var c = {}; (f.options || []).forEach(function (o) { c[o] = 0; });
+          vals.forEach(function (v) { (Array.isArray(v) ? v : [v]).forEach(function (o) { c[o] = (c[o] || 0) + 1; }); });
+          body = Object.keys(c).map(function (k) { return bar(k, c[k], vals.length); }).join('') + (f.type === 'checks' ? '<div class="hint">เลือกได้หลายข้อ — ร้อยละคิดจากจำนวนผู้ตอบข้อนี้</div>' : '');
+        } else if (f.type === 'rating' || f.type === 'number') {
+          var nums = vals.map(Number).filter(function (x) { return isFinite(x); }), avg = nums.length ? nums.reduce(function (s, x) { return s + x; }, 0) / nums.length : 0;
+          body = '<div class="sv-avg">ค่าเฉลี่ย <b>' + (nums.length ? avg.toFixed(2) : '-') + '</b>' + (f.type === 'rating' ? ' / 5' : '') + ' <span class="hint">(' + nums.length + ' คำตอบ)</span></div>';
+          if (f.type === 'rating') { var rc = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }; nums.forEach(function (x) { rc[x] = (rc[x] || 0) + 1; }); body += [5, 4, 3, 2, 1].map(function (k) { return bar(k + ' คะแนน', rc[k], nums.length); }).join(''); }
+        } else {
+          body = vals.length ? '<ul class="sv-texts">' + vals.slice(0, 200).map(function (v) { return '<li>' + escapeHtml(fieldValueText(v, f.type)) + '</li>'; }).join('') + '</ul>' : '<div class="hint">ยังไม่มีคำตอบ</div>';
+        }
+        return '<div class="sv-q"><div class="sv-qh">' + (qi + 1) + '. ' + escapeHtml(f.label) + ' <small>' + escapeHtml(FIELD_TYPE_LABEL[f.type] || '') + '</small></div>' + body + '</div>';
+      }).join('');
+      var m = document.getElementById('svSumModal');
+      if (!m) {
+        m = document.createElement('div'); m.className = 'modal-backdrop'; m.id = 'svSumModal'; m.hidden = true;
+        m.innerHTML = '<div class="modal-box modal-box-wide"><button type="button" class="modal-close-x" data-sv-x aria-label="ปิด">✕</button><h3 id="svSumTitle"></h3><div id="svSumBody" style="text-align:left"></div><div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" data-sv-x>ปิด</button></div></div>';
+        document.body.appendChild(m); m.addEventListener('click', function (e) { if (e.target.closest('[data-sv-x]')) hideModalEl(m); });
+      }
+      document.getElementById('svSumTitle').textContent = 'สรุปผลแบบสำรวจ: ' + (d.categoryName || a.title || '');
+      document.getElementById('svSumBody').innerHTML = html;
+      showModalEl(m);
     }
     function reviewAllBtnHtml(a) {
       var n = unreviewedRows(a).length;
@@ -768,6 +803,8 @@
       var b = e.target.closest('[data-rv-file]'); if (!b || !rvCur || !rvCur.files) return;
       // 1.85: ส่งชนิดไฟล์ให้พรีวิว (รูปภาพแสดงเป็นรูป — เดิมเปิดผ่านหน้าตัวอย่าง Drive ทำให้รูปไม่ขึ้น) + เลื่อนดูไฟล์ถัดไป
       var files = rvCur.files, who = rvCur.row.userName;
+      var f0 = files[Number(b.getAttribute('data-rv-file'))];
+      if (f0 && isSurveySub(f0)) { showAnswersModal(who + ' — คำตอบแบบสำรวจ', f0.fields, 'ตอบเมื่อ ' + formatDateTimeThai(f0.uploadedAt)); return; } // 1.98
       var show = function (i) {
         var f = files[i];
         openFilePreview(drivePreviewUrl(f.fileUrl), who + ' — ' + (f.title || f.fileName), f.fileUrl, undefined,
@@ -812,6 +849,8 @@
       var find = function (id) { return allAssignments.filter(function (x) { return x.eventId === id; })[0]; };
       var cx = e.target.closest('[data-cf-export]'); // 1.97
       if (cx) { var ax = find(cx.getAttribute('data-cf-export')); if (ax) exportFieldsXlsx(ax); return; }
+      var sv = e.target.closest('[data-sv-sum]'); // 1.98
+      if (sv) { var as = find(sv.getAttribute('data-sv-sum')); if (as) openSurveySummary(as); return; }
       if (b) {
         var a = find(b.getAttribute('data-rv-ev')); if (!a) return;
         var row = a.rows.filter(function (r) { return r.userId === b.getAttribute('data-rv-u'); })[0];

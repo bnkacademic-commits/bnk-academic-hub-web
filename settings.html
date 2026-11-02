@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.97.5.011126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.0.021126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -820,6 +820,7 @@
             <label>วิธีส่งงานของประเภทนี้</label>
             <div class="cat-mode" id="catSubMode">
               <label class="cat-mode-opt"><input type="radio" name="catSubMode" value="system" checked /><span><b>ส่งผ่านระบบ (อัปโหลดไฟล์)</b><small>ครูกดปุ่ม "ส่งงาน" แนบไฟล์ — ขึ้นในเช็คลิสต์และสรุปการส่งงาน</small></span></label>
+              <label class="cat-mode-opt"><input type="radio" name="catSubMode" value="survey" /><span><b>ตอบแบบสำรวจ</b><small>ครูตอบคำถามแทนการแนบไฟล์ (ตั้งคำถามที่แท็บ "ข้อมูลที่ต้องกรอก" — เลือกได้ข้อเดียว / หลายข้อ / คะแนน 1–5 / ข้อความ) — ขึ้นในเช็คลิสต์และสรุปการส่งงาน เจ้าหน้าที่ดูสรุปผลและส่งออก Excel ได้ · ไม่ใช้พื้นที่ Google Drive</small></span></label>
               <label class="cat-mode-opt"><input type="radio" name="catSubMode" value="notice" /><span><b>แจ้งเตือนอย่างเดียว</b><small>ไม่มีปุ่มส่งงาน ไม่มีการตรวจ — เป็นแค่การ์ดแจ้งเตือนในปฏิทิน/กำหนดการ</small></span></label>
               <label class="cat-mode-opt"><input type="radio" name="catSubMode" value="check" /><span><b>แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน</b><small>ครูส่งงานนอกระบบ (เช่น ส่งเล่มที่ห้องกลุ่มบริหารงาน) แล้วเจ้าหน้าที่กด "ตรวจแล้ว" ทีละคน — ขึ้นในเช็คลิสต์ของครูและนับในสรุปการส่งงาน · ตั้งให้ครูกด "แจ้งว่าส่งแล้ว" ได้ที่กำหนดการแต่ละรายการ</small></span></label>
             </div>
@@ -1052,6 +1053,7 @@
             <label>วิธีส่งงานของประเภทนี้</label>
             <div class="cat-mode" id="editCatSubMode">
               <label class="cat-mode-opt"><input type="radio" name="editCatSubMode" value="system" checked /><span><b>ส่งผ่านระบบ (อัปโหลดไฟล์)</b><small>ครูกดปุ่ม "ส่งงาน" แนบไฟล์ — ขึ้นในเช็คลิสต์และสรุปการส่งงาน</small></span></label>
+              <label class="cat-mode-opt"><input type="radio" name="editCatSubMode" value="survey" /><span><b>ตอบแบบสำรวจ</b><small>ครูตอบคำถามแทนการแนบไฟล์ (ตั้งคำถามที่แท็บ "ข้อมูลที่ต้องกรอก" — เลือกได้ข้อเดียว / หลายข้อ / คะแนน 1–5 / ข้อความ) — ขึ้นในเช็คลิสต์และสรุปการส่งงาน เจ้าหน้าที่ดูสรุปผลและส่งออก Excel ได้ · ไม่ใช้พื้นที่ Google Drive</small></span></label>
               <label class="cat-mode-opt"><input type="radio" name="editCatSubMode" value="notice" /><span><b>แจ้งเตือนอย่างเดียว</b><small>ไม่มีปุ่มส่งงาน ไม่มีการตรวจ — เป็นแค่การ์ดแจ้งเตือนในปฏิทิน/กำหนดการ</small></span></label>
               <label class="cat-mode-opt"><input type="radio" name="editCatSubMode" value="check" /><span><b>แจ้งเตือน + เจ้าหน้าที่ตรวจรายคน</b><small>ครูส่งงานนอกระบบ (เช่น ส่งเล่มที่ห้องกลุ่มบริหารงาน) แล้วเจ้าหน้าที่กด "ตรวจแล้ว" ทีละคน — ขึ้นในเช็คลิสต์ของครูและนับในสรุปการส่งงาน · ตั้งให้ครูกด "แจ้งว่าส่งแล้ว" ได้ที่กำหนดการแต่ละรายการ</small></span></label>
             </div>
@@ -1282,8 +1284,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.97.5.011126"></script>
-  <script src="assets/gallery.js?v=1.97.5.011126"></script>
+  <script src="assets/api.js?v=1.98.0.021126"></script>
+  <script src="assets/gallery.js?v=1.98.0.021126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1313,7 +1315,7 @@
       selectEl.innerHTML = opts;
     }
     // 1.97: ข้อมูลที่ต้องกรอก — กด "เพิ่มรายการ" แล้วตั้งชื่อหัวข้อ/ชนิดช่องเอง (เดิมเลือกได้แค่ 4 ช่องสำเร็จรูป ซึ่งยังกดเพิ่มได้จากแถว "เพิ่มแบบสำเร็จรูป")
-    var CFE_MAX = 10, cfeBoxes = {};
+    var CFE_MAX = 30, cfeBoxes = {}; // 1.98: 10 → 30 (แบบสำรวจ)
     function cfeNewId() { return 'f' + Math.random().toString(36).slice(2, 8); }
     function renderFieldCheckboxes(containerId, namePrefix, defs) {
       var box = document.getElementById(containerId);
@@ -1327,7 +1329,7 @@
       var chk = function (k, t) { return '<label><input type="checkbox" data-cfe="' + k + '"' + (d[k] ? ' checked' : '') + ' /> ' + t + '</label>'; };
       var extra = '';
       if (d.type === 'numlist') extra = '<div class="cfe-sub">ชื่อช่องรายละเอียด <input type="text" data-cfe="detailLabel" maxlength="40" style="width:150px" value="' + escapeHtml(d.detailLabel || '') + '" placeholder="เช่น ชื่อวิชา" /> สูงสุด <input type="number" data-cfe="max" min="1" max="30" style="width:70px" value="' + escapeHtml(d.max || 10) + '" /> รายการ</div>';
-      if (d.type === 'select') extra = '<div class="cfe-sub" style="display:block">ตัวเลือก (บรรทัดละ 1 ตัวเลือก)<textarea data-cfe="options" rows="3" placeholder="ม.1&#10;ม.2&#10;ม.3">' + escapeHtml((d.options || []).join('\n')) + '</textarea></div>';
+      if (FIELD_HAS_OPTIONS[d.type]) extra = '<div class="cfe-sub" style="display:block">ตัวเลือก (บรรทัดละ 1 ตัวเลือก)<textarea data-cfe="options" rows="3" placeholder="ม.1&#10;ม.2&#10;ม.3">' + escapeHtml((d.options || []).join('\n')) + '</textarea></div>';
       return '<div class="cfe-row" data-cfe-i="' + i + '"><div class="cfe-top">' +
         '<button type="button" class="cfe-ib" data-cfe-mv="-1" title="เลื่อนขึ้น" aria-label="เลื่อนขึ้น"' + (i === 0 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-up"></i></button>' +
         '<button type="button" class="cfe-ib" data-cfe-mv="1" title="เลื่อนลง" aria-label="เลื่อนลง"' + (i === n - 1 ? ' disabled' : '') + '><i class="fa-solid fa-arrow-down"></i></button>' +
@@ -1374,7 +1376,7 @@
       return box.__defs.filter(function (d) { return String(d.label || '').trim(); }).map(function (d) {
         var o = { id: d.id, label: d.label.trim(), type: d.type, required: !!d.required, excel: !!d.excel, pub: !!d.pub, hint: String(d.hint || '').trim() };
         if (d.type === 'numlist') { o.detailLabel = String(d.detailLabel || '').trim() || 'รายละเอียด'; o.max = Math.min(30, Math.max(1, Math.trunc(Number(d.max) || 10))); }
-        if (d.type === 'select') { o.options = d.options || []; if (!o.options.length) throw new Error('หัวข้อ "' + o.label + '" ต้องมีตัวเลือกอย่างน้อย 1 ตัว'); }
+        if (FIELD_HAS_OPTIONS[d.type]) { o.options = d.options || []; if (!o.options.length) throw new Error('หัวข้อ "' + o.label + '" ต้องมีตัวเลือกอย่างน้อย 1 ตัว'); }
         return o;
       });
     }
@@ -3184,15 +3186,17 @@
         var catTemplateVal = document.getElementById('catTemplate').value;
         var catFieldsVal; try { catFieldsVal = readCheckedFields('catFields'); } catch (fe) { errBox.textContent = fe.message; errBox.hidden = false; return; } // 1.97
         var catModeVal = catSubMode('cat'); // 1.93
-        var catNoSubmissionVal = catModeVal !== 'system';
+        var catNoSubmissionVal = catModeVal !== 'system' && catModeVal !== 'survey'; // 1.98: แบบสำรวจ = ส่งผ่านระบบ
+        if (catModeVal === 'survey' && !catFieldsVal.length) { errBox.textContent = 'แบบสำรวจต้องมีคำถามอย่างน้อย 1 ข้อ — ตั้งที่แท็บ "ข้อมูลที่ต้องกรอก"'; errBox.hidden = false; switchCatTab('fields'); return; }
         var catRoomBasedVal = Number(document.getElementById('catRoomMode').value); // 1.90 · 1.96: 0–3
         if (catRoomBasedVal && catNoSubmissionVal) { errBox.textContent = 'งานตามห้องต้องเลือกวิธีส่งงานเป็น "ส่งผ่านระบบ"'; errBox.hidden = false; return; }
+        if (catRoomBasedVal && catModeVal === 'survey') { errBox.textContent = 'แบบสำรวจใช้กับงานตามห้องไม่ได้'; errBox.hidden = false; return; }
         var catDepartmentVal = document.getElementById('catDepartment').value;
         var catHideFromPortfolioVal = document.getElementById('catHideFromPortfolio').checked;
         var ok = await askConfirm('ยืนยันเพิ่มประเภทงาน "' + catNameVal + '"?', 'ยืนยันการเพิ่มประเภทงาน');
         if (!ok) return;
         var r = await withProgress('กำลังเพิ่มประเภทงาน', function () {
-          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, displayTemplate: catTemplateVal, customFields: catFieldsVal, noSubmission: catNoSubmissionVal, manualCheck: catModeVal === 'check', roomMode: catRoomBasedVal, sendPrefix: document.getElementById('catSendPrefix').checked, department: catDepartmentVal, hideFromPortfolio: catHideFromPortfolioVal });
+          return apiCall('adminCreateWorkCategory', { name: catNameVal, color: catColorVal, displayTemplate: catTemplateVal, customFields: catFieldsVal, noSubmission: catNoSubmissionVal, manualCheck: catModeVal === 'check', survey: catModeVal === 'survey', roomMode: catRoomBasedVal, sendPrefix: document.getElementById('catSendPrefix').checked, department: catDepartmentVal, hideFromPortfolio: catHideFromPortfolioVal || catModeVal === 'survey' });
         }, { successLabel: 'เพิ่มประเภทงานแล้ว' });
         if (r.ok) {
           hideModalEl(createCatModalEl);
@@ -3215,7 +3219,7 @@
       document.getElementById('ecTabBtn-fields').addEventListener('click', function () { switchEditCatTab('fields'); });
       openEditCatModal = function (cat) {
         editCatOriginal = {
-          color: cat.color || '#3457d5', template: normalizeTemplate(cat.displayTemplate), noSubmission: !!cat.noSubmission, manualCheck: !!cat.manualCheck, roomMode: Number(cat.roomMode != null ? cat.roomMode : (cat.roomBased ? 1 : 0)), name: cat.name, sendPrefix: !!cat.sendPrefix,
+          color: cat.color || '#3457d5', template: normalizeTemplate(cat.displayTemplate), noSubmission: !!cat.noSubmission, manualCheck: !!cat.manualCheck, survey: !!cat.survey, roomMode: Number(cat.roomMode != null ? cat.roomMode : (cat.roomBased ? 1 : 0)), name: cat.name, sendPrefix: !!cat.sendPrefix,
           department: cat.department || '', hideFromPortfolio: !!cat.hideFromPortfolio,
           fields: JSON.stringify(cat.customFields || [])
         };
@@ -3225,7 +3229,7 @@
         document.getElementById('editCatSendPrefix').checked = editCatOriginal.sendPrefix;
         document.getElementById('editCatColor').value = editCatOriginal.color;
         renderTemplateOptions(document.getElementById('editCatTemplate'), editCatOriginal.template);
-        setCatSubMode('editCat', editCatOriginal.manualCheck ? 'check' : (editCatOriginal.noSubmission ? 'notice' : 'system')); // 1.93
+        setCatSubMode('editCat', editCatOriginal.manualCheck ? 'check' : (editCatOriginal.noSubmission ? 'notice' : (editCatOriginal.survey ? 'survey' : 'system'))); // 1.93 · 1.98 survey
         document.getElementById('editCatRoomMode').value = String(editCatOriginal.roomMode); // 1.90 · 1.96: 3 แบบ
         renderDepartmentOptions(document.getElementById('editCatDepartment'), editCatOriginal.department);
         document.getElementById('editCatHideFromPortfolio').checked = editCatOriginal.hideFromPortfolio;
@@ -3246,7 +3250,8 @@
         var next = {
           color: document.getElementById('editCatColor').value,
           template: document.getElementById('editCatTemplate').value,
-          noSubmission: catSubMode('editCat') !== 'system',
+          noSubmission: catSubMode('editCat') !== 'system' && catSubMode('editCat') !== 'survey',
+          survey: catSubMode('editCat') === 'survey', // 1.98
           manualCheck: catSubMode('editCat') === 'check',
           roomMode: Number(document.getElementById('editCatRoomMode').value),
           name: document.getElementById('editCatNameInput').value.replace(/\s+/g, ' ').trim(),
@@ -3261,9 +3266,12 @@
         if (!next.name) { errBox.textContent = 'กรุณากรอกชื่อประเภทงาน'; errBox.hidden = false; return; }
         if (next.name !== o.name || next.sendPrefix !== o.sendPrefix) calls.unshift(['adminRenameWorkCategory', { categoryId: catId, name: next.name, sendPrefix: next.sendPrefix }]); // 1.96
         if (next.roomMode && next.noSubmission) { errBox.textContent = 'งานตามห้องต้องเป็นงานที่ส่งผ่านระบบ'; errBox.hidden = false; return; }
+        if (next.roomMode && next.survey) { errBox.textContent = 'แบบสำรวจใช้กับงานตามห้องไม่ได้'; errBox.hidden = false; return; }
+        if (next.survey && !next.fields.length) { errBox.textContent = 'แบบสำรวจต้องมีคำถามอย่างน้อย 1 ข้อ — ตั้งที่แท็บ "ข้อมูลที่ต้องกรอก"'; errBox.hidden = false; switchEditCatTab('fields'); return; }
         if (next.roomMode !== o.roomMode && !next.roomMode) calls.push(['adminSetWorkCategoryRoomBased', { categoryId: catId, roomMode: 0 }]);
         if (next.noSubmission !== o.noSubmission || next.manualCheck !== o.manualCheck) calls.push(['adminSetWorkCategoryNoSubmission', { categoryId: catId, noSubmission: next.noSubmission, manualCheck: next.manualCheck }]);
         if (next.roomMode !== o.roomMode && next.roomMode) calls.push(['adminSetWorkCategoryRoomBased', { categoryId: catId, roomMode: next.roomMode }]);
+        if (next.survey !== o.survey) { calls.push(['adminSetWorkCategorySurvey', { categoryId: catId, survey: next.survey }]); if (next.survey && !next.hideFromPortfolio) { next.hideFromPortfolio = true; } } // 1.98: แบบสำรวจไม่ขึ้นหน้าผลงานครู
         if (next.department !== o.department) calls.push(['adminSetWorkCategoryDepartment', { categoryId: catId, department: next.department }]);
         if (next.hideFromPortfolio !== o.hideFromPortfolio) calls.push(['adminSetWorkCategoryPortfolioVisibility', { categoryId: catId, hideFromPortfolio: next.hideFromPortfolio }]);
         if (JSON.stringify(next.fields) !== o.fields) calls.push(['adminUpdateWorkCategoryFields', { categoryId: catId, customFields: next.fields }]);
