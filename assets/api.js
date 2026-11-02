@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.98.0';
-var APP_VERSION = '1.98.0.021126';
+var WORKER_MIN_VERSION = '1.98.1';
+var APP_VERSION = '1.98.1.021126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1340,6 +1340,17 @@ function applyMemoFeatureVisibility(st) {
   document.querySelectorAll('.memo-feature, .sidenav a[href="memo.html"]').forEach(function (el) { el.classList.toggle('memo-feature-off', off); });
 }
 
+// 1.98.1: เปิด/ปิดระบบนิเทศการสอน (settings.supEnabled) — จำไว้ใน localStorage ให้เมนูไม่กระพริบ
+try { if (localStorage.getItem('bnkah_sup_off') === '1') document.documentElement.classList.add('sup-off'); } catch (e) { /* ข้าม */ }
+function applySupVisibility(st) {
+  var off = !!(st && st.supEnabled === false);
+  try { if (off) localStorage.setItem('bnkah_sup_off', '1'); else localStorage.removeItem('bnkah_sup_off'); } catch (e) { /* ข้าม */ }
+  document.documentElement.classList.toggle('sup-off', off);
+}
+// 1.98.1: เกณฑ์ระดับคุณภาพของโรงเรียน (5 ดีมาก · 4 ดี · 3 พอใช้ · 2 ควรปรับปรุง · 1 ไม่ผ่าน) — ค่าเฉลี่ยปัดตามช่วง .50
+var SUP_LEVELS = ['', 'ไม่ผ่าน', 'ควรปรับปรุง', 'พอใช้', 'ดี', 'ดีมาก'];
+function supLevelOf(avg) { if (avg == null || !isFinite(avg)) return ''; return SUP_LEVELS[avg >= 4.5 ? 5 : avg >= 3.5 ? 4 : avg >= 2.5 ? 3 : avg >= 1.5 ? 2 : 1]; }
+
 async function currentTermLabel() {
   var t = await currentAcademicTerm();
   var semText = t.semester === 'summer' ? 'ภาคฤดูร้อน' : ('ภาคเรียนที่ ' + t.semester);
@@ -1982,6 +1993,7 @@ function mountChrome(activePage) {
       }
       // 1.48.121026: Super Admin ปิด "จัดทำบันทึกข้อความ" -> ซ่อนเมนู/ปุ่ม/แท็บที่เกี่ยวข้อง และพาออกจากหน้า memo.html
       applyMemoFeatureVisibility(st);
+      applySupVisibility(st); // 1.98.1: ปิดระบบนิเทศ = ซ่อนเมนู
       if (st && st.memoEnabled === false && activePage === 'memo') location.replace(homePageFor(session));
     });
 

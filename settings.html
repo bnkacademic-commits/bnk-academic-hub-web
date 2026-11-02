@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.98.0.021126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.1.021126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -51,6 +51,7 @@
       <button class="tab-btn memo-feature" data-tab="deptinfo">ข้อมูลกลุ่มบริหารงาน</button>
       <button class="tab-btn super-admin-only" data-tab="accounts">จัดการบัญชี</button>
       <button class="tab-btn super-admin-only" data-tab="extlinks">เว็บไซต์โรงเรียน</button>
+      <button class="tab-btn super-admin-only" data-tab="supervision">นิเทศการสอน</button>
       <button class="tab-btn super-admin-only" data-tab="log">ประวัติการส่งงานและลบงาน</button>
       <button class="tab-btn" data-tab="systemlog">ประวัติระบบ</button>
       <!-- ข้อมูลระบบ (1.46.121026): ทุกบัญชีเห็นแท็บนี้ — ส่วนพื้นที่เก็บข้อมูลเห็นเฉพาะ Super Admin ส่วน "เครดิต" ทุกคนเห็น
@@ -639,6 +640,23 @@
         </div>
         <p class="hint" style="margin-top:-8px; margin-bottom:14px;">สร้างปุ่มลิงก์ไปเว็บไซต์โรงเรียน (เช่น ระบบอื่นของโรงเรียน เว็บไซต์หน่วยงาน) ไปแสดงในหน้าฮับของทุกบัญชีที่มีฮับ เป็นส่วนใหม่ก่อนปฏิทิน — กดปุ่มแล้วเปิดลิงก์ในแท็บเบราว์เซอร์ใหม่ทันที ถ้าอัปโหลดรูปภาพไว้ด้วย ปุ่มจะแสดงเป็นรูปนั้นแทนปุ่มสีข้อความ (ปุ่มรูปภาพแสดงผลจริงที่ขนาด <b>160×60px</b> เป๊ะ — สร้างรูปต้นฉบับขนาด <b>320×120px</b> พอดี คือ 2 เท่าของขนาดแสดงผลจริงเพื่อความคมชัด อัตราส่วน 8:3 พื้นหลังโปร่งใส จะเต็มปุ่มสนิทไม่มีขอบขาวหรือถูกครอบตัด) จัดลำดับก่อน-หลังได้ด้วยปุ่ม ▲ ▼ ท้ายแถว</p>
         <div id="extLinkListWrap"><div class="loading">กำลังโหลด</div></div>
+      </div>
+    </div>
+
+    <!-- 1.98.1: นิเทศการสอน — เปิด/ปิดระบบ + สิทธิ์รายคน (จัดการ / ดูผล) -->
+    <div class="tab-panel super-admin-only" id="tab-supervision">
+      <div class="card">
+        <div class="sup-onrow">
+          <div><div class="section-title" style="margin:0"><span><i class="fa-solid fa-chalkboard-user ui-icon" aria-hidden="true"></i> ระบบนิเทศการสอน</span></div><p class="hint" style="margin:2px 0 0">ปิด = ซ่อนเมนู "นิเทศการสอน" จากทุกคน (ข้อมูลเดิมยังอยู่ เปิดใหม่ได้ทุกเมื่อ)</p></div>
+          <label class="sup-switch"><input type="checkbox" id="supOnSwitch" /><i></i><span id="supOnLabel">เปิดใช้งาน</span></label>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title"><span><i class="fa-solid fa-user-shield ui-icon" aria-hidden="true"></i> สิทธิ์งานนิเทศ <span class="hint" style="margin:0;font-weight:400">(กำหนดรายคน)</span></span></div>
+        <div class="sup-addrow"><input type="search" id="supPermQ" placeholder="พิมพ์ชื่อครูเพื่อเพิ่ม…" list="supPermList" autocomplete="off" /><datalist id="supPermList"></datalist><button type="button" class="btn btn-primary" id="supPermAdd"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่ม</button></div>
+        <div id="supPermWrap"><div class="loading">กำลังโหลด</div></div>
+        <p class="hint">จัดการงานนิเทศ = สร้างรอบ · กำหนดผู้นิเทศ · ตั้งแบบประเมิน · ลงวัน · ตารางนิเทศ &nbsp;|&nbsp; ดูผลการนิเทศ = คะแนน · ข้อเสนอแนะ · ความพึงพอใจ · รายงาน PDF · ผู้นิเทศเห็นผลที่ตัวเองประเมินเสมอ · ครูทุกคนเห็น "ตารางนิเทศรวม" (ไม่มีคะแนน)</p>
+        <div style="text-align:right"><button type="button" class="btn btn-success" id="supPermSave"><i class="fa-solid fa-check" aria-hidden="true"></i> บันทึกสิทธิ์</button></div>
       </div>
     </div>
 
@@ -1284,8 +1302,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=1.98.0.021126"></script>
-  <script src="assets/gallery.js?v=1.98.0.021126"></script>
+  <script src="assets/api.js?v=1.98.1.021126"></script>
+  <script src="assets/gallery.js?v=1.98.1.021126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1381,6 +1399,50 @@
       });
     }
 
+    // ---------- 1.98.1: นิเทศการสอน (Super Admin) ----------
+    var supPerm = { list: [], people: [] };
+    async function loadSupPerms() {
+      var wrap = document.getElementById('supPermWrap');
+      try {
+        var d = await apiCall('supManagersGet', {});
+        supPerm.list = d.managers.map(function (m) { return { id: m.id, name: m.name, sub: [m.department ? groupLabel(m.department) : '', m.subjectGroup, m.executive ? 'ผู้บริหาร' : ''].filter(Boolean).join(' · '), manage: !!m.manage, view: !!m.view }; });
+        supPerm.people = d.people;
+        document.getElementById('supOnSwitch').checked = d.enabled !== false; supOnPaint();
+        document.getElementById('supPermList').innerHTML = d.people.map(function (p) { return '<option value="' + escapeHtml(p.name) + '"></option>'; }).join('');
+        renderSupPerms();
+      } catch (e) { wrap.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; }
+    }
+    function renderSupPerms() {
+      var ck = function (i, k, v) { return '<input type="checkbox" class="sup-ck" data-sp-i="' + i + '" data-sp-k="' + k + '"' + (v ? ' checked' : '') + ' aria-label="' + (k === 'manage' ? 'จัดการงานนิเทศ' : 'ดูผลการนิเทศ') + '" />'; };
+      document.getElementById('supPermWrap').innerHTML = supPerm.list.length ? '<div class="sup-ptbl-wrap"><table class="sup-ptbl"><thead><tr><th>ชื่อ</th><th>จัดการงานนิเทศ</th><th>ดูผลการนิเทศ</th><th>ลบ</th></tr></thead><tbody>' + supPerm.list.map(function (x, i) {
+        return '<tr><td><b>' + escapeHtml(x.name) + '</b><small>' + escapeHtml(x.sub || '') + '</small></td><td>' + ck(i, 'manage', x.manage) + '</td><td>' + ck(i, 'view', x.view) + '</td><td><button type="button" class="modal-close-x sup-del" data-sp-del="' + i + '" aria-label="ลบ">✕</button></td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="hint">ยังไม่มีรายชื่อ — ผู้ดูแลระบบจัดการได้คนเดียว</p>';
+    }
+    function supOnPaint() { var on = document.getElementById('supOnSwitch').checked; document.getElementById('supOnLabel').textContent = on ? 'เปิดใช้งาน' : 'ปิดอยู่'; }
+    document.getElementById('supOnSwitch').addEventListener('change', async function () {
+      var on = this.checked, sw = this;
+      if (!(await askConfirm(on ? 'เปิดใช้งานระบบนิเทศการสอน?' : 'ปิดระบบนิเทศการสอน? (เมนูจะหายจากทุกคน ข้อมูลเดิมยังอยู่)', on ? 'เปิดระบบนิเทศ' : 'ปิดระบบนิเทศ'))) { sw.checked = !on; return; }
+      var r = await withProgress('กำลังบันทึก', function () { return apiCall('adminUpdateSettings', { supEnabled: on }); }, { successLabel: on ? 'เปิดระบบนิเทศแล้ว' : 'ปิดระบบนิเทศแล้ว' });
+      if (!r.ok) sw.checked = !on; else { try { resetSettingsCache(); } catch (e) { /* ข้าม */ } applySupVisibility({ supEnabled: on }); }
+      supOnPaint();
+    });
+    document.getElementById('supPermWrap').addEventListener('change', function (e) { var c = e.target.closest('[data-sp-i]'); if (c) supPerm.list[+c.getAttribute('data-sp-i')][c.getAttribute('data-sp-k')] = c.checked; });
+    document.getElementById('supPermWrap').addEventListener('click', function (e) { var b = e.target.closest('[data-sp-del]'); if (b) { supPerm.list.splice(+b.getAttribute('data-sp-del'), 1); renderSupPerms(); } });
+    document.getElementById('supPermAdd').addEventListener('click', function () {
+      var q = document.getElementById('supPermQ').value.trim(); if (!q) return;
+      var p = supPerm.people.filter(function (x) { return x.name === q; })[0] || supPerm.people.filter(function (x) { return x.name.indexOf(q) !== -1; })[0];
+      if (!p) { showToast('ไม่พบชื่อนี้', true); return; }
+      if (supPerm.list.some(function (x) { return x.id === p.id; })) { showToast('มีชื่อนี้อยู่แล้ว', true); return; }
+      supPerm.list.push({ id: p.id, name: p.name, sub: [p.department ? groupLabel(p.department) : '', p.subjectGroup, p.executive ? 'ผู้บริหาร' : ''].filter(Boolean).join(' · '), manage: !p.executive, view: !!p.executive });
+      document.getElementById('supPermQ').value = ''; renderSupPerms();
+    });
+    document.getElementById('supPermSave').addEventListener('click', async function () {
+      var bad = supPerm.list.filter(function (x) { return !x.manage && !x.view; });
+      if (bad.length) { showToast('ติ๊กอย่างน้อย 1 สิทธิ์ หรือลบชื่อออก: ' + bad.map(function (x) { return x.name; }).join(', '), true); return; }
+      var r = await withProgress('กำลังบันทึกสิทธิ์', function () { return apiCall('supManagersSave', { items: supPerm.list.map(function (x) { return { id: x.id, manage: x.manage, view: x.view }; }) }); }, { successLabel: 'บันทึกสิทธิ์งานนิเทศแล้ว' });
+      if (r.ok) loadSupPerms();
+    });
+
     // 1.45.111026: ทุกบัญชีเข้าหน้านี้ได้ (เพื่อดูเครดิต) — 1.46: ครู/ผู้บริหารเห็นเฉพาะแท็บ "ข้อมูลระบบ" (มีแค่การ์ดเครดิต)
     var session = requireLogin();
     if (session) mountChrome('settings');
@@ -1447,6 +1509,7 @@
         })]);
       },
       extlinks: function () { return loadExtLinks(); },
+      supervision: function () { return loadSupPerms(); }, // 1.98.1
       log: function () { return loadLog(); },
       systemlog: function () { return loadSystemLog(); },
       sysinfo: function () { return isSuperAdminSession ? loadSysInfo() : Promise.resolve(); }

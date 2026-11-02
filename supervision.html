@@ -16,12 +16,12 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.98.0.021126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.1.021126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
   <div id="app-topbar"></div>
-  <!-- 1.98: นิเทศการสอน — ครูเลือกคาบ (วันในสัปดาห์ + คาบ) · ผู้จัดการงานนิเทศลงวันในปฏิทิน · ผู้นิเทศทำแบบประเมิน -->
+  <!-- 1.98 · 1.98.1: นิเทศการสอน — ครูเลือกคาบ (วันในสัปดาห์ + คาบ) · ผู้จัดการงานนิเทศลงวันในปฏิทิน · ผู้นิเทศทำแบบประเมิน -->
   <div class="container">
     <div class="page-header">
       <div>
@@ -45,14 +45,14 @@
   </div>
   <input type="file" id="spPlanFile" hidden />
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.98.0.021126"></script>
+  <script src="assets/api.js?v=1.98.1.021126"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('supervision'); if (typeof mountFooter === 'function') mountFooter(); }
     var DAYS = ['', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์'], DAYS_S = ['', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.'];
     var MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
     var B = null;               // ผลจาก supBoot
-    var st = { tab: '', roundId: '', D: null, busy: null, evals: null, tt: null, picks: {}, sel: '', pickDate: '', schedView: 'day', dutySel: '', mgrIds: null, extend: 0, onlyWait: true, filterGroup: '', q: '' };
+    var st = { tab: '', roundId: '', D: null, busy: null, evals: null, sats: null, tt: null, picks: {}, sel: '', pickDate: '', schedView: 'day', dutySel: '', extend: 0, onlyWait: true, filterGroup: '', q: '', formKind: 'eval', all: null, allRound: '', allQ: '', allG: '' };
     var body = document.getElementById('spBody');
 
     // ---------- ตัวช่วย ----------
@@ -69,6 +69,7 @@
     function err(msg) { return '<div class="error-box">' + escapeHtml(msg) + '</div>'; }
     function gradeOf(roomId) { return (/^m(\d)_/.exec(roomId || '') || [])[1] || ''; }
     function modal(title, html, actions) {
+      var mb0 = document.getElementById('spModalBody'); mb0.onchange = null; mb0.onclick = null;
       document.getElementById('spModalTitle').innerHTML = title;
       document.getElementById('spModalBody').innerHTML = html;
       document.getElementById('spModalActions').innerHTML = (actions || '') + '<button type="button" class="btn btn-ghost btn-close" data-sp-close>ปิด</button>';
@@ -81,21 +82,23 @@
     async function boot(keepTab) {
       try { B = await apiCall('supBoot', {}); }
       catch (e) { body.innerHTML = err(e.message); return; }
-      if (!B.sqlReady) { document.getElementById('spTabs').innerHTML = ''; body.innerHTML = '<div class="card">' + err('ยังใช้หน้านี้ไม่ได้ — ผู้ดูแลระบบต้องรัน SQL ชุดที่สามสิบสามก่อน (ดู README)') + '</div>'; return; }
-      if (B.manager && (!st.roundId || !roundOf(st.roundId))) st.roundId = B.rounds[0] ? B.rounds[0].id : '';
+      if (B.enabled === false) { document.getElementById('spTabs').innerHTML = ''; document.getElementById('spRoundPick').hidden = true; body.innerHTML = '<div class="card sp-empty"><i class="fa-solid fa-power-off"></i><p>ระบบนิเทศการสอนปิดใช้งานอยู่' + (B.superAdmin ? ' — เปิดได้ที่ ตั้งค่าระบบ → นิเทศการสอน' : '') + '</p></div>'; return; }
+      if (!B.sqlReady) { document.getElementById('spTabs').innerHTML = ''; body.innerHTML = '<div class="card">' + err('ยังใช้หน้านี้ไม่ได้ — ผู้ดูแลระบบต้องรัน SQL ชุดที่สามสิบสาม และสามสิบสี่ก่อน (ดู README)') + '</div>'; return; }
+      if ((B.manager || B.viewer) && (!st.roundId || !roundOf(st.roundId))) st.roundId = B.rounds[0] ? B.rounds[0].id : '';
       renderTabs(keepTab);
     }
     function tabList() {
       var t = [];
       if (B.mine.length) t.push(['mine', 'fa-user-check', 'คาบของฉัน']);
       if (B.duties.length) t.push(['duty', 'fa-clipboard-check', 'คาบที่ฉันต้องนิเทศ']);
-      if (B.manager) t.push(['rounds', 'fa-layer-group', 'รอบนิเทศ'], ['sup', 'fa-users', 'ผู้นิเทศ'], ['form', 'fa-list-check', 'แบบประเมิน'], ['dates', 'fa-calendar-days', 'ลงวันนิเทศ'], ['sched', 'fa-table-list', 'ตารางนิเทศ']);
-      if (B.superAdmin) t.push(['mgr', 'fa-user-shield', 'ผู้จัดการงานนิเทศ']);
+      if ((B.allRounds || []).length) t.push(['all', 'fa-calendar-check', 'ตารางนิเทศรวม']); // 1.98.1: ครูทุกคนเห็น
+      if (B.manager) t.push(['rounds', 'fa-layer-group', 'รอบนิเทศ'], ['sup', 'fa-users', 'ผู้นิเทศ'], ['form', 'fa-list-check', 'แบบประเมิน'], ['dates', 'fa-calendar-days', 'ลงวันนิเทศ']);
+      if (B.manager || B.viewer) t.push(['sched', 'fa-table-list', B.viewer ? 'ตารางและผลนิเทศ' : 'ตารางนิเทศ']);
       return t;
     }
     function renderTabs(keepTab) {
       var t = tabList();
-      if (!t.length) { document.getElementById('spTabs').innerHTML = ''; body.innerHTML = '<div class="card sp-empty"><i class="fa-solid fa-chalkboard-user"></i><p>ยังไม่มีรอบนิเทศที่เกี่ยวกับคุณ</p></div>'; return; }
+      if (!t.length) { document.getElementById('spTabs').innerHTML = ''; body.innerHTML = '<div class="card sp-empty"><i class="fa-solid fa-chalkboard-user"></i><p>ยังไม่มีรอบนิเทศ</p></div>'; return; }
       if (!keepTab || !t.some(function (x) { return x[0] === st.tab; })) {
         var h = (location.hash || '').replace('#', '');
         st.tab = t.some(function (x) { return x[0] === h; }) ? h : t[0][0];
@@ -109,7 +112,7 @@
       box.hidden = !(mgrTab && B.rounds.length);
       if (!box.hidden) document.getElementById('spRoundSel').innerHTML = B.rounds.map(function (r) { return '<option value="' + escapeHtml(r.id) + '"' + (r.id === st.roundId ? ' selected' : '') + '>' + escapeHtml(r.title) + '</option>'; }).join('');
     }
-    document.getElementById('spRoundSel').addEventListener('change', function () { st.roundId = this.value; st.D = null; st.busy = null; st.evals = null; st.sel = ''; show(); });
+    document.getElementById('spRoundSel').addEventListener('change', function () { st.roundId = this.value; st.D = null; st.busy = null; st.evals = null; st.sats = null; st.sel = ''; show(); });
     document.getElementById('spTabs').addEventListener('click', function (e) {
       var b = e.target.closest('[data-sp-tab]'); if (!b) return;
       st.tab = b.getAttribute('data-sp-tab'); try { history.replaceState(null, '', '#' + st.tab); } catch (x) { /* ข้าม */ }
@@ -122,10 +125,10 @@
       return true;
     }
     async function show() {
-      var fn = { mine: renderMine, duty: renderDuty, rounds: renderRounds, sup: renderSup, form: renderForm, dates: renderDates, sched: renderSched, mgr: renderMgr }[st.tab];
+      var fn = { mine: renderMine, duty: renderDuty, all: renderAll, rounds: renderRounds, sup: renderSup, form: renderForm, dates: renderDates, sched: renderSched }[st.tab];
       try {
         if (['sup', 'form', 'dates', 'sched'].indexOf(st.tab) !== -1) {
-          if (!B.rounds.length) { body.innerHTML = '<div class="card sp-empty"><i class="fa-solid fa-layer-group"></i><p>ยังไม่มีรอบนิเทศ — สร้างรอบที่แท็บ "รอบนิเทศ"</p></div>'; return; }
+          if (!B.rounds.length) { body.innerHTML = '<div class="card sp-empty"><i class="fa-solid fa-layer-group"></i><p>ยังไม่มีรอบนิเทศ' + (B.manager ? ' — สร้างรอบที่แท็บ "รอบนิเทศ"' : '') + '</p></div>'; return; }
           if (!st.D || st.D.round.id !== st.roundId) body.innerHTML = '<div class="loading">กำลังโหลด...</div>';
           await needDetail();
         }
@@ -133,9 +136,31 @@
       } catch (e) { body.innerHTML = err(e.message); }
     }
 
+    // ---------- แบบประเมิน: หัวข้อใหญ่ (section) / ข้อย่อย + เลขข้อพิมพ์เอง (ใช้ทั้งแบบนิเทศและความพึงพอใจ) ----------
+    function qNum(f, i) { return f.num || String(i + 1); }
+    function formFillHtml(form, ans, can, id) {
+      ans = ans || {};
+      return '<div class="sp-evf" id="' + id + '">' + (form || []).map(function (f, i) {
+        if (f.type === 'section') return '<div class="sp-sec">' + escapeHtml(qNum(f, i)) + ' ' + escapeHtml(f.label) + '</div>';
+        var v = ans[f.id], sub = /\./.test(f.num || '');
+        if (f.type === 'rating') return '<div class="sp-qi' + (sub ? ' sub' : '') + '"><span><b>' + escapeHtml(qNum(f, i)) + '</b> ' + escapeHtml(f.label) + (f.required ? ' <span class="cf-req">*</span>' : '') + '</span>' +
+          '<div class="sp-rate" data-q="' + escapeHtml(f.id) + '">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-rate="' + n + '" title="' + n + ' = ' + SUP_LEVELS[n] + '" class="' + (String(v) === String(n) ? 'on' : '') + '"' + (can ? '' : ' disabled') + '>' + n + '</button>'; }).join('') + '</div></div>';
+        return '<div class="sp-evq' + (sub ? ' sub' : '') + '"><div class="q"><b>' + escapeHtml(qNum(f, i)) + '</b> ' + escapeHtml(f.label) + (f.required ? ' <span class="cf-req">*</span>' : '') + '</div><textarea rows="3" maxlength="2000" data-qt="' + escapeHtml(f.id) + '"' + (can ? '' : ' disabled') + '>' + escapeHtml(v || '') + '</textarea></div>';
+      }).join('') + '<div class="sp-scale">' + [5, 4, 3, 2, 1].map(function (n) { return n + ' = ' + SUP_LEVELS[n]; }).join(' · ') + '</div></div>';
+    }
+    function readFormAnswers(id) {
+      var a = {}, box = document.getElementById(id); if (!box) return a;
+      box.querySelectorAll('[data-q]').forEach(function (g) { var on = g.querySelector('button.on'); if (on) a[g.getAttribute('data-q')] = +on.getAttribute('data-rate'); });
+      box.querySelectorAll('[data-qt]').forEach(function (x) { if (x.value.trim()) a[x.getAttribute('data-qt')] = x.value.trim(); });
+      return a;
+    }
+    function checkForm(form, a) {
+      for (var i = 0; i < (form || []).length; i++) { var f = form[i]; if (f.type !== 'section' && f.required && (a[f.id] == null || a[f.id] === '')) return (f.type === 'rating' ? 'กรุณาให้คะแนน ' : 'กรุณากรอก ') + qNum(f, i) + ' ' + f.label; }
+      return '';
+    }
+
     // ---------- ตารางสอน (เลือกคาบ) ----------
-    function ttHtml(slots, picks, locked, opt) {
-      opt = opt || {};
+    function ttHtml(slots, picks, locked) {
       var m = {}; (slots || []).forEach(function (x) { m[x.day + '-' + x.period] = x; });
       var h = '<div class="sp-tt-wrap"><table class="tt-grid sp-tt"><thead><tr><th class="tt-dh"></th>';
       for (var p = 1; p <= 8; p++) h += '<th>คาบ ' + p + '<small>' + (TT_TIMES[p] || '') + '</small></th>';
@@ -160,50 +185,80 @@
     }
 
     // ---------- แท็บ: คาบของฉัน (ครูผู้รับการนิเทศ) ----------
+    function supBoxHtml(m) {
+      return '<div class="sp-sups"><h4><i class="fa-solid fa-user-tie"></i> ผู้นิเทศ' + (m.supervisors.length ? ' (' + m.supervisors.length + ' คน)' : '') + '</h4>' +
+        (m.supervisors.length ? m.supervisors.map(function (x) { return '<div class="sp-sprow"><span class="sp-av">' + escapeHtml(String(x.name).replace(/^(นาย|นางสาว|นาง|ผอ\.|รอง ผอ\.|ดร\.)\s*/, '').charAt(0)) + '</span>' + escapeHtml(x.name) + '</div>'; }).join('') : '<div class="mut">รอผู้จัดการงานนิเทศกำหนด</div>') + '</div>';
+    }
+    function planBoxHtml(m, r) {
+      return '<div class="sp-plan">' + (m.plan ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(m.plan.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> ' + escapeHtml(m.plan.name) + '</a> <button type="button" class="btn btn-ghost btn-sm" data-plan-del="' + escapeHtml(r.id) + '">ลบไฟล์</button>' :
+        '<button type="button" class="btn btn-secondary btn-sm" data-plan-add="' + escapeHtml(r.id) + '"' + (m.slots.length ? '' : ' disabled title="เลือกคาบก่อน"') + '><i class="fa-solid fa-paperclip"></i> แนบแผนการสอน (ไม่บังคับ)</button>') + '</div>';
+    }
+    function pickBarHtml(m, r, tt, late) {
+      var pk = st.picks[r.id] || {}, keys = Object.keys(pk), saved = m.slots.length > 0;
+      var savedSame = saved && keys.length === m.slots.length && m.slots.every(function (s) { return pk[s.day + '-' + s.period]; });
+      var desc = keys.map(function (k) { var x = (tt && tt.slots || []).filter(function (y) { return y.day + '-' + y.period === k; })[0], d = +k.split('-')[0], p = +k.split('-')[1]; return 'ทุกวัน' + DAYS[d] + ' คาบ ' + p + (x ? ' · ' + slotLabel(x) : ''); }).join(' / ');
+      return '<div class="sp-bar"><span>คาบที่เลือก: <b class="ok">' + (keys.length ? escapeHtml(desc) : '—') + '</b> <small class="mut">(' + keys.length + '/' + r.perTeacher + ')</small>' + (savedSame ? ' <span class="sp-st ok">ส่งแล้ว · รอเจ้าหน้าที่ลงวันที่</span>' : '') + '</span>' +
+        planBoxHtml(m, r) + (late ? '' : '<button type="button" class="btn btn-success" data-pick-save="' + escapeHtml(r.id) + '"' + (keys.length === r.perTeacher && !savedSame ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> ' + (saved ? 'บันทึกคาบที่เปลี่ยน' : 'ส่งคาบที่เลือก') + '</button>') + '</div>';
+    }
+    function satHtml(m, r) {
+      if (!m.canSat || !(r.satForm || []).some(function (f) { return f.type !== 'section'; })) return '';
+      return '<div class="sp-satbox"><h3><i class="fa-solid fa-face-smile"></i> แบบประเมินความพึงพอใจต่อการนิเทศ <span class="mut">· ได้รับการนิเทศแล้ว' + (m.sat ? ' · ส่งแล้ว ' + escapeHtml(formatDateTimeThai(m.sat.savedAt)) + ' (แก้ได้)' : '') + '</span></h3>' +
+        formFillHtml(r.satForm, m.sat && m.sat.answers, true, 'spSat_' + r.id) +
+        '<div class="sp-evact"><span class="mut"><i class="fa-solid fa-lock"></i> ผู้นิเทศไม่เห็นคำตอบนี้ · ผู้มีสิทธิ์ดูผลเห็นสรุป</span><button type="button" class="btn btn-success" data-sat-save="' + escapeHtml(r.id) + '"><i class="fa-solid fa-paper-plane"></i> ' + (m.sat ? 'บันทึกการแก้ไข' : 'ส่งแบบประเมิน') + '</button></div></div>';
+    }
     async function renderMine() {
-      body.innerHTML = '<div class="loading">กำลังโหลดตารางสอน...</div>';
+      if (!st.tt) body.innerHTML = '<div class="loading">กำลังโหลดตารางสอน...</div>';
       var tt = null; try { tt = await loadMyTT(); } catch (e) { tt = { linked: false, reason: e.message, slots: [] }; }
       var html = B.mine.map(function (m) {
         var r = roundOf(m.roundId); if (!r) return '';
         var dated = m.slots.some(function (s) { return s.date; }), today = todayYmd();
         var late = r.pickUntil && today > r.pickUntil;
-        var head = '<div class="sp-rhead"><div><h2>' + escapeHtml(r.title) + '</h2><div class="mut">' + escapeHtml(semTxt(r)) + ' · ช่วงนิเทศ ' + thD(r.startDate) + ' – ' + thD(r.endDate) + (r.pickUntil ? ' · เลือกคาบได้ถึง ' + thD(r.pickUntil) : '') +
-          ' · ผู้นิเทศ: ' + (m.supervisors.length ? m.supervisors.map(function (x) { return escapeHtml(x.name); }).join(', ') : '<i>รอกำหนด</i>') + '</div></div></div>';
-        var planBox = '<div class="sp-plan">' + (m.plan ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(m.plan.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> ' + escapeHtml(m.plan.name) + '</a> <button type="button" class="btn btn-ghost btn-sm" data-plan-del="' + escapeHtml(r.id) + '">ลบไฟล์</button>' :
-          '<button type="button" class="btn btn-secondary btn-sm" data-plan-add="' + escapeHtml(r.id) + '"' + (m.slots.length ? '' : ' disabled title="เลือกคาบก่อน"') + '><i class="fa-solid fa-paperclip"></i> แนบแผนการสอน (ไม่บังคับ)</button>') + '</div>';
+        var head = '<div class="sp-rhead"><div><h2>' + escapeHtml(r.title) + '</h2><div class="mut">' + escapeHtml(semTxt(r)) + ' · ช่วงนิเทศ ' + thD(r.startDate) + ' – ' + thD(r.endDate) + (r.pickUntil ? ' · เลือกคาบได้ถึง ' + thD(r.pickUntil) : '') + '</div></div></div>';
         if (dated) {
           var picks = {}; m.slots.forEach(function (s) { picks[s.day + '-' + s.period] = s.date ? 'นิเทศ ' + thDS(s.date) : 'รอลงวัน'; });
-          return '<div class="card sp-round">' + head +
+          return '<div class="card sp-round" data-round="' + escapeHtml(r.id) + '">' + head +
             '<div class="sp-info"><i class="fa-solid fa-bell"></i> เจ้าหน้าที่ลงวันนิเทศให้แล้ว — เปลี่ยนวันหรือคาบ ติดต่อผู้จัดการงานนิเทศ</div>' +
             '<div class="sp-bigs">' + m.slots.map(function (s) {
               return '<div class="sp-big' + (s.date ? '' : ' wait') + '"><span>' + (s.date ? 'วัน' + DAYS[dowOf(s.date)] : 'ทุกวัน' + DAYS[s.day]) + '</span><b>' + (s.date ? thDS(s.date) : 'รอลงวัน') + '</b><span>' + (s.date ? (ymdParts(s.date).y + 543) + ' · ' : '') + 'คาบ ' + s.period + '</span><small>' + escapeHtml(slotLabel(s)) + '</small></div>';
-            }).join('') + '<div class="sp-bigside">' + planBox + '</div></div>' +
+            }).join('') + supBoxHtml(m) + '<div class="sp-bigside">' + planBoxHtml(m, r) + '</div></div>' +
+            satHtml(m, r) +
             (tt && tt.linked ? '<h3 class="sp-h3">ตารางสอนของคุณ</h3>' + ttHtml(tt.slots, picks, true) : '') + '</div>';
         }
-        // ยังไม่ลงวัน: เลือก/เปลี่ยนคาบได้ (จนถึงวันที่กำหนด)
         if (!st.picks[r.id]) { st.picks[r.id] = {}; m.slots.forEach(function (s) { st.picks[r.id][s.day + '-' + s.period] = true; }); }
-        var pk = st.picks[r.id], keys = Object.keys(pk), saved = m.slots.length > 0;
-        var savedSame = saved && keys.length === m.slots.length && m.slots.every(function (s) { return pk[s.day + '-' + s.period]; });
-        var desc = keys.map(function (k) { var x = (tt && tt.slots || []).filter(function (y) { return y.day + '-' + y.period === k; })[0], d = +k.split('-')[0], p = +k.split('-')[1]; return 'ทุกวัน' + DAYS[d] + ' คาบ ' + p + (x ? ' · ' + slotLabel(x) : ''); }).join(' / ');
-        var grid = !tt || !tt.linked ? err((tt && tt.reason) || 'ยังไม่พบตารางสอนของคุณในเว็บเช็คชื่อ — ติดต่อผู้ดูแลเว็บเช็คชื่อให้ผูกรายชื่อครูกับ AcademicHub') : ttHtml(tt.slots, pk, late);
+        var grid = !tt || !tt.linked ? err((tt && tt.reason) || 'ยังไม่พบตารางสอนของคุณในเว็บเช็คชื่อ — ติดต่อผู้ดูแลเว็บเช็คชื่อให้ผูกรายชื่อครูกับ AcademicHub') : ttHtml(tt.slots, st.picks[r.id], late);
         return '<div class="card sp-round" data-round="' + escapeHtml(r.id) + '">' + head +
-          (late ? '<div class="sp-warn"><i class="fa-solid fa-lock"></i> หมดเวลาเลือกคาบแล้ว' + (saved ? '' : ' — ติดต่อผู้จัดการงานนิเทศ') + '</div>' : '<p class="mut" style="margin:6px 0 8px">แตะคาบในตารางสอนที่ต้องการรับการนิเทศ ' + r.perTeacher + ' คาบ (เลือกวันในสัปดาห์ + คาบ — วันที่จริงเจ้าหน้าที่จะลงให้ภายหลัง)</p>') +
-          grid +
-          '<div class="sp-bar"><span>คาบที่เลือก: <b class="ok">' + (keys.length ? escapeHtml(desc) : '—') + '</b> <small class="mut">(' + keys.length + '/' + r.perTeacher + ')</small>' + (savedSame ? ' <span class="sp-st ok">ส่งแล้ว · รอเจ้าหน้าที่ลงวันที่</span>' : '') + '</span>' +
-          planBox + (late ? '' : '<button type="button" class="btn btn-success" data-pick-save="' + escapeHtml(r.id) + '"' + (keys.length === r.perTeacher && !savedSame ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> ' + (saved ? 'บันทึกคาบที่เปลี่ยน' : 'ส่งคาบที่เลือก') + '</button>') + '</div></div>';
+          '<div class="sp-supline">' + supBoxHtml(m) + '</div>' +
+          (late ? '<div class="sp-warn"><i class="fa-solid fa-lock"></i> หมดเวลาเลือกคาบแล้ว' + (m.slots.length ? '' : ' — ติดต่อผู้จัดการงานนิเทศ') + '</div>' : '<p class="mut" style="margin:6px 0 8px">แตะคาบในตารางสอนที่ต้องการรับการนิเทศ ' + r.perTeacher + ' คาบ (เลือกวันในสัปดาห์ + คาบ — วันที่จริงเจ้าหน้าที่จะลงให้ภายหลัง)</p>') +
+          grid + pickBarHtml(m, r, tt, late) + '</div>';
       }).join('');
       body.innerHTML = html || '<div class="card sp-empty"><p>ไม่มีรอบนิเทศ</p></div>';
       if (typeof ttShrink === 'function') ttShrink(body);
     }
+    // 1.98.1: เลือกคาบ = เปลี่ยนเฉพาะช่องที่แตะ + แถบด้านล่าง (ไม่วาดทั้งหน้า — ไม่กระพริบ)
     function togglePick(roundId, k) {
       var r = roundOf(roundId), pk = st.picks[roundId] || (st.picks[roundId] = {});
       if (pk[k]) delete pk[k];
-      else { if (r.perTeacher === 1) { st.picks[roundId] = {}; pk = st.picks[roundId]; } else if (Object.keys(pk).length >= r.perTeacher) { showToast('เลือกได้ ' + r.perTeacher + ' คาบ — แตะคาบเดิมเพื่อยกเลิกก่อน', true); return; } pk[k] = true; }
-      renderMine();
+      else { if (r.perTeacher === 1) { Object.keys(pk).forEach(function (x) { delete pk[x]; }); } else if (Object.keys(pk).length >= r.perTeacher) { showToast('เลือกได้ ' + r.perTeacher + ' คาบ — แตะคาบเดิมเพื่อยกเลิกก่อน', true); return; } pk[k] = true; }
+      var card = body.querySelector('[data-round="' + roundId + '"]'); if (!card) return;
+      card.querySelectorAll('[data-pick]').forEach(function (td) {
+        var on = !!pk[td.getAttribute('data-pick')], b = td.querySelector('.sp-badge');
+        td.classList.toggle('sp-on', on);
+        if (on && !b) td.insertAdjacentHTML('beforeend', '<span class="sp-badge">เลือกแล้ว</span>'); else if (!on && b) b.remove();
+      });
+      var m = B.mine.filter(function (x) { return x.roundId === roundId; })[0], bar = card.querySelector('.sp-bar');
+      if (m && bar) bar.outerHTML = pickBarHtml(m, r, st.tt, false);
     }
     body.addEventListener('click', async function (e) {
       var t;
       if (st.tab === 'mine' && (t = e.target.closest('[data-pick]'))) { togglePick(t.closest('[data-round]').getAttribute('data-round'), t.getAttribute('data-pick')); return; }
+      if (st.tab === 'mine' && (t = e.target.closest('[data-rate]'))) { t.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); }); return; }
+      if ((t = e.target.closest('[data-sat-save]'))) {
+        var rid0 = t.getAttribute('data-sat-save'), r0 = roundOf(rid0), a0 = readFormAnswers('spSat_' + rid0), e0 = checkForm(r0.satForm, a0);
+        if (e0) { showToast(e0, true); return; }
+        var rs = await withProgress('กำลังส่งแบบประเมินความพึงพอใจ', function () { return apiCall('supSatSave', { roundId: rid0, answers: a0 }); }, { successLabel: 'ส่งแบบประเมินแล้ว ขอบคุณครับ/ค่ะ' });
+        if (rs.ok) await boot(true);
+        return;
+      }
       if ((t = e.target.closest('[data-pick-save]'))) {
         var rid = t.getAttribute('data-pick-save'), picks = Object.keys(st.picks[rid] || {}).map(function (k) { return { day: +k.split('-')[0], period: +k.split('-')[1] }; });
         var r = await withProgress('กำลังบันทึกคาบที่เลือก', function () { return apiCall('supPickSave', { roundId: rid, picks: picks }); }, { successLabel: 'ส่งคาบที่เลือกแล้ว — รอเจ้าหน้าที่ลงวันที่' });
@@ -230,6 +285,26 @@
       if (r.ok) await boot(true);
     });
 
+    // ---------- แท็บ: ตารางนิเทศรวม (ทุกคน · ไม่มีผลประเมิน) ----------
+    async function renderAll() {
+      if (!st.all || (st.allRound && st.all.roundId !== st.allRound)) { body.innerHTML = '<div class="loading">กำลังโหลด...</div>'; st.all = await apiCall('supSchedule', { roundId: st.allRound || '' }); }
+      var d = st.all, groups = {}; d.rows.forEach(function (x) { groups[x.subjectGroup || 'ไม่ระบุ'] = 1; });
+      var q = st.allQ || '', g = st.allG || '';
+      var rows = d.rows.filter(function (x) { return (!g || (x.subjectGroup || 'ไม่ระบุ') === g) && (!q || (x.teacherName + ' ' + x.supervisors.join(' ')).indexOf(q) !== -1); });
+      body.innerHTML = '<div class="sp-toolbar">' + (d.rounds.length > 1 ? '<select data-all-round>' + d.rounds.map(function (r) { return '<option value="' + escapeHtml(r.id) + '"' + (r.id === d.roundId ? ' selected' : '') + '>' + escapeHtml(r.title) + '</option>'; }).join('') + '</select>' : '<b>' + escapeHtml((d.rounds[0] || {}).title || '') + '</b>') +
+        '<select data-all-g><option value="">ทุกกลุ่มสาระ</option>' + Object.keys(groups).sort(function (a, b) { return a.localeCompare(b, 'th'); }).map(function (x) { return '<option' + (x === g ? ' selected' : '') + '>' + escapeHtml(x) + '</option>'; }).join('') + '</select>' +
+        '<input type="search" data-all-q placeholder="ค้นหาชื่อครู / ผู้นิเทศ" value="' + escapeHtml(q) + '" /></div>' +
+        '<div class="card sp-tbl-wrap"><table class="sp-tbl"><thead><tr><th>วันที่</th><th>คาบ</th><th>ครูผู้รับการนิเทศ</th><th>กลุ่มสาระฯ</th><th>วิชา / ห้อง</th><th>ผู้นิเทศ</th></tr></thead><tbody>' +
+        rows.map(function (x) { var me = x.teacherId === B.me.id || x.supervisors.indexOf(B.me.name) !== -1; return '<tr' + (me ? ' class="sp-me"' : '') + '><td class="nw"><b>' + thD(x.date, true) + '</b></td><td>' + x.period + '</td><td>' + escapeHtml(x.teacherName) + '</td><td>' + escapeHtml(x.subjectGroup || '-') + '</td><td>' + escapeHtml((x.code || x.subject) + ' · ' + x.room) + '</td><td>' + escapeHtml(x.supervisors.join(', ')) + '</td></tr>'; }).join('') +
+        (rows.length ? '' : '<tr><td colspan="6" class="mut">ยังไม่มีวันนิเทศ</td></tr>') + '</tbody></table><p class="mut" style="margin:8px 0 0">ครูทุกคนเห็นตารางนี้ · ไม่แสดงผลประเมิน · แถวสีม่วง = เกี่ยวกับคุณ</p></div>';
+    }
+    body.addEventListener('change', function (e) {
+      if (st.tab !== 'all') return;
+      if (e.target.matches('[data-all-round]')) { st.allRound = e.target.value; renderAll(); }
+      if (e.target.matches('[data-all-g]')) { st.allG = e.target.value; renderAll(); }
+    });
+    body.addEventListener('input', function (e) { if (st.tab === 'all' && e.target.matches('[data-all-q]')) { st.allQ = e.target.value.trim(); var pos = e.target.selectionStart; renderAll(); var n = body.querySelector('[data-all-q]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } });
+
     // ---------- แท็บ: คาบที่ฉันต้องนิเทศ (ผู้นิเทศ) ----------
     function dutyKey(d) { return d.slot ? d.slot.id : 'n:' + d.roundId + ':' + d.teacherId; }
     function renderDuty() {
@@ -242,35 +317,69 @@
         return '<tr class="sp-row' + (dutyKey(d) === st.dutySel ? ' sel' : '') + '" data-duty="' + escapeHtml(dutyKey(d)) + '"><td class="nw">' + (s && s.date ? '<b>' + DAYS_S[dowOf(s.date)] + ' ' + thDS(s.date) + '</b><div class="mut">คาบ ' + s.period + '</div>' : (s ? '<span class="mut">ทุกวัน' + DAYS[s.day] + ' คาบ ' + s.period + '</span>' : '-')) + '</td>' +
           '<td>' + escapeHtml(d.teacherName) + '<div class="mut">' + escapeHtml(s ? slotLabel(s) : '') + (d.plan ? ' · <i class="fa-solid fa-paperclip"></i> แผนการสอน' : '') + (r && B.rounds.length > 1 ? ' · ' + escapeHtml(r.title) : '') + '</div></td><td><span class="sp-st ' + x[0] + '">' + x[1] + '</span></td></tr>';
       }).join('') + '</tbody></table></div>';
-      var right = '<div class="card sp-col">';
-      if (!cur) right += '<p class="mut">เลือกรายการทางซ้าย</p>';
+      var right = '<div class="sp-col">';
+      if (!cur) right += '<div class="card"><p class="mut">เลือกรายการทางซ้าย</p></div>';
       else {
-        var r = roundOf(cur.roundId), form = (r && r.form) || [], ans = (cur.myEval && cur.myEval.answers) || {}, can = cur.slot && cur.slot.date;
-        right += '<h3>แบบประเมิน · ' + escapeHtml(cur.teacherName) + '</h3><div class="mut" style="margin:-6px 0 10px">' + (cur.slot ? (cur.slot.date ? thD(cur.slot.date, true) : 'ทุกวัน' + DAYS[cur.slot.day]) + ' คาบ ' + cur.slot.period + ' · ' + escapeHtml(slotLabel(cur.slot)) : '') +
+        var r = roundOf(cur.roundId), can = cur.slot && cur.slot.date;
+        right += '<div class="card"><h3>แบบประเมินการนิเทศ · ' + escapeHtml(cur.teacherName) + '</h3><div class="mut" style="margin:-6px 0 10px">' + (cur.slot ? (cur.slot.date ? thD(cur.slot.date, true) : 'ทุกวัน' + DAYS[cur.slot.day]) + ' คาบ ' + cur.slot.period + ' · ' + escapeHtml(slotLabel(cur.slot)) : '') +
           (cur.coSupervisors.length ? ' · นิเทศร่วมกับ ' + escapeHtml(cur.coSupervisors.join(', ')) : '') + '</div>' +
           (cur.plan ? '<p><a class="btn btn-secondary btn-sm" href="' + escapeHtml(cur.plan.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> เปิดแผนการสอน</a></p>' : '') +
           (!can ? '<div class="sp-warn"><i class="fa-solid fa-hourglass-half"></i> ' + (cur.slot ? 'รอเจ้าหน้าที่ลงวันนิเทศ — ทำแบบประเมินได้หลังลงวันแล้ว' : 'ครูยังไม่เลือกคาบ') + '</div>' : '') +
-          '<div class="sp-evf" id="spEvf">' + form.map(function (f) {
-            var v = ans[f.id];
-            return '<div class="sp-evq"><div class="q">' + escapeHtml(f.label) + (f.required ? ' <span class="cf-req">*</span>' : '') + '</div>' + (f.type === 'rating' ?
-              '<div class="sp-rate" data-q="' + escapeHtml(f.id) + '">' + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-rate="' + n + '" class="' + (String(v) === String(n) ? 'on' : '') + '"' + (can ? '' : ' disabled') + '>' + n + '</button>'; }).join('') + '</div>' :
-              '<textarea rows="3" maxlength="2000" data-qt="' + escapeHtml(f.id) + '"' + (can ? '' : ' disabled') + '>' + escapeHtml(v || '') + '</textarea>') + '</div>';
-          }).join('') + '</div>' +
+          formFillHtml((r && r.form) || [], cur.myEval && cur.myEval.answers, can, 'spEvf') +
           '<div class="sp-evact">' + (cur.myEval ? '<span class="mut">บันทึกล่าสุด ' + escapeHtml(formatDateTimeThai(cur.myEval.savedAt)) + '</span>' : '') + '<button type="button" class="btn btn-success" data-ev-save' + (can ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> บันทึกผลประเมิน</button></div>' +
-          '<p class="mut sp-note"><i class="fa-solid fa-lock"></i> ผลประเมินเห็นได้เฉพาะผู้นิเทศ และผู้จัดการงานนิเทศ</p>';
+          '<p class="mut sp-note"><i class="fa-solid fa-lock"></i> ผลประเมินเห็นได้เฉพาะผู้นิเทศ และผู้มีสิทธิ์ดูผลการนิเทศ</p></div>' +
+          (can ? '<div class="card"><h3><i class="fa-solid fa-camera"></i> รูปการนิเทศ <span class="mut">(สูงสุด 2 รูป · ใช้ในรายงาน PDF)</span></h3><div class="sp-photos" id="spPhotos"><div class="loading">กำลังโหลด...</div></div><p class="mut" style="margin:8px 0 0">ผู้นิเทศของคาบนี้ทุกคน และผู้จัดการงานนิเทศ อัปโหลดได้ · ระบบย่อรูปให้อัตโนมัติ</p></div>' : '');
       }
-      body.innerHTML = '<div class="sp-two">' + left + right + '</div>';
+      body.innerHTML = '<div class="sp-two">' + left + right + '</div></div>';
+      if (cur && cur.slot && cur.slot.date) loadPhotos(cur.slot.id, true);
     }
+    // ---------- รูปการนิเทศ (2 รูป) ----------
+    async function loadPhotos(slotId, canEdit) {
+      var box = document.getElementById('spPhotos'); if (!box) return;
+      var ph = []; try { ph = (await apiCall('supPhotos', { slotId: slotId })).photos || []; } catch (e) { box.innerHTML = err(e.message); return; }
+      if (!document.getElementById('spPhotos')) return;
+      box.innerHTML = [0, 1].map(function (i) {
+        var p = ph.filter(function (x) { return x.idx === i; })[0];
+        return p ? '<div class="sp-ph f"><img src="' + p.data + '" alt="รูปการนิเทศ ' + (i + 1) + '" />' + (canEdit ? '<button type="button" class="sp-x" data-ph-del="' + i + '" data-slot="' + escapeHtml(slotId) + '" aria-label="ลบรูป"><i class="fa-solid fa-xmark"></i></button>' : '') + '</div>'
+          : (canEdit ? '<label class="sp-ph"><input type="file" accept="image/*" data-ph-add="' + i + '" data-slot="' + escapeHtml(slotId) + '" hidden /><i class="fa-solid fa-camera"></i><b>เพิ่มรูปที่ ' + (i + 1) + '</b><span>ถ่าย / เลือกจากเครื่อง</span></label>' : '<div class="sp-ph"><span>ไม่มีรูป</span></div>');
+      }).join('');
+    }
+    function shrinkImage(file) {
+      return new Promise(function (res, rej) {
+        var img = new Image(), url = URL.createObjectURL(file);
+        img.onload = function () {
+          var max = 1280, w = img.width, h = img.height, k = Math.min(1, max / Math.max(w, h)), c = document.createElement('canvas');
+          c.width = Math.round(w * k); c.height = Math.round(h * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+          var q = 0.82, d = c.toDataURL('image/jpeg', q);
+          while (d.length > 440000 && q > 0.35) { q -= 0.1; d = c.toDataURL('image/jpeg', q); }
+          if (d.length > 440000) { c.width = Math.round(c.width * 0.7); c.height = Math.round(c.height * 0.7); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); d = c.toDataURL('image/jpeg', 0.7); }
+          res(d);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('เปิดรูปนี้ไม่ได้')); };
+        img.src = url;
+      });
+    }
+    body.addEventListener('change', async function (e) {
+      var inp = e.target.closest('[data-ph-add]'); if (!inp) return;
+      var file = inp.files && inp.files[0]; if (!file) return;
+      var sid = inp.getAttribute('data-slot'), idx = +inp.getAttribute('data-ph-add');
+      var r = await withProgress('กำลังอัปโหลดรูป', async function () { var d = await shrinkImage(file); return apiCall('supPhotoSave', { slotId: sid, idx: idx, data: d }); }, { successLabel: 'เพิ่มรูปแล้ว' });
+      if (r.ok) loadPhotos(sid, true);
+    });
     var handlers = {};
     handlers.duty = async function (e) {
       var t;
       if ((t = e.target.closest('[data-duty]'))) { st.dutySel = t.getAttribute('data-duty'); renderDuty(); return; }
       if ((t = e.target.closest('[data-rate]'))) { t.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); }); return; }
+      if ((t = e.target.closest('[data-ph-del]'))) {
+        if (!(await askConfirm('ลบรูปนี้?', 'ลบรูป'))) return;
+        try { await apiCall('supPhotoDelete', { slotId: t.getAttribute('data-slot'), idx: +t.getAttribute('data-ph-del') }); loadPhotos(t.getAttribute('data-slot'), true); } catch (x) { showToast(x.message, true); }
+        return;
+      }
       if (e.target.closest('[data-ev-save]')) {
         var cur = B.duties.filter(function (d) { return dutyKey(d) === st.dutySel; })[0]; if (!cur || !cur.slot) return;
-        var answers = {};
-        document.querySelectorAll('#spEvf [data-q]').forEach(function (g) { var on = g.querySelector('button.on'); if (on) answers[g.getAttribute('data-q')] = +on.getAttribute('data-rate'); });
-        document.querySelectorAll('#spEvf [data-qt]').forEach(function (x) { if (x.value.trim()) answers[x.getAttribute('data-qt')] = x.value.trim(); });
+        var r0 = roundOf(cur.roundId), answers = readFormAnswers('spEvf'), ce = checkForm(r0 && r0.form, answers);
+        if (ce) { showToast(ce, true); return; }
         var r = await withProgress('กำลังบันทึกผลประเมิน', function () { return apiCall('supEvalSave', { slotId: cur.slot.id, answers: answers }); }, { successLabel: 'บันทึกผลประเมินแล้ว' });
         if (r.ok) await boot(true);
       }
@@ -340,17 +449,17 @@
         '<div class="sp-toolbar"><select data-f-group><option value="">ทุกกลุ่มสาระ</option>' + Object.keys(groups).sort(function (a, b) { return a.localeCompare(b, 'th'); }).map(function (g) { return '<option' + (g === st.filterGroup ? ' selected' : '') + '>' + escapeHtml(g) + '</option>'; }).join('') + '</select>' +
         '<input type="search" data-f-q placeholder="ค้นหาชื่อครู" value="' + escapeHtml(st.q) + '" />' +
         (addable.length ? '<select data-t-add><option value="">+ เพิ่มครูเข้ารอบ…</option>' + addable.map(function (p) { return '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name) + '</option>'; }).join('') + '</select>' : '') + '</div>' +
-        '<div class="sp-tbl-wrap"><table class="sp-tbl"><thead><tr><th>ครูผู้รับการนิเทศ</th><th>กลุ่มสาระฯ</th><th>ผู้นิเทศ</th><th>คาบที่เลือก</th><th>สถานะ</th><th></th></tr></thead><tbody>' +
+        '<div class="sp-tbl-wrap"><table class="sp-tbl sp-cp"><thead><tr><th>ครูผู้รับการนิเทศ</th><th>กลุ่มสาระฯ</th><th>ผู้นิเทศ</th><th>คาบที่เลือก</th><th>สถานะ</th><th style="text-align:right">จัดการ</th></tr></thead><tbody>' +
         list.map(function (t) {
           var s = teacherStatus(t);
-          return '<tr data-t="' + escapeHtml(t.id) + '"><td><b>' + escapeHtml(t.name) + '</b></td><td>' + escapeHtml(t.subjectGroup || '-') + '</td>' +
+          return '<tr data-t="' + escapeHtml(t.id) + '"><td class="nw"><b>' + escapeHtml(t.name) + '</b></td><td class="nw">' + escapeHtml(t.subjectGroup || '-') + '</td>' +
             '<td class="sp-chips">' + t.supervisors.map(function (id) { return '<span class="sp-chip">' + escapeHtml(nameOf(id)) + '<button type="button" data-sv-del="' + escapeHtml(id) + '" aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button></span>'; }).join('') +
             '<button type="button" class="sp-chip-add" data-sv-pick>+ เพิ่ม</button></td>' +
             '<td>' + (t.slots.length ? t.slots.map(function (x) { return '<div class="sp-slotln">' + DAYS_S[x.day] + ' คาบ ' + x.period + ' · ' + escapeHtml(slotLabel(x)) + (x.date ? ' · <b>' + thD(x.date) + '</b>' : '') + '</div>'; }).join('') : '<span class="mut">-</span>') + '</td>' +
             '<td><span class="sp-st ' + s[0] + '">' + s[1] + '</span></td>' +
-            '<td class="sp-tdacts"><button type="button" class="btn btn-ghost btn-sm" data-sv-copy title="ใช้ผู้นิเทศชุดนี้กับครูทุกคนในกลุ่มสาระเดียวกัน"' + (t.supervisors.length ? '' : ' disabled') + '><i class="fa-solid fa-copy"></i> ทั้งกลุ่มสาระ</button>' +
-            '<button type="button" class="btn btn-ghost btn-sm" data-t-pick title="เปลี่ยนคาบแทนครู"><i class="fa-solid fa-table-cells"></i> คาบ</button>' +
-            '<button type="button" class="btn btn-ghost btn-sm sp-del" data-t-rem title="นำออกจากรอบนี้"><i class="fa-solid fa-user-minus"></i></button></td></tr>';
+            '<td class="sp-tdacts"><button type="button" class="sp-ib" data-sv-copy title="ใช้ผู้นิเทศชุดนี้กับครูทุกคนในกลุ่มสาระเดียวกัน" aria-label="ใช้ผู้นิเทศชุดนี้ทั้งกลุ่มสาระ"' + (t.supervisors.length ? '' : ' disabled') + '><i class="fa-solid fa-copy"></i></button>' +
+            '<button type="button" class="sp-ib" data-t-pick title="เปลี่ยนคาบแทนครู" aria-label="เปลี่ยนคาบแทนครู"><i class="fa-solid fa-table-cells"></i></button>' +
+            '<button type="button" class="sp-ib r" data-t-rem title="นำออกจากรอบนี้" aria-label="นำออกจากรอบนี้"><i class="fa-solid fa-user-minus"></i></button></td></tr>';
         }).join('') + '</tbody></table></div></div>';
     }
     async function setSupervisors(teacherIds, supIds, label) {
@@ -430,38 +539,63 @@
       };
     }
 
-    // ---------- แท็บ: แบบประเมิน (ผู้จัดการ) ----------
+    // ---------- แท็บ: แบบประเมิน (ผู้จัดการ) — 2 แบบ: การนิเทศ (ผู้นิเทศกรอก) / ความพึงพอใจ (ครูกรอก) · หัวข้อใหญ่ + ข้อย่อย + เลขข้อ ----------
+    function curForm() { return st.formKind === 'sat' ? (st.D.round.satForm || (st.D.round.satForm = [])) : st.D.round.form; }
+    function setCurForm(f) { if (st.formKind === 'sat') st.D.round.satForm = f; else st.D.round.form = f; }
     function syncForm() {
-      st.D.round.form = Array.prototype.map.call(body.querySelectorAll('[data-fi-row]'), function (row) {
-        return { id: row.getAttribute('data-fi-row'), label: row.querySelector('[data-fi="label"]').value, type: row.querySelector('[data-fi="type"]').value, required: row.querySelector('[data-fi="required"]').checked };
-      });
+      setCurForm(Array.prototype.map.call(body.querySelectorAll('[data-fi-row]'), function (row) {
+        var ty = row.getAttribute('data-fi-type'), o = { id: row.getAttribute('data-fi-row'), num: row.querySelector('[data-fi="num"]').value.trim(), label: row.querySelector('[data-fi="label"]').value, type: ty === 'section' ? 'section' : row.querySelector('[data-fi="type"]').value };
+        if (o.type !== 'section') o.required = row.querySelector('[data-fi="required"]').checked;
+        return o;
+      }));
     }
     function renderForm() {
-      var f = st.D.round.form, n = f.length, used = st.D.evals.length;
-      body.innerHTML = '<div class="card"><h3>แบบประเมิน (ตั้งหัวข้อเอง) <span class="mut">· ' + escapeHtml(st.D.round.title) + '</span></h3>' +
-        (used ? '<div class="sp-warn"><i class="fa-solid fa-circle-info"></i> มีผลประเมินแล้ว ' + used + ' รายการ — แก้ชื่อหัวข้อได้ · ลบหัวข้อแล้วคะแนนของหัวข้อนั้นจะไม่แสดง</div>' : '') +
+      var f = curForm(), n = f.length, used = st.formKind === 'sat' ? Object.keys(st.D.satDone || {}).length : st.D.evals.length;
+      var others = B.rounds.filter(function (r) { return r.id !== st.roundId; });
+      body.innerHTML = '<div class="sp-toolbar"><div class="sp-seg"><button type="button" data-fk="eval" class="' + (st.formKind !== 'sat' ? 'on' : '') + '">แบบประเมินการนิเทศ (ผู้นิเทศกรอก)</button><button type="button" data-fk="sat" class="' + (st.formKind === 'sat' ? 'on' : '') + '">แบบประเมินความพึงพอใจ (ครูผู้รับการนิเทศกรอก)</button></div></div>' +
+        '<div class="card">' + (used ? '<div class="sp-warn"><i class="fa-solid fa-circle-info"></i> มีคนตอบแล้ว ' + used + ' รายการ — แก้ชื่อหัวข้อได้ · ลบหัวข้อแล้วคะแนนของหัวข้อนั้นจะไม่แสดง</div>' : '') +
         '<div class="sp-flist">' + f.map(function (x, i) {
-          return '<div class="sp-frow" data-fi-row="' + escapeHtml(x.id) + '"><span class="sp-fmv"><button type="button" data-fi-mv="-1"' + (i ? '' : ' disabled') + ' aria-label="เลื่อนขึ้น"><i class="fa-solid fa-arrow-up"></i></button><button type="button" data-fi-mv="1"' + (i < n - 1 ? '' : ' disabled') + ' aria-label="เลื่อนลง"><i class="fa-solid fa-arrow-down"></i></button></span>' +
-            '<input data-fi="label" maxlength="150" value="' + escapeHtml(x.label) + '" placeholder="ชื่อหัวข้อ" />' +
-            '<select data-fi="type"><option value="rating"' + (x.type === 'rating' ? ' selected' : '') + '>ระดับคะแนน 1–5</option><option value="text"' + (x.type === 'text' ? ' selected' : '') + '>ข้อความยาว</option></select>' +
-            '<label class="sp-req"><input type="checkbox" data-fi="required"' + (x.required ? ' checked' : '') + ' /> บังคับ</label>' +
+          var sec = x.type === 'section', sub = !sec && /\./.test(x.num || '');
+          return '<div class="sp-frow' + (sec ? ' sec' : '') + (sub ? ' sub' : '') + '" data-fi-row="' + escapeHtml(x.id) + '" data-fi-type="' + (sec ? 'section' : 'q') + '"><span class="sp-fmv"><button type="button" data-fi-mv="-1"' + (i ? '' : ' disabled') + ' aria-label="เลื่อนขึ้น"><i class="fa-solid fa-arrow-up"></i></button><button type="button" data-fi-mv="1"' + (i < n - 1 ? '' : ' disabled') + ' aria-label="เลื่อนลง"><i class="fa-solid fa-arrow-down"></i></button></span>' +
+            '<input data-fi="num" class="sp-num" maxlength="12" value="' + escapeHtml(x.num || '') + '" placeholder="เลข" aria-label="เลขข้อ" />' +
+            '<input data-fi="label" maxlength="200" value="' + escapeHtml(x.label) + '" placeholder="' + (sec ? 'ชื่อหัวข้อใหญ่' : 'ชื่อหัวข้อ') + '" />' +
+            (sec ? '<span class="sp-sectag">หัวข้อใหญ่ (ไม่มีคะแนน)</span>' : '<select data-fi="type"><option value="rating"' + (x.type === 'rating' ? ' selected' : '') + '>ระดับคะแนน 1–5</option><option value="text"' + (x.type === 'text' ? ' selected' : '') + '>ข้อความยาว</option></select>' +
+            '<label class="sp-req"><input type="checkbox" data-fi="required"' + (x.required ? ' checked' : '') + ' /> บังคับ</label>') +
             '<button type="button" class="sp-x" data-fi-del aria-label="ลบหัวข้อ"><i class="fa-solid fa-xmark"></i></button></div>';
         }).join('') + '</div>' +
-        '<div class="sp-formact"><button type="button" class="btn btn-secondary" data-fi-add' + (n >= 30 ? ' disabled' : '') + '><i class="fa-solid fa-plus"></i> เพิ่มหัวข้อ</button><button type="button" class="btn btn-success" data-fi-save><i class="fa-solid fa-check"></i> บันทึกแบบประเมิน</button></div></div>';
+        '<div class="sp-formact" style="justify-content:flex-start"><button type="button" class="btn btn-secondary" data-fi-sec' + (n >= 60 ? ' disabled' : '') + '><i class="fa-solid fa-heading"></i> เพิ่มหัวข้อใหญ่</button><button type="button" class="btn btn-secondary" data-fi-add' + (n >= 60 ? ' disabled' : '') + '><i class="fa-solid fa-plus"></i> เพิ่มหัวข้อย่อย</button>' +
+        (others.length ? '<select data-fi-copy><option value="">คัดลอกจากรอบก่อน…</option>' + others.map(function (r) { return '<option value="' + escapeHtml(r.id) + '">' + escapeHtml(r.title) + '</option>'; }).join('') + '</select>' : '') +
+        '<span class="sp-sp"></span><button type="button" class="btn btn-success" data-fi-save><i class="fa-solid fa-check"></i> บันทึก</button></div>' +
+        '<p class="mut">เลขข้อพิมพ์เองได้ (1 / 1.1 / ก.) · เลขที่มีจุด (เช่น 1.1) แสดงเยื้องเป็นข้อย่อย · ค่าเฉลี่ยในรายงานคิดแยกตามหัวข้อใหญ่และรวมทั้งหมด · ระดับ: ' + [5, 4, 3, 2, 1].map(function (k) { return k + ' = ' + SUP_LEVELS[k]; }).join(' · ') + '</p></div>';
+    }
+    function nextNum(f, sec) {
+      var last = f.filter(function (x) { return x.type === 'section'; }).pop(), top = f.filter(function (x) { return x.type === 'section' || !/\./.test(x.num || ''); }).length;
+      if (sec || !last) return String(top + 1);
+      var subs = f.filter(function (x) { return x.type !== 'section' && String(x.num || '').indexOf((last.num || '') + '.') === 0; }).length;
+      return (last.num || '') + '.' + (subs + 1);
     }
     handlers.form = async function (e) {
       var b;
-      if (e.target.closest('[data-fi-add]')) { syncForm(); st.D.round.form.push({ id: 'q' + Math.random().toString(36).slice(2, 8), label: '', type: 'rating', required: true }); renderForm(); var ins = body.querySelectorAll('[data-fi="label"]'); ins[ins.length - 1].focus(); return; }
-      if ((b = e.target.closest('[data-fi-del]'))) { syncForm(); var id = b.closest('[data-fi-row]').getAttribute('data-fi-row'); st.D.round.form = st.D.round.form.filter(function (x) { return x.id !== id; }); renderForm(); return; }
-      if ((b = e.target.closest('[data-fi-mv]'))) { syncForm(); var f = st.D.round.form, i = f.map(function (x) { return x.id; }).indexOf(b.closest('[data-fi-row]').getAttribute('data-fi-row')), j = i + (+b.getAttribute('data-fi-mv')); if (j < 0 || j >= f.length) return; var tmp = f[i]; f[i] = f[j]; f[j] = tmp; renderForm(); return; }
+      if ((b = e.target.closest('[data-fk]'))) { syncForm(); st.formKind = b.getAttribute('data-fk'); renderForm(); return; }
+      if (e.target.closest('[data-fi-add]') || e.target.closest('[data-fi-sec]')) { syncForm(); var sec = !!e.target.closest('[data-fi-sec]'), f0 = curForm(); f0.push(sec ? { id: 's' + Math.random().toString(36).slice(2, 8), num: nextNum(f0, true), label: '', type: 'section' } : { id: 'q' + Math.random().toString(36).slice(2, 8), num: nextNum(f0, false), label: '', type: 'rating', required: true }); renderForm(); var ins = body.querySelectorAll('[data-fi="label"]'); ins[ins.length - 1].focus(); return; }
+      if ((b = e.target.closest('[data-fi-del]'))) { syncForm(); var id = b.closest('[data-fi-row]').getAttribute('data-fi-row'); setCurForm(curForm().filter(function (x) { return x.id !== id; })); renderForm(); return; }
+      if ((b = e.target.closest('[data-fi-mv]'))) { syncForm(); var f = curForm(), i = f.map(function (x) { return x.id; }).indexOf(b.closest('[data-fi-row]').getAttribute('data-fi-row')), j = i + (+b.getAttribute('data-fi-mv')); if (j < 0 || j >= f.length) return; var tmp = f[i]; f[i] = f[j]; f[j] = tmp; renderForm(); return; }
       if (e.target.closest('[data-fi-save]')) {
         syncForm();
-        var form = st.D.round.form.filter(function (x) { return x.label.trim(); });
-        if (!form.length) { showToast('ต้องมีอย่างน้อย 1 หัวข้อ', true); return; }
-        var r = await withProgress('กำลังบันทึกแบบประเมิน', function () { return apiCall('supFormSave', { roundId: st.roundId, form: form }); }, { successLabel: 'บันทึกแบบประเมินแล้ว' });
-        if (r.ok) { st.D.round.form = r.data.form; await boot(true); }
+        var form = curForm().filter(function (x) { return x.label.trim(); });
+        if (!form.some(function (x) { return x.type !== 'section'; })) { showToast('ต้องมีอย่างน้อย 1 ข้อที่ให้คะแนนหรือกรอกข้อความ', true); return; }
+        var kind = st.formKind;
+        var r = await withProgress('กำลังบันทึกแบบประเมิน', function () { return apiCall('supFormSave', { roundId: st.roundId, form: form, kind: kind }); }, { successLabel: 'บันทึกแบบประเมินแล้ว' });
+        if (r.ok) { setCurForm(r.data.form); await boot(true); }
       }
     };
+    body.addEventListener('change', function (e) {
+      if (st.tab !== 'form' || !e.target.matches('[data-fi-copy]') || !e.target.value) return;
+      var src = roundOf(e.target.value); if (!src) return;
+      var f = st.formKind === 'sat' ? (src.satForm || []) : (src.form || []);
+      if (!f.length) { showToast('รอบนั้นยังไม่มีแบบประเมินนี้', true); e.target.value = ''; return; }
+      setCurForm(JSON.parse(JSON.stringify(f))); renderForm(); showToast('คัดลอกแล้ว — กด "บันทึก" เพื่อใช้กับรอบนี้');
+    });
 
     // ---------- แท็บ: ลงวันนิเทศ (ผู้จัดการ) ----------
     async function ensureBusy() { if (!st.busy) { try { st.busy = (await apiCall('supBusy', { roundId: st.roundId })).busy || {}; } catch (e) { st.busy = {}; } } return st.busy; }
@@ -586,7 +720,16 @@
     }
 
     // ---------- แท็บ: ตารางนิเทศ (ผู้จัดการ) ----------
-    async function ensureEvals() { if (!st.evals) st.evals = (await apiCall('supEvalList', { roundId: st.roundId })).evals || []; return st.evals; }
+    // ผู้มีสิทธิ์ดูผล = คะแนน + ความพึงพอใจ · ผู้จัดการอย่างเดียว = เห็นแค่ว่าประเมินแล้วหรือยัง (ไม่มีคะแนน)
+    async function ensureEvals() {
+      if (st.evals) return st.evals;
+      if (B.viewer) { var d = await apiCall('supEvalList', { roundId: st.roundId }); st.evals = d.evals || []; st.sats = d.sats || []; }
+      else { st.evals = (st.D.evals || []).map(function (e) { return { slotId: e.slotId, supervisorId: e.supervisorId, answers: {}, savedAt: e.savedAt }; }); st.sats = []; }
+      return st.evals;
+    }
+    function satOf(tid) { return (st.sats || []).filter(function (x) { return x.teacherId === tid; })[0] || null; }
+    function qLabel(f, form) { return (f.num || String(form.indexOf(f) + 1)) + ' ' + f.label; }
+    function ratedItems(form) { return (form || []).filter(function (f) { return f.type === 'rating'; }); }
     function schedRows() {
       var ev = {}; (st.evals || []).forEach(function (e) { (ev[e.slotId] = ev[e.slotId] || []).push(e); });
       return allSlots().map(function (x) { return { t: x.t, s: x.s, evs: ev[x.s.id] || [] }; });
@@ -607,12 +750,13 @@
       await Promise.all([ensureEvals(), ensureBusy()]);
       var rows = schedRows(), dated = rows.filter(function (x) { return x.s.date; }).sort(function (a, b) { return a.s.date.localeCompare(b.s.date) || a.s.period - b.s.period; }), und = rows.filter(function (x) { return !x.s.date; });
       var w = schedWarnings(rows);
-      var evCell = function (x) { var n = x.evs.length, m = x.t.supervisors.length; return n ? '<button type="button" class="sp-st ' + (n >= m ? 'ok' : 'wait') + ' sp-evbtn" data-ev-view="' + escapeHtml(x.s.id) + '">ประเมินแล้ว ' + n + '/' + m + '</button>' : '<span class="sp-st wait">ยังไม่ประเมิน</span>'; };
+      var evCell = function (x) { var n = x.evs.length, m = x.t.supervisors.length; if (!n) return '<span class="sp-st wait">ยังไม่ประเมิน</span>'; var a = B.viewer ? avgAll(x.evs, st.D.round.form) : null; return B.viewer ? '<button type="button" class="sp-st ' + (n >= m ? 'ok' : 'wait') + ' sp-evbtn" data-ev-view="' + escapeHtml(x.s.id) + '">ประเมินแล้ว ' + n + '/' + m + (a != null ? ' · ' + a.toFixed(2) : '') + '</button>' : '<span class="sp-st ' + (n >= m ? 'ok' : 'wait') + '">ประเมินแล้ว ' + n + '/' + m + '</span>'; };
+      var satCell = function (x) { var sa = satOf(x.t.id); return sa ? '<button type="button" class="sp-st ok sp-evbtn" data-sat-view="' + escapeHtml(x.t.id) + '">ตอบแล้ว</button>' : '<span class="mut">-</span>'; };
       var tbl;
       if (st.schedView === 'day') {
-        tbl = '<table class="sp-tbl"><thead><tr><th>วันที่</th><th>คาบ</th><th>ครูผู้รับการนิเทศ</th><th>วิชา / ห้อง</th><th>ผู้นิเทศ</th><th>ผลประเมิน</th></tr></thead><tbody>' + dated.map(function (x) {
-          return '<tr><td class="nw"><b>' + thD(x.s.date, true) + '</b></td><td>' + x.s.period + '</td><td>' + escapeHtml(x.t.name) + '</td><td>' + escapeHtml((x.s.code ? x.s.code + ' ' : '') + (x.s.subject && x.s.subject !== x.s.code ? x.s.subject : '') + ' · ' + x.s.room) + '</td><td>' + escapeHtml(x.t.supervisors.map(nameOf).join(', ')) + '</td><td>' + evCell(x) + '</td></tr>';
-        }).join('') + (dated.length ? '' : '<tr><td colspan="6" class="mut">ยังไม่มีวันนิเทศ</td></tr>') + '</tbody></table>';
+        tbl = '<table class="sp-tbl"><thead><tr><th>วันที่</th><th>คาบ</th><th>ครูผู้รับการนิเทศ</th><th>วิชา / ห้อง</th><th>ผู้นิเทศ</th><th>ผลประเมิน</th>' + (B.viewer ? '<th>ความพึงพอใจ</th>' : '') + '</tr></thead><tbody>' + dated.map(function (x) {
+          return '<tr><td class="nw"><b>' + thD(x.s.date, true) + '</b></td><td>' + x.s.period + '</td><td class="nw">' + escapeHtml(x.t.name) + (st.D.photos && st.D.photos[x.s.id] ? ' <i class="fa-solid fa-camera mut" title="มีรูป ' + st.D.photos[x.s.id] + ' รูป"></i>' : '') + '</td><td>' + escapeHtml((x.s.code ? x.s.code + ' ' : '') + (x.s.subject && x.s.subject !== x.s.code ? x.s.subject : '') + ' · ' + x.s.room) + '</td><td>' + escapeHtml(x.t.supervisors.map(nameOf).join(', ')) + '</td><td>' + evCell(x) + '</td>' + (B.viewer ? '<td>' + satCell(x) + '</td>' : '') + '</tr>';
+        }).join('') + (dated.length ? '' : '<tr><td colspan="7" class="mut">ยังไม่มีวันนิเทศ</td></tr>') + '</tbody></table>';
       } else {
         var by = {}; dated.forEach(function (x) { x.t.supervisors.forEach(function (id) { (by[id] = by[id] || []).push(x); }); });
         tbl = Object.keys(by).sort(function (a, b) { return nameOf(a).localeCompare(nameOf(b), 'th'); }).map(function (id) {
@@ -623,13 +767,22 @@
         }).join('') || '<p class="mut">ยังไม่มีวันนิเทศ</p>';
       }
       body.innerHTML = '<div class="sp-toolbar"><div class="sp-seg"><button type="button" data-view="day" class="' + (st.schedView === 'day' ? 'on' : '') + '">เรียงตามวัน</button><button type="button" data-view="sup" class="' + (st.schedView === 'sup' ? 'on' : '') + '">แยกตามผู้นิเทศ</button></div>' +
-        '<span class="sp-sp"></span><button type="button" class="btn btn-secondary btn-sm" data-x-pdf><i class="fa-solid fa-file-pdf"></i> PDF</button><button type="button" class="btn btn-secondary btn-sm" data-x-xls><i class="fa-solid fa-file-excel"></i> Excel ตารางนิเทศ</button><button type="button" class="btn btn-secondary btn-sm" data-x-evx><i class="fa-solid fa-file-excel"></i> Excel ผลประเมิน</button></div>' +
+        '<span class="sp-sp"></span><button type="button" class="btn btn-secondary btn-sm" data-x-pdf><i class="fa-solid fa-file-pdf"></i> PDF ตารางนิเทศ</button><button type="button" class="btn btn-secondary btn-sm" data-x-xls><i class="fa-solid fa-file-excel"></i> Excel ตารางนิเทศ</button>' +
+        (B.viewer ? '<button type="button" class="btn btn-secondary btn-sm" data-x-evx><i class="fa-solid fa-file-excel"></i> Excel ผลประเมิน</button><button type="button" class="btn btn-secondary btn-sm" data-x-sat><i class="fa-solid fa-file-excel"></i> Excel ความพึงพอใจ</button><button type="button" class="btn btn-primary btn-sm" data-x-rep><i class="fa-solid fa-file-pdf"></i> รายงานรายคน</button>' : '') + '</div>' +
         (w.length ? '<div class="sp-warn"><i class="fa-solid fa-triangle-exclamation"></i> ' + w.map(escapeHtml).join(' · ') + '</div>' : '') +
         '<div class="card sp-tbl-wrap">' + tbl + '</div>' +
         (und.length ? '<div class="card"><h3>ยังไม่ลงวันที่ (' + und.length + ')</h3><div class="sp-und">' + und.map(function (x) { return '<span class="sp-chip">' + escapeHtml(x.t.name) + ' · ' + DAYS_S[x.s.day] + ' คาบ ' + x.s.period + '</span>'; }).join('') + '</div></div>' : '') +
         (function () { var no = st.D.teachers.filter(function (t) { return !t.slots.length; }); return no.length ? '<div class="card"><h3>ยังไม่เลือกคาบ (' + no.length + ')</h3><div class="sp-und">' + no.slice(0, 150).map(function (t) { return '<span class="sp-chip">' + escapeHtml(t.name) + '</span>'; }).join('') + (no.length > 150 ? '<span class="mut">และอีก ' + (no.length - 150) + ' คน</span>' : '') + '</div></div>' : ''; })();
     }
     function avgOf(e, form) { var xs = form.filter(function (f) { return f.type === 'rating' && e.answers[f.id]; }).map(function (f) { return +e.answers[f.id]; }); return xs.length ? xs.reduce(function (a, b) { return a + b; }, 0) / xs.length : null; }
+    function avgAll(evs, form) { var xs = []; evs.forEach(function (e) { form.forEach(function (f) { if (f.type === 'rating' && e.answers[f.id]) xs.push(+e.answers[f.id]); }); }); return xs.length ? xs.reduce(function (a, b) { return a + b; }, 0) / xs.length : null; }
+    function answersHtml(form, ans) {
+      return form.map(function (f, i) {
+        if (f.type === 'section') return '<div class="sp-sec">' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</div>';
+        var v = ans[f.id]; if (v == null || v === '') return '';
+        return '<div class="ans-row' + (/\./.test(f.num || '') ? ' sub' : '') + '"><div class="q">' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</div><div class="a">' + escapeHtml(f.type === 'rating' ? v + ' (' + SUP_LEVELS[v] + ')' : v) + '</div></div>';
+      }).join('');
+    }
     handlers.sched = async function (e) {
       var b;
       if ((b = e.target.closest('[data-view]'))) { st.schedView = b.getAttribute('data-view'); renderSched(); return; }
@@ -637,10 +790,18 @@
         var x = schedRows().filter(function (y) { return y.s.id === b.getAttribute('data-ev-view'); })[0], form = st.D.round.form;
         modal('ผลประเมิน · ' + escapeHtml(x.t.name), '<p class="mut" style="margin-top:0">' + thD(x.s.date, true) + ' คาบ ' + x.s.period + ' · ' + escapeHtml(slotLabel(x.s)) + '</p>' + x.evs.map(function (ev) {
           var a = avgOf(ev, form);
-          return '<div class="sp-evview"><h4>' + escapeHtml(nameOf(ev.supervisorId)) + (a != null ? ' <span class="sp-st ok">เฉลี่ย ' + a.toFixed(2) + '</span>' : '') + '</h4>' + form.map(function (f) { var v = ev.answers[f.id]; return v == null || v === '' ? '' : '<div class="ans-row"><div class="q">' + escapeHtml(f.label) + '</div><div class="a">' + escapeHtml(f.type === 'rating' ? v + ' / 5' : v) + '</div></div>'; }).join('') + '<div class="mut">บันทึก ' + escapeHtml(formatDateTimeThai(ev.savedAt)) + '</div></div>';
-        }).join(''));
+          return '<div class="sp-evview"><h4>' + escapeHtml(nameOf(ev.supervisorId)) + (a != null ? ' <span class="sp-st ok">เฉลี่ย ' + a.toFixed(2) + ' · ' + supLevelOf(a) + '</span>' : '') + '</h4>' + answersHtml(form, ev.answers) + '<div class="mut">บันทึก ' + escapeHtml(formatDateTimeThai(ev.savedAt)) + '</div></div>';
+        }).join('') + '<div id="spEvPh" class="sp-photos ro"></div>');
+        apiCall('supPhotos', { slotId: x.s.id }).then(function (d) { var el = document.getElementById('spEvPh'); if (el) el.innerHTML = (d.photos || []).map(function (p) { return '<div class="sp-ph f"><img src="' + p.data + '" alt="รูปการนิเทศ" /></div>'; }).join(''); }).catch(function () { /* ข้าม */ });
         return;
       }
+      if ((b = e.target.closest('[data-sat-view]'))) {
+        var tid = b.getAttribute('data-sat-view'), sa = satOf(tid), sf = st.D.round.satForm || [], av = sa ? avgOf(sa, sf) : null;
+        modal('ความพึงพอใจ · ' + escapeHtml((st.D.teachers.filter(function (t) { return t.id === tid; })[0] || {}).name || ''), sa ? '<div class="sp-evview">' + (av != null ? '<h4><span class="sp-st ok">เฉลี่ย ' + av.toFixed(2) + ' · ' + supLevelOf(av) + '</span></h4>' : '') + answersHtml(sf, sa.answers) + '<div class="mut">ส่งเมื่อ ' + escapeHtml(formatDateTimeThai(sa.savedAt)) + '</div></div>' : '<p class="mut">ยังไม่ตอบ</p>');
+        return;
+      }
+      if (e.target.closest('[data-x-sat]')) { exportSatXlsx(); return; }
+      if (e.target.closest('[data-x-rep]')) { openReport(); return; }
       if (e.target.closest('[data-x-xls]')) { exportSchedXlsx(); return; }
       if (e.target.closest('[data-x-evx]')) { exportEvalXlsx(); return; }
       if (e.target.closest('[data-x-pdf]')) { exportPdf(); }
@@ -652,11 +813,17 @@
       downloadBlob(buildXlsx('ตารางนิเทศ', ['ลำดับ', 'วันที่', 'คาบ', 'ครูผู้รับการนิเทศ', 'กลุ่มสาระฯ', 'รหัสวิชา', 'ชื่อวิชา', 'ห้อง', 'ผู้นิเทศ', 'ประเมินแล้ว'], data, [7, 18, 6, 28, 22, 10, 26, 8, 40, 11], 'ตารางนิเทศ · ' + st.D.round.title + ' (' + semTxt(st.D.round) + ')'), fileStem() + '.xlsx');
     }
     function exportEvalXlsx() {
-      var form = st.D.round.form, rows = [];
-      schedRows().forEach(function (x) { x.evs.forEach(function (ev) { var a = avgOf(ev, form); rows.push([x.s.date ? thD(x.s.date) : '', x.s.period, x.t.name, x.t.subjectGroup || '', slotLabel(x.s), nameOf(ev.supervisorId)].concat(form.map(function (f) { var v = ev.answers[f.id]; return f.type === 'rating' && v ? +v : (v || ''); })).concat([a != null ? Math.round(a * 100) / 100 : ''])); }); });
+      var form = st.D.round.form.filter(function (f) { return f.type !== 'section'; }), all = st.D.round.form, rows = [];
+      schedRows().forEach(function (x) { x.evs.forEach(function (ev) { var a = avgOf(ev, all); rows.push([x.s.date ? thD(x.s.date) : '', x.s.period, x.t.name, x.t.subjectGroup || '', slotLabel(x.s), nameOf(ev.supervisorId)].concat(form.map(function (f) { var v = ev.answers[f.id]; return f.type === 'rating' && v ? +v : (v || ''); })).concat([a != null ? Math.round(a * 100) / 100 : '', supLevelOf(a)])); }); });
       if (!rows.length) { showToast('ยังไม่มีผลประเมิน', true); return; }
       rows = rows.map(function (r, i) { return [i + 1].concat(r); });
-      downloadBlob(buildXlsx('ผลประเมิน', ['ลำดับ', 'วันที่', 'คาบ', 'ครูผู้รับการนิเทศ', 'กลุ่มสาระฯ', 'วิชา / ห้อง', 'ผู้นิเทศ'].concat(form.map(function (f) { return f.label; })).concat(['ค่าเฉลี่ย']), rows, [7, 14, 6, 28, 20, 22, 26].concat(form.map(function (f) { return f.type === 'rating' ? 14 : 40; })).concat([10]), 'ผลประเมินการนิเทศ · ' + st.D.round.title), fileStem() + '-ผลประเมิน.xlsx');
+      downloadBlob(buildXlsx('ผลประเมิน', ['ลำดับ', 'วันที่', 'คาบ', 'ครูผู้รับการนิเทศ', 'กลุ่มสาระฯ', 'วิชา / ห้อง', 'ผู้นิเทศ'].concat(form.map(function (f) { return qLabel(f, all); })).concat(['ค่าเฉลี่ย', 'ระดับ']), rows, [7, 14, 6, 28, 20, 22, 26].concat(form.map(function (f) { return f.type === 'rating' ? 14 : 40; })).concat([10, 12]), 'ผลประเมินการนิเทศ · ' + st.D.round.title), fileStem() + '-ผลประเมิน.xlsx');
+    }
+    function exportSatXlsx() {
+      var all = st.D.round.satForm || [], form = all.filter(function (f) { return f.type !== 'section'; });
+      var rows = (st.sats || []).map(function (sa, i) { var t = st.D.teachers.filter(function (x) { return x.id === sa.teacherId; })[0] || {}, a = avgOf(sa, all); return [i + 1, t.name || '', t.subjectGroup || ''].concat(form.map(function (f) { var v = sa.answers[f.id]; return f.type === 'rating' && v ? +v : (v || ''); })).concat([a != null ? Math.round(a * 100) / 100 : '', supLevelOf(a), formatDateThai(String(sa.savedAt).slice(0, 10))]); });
+      if (!rows.length) { showToast('ยังไม่มีผู้ตอบแบบประเมินความพึงพอใจ', true); return; }
+      downloadBlob(buildXlsx('ความพึงพอใจ', ['ลำดับ', 'ครูผู้รับการนิเทศ', 'กลุ่มสาระฯ'].concat(form.map(function (f) { return qLabel(f, all); })).concat(['ค่าเฉลี่ย', 'ระดับ', 'วันที่ตอบ']), rows, [7, 28, 20].concat(form.map(function (f) { return f.type === 'rating' ? 14 : 40; })).concat([10, 12, 14]), 'ความพึงพอใจต่อการนิเทศ · ' + st.D.round.title), fileStem() + '-ความพึงพอใจ.xlsx');
     }
     async function exportPdf() {
       var r = st.D.round, rows = schedRows().filter(function (x) { return x.s.date; }).sort(function (a, b) { return a.s.date.localeCompare(b.s.date) || a.s.period - b.s.period; });
@@ -697,28 +864,105 @@
       }, { successLabel: 'ดาวน์โหลดไฟล์ PDF แล้ว' });
     }
 
-    // ---------- แท็บ: ผู้จัดการงานนิเทศ (Super Admin) ----------
-    async function renderMgr() {
-      body.innerHTML = '<div class="loading">กำลังโหลด...</div>';
-      var d = await apiCall('supManagersGet', {});
-      if (!st.mgrIds) st.mgrIds = d.managers.map(function (m) { return m.id; });
-      var byId = {}; d.people.forEach(function (p) { byId[p.id] = p; });
-      var ppl = d.people.slice().sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'th'); });
-      body.innerHTML = '<div class="card"><h3>ผู้จัดการงานนิเทศ <span class="mut">(สิทธิ์เดียว — สร้างรอบ กำหนดผู้นิเทศ ตั้งแบบประเมิน ลงวันนิเทศ ดูตารางและผลประเมินทั้งหมด)</span></h3>' +
-        '<div class="sp-mgrs">' + (st.mgrIds.length ? st.mgrIds.map(function (id) { var p = byId[id] || { name: '?' }; return '<div class="sp-mgr"><div><b>' + escapeHtml(p.name) + '</b><div class="mut">' + escapeHtml([p.department ? groupLabel(p.department) : '', p.subjectGroup].filter(Boolean).join(' · ')) + '</div></div><button type="button" class="sp-x" data-mgr-del="' + escapeHtml(id) + '" aria-label="ลบ"><i class="fa-solid fa-xmark"></i></button></div>'; }).join('') : '<p class="mut">ยังไม่มี — ผู้ดูแลระบบจัดการได้คนเดียว</p>') + '</div>' +
-        '<div class="sp-toolbar"><select data-mgr-add><option value="">+ เพิ่มผู้จัดการงานนิเทศ…</option>' + ppl.filter(function (p) { return st.mgrIds.indexOf(p.id) === -1; }).map(function (p) { return '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name) + '</option>'; }).join('') + '</select>' +
-        '<span class="sp-sp"></span><button type="button" class="btn btn-success" data-mgr-save><i class="fa-solid fa-check"></i> บันทึก</button></div>' +
-        '<p class="mut">คนที่ไม่มีชื่อในรายการนี้ เห็นเฉพาะหน้าของตัวเอง (เลือกคาบ / คาบที่ต้องไปนิเทศ) · ผู้นิเทศเห็นผลที่ตัวเองประเมินเสมอ</p></div>';
-      body.querySelector('[data-mgr-add]').onchange = function () { if (this.value) { st.mgrIds.push(this.value); renderMgr(); } };
-    }
-    handlers.mgr = async function (e) {
-      var b;
-      if ((b = e.target.closest('[data-mgr-del]'))) { st.mgrIds = st.mgrIds.filter(function (id) { return id !== b.getAttribute('data-mgr-del'); }); renderMgr(); return; }
-      if (e.target.closest('[data-mgr-save]')) {
-        var r = await withProgress('กำลังบันทึก', function () { return apiCall('supManagersSave', { userIds: st.mgrIds }); }, { successLabel: 'บันทึกผู้จัดการงานนิเทศแล้ว' });
-        if (r.ok) { st.mgrIds = null; renderMgr(); }
+    // ---------- 1.98.1: รายงานการนิเทศรายคน (PDF) — เลือกสิ่งที่แสดงได้ · ผู้มีสิทธิ์ดูผลเท่านั้น ----------
+    var REP_OPTS = [['info', 'ข้อมูลครูและวิชา', 1], ['sups', 'รายชื่อผู้นิเทศ', 1], ['scores', 'คะแนนรายหัวข้อ (แยกผู้นิเทศ)', 1], ['avg', 'ค่าเฉลี่ยรวม + ระดับคุณภาพ', 1], ['comments', 'ข้อเสนอแนะ', 1], ['sat', 'ความพึงพอใจของผู้รับการนิเทศ', 0], ['photos', 'รูปการนิเทศ', 1], ['sigSup', 'ช่องลงชื่อผู้นิเทศ', 1], ['sigExec', 'ช่องลงชื่อผู้บริหาร', 0]];
+    var repState = { opts: null, tid: '', all: false, photos: {}, st: null };
+    function repRows() { return schedRows().filter(function (x) { return x.s.date && x.evs.length; }).sort(function (a, b) { return String(a.t.name).localeCompare(String(b.t.name), 'th') || a.s.seq - b.s.seq; }); }
+    function repPageHtml(x, o) {
+      var r = st.D.round, form = r.form || [], evs = x.evs.slice().sort(function (a, b) { return nameOf(a.supervisorId).localeCompare(nameOf(b.supervisorId), 'th'); }), stg = repState.st || {}, logo = stg.logoDataUrl || stg.iconDataUrl || '';
+      var h = '<div class="rp-pg"><div class="rp-hd">' + (logo ? '<img src="' + logo + '" alt="">' : '') + '<h1>แบบบันทึกการนิเทศการจัดการเรียนการสอน</h1><div>' + escapeHtml(r.title) + ' · ' + escapeHtml(semTxt(r)) + (stg.schoolName ? ' · ' + escapeHtml(stg.schoolName) : '') + '</div></div>';
+      if (o.info || o.sups) h += '<table class="rp-info">' + (o.info ? '<tr><td>ผู้รับการนิเทศ</td><td>' + escapeHtml(x.t.name) + (x.t.subjectGroup ? ' (' + escapeHtml(x.t.subjectGroup) + ')' : '') + '</td></tr><tr><td>วิชา / ห้อง</td><td>' + escapeHtml((x.s.code ? x.s.code + ' ' : '') + (x.s.subject && x.s.subject !== x.s.code ? x.s.subject : '') + ' · ' + x.s.room) + '</td></tr><tr><td>วันที่นิเทศ</td><td>วัน' + DAYS[dowOf(x.s.date)] + 'ที่ ' + thD(x.s.date) + ' คาบ ' + x.s.period + '</td></tr>' : '') +
+        (o.sups ? '<tr><td>ผู้นิเทศ</td><td>' + escapeHtml(x.t.supervisors.map(nameOf).join(', ')) + '</td></tr>' : '') + '</table>';
+      var rated = form.filter(function (f) { return f.type === 'rating'; }), avgItem = function (f) { var v = evs.map(function (e) { return +e.answers[f.id]; }).filter(function (n) { return n >= 1; }); return v.length ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : null; };
+      if (o.scores && rated.length) {
+        h += '<table class="rp-tbl"><thead><tr><th>หัวข้อ</th>' + evs.map(function (e) { return '<th class="c">' + escapeHtml(nameOf(e.supervisorId)) + '</th>'; }).join('') + '<th class="c">เฉลี่ย</th></tr></thead><tbody>';
+        var secItems = [];
+        var flush = function () { if (o.avg && secItems.length) { var v = secItems.map(avgItem).filter(function (n) { return n != null; }); if (v.length) { var a = v.reduce(function (p, q) { return p + q; }, 0) / v.length; h += '<tr class="rp-secavg"><td>เฉลี่ยหัวข้อนี้</td>' + evs.map(function () { return '<td></td>'; }).join('') + '<td class="c">' + a.toFixed(2) + '</td></tr>'; } } secItems = []; };
+        form.forEach(function (f, i) {
+          if (f.type === 'section') { flush(); h += '<tr class="rp-sec"><td colspan="' + (evs.length + 2) + '">' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</td></tr>'; return; }
+          if (f.type !== 'rating') return;
+          secItems.push(f); var a = avgItem(f);
+          h += '<tr><td' + (/\./.test(f.num || '') ? ' class="sub"' : '') + '>' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</td>' + evs.map(function (e) { return '<td class="c">' + escapeHtml(e.answers[f.id] || '-') + '</td>'; }).join('') + '<td class="c">' + (a != null ? a.toFixed(2) : '-') + '</td></tr>';
+        });
+        flush(); h += '</tbody></table>';
       }
-    };
+      if (o.avg) { var tot = avgAll(evs, form); if (tot != null) h += '<div class="rp-total">ค่าเฉลี่ยรวม <b>' + tot.toFixed(2) + '</b> · ระดับคุณภาพ <b>' + supLevelOf(tot) + '</b><span>เกณฑ์: ' + [5, 4, 3, 2, 1].map(function (k) { return k + ' = ' + SUP_LEVELS[k]; }).join(' · ') + '</span></div>'; }
+      if (o.comments) {
+        var texts = [];
+        form.forEach(function (f, i) { if (f.type !== 'text') return; evs.forEach(function (e) { if (e.answers[f.id]) texts.push('<li><b>' + escapeHtml(nameOf(e.supervisorId)) + ':</b> ' + escapeHtml(e.answers[f.id]) + '</li>'); }); });
+        if (texts.length) h += '<div class="rp-box"><b>ข้อเสนอแนะ</b><ul>' + texts.join('') + '</ul></div>';
+      }
+      if (o.sat) {
+        var sa = satOf(x.t.id), sf = r.satForm || [];
+        if (sa) { var sav = avgOf(sa, sf); h += '<div class="rp-box"><b>ความพึงพอใจของผู้รับการนิเทศ</b>' + (sav != null ? ' — เฉลี่ย ' + sav.toFixed(2) + ' (' + supLevelOf(sav) + ')' : '') + '<ul>' + sf.map(function (f, i) { var v = sa.answers[f.id]; return f.type === 'section' ? '<li class="sec">' + escapeHtml(qNum(f, i) + ' ' + f.label) + '</li>' : (v ? '<li>' + escapeHtml(qNum(f, i) + ' ' + f.label) + ': <b>' + escapeHtml(f.type === 'rating' ? v + ' (' + SUP_LEVELS[v] + ')' : v) + '</b></li>' : ''); }).join('') + '</ul></div>'; }
+      }
+      if (o.photos) { var ph = repState.photos[x.s.id] || []; if (ph.length) h += '<div class="rp-ph">' + ph.map(function (p) { return '<img src="' + p.data + '" alt="">'; }).join('') + '</div>'; }
+      if (o.sigSup || o.sigExec) {
+        var sig = [];
+        if (o.sigSup) x.t.supervisors.forEach(function (id) { sig.push('<div>ลงชื่อ ..................................................<br>(' + escapeHtml(nameOf(id)) + ')<br>ผู้นิเทศ</div>'); });
+        if (o.sigExec) sig.push('<div>ลงชื่อ ..................................................<br>(..................................................)<br>ผู้อำนวยการโรงเรียน</div>');
+        h += '<div class="rp-sig">' + sig.join('') + '</div>';
+      }
+      return h + '</div>';
+    }
+    var REP_CSS = '.rp-pg{width:794px;box-sizing:border-box;padding:40px 52px;background:#fff;color:#0f172a;font-family:Sarabun,sans-serif;font-size:15px;line-height:1.45}' +
+      '.rp-hd{text-align:center;margin-bottom:12px}.rp-hd img{width:64px;height:64px;object-fit:contain}.rp-hd h1{font-size:21px;margin:4px 0 2px}.rp-hd div{font-size:14px;color:#334155}' +
+      'table{width:100%;border-collapse:collapse;margin:8px 0}td,th{border:1px solid #94a3b8;padding:4px 8px;vertical-align:top}.rp-info td:first-child{width:26%;background:#f1f5f9;font-weight:700}' +
+      '.rp-tbl th{background:#e2e8f0}.rp-tbl .c{text-align:center;width:90px}.rp-tbl td.sub{padding-left:22px}.rp-sec td{background:#eff6ff;font-weight:700}.rp-secavg td{background:#f8fafc;font-style:italic}' +
+      '.rp-total{margin:8px 0;padding:8px 12px;border:2px solid #0b6fcc;border-radius:8px}.rp-total span{display:block;font-size:12px;color:#64748b}.rp-box{margin:8px 0}.rp-box ul{margin:4px 0;padding-left:22px}.rp-box li.sec{list-style:none;margin-left:-18px;font-weight:700}' +
+      '.rp-ph{display:flex;gap:10px;margin:10px 0}.rp-ph img{flex:1;max-width:50%;height:220px;object-fit:cover;border-radius:6px}.rp-sig{display:flex;flex-wrap:wrap;justify-content:space-around;gap:18px 10px;margin-top:26px;text-align:center}.rp-sig div{min-width:42%}';
+    async function repEnsurePhotos(rows) {
+      for (var i = 0; i < rows.length; i++) { var id = rows[i].s.id; if (repState.photos[id]) continue; try { repState.photos[id] = (st.D.photos && st.D.photos[id]) ? (await apiCall('supPhotos', { slotId: id })).photos || [] : []; } catch (e) { repState.photos[id] = []; } }
+    }
+    async function openReport() {
+      await ensureEvals();
+      var rows = repRows();
+      if (!rows.length) { showToast('ยังไม่มีคาบที่ประเมินแล้ว', true); return; }
+      if (!repState.opts) { repState.opts = {}; REP_OPTS.forEach(function (o) { repState.opts[o[0]] = !!o[2]; }); }
+      if (!repState.tid || !rows.some(function (x) { return x.s.id === repState.tid; })) repState.tid = rows[0].s.id;
+      repState.st = await getSiteSettings().catch(function () { return {}; }) || {};
+      modal('<i class="fa-solid fa-file-pdf" style="color:#dc2626"></i> รายงานการนิเทศรายคน', '<div class="rp-wrap"><div class="rp-side"><b>เลือกสิ่งที่แสดง</b><div class="rp-opts">' + REP_OPTS.map(function (o) { return '<label><input type="checkbox" data-rep-o="' + o[0] + '"' + (repState.opts[o[0]] ? ' checked' : '') + ' /> ' + o[1] + '</label>'; }).join('') + '</div>' +
+        '<label class="rp-lbl">ครู</label><select id="repTeacher">' + rows.map(function (x) { return '<option value="' + escapeHtml(x.s.id) + '"' + (x.s.id === repState.tid ? ' selected' : '') + '>' + escapeHtml(x.t.name + (st.D.round.perTeacher > 1 ? ' · ' + thDS(x.s.date) : '')) + '</option>'; }).join('') + '</select>' +
+        '<label class="rp-all"><input type="checkbox" id="repAll"' + (repState.all ? ' checked' : '') + ' /> ส่งออกทุกคนในรอบ (' + rows.length + ' คน · ไฟล์เดียว คนละหน้า)</label></div><div class="rp-prev"><div id="repPrev"></div></div></div>',
+        '<button type="button" class="btn btn-success" id="repGo"><i class="fa-solid fa-download"></i> ดาวน์โหลด PDF</button>');
+      var paint = async function () { var x = rows.filter(function (y) { return y.s.id === repState.tid; })[0]; await repEnsurePhotos([x]); document.getElementById('repPrev').innerHTML = '<style>' + REP_CSS + '</style>' + repPageHtml(x, repState.opts); };
+      var mb = document.getElementById('spModalBody');
+      mb.onchange = function (e) { var c = e.target; if (c.matches('[data-rep-o]')) repState.opts[c.getAttribute('data-rep-o')] = c.checked; if (c.id === 'repTeacher') repState.tid = c.value; if (c.id === 'repAll') repState.all = c.checked; paint(); };
+      mb.onclick = null;
+      document.getElementById('repGo').onclick = function () { exportReport(repState.all ? rows : rows.filter(function (y) { return y.s.id === repState.tid; })); };
+      paint();
+    }
+    async function exportReport(rows) {
+      var o = repState.opts;
+      await withProgress('กำลังสร้างรายงาน PDF', async function (p) {
+        await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js');
+        if (o.photos) { p.setProgress(3, 'กำลังโหลดรูป'); await repEnsurePhotos(rows); }
+        var u = new URL('assets/fonts/', location.href).href;
+        var faces = [400, 700].map(function (w) { return '@font-face{font-family:Sarabun;font-weight:' + w + ';src:url(' + u + 'sarabun-thai-' + w + '-normal.woff2) format("woff2");unicode-range:U+0E00-0E7F}@font-face{font-family:Sarabun;font-weight:' + w + ';src:url(' + u + 'sarabun-latin-' + w + '-normal.woff2) format("woff2")}'; }).join('');
+        var fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;left:-20000px;top:0;width:810px;height:1200px;border:0;'; document.body.appendChild(fr);
+        try {
+          var d = fr.contentWindow.document; d.open(); d.write('<!doctype html><html lang="th"><head><meta charset="utf-8"><style>body{margin:0}' + faces + REP_CSS + '</style></head><body></body></html>'); d.close();
+          await new Promise(function (res) { if (d.readyState === 'complete') res(); else fr.contentWindow.addEventListener('load', res); });
+          if (d.fonts && d.fonts.load) { try { await Promise.all(['400', '700'].map(function (w) { return d.fonts.load(w + ' 16px Sarabun', 'กขค ABC 123'); })); } catch (fe) { /* ฟอนต์สำรอง */ } }
+          var pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true }), first = true, pageH = Math.round(794 * 297 / 210);
+          for (var i = 0; i < rows.length; i++) {
+            p.setProgress(5 + Math.round(i / rows.length * 90), rows[i].t.name + ' (' + (i + 1) + '/' + rows.length + ')');
+            d.body.innerHTML = repPageHtml(rows[i], o);
+            await Promise.all(Array.prototype.map.call(d.images, function (im) { return im.complete ? 0 : new Promise(function (res) { im.onload = im.onerror = res; }); }));
+            if (first) { try { await html2canvas(d.body.firstChild, { scale: 0.3, backgroundColor: '#ffffff', logging: false, windowWidth: 810 }); } catch (we) { /* อุ่นเครื่อง */ } }
+            var cv = await html2canvas(d.body.firstChild, { scale: 2, backgroundColor: '#ffffff', logging: false, windowWidth: 810 });
+            // ยาวเกิน 1 หน้า = ตัดเป็นหลายหน้า A4
+            for (var y = 0; y < cv.height; y += pageH * 2) {
+              var part = document.createElement('canvas'); part.width = cv.width; part.height = Math.min(pageH * 2, cv.height - y);
+              part.getContext('2d').fillStyle = '#fff'; part.getContext('2d').fillRect(0, 0, part.width, part.height); part.getContext('2d').drawImage(cv, 0, -y);
+              if (!first) pdf.addPage(); first = false;
+              pdf.addImage(part.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 210, 210 * part.height / part.width);
+            }
+          }
+          downloadBlob(pdf.output('blob'), fileStem() + (rows.length === 1 ? '-' + rows[0].t.name : '-รายงานทุกคน') + '.pdf');
+        } finally { fr.remove(); }
+      }, { successLabel: 'ดาวน์โหลดรายงานแล้ว' });
+    }
 
     if (session) boot();
   </script>

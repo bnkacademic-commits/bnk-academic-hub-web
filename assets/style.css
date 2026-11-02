@@ -4500,3 +4500,75 @@ table.tt-grid.sp-tt td .sp-badge { font-size: 10px; line-height: 14px; padding: 
 table.tt-grid.sp-tt .tt-in { height: auto; max-height: 40px; }
 table.tt-grid.sp-tt td.tt-day { vertical-align: middle; padding-top: 0; }
 .sp-tdacts { white-space: nowrap; } .sp-tdacts .btn { padding: 4px 8px; }
+html.sup-off .sidenav a[href="supervision.html"] { display: none !important; }
+/* 1.98.1: ตั้งค่า → นิเทศการสอน */
+.sup-onrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sup-switch { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; cursor: pointer; }
+.sup-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.sup-switch i { width: 48px; height: 27px; border-radius: 999px; background: #cbd5e1; position: relative; transition: background .15s; }
+.sup-switch i:after { content: ""; position: absolute; left: 3px; top: 3px; width: 21px; height: 21px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+.sup-switch input:checked + i { background: #16a34a; }
+.sup-switch input:checked + i:after { left: 24px; }
+.sup-switch input:focus-visible + i { outline: 2px solid var(--primary); outline-offset: 2px; }
+.sup-addrow { display: flex; gap: 8px; margin-bottom: 10px; }
+.sup-addrow input { flex: 1; }
+.sup-ptbl-wrap { overflow-x: auto; }
+.sup-ptbl { width: 100%; border-collapse: collapse; }
+.sup-ptbl th { background: var(--surface-2); padding: 8px; font-size: .84rem; color: var(--text-muted); text-align: center; }
+.sup-ptbl th:first-child { text-align: left; }
+.sup-ptbl td { padding: 8px; border-top: 1px solid var(--border); text-align: center; }
+.sup-ptbl td:first-child { text-align: left; }
+.sup-ptbl td small { display: block; color: var(--text-muted); }
+.sup-ck { width: 20px !important; height: 20px; accent-color: #16a34a; cursor: pointer; }
+.sup-ptbl .modal-close-x.sup-del { position: static; display: inline-flex; }
+/* ===== 1.98.1: นิเทศการสอน (ผู้นิเทศติดวันที่ · หัวข้อใหญ่/ย่อย · ความพึงพอใจ · รูป · รายงาน) ===== */
+.sp-sups { border: 2px solid #c7d2fe; background: #eef2ff; border-radius: 14px; padding: 10px 16px; min-width: 260px; }
+.sp-sups h4 { margin: 0 0 6px; color: #3730a3; font-size: .95rem; }
+.sp-sprow { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-weight: 700; }
+.sp-av { width: 28px; height: 28px; border-radius: 50%; background: #6366f1; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: .8rem; flex: 0 0 auto; }
+.sp-supline { margin: 8px 0; display: flex; }
+.sp-supline .sp-sups { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 8px 14px; }
+.sp-supline .sp-sups h4 { margin: 0 6px 0 0; }
+.sp-supline .sp-sprow { margin: 0; }
+.sp-sec { font-weight: 800; color: #1e3a8a; background: #eff6ff; border-radius: 8px; padding: 6px 10px; margin: 10px 0 4px; }
+.sp-qi { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 5px 4px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.sp-qi.sub, .sp-evq.sub { padding-left: 16px; }
+.sp-scale { font-size: .78rem; color: var(--text-muted); margin-top: 8px; }
+.sp-satbox { border: 2px solid #f59e0b; background: #fffbeb; border-radius: 14px; padding: 12px 14px; margin: 12px 0; }
+.sp-satbox h3 { color: #92400e; margin: 0 0 6px; font-size: 1rem; }
+.sp-satbox textarea { background: #fff; }
+.sp-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sp-photos.ro:empty { display: none; }
+.sp-ph { border: 2px dashed var(--border); border-radius: 12px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--text-muted); background: var(--surface-2); cursor: pointer; position: relative; overflow: hidden; font-weight: 600; }
+.sp-ph i { font-size: 1.4rem; }
+.sp-ph span { font-size: .8rem; font-weight: 400; }
+.sp-ph.f { border: 0; cursor: default; }
+.sp-ph.f img { width: 100%; height: 180px; object-fit: cover; display: block; }
+.sp-ph .sp-x { position: absolute; top: 6px; right: 6px; }
+.sp-ib { display: inline-flex; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); align-items: center; justify-content: center; color: var(--text-muted); background: var(--surface); margin-left: 3px; cursor: pointer; }
+.sp-ib:hover { border-color: var(--primary); color: var(--primary); }
+.sp-ib.r { color: #dc2626; }
+.sp-ib:disabled { opacity: .4; cursor: default; }
+.sp-cp td { padding: 6px 8px; vertical-align: middle; }
+.sp-cp .sp-tdacts { text-align: right; }
+.sp-num { width: 64px !important; text-align: center; flex: 0 0 auto; }
+.sp-sectag { font-size: .8rem; color: #1e3a8a; font-weight: 700; white-space: nowrap; padding: 0 6px; }
+.sp-frow.sec { background: #eff6ff; border-color: #bfdbfe; }
+.sp-frow.sub { margin-left: 34px; }
+.sp-tbl tr.sp-me td { background: #f3e8ff; }
+.ans-row.sub { padding-left: 16px; }
+.rp-wrap { display: grid; grid-template-columns: 260px 1fr; gap: 14px; }
+.rp-side { display: flex; flex-direction: column; gap: 6px; }
+.rp-opts label, .rp-all { display: flex; gap: 8px; align-items: center; font-weight: 600; padding: 3px 0; }
+.rp-opts input, .rp-all input { width: auto; }
+.rp-lbl { font-weight: 700; margin-top: 8px; }
+.rp-prev { max-height: 64vh; overflow: auto; background: #cbd5e1; border-radius: 10px; padding: 10px; }
+.rp-prev .rp-pg { transform: scale(.82); transform-origin: top left; margin-bottom: -18%; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+@media (max-width: 760px) { .rp-wrap { grid-template-columns: 1fr; } }
+:root[data-theme="dark"] .sp-sups { background: rgba(99,102,241,.15); border-color: #4f46e5; }
+:root[data-theme="dark"] .sp-sups h4 { color: #c7d2fe; }
+:root[data-theme="dark"] .sp-sec { background: rgba(59,130,246,.18); color: #bfdbfe; }
+:root[data-theme="dark"] .sp-satbox { background: rgba(245,158,11,.12); }
+:root[data-theme="dark"] .sp-satbox h3 { color: #fcd34d; }
+:root[data-theme="dark"] .sp-tbl tr.sp-me td { background: rgba(147,51,234,.18); }
+.modal-backdrop .modal-box.sp-modal-box { width: min(1120px, 96vw); max-width: 1120px; }
