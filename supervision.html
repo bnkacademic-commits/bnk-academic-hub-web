@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.98.2.021126" />
+<link rel="stylesheet" href="assets/style.css?v=1.98.4.021126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -45,7 +45,7 @@
   </div>
   <input type="file" id="spPlanFile" hidden />
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.98.2.021126"></script>
+  <script src="assets/api.js?v=1.98.4.021126"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('supervision'); if (typeof mountFooter === 'function') mountFooter(); }
@@ -73,7 +73,7 @@
     function err(msg) { return '<div class="error-box">' + escapeHtml(msg) + '</div>'; }
     function gradeOf(roomId) { return (/^m(\d)_/.exec(roomId || '') || [])[1] || ''; }
     function modal(title, html, actions) {
-      var mb0 = document.getElementById('spModalBody'); mb0.onchange = null; mb0.onclick = null;
+      var mb0 = document.getElementById('spModalBody'); mb0.onchange = null; mb0.onclick = null; document.getElementById('spModalActions').onclick = null;
       document.getElementById('spModalTitle').innerHTML = title;
       document.getElementById('spModalBody').innerHTML = html;
       document.getElementById('spModalActions').innerHTML = (actions || '') + '<button type="button" class="btn btn-ghost btn-close" data-sp-close>ปิด</button>';
@@ -106,6 +106,8 @@
       if (!keepTab || !t.some(function (x) { return x[0] === st.tab; })) {
         var h = (location.hash || '').replace('#', '');
         st.tab = t.some(function (x) { return x[0] === h; }) ? h : t[0][0];
+        var qs = new URLSearchParams(location.search).get('sat'); // 1.98.4: จากหน้าแรก/กระดิ่ง = เปิดแบบประเมินความพึงพอใจเลย
+        if (qs && B.mine.length) { st.tab = 'mine'; setTimeout(function () { openSat(qs); }, 0); try { history.replaceState(null, '', location.pathname + '#mine'); } catch (e) { /* ข้าม */ } }
       }
       document.getElementById('spTabs').innerHTML = t.map(function (x) { return '<button type="button" role="tab" data-sp-tab="' + x[0] + '" class="' + (x[0] === st.tab ? 'on' : '') + '"><i class="fa-solid ' + x[1] + '" aria-hidden="true"></i> ' + x[2] + '</button>'; }).join('');
       renderRoundPick();
@@ -208,11 +210,39 @@
       return '<div class="sp-bar"><span>คาบที่เลือก: <b class="ok">' + (keys.length ? escapeHtml(desc) : '—') + '</b> <small class="mut">(' + keys.length + '/' + r.perTeacher + ')</small>' + (savedSame ? ' <span class="sp-st ok">ส่งแล้ว · รอเจ้าหน้าที่ลงวันที่</span>' : '') + '</span>' +
         planBoxHtml(m, r) + (late ? '' : '<button type="button" class="btn btn-success" data-pick-save="' + escapeHtml(r.id) + '"' + (keys.length === r.perTeacher && !savedSame ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> ' + (saved ? 'บันทึกคาบที่เปลี่ยน' : 'ส่งคาบที่เลือก') + '</button>') + '</div>';
     }
-    function satHtml(m, r) {
-      if (!m.canSat || !(r.satForm || []).some(function (f) { return f.type !== 'section'; })) return '';
-      return '<div class="sp-satbox"><h3><i class="fa-solid fa-face-smile"></i> แบบประเมินความพึงพอใจต่อการนิเทศ <span class="mut">· ได้รับการนิเทศแล้ว' + (m.sat ? ' · ส่งแล้ว ' + escapeHtml(formatDateTimeThai(m.sat.savedAt)) + ' (แก้ได้)' : '') + '</span></h3>' +
-        formFillHtml(r.satForm, m.sat && m.sat.answers, true, 'spSat_' + r.id) +
-        '<div class="sp-evact"><span class="mut"><i class="fa-solid fa-lock"></i> ผู้นิเทศไม่เห็นคำตอบนี้ · ผู้มีสิทธิ์ดูผลเห็นสรุป</span><button type="button" class="btn btn-success" data-sat-save="' + escapeHtml(r.id) + '"><i class="fa-solid fa-paper-plane"></i> ' + (m.sat ? 'บันทึกการแก้ไข' : 'ส่งแบบประเมิน') + '</button></div></div>';
+    // 1.98.4: กล่องแบบประเมินความพึงพอใจ ต่อจากกล่องผู้นิเทศ (เทา = ยังทำไม่ได้ · ส้ม = พร้อมทำ · เขียว = ส่งแล้ว) — กดแล้วเป็นป็อปอัป
+    function hasSat(r) { return (r.satForm || []).some(function (f) { return f.type !== 'section'; }); }
+    function satBoxHtml(m, r) {
+      if (!hasSat(r)) return '';
+      var h = '<h4><i class="fa-solid fa-face-smile"></i> แบบประเมินความพึงพอใจ</h4>';
+      if (m.sat) return '<div class="sp-satc done">' + h + '<div class="st"><i class="fa-solid fa-circle-check"></i> ส่งแล้ว ' + escapeHtml(formatDateThai(String(m.sat.savedAt).slice(0, 10))) + '</div><button type="button" class="btn btn-secondary btn-sm" data-sat-open="' + escapeHtml(r.id) + '"><i class="fa-solid fa-eye"></i> ดู / แก้ไข</button></div>';
+      if (m.canSat) return '<div class="sp-satc ready">' + h + '<div class="st"><i class="fa-solid fa-circle-exclamation"></i> พร้อมทำแล้ว</div><div class="sub">ได้รับการนิเทศแล้ว</div><button type="button" class="btn btn-sm sp-btn-o" data-sat-open="' + escapeHtml(r.id) + '"><i class="fa-solid fa-pen"></i> ทำแบบประเมิน</button></div>';
+      return '<div class="sp-satc off">' + h + '<div class="st"><i class="fa-solid fa-lock"></i> ยังทำไม่ได้</div><div class="sub">ทำได้หลังผู้นิเทศบันทึกผลแล้ว</div><button type="button" class="btn btn-sm" disabled>ทำแบบประเมิน</button></div>';
+    }
+    function lockBarHtml(savedAt, attr) { return '<div class="sp-lockbar"><i class="fa-solid fa-lock"></i><span>บันทึกแล้ว ' + escapeHtml(formatDateTimeThai(savedAt)) + ' · ล็อกไว้กันกดพลาด</span><button type="button" class="btn btn-secondary btn-sm" ' + attr + '><i class="fa-solid fa-pen"></i> แก้ไข</button></div>'; }
+    var SAVE_LOCK_MSG = 'บันทึกแล้วแบบประเมินจะล็อกไว้ ถ้าต้องการเปลี่ยนให้กด "แก้ไข"';
+    function openSat(rid, edit) {
+      var m = B.mine.filter(function (x) { return x.roundId === rid; })[0], r = roundOf(rid);
+      if (!m || !r || !hasSat(r)) return;
+      if (!m.canSat) { showToast('ทำแบบประเมินความพึงพอใจได้หลังผู้นิเทศบันทึกผลแล้ว', true); return; }
+      var lock = !!m.sat && !edit, s0 = m.slots.filter(function (x) { return x.date; })[0];
+      modal('แบบประเมินความพึงพอใจต่อการนิเทศ', '<div class="mut" style="margin:-4px 0 8px">' + (s0 ? escapeHtml(thD(s0.date, true) + ' คาบ ' + s0.period + ' · ' + slotLabel(s0)) : '') + '</div>' +
+        (lock ? lockBarHtml(m.sat.savedAt, 'data-sat-edit') : '') + formFillHtml(r.satForm, m.sat && m.sat.answers, !lock, 'spSatF') +
+        '<p class="mut sp-note"><i class="fa-solid fa-lock"></i> ผู้นิเทศไม่เห็นคำตอบนี้ · ผู้มีสิทธิ์ดูผลเห็นสรุป</p>',
+        lock ? '' : '<button type="button" class="btn btn-success" data-sat-save><i class="fa-solid fa-paper-plane"></i> บันทึก</button>');
+      var mb = document.getElementById('spModalBody'), ma = document.getElementById('spModalActions');
+      mb.onclick = function (e) {
+        var t = e.target.closest('[data-rate]'); if (t && !t.disabled) { t.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); }); return; }
+        if (e.target.closest('[data-sat-edit]')) openSat(rid, true);
+      };
+      ma.onclick = async function (e) {
+        if (!e.target.closest('[data-sat-save]')) return;
+        var a0 = readFormAnswers('spSatF'), e0 = checkForm(r.satForm, a0);
+        if (e0) { showToast(e0, true); return; }
+        if (!(await askConfirm(SAVE_LOCK_MSG, 'ยืนยันส่งแบบประเมิน?'))) return;
+        var rs = await withProgress('กำลังส่งแบบประเมินความพึงพอใจ', function () { return apiCall('supSatSave', { roundId: rid, answers: a0 }); }, { successLabel: 'ส่งแบบประเมินแล้ว ขอบคุณครับ/ค่ะ' });
+        if (rs.ok) { closeModal(); await boot(true); }
+      };
     }
     async function renderMine() {
       var stopL = st.tt ? function () {} : lazyLoading('กำลังโหลดตารางสอน...');
@@ -228,8 +258,7 @@
             '<div class="sp-info"><i class="fa-solid fa-bell"></i> เจ้าหน้าที่ลงวันนิเทศให้แล้ว — เปลี่ยนวันหรือคาบ ติดต่อผู้จัดการงานนิเทศ</div>' +
             '<div class="sp-bigs">' + m.slots.map(function (s) {
               return '<div class="sp-big' + (s.date ? '' : ' wait') + '"><span>' + (s.date ? 'วัน' + DAYS[dowOf(s.date)] : 'ทุกวัน' + DAYS[s.day]) + '</span><b>' + (s.date ? thDS(s.date) : 'รอลงวัน') + '</b><span>' + (s.date ? (ymdParts(s.date).y + 543) + ' · ' : '') + 'คาบ ' + s.period + '</span><small>' + escapeHtml(slotLabel(s)) + '</small></div>';
-            }).join('') + supBoxHtml(m) + '<div class="sp-bigside">' + planBoxHtml(m, r) + '</div></div>' +
-            satHtml(m, r) +
+            }).join('') + supBoxHtml(m) + satBoxHtml(m, r) + '<div class="sp-bigside">' + planBoxHtml(m, r) + '</div></div>' +
             (tt && tt.linked ? '<h3 class="sp-h3">ตารางสอนของคุณ</h3>' + ttHtml(tt.slots, picks, true) : '') + '</div>';
         }
         if (!st.picks[r.id]) { st.picks[r.id] = {}; m.slots.forEach(function (s) { st.picks[r.id][s.day + '-' + s.period] = true; }); }
@@ -260,13 +289,7 @@
       var t;
       if (st.tab === 'mine' && (t = e.target.closest('[data-pick]'))) { togglePick(t.closest('[data-round]').getAttribute('data-round'), t.getAttribute('data-pick')); return; }
       if (st.tab === 'mine' && (t = e.target.closest('[data-rate]'))) { t.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); }); return; }
-      if ((t = e.target.closest('[data-sat-save]'))) {
-        var rid0 = t.getAttribute('data-sat-save'), r0 = roundOf(rid0), a0 = readFormAnswers('spSat_' + rid0), e0 = checkForm(r0.satForm, a0);
-        if (e0) { showToast(e0, true); return; }
-        var rs = await withProgress('กำลังส่งแบบประเมินความพึงพอใจ', function () { return apiCall('supSatSave', { roundId: rid0, answers: a0 }); }, { successLabel: 'ส่งแบบประเมินแล้ว ขอบคุณครับ/ค่ะ' });
-        if (rs.ok) await boot(true);
-        return;
-      }
+      if ((t = e.target.closest('[data-sat-open]'))) { openSat(t.getAttribute('data-sat-open')); return; }
       if ((t = e.target.closest('[data-pick-save]'))) {
         var rid = t.getAttribute('data-pick-save'), picks = Object.keys(st.picks[rid] || {}).map(function (k) { return { day: +k.split('-')[0], period: +k.split('-')[1] }; });
         var r = await withProgress('กำลังบันทึกคาบที่เลือก', function () { return apiCall('supPickSave', { roundId: rid, picks: picks }); }, { successLabel: 'ส่งคาบที่เลือกแล้ว — รอเจ้าหน้าที่ลงวันที่' });
@@ -328,13 +351,14 @@
       var right = '<div class="sp-col">';
       if (!cur) right += '<div class="card"><p class="mut">เลือกรายการทางซ้าย</p></div>';
       else {
-        var r = roundOf(cur.roundId), can = cur.slot && cur.slot.date;
+        var r = roundOf(cur.roundId), can = cur.slot && cur.slot.date, evLock = can && cur.myEval && !(st.evEdit || {})[cur.slot.id]; // 1.98.4: บันทึกแล้ว = ล็อก (กด "แก้ไข" เพื่อเปลี่ยน)
         right += '<div class="card"><h3>แบบประเมินการนิเทศ · ' + escapeHtml(cur.teacherName) + '</h3><div class="mut" style="margin:-6px 0 10px">' + (cur.slot ? (cur.slot.date ? thD(cur.slot.date, true) : 'ทุกวัน' + DAYS[cur.slot.day]) + ' คาบ ' + cur.slot.period + ' · ' + escapeHtml(slotLabel(cur.slot)) : '') +
           (cur.coSupervisors.length ? ' · นิเทศร่วมกับ ' + escapeHtml(cur.coSupervisors.join(', ')) : '') + '</div>' +
           (cur.plan ? '<p><a class="btn btn-secondary btn-sm" href="' + escapeHtml(cur.plan.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> เปิดแผนการสอน</a></p>' : '') +
           (!can ? '<div class="sp-warn"><i class="fa-solid fa-hourglass-half"></i> ' + (cur.slot ? 'รอเจ้าหน้าที่ลงวันนิเทศ — ทำแบบประเมินได้หลังลงวันแล้ว' : 'ครูยังไม่เลือกคาบ') + '</div>' : '') +
-          formFillHtml((r && r.form) || [], cur.myEval && cur.myEval.answers, can, 'spEvf') +
-          '<div class="sp-evact">' + (cur.myEval ? '<span class="mut">บันทึกล่าสุด ' + escapeHtml(formatDateTimeThai(cur.myEval.savedAt)) + '</span>' : '') + '<button type="button" class="btn btn-success" data-ev-save' + (can ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> บันทึกผลประเมิน</button></div>' +
+          (evLock ? lockBarHtml(cur.myEval.savedAt, 'data-ev-edit') : '') +
+          formFillHtml((r && r.form) || [], cur.myEval && cur.myEval.answers, can && !evLock, 'spEvf') +
+          (evLock ? '' : '<div class="sp-evact">' + (cur.myEval ? '<button type="button" class="btn btn-ghost" data-ev-cancel>ยกเลิกการแก้ไข</button>' : '') + '<button type="button" class="btn btn-success" data-ev-save' + (can ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> บันทึกผลประเมิน</button></div>') +
           '<p class="mut sp-note"><i class="fa-solid fa-lock"></i> ผลประเมินเห็นได้เฉพาะผู้นิเทศ และผู้มีสิทธิ์ดูผลการนิเทศ</p></div>' +
           (can && B.photosEnabled !== false ? '<div class="card"><h3><i class="fa-solid fa-camera"></i> รูปการนิเทศ <span class="mut">(สูงสุด 2 รูป · ใช้ในรายงาน PDF)</span></h3><div class="sp-photos" id="spPhotos"><div class="loading">กำลังโหลด...</div></div><p class="mut" style="margin:8px 0 0">ผู้นิเทศของคาบนี้ทุกคน และผู้จัดการงานนิเทศ อัปโหลดได้ · ระบบย่อรูปให้อัตโนมัติ</p></div>' : '');
       }
@@ -395,12 +419,16 @@
         try { await apiCall('supPhotoDelete', { slotId: t.getAttribute('data-slot'), idx: +t.getAttribute('data-ph-del') }); if (st.phc) delete st.phc[t.getAttribute('data-slot')]; loadPhotos(t.getAttribute('data-slot'), true); } catch (x) { showToast(x.message, true); }
         return;
       }
+      var cur0 = B.duties.filter(function (d) { return dutyKey(d) === st.dutySel; })[0];
+      if (e.target.closest('[data-ev-edit]') && cur0 && cur0.slot) { (st.evEdit = st.evEdit || {})[cur0.slot.id] = 1; renderDuty(); return; }
+      if (e.target.closest('[data-ev-cancel]') && cur0 && cur0.slot) { if (st.evEdit) delete st.evEdit[cur0.slot.id]; renderDuty(); return; }
       if (e.target.closest('[data-ev-save]')) {
-        var cur = B.duties.filter(function (d) { return dutyKey(d) === st.dutySel; })[0]; if (!cur || !cur.slot) return;
+        var cur = cur0; if (!cur || !cur.slot) return;
         var r0 = roundOf(cur.roundId), answers = readFormAnswers('spEvf'), ce = checkForm(r0 && r0.form, answers);
         if (ce) { showToast(ce, true); return; }
+        if (!(await askConfirm(SAVE_LOCK_MSG, 'ยืนยันบันทึกผลประเมิน?'))) return;
         var r = await withProgress('กำลังบันทึกผลประเมิน', function () { return apiCall('supEvalSave', { slotId: cur.slot.id, answers: answers }); }, { successLabel: 'บันทึกผลประเมินแล้ว' });
-        if (r.ok) await boot(true);
+        if (r.ok) { if (st.evEdit) delete st.evEdit[cur.slot.id]; await boot(true); }
       }
     };
 

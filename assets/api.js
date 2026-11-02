@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.98.2';
-var APP_VERSION = '1.98.2.021126';
+var WORKER_MIN_VERSION = '1.98.4';
+var APP_VERSION = '1.98.4.021126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1351,11 +1351,16 @@ function applySupVisibility(st) {
 function renderSupUpcoming(elId, events) {
   var el = document.getElementById(elId); if (!el) return;
   var today = todayYmd(), MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
-  var list = (events || []).filter(function (e) { return e.supervision && e.date >= today; }).sort(function (a, b) { return a.date.localeCompare(b.date); }).slice(0, 6);
+  var list = (events || []).filter(function (e) { return e.supervision && e.date >= today; }).sort(function (a, b) { return (a.supervision === 'sat' ? 0 : 1) - (b.supervision === 'sat' ? 0 : 1) || a.date.localeCompare(b.date); }).slice(0, 6);
   el.hidden = !list.length; if (!list.length) return;
-  el.innerHTML = '<div class="section-title" style="justify-content:space-between"><span><i class="fa-solid fa-chalkboard-user ui-icon" aria-hidden="true"></i> การนิเทศที่จะถึง</span><a class="btn btn-ghost btn-sm" href="supervision.html">ดูทั้งหมด</a></div>' + list.map(function (e) {
+  el.innerHTML = '<div class="section-title" style="justify-content:space-between"><span><i class="fa-solid fa-chalkboard-user ui-icon" aria-hidden="true"></i> การนิเทศที่จะถึง</span><a class="sup-up-all" href="supervision.html">ดูทั้งหมด</a></div>' + list.map(function (e) {
+    if (e.supervision === 'sat') { var q = String(e.satDate || '').split('-'); // 1.98.4: แบบประเมินความพึงพอใจพร้อมทำ
+      return '<a class="sup-up-item sat" href="' + escapeHtml(e.link) + '"><span class="d"><i class="fa-solid fa-face-smile" aria-hidden="true"></i></span><span class="t"><b>' + escapeHtml(e.title) + '</b><small>' + escapeHtml(q.length === 3 ? 'นิเทศวันที่ ' + (+q[2]) + ' ' + MS[+q[1] - 1] + ' ' + (+q[0] + 543) + String(e.message || '').replace(/^นิเทศวันที่ \S+/, '') : e.message || '') + '</small><span class="sup-up-tag o">แตะเพื่อทำแบบประเมิน</span></span><i class="fa-solid fa-chevron-right sup-up-chev" aria-hidden="true"></i></a>'; }
     var p = e.date.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]), left = Math.round((d - new Date(today.replace(/-/g, '/'))) / 864e5), sup = e.supervision === 'sup';
-    return '<a class="sup-up-item" href="supervision.html' + (sup ? '#duty' : '#mine') + '"><span class="d">' + DW[d.getDay()] + '<b>' + (+p[2]) + '</b>' + MS[+p[1] - 1] + '</span><span class="t"><b>' + (sup ? 'ไปนิเทศ' : 'รับการนิเทศ') + '</b> ' + escapeHtml(e.title.replace(/^(ไปนิเทศ|รับการนิเทศ)\s*/, '')) + '<small>' + escapeHtml(e.message || '') + ' · ' + (left === 0 ? 'วันนี้' : left === 1 ? 'พรุ่งนี้' : 'อีก ' + left + ' วัน') + '</small></span>' + (sup ? '<span class="btn btn-sm btn-secondary">ทำแบบประเมิน</span>' : '') + '</a>';
+    var who = e.title.replace(/^(ไปนิเทศ|รับการนิเทศ)\s*/, '').replace(/^คาบ \d+ · /, ''), per = (/คาบ (\d+)/.exec(e.title) || [])[1];
+    var line1 = sup ? who : (per ? 'คาบ ' + per + ' · ' : '') + who, line2 = sup ? (per ? 'คาบ ' + per + ' · ' : '') + String(e.message || '').split(' · ')[0] : (e.message || '');
+    return '<a class="sup-up-item" href="supervision.html' + (sup ? '#duty' : '#mine') + '"><span class="d">' + DW[d.getDay()] + '<b>' + (+p[2]) + '</b>' + MS[+p[1] - 1] + '</span><span class="t"><b>' + (sup ? 'ไปนิเทศ' : 'รับการนิเทศ') + ' · ' + escapeHtml(line1) + '</b><small>' + escapeHtml(line2) + '</small><small>' + (left === 0 ? 'วันนี้' : left === 1 ? 'พรุ่งนี้' : 'อีก ' + left + ' วัน') + '</small>' +
+      '<span class="sup-up-tag ' + (sup ? 's' : 'r') + '">' + (sup ? 'แตะเพื่อทำแบบประเมิน' : 'แตะเพื่อดูรายละเอียด') + '</span></span><i class="fa-solid fa-chevron-right sup-up-chev" aria-hidden="true"></i></a>';
   }).join('');
 }
 // 1.98.1: เกณฑ์ระดับคุณภาพของโรงเรียน (5 ดีมาก · 4 ดี · 3 พอใช้ · 2 ควรปรับปรุง · 1 ไม่ผ่าน) — ค่าเฉลี่ยปัดตามช่วง .50
@@ -1978,6 +1983,7 @@ function mountChrome(activePage) {
               '<button class="dd-item dd-install" id="ddInstall" type="button" hidden><span class="dd-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span> ติดตั้งแอปลงเครื่องนี้</button>' +
               '<div class="dd-divider" id="ddInstallDiv" hidden></div>' +
               // 1.66: เลือกธีม 3 แบบ (ภาพตัวอย่างย่อ) แทนสวิตช์ Dark Mode เดิม
+              '<button class="dd-item dd-mobile-only" id="ddManual" type="button"><span class="dd-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span> คู่มือการใช้งาน</button>' + // 1.98.3: มือถือ — คู่มือย้ายมาอยู่ในเมนู
               '<div class="dd-theme-title">ธีม</div><div class="dd-themes" id="themePicker" role="radiogroup" aria-label="ธีม">' +
                 [['light', 'กระดาษขาว'], ['sepia', 'ถนอมตา'], ['dark', 'กลางคืน']].map(function (t) {
                   return '<button type="button" role="radio" class="dd-theme t-' + t[0] + '" data-theme-pick="' + t[0] + '"><span class="mini"><i class="p"></i><i></i><i></i></span>' + t[1] + '</button>';
@@ -2074,6 +2080,7 @@ function mountChrome(activePage) {
     initNotifBell(); // 1.75
     initTimetable(); // 1.92.1
     document.getElementById('manualOpenBtn').addEventListener('click', function () { openManual(); });
+    document.getElementById('ddManual').addEventListener('click', function () { dropdown.classList.remove('open'); openManual(); });
     document.getElementById('ddReport').addEventListener('click', function () { dropdown.classList.remove('open'); openReportModal(); });
     document.getElementById('ddInstall').addEventListener('click', function () { dropdown.classList.remove('open'); startInstallApp(); });
     updateInstallItem();
@@ -2542,7 +2549,7 @@ var NOTIF_KIND = {
   due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626'],
   activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'], // 1.81: กิจกรรม
   att_missing: ['fa-clipboard-check', '#7c3aed'], hr_missing: ['fa-book-open', '#0891b2'], // 1.91: เว็บเช็คชื่อ
-  sup_date: ['fa-chalkboard-user', '#7c3aed'], sup_duty: ['fa-clipboard-check', '#7c3aed'] // 1.98: นิเทศการสอน
+  sup_date: ['fa-chalkboard-user', '#7c3aed'], sup_duty: ['fa-clipboard-check', '#7c3aed'], sup_sat: ['fa-face-smile', '#f59e0b'] // 1.98: นิเทศการสอน · 1.98.4 แบบความพึงพอใจพร้อมทำ
 };
 var _notifCovers = {}; // 1.85.2: รูปปกอัลบั้มในกระดิ่ง
 function applyTopBadges(r) {
