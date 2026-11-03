@@ -42,7 +42,9 @@
     renderCards();
     await loadSub();
   }
-  function pageTabs() { return '<span class="tc-pages">' + [['teach', 'fa-book-open', 'วิชาที่สอน'], ['leave', 'fa-user-clock', 'แจ้งไปราชการ / ลา']].map(function (x) { return '<button type="button" class="cb-seg' + (st.page === x[0] ? ' on' : '') + '" data-tc-page="' + x[0] + '"><i class="fa-solid ' + x[1] + '"></i> ' + x[2] + '</button>'; }).join('') + '</span>'; }
+  // 2.00.5: แท็บแจ้งไปราชการ / ลา — ซ่อนถ้าไม่มีสิทธิ์ (ไม่ได้เปิดให้ครูแจ้งเอง และไม่ใช่ผู้ดูแล)
+  function leaveOk() { return !!((B && B.leaveTab) || (L && (L.manage || L.view || L.selfReport || L.isSuper))); }
+  function pageTabs() { if (!leaveOk()) return ''; return '<span class="tc-pages">' + [['teach', 'fa-book-open', 'วิชาที่สอน'], ['leave', 'fa-user-clock', 'แจ้งไปราชการ / ลา']].map(function (x) { return '<button type="button" class="cb-seg' + (st.page === x[0] ? ' on' : '') + '" data-tc-page="' + x[0] + '"><i class="fa-solid ' + x[1] + '"></i> ' + x[2] + '</button>'; }).join('') + '</span>'; }
   function renderTabs() {
     if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); return; }
     var h = pageTabs() + (B.admin && B.teachers && B.teachers.length ? '<label class="cb-mut" for="tcFor">ดูวิชาของ</label> <select id="tcFor" class="cb-search">' + (B.isSuper ? '<option value="">— เลือกครู —</option>' : '') + B.teachers.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === B.forUser ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select>' : '');
@@ -54,7 +56,9 @@
     if (e.target.closest('[data-tc-win]')) { openWindowCfg(); return; }
     var pg = e.target.closest('[data-tc-page]'); if (!pg || pg.getAttribute('data-tc-page') === st.page) return;
     st.page = pg.getAttribute('data-tc-page'); try { history.replaceState(null, '', st.page === 'leave' ? '#leave' : location.pathname + location.search); } catch (x) { /* ข้าม */ }
-    if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); renderLeave(); } else { body.innerHTML = ''; boot(); }
+    if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); renderLeave(); }
+    else if (B && B.linked && B.term && B.subjects.length) { body.innerHTML = ''; layout(); renderTabs(); renderCards(); loadSub(); } // 2.00.5: วาดจากข้อมูลเดิม ไม่โหลดใหม่ (ไม่กระพริบ)
+    else { body.innerHTML = ''; boot(); }
   });
   // ---------- สถานะของแต่ละวิชา (การ์ด) ----------
   function statusOf(sj) {
@@ -323,6 +327,8 @@
   }
   async function renderLeave() {
     if (!L) { var t = slowLoading(body, 'กำลังโหลด...'); try { L = await apiCall('leaveBoot', {}); } catch (e) { clearTimeout(t); body.innerHTML = err(e.message); return; } clearTimeout(t); }
+    tabsEl.innerHTML = pageTabs();
+    if (!leaveOk()) { st.page = 'teach'; try { history.replaceState(null, '', location.pathname + location.search); } catch (x) { /* ข้าม */ } body.innerHTML = ''; boot(); return; }
     if (!L.sqlReady) { body.innerHTML = '<div class="card">' + err('ยังใช้ส่วนนี้ไม่ได้ — ผู้ดูแลระบบต้องรัน SQL ชุดที่สามสิบเจ็ดก่อน (ดู README)') + '</div>'; return; }
     if (!L.term) { body.innerHTML = '<div class="card cb-empty"><i class="fa-solid fa-sun"></i><p>ช่วงนี้ไม่ใช่ภาคเรียนปกติ</p></div>'; return; }
     if (!LV.items) { try { LV.items = (await apiCall('leaveList', {})).items || []; } catch (e) { body.innerHTML = err(e.message); return; } }

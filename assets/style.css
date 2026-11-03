@@ -4651,3 +4651,7 @@ a.sup-up-all { font-size: .86rem; font-weight: 700; color: #7c3aed; }
 .dd-seg .dd-theme.on { background: var(--surface); color: var(--primary-dark); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .dd-seg .dd-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; border: 1px solid #94a3b8; }
 .dd-seg .t-light .dd-dot { background: #f8fafc; } .dd-seg .t-sepia .dd-dot { background: #f3ead7; } .dd-seg .t-dark .dd-dot { background: #0b1220; }
+/* 2.00.5: กันหน้ากระตุกตอนโหลด (นิเทศ / ชุมนุม / วิชาที่สอน) — จองที่ให้แถบแท็บ + พื้นที่เนื้อหา (ท้ายเว็บไม่กระโดด) */
+#spTabs:empty, #cbTabs:empty { min-height: 40px; }
+#spBody, #cbBody { min-height: calc(100vh - 260px); }
+#spBody > .loading:only-child, #cbBody > .loading:only-child { min-height: 200px; }
