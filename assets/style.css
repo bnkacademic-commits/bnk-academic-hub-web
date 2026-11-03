@@ -3565,6 +3565,10 @@ a.ov-alert:hover { text-decoration: underline; }
 .ann-pop-prev img { display: block; max-width: 100%; max-height: 200px; border-radius: 10px; border: 1px solid var(--border); }
 .ann-pop-rm { position: absolute; top: 6px; left: 6px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: #ef4444; color: #fff; cursor: pointer; }
 .ann-pop-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; font-size: .78rem; }
+.ann-att-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; font-size: .78rem; color: var(--muted); } /* 2.00.2 */
+.ann-att-meta i { color: var(--primary); }
+.hub-ann-b .ev-lbtns { margin-top: 6px; }
+.annp-bd .ev-lbtns { margin-top: 12px; }
 .ann-pop-tag { background: #ede9fe; color: #6d28d9; border-radius: 99px; padding: 1px 9px; font-weight: 700; }
 .ann-pop-stat { background: #dcfce7; color: #15803d; border-radius: 99px; padding: 1px 9px; }
 /* ป็อปอัปที่ผู้ใช้เห็น */

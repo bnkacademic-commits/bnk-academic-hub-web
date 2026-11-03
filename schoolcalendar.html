@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.0.031126" />
+<link rel="stylesheet" href="assets/style.css?v=2.00.2.031126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -74,7 +74,7 @@
     </div>
   </div>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.00.0.031126"></script>
+  <script src="assets/api.js?v=2.00.2.031126"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('schoolcal'); if (typeof mountFooter === 'function') mountFooter(); } // 1.96: + footer
@@ -178,7 +178,7 @@
         var hl = state.day && state.day >= x.from && state.day <= x.to;
         var rc = act ? (isHolidayEv(e) ? ' sc-r-hol' : ' sc-r-act') : '', rs = act && !isHolidayEv(e) ? ' style="--rc:' + activityColor(e) + '"' : ''; // 1.96.3: แถวกิจกรรมปูพื้นสีกิจกรรม · วันหยุดสีแดง
         return '<tr class="' + (hl ? 'sc-row-hl' : '') + rc + '"' + rs + ' data-from="' + x.from + '"><td><span class="sc-dow d' + dw + '">' + DOW[dw] + '</span></td><td class="sc-date">' + escapeHtml(dt) + '</td>' +
-          '<td>' + kind + dot + '<span class="sc-t">' + escapeHtml(e.title) + '</span>' + (sub.length ? '<span class="sc-small">' + escapeHtml(sub.join(' · ')) + '</span>' : '') + '</td>' +
+          '<td>' + kind + dot + '<span class="sc-t">' + escapeHtml(e.title) + '</span>' + (sub.length ? '<span class="sc-small">' + escapeHtml(sub.join(' · ')) + '</span>' : '') + (act ? eventLinksHtml(evLinksOf(e), false) : '') + '</td>' + // 2.00.1: ไฟล์แนบ/ลิงก์ของกิจกรรม
           '<td class="sc-resp">' + respHtml(e) + '</td></tr>';
       }).join('') + '</tbody></table>';
     }

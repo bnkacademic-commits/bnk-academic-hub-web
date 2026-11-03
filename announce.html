@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.0.031126" />
+<link rel="stylesheet" href="assets/style.css?v=2.00.2.031126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -145,6 +145,20 @@
             </div>
           </div>
           <div class="hint ann-time-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>ไม่ระบุเวลา = แสดงทันทีจนกว่าจะลบ · ระบุเวลา = แสดง/ซ่อนอัตโนมัติตามช่วงที่ตั้ง</span></div>
+          <!-- 2.00.2: ไฟล์แนบ (สูงสุด 3 · Google Drive) + ลิงก์แนบ (สูงสุด 3) — ครูเห็นเป็นปุ่มใต้ประกาศ -->
+          <div class="field" id="annSamplesField">
+            <label>ไฟล์แนบ <span class="opt">(ไม่บังคับ · สูงสุด 3 ไฟล์)</span></label>
+            <div id="annSamples" class="ev-samples"></div>
+            <button type="button" class="ev-add-btn" id="annSampleAdd"><i class="fa-solid fa-upload" aria-hidden="true"></i> อัปโหลดไฟล์</button>
+            <input type="file" id="annSampleInput" hidden />
+            <div class="hint">เช่น แบบฟอร์มให้ครูดาวน์โหลดไปกรอก หรือไฟล์ตัวอย่าง · เก็บใน Google Drive ของโรงเรียน (โฟลเดอร์ "ฟอร์มตัวอย่าง/ประกาศ")</div>
+          </div>
+          <div class="field" id="annLinksField">
+            <label>ลิงก์แนบ <span class="opt">(ไม่บังคับ · สูงสุด 3 ลิงก์)</span></label>
+            <div id="annLinks" class="ev-links"></div>
+            <button type="button" class="ev-add-btn" id="annLinkAdd"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มลิงก์</button>
+            <div class="hint">ครูเห็นเป็นปุ่ม (ไม่ใส่ข้อความบนปุ่ม = "เปิดลิงก์") · ใส่ได้เฉพาะลิงก์ที่ขึ้นต้นด้วย https://</div>
+          </div>
           <!-- 1.85: ประกาศแบบป็อปอัป — เด้งกลางจอเมื่อเปิดหน้าแรก (นอกจากแสดงในรายการประกาศตามปกติ) -->
           <div class="ann-pop" id="annPopBox" hidden>
             <input type="checkbox" id="annPopOn" hidden style="display:none" />
@@ -235,6 +249,8 @@
             <label for="evActMessage">รายละเอียด <span class="opt">(ไม่บังคับ)</span></label>
             <textarea id="evActMessage" placeholder="เช่น ขอเชิญครูและนักเรียนร่วมกิจกรรม"></textarea>
           </div>
+          <!-- 2.00.1: ไฟล์แนบ + ลิงก์ของกิจกรรม (ย้ายช่องเดียวกับงานที่ต้องส่งมาไว้ตรงนี้เมื่อเลือก "กิจกรรม") -->
+          <div id="evActAttach"></div>
           <div class="field-row">
             <div class="field">
               <label for="evActYear">ปีการศึกษา</label>
@@ -349,7 +365,7 @@
             <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
           </div>
           <!-- 1.97: ฟอร์ม/ไฟล์ตัวอย่าง (สูงสุด 3) — อัปโหลดเข้า Google Drive ครูดาวน์โหลด/เปิดดูได้ -->
-          <div class="field">
+          <div class="field" id="evSamplesField">
             <label>ฟอร์ม / ไฟล์ตัวอย่าง <span class="opt">(ไม่บังคับ · สูงสุด 3 ไฟล์)</span></label>
             <div id="evSamples" class="ev-samples"></div>
             <button type="button" class="ev-add-btn" id="evSampleAdd"><i class="fa-solid fa-upload" aria-hidden="true"></i> อัปโหลดไฟล์</button>
@@ -357,7 +373,7 @@
             <div class="hint">เช่น แบบฟอร์มให้ครูดาวน์โหลดไปกรอก หรือตัวอย่างงานที่ทำเสร็จแล้ว · เก็บใน Google Drive ของโรงเรียน (โฟลเดอร์ "ฟอร์มตัวอย่าง")</div>
           </div>
           <!-- 1.88: ลิงก์แนบ (สูงสุด 3) — ครูเห็นเป็นปุ่ม -->
-          <div class="field">
+          <div class="field" id="evLinksField">
             <label>ลิงก์แนบ <span class="opt">(ไม่บังคับ · สูงสุด 3 ลิงก์)</span></label>
             <div id="evLinks" class="ev-links"></div>
             <button type="button" class="ev-add-btn" id="evLinkAdd"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มลิงก์</button>
@@ -427,7 +443,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.00.0.031126"></script>
+  <script src="assets/api.js?v=2.00.2.031126"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -775,6 +791,10 @@
       document.querySelectorAll('#evKindPick .evk-card').forEach(function (b) { var on = b.getAttribute('data-kind') === k; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
       document.getElementById('evActivityWrap').hidden = k !== 'activity';
       document.getElementById('evDeadlineWrap').hidden = k === 'activity';
+      (function () { var sf = document.getElementById('evSamplesField'), lf = document.getElementById('evLinksField'), box = document.getElementById('evActAttach'), rv = document.getElementById('evReviewField'); // 2.00.1
+        if (k === 'activity') { box.appendChild(sf); box.appendChild(lf); } else if (sf.parentNode === box) { rv.parentNode.insertBefore(sf, rv); rv.parentNode.insertBefore(lf, rv); }
+        var h = sf.querySelector('.hint'); if (h) { if (!h.__orig) h.__orig = h.innerHTML; h.innerHTML = k === 'activity' ? 'เช่น หนังสือเชิญ กำหนดการ หรือเอกสารที่ผู้เข้าร่วมต้องใช้ · ครูเปิดดู/ดาวน์โหลดได้จากปฏิทิน' : h.__orig; }
+        var lb = sf.querySelector('label'); if (lb) lb.innerHTML = (k === 'activity' ? 'ไฟล์แนบ' : 'ฟอร์ม / ไฟล์ตัวอย่าง') + ' <span class="opt">(ไม่บังคับ · สูงสุด 3 ไฟล์)</span>'; })();
       var editing = !!document.getElementById('evEditId').value;
       document.getElementById('evSubmitBtn').innerHTML = editing ? 'บันทึกการแก้ไข' : (k === 'activity' ? '<i class="fa-solid fa-check" aria-hidden="true"></i> เพิ่มกิจกรรม' : 'เพิ่มกำหนดการ');
       document.getElementById('createEventError').hidden = true;
@@ -1110,7 +1130,7 @@
       if (!file) return;
       evSampleBusy = true; renderEvSamples();
       try {
-        var prep = await apiCall('sampleUploadPrepare', { fileName: file.name, mimeType: file.type, fileSize: file.size, academicYear: document.getElementById('evYear').value, direct: 1, origin: location.origin });
+        var prep = await apiCall('sampleUploadPrepare', { fileName: file.name, mimeType: file.type, fileSize: file.size, academicYear: document.getElementById(evIsAct() ? 'evActYear' : 'evYear').value, direct: 1, origin: location.origin });
         var res = await sendPreparedFile(prep, file, { filename: prep.uploadFileName || file.name, mimeType: file.type });
         var f = await apiCall('sampleUploadFinalize', { sampleId: prep.sampleId, fileId: res.fileId, fileUrl: res.url, directUrl: res.directUrl, fileName: prep.uploadFileName || file.name, mimeType: file.type, via: res.via, fallbackReason: res.fallbackReason || '' });
         evSamples.push(f);
@@ -1122,7 +1142,7 @@
     function evExtrasPayload() {
       var c = evCat();
       return { color: evIsAct() ? evColor : '', calShow: evScMode, responsible: evResp.get(), selfReport: !evIsAct() && !!(c && c.manualCheck) && document.getElementById('evSelfReport').checked,
-        calOnly: document.getElementById('evCalOnly').checked, sampleFiles: evIsAct() ? [] : evSamples.map(function (f) { return { id: f.id, note: f.note || '' }; }) }; // 1.97
+        calOnly: document.getElementById('evCalOnly').checked, sampleFiles: evSamples.map(function (f) { return { id: f.id, note: f.note || '' }; }) }; // 1.97
     }
     function openCreateEvent() {
       document.getElementById('evEditId').value = '';
@@ -1282,7 +1302,8 @@
         ownerType: evActOwnerType, ownerGroup: evAtt.mode === 'holiday' ? '' : v('evActOwnerGroup'), audience: evActAud.get(), message: v('evActMessage'),
         academicYear: v('evActYear'), semester: v('evActSem'),
         notify: document.getElementById('evActNotify').checked, repeatYearly: document.getElementById('evActRepeat').checked,
-        attMode: evAtt.mode, attPlan: attPlanPayload() // 1.92: เว็บเช็คชื่อ (วันหยุด / หยุดเรียนบางคาบ / จัดกิจกรรม)
+        attMode: evAtt.mode, attPlan: attPlanPayload(), // 1.92: เว็บเช็คชื่อ (วันหยุด / หยุดเรียนบางคาบ / จัดกิจกรรม)
+        links: getEvLinks() // 2.00.1: ลิงก์แนบของกิจกรรม
       };
       Object.assign(payload, evExtrasPayload()); // 1.93
       if (editId) payload.eventId = editId;
@@ -1326,7 +1347,7 @@
         return '<div class="pop-card' + (on ? '' : ' off') + '" data-pop="' + escapeHtml(a.id) + '">' +
           '<div class="pop-pv' + (a.hasImage ? '' : ' no') + '" data-pop-img="' + escapeHtml(a.id) + '">' + (a.hasImage && _popImgs[a.id] ? '<img src="' + _popImgs[a.id] + '" alt="" />' : '<i class="fa-solid fa-' + (a.hasImage ? 'image' : 'window-restore') + '" aria-hidden="true"></i>') + '</div>' +
           '<div class="pop-in"><div class="pop-t"><b>' + escapeHtml(a.title) + '</b> <span class="pop-st ' + (on ? 'on' : 'off') + '">' + (on ? 'กำลังแสดง' : wait ? 'ยังไม่ถึงเวลาแสดง' : 'หมดเวลาแสดง') + '</span> <span class="pop-st md">' + (a.popup === 'once' ? 'ครั้งเดียวต่อคน' : 'ทุกครั้งจนกว่าจะติ๊ก') + '</span></div>' +
-            '<div class="pop-m">' + escapeHtml(gi.label) + ' · ' + escapeHtml(audienceLabel_(a.audience)) + (a.showUntil ? ' · ถึง ' + escapeHtml(formatDateTimeThai(a.showUntil)) : '') + '</div>' +
+            '<div class="pop-m">' + escapeHtml(gi.label) + ' · ' + escapeHtml(audienceLabel_(a.audience)) + (a.showUntil ? ' · ถึง ' + escapeHtml(formatDateTimeThai(a.showUntil)) : '') + '</div>' + annAttachMeta(a) +
             (st ? '<div class="pop-m">' + (a.popup === 'once' ? 'เห็นแล้ว ' + st.seen + ' / ' + st.total + ' คน' : 'ไม่แสดงอีกแล้ว ' + st.dismissed + ' / ' + st.total + ' คน · เห็นแล้ว ' + st.seen + ' คน') + '</div><div class="pop-bar"><i style="width:' + pct + '%"></i></div>' : '') +
           '</div>' +
           (canManage && a.canEdit ? '<div class="pop-acts"><button class="btn btn-secondary btn-sm" data-edit-id="' + a.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button></div>' : '') +
@@ -1374,7 +1395,7 @@
             '<div style="flex:1 1 220px; min-width:220px;"><div class="ann-gchip-row"><span class="ann-gchip"' + (gi.color ? ' style="--g:' + gi.color + '"' : '') + '><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ' + escapeHtml(gi.label) + '</span></div><div class="sub-item-title">' + escapeHtml(a.title) + '</div>' +
             (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
             '<div class="sub-item-meta">' + (a.createdByName ? 'โดย ' + escapeHtml(a.createdByName) + ' · ' : '') + formatDateTimeThai(a.createdAt) + ' · สำหรับ: ' + escapeHtml(audienceLabel_(a.audience)) + '</div>' +
-            annScheduleMeta(a) + annPopMeta(a) + '</div>' +
+            annScheduleMeta(a) + annPopMeta(a) + annAttachMeta(a) + '</div>' +
             (canManage && a.canEdit ? '<div style="display:flex; gap:6px; flex-shrink:0;">' +
             '<button class="btn btn-secondary btn-sm" data-edit-id="' + a.id + '">แก้ไข</button>' +
             '<button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button>' +
@@ -1465,12 +1486,51 @@
       if (editing && on && document.getElementById('annPopReset').checked) pl.resetPopup = true;
       return pl;
     }
+    // ---------- 2.00.2: ไฟล์แนบ + ลิงก์แนบของประกาศ (ใช้ระบบอัปโหลดเดียวกับปฏิทิน) ----------
+    var annSamples = [], annSampleBusy = false;
+    function renderAnnSamples() {
+      document.getElementById('annSamples').innerHTML = annSamples.map(function (f, i) {
+        return '<div class="ev-sample">' + fileTypeIconHtml(f.name, f.mime, 'sm') + '<div class="ev-sample-t"><a href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener">' + escapeHtml(f.name) + '</a>' +
+          '<input type="text" maxlength="80" data-asmp-note="' + i + '" placeholder="ข้อความบนปุ่ม เช่น แบบฟอร์มให้ดาวน์โหลด (ไม่ใส่ = ชื่อไฟล์)" value="' + escapeHtml(f.note || '') + '" /></div>' +
+          '<button type="button" class="ev-x" data-asmp-del="' + i + '" title="เอาไฟล์นี้ออก" aria-label="เอาไฟล์นี้ออก"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>';
+      }).join('') + (annSampleBusy ? '<div class="hint"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> กำลังอัปโหลด…</div>' : '');
+      document.getElementById('annSampleAdd').hidden = annSamples.length >= 3 || annSampleBusy;
+    }
+    document.getElementById('annSamples').addEventListener('input', function (e) { var n = e.target.closest('[data-asmp-note]'); if (n) annSamples[Number(n.getAttribute('data-asmp-note'))].note = n.value; });
+    document.getElementById('annSamples').addEventListener('click', function (e) { var d = e.target.closest('[data-asmp-del]'); if (!d) return; annSamples.splice(Number(d.getAttribute('data-asmp-del')), 1); renderAnnSamples(); });
+    document.getElementById('annSampleAdd').addEventListener('click', function () { document.getElementById('annSampleInput').click(); });
+    document.getElementById('annSampleInput').addEventListener('change', async function (e) {
+      var file = e.target.files && e.target.files[0]; e.target.value = '';
+      if (!file) return;
+      annSampleBusy = true; renderAnnSamples();
+      try {
+        var prep = await apiCall('sampleUploadPrepare', { fileName: file.name, mimeType: file.type, fileSize: file.size, scope: 'ann', direct: 1, origin: location.origin });
+        var res = await sendPreparedFile(prep, file, { filename: prep.uploadFileName || file.name, mimeType: file.type });
+        var f = await apiCall('sampleUploadFinalize', { sampleId: prep.sampleId, fileId: res.fileId, fileUrl: res.url, directUrl: res.directUrl, fileName: prep.uploadFileName || file.name, mimeType: file.type, via: res.via, fallbackReason: res.fallbackReason || '' });
+        annSamples.push(f);
+      } catch (err) { showToast('อัปโหลดไม่สำเร็จ: ' + err.message, true); }
+      annSampleBusy = false; renderAnnSamples();
+    });
+    function syncAnnLinkAdd() { document.getElementById('annLinkAdd').hidden = document.querySelectorAll('#annLinks .ev-link-row').length >= 3; }
+    function getAnnLinks() { return Array.prototype.map.call(document.querySelectorAll('#annLinks .ev-link-row'), function (r) { return { url: r.querySelector('.ev-link-url').value.trim(), label: r.querySelector('.ev-link-lbl').value.trim() }; }).filter(function (l) { return l.url || l.label; }); }
+    document.getElementById('annLinkAdd').addEventListener('click', function () { document.getElementById('annLinks').insertAdjacentHTML('beforeend', linkRow(null)); syncAnnLinkAdd(); var ins = document.querySelectorAll('#annLinks .ev-link-url'); ins[ins.length - 1].focus(); });
+    document.getElementById('annLinks').addEventListener('click', function (e) { var b = e.target.closest('[data-link-rm]'); if (!b) return; b.closest('.ev-link-row').remove(); syncAnnLinkAdd(); });
+    function setAnnAttach(a) {
+      annSamples = ((a && a.sampleFiles) || []).map(function (f) { return Object.assign({}, f); }); annSampleBusy = false; renderAnnSamples();
+      document.getElementById('annLinks').innerHTML = ((a && a.links) || []).map(linkRow).join(''); syncAnnLinkAdd();
+    }
+    function annAttachMeta(a) {
+      var nf = (a.sampleFiles || []).length, nl = (a.links || []).length;
+      if (!nf && !nl) return '';
+      return '<div class="ann-att-meta">' + (nf ? '<span><i class="fa-solid fa-paperclip" aria-hidden="true"></i> ไฟล์แนบ ' + nf + '</span>' : '') + (nl ? '<span><i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์ ' + nl + '</span>' : '') + '</div>';
+    }
     function openCreateAnn(popupMode) {
       document.getElementById('annEditId').value = '';
       document.getElementById('createAnnForm').reset();
       setAnnGroup(annIsTop ? '' : (session.department || ''));
       annAud.set('all');
       setAnnPop(null, popupMode === true);
+      setAnnAttach(null); // 2.00.2
       document.getElementById('createAnnError').hidden = true;
       showModalEl(annModalEl);
     }
@@ -1483,6 +1543,7 @@
       setAnnGroup(a.department || '');
       annAud.set(a.audience || 'all');
       setAnnPop(a, !!a.popup);
+      setAnnAttach(a); // 2.00.2
       document.getElementById('createAnnError').hidden = true;
       showModalEl(annModalEl);
     }
@@ -1510,6 +1571,9 @@
       }
       var annAudErr = annAud.check();
       if (annAudErr) { errBox.textContent = annAudErr; errBox.hidden = false; return; }
+      if (annSampleBusy) { errBox.textContent = 'กรุณารอให้อัปโหลดไฟล์แนบเสร็จก่อน'; errBox.hidden = false; return; }
+      var annLinks = getAnnLinks(), badAnnLink = annLinks.filter(function (l) { return !/^https:\/\/\S+$/i.test(l.url); })[0];
+      if (badAnnLink) { errBox.textContent = badAnnLink.url ? 'ลิงก์ต้องขึ้นต้นด้วย https:// และไม่มีช่องว่าง' : 'กรุณาใส่ลิงก์ของปุ่ม "' + badAnnLink.label + '"'; errBox.hidden = false; return; }
       var editId = document.getElementById('annEditId').value;
       var okAnn = await askConfirm(
         editId ? 'ยืนยันบันทึกการแก้ไขประกาศนี้?' : (document.getElementById('annPopOn').checked ? 'ยืนยันเผยแพร่ประกาศแบบป็อปอัปนี้? (เด้งเมื่อผู้รับเปิดหน้าแรก)' : 'ยืนยันเผยแพร่ประกาศนี้ไปยังหน้าฮับของทุกบัญชี?'),
@@ -1524,6 +1588,7 @@
         showUntil: showUntilRaw ? new Date(showUntilRaw).toISOString() : ''
       };
       annPayload.audience = annAud.get();
+      annPayload.links = annLinks; annPayload.sampleFiles = annSamples.map(function (f) { return { id: f.id, note: (f.note || '').trim() }; }); // 2.00.2
       if (annIsTop) annPayload.department = document.getElementById('annDept').value;
       if (editId) annPayload.announcementId = editId;
       annPopPayload(annPayload, !!editId);

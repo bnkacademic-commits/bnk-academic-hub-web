@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.00.0';
-var APP_VERSION = '2.00.0.031126';
+var WORKER_MIN_VERSION = '2.00.2';
+var APP_VERSION = '2.00.2.031126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -204,8 +204,9 @@ function forceSessionExpire() {
 // error อื่นๆ ระหว่างตรวจ (เช่น เครือข่ายสะดุดชั่วคราว) ปล่อยผ่านเฉยๆ รอตรวจรอบถัดไป ไม่ถือเป็นการเด้งออก
 // 1.69: ทุก 30 วินาที (เดิม 10) และเฉพาะตอนที่มีการใช้งานภายใน 2 นาทีที่ผ่านมา — ลดคำขอไป Worker · ใช้งานต่อหลังนิ่ง = ตรวจทันที
 // คำตอบมี token ใหม่ (ต่ออายุอัตโนมัติ) -> เก็บแทนของเดิม
-var SESSION_WATCH_INTERVAL_MS = 30 * 1000;
-var SESSION_WATCH_ACTIVE_MS = 2 * 60 * 1000;
+// 2.00.1: ทุก 2 นาที (เดิม 30 วินาที) · ตรวจเฉพาะเมื่อมีการใช้งานภายใน 5 นาที · กลับมาที่แท็บ/กลับมาใช้งาน = ตรวจทันที — ลดคำขอไป Worker ราว 75%
+var SESSION_WATCH_INTERVAL_MS = 2 * 60 * 1000;
+var SESSION_WATCH_ACTIVE_MS = 5 * 60 * 1000;
 var _sessionWatchHandle = null;
 function startSessionWatch() {
   if (_sessionWatchHandle) return; // กันเรียกซ้ำ (เช่น mountChrome ถูกเรียกมากกว่า 1 ครั้งในหน้าเดียว)
@@ -1127,6 +1128,7 @@ function activityDayHtml(e) {
       (e.location ? '<div class="day-ev-meta"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(e.location) + '</div>' : '') +
       (e.ownerGroup ? '<div class="day-ev-meta"><i class="fa-solid ' + (e.ownerType === 'subject' ? 'fa-book' : 'fa-sitemap') + '" aria-hidden="true"></i> ' + escapeHtml(activityOwnerLabel(e)) + '</div>' : '') +
       (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') +
+      eventLinksHtml(evLinksOf(e), false) + // 2.00.1: ไฟล์แนบ/ลิงก์ของกิจกรรม
     '</div></div>';
 }
 // "กิจกรรมที่จะถึง" ใต้ปฏิทิน — กิจกรรมที่ยังไม่จบ ภายใน 60 วัน (รวมที่ทำซ้ำทุกปี)
@@ -1146,7 +1148,7 @@ function activityUpcomingHtml(acts, emptyText) {
       '<div class="event-date-chip act">' + escapeHtml(eventRangeText(e)) + (dl && dl.days > 0 ? '<span class="days-left">(อีก ' + dl.days + ' วัน)</span>' : (e.date <= today ? '<span class="days-left">(วันนี้)</span>' : '')) + '</div>' +
       '<div style="flex:1 1 220px; min-width:0;"><div class="sub-item-title"><i class="fa-solid fa-flag" style="color:' + activityColor(e) + '; margin-right:4px;" aria-hidden="true"></i>' + escapeHtml(e.title) + ' ' + activityOwnerBadgeHtml(e) + '</div>' +
       (meta.length ? '<div class="sub-item-meta evl-meta">' + meta.join(' · ') + '</div>' : '') +
-      (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div></div>';
+      (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + eventLinksHtml(evLinksOf(e), false) + '</div></div>';
   }).join('') + '</div>';
 }
 // ปุ่มกรองชนิด ทั้งหมด / กำหนดส่ง / กิจกรรม
@@ -2892,7 +2894,7 @@ function _showAnnPopup(a, i, n) {
     el.innerHTML = '<div class="modal-box annp-box" role="dialog" aria-modal="true" aria-labelledby="annpTitle">' +
       '<button type="button" class="modal-close-x" data-annp="close" aria-label="ปิด">✕</button>' +
       '<div class="annp-hd"><small><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ประกาศจาก' + escapeHtml(from) + ' · ' + escapeHtml(formatDateThai(a.createdAt)) + (n > 1 ? '<span class="annp-n">' + (i + 1) + ' / ' + n + '</span>' : '') + '</small><h3 id="annpTitle">' + escapeHtml(a.title) + '</h3></div>' +
-      '<div class="annp-bd">' + (a.message ? escapeHtml(a.message) : '') + (a.image ? '<img src="' + a.image + '" alt="" />' : '') + '</div>' +
+      '<div class="annp-bd">' + (a.message ? escapeHtml(a.message) : '') + (a.image ? '<img src="' + a.image + '" alt="" />' : '') + eventLinksHtml(evLinksOf(a), false) + '</div>' +
       '<div class="annp-ft">' + (a.popup === 'until' ? '<label class="annp-ck"><input type="checkbox" id="annpNever" /> ไม่ต้องแสดงประกาศนี้อีก</label>' : '<span></span>') +
       '<button type="button" class="btn btn-success" data-annp="ok">รับทราบ' + (i < n - 1 ? ' <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>' : '') + '</button></div></div>';
     document.body.appendChild(el);
