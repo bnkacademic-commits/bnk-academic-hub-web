@@ -29,9 +29,9 @@
 
   // ---------- โหลด ----------
   async function boot(keep) {
-    try { B = await apiCall('clubBoot', {}); } catch (e) { body.innerHTML = err(e.message); return; }
+    try { B = await apiCall('clubBoot', st.term ? { term: st.term } : {}); } catch (e) { body.innerHTML = err(e.message); return; }
     if (!B.sqlReady) { tabsEl.innerHTML = ''; body.innerHTML = '<div class="card">' + err('ยังใช้หน้านี้ไม่ได้ — ผู้ดูแลระบบต้องรัน SQL ชุดที่สามสิบห้าก่อน (ดู README)') + '</div>'; return; }
-    if (!st.clubId || !keep) st.clubId = B.myClubId || (B.manager && st.clubId) || '';
+    if (!st.clubId || !keep) st.clubId = B.myClubId || (B.viewer && st.clubId) || '';
     D = null;
     if (st.clubId) { try { D = await apiCall('clubDetail', { id: st.clubId }); } catch (e) { st.clubId = ''; D = null; } }
     renderTabs(keep);
@@ -40,14 +40,16 @@
   function tabList() {
     var t = [];
     if (D) t.push(['info', 'fa-circle-info', 'ข้อมูลชุมนุม'], ['stu', 'fa-users', 'นักเรียน (' + activeMembers().length + ')'], ['check', 'fa-clipboard-check', 'เช็คชื่อ'], ['photo', 'fa-camera', 'รูปกิจกรรม (' + D.club.photos.length + '/4)'], ['sum', 'fa-file-pdf', 'สรุปและส่งเล่ม']);
-    else if (B.term) t.push(['info', 'fa-plus', B.myClubId ? 'ข้อมูลชุมนุม' : 'สร้างชุมนุม']);
-    if (B.manager) t.push(['all', 'fa-layer-group', 'ทุกชุมนุม'], ['who', 'fa-user-check', 'นักเรียนกับชุมนุม'], ['cfg', 'fa-gear', 'ตั้งค่าชุมนุม']);
+    else if (B.term && !B.isPast) t.push(['info', 'fa-plus', B.myClubId ? 'ข้อมูลชุมนุม' : 'สร้างชุมนุม']);
+    if (B.viewer) t.push(['all', 'fa-layer-group', 'ทุกชุมนุม'], ['who', 'fa-user-check', 'นักเรียนกับชุมนุม']);
+    if (B.manager && !B.isPast) t.push(['cfg', 'fa-gear', 'ตั้งค่าชุมนุม']);
+    if (B.superAdmin) t.push(['mgr', 'fa-user-shield', 'ผู้ดูแลงานชุมนุม']); // 2.00.4
     return t;
   }
   function renderTabs(keep) {
     var t = tabList();
     if (!keep || !t.some(function (x) { return x[0] === st.tab; })) { var h = (location.hash || '').replace('#', ''); st.tab = t.some(function (x) { return x[0] === h; }) ? h : (t[0] ? t[0][0] : ''); }
-    tabsEl.innerHTML = (D && B.manager && D.club.id !== B.myClubId ? '<span class="cb-viewing"><i class="fa-solid fa-eye"></i> ' + esc(D.club.name) + ' <button type="button" class="btn btn-ghost btn-sm" data-cb-leave>กลับ</button></span>' : '') +
+    tabsEl.innerHTML = termPickHtml() + (D && B.viewer && D.club.id !== B.myClubId ? '<span class="cb-viewing"><i class="fa-solid fa-eye"></i> ' + esc(D.club.name) + ' <button type="button" class="btn btn-ghost btn-sm" data-cb-leave>กลับ</button></span>' : '') +
       t.map(function (x) { return '<button type="button" role="tab" data-cb-tab="' + x[0] + '" class="' + (x[0] === st.tab ? 'on' : '') + '"><i class="fa-solid ' + x[1] + '" aria-hidden="true"></i> ' + x[2] + '</button>'; }).join('');
     show();
   }
@@ -55,9 +57,17 @@
     var b = e.target.closest('[data-cb-tab]'); if (b) { st.tab = b.getAttribute('data-cb-tab'); try { history.replaceState(null, '', '#' + st.tab); } catch (x) { /* ข้าม */ } renderTabs(true); return; }
     if (e.target.closest('[data-cb-leave]')) { st.clubId = B.myClubId || ''; boot(false); }
   });
+  // 2.00.4: เลือกภาคเรียน / ปีการศึกษา (ดูชุมนุมที่เคยเปิด) — ภาคเรียนที่ผ่านมา = ดูได้อย่างเดียว (ยกเว้นแอดมินจัดการ)
+  function termPickHtml() {
+    var L = (B.terms || []).slice(), curK = B.curTerm ? B.curTerm.year + '_' + B.curTerm.semester : '', selK = B.term ? B.term.year + '_' + B.term.semester : '';
+    if (selK && !L.some(function (x) { return x.key === selK; })) L.unshift({ key: selK, year: B.term.year, semester: B.term.semester });
+    if (L.length < 2) return '';
+    return '<label class="cb-term"><i class="fa-solid fa-calendar"></i> <select id="cbTerm" aria-label="ภาคเรียน">' + L.map(function (x) { return '<option value="' + x.key + '"' + (x.key === selK ? ' selected' : '') + '>ภาคเรียนที่ ' + x.semester + '/' + x.year + (x.key === curK ? ' (ปัจจุบัน)' : '') + '</option>'; }).join('') + '</select></label>';
+  }
+  tabsEl.addEventListener('change', function (e) { if (e.target.id !== 'cbTerm') return; var k = e.target.value, curK = B.curTerm ? B.curTerm.year + '_' + B.curTerm.semester : ''; st.term = k === curK ? '' : k; st.clubId = ''; st.stu = null; cfgDraft = null; boot(false); });
   function show() {
     if (!B.term && !D) { body.innerHTML = '<div class="card cb-empty"><i class="fa-solid fa-sun"></i><p>ช่วงนี้ไม่ใช่ภาคเรียนปกติ (ภาคฤดูร้อน)</p></div>'; return; }
-    var f = { info: renderInfo, stu: renderStu, check: renderCheck, photo: renderPhoto, sum: renderSum, all: renderAll, who: renderWho, cfg: renderCfg }[st.tab];
+    var f = { info: renderInfo, stu: renderStu, check: renderCheck, photo: renderPhoto, sum: renderSum, all: renderAll, who: renderWho, cfg: renderCfg, mgr: renderMgr }[st.tab];
     if (f) Promise.resolve(f()).catch(function (e) { body.innerHTML = err(e.message); });
   }
   function headHtml() {
@@ -67,6 +77,7 @@
     var done = sessionsCounted().length;
     return '<div class="card cb-head"><div><h2>' + esc(c.name) + '</h2><div class="cb-mut">ภาคเรียนที่ ' + esc(c.semester) + '/' + esc(c.year) + ' · นักเรียน ' + activeMembers().length + ' คน · เช็คแล้ว ' + done + '/' + countable().length + ' ครั้ง</div>' +
       '<div class="cb-chips">' + c.teachers.map(function (t) { return '<span class="cb-chip' + (t.id === c.ownerId ? ' own' : '') + '"><i class="fa-solid fa-user-tie"></i> ' + esc(t.name) + (t.id === c.ownerId ? ' (ครูหลัก)' : '') + '</span>'; }).join('') + '</div></div>' + stTag + '</div>' +
+      (D.past && D.ro && !D.locked ? '<div class="cb-info"><i class="fa-solid fa-eye"></i> ภาคเรียนที่ผ่านมาแล้ว — ดูได้อย่างเดียว</div>' : '') + (!D.past && D.ro && !D.locked ? '<div class="cb-info"><i class="fa-solid fa-eye"></i> ดูได้อย่างเดียว (สิทธิ์ดูผล)</div>' : '') +
       (D.locked ? '<div class="cb-info"><i class="fa-solid fa-lock"></i> เล่มรายงานผ่านการตรวจแล้ว — ข้อมูลชุมนุมถูกล็อก แก้ไขไม่ได้</div>' : '');
   }
   function activeMembers() { return D ? D.members.filter(function (m) { return !m.removedAt; }) : []; }
@@ -77,7 +88,7 @@
   // ---------- แท็บ: ข้อมูลชุมนุม (สร้าง / แก้ไข) ----------
   var pickT = null;
   function renderInfo() {
-    var c = D ? D.club : { name: '', teacherIds: [B.me.id], ownerId: B.me.id, info: {} }, ro = D && D.locked;
+    var c = D ? D.club : { name: '', teacherIds: [B.me.id], ownerId: B.me.id, info: {} }, ro = D && D.ro;
     if (!pickT || pickT.club !== (D ? D.club.id : '')) pickT = { club: D ? D.club.id : '', ids: c.teacherIds.slice() };
     var nm = {}; B.teachers.forEach(function (t) { nm[t.id] = t.name; });
     var h = headHtml() + '<div class="card"><h3>' + (D ? 'ข้อมูลชุมนุม (แบบเสนอกิจกรรมชุมนุม)' : 'สร้างชุมนุม — ภาคเรียนที่ ' + esc(B.term.semester) + '/' + esc(B.term.year)) + '</h3>' +
@@ -107,7 +118,7 @@
 
   // ---------- แท็บ: นักเรียน ----------
   function renderStu() {
-    var ro = D.locked, act = activeMembers(), gone = D.members.filter(function (m) { return m.removedAt; });
+    var ro = D.ro, act = activeMembers(), gone = D.members.filter(function (m) { return m.removedAt; });
     var h = headHtml() + '<div class="card"><div class="cb-toolbar"><h3 style="margin:0">นักเรียนในชุมนุม (' + act.length + ' คน)</h3><span class="cb-sp"></span>' + (ro ? '' : '<button type="button" class="btn btn-primary btn-sm" data-stu-add><i class="fa-solid fa-user-plus"></i> เพิ่มนักเรียน</button>') + '</div>' +
       '<div class="cb-tbl-wrap"><table class="cb-tbl"><thead><tr><th>#</th><th>เลขประจำตัว</th><th>ชื่อ – สกุล</th><th>ห้อง</th><th></th></tr></thead><tbody>' +
       act.map(function (m, i) { return '<tr><td>' + (i + 1) + '</td><td>' + esc(m.code || '-') + '</td><td>' + esc(m.name) + '</td><td>' + room(m.roomId) + '</td><td class="r">' + (ro ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-stu-del="' + esc(m.id) + '" title="เอาออกจากชุมนุม"><i class="fa-solid fa-user-minus"></i></button>') + '</td></tr>'; }).join('') +
@@ -169,7 +180,7 @@
     var ss = B.sessions || [];
     if (!ss.length) { setBody(headHtml() + '<div class="card cb-empty"><i class="fa-solid fa-calendar-xmark"></i><p>แอดมินยังไม่ได้กำหนดวันชุมนุมของภาคเรียนนี้</p></div>'); return; }
     if (!st.sel || !ss.some(function (s) { return s.date === st.sel; })) { var cand = ss.filter(function (s) { return !s.off && s.date <= B.today && !checkOf(s.date); })[0] || ss.filter(function (s) { return s.date <= B.today; }).slice(-1)[0] || ss[0]; st.sel = cand.date; }
-    var s = ss.filter(function (x) { return x.date === st.sel; })[0], ck = checkOf(s.date), ro = D.locked || s.off || s.date > B.today;
+    var s = ss.filter(function (x) { return x.date === st.sel; })[0], ck = checkOf(s.date), ro = D.ro || s.off || s.date > B.today;
     var chips = '<div class="cb-sess">' + ss.map(function (x) {
       var c = checkOf(x.date), cls = x.off ? 'off' : c ? 'ok' : x.date > B.today ? 'fut' : 'no';
       return '<button type="button" class="cb-sc ' + cls + (x.date === st.sel ? ' sel' : '') + '" data-sess="' + x.date + '"><b>ครั้งที่ ' + x.no + '</b><span>' + thD(x.date) + (x.off ? ' · หยุด' : c ? ' ✓' : '') + '</span></button>';
@@ -192,7 +203,7 @@
 
   // ---------- แท็บ: รูปกิจกรรม ----------
   function renderPhoto() {
-    var ro = D.locked, ph = {}; D.club.photos.forEach(function (p) { ph[p.idx] = p; });
+    var ro = D.ro, ph = {}; D.club.photos.forEach(function (p) { ph[p.idx] = p; });
     var h = headHtml() + '<div class="card"><h3>รูปภาพหลักฐานการดำเนินกิจกรรม <span class="cb-mut">(4 รูป ใน 1 ภาคเรียน · ใช้ในเล่มรายงาน)</span></h3><div class="cb-photos">' + [0, 1, 2, 3].map(function (i) {
       var p = ph[i];
       if (!p) return '<div class="cb-ph empty">' + (ro ? '<span>ไม่มีรูป</span>' : '<button type="button" class="cb-phadd" data-ph-add="' + i + '"><i class="fa-solid fa-camera"></i><b>เพิ่มรูปที่ ' + (i + 1) + '</b><span>ถ่าย / เลือกจากเครื่อง</span></button>') + '</div>';
@@ -229,7 +240,7 @@
   }
   var sumRes = null;
   function renderSum() {
-    var ro = D.locked, act = activeMembers(), cfgOk = !!B.categoryId;
+    var ro = D.ro, act = activeMembers(), cfgOk = !!B.categoryId;
     if (!sumRes || sumRes.club !== D.club.id) sumRes = { club: D.club.id, r: Object.assign({}, D.club.results) };
     var R = sumRes.r, nPass = 0, nFail = 0; act.forEach(function (m) { if (R[m.id] === 'pass') nPass++; else if (R[m.id] === 'fail') nFail++; });
     var ready = [['แบบเสนอกิจกรรม', !!(D.club.info.rationale && D.club.info.objectives)], ['เช็คชื่อครบทุกครั้ง (' + sessionsCounted().length + '/' + countable().filter(function (s) { return s.date <= B.today; }).length + ')', countable().filter(function (s) { return s.date <= B.today; }).every(function (s) { return !!checkOf(s.date); })], ['รูปกิจกรรม 4 รูป (' + D.club.photos.length + '/4)', D.club.photos.length >= 4], ['เลือกผลครบ (' + (nPass + nFail) + '/' + act.length + ' คน)', act.length > 0 && nPass + nFail === act.length], ['บันทึกสรุป (ปัญหาที่พบ / การแก้ไข)', !!(D.club.summary.problems && D.club.summary.fixes)]];
@@ -328,16 +339,16 @@
 
   // ---------- แอดมิน: ทุกชุมนุม ----------
   async function renderAll() {
-    var stop = lazyLoad(); var r; try { r = await apiCall('clubAll', {}); } finally { stop(); }
+    var stop = lazyLoad(); var r; try { r = await apiCall('clubAll', st.term ? { term: st.term } : {}); } finally { stop(); }
     var rows = r.clubs || [];
     var tag = function (rv) { return rv && rv.state === 'ok' ? '<span class="cb-tag ok">ผ่าน</span>' : rv && rv.state === 'fix' ? '<span class="cb-tag no">ส่งกลับแก้ไข</span>' : rv && rv.uploaded ? '<span class="cb-tag wt">รอตรวจ</span>' : '<span class="cb-tag gr">ยังไม่ส่ง</span>'; };
-    setBody('<div class="card"><div class="cb-toolbar"><h3 style="margin:0">ชุมนุมทั้งหมด (' + rows.length + ') · ภาคเรียนที่ ' + esc(B.term ? B.term.semester + '/' + B.term.year : '-') + '</h3><span class="cb-sp"></span><button type="button" class="btn btn-primary btn-sm" data-new-for><i class="fa-solid fa-plus"></i> สร้างชุมนุมให้ครู</button></div><div class="cb-tbl-wrap"><table class="cb-tbl"><thead><tr><th>ชุมนุม</th><th>ครู</th><th>นักเรียน</th><th>เช็คแล้ว</th><th>รูป</th><th>เล่มรายงาน</th><th></th></tr></thead><tbody>' +
+    setBody('<div class="card"><div class="cb-toolbar"><h3 style="margin:0">ชุมนุมทั้งหมด (' + rows.length + ') · ภาคเรียนที่ ' + esc(B.term ? B.term.semester + '/' + B.term.year : '-') + '</h3><span class="cb-sp"></span>' + (B.manager && !B.isPast ? '<button type="button" class="btn btn-primary btn-sm" data-new-for><i class="fa-solid fa-plus"></i> สร้างชุมนุมให้ครู</button>' : '') + '</div><div class="cb-tbl-wrap"><table class="cb-tbl"><thead><tr><th>ชุมนุม</th><th>ครู</th><th>นักเรียน</th><th>เช็คแล้ว</th><th>รูป</th><th>เล่มรายงาน</th><th></th></tr></thead><tbody>' +
       rows.map(function (c) { return '<tr><td><b>' + esc(c.name) + '</b></td><td>' + esc(c.teachers.join(', ')) + '</td><td>' + c.members + '</td><td>' + c.checks + '/' + countable().length + '</td><td>' + c.photos + '/4</td><td>' + tag(c.review) + '</td><td class="r"><button type="button" class="btn btn-secondary btn-sm" data-open-club="' + esc(c.id) + '"><i class="fa-solid fa-arrow-right"></i> เปิด</button></td></tr>'; }).join('') +
       (rows.length ? '' : '<tr><td colspan="7" class="cb-mut">ยังไม่มีชุมนุมในภาคเรียนนี้</td></tr>') + '</tbody></table></div></div>');
   }
   // ---------- แอดมิน: นักเรียนกับชุมนุม ----------
   async function renderWho() {
-    if (!st.stu) { var stop = lazyLoad(); try { st.stu = await apiCall('clubStudents', {}); } finally { stop(); } }
+    if (!st.stu) { var stop = lazyLoad(); try { st.stu = await apiCall('clubStudents', st.term ? { term: st.term } : {}); } finally { stop(); } }
     var r = st.stu, map = r.map || {}, f = st.filt, all = r.students || [];
     var none = all.filter(function (s) { return !(map[s.id] || []).length; }), dup = all.filter(function (s) { return (map[s.id] || []).length > 1; });
     var grades = {}; all.forEach(function (s) { var g = (/^m(\d)_/.exec(s.roomId) || [])[1]; if (g) grades[g] = 1; });
@@ -369,10 +380,38 @@
       '<div class="card"><h3><i class="fa-solid fa-paper-plane"></i> ส่งเล่มรายงาน</h3><div class="field"><label>ประเภทงานที่ใช้รับเล่มรายงานชุมนุม</label><select id="cgCat"><option value="">— ยังไม่เลือก —</option>' + c.cats.filter(function (x) { return !x.noSubmission && !x.no_submission && !x.survey; }).map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === c.categoryId ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></div><p class="cb-mut">แนะนำ: สร้างประเภทงาน "รายงานกิจกรรมชุมนุม" (ไม่มีหัวข้อบังคับกรอก) แล้วตั้งผู้รับผิดชอบตรวจ = หัวหน้า/เจ้าหน้าที่วิชาการ และผู้รับผิดชอบงานชุมนุม</p>' +
       '<h4>ผู้ลงนามในหน้าแรกของเล่ม (ต่อจากครูที่ปรึกษาชุมนุม)</h4><div id="cgSigners">' + c.signers.map(function (s, i) { return '<div class="cb-inl"><input data-sg-t="' + i + '" value="' + esc(s.title) + '" placeholder="ตำแหน่ง เช่น หัวหน้างานกิจกรรมชุมนุม" style="flex:1" /><input data-sg-n="' + i + '" value="' + esc(s.name) + '" placeholder="ชื่อ – สกุล" style="flex:1" /><button type="button" class="cb-x" data-sg-del="' + i + '"><i class="fa-solid fa-xmark"></i></button></div>'; }).join('') + '</div><button type="button" class="btn btn-secondary btn-sm" data-sg-add><i class="fa-solid fa-plus"></i> เพิ่มผู้ลงนาม</button></div>' +
       '<div class="card"><h3><i class="fa-solid fa-align-left"></i> ข้อความคงที่ในเล่ม (ใช้กับทุกชุมนุม)</h3>' + [['steps', 'ขั้นตอนการจัดทำและส่งเล่มเอกสาร'], ['aims', 'กิจกรรมชุมนุม (มุ่งเน้นให้ผู้เรียน)'], ['criteria', 'เกณฑ์การตัดสินและแนวทางการแก้ไข']].map(function (x) { return '<div class="field"><label>' + x[1] + '</label><textarea rows="6" data-tx="' + x[0] + '">' + esc(c.texts[x[0]] || '') + '</textarea></div>'; }).join('') + '</div>' +
-      (B.superAdmin ? '<div class="card"><h3><i class="fa-solid fa-user-shield"></i> ผู้รับผิดชอบงานชุมนุม (นอกจากแอดมิน)</h3><div class="cb-chips">' + c.managers.map(function (id) { return '<span class="cb-chip">' + esc(nm[id] || id) + ' <button type="button" class="cb-x" data-mg-del="' + esc(id) + '"><i class="fa-solid fa-xmark"></i></button></span>'; }).join('') + '<select id="cgMgAdd"><option value="">+ เพิ่มครู</option>' + B.teachers.filter(function (t) { return c.managers.indexOf(t.id) === -1; }).map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>'; }).join('') + '</select></div><p class="cb-mut">ดูทุกชุมนุม · นักเรียนกับชุมนุม · ตั้งค่า · ย้ายนักเรียนข้ามชุมนุม ได้เหมือนแอดมิน</p></div>' : '') +
       '<div class="cb-actions"><span class="cb-sp"></span><button type="button" class="btn btn-success" data-cg-save><i class="fa-solid fa-check"></i> บันทึกการตั้งค่า</button></div>');
   }
   function cfgSync() { var c = cfgDraft; if (!c) return; var o = document.getElementById('cgOpen'); if (o) c.openTime = o.value || '12:00'; var cat = document.getElementById('cgCat'); if (cat) c.categoryId = cat.value; body.querySelectorAll('[data-sg-t]').forEach(function (x) { c.signers[+x.getAttribute('data-sg-t')].title = x.value; }); body.querySelectorAll('[data-sg-n]').forEach(function (x) { c.signers[+x.getAttribute('data-sg-n')].name = x.value; }); body.querySelectorAll('[data-tx]').forEach(function (x) { c.texts[x.getAttribute('data-tx')] = x.value; }); }
+
+  // ---------- 2.00.4: ผู้ดูแลงานชุมนุม (Super Admin เลือกจากรายชื่อในระบบ · จัดการ / ดูผล) ----------
+  var mgrDraft = null;
+  function renderMgr() {
+    if (!mgrDraft) mgrDraft = (B.managers || []).map(function (m) { return { id: m.id, manage: !!m.manage, view: !!m.view }; });
+    var nm = {}; (B.people || []).forEach(function (u) { nm[u.id] = u.name; });
+    setBody('<div class="card"><h3><i class="fa-solid fa-user-shield"></i> ผู้ดูแลงานชุมนุม</h3><p class="cb-mut">ผู้ดูแลระบบสูงสุดเป็นแอดมินงานชุมนุมเสมอ · คนอื่นต้องเพิ่มชื่อที่นี่ (แอดมินระบบ / เจ้าหน้าที่ไม่ได้สิทธิ์อัตโนมัติ)</p>' +
+      '<div class="cb-tbl-wrap"><table class="cb-tbl"><thead><tr><th>ชื่อ</th><th>จัดการ</th><th>ดูผล</th><th></th></tr></thead><tbody>' + mgrDraft.map(function (m, i) {
+        return '<tr><td>' + esc(nm[m.id] || m.id) + '</td><td><input type="checkbox" data-mg-m="' + i + '"' + (m.manage ? ' checked' : '') + ' aria-label="จัดการ" /></td><td><input type="checkbox" data-mg-v="' + i + '"' + (m.view || m.manage ? ' checked' : '') + (m.manage ? ' disabled' : '') + ' aria-label="ดูผล" /></td><td class="r"><button type="button" class="cb-x" data-mg-rm="' + i + '" aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button></td></tr>';
+      }).join('') + (mgrDraft.length ? '' : '<tr><td colspan="4" class="cb-mut">ยังไม่มี — เลือกชื่อด้านล่าง</td></tr>') + '</tbody></table></div>' +
+      '<div class="cb-inl" style="margin-top:10px"><select id="cbMgAdd" class="cb-search"><option value="">+ เพิ่มคนจากรายชื่อในระบบ</option>' + (B.people || []).filter(function (u) { return !mgrDraft.some(function (m) { return m.id === u.id; }); }).map(function (u) { return '<option value="' + esc(u.id) + '">' + esc(u.name) + '</option>'; }).join('') + '</select></div>' +
+      '<p class="cb-mut"><b>จัดการ</b> = ดู/แก้ทุกชุมนุม · ย้ายนักเรียน · ตั้งวันชุมนุม ผู้ลงนาม ข้อความในเล่ม · แก้ภาคเรียนที่ผ่านมาได้ — <b>ดูผล</b> = ดูทุกชุมนุมและนักเรียนกับชุมนุมได้อย่างเดียว</p>' +
+      '<div class="cb-actions"><span class="cb-sp"></span><button type="button" class="btn btn-success" data-mg-save><i class="fa-solid fa-check"></i> บันทึก</button></div></div>');
+  }
+  body.addEventListener('change', function (e) {
+    var t;
+    if (e.target.id === 'cbMgAdd' && e.target.value) { mgrDraft.push({ id: e.target.value, manage: false, view: true }); renderMgr(); return; }
+    if ((t = e.target.closest('[data-mg-m]'))) { var m = mgrDraft[+t.getAttribute('data-mg-m')]; m.manage = t.checked; if (m.manage) m.view = true; renderMgr(); return; }
+    if ((t = e.target.closest('[data-mg-v]'))) { mgrDraft[+t.getAttribute('data-mg-v')].view = t.checked; }
+  });
+  body.addEventListener('click', async function (e) {
+    var t;
+    if ((t = e.target.closest('[data-mg-rm]'))) { mgrDraft.splice(+t.getAttribute('data-mg-rm'), 1); renderMgr(); return; }
+    if (e.target.closest('[data-mg-save]')) {
+      var list = mgrDraft.filter(function (m) { return m.manage || m.view; });
+      var r = await withProgress('กำลังบันทึกผู้ดูแลงานชุมนุม', function () { return apiCall('clubCfgSave', { managers: list }); }, { successLabel: 'บันทึกแล้ว' });
+      if (r.ok) { mgrDraft = null; await boot(true); }
+    }
+  });
 
   // ---------- คลิกทั้งหมด ----------
   function lazyLoad() { var t = setTimeout(function () { body.innerHTML = '<div class="loading">กำลังโหลด...</div>'; }, 300); return function () { clearTimeout(t); }; }
@@ -440,10 +479,8 @@
     if ((t = e.target.closest('[data-cg-off]'))) { cfgSync(); var ov = t.getAttribute('data-cg-off'), oi = cfgDraft.off.indexOf(ov); if (oi === -1) cfgDraft.off.push(ov); else cfgDraft.off.splice(oi, 1); renderCfg(); return; }
     if (e.target.closest('[data-sg-add]')) { cfgSync(); cfgDraft.signers.push({ title: '', name: '' }); renderCfg(); return; }
     if ((t = e.target.closest('[data-sg-del]'))) { cfgSync(); cfgDraft.signers.splice(+t.getAttribute('data-sg-del'), 1); renderCfg(); return; }
-    if ((t = e.target.closest('[data-mg-del]'))) { cfgSync(); var mv = t.getAttribute('data-mg-del'); cfgDraft.managers = cfgDraft.managers.filter(function (x) { return x !== mv; }); renderCfg(); return; }
     if (e.target.closest('[data-cg-save]')) {
       cfgSync(); var c = cfgDraft, payload = { dates: c.dates, off: c.off, openTime: c.openTime, categoryId: c.categoryId, signers: c.signers, texts: c.texts };
-      if (B.superAdmin) payload.managers = c.managers;
       var rg = await withProgress('กำลังบันทึกการตั้งค่าชุมนุม', function () { return apiCall('clubCfgSave', payload); }, { successLabel: 'บันทึกการตั้งค่าแล้ว' });
       if (rg.ok) { cfgDraft = null; await boot(true); }
       return;
@@ -452,7 +489,6 @@
   body.addEventListener('change', function (e) {
     if (e.target.matches('[data-wg]')) { st.filt.g = e.target.value; st.filt.room = ''; renderWho(); }
     else if (e.target.matches('[data-wr]')) { st.filt.room = e.target.value; renderWho(); }
-    else if (e.target.id === 'cgMgAdd' && e.target.value) { cfgSync(); cfgDraft.managers.push(e.target.value); renderCfg(); }
   });
   body.addEventListener('input', function (e) {
     if (e.target.matches('[data-wq]')) { st.filt.q = e.target.value.trim(); var pos = e.target.selectionStart; renderWho(); var n = body.querySelector('[data-wq]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } }

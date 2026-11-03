@@ -3,6 +3,7 @@
 .cb-tabs button { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; padding: 7px 14px; font: inherit; font-weight: 700; font-size: .88rem; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
 .cb-tabs button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
 .cb-viewing { display: inline-flex; align-items: center; gap: 6px; background: #fef3c7; color: #92400e; border-radius: 999px; padding: 3px 4px 3px 12px; font-weight: 700; font-size: .85rem; margin-right: 6px; }
+.cb-term { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; font-weight: 700; color: var(--text-muted); } .cb-term select { border: 1px solid var(--border); border-radius: 10px; padding: 5px 8px; font: inherit; background: var(--surface); color: var(--text); } /* 2.00.4 */
 .cb-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 .cb-head h2 { margin: 0 0 2px; font-size: 1.25rem; }
 .cb-mut { color: var(--text-muted); font-size: .82rem; }
@@ -104,3 +105,15 @@
 @media (max-width: 560px) { .cb-g3 { grid-template-columns: 1fr; } .cb-photos { grid-template-columns: 1fr; } .cb-st button { padding: 4px 7px; } }
 :root[data-theme="dark"] .cb-sc.ok { background: rgba(22,163,74,.15); } :root[data-theme="dark"] .cb-sc.no { background: rgba(220,38,38,.12); }
 :root[data-theme="dark"] .tc-cell.ok { background: rgba(22,163,74,.25); color: #86efac; } :root[data-theme="dark"] .tc-cell.no { background: rgba(220,38,38,.22); color: #fca5a5; }
+
+/* 2.00.4: สรุปรายคน (สีเดียวกับเว็บเช็คชื่อ) · หลอดสัดส่วน 100% + แจกแจง % */
+.tc-lg { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: .82rem; margin: 6px 0 10px; } .tc-lg span { display: inline-flex; align-items: center; gap: 5px; } .tc-lg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.tc-sum td, .tc-sum th { text-align: center; } .tc-sum td:nth-child(2), .tc-sum th:nth-child(2), .tc-sum td:last-child, .tc-sum th:last-child { text-align: left; }
+.tc-n { display: inline-block; min-width: 28px; padding: 2px 7px; border-radius: 8px; font-weight: 700; font-size: .82rem; background: color-mix(in srgb, var(--k) 13%, var(--surface)); color: var(--k); } .tc-n.z { background: var(--surface-2); color: var(--text-muted); opacity: .6; }
+.tc-bw { display: flex; align-items: center; gap: 8px; } .tc-bw b { min-width: 42px; text-align: right; }
+.tc-bar { display: flex; width: 220px; max-width: 46vw; height: 12px; border-radius: 99px; overflow: hidden; background: var(--surface-2); } .tc-bar i { display: block; height: 100%; }
+.tc-pb { display: flex; flex-wrap: wrap; gap: 3px; font-size: .74rem; font-weight: 700; margin-top: 3px; } .tc-pb .z { color: var(--text-muted); opacity: .55; font-weight: 500; } .tc-pb em { font-style: normal; color: var(--text-muted); opacity: .5; }
+/* 2.00.4: แจ้งไปราชการ / ลา */
+.tc-pages { display: inline-flex; gap: 6px; margin-right: 8px; flex-wrap: wrap; }
+.tc-lp { max-height: 220px; overflow: auto; margin-top: 6px; }
+.tc-lper { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; } .tc-lper label { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
