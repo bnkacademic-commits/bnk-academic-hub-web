@@ -16,7 +16,8 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=1.98.5.031126" />
+<link rel="stylesheet" href="assets/style.css?v=2.00.0.031126" />
+<link rel="stylesheet" href="assets/supervision.css?v=2.00.0.031126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -45,7 +46,7 @@
   </div>
   <input type="file" id="spPlanFile" hidden />
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=1.98.5.031126"></script>
+  <script src="assets/api.js?v=2.00.0.031126"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('supervision'); if (typeof mountFooter === 'function') mountFooter(); }
@@ -923,10 +924,10 @@
           if (d.fonts && d.fonts.load) { try { await Promise.all(['400', '700'].map(function (w) { return d.fonts.load(w + ' 16px Sarabun', 'กขค ABC 123'); })); await d.fonts.ready; } catch (fe) { /* ฟอนต์สำรอง */ } }
           await Promise.all(Array.prototype.map.call(d.images, function (im) { return im.complete ? 0 : new Promise(function (res) { im.onload = im.onerror = res; }); }));
           var pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
-          try { await html2canvas(pages[0], { scale: 0.3, backgroundColor: '#ffffff', logging: false, windowWidth: 1140 }); } catch (we) { /* อุ่นเครื่อง */ }
+          try { await html2canvas(pages[0], { scale: 0.3, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: 1140 }); } catch (we) { /* อุ่นเครื่อง */ }
           for (var k = 0; k < pages.length; k++) {
             p.setProgress(Math.round(k / pages.length * 95), 'หน้า ' + (k + 1) + '/' + pages.length);
-            var cv = await html2canvas(pages[k], { scale: 2, backgroundColor: '#ffffff', logging: false, windowWidth: 1140 });
+            var cv = await html2canvas(pages[k], { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: 1140 });
             if (k) pdf.addPage();
             pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 297, 210);
           }
@@ -1020,8 +1021,8 @@
             p.setProgress(5 + Math.round(i / rows.length * 90), rows[i].t.name + ' (' + (i + 1) + '/' + rows.length + ')');
             d.body.innerHTML = repPageHtml(rows[i], o);
             await Promise.all(Array.prototype.map.call(d.images, function (im) { return im.complete ? 0 : new Promise(function (res) { im.onload = im.onerror = res; }); }));
-            if (first) { try { await html2canvas(d.body.firstChild, { scale: 0.3, backgroundColor: '#ffffff', logging: false, windowWidth: 810 }); } catch (we) { /* อุ่นเครื่อง */ } }
-            var cv = await html2canvas(d.body.firstChild, { scale: 2, backgroundColor: '#ffffff', logging: false, windowWidth: 810 });
+            if (first) { try { await html2canvas(d.body.firstChild, { scale: 0.3, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: 810 }); } catch (we) { /* อุ่นเครื่อง */ } }
+            var cv = await html2canvas(d.body.firstChild, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: 810 });
             // ยาวเกิน 1 หน้า = ตัดเป็นหลายหน้า A4
             for (var y = 0; y < cv.height; y += pageH * 2) {
               var part = document.createElement('canvas'); part.width = cv.width; part.height = Math.min(pageH * 2, cv.height - y);

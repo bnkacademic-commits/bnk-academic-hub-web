@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '1.98.4';
-var APP_VERSION = '1.98.5.031126';
+var WORKER_MIN_VERSION = '2.00.0';
+var APP_VERSION = '2.00.0.031126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -377,6 +377,8 @@ async function getSiteSettings() {
     });
   }
   _settingsCache = await _settingsPromise;
+  // 1.99: รูปแบรนด์มาเป็นลิงก์ /brand/... (เบราว์เซอร์แคชได้) — เติมที่อยู่ Worker ให้ใช้เป็น src ได้ทันที
+  ['logoDataUrl', 'logoWideDataUrl', 'loginHeroDataUrl', 'iconDataUrl'].forEach(function (k) { var v = _settingsCache && _settingsCache[k]; if (typeof v === 'string' && v.indexOf('/brand/') === 0) _settingsCache[k] = API_URL.replace(/\/+$/, '') + v; });
   try { applyUploadMaxLabels(); } catch (e) { /* หน้าที่ยังไม่มี DOM */ } // 1.86
   return _settingsCache;
 }
@@ -865,7 +867,7 @@ var ICON_FA = {
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
   sun: 'fa-sun', palette: 'fa-palette', layout: 'fa-table-cells-large', pin: 'fa-thumbtack', clock: 'fa-clock',
-  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images', schoolcal: 'fa-calendar-week', supervision: 'fa-chalkboard-user'
+  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images', schoolcal: 'fa-calendar-week', supervision: 'fa-chalkboard-user', teach: 'fa-book-open-reader', club: 'fa-people-group'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -1807,6 +1809,8 @@ var NAV_SLOTS = [
   { slot: 'announce', label: 'ประกาศและปฏิทิน', icon: 'announce', who: ['staff', 'exec', 'super'] },
   { slot: 'schoolcal', label: 'ปฏิทินโรงเรียน', icon: 'schoolcal', who: ['all'] }, // 1.93
   { slot: 'supervision', label: 'นิเทศการสอน', icon: 'supervision', who: ['all'] }, // 1.98
+  { slot: 'teach', label: 'วิชาที่สอน', icon: 'teach', who: ['teacher', 'staff', 'super'] }, // 1.99
+  { slot: 'club', label: 'ชุมนุม', icon: 'club', who: ['teacher', 'staff', 'super'] }, // 1.99
   { slot: 'directory', label: 'ทำเนียบบุคลากร', icon: 'directory', who: ['all'] },
   { slot: 'orders', label: 'คลังคำสั่ง', icon: 'orders', who: ['all'] },
   { slot: 'certs', label: 'คลังเกียรติบัตร', icon: 'certs', who: ['all'] },
@@ -1864,6 +1868,8 @@ function navLinksFor(session) {
   // 1.93: "ปฏิทินโรงเรียน" — ทุกบัญชีที่ล็อกอินเห็น (กำหนดส่งงาน + กิจกรรมทั้งโรงเรียน รายเดือน)
   if (session) links.push({ href: 'schoolcalendar.html', label: 'ปฏิทินโรงเรียน', key: 'schoolcal', icon: 'schoolcal' });
   if (session) links.push({ href: 'supervision.html', label: 'นิเทศการสอน', key: 'supervision', icon: 'supervision' }); // 1.98
+  if (session && !isExec) links.push({ href: 'teach.html', label: 'วิชาที่สอน', key: 'teach', icon: 'teach' }); // 1.99
+  if (session && !isExec) links.push({ href: 'club.html', label: 'ชุมนุม', key: 'club', icon: 'club' }); // 1.99
   if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
   // "คลังคำสั่ง" (ตั้งแต่ 1.41.111026 ชื่อเดิม "ไฟล์คำสั่ง"; เปลี่ยนชื่อใน 1.43.111026): ทุกบทบาทที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ — แก้ไข/ลบได้เฉพาะเจ้าของ
   if (session) links.push({ href: 'orders.html', label: 'คลังคำสั่ง', key: 'orders', icon: 'orders' });
@@ -1981,14 +1987,14 @@ function mountChrome(activePage) {
             '</button>' +
             '<div class="profile-dropdown" id="profileDropdown">' +
               // 1.98.5: หัวเมนูแบบกะทัดรัด — รูป + ชื่อ + ป้ายประเภทบัญชี + กลุ่มบริหารงาน · กลุ่มสาระฯ
-              (function () { var L = accountInfoLines(session); return '<div class="dd-header dd-head2"><span class="profile-avatar dd-av" id="ddAvatar">' + avatarInnerHtml(session.avatarUrl) + '</span><div class="dd-hinfo"><div class="dd-name">' + escapeHtml(session.name) + '</div>' + (L[0] ? '<span class="dd-tag">' + escapeHtml(L[0].value) + '</span>' : '') + (L.length > 1 ? '<div class="dd-sub">' + L.slice(1).map(function (l) { return escapeHtml(l.value); }).join(' · ') + '</div>' : '') + '</div></div>'; })() +
+              (function () { var L = accountInfoLines(session); return '<div class="dd-header dd-head2"><span class="profile-avatar dd-av" id="ddAvatar">' + avatarInnerHtml(session.avatarUrl) + '</span><div class="dd-hinfo"><div class="dd-name">' + escapeHtml(session.name) + '</div>' + (L[0] ? '<span class="dd-tag">' + escapeHtml(L[0].value) + '</span>' : '') + L.slice(1).map(function (l) { return '<div class="dd-sub">' + escapeHtml(l.value) + '</div>'; }).join('') + '</div></div>'; })() +
               // 1.80: ติดตั้งแอป (PWA) — แสดงเฉพาะเครื่องที่ติดตั้งได้และยังไม่ได้ติดตั้ง (ดู updateInstallItem)
               '<button class="dd-item dd-install" id="ddInstall" type="button" hidden><span class="dd-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span> ติดตั้งแอปลงเครื่องนี้</button>' +
               '<div class="dd-divider" id="ddInstallDiv" hidden></div>' +
               // 1.66: เลือกธีม 3 แบบ (ภาพตัวอย่างย่อ) แทนสวิตช์ Dark Mode เดิม
               '<button class="dd-item" id="ddManual" type="button"><span class="dd-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span> คู่มือการใช้งาน</button>' + // 1.98.3: มือถือ — คู่มือย้ายมาอยู่ในเมนู
               '<div class="dd-theme-title">ธีม</div><div class="dd-themes dd-seg" id="themePicker" role="radiogroup" aria-label="ธีม">' +
-                [['light', 'กระดาษขาว'], ['sepia', 'ถนอมตา'], ['dark', 'กลางคืน']].map(function (t) {
+                [['light', 'สีขาว'], ['sepia', 'ถนอมตา'], ['dark', 'กลางคืน']].map(function (t) {
                   return '<button type="button" role="radio" class="dd-theme t-' + t[0] + '" data-theme-pick="' + t[0] + '"><span class="dd-dot"></span>' + t[1] + '</button>';
                 }).join('') + '</div>' +
               '<div class="dd-divider"></div>' +
