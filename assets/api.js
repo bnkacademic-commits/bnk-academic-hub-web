@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '1.98.4';
-var APP_VERSION = '1.98.4.021126';
+var APP_VERSION = '1.98.5.031126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1573,6 +1573,7 @@ function ensureSharedModals() {
       if (s) { s.avatarUrl = r.data.avatarUrl; setSession(getToken(), s); }
       var topbarEl = document.getElementById('topbarAvatar');
       if (topbarEl) topbarEl.innerHTML = avatarInnerHtml(r.data.avatarUrl);
+      var ddAv = document.getElementById('ddAvatar'); if (ddAv) ddAv.innerHTML = avatarInnerHtml(r.data.avatarUrl);
       avatarRemoveBtn.hidden = false;
       hideModalEl(avatarModal);
     } else {
@@ -1593,6 +1594,7 @@ function ensureSharedModals() {
       if (s2) { s2.avatarUrl = ''; setSession(getToken(), s2); }
       var topbarEl2 = document.getElementById('topbarAvatar');
       if (topbarEl2) topbarEl2.innerHTML = avatarInnerHtml('');
+      var ddAv2 = document.getElementById('ddAvatar'); if (ddAv2) ddAv2.innerHTML = avatarInnerHtml('');
       avatarPreview.innerHTML = avatarInnerHtml('');
       avatarRemoveBtn.hidden = true;
       _pendingAvatar = null;
@@ -1969,7 +1971,7 @@ function mountChrome(activePage) {
           '</button>' +
           // 1.75: แจ้งปัญหา (หูฟัง) + แจ้งเตือน (กระดิ่ง) — อยู่ระหว่างรีเฟรชกับเมนูบัญชี
           // 1.76: ปุ่มคู่มือการใช้งาน (แทนหูฟัง — แจ้งปัญหาย้ายไปเมนูบัญชี)
-          '<button class="refresh-btn tb-icon-btn" id="manualOpenBtn" type="button" title="คู่มือการใช้งาน" aria-label="คู่มือการใช้งาน"><i class="fa-solid fa-book-open" aria-hidden="true"></i></button>' +
+          // 1.98.5: ปุ่มคู่มือย้ายไปอยู่ในเมนูบัญชีทุกขนาดจอ
           '<button class="refresh-btn tb-icon-btn" id="notifBtn" type="button" title="แจ้งเตือน" aria-label="แจ้งเตือน" aria-expanded="false"><i class="fa-solid fa-bell" aria-hidden="true"></i><span class="tb-badge" id="notifBadge" hidden>0</span></button>' +
           '<div class="profile-menu">' +
             '<button class="profile-trigger" id="profileTrigger" aria-expanded="false" type="button">' +
@@ -1978,15 +1980,16 @@ function mountChrome(activePage) {
               '<span class="chevron">▾</span>' +
             '</button>' +
             '<div class="profile-dropdown" id="profileDropdown">' +
-              '<div class="dd-header"><div class="dd-name">' + escapeHtml(session.name) + '</div>' + accountInfoLines(session).map(function (l) { return '<div class="dd-role"><span class="dd-k">' + escapeHtml(l.label) + '</span><span class="dd-v">' + escapeHtml(l.value) + '</span></div>'; }).join('') + '</div>' +
+              // 1.98.5: หัวเมนูแบบกะทัดรัด — รูป + ชื่อ + ป้ายประเภทบัญชี + กลุ่มบริหารงาน · กลุ่มสาระฯ
+              (function () { var L = accountInfoLines(session); return '<div class="dd-header dd-head2"><span class="profile-avatar dd-av" id="ddAvatar">' + avatarInnerHtml(session.avatarUrl) + '</span><div class="dd-hinfo"><div class="dd-name">' + escapeHtml(session.name) + '</div>' + (L[0] ? '<span class="dd-tag">' + escapeHtml(L[0].value) + '</span>' : '') + (L.length > 1 ? '<div class="dd-sub">' + L.slice(1).map(function (l) { return escapeHtml(l.value); }).join(' · ') + '</div>' : '') + '</div></div>'; })() +
               // 1.80: ติดตั้งแอป (PWA) — แสดงเฉพาะเครื่องที่ติดตั้งได้และยังไม่ได้ติดตั้ง (ดู updateInstallItem)
               '<button class="dd-item dd-install" id="ddInstall" type="button" hidden><span class="dd-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span> ติดตั้งแอปลงเครื่องนี้</button>' +
               '<div class="dd-divider" id="ddInstallDiv" hidden></div>' +
               // 1.66: เลือกธีม 3 แบบ (ภาพตัวอย่างย่อ) แทนสวิตช์ Dark Mode เดิม
-              '<button class="dd-item dd-mobile-only" id="ddManual" type="button"><span class="dd-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span> คู่มือการใช้งาน</button>' + // 1.98.3: มือถือ — คู่มือย้ายมาอยู่ในเมนู
-              '<div class="dd-theme-title">ธีม</div><div class="dd-themes" id="themePicker" role="radiogroup" aria-label="ธีม">' +
+              '<button class="dd-item" id="ddManual" type="button"><span class="dd-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span> คู่มือการใช้งาน</button>' + // 1.98.3: มือถือ — คู่มือย้ายมาอยู่ในเมนู
+              '<div class="dd-theme-title">ธีม</div><div class="dd-themes dd-seg" id="themePicker" role="radiogroup" aria-label="ธีม">' +
                 [['light', 'กระดาษขาว'], ['sepia', 'ถนอมตา'], ['dark', 'กลางคืน']].map(function (t) {
-                  return '<button type="button" role="radio" class="dd-theme t-' + t[0] + '" data-theme-pick="' + t[0] + '"><span class="mini"><i class="p"></i><i></i><i></i></span>' + t[1] + '</button>';
+                  return '<button type="button" role="radio" class="dd-theme t-' + t[0] + '" data-theme-pick="' + t[0] + '"><span class="dd-dot"></span>' + t[1] + '</button>';
                 }).join('') + '</div>' +
               '<div class="dd-divider"></div>' +
               '<button class="dd-item" id="ddChangeAvatar" type="button"><span class="dd-icon">' + icon('image', 16) + '</span> เปลี่ยนรูปโปรไฟล์</button>' +
@@ -2079,7 +2082,6 @@ function mountChrome(activePage) {
 
     initNotifBell(); // 1.75
     initTimetable(); // 1.92.1
-    document.getElementById('manualOpenBtn').addEventListener('click', function () { openManual(); });
     document.getElementById('ddManual').addEventListener('click', function () { dropdown.classList.remove('open'); openManual(); });
     document.getElementById('ddReport').addEventListener('click', function () { dropdown.classList.remove('open'); openReportModal(); });
     document.getElementById('ddInstall').addEventListener('click', function () { dropdown.classList.remove('open'); startInstallApp(); });

@@ -4602,10 +4602,8 @@ html.sup-off .sidenav a[href="supervision.html"] { display: none !important; }
   .sp-frow input[data-fi="label"] { min-width: 100%; order: 3; }
 }
 /* ===== 1.98.3: มือถือ — คู่มือย้ายไปเมนูรูปโปรไฟล์ · แบนเนอร์ไม่ทับปุ่ม · การ์ดการนิเทศกดทั้งแถว ===== */
-.dd-item.dd-mobile-only { display: none; }
 @media (max-width: 767px) {
   #manualOpenBtn { display: none !important; }
-  .dd-item.dd-mobile-only { display: flex; }
   .topbar .brand img.brand-logo-wide { max-width: min(180px, calc(100vw - 215px)); height: auto; max-height: 34px; }
 }
 a.sup-up-item, a.sup-up-item:hover, a.sup-up-item *, a.sup-up-all, a.sup-up-all:hover { text-decoration: none !important; }
@@ -4641,3 +4639,21 @@ a.sup-up-all { font-size: .86rem; font-weight: 700; color: #7c3aed; }
 :root[data-theme="dark"] .sp-satc.done, :root[data-theme="dark"] .sp-lockbar { background: rgba(22,163,74,.12); color: #86efac; border-color: #16a34a; }
 :root[data-theme="dark"] .sup-up-item.sat { background: rgba(245,158,11,.12); border-color: #b45309; }
 @media (max-width: 640px) { .sp-satc { min-width: 0; width: 100%; } }
+
+/* ===== 1.98.5: เมนูบัญชีแบบกะทัดรัด (ทุกขนาดจอ) — หัวเมนู 3 บรรทัด · ธีมแถวเดียว · รายการเตี้ยลง · จอเตี้ยเลื่อนในเมนูได้ ===== */
+.profile-dropdown { width: 300px; max-width: calc(100vw - 16px); max-height: calc(100vh - 76px); max-height: calc(100dvh - 76px); overflow-y: auto; overscroll-behavior: contain; padding: 6px; }
+.profile-dropdown .dd-header.dd-head2 { display: flex; gap: 10px; align-items: center; padding: 6px 8px 10px; margin-bottom: 4px; }
+.profile-dropdown .dd-av { width: 42px; height: 42px; flex: none; }
+.profile-dropdown .dd-hinfo { min-width: 0; }
+.profile-dropdown .dd-head2 .dd-name { font-size: 0.95rem; margin: 0 0 2px; line-height: 1.3; word-break: break-word; }
+.profile-dropdown .dd-tag { display: inline-block; font-size: 0.7rem; font-weight: 700; line-height: 1.5; padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary-dark); }
+.profile-dropdown .dd-sub { font-size: 0.74rem; color: var(--text-muted); line-height: 1.4; margin-top: 3px; word-break: break-word; }
+.profile-dropdown button.dd-item { padding: 7px 10px; font-size: 0.9rem; line-height: 1.45; }
+.profile-dropdown .dd-divider { margin: 4px 2px; }
+.dd-theme-title { padding: 4px 10px 2px; }
+.dd-themes.dd-seg { gap: 3px; margin: 2px 6px 6px; padding: 3px; background: var(--surface-2); border-radius: 10px; }
+.dd-seg .dd-theme { border: 0; border-radius: 8px; padding: 5px 2px; font-size: 0.74rem; display: flex; align-items: center; justify-content: center; gap: 5px; color: var(--text-muted); }
+.dd-seg .dd-theme:hover { background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.dd-seg .dd-theme.on { background: var(--surface); color: var(--primary-dark); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.dd-seg .dd-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; border: 1px solid #94a3b8; }
+.dd-seg .t-light .dd-dot { background: #f8fafc; } .dd-seg .t-sepia .dd-dot { background: #f3ead7; } .dd-seg .t-dark .dd-dot { background: #0b1220; }
