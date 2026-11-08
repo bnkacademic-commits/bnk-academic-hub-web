@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.02.3.081126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.4.091126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -366,10 +366,10 @@
           </div>
           <!-- 1.97: ฟอร์ม/ไฟล์ตัวอย่าง (2.01.0: สูงสุด 10 · เก็บในโฟลเดอร์ของรายการนี้ · ลบรายการ = ลบไฟล์ทั้งหมด) -->
           <div class="field" id="evSamplesField">
-            <label>ฟอร์ม / ไฟล์แนบ <span class="opt">(ไม่บังคับ · สูงสุด 10 ไฟล์ · เก็บในโฟลเดอร์ของรายการนี้ใน Drive)</span></label>
+            <label>ฟอร์ม / ไฟล์แนบ <span class="opt">(ไม่บังคับ · เลือกหลายไฟล์พร้อมกันได้ · สูงสุด 100 ไฟล์ · เก็บในโฟลเดอร์ของรายการนี้ใน Drive)</span></label>
             <div id="evSamples" class="ev-samples"></div>
             <button type="button" class="ev-add-btn" id="evSampleAdd"><i class="fa-solid fa-upload" aria-hidden="true"></i> อัปโหลดไฟล์</button>
-            <input type="file" id="evSampleInput" hidden />
+            <input type="file" id="evSampleInput" multiple hidden />
             <div class="hint">เช่น แบบฟอร์มให้ครูดาวน์โหลดไปกรอก หรือตัวอย่างงานที่ทำเสร็จแล้ว · เก็บใน Google Drive ของโรงเรียน (โฟลเดอร์ "ฟอร์มตัวอย่าง")</div>
           </div>
           <!-- 1.88: ลิงก์แนบ (สูงสุด 3) — ครูเห็นเป็นปุ่ม -->
@@ -443,7 +443,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.02.3.081126"></script>
+  <script src="assets/api.js?v=2.02.4.091126"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -681,6 +681,8 @@
           if (ev.repeatYearly) meta.push('<i class="fa-solid fa-rotate" aria-hidden="true"></i> ทุกปี');
           if (attTagHtml(ev)) meta.push(attTagHtml(ev)); // 1.89 หยุดเรียน · 1.92 วันหยุด/หยุดเรียนบางคาบ/กิจกรรม
           if (ev.notify) meta.push('<i class="fa-solid fa-bell" aria-hidden="true"></i> แจ้งเตือน');
+          if (ev.sampleFiles && ev.sampleFiles.length) meta.push('<i class="fa-solid fa-paperclip" aria-hidden="true"></i> ไฟล์แนบ ' + ev.sampleFiles.length); // 2.02.4
+          if (ev.links && ev.links.length) meta.push('<i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์ ' + ev.links.length); // 2.02.4
         } else {
           meta.push((ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + ' ปีการศึกษา ' + escapeHtml(ev.academicYear));
           meta.push('สำหรับ: ' + escapeHtml(audienceLabel_(ev.audience)));
@@ -689,7 +691,7 @@
           if (ev.links && ev.links.length) meta.push('<i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์ ' + ev.links.length);
         }
         if (ev.responsible && ev.responsible.users && ev.responsible.users.length) meta.push('<i class="fa-solid fa-user-check" aria-hidden="true"></i> ผู้รับผิดชอบ: ' + ev.responsible.users.map(function (u) { return escapeHtml(u.name); }).join(', ')); // 1.94
-        if (ev.sampleFiles && ev.sampleFiles.length) meta.push('<i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> ไฟล์ตัวอย่าง ' + ev.sampleFiles.length); // 1.97
+        if (!isAct && ev.sampleFiles && ev.sampleFiles.length) meta.push('<i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> ไฟล์ตัวอย่าง ' + ev.sampleFiles.length); // 1.97 · 2.02.4 กิจกรรมแสดงเป็น "ไฟล์แนบ" ด้านบน
         if (ev.calOnly) meta.push('<i class="fa-solid fa-calendar-check" aria-hidden="true"></i> แสดงเฉพาะปฏิทินโรงเรียน'); // 1.97
         if (ev.calShow === 'none') meta.push('<i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i> ไม่แสดงในปฏิทินโรงเรียน');
         var nSeries = ev.seriesId ? lastEvents.filter(function (x) { return x.seriesId === ev.seriesId; }).length : 0;
@@ -818,7 +820,7 @@
       (function () { var sf = document.getElementById('evSamplesField'), lf = document.getElementById('evLinksField'), box = document.getElementById('evActAttach'), rv = document.getElementById('evReviewField'); // 2.00.1
         if (k === 'activity') { box.appendChild(sf); box.appendChild(lf); } else if (sf.parentNode === box) { rv.parentNode.insertBefore(sf, rv); rv.parentNode.insertBefore(lf, rv); }
         var h = sf.querySelector('.hint'); if (h) { if (!h.__orig) h.__orig = h.innerHTML; h.innerHTML = k === 'activity' ? 'เช่น หนังสือเชิญ กำหนดการ หรือเอกสารที่ผู้เข้าร่วมต้องใช้ · ครูเปิดดู/ดาวน์โหลดได้จากปฏิทิน' : h.__orig; }
-        var lb = sf.querySelector('label'); if (lb) lb.innerHTML = (k === 'activity' ? 'ไฟล์แนบ' : 'ฟอร์ม / ไฟล์ตัวอย่าง') + ' <span class="opt">(ไม่บังคับ · สูงสุด 3 ไฟล์)</span>'; })();
+        var lb = sf.querySelector('label'); if (lb) lb.innerHTML = (k === 'activity' ? 'ไฟล์แนบ' : 'ฟอร์ม / ไฟล์ตัวอย่าง') + ' <span class="opt">(ไม่บังคับ · เลือกหลายไฟล์พร้อมกันได้ · สูงสุด 100 ไฟล์ · เก็บในโฟลเดอร์ของรายการนี้ใน Drive)</span>'; })();
       var editing = !!document.getElementById('evEditId').value;
       document.getElementById('evSubmitBtn').innerHTML = editing ? 'บันทึกการแก้ไข' : (k === 'activity' ? '<i class="fa-solid fa-check" aria-hidden="true"></i> เพิ่มกิจกรรม' : 'เพิ่มกำหนดการ');
       document.getElementById('createEventError').hidden = true;
@@ -1131,36 +1133,74 @@
       evResp.set(ev && ev.responsible ? ev.responsible : null);
       document.getElementById('evSelfReport').checked = !!(ev && ev.selfReport);
       document.getElementById('evCalOnly').checked = !!(ev && ev.calOnly); // 1.97
-      evSamples = ev && ev.sampleFiles ? ev.sampleFiles.map(function (f) { return Object.assign({}, f); }) : []; evSfTag = (evSamples.filter(function (f) { return f.tag; })[0] || {}).tag || Math.random().toString(36).slice(2, 8); renderEvSamples(); evCalOnlySync();
+      evQ = []; evSamples = ev && ev.sampleFiles ? ev.sampleFiles.map(function (f) { return Object.assign({}, f); }) : []; evSfTag = (evSamples.filter(function (f) { return f.tag; })[0] || {}).tag || Math.random().toString(36).slice(2, 8); renderEvSamples(); evCalOnlySync();
       renderEvSc();
     }
     // ---- 1.97: ฟอร์ม/ไฟล์ตัวอย่าง ----
     var evSamples = [], evSampleBusy = false, evSfTag = ''; // 2.01.0: evSfTag = รหัสโฟลเดอร์ของรายการนี้
     function sampleIcon(f) { return fileTypeIconHtml(f.name, f.mime, 'sm'); }
+    // 2.02.4: อัปหลายไฟล์พร้อมกัน (สูงสุด 100) — ทยอยส่งครั้งละ 2 ไฟล์ · ไม่สำเร็จกดลองใหม่ได้ · ลากไฟล์มาวางได้
+    var EV_SMP_MAX = 100, evQ = [];
     function renderEvSamples() {
       var box = document.getElementById('evSamples');
-      box.innerHTML = evSamples.map(function (f, i) {
+      var many = evSamples.length > 12;
+      var rows = evSamples.map(function (f, i) {
         return '<div class="ev-sample">' + sampleIcon(f) + '<div class="ev-sample-t"><a href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener">' + escapeHtml(f.name) + '</a>' +
-          '<input type="text" maxlength="80" data-smp-note="' + i + '" placeholder="คำอธิบายสั้น เช่น ฟอร์มให้ดาวน์โหลดไปกรอก (ไม่บังคับ)" value="' + escapeHtml(f.note || '') + '" /></div>' +
+          (many ? '' : '<input type="text" maxlength="80" data-smp-note="' + i + '" placeholder="คำอธิบายสั้น เช่น ฟอร์มให้ดาวน์โหลดไปกรอก (ไม่บังคับ)" value="' + escapeHtml(f.note || '') + '" />') + '</div>' +
           '<button type="button" class="ev-x" data-smp-del="' + i + '" title="เอาไฟล์นี้ออก" aria-label="เอาไฟล์นี้ออก"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>';
-      }).join('') + (evSampleBusy ? '<div class="hint"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> กำลังอัปโหลด…</div>' : '');
-      document.getElementById('evSampleAdd').hidden = evSamples.length >= 10 || evSampleBusy;
+      }).join('');
+      var q = evQ.filter(function (x) { return x.st !== 'done'; });
+      var qh = q.map(function (x, i) {
+        return '<div class="ev-sample ev-q ' + x.st + '"><i class="fa-solid ' + (x.st === 'err' ? 'fa-circle-exclamation' : x.st === 'run' ? 'fa-spinner fa-spin' : 'fa-clock') + '" aria-hidden="true"></i><div class="ev-sample-t"><b>' + escapeHtml(x.file.name) + '</b><small>' + (x.st === 'err' ? escapeHtml(x.err || 'ไม่สำเร็จ') : x.st === 'run' ? 'กำลังอัปโหลด…' : 'รอคิว') + '</small></div>' +
+          (x.st === 'err' ? '<button type="button" class="linklike" data-smp-retry="' + evQ.indexOf(x) + '">ลองใหม่</button>' : '') + '</div>';
+      }).join('');
+      var nRun = evQ.filter(function (x) { return x.st === 'run' || x.st === 'wait'; }).length;
+      box.innerHTML = (evSamples.length ? '<div class="ev-smp-sum"><i class="fa-solid fa-paperclip" aria-hidden="true"></i> ไฟล์แนบ ' + evSamples.length + ' ไฟล์' + (nRun ? ' · กำลังอัปอีก ' + nRun + ' ไฟล์' : '') + (many ? '<small>ไฟล์เยอะ — ช่องคำอธิบายรายไฟล์ซ่อนไว้</small>' : '') + '</div>' : '') +
+        '<div class="ev-smp-list' + (many ? ' scroll' : '') + '">' + rows + '</div>' + qh;
+      evSampleBusy = nRun > 0;
+      var add = document.getElementById('evSampleAdd');
+      add.hidden = evSamples.length + nRun >= EV_SMP_MAX;
+      add.innerHTML = '<i class="fa-solid fa-upload" aria-hidden="true"></i> ' + (evSamples.length ? 'เพิ่มไฟล์' : 'อัปโหลดไฟล์') + ' <small>(เลือกได้หลายไฟล์)</small>';
     }
     document.getElementById('evSamples').addEventListener('input', function (e) { var n = e.target.closest('[data-smp-note]'); if (n) evSamples[Number(n.getAttribute('data-smp-note'))].note = n.value; });
-    document.getElementById('evSamples').addEventListener('click', function (e) { var d = e.target.closest('[data-smp-del]'); if (!d) return; evSamples.splice(Number(d.getAttribute('data-smp-del')), 1); renderEvSamples(); });
-    document.getElementById('evSampleAdd').addEventListener('click', function () { document.getElementById('evSampleInput').click(); });
-    document.getElementById('evSampleInput').addEventListener('change', async function (e) {
-      var file = e.target.files && e.target.files[0]; e.target.value = '';
-      if (!file) return;
-      evSampleBusy = true; renderEvSamples();
-      try {
-        var prep = await apiCall('sampleUploadPrepare', { fileName: file.name, mimeType: file.type, fileSize: file.size, academicYear: document.getElementById(evIsAct() ? 'evActYear' : 'evYear').value, folderTag: evSfTag, folderTitle: (document.getElementById(evIsAct() ? 'evActTitle' : 'evTitle') || {}).value || '', direct: 1, origin: location.origin });
-        var res = await sendPreparedFile(prep, file, { filename: prep.uploadFileName || file.name, mimeType: file.type });
-        var f = await apiCall('sampleUploadFinalize', { sampleId: prep.sampleId, fileId: res.fileId, fileUrl: res.url, directUrl: res.directUrl, fileName: prep.uploadFileName || file.name, mimeType: file.type, via: res.via, fallbackReason: res.fallbackReason || '' });
-        f.tag = prep.folderTag || evSfTag; evSamples.push(f);
-      } catch (err) { showToast('อัปโหลดไม่สำเร็จ: ' + err.message); }
-      evSampleBusy = false; renderEvSamples();
+    document.getElementById('evSamples').addEventListener('click', function (e) {
+      var r = e.target.closest('[data-smp-retry]'); if (r) { var x = evQ[Number(r.getAttribute('data-smp-retry'))]; if (x) { x.st = 'wait'; x.err = ''; evPump(); } return; }
+      var d = e.target.closest('[data-smp-del]'); if (!d) return; evSamples.splice(Number(d.getAttribute('data-smp-del')), 1); renderEvSamples();
     });
+    document.getElementById('evSampleAdd').addEventListener('click', function () { document.getElementById('evSampleInput').click(); });
+    function evQueueFiles(list) {
+      var files = Array.from(list || []); if (!files.length) return;
+      var room = EV_SMP_MAX - evSamples.length - evQ.filter(function (x) { return x.st === 'run' || x.st === 'wait'; }).length;
+      if (files.length > room) { showToast('แนบได้สูงสุด ' + EV_SMP_MAX + ' ไฟล์ต่อรายการ — เพิ่มได้อีก ' + Math.max(0, room) + ' ไฟล์', true); files = files.slice(0, Math.max(0, room)); }
+      files.forEach(function (f) { evQ.push({ file: f, st: 'wait', err: '' }); });
+      evPump();
+    }
+    var evPumping = 0;
+    function evPump() {
+      renderEvSamples();
+      while (evPumping < 2) {
+        var x = evQ.filter(function (y) { return y.st === 'wait'; })[0]; if (!x) break;
+        x.st = 'run'; evPumping++;
+        evUploadOne(x).then(function (it) { it.st = 'done'; }, function (err) { this.st = 'err'; this.err = err.message; }.bind(x)).then(function () { evPumping--; evPump(); });
+      }
+      if (!evPumping && evQ.length && evQ.every(function (y) { return y.st === 'done'; })) evQ = [];
+      renderEvSamples();
+    }
+    async function evUploadOne(x) {
+      var file = x.file;
+      var prep = await apiCall('sampleUploadPrepare', { fileName: file.name, mimeType: file.type, fileSize: file.size, academicYear: document.getElementById(evIsAct() ? 'evActYear' : 'evYear').value, folderTag: evSfTag, folderTitle: (document.getElementById(evIsAct() ? 'evActTitle' : 'evTitle') || {}).value || '', direct: 1, origin: location.origin });
+      var res = await sendPreparedFile(prep, file, { filename: prep.uploadFileName || file.name, mimeType: file.type });
+      var f = await apiCall('sampleUploadFinalize', { sampleId: prep.sampleId, fileId: res.fileId, fileUrl: res.url, directUrl: res.directUrl, fileName: prep.uploadFileName || file.name, mimeType: file.type, via: res.via, fallbackReason: res.fallbackReason || '' });
+      f.tag = prep.folderTag || evSfTag; evSamples.push(f);
+      return x;
+    }
+    document.getElementById('evSampleInput').addEventListener('change', function (e) { var fs = e.target.files; evQueueFiles(fs); e.target.value = ''; });
+    (function () { // ลากไฟล์มาวางในช่องไฟล์แนบ
+      var fld = document.getElementById('evSamplesField');
+      fld.addEventListener('dragover', function (e) { if (e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf('Files') !== -1) { e.preventDefault(); fld.classList.add('drop-on'); } });
+      fld.addEventListener('dragleave', function () { fld.classList.remove('drop-on'); });
+      fld.addEventListener('drop', function (e) { e.preventDefault(); fld.classList.remove('drop-on'); if (e.dataTransfer) evQueueFiles(e.dataTransfer.files); });
+    })();
     function evCalOnlySync() { var on = document.getElementById('evCalOnly').checked, n = document.getElementById('evActNotify'); if (n) { if (on) n.checked = false; n.disabled = on; } }
     document.getElementById('evCalOnly').addEventListener('change', evCalOnlySync);
     function evExtrasPayload() {
@@ -1246,6 +1286,8 @@
       e.preventDefault();
       var errBox = document.getElementById('createEventError');
       errBox.hidden = true;
+      if (evSampleBusy) { errBox.textContent = 'กรุณารอให้อัปโหลดไฟล์แนบเสร็จก่อน'; errBox.hidden = false; return; } // 2.02.4
+      if (evQ.some(function (x) { return x.st === 'err'; })) { errBox.textContent = 'มีไฟล์แนบที่อัปไม่สำเร็จ — กด "ลองใหม่" หรือเอาออกก่อนบันทึก'; errBox.hidden = false; return; }
       if (document.getElementById('evKind').value === 'activity') return submitActivity(errBox);
       var evDateVal = document.getElementById('evDate').value;
       var evEndDateVal = document.getElementById('evEndDate').value;

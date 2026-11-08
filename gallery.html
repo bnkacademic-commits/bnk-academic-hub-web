@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.02.3.081126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.4.091126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -122,7 +122,7 @@
         <input type="file" id="upInput" accept="image/*,.heic,.heif" multiple hidden />
         <i class="fa-solid fa-images" aria-hidden="true"></i>
         <span id="upDropTxt"><b>เลือกรูป</b> หรือ ลากรูปมาวางที่นี่</span>
-        <small>รูปภาพทุกชนิด (JPG, PNG, HEIC) · ไฟล์ต้นฉบับเต็มขนาด · เลือกได้ครั้งละหลายรูป</small>
+        <small id="upDropHint">รูปภาพทุกชนิด (JPG, PNG, HEIC) · ไฟล์ต้นฉบับเต็มขนาด · เลือกได้ครั้งละหลายรูป</small>
       </label>
       <!-- 1.84.2: เลือกรูปแล้วยังไม่อัป — ตรวจรายการ เอาออก/เพิ่ม แล้วกด "เริ่มอัป" -->
       <div class="up-stage" id="upStage" hidden>
@@ -184,8 +184,8 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=2.02.3.081126"></script>
-  <script src="assets/gallery.js?v=2.02.3.081126"></script>
+  <script src="assets/api.js?v=2.02.4.091126"></script>
+  <script src="assets/gallery.js?v=2.02.4.091126"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -218,8 +218,8 @@
       try {
         var r = await apiCall('albumList', { year: $('galYear').value || '' });
         albums = r.items || []; years = r.years || []; if (r.subjectGroups) subjectGroups = r.subjectGroups;
-        galInfo = { managedReady: !!r.managedReady, trashCount: Number(r.trashCount || 0), uploadMode: r.uploadMode || 'auto', trashDays: r.trashDays || 7 };
-        $('galMgrBtn').hidden = !r.superAdmin; // 2.01.0
+        galInfo = { managedReady: !!r.managedReady, trashCount: Number(r.trashCount || 0), uploadMode: r.uploadMode || 'auto', trashDays: r.trashDays || 7, videoOn: r.videoOn !== false };
+        $('galMgrBtn').hidden = true; // 2.01.0 · 2.02.4: ผู้ดูแลคลังรูปภาพย้ายไปตั้งค่าระบบ › จัดการผู้ดูแล
         syncGalTabs();
         fillGroupFilter();
       } catch (e) { root.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; return; }
@@ -442,7 +442,7 @@
           (managed ? '' : '<span class="tr-tag link"><i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์โฟลเดอร์ของครู</span>') + '</div>' +
         '<div class="alb-pg-meta"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> สร้างโดย ' + escapeHtml(a.createdByName || '-') + (managed ? ' · อัปโดย ' + (a.uploaderCount || 0) + ' คน · ' + escapeHtml(formatBytes(a.totalBytes || 0)) : '') + '</div>' +
         '<a class="alb-pg2-cover' + (cover ? '' : ' no-cover') + '" style="--ac:' + albumColor(a) + '" href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener" aria-label="ดูรูปทั้งหมด">' + (cover ? '<img src="' + cover + '" alt="" referrerpolicy="no-referrer" />' : '<i class="fa-solid fa-images" aria-hidden="true"></i>') +
-          (a.photoCount > 0 ? '<span class="alb-pg-n"><i class="fa-solid fa-images" aria-hidden="true"></i> ' + a.photoCount + ' รูป</span>' : '') + '</a>' +
+          (a.photoCount > 0 || a.videoCount > 0 ? '<span class="alb-pg-n">' + albumCountTxt(a) + '</span>' : '') + '</a>' +
         '<a class="btn btn-primary alb-pg2-drive" href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener"><i class="fa-solid ' + (isPhotos ? 'fa-images' : 'fa-folder-open') + '" aria-hidden="true"></i> ดูรูปทั้งหมดใน ' + (isPhotos ? 'Google Photos' : 'Google Drive') + '</a>' +
         (managed && a.canEdit ? '<label class="alb-sw"><input type="checkbox" data-ap-sw' + (a.allowUpload !== false ? ' checked' : '') + ' /><span class="alb-sw-t"></span><b>เปิดให้ครูอัปรูปเพิ่ม</b><small>ปิดแล้วครูทั่วไปดูได้อย่างเดียว · ผู้สร้างและผู้ดูแลยังอัปได้</small></label>' : '') + // 2.01.0
         (managed && a.canUpload === false ? '<div class="hint"><i class="fa-solid fa-lock" aria-hidden="true"></i> อัลบั้มนี้ปิดรับรูปจากครูแล้ว</div>' : '') +
@@ -568,22 +568,32 @@
     // ---------- อัปรูป ----------
     var UP_CONC = 3, UP_BATCH = 10, RELAY_MAX = 25 * 1024 * 1024;
     var up = null; // { album, items[], paused, mode('auto'|'direct'), directBroken, reason, done[], running }
+    var VID_EXT = /\.(mp4|m4v|mov|webm|avi|mkv|3gp|mts|wmv)$/i; // 2.02.4: วิดีโอ
+    function isVid(f) { return /^video\//.test(f.type || '') || VID_EXT.test(f.name || ''); }
     function mimeOf(f) {
-      if (f.type && /^image\//.test(f.type)) return f.type;
+      if (f.type && /^(image|video)\//.test(f.type)) return f.type;
       var ext = (/\.(\w+)$/.exec(f.name || '') || [0, ''])[1].toLowerCase();
-      return { heic: 'image/heic', heif: 'image/heif', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' }[ext] || 'image/jpeg';
+      return { heic: 'image/heic', heif: 'image/heif', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', avi: 'video/x-msvideo', mkv: 'video/x-matroska', '3gp': 'video/3gpp', mts: 'video/mp2t', wmv: 'video/x-ms-wmv' }[ext] || 'image/jpeg';
+    }
+    function setUpAccept() { // 2.02.4: เปิดวิดีโอ = เลือกวิดีโอได้ด้วย
+      var v = galInfo.videoOn !== false;
+      $('upInput').setAttribute('accept', 'image/*,.heic,.heif' + (v ? ',video/*,.mp4,.m4v,.mov,.webm,.avi,.mkv,.3gp,.mts,.wmv' : ''));
+      $('upDropTxt').innerHTML = v ? '<b>เลือกรูปหรือวิดีโอ</b> หรือ ลากไฟล์มาวางที่นี่' : '<b>เลือกรูป</b> หรือ ลากรูปมาวางที่นี่';
+      $('upDropHint').textContent = v ? 'รูปภาพ (JPG, PNG, HEIC) และวิดีโอ (MP4, MOV) · ไฟล์ต้นฉบับเต็มขนาด · เลือกได้ครั้งละหลายไฟล์' : 'รูปภาพทุกชนิด (JPG, PNG, HEIC) · ไฟล์ต้นฉบับเต็มขนาด · เลือกได้ครั้งละหลายรูป';
     }
     function openUpload(a) {
       if (up && up.running && up.album.id !== a.id) { showToast('กำลังอัปรูปเข้าอัลบั้ม "' + up.album.title + '" อยู่ — รอให้เสร็จก่อน', true); showModalEl($('upModal')); return; }
       if (!up || !up.running) up = { album: a, items: [], paused: false, mode: galInfo.uploadMode, reason: '', done: [], running: false, sent: 0 };
-      $('upTitle').innerHTML = '<i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> อัปรูปเข้า "' + escapeHtml(a.title) + '"';
+      $('upTitle').innerHTML = '<i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> อัปรูปเข้า "' + escapeHtml(a.title) + '"'; setUpAccept();
       renderUpload();
       showModalEl($('upModal'));
     }
     function addFiles(list) {
       if (!up) return;
-      var imgs = Array.from(list || []).filter(function (f) { return /^image\//.test(f.type) || /\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name); });
-      if (!imgs.length) { showToast('ไม่พบไฟล์รูปภาพ', true); return; }
+      var vOn = galInfo.videoOn !== false, nv = 0;
+      var imgs = Array.from(list || []).filter(function (f) { if (isVid(f)) { if (vOn) return true; nv++; return false; } return /^image\//.test(f.type) || /\.(heic|heif|jpe?g|png|webp|gif)$/i.test(f.name); });
+      if (nv) showToast('ผู้ดูแลระบบปิดการอัปวิดีโอไว้ — ข้ามวิดีโอ ' + nv + ' ไฟล์', true);
+      if (!imgs.length) { if (!nv) showToast(vOn ? 'ไม่พบไฟล์รูปภาพหรือวิดีโอ' : 'ไม่พบไฟล์รูปภาพ', true); return; }
       if (up.running) { // กำลังอัปอยู่ = ต่อคิวทันที (แบบเดิม)
         imgs.forEach(function (f) { up.items.push({ file: f, name: f.name, size: f.size, mime: mimeOf(f), state: 'wait', pct: 0, mode: '', err: '' }); });
         renderUpload(); startUpload(); return;
@@ -641,7 +651,7 @@
       $('upStartTxt').textContent = 'เริ่มอัป ' + st.length + ' รูป';
       var LIM = 120;
       $('upStageList').innerHTML = st.slice(0, LIM).map(function (x, i) {
-        return '<div class="up-st-it">' + (x.prev ? '<img src="' + x.prev + '" alt="" loading="lazy" />' : '<span class="up-st-ic"><i class="fa-solid fa-image" aria-hidden="true"></i></span>') +
+        return '<div class="up-st-it">' + (x.prev ? '<img src="' + x.prev + '" alt="" loading="lazy" />' : '<span class="up-st-ic"><i class="fa-solid ' + (/^video\//.test(x.mime) ? 'fa-film' : 'fa-image') + '" aria-hidden="true"></i></span>') +
           '<div class="up-nm"><b>' + escapeHtml(x.name) + '</b><span class="muted">' + escapeHtml(formatBytes(x.size)) + '</span></div>' +
           '<button type="button" class="up-st-rm" data-st-rm="' + i + '" aria-label="เอา ' + escapeHtml(x.name) + ' ออก" title="เอาออก"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>';
       }).join('') + (st.length > LIM ? '<div class="muted up-more">… และอีก ' + (st.length - LIM) + ' รูป</div>' : '');
@@ -755,7 +765,7 @@
       try {
         var r = await apiCall('albumUploadDone', { id: up.album.id, items: batch, fallbackReason: up.reason });
         var a = albums.filter(function (x) { return x.id === up.album.id; })[0];
-        if (a) { a.photoCount = r.photoCount; a.totalBytes = r.totalBytes; if (r.coverFileId && r.coverFileId !== a.coverFileId) { a.coverFileId = r.coverFileId; delete ALBUM_COVERS[a.id]; } }
+        if (a) { a.photoCount = r.photoCount; if (r.videoCount != null) a.videoCount = r.videoCount; a.totalBytes = r.totalBytes; if (r.coverFileId && r.coverFileId !== a.coverFileId) { a.coverFileId = r.coverFileId; delete ALBUM_COVERS[a.id]; } }
       } catch (e) { up.done = batch.concat(up.done); if (force) showToast('บันทึกรายการรูปไม่สำเร็จ: ' + e.message, true); }
     }
     var sessLock = null;
@@ -834,9 +844,9 @@
       $('mgList').innerHTML = list.length ? list.slice(0, mgShown).map(function (p) {
         return '<div class="mg-it' + (p.canDelete ? '' : ' ro') + '" data-ph="' + escapeHtml(p.id) + '">' +
           '<input type="checkbox" ' + (p.canDelete ? '' : 'disabled ') + (mg.sel[p.id] ? 'checked ' : '') + 'aria-label="เลือก ' + escapeHtml(p.name) + '" />' +
-          '<i class="fa-solid fa-image" aria-hidden="true"></i><div class="mg-nm"><div><b>' + escapeHtml(p.name) + '</b> <span class="muted">· ' + escapeHtml(formatBytes(p.size)) + '</span>' + (p.isCover ? ' <span class="tr-tag pub">ปก</span>' : '') + (p.mode === 'relay' ? ' <em class="relay-tag">relay</em>' : '') + '</div>' +
+          '<i class="fa-solid ' + (/^video\//.test(p.mime) ? 'fa-film' : 'fa-image') + '" aria-hidden="true"></i><div class="mg-nm"><div><b>' + escapeHtml(p.name) + '</b> <span class="muted">· ' + escapeHtml(formatBytes(p.size)) + '</span>' + (p.isCover ? ' <span class="tr-tag pub">ปก</span>' : '') + (p.mode === 'relay' ? ' <em class="relay-tag">relay</em>' : '') + '</div>' +
           '<div class="muted mg-by">' + escapeHtml(p.uploadedByName || '-') + ' · ' + escapeHtml(formatDateTimeThai(p.createdAt)) + '</div></div>' +
-          '<span class="mg-acts">' + (canEditAlb && !p.isCover ? '<button type="button" class="linklike" data-mg-cover>ตั้งเป็นปก</button>' : '') +
+          '<span class="mg-acts">' + (canEditAlb && !p.isCover && !/^video\//.test(p.mime) ? '<button type="button" class="linklike" data-mg-cover>ตั้งเป็นปก</button>' : '') +
           '<a class="linklike" href="https://drive.google.com/file/d/' + encodeURIComponent(p.fileId) + '/view" target="_blank" rel="noopener">ดู</a></span></div>';
       }).join('') + (list.length > mgShown ? '<div class="list-more"><button type="button" class="btn btn-secondary btn-sm" data-mg-more>แสดงเพิ่ม (อีก ' + (list.length - mgShown) + ' รูป)</button></div>' : '')
         : '<div class="empty-state">' + (ps.length ? 'ไม่พบรูปตามที่ค้นหา' : 'ยังไม่มีรูปที่อัปผ่านเว็บ') + '</div>';
@@ -863,7 +873,7 @@
       if (!r.ok) return;
       mg.sel = {};
       var a = albums.filter(function (x) { return x.id === albPage.id; })[0];
-      if (a) { a.photoCount = r.data.photoCount; a.totalBytes = r.data.totalBytes; if (r.data.coverFileId !== a.coverFileId) { a.coverFileId = r.data.coverFileId; delete ALBUM_COVERS[a.id]; } }
+      if (a) { a.photoCount = r.data.photoCount; if (r.data.videoCount != null) a.videoCount = r.data.videoCount; a.totalBytes = r.data.totalBytes; if (r.data.coverFileId !== a.coverFileId) { a.coverFileId = r.data.coverFileId; delete ALBUM_COVERS[a.id]; } }
       albPage.data = await apiCall('albumPhotos', { id: albPage.id });
       renderManage(); renderAlbumPage(); render();
     });

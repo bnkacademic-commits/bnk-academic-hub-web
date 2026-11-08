@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.02.1';
-var APP_VERSION = '2.02.3.081126';
+var WORKER_MIN_VERSION = '2.02.4';
+var APP_VERSION = '2.02.4.091126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1238,6 +1238,7 @@ function linkHost(u) { try { return new URL(u).hostname.replace(/^www\./, ''); }
 function eventLinksHtml(links, withHost) {
   if (!links || !links.length) return '';
   return '<div class="ev-lbtns">' + links.map(function (l) {
+    if (l.folder) return '<button type="button" class="ev-lbtn fld" data-sfolder="' + escapeHtml(l.folder) + '"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> ' + (l.more ? 'ไฟล์แนบทั้งหมด ' + l.n + ' ไฟล์' : 'เปิดโฟลเดอร์ไฟล์แนบ') + '</button>'; // 2.02.4
     if (l.sample) return '<a class="ev-lbtn smp" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(l.name || '') + '"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> ' + escapeHtml(l.label) + '</a>'; // 1.97: ฟอร์ม/ไฟล์ตัวอย่าง
     var h = linkHost(l.url);
     return '<a class="ev-lbtn" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> ' + escapeHtml(l.label || 'เปิดลิงก์') + (withHost && h ? ' <small>' + escapeHtml(h) + '</small>' : '') + '</a>';
@@ -3647,10 +3648,27 @@ function showAnswersModal(title, values, sub) {
 function isSurveySub(s) { return !!s && s.mimeType === 'survey'; }
 
 // 1.97: ลิงก์ของกำหนดการ = ฟอร์ม/ไฟล์ตัวอย่าง (ก่อน) + ลิงก์แนบ
+// 2.02.4: ไฟล์แนบเยอะ (สูงสุด 100) — แสดง 4 ไฟล์แรก ที่เหลือรวมในปุ่ม "เปิดโฟลเดอร์ไฟล์แนบ" (ไฟล์ตั้งแต่ 2 ไฟล์ขึ้นไปมีปุ่มนี้เสมอ)
 function evLinksOf(e) {
   if (!e) return [];
-  return (e.sampleFiles || []).map(function (f) { return { url: f.url, label: f.note || f.name, name: f.name, sample: true }; }).concat(e.links || []);
+  var sf = e.sampleFiles || [], tag = (sf.filter(function (f) { return f.tag; })[0] || {}).tag || '';
+  var show = sf.length > 4 && tag ? sf.slice(0, 3) : sf;
+  var out = show.map(function (f) { return { url: f.url, label: f.note || f.name, name: f.name, sample: true }; });
+  if (tag && sf.length >= 2) out.push({ folder: tag, n: sf.length, more: sf.length - show.length });
+  return out.concat(e.links || []);
 }
+var _sfUrl = {};
+document.addEventListener('click', async function (ev) {
+  var b = ev.target.closest && ev.target.closest('[data-sfolder]'); if (!b) return;
+  ev.preventDefault();
+  var tag = b.getAttribute('data-sfolder');
+  if (_sfUrl[tag]) { window.open(_sfUrl[tag], '_blank', 'noopener'); return; }
+  var w = window.open('', '_blank'); // เปิดแท็บไว้ก่อน (กันเบราว์เซอร์บล็อกป็อปอัปหลังรอผล)
+  try {
+    var r = await apiCall('sampleFolderLink', { tag: tag }); _sfUrl[tag] = r.url;
+    if (w) { w.opener = null; w.location.href = r.url; } else window.open(r.url, '_blank', 'noopener');
+  } catch (x) { if (w) w.close(); showToast(x.message, true); }
+});
 function samplesListHtml(list) {
   if (!list || !list.length) return '';
   return '<div class="field"><label>ฟอร์ม / ไฟล์ตัวอย่างของงานนี้</label><div class="smp-list">' + list.map(function (f) {

@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.02.3.081126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.4.091126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login')||localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body class="pubc-body">
@@ -43,17 +43,18 @@
     <div id="phRoot" aria-live="polite"></div>
   </main>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.02.3.081126"></script>
-  <script src="assets/gallery.js?v=2.02.3.081126"></script>
+  <script src="assets/api.js?v=2.02.4.091126"></script>
+  <script src="assets/gallery.js?v=2.02.4.091126"></script>
   <script>
     mountFooter();
     applyBranding();
     var $ = function (id) { return document.getElementById(id); };
     // 2.02.0: อัลบั้มล่าสุด 5 อัลบั้มแสดงเสมอ (ไม่มีคำค้น) · รายการด้านล่างเริ่มที่ปีการศึกษาปัจจุบัน (เปลี่ยนได้) · โหลดเพิ่มทีละ 10
-    var albums = [], hero = [], st = { q: '', year: 'cur', sem: '', next: 0, more: false, years: [], total: null }, tok = 0;
+    var albums = [], hero = [], st = { q: '', year: 'cur', sem: '', video: false, next: 0, more: false, years: [], total: null }, tok = 0;
     function filtersHtml() {
       return '<div class="ph-flt"><select id="phYear" aria-label="ปีการศึกษา"><option value="">ทุกปีการศึกษา</option>' + st.years.map(function (y) { return '<option value="' + escapeHtml(y) + '"' + (st.year === y ? ' selected' : '') + '>ปีการศึกษา ' + escapeHtml(y) + '</option>'; }).join('') + '</select>' +
-        '<select id="phSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option>' + ['1', '2', '3'].map(function (x) { return '<option value="' + x + '"' + (st.sem === x ? ' selected' : '') + '>' + (x === '3' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + x) + '</option>'; }).join('') + '</select></div>';
+        '<select id="phSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option>' + ['1', '2', '3'].map(function (x) { return '<option value="' + x + '"' + (st.sem === x ? ' selected' : '') + '>' + (x === '3' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + x) + '</option>'; }).join('') + '</select>' +
+        '<button type="button" class="ph-vid' + (st.video ? ' on' : '') + '" id="phVid" aria-pressed="' + st.video + '"><i class="fa-solid fa-play" aria-hidden="true"></i> มีวิดีโอ</button></div>'; // 2.02.4
     }
     async function load(append) {
       var root = $('phRoot'), my = ++tok, first = st.year === 'cur';
@@ -62,7 +63,7 @@
       if (!append) { st.next = 0; if (!root.querySelector('.alb-grid')) root.innerHTML = '<div class="loading">กำลังโหลด</div>'; }
       var btn = $('phMore'); if (btn) { btn.disabled = true; btn.textContent = 'กำลังโหลด...'; }
       try {
-        var r = await apiCall('publicAlbumList', { q: st.q, year: st.year, semester: st.sem, offset: st.next, hero: !append && !hero.length && !st.q ? 1 : 0 });
+        var r = await apiCall('publicAlbumList', { q: st.q, year: st.year, semester: st.sem, video: st.video ? 1 : 0, offset: st.next, hero: !append && !hero.length && !st.q ? 1 : 0 });
         if (my !== tok) return;
         if (r.schoolName) $('phSub').textContent = 'ภาพกิจกรรมของ' + r.schoolName;
         if (r.years) st.years = r.years;
@@ -73,7 +74,7 @@
         render(append ? add : null);
       } catch (e) { if (my === tok) root.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; }
     }
-    function listOf(arr) { var hid = {}; if (!st.q) hero.forEach(function (a) { hid[a.id] = 1; }); return arr.filter(function (a) { return !hid[a.id]; }); }
+    function listOf(arr) { var hid = {}; if (!st.q && !st.video) hero.forEach(function (a) { hid[a.id] = 1; }); return arr.filter(function (a) { return !hid[a.id]; }); }
     function render(added) {
       var root = $('phRoot');
       if (added && $('phList')) { // โหลดเพิ่ม = ต่อท้ายรายการเดิม (ไม่วาดใหม่ทั้งหน้า)
@@ -81,11 +82,12 @@
         var list = $('phList'); while (tmp.firstChild) list.appendChild(tmp.firstChild);
         wireAlbumCovers(list); loadManagedCovers(list, more, true); moreBtn(); return;
       }
-      var showHero = !st.q && hero.length, rest = listOf(albums);
+      var showHero = !st.q && !st.video && hero.length, rest = listOf(albums);
       var label = st.q ? 'ผลการค้นหา' : st.year ? 'อัลบั้มปีการศึกษา ' + escapeHtml(st.year) + (st.sem ? ' ' + (st.sem === '3' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + st.sem) : '') : 'อัลบั้มทั้งหมด' + (st.sem ? ' ' + (st.sem === '3' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + st.sem) : '');
-      root.innerHTML = (showHero ? '<h2 class="ph-h">อัลบั้มล่าสุด</h2><div class="alb-grid ph-hero">' + hero.map(function (a) { return albumCardHtml(a, {}); }).join('') + '</div>' : '') +
+      // 2.02.4: อัลบั้มล่าสุด = การ์ดใหญ่ 2 (กว้าง 2 ช่อง ชื่อวางบนรูป) + การ์ดปกติ 4 · การ์ดทุกใบสูงเท่ากัน ปกแนวนอน
+      root.innerHTML = (showHero ? '<h2 class="ph-h">อัลบั้มล่าสุด</h2><div class="alb-grid ph-fix ph-hero2">' + hero.map(function (a, i) { var h = albumCardHtml(a, {}); return i < 2 ? h.replace('class="alb-card"', 'class="alb-card alb-big"') : h; }).join('') + '</div>' : '') +
         '<h2 class="ph-h ph-h2">' + label + (st.total != null ? ' <small>(' + st.total + ' อัลบั้ม)</small>' : '') + '</h2>' + filtersHtml() +
-        (rest.length ? '<div class="alb-grid ph-list" id="phList">' + rest.map(function (a) { return albumCardHtml(a, {}); }).join('') + '</div>' :
+        (rest.length ? '<div class="alb-grid ph-fix ph-list" id="phList">' + rest.map(function (a) { return albumCardHtml(a, {}); }).join('') + '</div>' :
           '<div class="pubc-empty"><i class="fa-solid fa-images" aria-hidden="true"></i> ' + (st.q ? 'ไม่พบอัลบั้มที่ตรงกับ "' + escapeHtml(st.q) + '"<div class="hint">ลองพิมพ์คำอื่น หรือพิมพ์เพียงบางส่วนของชื่อกิจกรรม</div>' : (albums.length ? 'อัลบั้มของช่วงนี้แสดงอยู่ในอัลบั้มล่าสุดด้านบนแล้ว' : 'ยังไม่มีอัลบั้มในช่วงนี้ — ลองเลือกปีการศึกษาอื่น')) + '</div>') +
         '<div class="ph-more-wrap" id="phMoreWrap"></div>';
       wireAlbumCovers(root); loadManagedCovers(root, (showHero ? hero : []).concat(rest), true); moreBtn();
@@ -96,6 +98,7 @@
     $('phRoot').addEventListener('change', function (e) { if (e.target.id === 'phYear') { st.year = e.target.value; load(false); } else if (e.target.id === 'phSem') { st.sem = e.target.value; load(false); } });
     $('phRoot').addEventListener('click', function (e) {
       if (e.target.closest('#phMore')) { load(true); return; }
+      if (e.target.closest('#phVid')) { st.video = !st.video; load(false); return; } // 2.02.4
       var card = e.target.closest('[data-alb]'); if (!card || !e.target.closest('[data-alb-copy]')) return;
       var a = albums.concat(hero).filter(function (x) { return x.id === card.getAttribute('data-alb'); })[0];
       if (a) copyAlbumText(a);

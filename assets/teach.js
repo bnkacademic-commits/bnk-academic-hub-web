@@ -383,7 +383,7 @@
       return;
     }
     if (e.target.closest('[data-lm-save]')) {
-      var c = { selfReport: document.getElementById('lvSelf').checked, evidence: document.getElementById('lvEvOn').checked, managers: LV.mgr.filter(function (m) { return m.manage || m.view; }) };
+      var c = { selfReport: document.getElementById('lvSelf').checked, evidence: document.getElementById('lvEvOn').checked }; // 2.02.4: ผู้ดูแลการแจ้งตั้งในหน้าตั้งค่า
       var rs = await withProgress('กำลังบันทึกการตั้งค่า', function () { return apiCall('leaveCfgSave', c); }, { successLabel: 'บันทึกการตั้งค่าแล้ว' });
       if (rs.ok) { L = null; LV.mgr = null; LV.items = null; renderLeave(); }
     }
@@ -422,9 +422,8 @@
       h += '<div class="card"><h3><i class="fa-solid fa-user-shield"></i> ตั้งค่าการแจ้ง (ผู้ดูแลระบบสูงสุด)</h3>' +
         '<label class="evk-chk"><input type="checkbox" id="lvSelf"' + (L.selfReport ? ' checked' : '') + ' /><span><b>ให้ครูแจ้งของตัวเองได้</b><small>ปิด = เฉพาะผู้ดูแลการแจ้ง (สิทธิ์จัดการ) แจ้งแทน</small></span></label>' +
         '<label class="evk-chk"><input type="checkbox" id="lvEvOn"' + (L.evidence ? ' checked' : '') + ' /><span><b>แนบหลักฐานได้</b><small>เช่น หนังสือราชการ / ใบลา (ไม่บังคับ · เก็บใน Google Drive)</small></span></label>' +
-        '<h4>ผู้ดูแลการแจ้ง</h4><div class="cb-tbl-wrap"><table class="cb-tbl"><thead><tr><th>ชื่อ</th><th>จัดการ</th><th>ดูผล</th><th></th></tr></thead><tbody>' + LV.mgr.map(function (m, i) { return '<tr><td>' + esc(nm[m.id] || m.id) + '</td><td><input type="checkbox" data-lm-m="' + i + '"' + (m.manage ? ' checked' : '') + ' aria-label="จัดการ" /></td><td><input type="checkbox" data-lm-v="' + i + '"' + (m.view || m.manage ? ' checked' : '') + (m.manage ? ' disabled' : '') + ' aria-label="ดูผล" /></td><td class="r"><button type="button" class="cb-x" data-lm-rm="' + i + '" aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button></td></tr>'; }).join('') + (LV.mgr.length ? '' : '<tr><td colspan="4" class="cb-mut">ยังไม่มี</td></tr>') + '</tbody></table></div>' +
-        '<div class="cb-inl" style="margin-top:8px"><select id="lmAdd" class="cb-search"><option value="">+ เพิ่มคนจากรายชื่อในระบบ</option>' + (L.people || []).filter(function (u) { return !LV.mgr.some(function (m) { return m.id === u.id; }); }).map(function (u) { return '<option value="' + esc(u.id) + '">' + esc(u.name) + '</option>'; }).join('') + '</select></div>' +
-        '<p class="cb-mut"><b>จัดการ</b> = แจ้ง / ลบแทนครูทุกคน · <b>ดูผล</b> = ดูรายการทั้งหมดอย่างเดียว</p><div class="cb-actions"><span class="cb-sp"></span><button type="button" class="btn btn-success" data-lm-save><i class="fa-solid fa-check"></i> บันทึกการตั้งค่า</button></div></div>';
+        '<p class="cb-mut"><i class="fa-solid fa-user-shield"></i> ผู้ดูแลการแจ้ง (จัดการ / ดูผล) ตั้งได้ที่ <a href="settings.html#managers">ตั้งค่าระบบ › จัดการผู้ดูแล</a></p>' + // 2.02.4 ย้ายไปตั้งค่า
+        '<div class="cb-actions"><span class="cb-sp"></span><button type="button" class="btn btn-success" data-lm-save><i class="fa-solid fa-check"></i> บันทึกการตั้งค่า</button></div></div>';
     }
     var y = window.scrollY; body.innerHTML = h; window.scrollTo(0, y);
   }

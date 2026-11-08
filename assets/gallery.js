@@ -40,6 +40,12 @@ async function loadManagedCovers(root, list, isPublic) {
     });
   });
 }
+// 2.02.4: จำนวนรูป + วิดีโอ บนการ์ด/หน้าอัลบั้ม
+function albumCountTxt(a) {
+  var h = a.photoCount > 0 ? '<span><i class="fa-solid fa-images" aria-hidden="true"></i> ' + a.photoCount + ' รูป</span>' : '';
+  if (a.videoCount > 0) h += '<span><i class="fa-solid fa-play" aria-hidden="true"></i> ' + a.videoCount + ' วิดีโอ</span>';
+  return h;
+}
 function albumColor(a) { return (a.department && deptThemeColor(a.department)) || 'var(--primary)'; }
 function albumCardHtml(a, opts) {
   opts = opts || {};
@@ -54,7 +60,7 @@ function albumCardHtml(a, opts) {
     '<a class="alb-cover' + (cover ? '' : ' no-cover') + '"' + openAttr + ' aria-label="เปิดอัลบั้ม ' + escapeHtml(a.title) + '">' +
       coverHtml + '<span class="alb-icon"><i class="fa-solid fa-images" aria-hidden="true"></i></span>' +
       '<span class="alb-date">' + escapeHtml(albumDateLabel(a)) + '</span>' +
-      (a.photoCount > 0 ? '<span class="alb-count"><i class="fa-solid fa-images" aria-hidden="true"></i> ' + a.photoCount + ' รูป</span>' : '') +
+      (a.photoCount > 0 || a.videoCount > 0 ? '<span class="alb-count">' + albumCountTxt(a) + '</span>' : '') +
     '</a>' +
     '<div class="alb-body"><div class="alb-title">' + escapeHtml(a.title) + '</div>' +
       '<div class="alb-meta">' + escapeHtml(albumSemLabel(a)) + ' ปีการศึกษา ' + escapeHtml(a.academicYear) +

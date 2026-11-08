@@ -43,7 +43,7 @@
     else if (B.term && !B.isPast) t.push(['info', 'fa-plus', B.myClubId ? 'ข้อมูลชุมนุม' : 'สร้างชุมนุม']);
     if (B.viewer) t.push(['all', 'fa-layer-group', 'ทุกชุมนุม'], ['who', 'fa-user-check', 'นักเรียนกับชุมนุม'], ['room', 'fa-door-open', 'สรุปรายห้อง']); // 2.01.0
     if (B.manager && !B.isPast) t.push(['cfg', 'fa-gear', 'ตั้งค่าชุมนุม']);
-    if (B.superAdmin) t.push(['mgr', 'fa-user-shield', 'ผู้ดูแลงานชุมนุม']); // 2.00.4
+    // 2.02.4: ผู้ดูแลงานชุมนุมย้ายไปตั้งค่าระบบ › จัดการผู้ดูแล
     return t;
   }
   function renderTabs(keep) {
