@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -364,9 +364,9 @@
             <label for="evMessage">รายละเอียดเพิ่มเติม <span class="opt">(ไม่บังคับ)</span></label>
             <textarea id="evMessage" placeholder="ข้อความที่จะแสดงให้ครูเห็นในปฏิทิน"></textarea>
           </div>
-          <!-- 1.97: ฟอร์ม/ไฟล์ตัวอย่าง (สูงสุด 3) — อัปโหลดเข้า Google Drive ครูดาวน์โหลด/เปิดดูได้ -->
+          <!-- 1.97: ฟอร์ม/ไฟล์ตัวอย่าง (2.01.0: สูงสุด 10 · เก็บในโฟลเดอร์ของรายการนี้ · ลบรายการ = ลบไฟล์ทั้งหมด) -->
           <div class="field" id="evSamplesField">
-            <label>ฟอร์ม / ไฟล์ตัวอย่าง <span class="opt">(ไม่บังคับ · สูงสุด 3 ไฟล์)</span></label>
+            <label>ฟอร์ม / ไฟล์แนบ <span class="opt">(ไม่บังคับ · สูงสุด 10 ไฟล์ · เก็บในโฟลเดอร์ของรายการนี้ใน Drive)</span></label>
             <div id="evSamples" class="ev-samples"></div>
             <button type="button" class="ev-add-btn" id="evSampleAdd"><i class="fa-solid fa-upload" aria-hidden="true"></i> อัปโหลดไฟล์</button>
             <input type="file" id="evSampleInput" hidden />
@@ -443,7 +443,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -626,12 +626,34 @@
       ['all', 'deadline', 'activity'].forEach(function (k) { document.getElementById('evlN-' + k).textContent = counts[k]; });
       return evlKind === 'all' ? base : base.filter(function (ev) { return (ev.kind === 'activity' ? 'activity' : 'deadline') === evlKind; });
     }
+    // 2.01.0: สีตามกลุ่มบริหารงาน (วิชาการ น้ำเงิน · บุคคล เขียว · งบประมาณ ส้ม · ทั่วไป ม่วง) · กลุ่มสาระได้สีแยกของแต่ละกลุ่ม
+    var EVG_DEPT = [[/วิชาการ/, '#2563eb'], [/บุคคล/, '#16a34a'], [/งบประมาณ|การเงิน/, '#ea580c'], [/ทั่วไป/, '#9333ea']], EVG_SUB = ['#0d9488', '#db2777', '#ca8a04', '#0891b2', '#65a30d', '#e11d48', '#4f46e5', '#a16207', '#7c3aed', '#0e7490'];
+    function evgHash(t) { var h = 0; t = String(t || ''); for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return h; }
+    function evGroupColor(g) {
+      if (g.subject) { var i = (SUBJECT_GROUPS || []).indexOf(g.subject); return EVG_SUB[(i >= 0 ? i : evgHash(g.subject)) % EVG_SUB.length]; }
+      if (g.dept) { for (var k = 0; k < EVG_DEPT.length; k++) if (EVG_DEPT[k][0].test(g.dept)) return EVG_DEPT[k][1]; return ['#475569', '#0369a1', '#b45309'][evgHash(g.dept) % 3]; }
+      return '#94a3b8';
+    }
+    function evGroupKey(g) { return g.subject ? g.subject : g.dept ? 'd:' + g.dept : ''; }
     function evOwnerBadge(ev) {
-      var g = evGroupOf(ev);
-      if (g.subject) return '<span class="evl-gb sub">กลุ่มสาระฯ ' + escapeHtml(g.subject) + '</span>';
-      if (g.dept) return '<span class="evl-gb">' + escapeHtml(groupLabel(g.dept)) + '</span>';
+      var g = evGroupOf(ev), c = evGroupColor(g);
+      if (g.subject) return '<span class="evl-gb sub" style="background:' + c + ';color:#fff;border-color:' + c + '">กลุ่มสาระฯ ' + escapeHtml(g.subject) + '</span>';
+      if (g.dept) return '<span class="evl-gb" style="background:' + c + ';color:#fff;border-color:' + c + '">' + escapeHtml(groupLabel(g.dept)) + '</span>';
       return '';
     }
+    // 2.01.0: ปุ่มกรองตามกลุ่มงาน (สี + จำนวน) — ใช้ตัวกรอง "กลุ่ม" เดิม
+    function renderEvlGChips() {
+      var host = document.getElementById('evlGChips'); if (!host) { var w = document.getElementById('eventListWrap'); if (!w) return; w.insertAdjacentHTML('beforebegin', '<div id="evlGChips" class="evl-gchips"></div>'); host = document.getElementById('evlGChips'); }
+      var cnt = {}, lbl = {}, col = {}, gv = document.getElementById('evlGroup').value, sv = document.getElementById('evlGroup');
+      lastEvents.forEach(function (ev) { var g = evGroupOf(ev), k = evGroupKey(g); if (!k) return; cnt[k] = (cnt[k] || 0) + 1; lbl[k] = g.subject ? 'กลุ่มสาระฯ ' + g.subject : groupLabel(g.dept); col[k] = evGroupColor(g); });
+      var keys = Object.keys(cnt).filter(function (k) { return Array.prototype.some.call(sv.options, function (o) { return o.value === k; }); }).sort(function (a, b) { return (a.indexOf('d:') === 0 ? 0 : 1) - (b.indexOf('d:') === 0 ? 0 : 1) || cnt[b] - cnt[a]; });
+      if (keys.length < 2) { host.innerHTML = ''; return; }
+      host.innerHTML = '<button type="button" class="evl-gc' + (!gv ? ' on' : '') + '" data-evg="" style="--c:#1e293b">ทุกกลุ่มงาน</button>' + keys.map(function (k) { return '<button type="button" class="evl-gc' + (gv === k ? ' on' : '') + '" data-evg="' + escapeHtml(k) + '" style="--c:' + col[k] + '"><i></i>' + escapeHtml(lbl[k]) + ' <b>' + cnt[k] + '</b></button>'; }).join('');
+    }
+    document.getElementById('tab-calendar').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-evg]'); if (!b) return;
+      var sel = document.getElementById('evlGroup'); sel.value = b.getAttribute('data-evg'); sel.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     function evTimeText(ev) { return ev.timeStart ? (ev.timeStart + (ev.timeEnd ? '–' + ev.timeEnd : '') + ' น.') : ''; }
     function renderEvents() {
       var wrap = document.getElementById('eventListWrap');
@@ -644,6 +666,7 @@
         return rs.filter(function (r) { return (r.endDate || r.date) >= srToday; })[0] || rs[rs.length - 1];
       });
       evlBar.update(list.length);
+      renderEvlGChips(); // 2.01.0
       if (!lastEvents.length) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการ</div>'; return; }
       if (!list.length) { wrap.innerHTML = '<div class="empty-state">ไม่พบกำหนดการตามตัวกรอง</div>'; return; }
       var html = '';
@@ -677,7 +700,8 @@
         var acts = canManage && ev.canEdit
           ? '<div class="evl-acts">' + mcBtn + (ev.seriesId ? seriesActs : '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>') + '</div>'
           : (ev.seriesId ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-series-view="' + ev.seriesId + '"><i class="fa-solid fa-list" aria-hidden="true"></i> ดูทุกรอบ (' + nSeries + ')</button></div>' : '') + (canManage ? '<div class="evl-lock" title="แก้ไขได้เฉพาะผู้เพิ่ม เจ้าหน้าที่กลุ่มเจ้าของ และผู้ดูแลระบบ"><i class="fa-solid fa-lock" aria-hidden="true"></i> ดูได้อย่างเดียว</div>' : '');
-        html += '<div class="event-list-item evl-item">' +
+        var gC = evGroupColor(evGroupOf(ev));
+        html += '<div class="event-list-item evl-item" style="border-left:6px solid ' + gC + '">' +
           '<div class="event-date-chip' + (isAct ? ' act' : '') + '">' + dateChip + '</div>' +
           '<div class="evl-body">' +
             '<div class="sub-item-title"><span class="evl-tp ' + (isAct ? 'ac' : 'dl') + '"><i class="fa-solid ' + (isAct ? 'fa-flag' : 'fa-file-arrow-up') + '" aria-hidden="true"></i> ' + (isAct ? 'กิจกรรม' : 'กำหนดส่งงาน') + '</span>' + escapeHtml(ev.title) + roundBadge + ' ' + evOwnerBadge(ev) + '</div>' +
@@ -722,7 +746,7 @@
       renderEvents();
     });
     document.getElementById('evlFlt').addEventListener('change', function (e) { if (e.target.id === 'evlQ') return; evlShown = LIST_PAGE; renderEvents(); }); // 1.88: ช่องค้นหาแสดงผลตอนพิมพ์แล้ว — ไม่วาดใหม่ตอนออกจากช่อง (กดปุ่มในรายการครั้งแรกไม่ติด)
-    document.getElementById('evlFlt').addEventListener('input', function (e) { if (e.target.id === 'evlQ') { evlShown = LIST_PAGE; renderEvents(); } });
+    document.getElementById('evlFlt').addEventListener('input', function (e) { if (e.target.id === 'evlQ') { clearTimeout(window.__evlQT); window.__evlQT = setTimeout(function () { evlShown = LIST_PAGE; renderEvents(); }, 220); } }); // 2.01.0: พิมพ์ค้นหาไม่วาดใหม่ทุกตัวอักษร
     document.getElementById('eventListWrap').addEventListener('click', evListClick);
     async function evListClick(e) {
       var mcb = e.target.closest('button[data-mc-ev]'); // 1.93: ตรวจรายคน
@@ -1107,11 +1131,11 @@
       evResp.set(ev && ev.responsible ? ev.responsible : null);
       document.getElementById('evSelfReport').checked = !!(ev && ev.selfReport);
       document.getElementById('evCalOnly').checked = !!(ev && ev.calOnly); // 1.97
-      evSamples = ev && ev.sampleFiles ? ev.sampleFiles.map(function (f) { return Object.assign({}, f); }) : []; renderEvSamples(); evCalOnlySync();
+      evSamples = ev && ev.sampleFiles ? ev.sampleFiles.map(function (f) { return Object.assign({}, f); }) : []; evSfTag = (evSamples.filter(function (f) { return f.tag; })[0] || {}).tag || Math.random().toString(36).slice(2, 8); renderEvSamples(); evCalOnlySync();
       renderEvSc();
     }
     // ---- 1.97: ฟอร์ม/ไฟล์ตัวอย่าง ----
-    var evSamples = [], evSampleBusy = false;
+    var evSamples = [], evSampleBusy = false, evSfTag = ''; // 2.01.0: evSfTag = รหัสโฟลเดอร์ของรายการนี้
     function sampleIcon(f) { return fileTypeIconHtml(f.name, f.mime, 'sm'); }
     function renderEvSamples() {
       var box = document.getElementById('evSamples');
@@ -1120,7 +1144,7 @@
           '<input type="text" maxlength="80" data-smp-note="' + i + '" placeholder="คำอธิบายสั้น เช่น ฟอร์มให้ดาวน์โหลดไปกรอก (ไม่บังคับ)" value="' + escapeHtml(f.note || '') + '" /></div>' +
           '<button type="button" class="ev-x" data-smp-del="' + i + '" title="เอาไฟล์นี้ออก" aria-label="เอาไฟล์นี้ออก"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>';
       }).join('') + (evSampleBusy ? '<div class="hint"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> กำลังอัปโหลด…</div>' : '');
-      document.getElementById('evSampleAdd').hidden = evSamples.length >= 3 || evSampleBusy;
+      document.getElementById('evSampleAdd').hidden = evSamples.length >= 10 || evSampleBusy;
     }
     document.getElementById('evSamples').addEventListener('input', function (e) { var n = e.target.closest('[data-smp-note]'); if (n) evSamples[Number(n.getAttribute('data-smp-note'))].note = n.value; });
     document.getElementById('evSamples').addEventListener('click', function (e) { var d = e.target.closest('[data-smp-del]'); if (!d) return; evSamples.splice(Number(d.getAttribute('data-smp-del')), 1); renderEvSamples(); });
@@ -1130,10 +1154,10 @@
       if (!file) return;
       evSampleBusy = true; renderEvSamples();
       try {
-        var prep = await apiCall('sampleUploadPrepare', { fileName: file.name, mimeType: file.type, fileSize: file.size, academicYear: document.getElementById(evIsAct() ? 'evActYear' : 'evYear').value, direct: 1, origin: location.origin });
+        var prep = await apiCall('sampleUploadPrepare', { fileName: file.name, mimeType: file.type, fileSize: file.size, academicYear: document.getElementById(evIsAct() ? 'evActYear' : 'evYear').value, folderTag: evSfTag, folderTitle: (document.getElementById(evIsAct() ? 'evActTitle' : 'evTitle') || {}).value || '', direct: 1, origin: location.origin });
         var res = await sendPreparedFile(prep, file, { filename: prep.uploadFileName || file.name, mimeType: file.type });
         var f = await apiCall('sampleUploadFinalize', { sampleId: prep.sampleId, fileId: res.fileId, fileUrl: res.url, directUrl: res.directUrl, fileName: prep.uploadFileName || file.name, mimeType: file.type, via: res.via, fallbackReason: res.fallbackReason || '' });
-        evSamples.push(f);
+        f.tag = prep.folderTag || evSfTag; evSamples.push(f);
       } catch (err) { showToast('อัปโหลดไม่สำเร็จ: ' + err.message); }
       evSampleBusy = false; renderEvSamples();
     });
@@ -1142,7 +1166,7 @@
     function evExtrasPayload() {
       var c = evCat();
       return { color: evIsAct() ? evColor : '', calShow: evScMode, responsible: evResp.get(), selfReport: !evIsAct() && !!(c && c.manualCheck) && document.getElementById('evSelfReport').checked,
-        calOnly: document.getElementById('evCalOnly').checked, sampleFiles: evSamples.map(function (f) { return { id: f.id, note: f.note || '' }; }) }; // 1.97
+        calOnly: document.getElementById('evCalOnly').checked, sampleFiles: evSamples.map(function (f) { return { id: f.id, note: f.note || '', tag: f.tag || '' }; }) }; // 1.97 · 2.01.0 tag = โฟลเดอร์
     }
     function openCreateEvent() {
       document.getElementById('evEditId').value = '';

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -408,7 +408,7 @@
       });
     })();
 
-    document.getElementById('fSearch').addEventListener('input', function () { sumShown = LIST_PAGE; renderTable(); });
+    document.getElementById('fSearch').addEventListener('input', debounce(function () { sumShown = LIST_PAGE; renderTable(); }, 200));
     document.getElementById('subTableWrap').addEventListener('click', function (e) { var mb = e.target.closest('[data-more]'); if (mb) { sumShown = mb.hasAttribute('data-more-all') ? 1e9 : sumShown + LIST_PAGE; renderTable(); } });
     document.getElementById('fYear').addEventListener('change', function () { loadSubYear(this.value); });
     document.getElementById('fSemester').addEventListener('change', function () { sumShown = LIST_PAGE; renderTable(); });
@@ -770,7 +770,18 @@
       var byId = {}; files.forEach(function (f) { byId[f.id] = f; });
       var olds = function (f) { var out = [], id = f.replacesId, g = 0; while (id && byId[id] && byId[id].replaced && g++ < 20) { out.push(byId[id]); id = byId[id].replacesId; } return out; };
       var cur = files.filter(function (f) { return !f.replaced; });
-      fw.innerHTML = (pf && cur.length > 1 ? '<div class="rv-allok"><button type="button" class="linklike" id="rvAllOk"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ผ่านทุกไฟล์</button></div>' : '') + cur.map(function (f) {
+      // 2.01.0: เรียงไฟล์ (ชื่อ ก→ฮ / ฮ→ก · เวลาที่ส่ง · ชนิด) + ค้นหาชื่อไฟล์ — ทำในเครื่อง ไม่เรียก Worker · จำการเลือกไว้
+      var srt = rvSortMode(), qq = (rvCur.q || '').trim().toLowerCase(), nameOf = function (f) { return String(f.title || f.fileName || ''); }, extOf = function (f) { var m = /\.([a-z0-9]+)$/i.exec(nameOf(f)); return (m ? m[1] : (f.mimeType || '')).toLowerCase(); };
+      var coll = typeof Intl !== 'undefined' && Intl.Collator ? new Intl.Collator('th', { numeric: true, sensitivity: 'base' }) : null, cmp = function (a, b) { return coll ? coll.compare(a, b) : String(a).localeCompare(String(b), 'th'); };
+      if (srt === 'az') cur.sort(function (a, b) { return cmp(nameOf(a), nameOf(b)); });
+      else if (srt === 'za') cur.sort(function (a, b) { return cmp(nameOf(b), nameOf(a)); });
+      else if (srt === 'type') cur.sort(function (a, b) { return cmp(extOf(a), extOf(b)) || cmp(nameOf(a), nameOf(b)); });
+      else cur.sort(function (a, b) { return String(a.uploadedAt || '').localeCompare(String(b.uploadedAt || '')); });
+      var shownCur = qq ? cur.filter(function (f) { return nameOf(f).toLowerCase().indexOf(qq) !== -1; }) : cur;
+      var bar = cur.length > 1 ? '<div class="rv-sortbar"><span>เรียงตาม</span>' + [['az', 'ชื่อไฟล์ ก→ฮ / 1→9'], ['za', 'ชื่อไฟล์ ฮ→ก'], ['time', 'เวลาที่ส่ง'], ['type', 'ชนิดไฟล์']].map(function (x) { return '<button type="button" data-rv-sort="' + x[0] + '" class="' + (srt === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') +
+        (cur.length > 5 ? '<input type="search" class="rv-fq" id="rvFq" placeholder="ค้นหาชื่อไฟล์" value="' + escapeHtml(rvCur.q || '') + '" />' : '') + '<span class="rv-fcount">' + (qq ? shownCur.length + ' / ' : '') + cur.length + ' ไฟล์</span></div>' : '';
+      cur = shownCur;
+      fw.innerHTML = bar + (pf && cur.length > 1 ? '<div class="rv-allok"><button type="button" class="linklike" id="rvAllOk"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ผ่านทุกไฟล์</button></div>' : '') + cur.map(function (f) {
         var i = files.indexOf(f), st = rvCur.st[f.id], isNew = rvCur.since && f.uploadedAt > rvCur.since, kind = fileKindOf(f.title || f.fileName, f.mimeType);
         var fid = driveFileId(f.fileUrl);
         var fic = fileTypeIconHtml(f.title || f.fileName, f.mimeType); // 1.85.3
@@ -786,7 +797,9 @@
       }).join('');
       rvSync();
     }
+    function rvSortMode() { try { return localStorage.getItem('bnkah_rv_sort') || 'az'; } catch (e) { return 'az'; } }
     document.getElementById('rvFiles').addEventListener('click', function (e) {
+      var sb = e.target.closest('[data-rv-sort]'); if (sb && rvCur) { try { localStorage.setItem('bnkah_rv_sort', sb.getAttribute('data-rv-sort')); } catch (x) { /* ข้าม */ } renderRvFiles(); return; } // 2.01.0
       if (!rvCur || !rvCur.perFile) return;
       if (e.target.closest('#rvAllOk')) { rvCur.files.forEach(function (f) { rvCur.st[f.id].state = 'ok'; }); renderRvFiles(); return; }
       var b = e.target.closest('[data-rv-st]'); if (!b) return;
@@ -795,6 +808,7 @@
       if (st === 'fix') { var inp = document.querySelector('[data-rv-note="' + id + '"]'); if (inp) inp.focus(); }
     });
     document.getElementById('rvFiles').addEventListener('input', function (e) {
+      if (e.target.id === 'rvFq' && rvCur) { rvCur.q = e.target.value; clearTimeout(rvCur.qt); rvCur.qt = setTimeout(function () { var p0 = e.target.selectionStart; renderRvFiles(); var nq = document.getElementById('rvFq'); if (nq) { nq.focus(); try { nq.setSelectionRange(p0, p0); } catch (x) { /* ข้าม */ } } }, 200); return; } // 2.01.0
       var n = e.target.closest('[data-rv-note]'); if (n && rvCur) rvCur.st[n.getAttribute('data-rv-note')].note = n.value;
     });
     document.getElementById('rvExtraOn').addEventListener('change', function () { var x = document.getElementById('rvExtra'); x.hidden = !this.checked; if (this.checked) x.focus(); rvSync(); });
@@ -886,7 +900,7 @@
     }
 
     document.getElementById('asgFilterAssignment').addEventListener('change', rerenderAsg);
-    document.getElementById('asgSearch').addEventListener('input', rerenderAsg);
+    document.getElementById('asgSearch').addEventListener('input', debounce(rerenderAsg, 200));
     document.getElementById('asgFilterYear').addEventListener('change', rerenderAsg);
     document.getElementById('asgFilterSemester').addEventListener('change', rerenderAsg);
 

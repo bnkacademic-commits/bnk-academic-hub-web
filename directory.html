@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -62,6 +62,13 @@
     .dir-groupby { display: flex; width: 100%; }
     .dir-groupby button { flex: 1 1 0; justify-content: center; padding: 7px 8px; font-size: 0.8rem; line-height: 1.3; }
     .dir-filters select { flex-basis: 100%; }
+    /* 2.02.0: มือถือ — การ์ด 2 คอลัมน์ รูปเล็กลง (เดิมแถวละ 1 ใบ ต้องเลื่อนยาวมาก) */
+    .dir-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .dir-card { padding: 12px 8px; }
+    .dir-avatar, .dir-exec .dir-avatar { width: 64px; height: 64px; margin-bottom: 8px; }
+    .dir-name { font-size: 0.82rem; overflow-wrap: anywhere; }
+    .dir-pos { font-size: 0.72rem; }
+    .dir-sub, .dir-head { font-size: 0.68rem; }
   }
   .dir-toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; background: var(--surface); }
   .dir-toggle button { border: 0; background: transparent; color: var(--text-muted); font: inherit; font-size: 0.85rem; font-weight: 700; padding: 7px 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
@@ -71,6 +78,8 @@
   .tree-hint { display: none; text-align: center; color: var(--text-muted); font-size: 0.8rem; margin: 0 0 6px; }
   .tree-hint.show { display: block; }
   .tree-wrap { overflow-x: auto; padding: 4px 4px 18px; -webkit-overflow-scrolling: touch; }
+  /* 2.01.0: กดค้างที่พื้นที่ว่างแล้วลากเพื่อเลื่อน (เมาส์ / นิ้ว) */
+  .tree-wrap { cursor: grab; } .tree-wrap.dragging { cursor: grabbing; user-select: none; } .tree-wrap .tn, .tree-wrap button, .tree-wrap a { cursor: pointer; }
   .tree { --tl: #9aa5c4; display: flex; flex-direction: column; align-items: center; width: max-content; margin: 0 auto; }
   [data-theme="dark"] .tree { --tl: #5b6685; }
   .tree ul { padding-top: 22px; position: relative; display: flex; justify-content: center; margin: 0; }
@@ -125,7 +134,7 @@
     <div class="dir-toolbar"><div class="dir-filters"><span class="dir-label">จัดกลุ่มตาม</span><div class="dir-toggle dir-groupby" role="group" aria-label="เลือกวิธีจัดกลุ่ม"><button type="button" data-group="subject" aria-pressed="true">กลุ่มสาระการเรียนรู้</button><button type="button" data-group="dept" aria-pressed="false">กลุ่มบริหารงาน</button></div><select id="dirFilter" aria-label="กรอง"></select></div><div class="dir-toggle" role="group" aria-label="เลือกมุมมอง"><button type="button" id="dirViewTree" data-view="tree" aria-pressed="false"><i class="fa-solid fa-sitemap"></i> ผังองค์กร</button><button type="button" id="dirViewCards" data-view="cards" aria-pressed="false"><i class="fa-solid fa-th-large"></i> การ์ด</button></div></div>
     <div id="dirRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
-  <script src="assets/api.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
   <script>
     var SUBJECT_GROUP_ORDER = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ'];
     var POSITION_RANK = ['ครูเชี่ยวชาญพิเศษ', 'ครูเชี่ยวชาญ', 'ครูชำนาญการพิเศษ', 'ครูชำนาญการ', 'ครู', 'ครูผู้ช่วย'];
@@ -219,7 +228,8 @@
     function splitPeople(people) {
       var execs = people.filter(function (p) { return p.kind === 'executive'; })
         .sort(function (a, b) { return rankIndex(EXEC_RANK, a.position) - rankIndex(EXEC_RANK, b.position) || String(a.name).localeCompare(String(b.name), 'th'); });
-      return { execs: execs, rest: people.filter(function (p) { return p.kind !== 'executive'; }) };
+      // 2.02.0: นักศึกษาฝึกสอน = กลุ่มแยกท้ายสุด
+      return { execs: execs, rest: people.filter(function (p) { return p.kind !== 'executive' && p.kind !== 'intern'; }), interns: people.filter(function (p) { return p.kind === 'intern'; }).sort(cmpPerson) };
     }
     // รายการกลุ่ม (คอลัมน์/หัวข้อ) ตามที่เลือกจัดกลุ่ม: กลุ่มสาระฯ = 8 กลุ่มตายตัว · กลุ่มบริหารงาน = ตามรายการที่ตั้งไว้ในระบบ + "ยังไม่สังกัด" ท้ายสุด
     function buildGroups(rest) {
@@ -245,7 +255,8 @@
       var sp = splitPeople(people), execs = sp.execs, rest = sp.rest;
       var cols = '';
       visibleGroups(rest).forEach(function (g) { cols += columnHtml(g.title, g.list, g.key); });
-      var h = '<div class="tree-hint" id="treeHint"><i class="fa-solid fa-arrows-left-right"></i> เลื่อนซ้าย-ขวาเพื่อดูกลุ่มอื่นๆ</div><div class="tree-wrap"><div class="tree" id="dirTree">';
+      if (sp.interns.length && !filterVal) cols += columnHtml('นักศึกษาฝึกสอน', sp.interns, 'intern');
+      var h = '<div class="tree-hint" id="treeHint"><i class="fa-solid fa-arrows-left-right"></i> กดค้างที่พื้นที่ว่างแล้วลาก หรือเลื่อนซ้าย-ขวาเพื่อดูกลุ่มอื่นๆ</div><div class="tree-wrap"><div class="tree" id="dirTree">';
       if (execs.length) {
         h += '<ul><li>' + nodeHtml(execs[0], 'ex1');
         if (execs.length > 1) h += '<ul>' + execs.slice(1).map(function (e) { return '<li>' + nodeHtml(e, 'ex2') + '</li>'; }).join('') + '</ul>';
@@ -259,6 +270,7 @@
       var sp = splitPeople(people), rest = sp.rest;
       var html = filterVal ? '' : sectionHtml('คณะผู้บริหาร', sp.execs, true, 'executive');
       visibleGroups(rest).forEach(function (g) { html += sectionHtml(g.title, g.list, false, g.key); });
+      if (sp.interns.length && !filterVal) html += sectionHtml('นักศึกษาฝึกสอน', sp.interns, false, 'intern');
       return html;
     }
     // ---- เลือกมุมมอง: ค่าเริ่มต้นตามความกว้างจอ (>=768px = ผังองค์กร, มือถือ = การ์ด) ผู้ใช้กดสลับเองได้และจำไว้ในเครื่องนั้น ----
@@ -360,6 +372,24 @@
     }
     window.__refreshPageData = load;
     load();
+    // 2.01.0: ผังองค์กร — กดค้างที่พื้นที่ว่างแล้วลากเลื่อน (ซ้าย-ขวา ในกรอบ · ขึ้น-ลง ทั้งหน้า) · กดที่ชื่อยังเปิดรายละเอียดตามเดิม
+    (function () {
+      var drag = null;
+      document.addEventListener('pointerdown', function (e) {
+        var w = e.target.closest && e.target.closest('.tree-wrap'); if (!w || e.button > 0) return;
+        if (e.target.closest('.tn, button, a, input, select')) return;
+        if (e.pointerType === 'touch') return; // นิ้ว: เลื่อนแบบปกติของเครื่องอยู่แล้ว
+        drag = { w: w, x: e.clientX, y: e.clientY, sl: w.scrollLeft, sy: window.scrollY, moved: false };
+      });
+      document.addEventListener('pointermove', function (e) {
+        if (!drag) return; var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+        if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+        drag.moved = true; drag.w.classList.add('dragging');
+        drag.w.scrollLeft = drag.sl - dx; window.scrollTo(window.scrollX, drag.sy - dy); e.preventDefault();
+      });
+      function end() { if (drag) { drag.w.classList.remove('dragging'); drag = null; } }
+      document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
+    })();
   </script>
 </body>
 </html>

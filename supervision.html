@@ -16,8 +16,8 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
-<link rel="stylesheet" href="assets/supervision.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
+<link rel="stylesheet" href="assets/supervision.css?v=2.02.1.081126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -46,7 +46,7 @@
   </div>
   <input type="file" id="spPlanFile" hidden />
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('supervision'); if (typeof mountFooter === 'function') mountFooter(); }
@@ -260,6 +260,7 @@
             '<div class="sp-bigs">' + m.slots.map(function (s) {
               return '<div class="sp-big' + (s.date ? '' : ' wait') + '"><span>' + (s.date ? 'วัน' + DAYS[dowOf(s.date)] : 'ทุกวัน' + DAYS[s.day]) + '</span><b>' + (s.date ? thDS(s.date) : 'รอลงวัน') + '</b><span>' + (s.date ? (ymdParts(s.date).y + 543) + ' · ' : '') + 'คาบ ' + s.period + '</span><small>' + escapeHtml(slotLabel(s)) + '</small></div>';
             }).join('') + supBoxHtml(m) + satBoxHtml(m, r) + '<div class="sp-bigside">' + planBoxHtml(m, r) + '</div></div>' +
+            (B.photosEnabled !== false ? m.slots.filter(function (s) { return s.date; }).map(function (s) { return '<div class="sp-myph"><h3 class="sp-h3"><i class="fa-solid fa-camera"></i> รูปการนิเทศ · ' + thDS(s.date) + ' คาบ ' + s.period + ' <span class="sp-st wait" data-ph-tag="' + escapeHtml(s.id) + '">0 / 2 รูป</span></h3><p class="mut" style="margin:-4px 0 8px">บังคับ 2 รูป — ต้องครบก่อนส่งแบบประเมินความพึงพอใจ · ระบบย่อรูปให้เอง</p><div class="sp-photos" data-ph-box="' + escapeHtml(s.id) + '"><div class="loading">กำลังโหลดรูป</div></div></div>'; }).join('') : '') +
             (tt && tt.linked ? '<h3 class="sp-h3">ตารางสอนของคุณ</h3>' + ttHtml(tt.slots, picks, true) : '') + '</div>';
         }
         if (!st.picks[r.id]) { st.picks[r.id] = {}; m.slots.forEach(function (s) { st.picks[r.id][s.day + '-' + s.period] = true; }); }
@@ -271,6 +272,7 @@
       }).join('');
       setBody(html || '<div class="card sp-empty"><p>ไม่มีรอบนิเทศ</p></div>');
       if (typeof ttShrink === 'function') ttShrink(body);
+      body.querySelectorAll('.sp-myph [data-ph-box]').forEach(function (b) { loadPhotos(b.getAttribute('data-ph-box')); }); // 2.01.0
     }
     // 1.98.1: เลือกคาบ = เปลี่ยนเฉพาะช่องที่แตะ + แถบด้านล่าง (ไม่วาดทั้งหน้า — ไม่กระพริบ)
     function togglePick(roundId, k) {
@@ -291,6 +293,12 @@
       if (st.tab === 'mine' && (t = e.target.closest('[data-pick]'))) { togglePick(t.closest('[data-round]').getAttribute('data-round'), t.getAttribute('data-pick')); return; }
       if (st.tab === 'mine' && (t = e.target.closest('[data-rate]'))) { t.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); }); return; }
       if ((t = e.target.closest('[data-sat-open]'))) { openSat(t.getAttribute('data-sat-open')); return; }
+      if ((t = e.target.closest('[data-ph-fill]'))) { // 2.01.0: ผู้จัดการงานนิเทศใส่รูปแทนครู
+        var sid0 = t.getAttribute('data-ph-fill');
+        modal('รูปการนิเทศ · ' + t.getAttribute('data-ph-name'), '<p class="mut" style="margin-top:0">ใส่แทนครูที่ถูกนิเทศ (บังคับ 2 รูป)</p><div class="sp-photos" data-ph-box="' + escapeHtml(sid0) + '"><div class="loading">กำลังโหลดรูป</div></div>', '<button type="button" class="btn btn-success" data-ph-done>เสร็จแล้ว</button>');
+        document.getElementById('spModalActions').onclick = function (ev) { if (ev.target.closest('[data-ph-done]')) { closeModal(); st.D = null; show(); } };
+        if (st.phc) delete st.phc[sid0]; loadPhotos(sid0); return;
+      }
       if ((t = e.target.closest('[data-pick-save]'))) {
         var rid = t.getAttribute('data-pick-save'), picks = Object.keys(st.picks[rid] || {}).map(function (k) { return { day: +k.split('-')[0], period: +k.split('-')[1] }; });
         var r = await withProgress('กำลังบันทึกคาบที่เลือก', function () { return apiCall('supPickSave', { roundId: rid, picks: picks }); }, { successLabel: 'ส่งคาบที่เลือกแล้ว — รอเจ้าหน้าที่ลงวันที่' });
@@ -335,7 +343,7 @@
       if (e.target.matches('[data-all-round]')) { st.allRound = e.target.value; renderAll(); }
       if (e.target.matches('[data-all-g]')) { st.allG = e.target.value; renderAll(); }
     });
-    body.addEventListener('input', function (e) { if (st.tab === 'all' && e.target.matches('[data-all-q]')) { st.allQ = e.target.value.trim(); var pos = e.target.selectionStart; renderAll(); var n = body.querySelector('[data-all-q]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } });
+    body.addEventListener('input', debounce(function (e) { if (st.tab === 'all' && e.target.matches('[data-all-q]')) { st.allQ = e.target.value.trim(); var pos = e.target.selectionStart; renderAll(); var n = body.querySelector('[data-all-q]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } }, 220)); // 2.01.0
 
     // ---------- แท็บ: คาบที่ฉันต้องนิเทศ (ผู้นิเทศ) ----------
     function dutyKey(d) { return d.slot ? d.slot.id : 'n:' + d.roundId + ':' + d.teacherId; }
@@ -361,22 +369,26 @@
           formFillHtml((r && r.form) || [], cur.myEval && cur.myEval.answers, can && !evLock, 'spEvf') +
           (evLock ? '' : '<div class="sp-evact">' + (cur.myEval ? '<button type="button" class="btn btn-ghost" data-ev-cancel>ยกเลิกการแก้ไข</button>' : '') + '<button type="button" class="btn btn-success" data-ev-save' + (can ? '' : ' disabled') + '><i class="fa-solid fa-check"></i> บันทึกผลประเมิน</button></div>') +
           '<p class="mut sp-note"><i class="fa-solid fa-lock"></i> ผลประเมินเห็นได้เฉพาะผู้นิเทศ และผู้มีสิทธิ์ดูผลการนิเทศ</p></div>' +
-          (can && B.photosEnabled !== false ? '<div class="card"><h3><i class="fa-solid fa-camera"></i> รูปการนิเทศ <span class="mut">(สูงสุด 2 รูป · ใช้ในรายงาน PDF)</span></h3><div class="sp-photos" id="spPhotos"><div class="loading">กำลังโหลด...</div></div><p class="mut" style="margin:8px 0 0">ผู้นิเทศของคาบนี้ทุกคน และผู้จัดการงานนิเทศ อัปโหลดได้ · ระบบย่อรูปให้อัตโนมัติ</p></div>' : '');
+          (can && B.photosEnabled !== false ? '<div class="card"><h3><i class="fa-solid fa-camera"></i> รูปการนิเทศ <span class="mut">(ครูที่ถูกนิเทศใส่ 2 รูป · ใช้ในรายงาน PDF)</span></h3><div class="sp-photos" id="spPhotos" data-ph-box="' + escapeHtml(cur.slot.id) + '"><div class="loading">กำลังโหลด...</div></div><p class="mut" style="margin:8px 0 0">ผู้นิเทศของคาบนี้ทุกคน และผู้จัดการงานนิเทศ อัปโหลดได้ · ระบบย่อรูปให้อัตโนมัติ</p></div>' : '');
       }
       setBody('<div class="sp-two">' + left + right + '</div></div>');
-      if (cur && cur.slot && cur.slot.date && B.photosEnabled !== false) loadPhotos(cur.slot.id, true);
+      if (cur && cur.slot && cur.slot.date && B.photosEnabled !== false) loadPhotos(cur.slot.id);
     }
     // ---------- รูปการนิเทศ (2 รูป) ----------
-    async function loadPhotos(slotId, canEdit) {
-      var box = document.getElementById('spPhotos'); if (!box) return;
+    // 2.01.0: ครูที่ถูกนิเทศใส่รูปเอง (บังคับ 2 รูป) · ผู้จัดการงานนิเทศใส่แทนได้ · ผู้นิเทศดูอย่างเดียว (สิทธิ์จาก Worker)
+    function phBox(slotId) { return document.querySelector('[data-ph-box="' + (window.CSS && CSS.escape ? CSS.escape(slotId) : slotId) + '"]'); }
+    async function loadPhotos(slotId) {
+      var box = phBox(slotId); if (!box) return;
       st.phc = st.phc || {};
-      var ph = st.phc[slotId]; // 1.98.2: จำไว้ — เปลี่ยนรายการไปมาไม่ต้องโหลด/ไม่กระพริบ
-      if (!ph) { try { ph = st.phc[slotId] = (await apiCall('supPhotos', { slotId: slotId })).photos || []; } catch (e) { box.innerHTML = err(e.message); return; } }
-      if (!document.getElementById('spPhotos')) return;
+      var pr = st.phc[slotId]; // 1.98.2: จำไว้ — เปลี่ยนรายการไปมาไม่ต้องโหลด/ไม่กระพริบ
+      if (!pr) { try { var d0 = await apiCall('supPhotos', { slotId: slotId }); pr = st.phc[slotId] = { photos: d0.photos || [], canEdit: !!d0.canEdit }; } catch (e) { box.innerHTML = err(e.message); return; } }
+      box = phBox(slotId); if (!box) return;
+      var ph = pr.photos, canEdit = pr.canEdit;
+      var tag = document.querySelector('[data-ph-tag="' + slotId + '"]'); if (tag) { var n = ph.length; tag.className = 'sp-st ' + (n >= 2 ? 'ok' : 'wait'); tag.textContent = n >= 2 ? 'ครบ 2 รูป' : n + ' / 2 รูป'; }
       box.innerHTML = [0, 1].map(function (i) {
         var p = ph.filter(function (x) { return x.idx === i; })[0];
         return p ? '<div class="sp-ph f"><img src="' + escapeHtml(p.src) + '" alt="รูปการนิเทศ ' + (i + 1) + '" referrerpolicy="no-referrer" loading="lazy" />' + (canEdit ? '<button type="button" class="sp-x" data-ph-del="' + i + '" data-slot="' + escapeHtml(slotId) + '" aria-label="ลบรูป"><i class="fa-solid fa-xmark"></i></button>' : '') + '</div>'
-          : (canEdit ? '<label class="sp-ph"><input type="file" accept="image/*" data-ph-add="' + i + '" data-slot="' + escapeHtml(slotId) + '" hidden /><i class="fa-solid fa-camera"></i><b>เพิ่มรูปที่ ' + (i + 1) + '</b><span>ถ่าย / เลือกจากเครื่อง</span></label>' : '<div class="sp-ph"><span>ไม่มีรูป</span></div>');
+          : (canEdit ? '<label class="sp-ph need"><input type="file" accept="image/*" data-ph-add="' + i + '" data-slot="' + escapeHtml(slotId) + '" hidden /><i class="fa-solid fa-camera"></i><b>เพิ่มรูปที่ ' + (i + 1) + '</b><span>ถ่าย / เลือกจากเครื่อง</span></label>' : '<div class="sp-ph"><span>ไม่มีรูป</span></div>');
       }).join('');
     }
     function shrinkImage(file) {
@@ -394,7 +406,7 @@
         img.src = url;
       });
     }
-    body.addEventListener('change', async function (e) {
+    async function phChange(e) {
       var inp = e.target.closest('[data-ph-add]'); if (!inp) return;
       var file = inp.files && inp.files[0]; if (!file) return;
       var sid = inp.getAttribute('data-slot'), idx = +inp.getAttribute('data-ph-add');
@@ -408,18 +420,21 @@
         return apiCall('supPhotoFinalize', { slotId: sid, idx: idx, pid: prep.pid, fileId: res.fileId, fileUrl: res.url, directUrl: res.directUrl, fileName: prep.uploadFileName, via: res.via, fallbackReason: res.fallbackReason || '' });
       }, { successLabel: 'เพิ่มรูปแล้ว', upload: true });
       if (st.phc) delete st.phc[sid];
-      if (r.ok) loadPhotos(sid, true);
-    });
+      if (r.ok) { loadPhotos(sid); if (st.D && st.D.photos) st.D = null; }
+    }
+    body.addEventListener('change', phChange);
+    document.getElementById('spModalBody').addEventListener('change', phChange);
+    async function phDel(t) {
+      if (!(await askConfirm('ลบรูปนี้?', 'ลบรูป'))) return;
+      try { await apiCall('supPhotoDelete', { slotId: t.getAttribute('data-slot'), idx: +t.getAttribute('data-ph-del') }); if (st.phc) delete st.phc[t.getAttribute('data-slot')]; loadPhotos(t.getAttribute('data-slot')); } catch (x) { showToast(x.message, true); }
+    }
+    document.getElementById('spModalBody').addEventListener('click', function (e) { var t = e.target.closest('[data-ph-del]'); if (t) phDel(t); });
     var handlers = {};
     handlers.duty = async function (e) {
       var t;
       if ((t = e.target.closest('[data-duty]'))) { st.dutySel = t.getAttribute('data-duty'); renderDuty(); if (window.innerWidth < 900) { var fc = body.querySelector('.sp-two > .sp-col:nth-child(2)'); if (fc) fc.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; } // 1.98.2: มือถือ = เลื่อนไปที่แบบประเมิน
       if ((t = e.target.closest('[data-rate]'))) { t.parentNode.querySelectorAll('button').forEach(function (b) { b.classList.toggle('on', b === t); }); return; }
-      if ((t = e.target.closest('[data-ph-del]'))) {
-        if (!(await askConfirm('ลบรูปนี้?', 'ลบรูป'))) return;
-        try { await apiCall('supPhotoDelete', { slotId: t.getAttribute('data-slot'), idx: +t.getAttribute('data-ph-del') }); if (st.phc) delete st.phc[t.getAttribute('data-slot')]; loadPhotos(t.getAttribute('data-slot'), true); } catch (x) { showToast(x.message, true); }
-        return;
-      }
+      if ((t = e.target.closest('[data-ph-del]'))) { await phDel(t); return; }
       var cur0 = B.duties.filter(function (d) { return dutyKey(d) === st.dutySel; })[0];
       if (e.target.closest('[data-ev-edit]') && cur0 && cur0.slot) { (st.evEdit = st.evEdit || {})[cur0.slot.id] = 1; renderDuty(); return; }
       if (e.target.closest('[data-ev-cancel]') && cur0 && cur0.slot) { if (st.evEdit) delete st.evEdit[cur0.slot.id]; renderDuty(); return; }
@@ -540,7 +555,7 @@
       }
       if (st.tab === 'dates' && x.matches('[data-only-wait]')) { st.onlyWait = x.checked; renderDates(); return; }
     });
-    body.addEventListener('input', function (e) { if (st.tab === 'sup' && e.target.matches('[data-f-q]')) { st.q = e.target.value.trim(); var pos = e.target.selectionStart; renderSup(); var n = body.querySelector('[data-f-q]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } });
+    body.addEventListener('input', debounce(function (e) { if (st.tab === 'sup' && e.target.matches('[data-f-q]')) { st.q = e.target.value.trim(); var pos = e.target.selectionStart; renderSup(); var n = body.querySelector('[data-f-q]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } }, 220)); // 2.01.0
     // เลือกผู้นิเทศ (ค้นหาชื่อ + ติ๊ก สูงสุด 6 คน)
     function openSupPicker(t) {
       var sel = t.supervisors.slice(), q = '';
@@ -827,7 +842,7 @@
       var tbl;
       if (st.schedView === 'day') {
         tbl = '<table class="sp-tbl"><thead><tr><th>วันที่</th><th>คาบ</th><th>ครูผู้รับการนิเทศ</th><th>วิชา / ห้อง</th><th>ผู้นิเทศ</th><th>ผลประเมิน</th>' + (B.viewer ? '<th>ความพึงพอใจ</th>' : '') + '</tr></thead><tbody>' + dated.map(function (x) {
-          return '<tr><td class="nw"><b>' + thD(x.s.date, true) + '</b></td><td>' + x.s.period + '</td><td class="nw">' + escapeHtml(x.t.name) + (st.D.photos && st.D.photos[x.s.id] ? ' <i class="fa-solid fa-camera mut" title="มีรูป ' + st.D.photos[x.s.id] + ' รูป"></i>' : '') + '</td><td>' + escapeHtml((x.s.code ? x.s.code + ' ' : '') + (x.s.subject && x.s.subject !== x.s.code ? x.s.subject : '') + ' · ' + x.s.room) + '</td><td>' + escapeHtml(x.t.supervisors.map(nameOf).join(', ')) + '</td><td>' + evCell(x) + '</td>' + (B.viewer ? '<td>' + satCell(x) + '</td>' : '') + '</tr>';
+          return '<tr><td class="nw"><b>' + thD(x.s.date, true) + '</b></td><td>' + x.s.period + '</td><td class="nw">' + escapeHtml(x.t.name) + (B.photosEnabled !== false ? (function (n) { return ' <span class="sp-st ' + (n >= 2 ? 'ok' : 'wait') + '" title="รูปการนิเทศ"><i class="fa-solid fa-camera"></i> ' + (n >= 2 ? '2/2' : n ? n + '/2' : 'ยังไม่ใส่') + '</span>' + (B.manager && n < 2 ? ' <button type="button" class="btn btn-secondary btn-sm sp-phfill" data-ph-fill="' + escapeHtml(x.s.id) + '" data-ph-name="' + escapeHtml(x.t.name) + '">ใส่รูปแทน</button>' : ''); })((st.D.photos && st.D.photos[x.s.id]) || 0) : '') + '</td><td>' + escapeHtml((x.s.code ? x.s.code + ' ' : '') + (x.s.subject && x.s.subject !== x.s.code ? x.s.subject : '') + ' · ' + x.s.room) + '</td><td>' + escapeHtml(x.t.supervisors.map(nameOf).join(', ')) + '</td><td>' + evCell(x) + '</td>' + (B.viewer ? '<td>' + satCell(x) + '</td>' : '') + '</tr>';
         }).join('') + (dated.length ? '' : '<tr><td colspan="7" class="mut">ยังไม่มีวันนิเทศ</td></tr>') + '</tbody></table>';
       } else {
         var by = {}; dated.forEach(function (x) { x.t.supervisors.forEach(function (id) { (by[id] = by[id] || []).push(x); }); });

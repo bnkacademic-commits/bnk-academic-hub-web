@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -33,6 +33,7 @@
       </div>
       <div class="ord-head-btns">
         <button type="button" class="btn page-refresh-btn" id="galRefreshBtn" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
+        <button type="button" class="btn btn-secondary" id="galMgrBtn" hidden><i class="fa-solid fa-user-shield" aria-hidden="true"></i> ผู้ดูแลคลังรูปภาพ</button><!-- 2.01.0: Super Admin -->
         <button type="button" class="btn btn-secondary" id="galShareBtn"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i> แชร์หน้าสาธารณะ</button>
         <button type="button" class="btn btn-primary" id="galAddBtn"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มอัลบั้ม</button>
       </div>
@@ -183,8 +184,8 @@
     </div>
   </div>
 
-  <script src="assets/api.js?v=2.00.6.041126"></script>
-  <script src="assets/gallery.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
+  <script src="assets/gallery.js?v=2.02.1.081126"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -218,6 +219,7 @@
         var r = await apiCall('albumList', { year: $('galYear').value || '' });
         albums = r.items || []; years = r.years || []; if (r.subjectGroups) subjectGroups = r.subjectGroups;
         galInfo = { managedReady: !!r.managedReady, trashCount: Number(r.trashCount || 0), uploadMode: r.uploadMode || 'auto', trashDays: r.trashDays || 7 };
+        $('galMgrBtn').hidden = !r.superAdmin; // 2.01.0
         syncGalTabs();
         fillGroupFilter();
       } catch (e) { root.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; return; }
@@ -237,7 +239,7 @@
       wireAlbumCovers(root);
       loadManagedCovers(root, list.slice(0, shown), false); // 1.82
     }
-    ['galSearch'].forEach(function (id) { $(id).addEventListener('input', function () { shown = GALLERY_PAGE; render(); }); });
+    ['galSearch'].forEach(function (id) { $(id).addEventListener('input', debounce(function () { shown = GALLERY_PAGE; render(); }, 200)); });
     ['galSem', 'galGroup', 'galMine'].forEach(function (id) { $(id).addEventListener('change', function () { shown = GALLERY_PAGE; render(); }); });
     $('galYear').addEventListener('change', function () { shown = GALLERY_PAGE; load(true); });
     $('galYearHint').addEventListener('click', function (e) { if (e.target.closest('#galSearchAllYears')) { $('galYear').value = ''; shown = GALLERY_PAGE; load(true); } });
@@ -429,7 +431,7 @@
       if (managed) { var listA = albums.filter(function (x) { return x.id === a.id; })[0]; if (listA) Object.assign(listA, a); }
       var isPhotos = !managed && /photos/.test(a.url || '');
       var acts = [];
-      if (managed) { acts.push(['upload', 'fa-cloud-arrow-up', 'อัปรูป']); acts.push(['manage', 'fa-list-check', 'จัดการรูป']); }
+      if (managed) { if (a.canUpload !== false) acts.push(['upload', 'fa-cloud-arrow-up', 'อัปรูป']); acts.push(['manage', 'fa-list-check', 'จัดการรูป']); }
       if (a.canEdit) acts.push(['edit', 'fa-pen', 'แก้ไข']);
       acts.push(['share', 'fa-share-nodes', 'แชร์']); // 1.84.2: ข้อความ / ลิงก์ + QR / ฝังในเว็บ
       $('albBody').innerHTML = '<div class="alb-pg2">' +
@@ -442,6 +444,8 @@
         '<a class="alb-pg2-cover' + (cover ? '' : ' no-cover') + '" style="--ac:' + albumColor(a) + '" href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener" aria-label="ดูรูปทั้งหมด">' + (cover ? '<img src="' + cover + '" alt="" referrerpolicy="no-referrer" />' : '<i class="fa-solid fa-images" aria-hidden="true"></i>') +
           (a.photoCount > 0 ? '<span class="alb-pg-n"><i class="fa-solid fa-images" aria-hidden="true"></i> ' + a.photoCount + ' รูป</span>' : '') + '</a>' +
         '<a class="btn btn-primary alb-pg2-drive" href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener"><i class="fa-solid ' + (isPhotos ? 'fa-images' : 'fa-folder-open') + '" aria-hidden="true"></i> ดูรูปทั้งหมดใน ' + (isPhotos ? 'Google Photos' : 'Google Drive') + '</a>' +
+        (managed && a.canEdit ? '<label class="alb-sw"><input type="checkbox" data-ap-sw' + (a.allowUpload !== false ? ' checked' : '') + ' /><span class="alb-sw-t"></span><b>เปิดให้ครูอัปรูปเพิ่ม</b><small>ปิดแล้วครูทั่วไปดูได้อย่างเดียว · ผู้สร้างและผู้ดูแลยังอัปได้</small></label>' : '') + // 2.01.0
+        (managed && a.canUpload === false ? '<div class="hint"><i class="fa-solid fa-lock" aria-hidden="true"></i> อัลบั้มนี้ปิดรับรูปจากครูแล้ว</div>' : '') +
         (acts.length ? '<div class="alb-pg2-acts n' + acts.length + '">' + acts.map(function (x) { return '<button type="button" data-ap="' + x[0] + '"><i class="fa-solid ' + x[1] + '" aria-hidden="true"></i><span>' + x[2] + '</span></button>'; }).join('') + '</div>' : '') +
         '<div class="hint alb-pg-hint"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ' + (managed ? 'เปิดดูใน Google Drive ได้ทุกคนที่มีลิงก์ · ไม่ต้องล็อกอิน Google' : 'โฟลเดอร์นี้เป็นของครูผู้สร้าง — เพิ่ม/ลบรูปใน Google Drive โดยตรง · เปิดดูได้ตามสิทธิ์ที่ครูตั้งไว้ในโฟลเดอร์') + '</div>' +
         '</div>';
@@ -449,6 +453,27 @@
       if (img) img.addEventListener('error', function () { var c = img.parentNode; c.classList.add('no-cover'); img.remove(); c.insertAdjacentHTML('afterbegin', '<i class="fa-solid fa-images" aria-hidden="true"></i>'); });
       if (managed && !cover && a.coverFileId) loadManagedCovers(document, [a], false).then(function () { if (ALBUM_COVERS[a.id] && albPage.id === a.id && !$('albModal').hidden) renderAlbumPage(); });
     }
+    $('albBody').addEventListener('change', async function (e) { // 2.01.0: เปิด/ปิดการอัปของครู
+      var sw = e.target.closest('[data-ap-sw]'); if (!sw || !albPage.data) return;
+      var a = albPage.data.album, on = sw.checked;
+      try { await apiCall('albumUploadSwitch', { id: a.id, allow: on }); a.allowUpload = on; var la = albums.filter(function (x) { return x.id === a.id; })[0]; if (la) la.allowUpload = on; showToast(on ? 'เปิดให้ครูอัปรูปเพิ่มแล้ว' : 'ปิดการอัปของครูแล้ว'); }
+      catch (x) { sw.checked = !on; showToast(x.message, true); }
+    });
+    // 2.01.0: Super Admin เลือกผู้ดูแลคลังรูปภาพ (แก้ไข / ลบ / เพิ่มรูป ได้ทุกอัลบั้ม)
+    $('galMgrBtn').addEventListener('click', async function () {
+      var d; try { d = await apiCall('galleryMgrGet', {}); } catch (x) { showToast(x.message, true); return; }
+      var sel = {}; (d.managers || []).forEach(function (id) { sel[id] = 1; });
+      var m = document.createElement('div'); m.className = 'modal-backdrop'; m.innerHTML = '<div class="modal-box modal-box-wide"><button type="button" class="modal-close-x" data-gm-x aria-label="ปิด">✕</button><h3><i class="fa-solid fa-user-shield"></i> ผู้ดูแลคลังรูปภาพ</h3><p class="hint">ผู้ดูแลแก้ไข ลบ เพิ่มรูป และเปิด/ปิดการอัปของครูได้ทุกอัลบั้ม · ครูทุกคนยังดูอัลบั้มได้ตามปกติ</p><input type="search" class="gm-q" placeholder="ค้นหาชื่อบุคลากร" /><div class="gm-list"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-gm-x>ยกเลิก</button><button type="button" class="btn btn-success" data-gm-save><i class="fa-solid fa-check"></i> บันทึก</button></div></div>';
+      document.body.appendChild(m); showModalEl(m);
+      var list = m.querySelector('.gm-list'), q = m.querySelector('.gm-q');
+      function draw() { var t = q.value.trim(); list.innerHTML = d.people.filter(function (u) { return !t || u.name.indexOf(t) !== -1; }).map(function (u) { return '<label class="gm-it' + (sel[u.id] ? ' on' : '') + '"><input type="checkbox" data-gm="' + escapeHtml(u.id) + '"' + (sel[u.id] ? ' checked' : '') + ' /><b>' + escapeHtml(u.name) + '</b><small>' + escapeHtml(u.department ? groupLabel(u.department) : '') + '</small></label>'; }).join('') || '<div class="hint">ไม่พบรายชื่อ</div>'; }
+      draw(); q.addEventListener('input', draw);
+      list.addEventListener('change', function (e) { var c = e.target.closest('[data-gm]'); if (!c) return; if (c.checked) sel[c.getAttribute('data-gm')] = 1; else delete sel[c.getAttribute('data-gm')]; c.closest('.gm-it').classList.toggle('on', c.checked); });
+      m.addEventListener('click', async function (e) {
+        if (e.target.closest('[data-gm-x]')) { hideModalEl(m); setTimeout(function () { m.remove(); }, 300); return; }
+        if (e.target.closest('[data-gm-save]')) { try { await apiCall('galleryMgrSave', { managers: Object.keys(sel) }); showToast('บันทึกผู้ดูแลคลังรูปภาพแล้ว'); hideModalEl(m); setTimeout(function () { m.remove(); }, 300); load(true); } catch (x) { showToast(x.message, true); } }
+      });
+    });
     $('albBody').addEventListener('click', function (e) {
       var b = e.target.closest('[data-ap]'); if (!b || !albPage.data) return;
       var a = albPage.data.album, k = b.getAttribute('data-ap');
@@ -816,7 +841,7 @@
       }).join('') + (list.length > mgShown ? '<div class="list-more"><button type="button" class="btn btn-secondary btn-sm" data-mg-more>แสดงเพิ่ม (อีก ' + (list.length - mgShown) + ' รูป)</button></div>' : '')
         : '<div class="empty-state">' + (ps.length ? 'ไม่พบรูปตามที่ค้นหา' : 'ยังไม่มีรูปที่อัปผ่านเว็บ') + '</div>';
     }
-    $('mgSearch').addEventListener('input', function () { mgShown = 100; renderManage(); });
+    $('mgSearch').addEventListener('input', debounce(function () { mgShown = 100; renderManage(); }, 200));
     $('mgWho').addEventListener('click', function (e) { var b = e.target.closest('[data-who]'); if (b) { mg.who = b.getAttribute('data-who'); mgShown = 100; renderManage(); } });
     $('mgList').addEventListener('click', async function (e) {
       if (e.target.closest('[data-mg-more]')) { mgShown += 100; renderManage(); return; }
@@ -856,6 +881,7 @@
 
     if (session) {
       mountChrome('gallery');
+      if (session && session.role === 'intern') { var gab = document.getElementById('galAddBtn'); if (gab) gab.remove(); } // 2.02.0: นักศึกษาฝึกสอนดู/อัปรูปในอัลบั้มที่เปิดให้อัปได้ (สร้างอัลบั้มไม่ได้)
       (async function () {
         // 1.77: เตรียมตัวกรองพลาดตรงไหนก็ต้องโหลดรายการเสมอ (1.76 ค้าง "กำลังโหลด" เมื่อปิดภาคฤดูร้อน — api.js ลบตัวเลือกไปก่อนแล้ว)
         try {

@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login')||localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body class="pubc-body">
@@ -30,59 +30,79 @@
   <header class="pubc-hero">
     <div class="pubc-logo"><i class="fa-solid fa-images" aria-hidden="true"></i></div>
     <h1>คลังรูปภาพกิจกรรม</h1>
-    <p id="phSub">ค้นหาอัลบั้มภาพกิจกรรมจากชื่อกิจกรรม</p>
+    <p id="phSub">อัลบั้มภาพกิจกรรมของโรงเรียน</p>
   </header>
-  <!-- 1.85: ค้นหาอย่างเดียว — ไม่แสดงรายการอัลบั้มจนกว่าจะค้นหา (Worker ส่งเฉพาะอัลบั้มที่ชื่อตรงกับคำค้น ≥ 2 ตัวอักษร ไม่เกิน 20 อัลบั้ม) -->
+  <!-- 2.02.0: อัลบั้มล่าสุด 5 แสดงเสมอ · รายการเริ่มที่ปีการศึกษาปัจจุบัน · 2.01.0: ไล่ดูได้ (อัลบั้มล่าสุด 5 + โหลดเพิ่มทีละ 10) · ค้นหา / กรองปีการศึกษา–ภาคเรียน · เฉพาะอัลบั้มที่เปิดสาธารณะ -->
   <main class="pubc-main ph-main">
     <form class="pubc-search" id="phForm" role="search" autocomplete="off">
       <div class="pubc-sbox">
-        <label class="pubc-in"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input id="phSearch" type="search" maxlength="80" placeholder="พิมพ์ชื่อกิจกรรม อย่างน้อย 2 ตัวอักษร" aria-label="ค้นหาอัลบั้มจากชื่อกิจกรรม" /></label>
+        <label class="pubc-in"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input id="phSearch" type="search" maxlength="80" placeholder="ค้นหาชื่อกิจกรรม เช่น ศึกษาดูงาน" aria-label="ค้นหาอัลบั้มจากชื่อกิจกรรม" /></label>
         <button type="submit" class="btn btn-primary" id="phGo">ค้นหา</button>
       </div>
     </form>
     <div id="phRoot" aria-live="polite"></div>
   </main>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.00.6.041126"></script>
-  <script src="assets/gallery.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
+  <script src="assets/gallery.js?v=2.02.1.081126"></script>
   <script>
     mountFooter();
     applyBranding();
     var $ = function (id) { return document.getElementById(id); };
-    var albums = [];
-    var EXAMPLES = ['กีฬาสี', 'ไหว้ครู', 'ปัจฉิม'];
-    function idle() {
-      $('phRoot').innerHTML = '<div class="pubc-empty ph-idle"><i class="fa-solid fa-images" aria-hidden="true"></i><div>พิมพ์ชื่อกิจกรรมที่ต้องการ แล้วกดค้นหา</div><div class="ph-ex">' +
-        EXAMPLES.map(function (t, i) { return '<button type="button" data-ex="' + escapeHtml(t) + '">' + (i === 0 ? 'เช่น ' : '') + escapeHtml(t) + '</button>'; }).join('') + '</div></div>';
+    // 2.02.0: อัลบั้มล่าสุด 5 อัลบั้มแสดงเสมอ (ไม่มีคำค้น) · รายการด้านล่างเริ่มที่ปีการศึกษาปัจจุบัน (เปลี่ยนได้) · โหลดเพิ่มทีละ 10
+    var albums = [], hero = [], st = { q: '', year: 'cur', sem: '', next: 0, more: false, years: [], total: null }, tok = 0;
+    function filtersHtml() {
+      return '<div class="ph-flt"><select id="phYear" aria-label="ปีการศึกษา"><option value="">ทุกปีการศึกษา</option>' + st.years.map(function (y) { return '<option value="' + escapeHtml(y) + '"' + (st.year === y ? ' selected' : '') + '>ปีการศึกษา ' + escapeHtml(y) + '</option>'; }).join('') + '</select>' +
+        '<select id="phSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option>' + ['1', '2', '3'].map(function (x) { return '<option value="' + x + '"' + (st.sem === x ? ' selected' : '') + '>' + (x === '3' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + x) + '</option>'; }).join('') + '</select></div>';
     }
-    async function search() {
-      var q = $('phSearch').value.replace(/\s+/g, ' ').trim(), root = $('phRoot');
-      try { history.replaceState(null, '', location.pathname + (q ? '?q=' + encodeURIComponent(q) : '')); } catch (e) { /* ไม่เป็นไร */ }
-      if (!q) { idle(); return; }
-      if (q.replace(/\s/g, '').length < 2) { root.innerHTML = '<div class="pubc-empty">กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร</div>'; return; }
-      root.innerHTML = '<div class="loading">กำลังค้นหา</div>';
+    async function load(append) {
+      var root = $('phRoot'), my = ++tok, first = st.year === 'cur';
+      try { history.replaceState(null, '', location.pathname + (st.q ? '?q=' + encodeURIComponent(st.q) : '')); } catch (e) { /* ไม่เป็นไร */ }
+      if (st.q && st.q.replace(/\s/g, '').length < 2) { root.innerHTML = filtersHtml() + '<div class="pubc-empty">กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร</div>'; return; }
+      if (!append) { st.next = 0; if (!root.querySelector('.alb-grid')) root.innerHTML = '<div class="loading">กำลังโหลด</div>'; }
+      var btn = $('phMore'); if (btn) { btn.disabled = true; btn.textContent = 'กำลังโหลด...'; }
       try {
-        var r = await apiCall('publicAlbumList', { q: q });
-        albums = r.items || [];
-        if (r.schoolName) $('phSub').textContent = 'ภาพกิจกรรมของ' + r.schoolName + ' · ค้นหาอัลบั้มจากชื่อกิจกรรม';
-        if (!albums.length) { root.innerHTML = '<div class="pubc-empty"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> ไม่พบอัลบั้มที่ตรงกับ "' + escapeHtml(q) + '"<div class="hint">ลองพิมพ์คำอื่น หรือพิมพ์เพียงบางส่วนของชื่อกิจกรรม</div></div>'; return; }
-        root.innerHTML = '<div class="pubc-count">' + (r.more ? 'พบมากกว่า ' + albums.length + ' อัลบั้ม — แสดง ' + albums.length + ' อัลบั้มล่าสุด พิมพ์ชื่อให้เจาะจงขึ้นเพื่อดูอัลบั้มอื่น' : 'พบ ' + albums.length + ' อัลบั้ม') + '</div>' +
-          '<div class="alb-grid">' + albums.map(function (a) { return albumCardHtml(a, {}); }).join('') + '</div>';
-        wireAlbumCovers(root);
-        loadManagedCovers(root, albums, true);
-      } catch (e) { root.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; }
+        var r = await apiCall('publicAlbumList', { q: st.q, year: st.year, semester: st.sem, offset: st.next, hero: !append && !hero.length && !st.q ? 1 : 0 });
+        if (my !== tok) return;
+        if (r.schoolName) $('phSub').textContent = 'ภาพกิจกรรมของ' + r.schoolName;
+        if (r.years) st.years = r.years;
+        if (first) st.year = r.year || '';
+        if (r.hero) hero = r.hero;
+        if (!append) albums = [];
+        var add = r.items || []; albums = albums.concat(add); st.next = r.nextOffset || albums.length; st.more = !!r.more; if (r.total != null) st.total = r.total;
+        render(append ? add : null);
+      } catch (e) { if (my === tok) root.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; }
     }
-    $('phForm').addEventListener('submit', function (e) { e.preventDefault(); search(); });
-    $('phSearch').addEventListener('input', function () { if (!this.value.trim()) search(); });
+    function listOf(arr) { var hid = {}; if (!st.q) hero.forEach(function (a) { hid[a.id] = 1; }); return arr.filter(function (a) { return !hid[a.id]; }); }
+    function render(added) {
+      var root = $('phRoot');
+      if (added && $('phList')) { // โหลดเพิ่ม = ต่อท้ายรายการเดิม (ไม่วาดใหม่ทั้งหน้า)
+        var more = listOf(added), tmp = document.createElement('div'); tmp.innerHTML = more.map(function (a) { return albumCardHtml(a, {}); }).join('');
+        var list = $('phList'); while (tmp.firstChild) list.appendChild(tmp.firstChild);
+        wireAlbumCovers(list); loadManagedCovers(list, more, true); moreBtn(); return;
+      }
+      var showHero = !st.q && hero.length, rest = listOf(albums);
+      var label = st.q ? 'ผลการค้นหา' : st.year ? 'อัลบั้มปีการศึกษา ' + escapeHtml(st.year) + (st.sem ? ' ' + (st.sem === '3' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + st.sem) : '') : 'อัลบั้มทั้งหมด' + (st.sem ? ' ' + (st.sem === '3' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + st.sem) : '');
+      root.innerHTML = (showHero ? '<h2 class="ph-h">อัลบั้มล่าสุด</h2><div class="alb-grid ph-hero">' + hero.map(function (a) { return albumCardHtml(a, {}); }).join('') + '</div>' : '') +
+        '<h2 class="ph-h ph-h2">' + label + (st.total != null ? ' <small>(' + st.total + ' อัลบั้ม)</small>' : '') + '</h2>' + filtersHtml() +
+        (rest.length ? '<div class="alb-grid ph-list" id="phList">' + rest.map(function (a) { return albumCardHtml(a, {}); }).join('') + '</div>' :
+          '<div class="pubc-empty"><i class="fa-solid fa-images" aria-hidden="true"></i> ' + (st.q ? 'ไม่พบอัลบั้มที่ตรงกับ "' + escapeHtml(st.q) + '"<div class="hint">ลองพิมพ์คำอื่น หรือพิมพ์เพียงบางส่วนของชื่อกิจกรรม</div>' : (albums.length ? 'อัลบั้มของช่วงนี้แสดงอยู่ในอัลบั้มล่าสุดด้านบนแล้ว' : 'ยังไม่มีอัลบั้มในช่วงนี้ — ลองเลือกปีการศึกษาอื่น')) + '</div>') +
+        '<div class="ph-more-wrap" id="phMoreWrap"></div>';
+      wireAlbumCovers(root); loadManagedCovers(root, (showHero ? hero : []).concat(rest), true); moreBtn();
+    }
+    function moreBtn() { var w = $('phMoreWrap'); if (w) w.innerHTML = st.more ? '<button type="button" class="btn btn-secondary" id="phMore">โหลดเพิ่มอีก 10 อัลบั้ม</button>' : ''; }
+    $('phForm').addEventListener('submit', function (e) { e.preventDefault(); st.q = $('phSearch').value.replace(/\s+/g, ' ').trim(); load(false); });
+    $('phSearch').addEventListener('input', function () { if (!this.value.trim() && st.q) { st.q = ''; load(false); } });
+    $('phRoot').addEventListener('change', function (e) { if (e.target.id === 'phYear') { st.year = e.target.value; load(false); } else if (e.target.id === 'phSem') { st.sem = e.target.value; load(false); } });
     $('phRoot').addEventListener('click', function (e) {
-      var ex = e.target.closest('[data-ex]'); if (ex) { $('phSearch').value = ex.getAttribute('data-ex'); search(); return; }
+      if (e.target.closest('#phMore')) { load(true); return; }
       var card = e.target.closest('[data-alb]'); if (!card || !e.target.closest('[data-alb-copy]')) return;
-      var a = albums.filter(function (x) { return x.id === card.getAttribute('data-alb'); })[0];
+      var a = albums.concat(hero).filter(function (x) { return x.id === card.getAttribute('data-alb'); })[0];
       if (a) copyAlbumText(a);
     });
-    getSiteSettings().then(function (st) { var n = (st && st.schoolName) || ''; if (n) $('phSub').textContent = 'ภาพกิจกรรมของ' + n + ' · ค้นหาอัลบั้มจากชื่อกิจกรรม'; }).catch(function () {});
-    var q0 = new URLSearchParams(location.search).get('q') || '';
-    if (q0) { $('phSearch').value = q0; search(); } else idle();
+    getSiteSettings().then(function (s0) { var n = (s0 && s0.schoolName) || ''; if (n) $('phSub').textContent = 'ภาพกิจกรรมของ' + n; }).catch(function () {});
+    st.q = new URLSearchParams(location.search).get('q') || ''; $('phSearch').value = st.q;
+    load(false);
   </script>
 </body>
 </html>

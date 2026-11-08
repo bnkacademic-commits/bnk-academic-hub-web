@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -208,7 +208,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -1061,12 +1061,12 @@
       // 1.87: ทะเบียนเกียรติบัตร
       $('rgKey').addEventListener('change', function () { reg.key = this.value; showRegister(); });
       ['rgKind', 'rgShowCancel'].forEach(function (id) { $(id).addEventListener('change', renderRegister); });
-      $('rgQ').addEventListener('input', renderRegister);
+      $('rgQ').addEventListener('input', debounce(renderRegister, 200));
       $('rgXlsx').addEventListener('click', rgExportXlsx);
       $('rgPrint').addEventListener('click', rgPrint);
       $('rgPdf').addEventListener('click', rgExportPdf);
       $('certKindSeg').addEventListener('click', function (e) { var b = e.target.closest('button[data-kind]'); if (!b) return; kindFilter = b.getAttribute('data-kind'); rerender(); });
-      $('certSearch').addEventListener('input', rerender);
+      $('certSearch').addEventListener('input', debounce(rerender, 200));
       ['certActivity', 'certSem', 'certMine'].forEach(function (id) { $(id).addEventListener('change', rerender); });
       $('certYear').addEventListener('change', function () { loadYear(this.value); });
       $('certYearHint').addEventListener('click', function (e) { if (e.target.closest('#certSearchAllYears')) { $('certYear').value = ''; loadYear(''); } });
@@ -1085,7 +1085,7 @@
         if (u) { var a = $('certSimilar')._sims[Number(u.getAttribute('data-sim-use'))]; $('certFActivity').value = a.name; simDecision = a.name; hideSimilar(); showErr(''); fillDatalists(); return; }
         if (e.target.closest('#certSimKeep')) { simDecision = $('certFActivity').value.replace(/\s+/g, ' ').trim(); hideSimilar(); showErr(''); }
       });
-      $('certFYear').addEventListener('input', renderGroups);
+      $('certFYear').addEventListener('input', debounce(renderGroups, 200));
       $('certFSem').addEventListener('change', renderGroups);
       $('certFDate').addEventListener('input', function () { syncCertDate(); if (mScope === 'internal' && numbering.yearMode === 'be') refreshNumbers(); });
       $('certFType').addEventListener('click', function (e) { var b = e.target.closest('[data-type]'); if (b) setType(b.getAttribute('data-type')); });
@@ -1216,9 +1216,9 @@
       $('certShareQrDl').addEventListener('click', downloadQr);
       ['certShareClose', 'certShareCloseX'].forEach(function (id) { $(id).addEventListener('click', function () { hideModalEl($('certShareModal')); }); });
       // ----- รวมชื่อกิจกรรม -----
-      $('certMergeSearch').addEventListener('input', renderMerge);
+      $('certMergeSearch').addEventListener('input', debounce(renderMerge, 200));
       $('certMergeTabs').addEventListener('click', function (e) { var b = e.target.closest('[data-mf]'); if (!b) return; mergeField = b.getAttribute('data-mf'); mergePicked = {}; $('certMergeTo').value = ''; $('certMergeSearch').value = ''; renderMerge(); });
-      $('certMergeTo').addEventListener('input', renderMerge);
+      $('certMergeTo').addEventListener('input', debounce(renderMerge, 200));
       $('certMergeList').addEventListener('change', function (e) { var k = e.target.getAttribute('data-merge'); if (k !== null) { mergePicked[k] = e.target.checked; renderMerge(); } });
       $('certMergeList').addEventListener('click', function (e) { var b = e.target.closest('[data-merge-to]'); if (!b) return; $('certMergeTo').value = b.getAttribute('data-merge-to'); renderMerge(); });
       $('certMergeSave').addEventListener('click', saveMerge);

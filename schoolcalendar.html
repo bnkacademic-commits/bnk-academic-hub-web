@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -74,7 +74,7 @@
     </div>
   </div>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('schoolcal'); if (typeof mountFooter === 'function') mountFooter(); } // 1.96: + footer
@@ -126,6 +126,8 @@
         html += '<button type="button" class="sc-month' + (cur ? ' cur' : '') + '" data-ym="' + mm.y + '-' + pad(mm.m) + '"><div class="sc-mt"><b>' + TH_MONTHS_FULL[mm.m - 1] + ' ' + (mm.y + 543) + '</b><span>' + (list.length ? list.length + ' รายการ' : '—') + '</span></div>' + c + '</button>';
       });
       document.getElementById('scGrid').innerHTML = html;
+      // 2.02.0: มือถือ — เลื่อนไปเดือนปัจจุบันครั้งแรก (ไม่ต้องไล่จาก พ.ค.)
+      if (!window.__scJumped && window.matchMedia('(max-width: 767px)').matches) { var cm = document.querySelector('#scGrid .sc-month.cur'); if (cm) { window.__scJumped = true; setTimeout(function () { var y = cm.getBoundingClientRect().top + window.scrollY - 70; window.scrollTo(0, Math.max(0, y)); }, 50); } }
     }
     function respHtml(e) {
       var t = responsibleText(e, e.kind === 'activity' ? '' : (e.categoryDepartment || catDept[e.categoryId] || ''));

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -56,6 +56,7 @@
       <button class="tab-btn" data-tab="systemlog">ประวัติระบบ</button>
       <!-- ข้อมูลระบบ (1.46.121026): ทุกบัญชีเห็นแท็บนี้ — ส่วนพื้นที่เก็บข้อมูลเห็นเฉพาะ Super Admin ส่วน "เครดิต" ทุกคนเห็น
            (ครู/ผู้บริหารเข้าหน้าตั้งค่าระบบได้ แต่เห็นเฉพาะแท็บนี้) — เดิม 1.45 เป็นแท็บ Signature Credit แยก -->
+      <button class="tab-btn" data-tab="devices"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> อุปกรณ์ที่เข้าสู่ระบบ</button>
       <button class="tab-btn" data-tab="sysinfo">ข้อมูลระบบ</button>
     </div>
 
@@ -617,6 +618,7 @@
             <option value="staff">เจ้าหน้าที่</option>
             <option value="sysadmin">แอดมินระบบ</option>
             <option value="executive">ผู้บริหาร</option>
+            <option value="intern">นักศึกษาฝึกสอน</option>
           </select>
           <select id="userStatusFilter" aria-label="กรองตามสถานะ">
             <option value="">ทุกสถานะ</option>
@@ -708,6 +710,16 @@
       </div>
     </div>
 
+    <!-- 2.02.0: อุปกรณ์ที่เข้าสู่ระบบ (ทุกบัญชี) — เข้าพร้อมกันได้ 3 เครื่อง (Super Admin 1) · ออกจากเครื่องที่เลือก / เครื่องอื่นทั้งหมด / ทุกเครื่อง -->
+    <div class="tab-panel" id="tab-devices">
+      <div class="card dv-card">
+        <div class="dv-sum" id="dvSum"><div class="loading">กำลังโหลด</div></div>
+        <div id="dvList"></div>
+        <div id="dvActs"></div>
+        <div class="hint" style="margin-top:10px;"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> เปลี่ยนรหัสผ่านแล้ว เครื่องอื่นทั้งหมดจะออกจากระบบอัตโนมัติ · ทำมือถือหาย แจ้งผู้ดูแลระบบให้สั่งออกจากทุกเครื่องได้</div>
+      </div>
+    </div>
+
     <!-- System info tab (ข้อมูลระบบ — ตั้งแต่ 1.41.111026, Super Admin เท่านั้น): ขนาดฐานข้อมูล D1, พื้นที่ Google Drive และพื้นที่ที่แต่ละบัญชีใช้
          ไม่กำหนดเพดานให้ Drive (เป็นของโรงเรียน) แสดงตัวเลขจริงอย่างเดียว — ต้องใช้ Drive relay เวอร์ชัน 1.36 ขึ้นไป (มี action storageSummary/folderUsage) -->
     <div class="tab-panel" id="tab-sysinfo">
@@ -767,8 +779,25 @@
           <select id="cuRole">
             <option value="teacher">ครู</option>
             <option value="executive">ผู้บริหาร</option>
+            <option value="intern">นักศึกษาฝึกสอน</option>
             <option value="superadmin">Super Admin (ไม่มีหน้าฮับส่วนตัว)</option>
           </select>
+        </div>
+        <!-- 2.02.0: นักศึกษาฝึกสอน — ครูพี่เลี้ยง (จากครูในระบบ) + สถาบัน + ช่วงวันที่ฝึกสอน (ครบวันสิ้นสุด = เข้าระบบไม่ได้) -->
+        <div id="cuInternFields" hidden>
+          <div class="field">
+            <label for="cuMentor">ครูพี่เลี้ยง <span style="color:var(--danger)">*</span></label>
+            <select id="cuMentor"><option value="">— เลือกครูพี่เลี้ยง —</option></select>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="cuUni">สถาบัน</label><input id="cuUni" maxlength="120" placeholder="เช่น มหาวิทยาลัยราชภัฏ..." /></div>
+            <div class="field"><label for="cuMajor">วิชาเอก</label><input id="cuMajor" maxlength="80" placeholder="เช่น ภาษาอังกฤษ" /></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="cuFrom">เริ่มฝึกสอน</label><input type="date" id="cuFrom" /></div>
+            <div class="field"><label for="cuUntil">สิ้นสุด (บัญชีปิดเองเมื่อพ้นวันนี้) <span style="color:var(--danger)">*</span></label><input type="date" id="cuUntil" /></div>
+          </div>
+          <div class="hint" style="margin:-4px 0 12px;">ครูพี่เลี้ยงตั้งค่าคาบสอน ชุมนุม สิทธิ์ และมอบหมายงานได้เองที่หน้า "วิชาที่สอน" แท็บนักศึกษาฝึกสอน · นักศึกษาไม่ต้องส่งงานตามกำหนดการของโรงเรียน</div>
         </div>
         <!-- ตำแหน่งผู้บริหาร (ตั้งแต่ 1.32.101026) — แสดงเฉพาะตอนเลือกประเภทบัญชีเป็นผู้บริหาร -->
         <div class="field" id="cuExecPositionField" hidden>
@@ -930,6 +959,21 @@
           <div class="mu-welcome"><span id="muWelcomeState"></span><button type="button" class="btn btn-secondary btn-sm" id="muWelcomeReset"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> แสดงอีกครั้ง</button></div>
           <div class="hint" style="margin-top:4px;">กดแล้ว ครั้งหน้าที่บัญชีนี้เข้าระบบ จะเห็นป็อปอัปต้อนรับอีกครั้ง</div>
         </div>
+        <!-- 2.02.0: ข้อมูลการฝึกสอน (เฉพาะบัญชีนักศึกษาฝึกสอน) -->
+        <form id="muInternForm" class="mu-section" style="text-align:left;" hidden>
+          <div class="mu-section-title"><i class="fa-solid fa-user-graduate" aria-hidden="true"></i> ข้อมูลการฝึกสอน</div>
+          <div class="field"><label for="muMentor">ครูพี่เลี้ยง</label><select id="muMentor"></select><div class="hint" style="margin-top:4px;">เปลี่ยนครูพี่เลี้ยง = คาบสอนและชุมนุมที่ครูคนเดิมตั้งไว้ถูกล้าง (งานที่มอบหมายเดิมยังอยู่)</div></div>
+          <div class="field-row">
+            <div class="field"><label for="muUni">สถาบัน</label><input id="muUni" maxlength="120" /></div>
+            <div class="field"><label for="muMajor">วิชาเอก</label><input id="muMajor" maxlength="80" /></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="muFrom">เริ่มฝึกสอน</label><input type="date" id="muFrom" /></div>
+            <div class="field"><label for="muUntil">สิ้นสุด (บัญชีปิดเองเมื่อพ้นวันนี้)</label><input type="date" id="muUntil" /></div>
+          </div>
+          <div class="error-box" id="muInternError" hidden style="margin:0 0 8px;"></div>
+          <button type="submit" class="btn btn-success btn-sm"><i class="fa-solid fa-check" aria-hidden="true"></i> บันทึกข้อมูลการฝึกสอน</button>
+        </form>
         <form id="muPwForm" class="mu-section" style="text-align:left;">
           <div class="mu-section-title">ตั้งรหัสผ่านใหม่</div>
           <div class="field-row">
@@ -952,6 +996,7 @@
               <option value="sysadmin">แอดมินระบบ</option>
               <option value="executive">ผู้บริหาร</option>
               <option value="superadmin">Super Admin</option>
+              <option value="intern" disabled>นักศึกษาฝึกสอน (เพิ่มเป็นบัญชีใหม่เท่านั้น)</option>
             </select>
           </div>
           <div id="muTeacherFields">
@@ -982,6 +1027,13 @@
 
       <!-- แท็บ 3: สถานะ -->
       <div class="ev-tab-panel" id="muTab-status">
+        <!-- 2.02.0: อุปกรณ์ที่เข้าสู่ระบบของบัญชีนี้ + สั่งออกทุกเครื่อง -->
+        <div class="mu-section" id="muDevSection">
+          <div class="mu-section-title"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i> อุปกรณ์ที่เข้าสู่ระบบ</div>
+          <div id="muDevList" class="hint">กำลังโหลด...</div>
+          <button type="button" class="btn btn-secondary btn-sm" id="muDevRevoke" style="margin-top:8px;color:var(--danger);"><i class="fa-solid fa-power-off" aria-hidden="true"></i> ออกจากระบบทุกเครื่อง</button>
+          <div class="hint" style="margin-top:4px;">ใช้กรณีทำมือถือหาย หรือลืมออกจากคอมพิวเตอร์ส่วนกลาง · ตั้งรหัสผ่านใหม่ก็ออกทุกเครื่องเช่นกัน</div>
+        </div>
         <!-- 1.58: วันที่เริ่มปฏิบัติงานที่โรงเรียน (ใช้ตัดสินว่าต้องส่งงานไหนบ้าง) -->
         <div class="mu-section" id="muJoinSection">
           <div class="mu-section-title">เริ่มปฏิบัติงานที่โรงเรียน</div>
@@ -1306,8 +1358,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.00.6.041126"></script>
-  <script src="assets/gallery.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
+  <script src="assets/gallery.js?v=2.02.1.081126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1473,9 +1525,10 @@
     if (session && !isAdminSession) {
       // ครู/ผู้บริหาร: ซ่อนทุกแท็บ เหลือ "ข้อมูลระบบ" (มีแค่การ์ดเครดิต — การ์ดพื้นที่เป็น super-admin-only ถูกลบไปแล้ว) (ซ่อนแทนการลบ เพราะสคริปต์ด้านล่างผูก event กับองค์ประกอบในแท็บอื่นไว้ — ข้อมูลจริงฝั่ง Worker ป้องกันสิทธิ์อยู่แล้ว)
       document.querySelectorAll('.super-admin-only').forEach(function (el) { el.remove(); });
-      document.querySelectorAll('.tab-btn').forEach(function (b) { var keep = b.getAttribute('data-tab') === 'sysinfo'; b.hidden = !keep; b.classList.toggle('active', keep); });
-      document.querySelectorAll('.tab-panel').forEach(function (p) { var keep = p.id === 'tab-sysinfo'; p.hidden = !keep; p.classList.toggle('active', keep); });
-      document.getElementById('settingsIntro').textContent = 'ข้อมูลเกี่ยวกับระบบและผู้พัฒนา';
+      document.querySelectorAll('.tab-btn').forEach(function (b) { var t = b.getAttribute('data-tab'), keep = t === 'sysinfo' || t === 'devices'; b.hidden = !keep; b.classList.toggle('active', t === 'devices'); });
+      document.querySelectorAll('.tab-panel').forEach(function (p) { var keep = p.id === 'tab-sysinfo' || p.id === 'tab-devices'; p.hidden = !keep; p.classList.toggle('active', p.id === 'tab-devices'); });
+      document.getElementById('settingsIntro').textContent = 'อุปกรณ์ที่เข้าสู่ระบบ และข้อมูลเกี่ยวกับระบบ';
+      setTimeout(function () { loadTabIfNeeded('devices'); }, 0);
     } else if (!isSuperAdminSession) {
       // ตั้งแต่ V10.0: "จัดการบัญชี" และ "ประวัติการส่งงานและลบงาน" เป็น super-admin-only ด้วย จึงเหลือแท็บ "ปฏิทิน" เป็นแท็บเริ่มต้นสำหรับเจ้าหน้าที่ฝ่ายวิชาการ
       document.querySelectorAll('.super-admin-only').forEach(function (el) { el.remove(); });
@@ -1523,8 +1576,40 @@
       supervision: function () { return loadSupPerms(); }, // 1.98.1
       log: function () { return loadLog(); },
       systemlog: function () { return loadSystemLog(); },
-      sysinfo: function () { return isSuperAdminSession ? loadSysInfo() : Promise.resolve(); }
+      sysinfo: function () { return isSuperAdminSession ? loadSysInfo() : Promise.resolve(); },
+      devices: function () { return loadDevices(); }
     };
+    // ---------- 2.02.0: อุปกรณ์ที่เข้าสู่ระบบ ----------
+    var DV_IC = { mobile: 'fa-mobile-screen', tablet: 'fa-tablet-screen-button', desktop: 'fa-desktop' };
+    var DV_KIND = { mobile: 'มือถือ', tablet: 'แท็บเล็ต', desktop: 'คอมพิวเตอร์' };
+    async function loadDevices() {
+      var sum = document.getElementById('dvSum'), list = document.getElementById('dvList'), acts = document.getElementById('dvActs');
+      try {
+        var r = await apiCall('mySessions', {});
+        if (!r.sqlReady) { sum.innerHTML = '<div class="hint">ยังใช้ไม่ได้ — ผู้ดูแลระบบต้องรัน SQL ชุดที่สามสิบแปดก่อน</div>'; list.innerHTML = ''; acts.innerHTML = ''; return; }
+        sum.innerHTML = '<span class="dv-ic dv-ic-p"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span><div><b>เข้าอยู่ ' + r.items.length + ' จาก ' + r.max + ' เครื่อง</b><div class="hint">' +
+          (r.superAdmin ? 'บัญชีผู้ดูแลระบบสูงสุดเข้าได้ทีละ 1 เครื่อง และไม่มีเข้าสู่ระบบอัตโนมัติ' : 'เข้าเครื่องที่ ' + (r.max + 1) + ' แล้ว เครื่องที่ไม่ได้ใช้นานที่สุดจะออกจากระบบเอง') +
+          (r.legacy ? '<br>เครื่องนี้เข้าสู่ระบบก่อนอัปเดต — ออกแล้วเข้าใหม่ 1 ครั้งเพื่อให้ขึ้นในรายการ' : '') + '</div></div>';
+        list.innerHTML = r.items.map(function (d) {
+          return '<div class="dv-item"><span class="dv-ic"><i class="fa-solid ' + (DV_IC[d.kind] || 'fa-desktop') + '" aria-hidden="true"></i></span><div class="dv-b"><div class="dv-n">' + escapeHtml(d.label) + (d.current ? ' <span class="badge badge-active">เครื่องนี้</span>' : '') + '</div>' +
+            '<div class="hint">' + (DV_KIND[d.kind] || '') + ' · ใช้ล่าสุด ' + escapeHtml(formatDateTimeThai(d.last)) + ' · เข้าครั้งแรก ' + escapeHtml(formatDateTimeThai(d.first)) + '</div>' +
+            '<div class="hint">' + (d.keep ? '<i class="fa-solid fa-circle-check" style="color:var(--accent)" aria-hidden="true"></i> จดจำเครื่อง (เข้าสู่ระบบอัตโนมัติ 7 วัน)' : '<i class="fa-solid fa-clock" aria-hidden="true"></i> ไม่ได้จดจำ — หมดอายุเองเมื่อไม่ได้ใช้งาน') + '</div></div>' +
+            (d.current ? '' : '<button type="button" class="btn btn-secondary btn-sm dv-out" data-dv-out="' + escapeHtml(d.id) + '" data-dv-name="' + escapeHtml(d.label) + '"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> ออกจากเครื่องนี้</button>') + '</div>';
+        }).join('') || '<div class="empty-state">ยังไม่มีเครื่องในรายการ</div>';
+        acts.innerHTML = (r.items.filter(function (d) { return !d.current; }).length ? '<button type="button" class="btn btn-secondary" data-dv-out="others"><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i> ออกจากเครื่องอื่นทั้งหมด</button> ' : '') +
+          '<button type="button" class="btn btn-secondary dv-all" data-dv-out="all"><i class="fa-solid fa-power-off" aria-hidden="true"></i> ออกจากระบบทุกเครื่อง</button>';
+      } catch (err) { sum.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>'; }
+    }
+    document.getElementById('tab-devices').addEventListener('click', async function (e) {
+      var b = e.target.closest('[data-dv-out]'); if (!b) return;
+      var id = b.getAttribute('data-dv-out');
+      var msg = id === 'all' ? 'ออกจากระบบทุกเครื่อง รวมเครื่องนี้? ทุกเครื่องต้องเข้าสู่ระบบใหม่' : id === 'others' ? 'ออกจากเครื่องอื่นทั้งหมด? เครื่องนี้ใช้งานต่อได้' : 'ออกจาก "' + b.getAttribute('data-dv-name') + '"? เครื่องนั้นต้องเข้าสู่ระบบใหม่';
+      if (!(await askConfirm(msg, 'ออกจากระบบ'))) return;
+      var r = await withProgress('กำลังออกจากระบบ', function () { return apiCall('sessionRevoke', { id: id }); }, { successLabel: 'เรียบร้อยแล้ว' });
+      if (!r.ok) return;
+      if (id === 'all') { clearSession(); location.href = 'index.html?_=' + Date.now(); return; }
+      loadDevices();
+    });
     function loadTabIfNeeded(tabKey) {
       if (_tabLoaded[tabKey]) return;
       _tabLoaded[tabKey] = true;
@@ -2409,7 +2494,7 @@
       await ensureUsersLoaded();
       renderTeacherInfoTable();
     }
-    document.getElementById('teacherInfoSearch').addEventListener('input', renderTeacherInfoTable);
+    document.getElementById('teacherInfoSearch').addEventListener('input', debounce(renderTeacherInfoTable, 200));
     document.getElementById('teacherInfoModalCloseX').addEventListener('click', function () { hideModalEl(teacherInfoModal); });
     document.getElementById('teacherInfoCancel').addEventListener('click', function () { hideModalEl(teacherInfoModal); });
     document.getElementById('teacherInfoForm').addEventListener('submit', async function (e) {
@@ -3067,7 +3152,7 @@
         var n = 0; for (var k in gmChecked) if (gmChecked[k]) n++;
         document.getElementById('gmCount').textContent = 'เลือกไว้ ' + n + ' คน';
       }
-      document.getElementById('gmSearch').addEventListener('input', renderGmList);
+      document.getElementById('gmSearch').addEventListener('input', debounce(renderGmList, 200));
       document.getElementById('gmFilter').addEventListener('change', renderGmList);
       document.getElementById('gmList').addEventListener('change', function (e) {
         var id = e.target.getAttribute && e.target.getAttribute('data-gm-id');
@@ -3542,6 +3627,14 @@
       document.getElementById('cuStaffField').hidden = v !== 'teacher';
       document.getElementById('cuJoinField').hidden = v !== 'teacher';
       document.getElementById('cuExecPositionField').hidden = v !== 'executive';
+      var inf = document.getElementById('cuInternFields'); if (inf) inf.hidden = v !== 'intern';
+      if (v === 'intern') fillMentorSelect(document.getElementById('cuMentor'), '');
+    }
+    // 2.02.0: รายชื่อครูพี่เลี้ยง (ครู/เจ้าหน้าที่/ผู้บริหารที่ใช้งานอยู่ — ไม่รวมนักศึกษาและ Super Admin)
+    function mentorCandidates() { return (allUsers || []).filter(function (u) { return u.status === 'active' && u.role !== 'intern' && !(u.role === 'admin' && !u.hasHub); }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'th'); }); }
+    function fillMentorSelect(sel, cur) {
+      if (!sel) return;
+      sel.innerHTML = '<option value="">— เลือกครูพี่เลี้ยง —</option>' + mentorCandidates().map(function (u) { return '<option value="' + escapeHtml(u.id) + '"' + (u.id === cur ? ' selected' : '') + '>' + escapeHtml(u.name) + (u.subjectGroup ? ' (' + escapeHtml(u.subjectGroup) + ')' : '') + '</option>'; }).join('');
     }
     if (isSuperAdminSession && document.getElementById('cuRole')) {
       document.getElementById('cuRole').addEventListener('change', syncCuDepartmentFieldVisibility);
@@ -3568,6 +3661,12 @@
       return '<span class="badge badge-archived">ระงับ</span>';
     }
     function roleBadge(u) {
+      if (u.role === 'intern') { // 2.02.0
+        var it = u.intern || {}, mt = (allUsers || []).filter(function (x) { return x.id === u.mentorId; })[0];
+        var exp = it.until && it.until < todayYmd();
+        return '<span class="badge badge-intern">นักศึกษาฝึกสอน</span>' + (exp ? ' <span class="badge badge-archived">ครบกำหนดแล้ว</span>' : '') +
+          '<div class="hint">ครูพี่เลี้ยง: ' + escapeHtml(mt ? mt.name : '-') + (it.until ? ' · ถึง ' + escapeHtml(formatDateThai(it.until)) : '') + '</div>';
+      }
       if (u.role === 'executive') return '<span class="badge badge-exec">' + escapeHtml(u.position || 'ผู้บริหาร') + '</span>';
       // ครูที่ยังไม่ระบุกลุ่มบริหารงาน (1.44.111026: ไม่บังคับแล้ว) — ป้ายบอกเฉยๆ ไม่ใช่คำเตือน
       var noGroup = ' <span class="hint">ไม่ระบุกลุ่ม</span>';
@@ -3578,7 +3677,7 @@
     }
 
     // เจ้าหน้าที่ฝ่ายวิชาการจัดการได้เฉพาะบัญชีครู ส่วนบัญชีเจ้าหน้าที่/Super Admin ต้องให้ Super Admin เป็นผู้จัดการ
-    function canManageUser(u) { return isSuperAdminSession || u.role === 'teacher'; }
+    function canManageUser(u) { return isSuperAdminSession || u.role === 'teacher' || u.role === 'intern'; }
 
     function renderUserTable() {
       var wrap = document.getElementById('userTableWrap');
@@ -3589,7 +3688,7 @@
       var qEl = document.getElementById('userSearch'), tEl = document.getElementById('userTypeFilter'), stEl = document.getElementById('userStatusFilter');
       var q = qEl ? qEl.value.trim().toLowerCase() : '', ft = tEl ? tEl.value : '', fs = stEl ? stEl.value : '';
       var visibleUsers = allVisible.filter(function (u) {
-        var kind = u.role === 'executive' ? 'executive' : (u.role === 'teacher' ? 'teacher' : (u.isSysAdmin ? 'sysadmin' : 'staff'));
+        var kind = u.role === 'intern' ? 'intern' : u.role === 'executive' ? 'executive' : (u.role === 'teacher' ? 'teacher' : (u.isSysAdmin ? 'sysadmin' : 'staff'));
         if (ft && kind !== ft) return false;
         if (fs && u.status !== fs) return false;
         if (q && (String(u.name) + ' ' + String(u.username)).toLowerCase().indexOf(q) < 0) return false;
@@ -3629,7 +3728,7 @@
     (function () {
       var qEl = document.getElementById('userSearch');
       if (!qEl) return; // แท็บจัดการบัญชีเป็น super-admin-only
-      qEl.addEventListener('input', renderUserTable);
+      qEl.addEventListener('input', debounce(renderUserTable, 200));
       document.getElementById('userTypeFilter').addEventListener('change', renderUserTable);
       document.getElementById('userStatusFilter').addEventListener('change', renderUserTable);
     })();
@@ -3644,8 +3743,9 @@
     if (isSuperAdminSession && document.getElementById('manageUserModal')) {
     var manageUserModalEl = document.getElementById('manageUserModal');
     var muUser = null; // บัญชีที่กำลังเปิดอยู่ (อ้างอิงจาก allUsers ล่าสุดเสมอ)
-    var MU_KIND_LABEL = { teacher: 'ครู', staff: 'เจ้าหน้าที่', sysadmin: 'แอดมินระบบ', executive: 'ผู้บริหาร', superadmin: 'Super Admin' };
+    var MU_KIND_LABEL = { teacher: 'ครู', staff: 'เจ้าหน้าที่', sysadmin: 'แอดมินระบบ', executive: 'ผู้บริหาร', superadmin: 'Super Admin', intern: 'นักศึกษาฝึกสอน' };
     function muKindOf(u) {
+      if (u.role === 'intern') return 'intern';
       if (u.role === 'executive') return 'executive';
       if (u.role === 'teacher') return 'teacher';
       if (u.isSysAdmin) return 'sysadmin'; // 1.94
@@ -3926,10 +4026,43 @@
       document.getElementById('muNameError').hidden = true;
       document.getElementById('muPw').value = ''; document.getElementById('muPwConfirm').value = '';
       document.getElementById('muPwError').hidden = true;
-      renderMuHeader(); renderMuTypeTab(); renderMuStatusTab(); renderMuWelcome();
+      renderMuHeader(); renderMuTypeTab(); renderMuStatusTab(); renderMuWelcome(); renderMuIntern(u); loadMuDevices(u);
       switchMuTab(tab || 'info');
       showModalEl(manageUserModalEl);
     };
+    // 2.02.0: นักศึกษาฝึกสอน (ข้อมูลการฝึกสอน) + อุปกรณ์ที่เข้าสู่ระบบ
+    function renderMuIntern(u) {
+      var f = document.getElementById('muInternForm'); if (!f) return;
+      f.hidden = u.role !== 'intern'; if (f.hidden) return;
+      var it = u.intern || {};
+      fillMentorSelect(document.getElementById('muMentor'), u.mentorId || '');
+      document.getElementById('muUni').value = it.uni || ''; document.getElementById('muMajor').value = it.major || '';
+      document.getElementById('muFrom').value = it.from || ''; document.getElementById('muUntil').value = it.until || '';
+      document.getElementById('muInternError').hidden = true;
+    }
+    document.getElementById('muInternForm').addEventListener('submit', async function (e) {
+      e.preventDefault(); var u = muFresh(); if (!u) return;
+      var eb = document.getElementById('muInternError'); eb.hidden = true;
+      var r = await withProgress('กำลังบันทึกข้อมูลการฝึกสอน', function () { return apiCall('adminInternSave', { userId: u.id, mentorId: document.getElementById('muMentor').value, uni: document.getElementById('muUni').value, major: document.getElementById('muMajor').value, from: document.getElementById('muFrom').value, until: document.getElementById('muUntil').value }); }, { successLabel: 'บันทึกแล้ว' });
+      if (r.ok) { await loadUsers(); var nu = allUsers.filter(function (x) { return x.id === u.id; })[0]; if (nu) { muUser = nu; renderMuHeader(); renderMuIntern(nu); } }
+      else { eb.textContent = r.error.message; eb.hidden = false; }
+    });
+    var DEV_IC = { mobile: 'fa-mobile-screen', tablet: 'fa-tablet-screen-button', desktop: 'fa-desktop' };
+    async function loadMuDevices(u) {
+      var box = document.getElementById('muDevList'); if (!box) return;
+      box.innerHTML = 'กำลังโหลด...';
+      try {
+        var r = await apiCall('adminUserSessions', { userId: u.id });
+        if (!r.sqlReady) { box.innerHTML = 'ต้องรัน SQL ชุดที่สามสิบแปดก่อน'; return; }
+        box.innerHTML = r.items.length ? r.items.map(function (d) { return '<div class="mu-dev"><i class="fa-solid ' + (DEV_IC[d.kind] || 'fa-desktop') + '" aria-hidden="true"></i> <b>' + escapeHtml(d.label) + '</b> · ใช้ล่าสุด ' + escapeHtml(formatDateTimeThai(d.last)) + (d.keep ? ' · จดจำเครื่อง' : '') + '</div>'; }).join('') : 'ไม่มีเครื่องที่เข้าสู่ระบบอยู่';
+      } catch (err) { box.textContent = err.message; }
+    }
+    document.getElementById('muDevRevoke').addEventListener('click', async function () {
+      var u = muFresh(); if (!u) return;
+      if (!(await askConfirm('สั่งให้ "' + u.name + '" ออกจากระบบทุกเครื่อง? (ต้องเข้าสู่ระบบใหม่)', 'ออกจากระบบทุกเครื่อง'))) return;
+      var r = await withProgress('กำลังสั่งออกจากระบบ', function () { return apiCall('adminRevokeSessions', { userId: u.id }); }, { successLabel: 'สั่งออกจากระบบทุกเครื่องแล้ว' });
+      if (r.ok) loadMuDevices(u);
+    });
     document.getElementById('manageUserClose').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
     document.getElementById('manageUserModalCloseX').addEventListener('click', function () { hideModalEl(manageUserModalEl); });
 
@@ -4052,6 +4185,13 @@
           joinedAt: kind === 'teacher' ? document.getElementById('cuJoinedAt').value : ''
         };
         if (kind === 'executive') cuPayload.position = document.getElementById('cuExecPosition').value;
+        if (kind === 'intern') {
+          cuPayload.role = 'intern'; cuPayload.joinedAt = ''; cuPayload.department = '';
+          cuPayload.mentorId = document.getElementById('cuMentor').value;
+          cuPayload.uni = document.getElementById('cuUni').value.trim(); cuPayload.major = document.getElementById('cuMajor').value.trim();
+          cuPayload.from = document.getElementById('cuFrom').value; cuPayload.until = document.getElementById('cuUntil').value;
+          if (!cuPayload.mentorId || !cuPayload.until) { errBox.textContent = 'กรุณาเลือกครูพี่เลี้ยงและใส่วันสิ้นสุดการฝึกสอน'; errBox.hidden = false; return; }
+        }
         var r = await withProgress('กำลังสร้างบัญชีใหม่', function () {
           return apiCall('adminCreateUser', cuPayload);
         }, { successLabel: 'สร้างบัญชีเรียบร้อยแล้ว' });
@@ -4101,7 +4241,7 @@
       });
     }
     function bindLogFilter(pre, render) {
-      ['Q'].forEach(function (k) { document.getElementById(pre + k).addEventListener('input', render); });
+      ['Q'].forEach(function (k) { document.getElementById(pre + k).addEventListener('input', debounce(render, 200)); });
       ['Type', 'From', 'To'].forEach(function (k) { document.getElementById(pre + k).addEventListener('change', render); });
       document.getElementById(pre + 'Reset').addEventListener('click', function () {
         ['Q', 'Type', 'From', 'To'].forEach(function (k) { document.getElementById(pre + k).value = ''; });

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -56,6 +56,11 @@
   <div id="app-topbar"></div>
 
   <div class="container">
+    <!-- 2.01.0: เว็บไซต์โรงเรียน (ปุ่มลิงก์ชุดเดียวกับหน้าแรกของครู) -->
+    <div class="card" id="extLinksCard" hidden>
+      <div class="section-title"><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> เว็บไซต์โรงเรียน</div>
+      <div class="ext-links-grid" id="extLinksGrid"></div>
+    </div>
     <div class="page-header">
       <h1 id="welcomeHeading">สวัสดี</h1>
       <p>ภาพรวมปฏิทินและการส่งงานของบุคลากร (ดูได้อย่างเดียว)</p>
@@ -71,6 +76,7 @@
     </div>
 
     <div class="card sup-up-card" id="supUpCard" hidden></div><!-- 1.98.2 -->
+    <div class="card xw-card" id="execWeeklyCard"></div><!-- 2.01.0: การเช็คชื่อประจำสัปดาห์ -->
     <div class="card">
       <div class="dash-cal-layout">
         <div class="dash-cal-main">
@@ -113,13 +119,23 @@
     </div>
   </div>
 
-<script src="assets/api.js?v=2.00.6.041126"></script>
+<script src="assets/api.js?v=2.02.1.081126"></script>
+<script src="assets/weekly.js?v=2.02.1.081126"></script>
   <script>
     var session = requireViewerAccess();
     // ผู้บริหารเท่านั้นที่ใช้หน้านี้เป็นหน้าแรก (เจ้าหน้าที่/Super Admin มีหน้าแรกของตัวเองอยู่แล้ว) — ส่งกลับหน้าแรกของบทบาทนั้น
     if (session && session.role !== 'executive') { location.href = homePageFor(session); session = null; }
     if (session) mountChrome('executive');
     if (session) document.getElementById('welcomeHeading').textContent = 'สวัสดี, ' + session.name;
+    // 2.01.0: เว็บไซต์โรงเรียน + การเช็คชื่อประจำสัปดาห์ + มีคาบสอนไหม (เมนู "วิชาที่สอน")
+    if (session) {
+      (async function () {
+        var card = document.getElementById('extLinksCard'), grid = document.getElementById('extLinksGrid');
+        try { var rows = await apiCall('hubListExternalLinks', {}); if (rows.length) { card.hidden = false; grid.innerHTML = rows.map(function (l) { return extLinkButtonHtml(l); }).join(''); enhanceExtLinkImages(grid); } } catch (e) { /* ไม่มีลิงก์ = ไม่แสดง */ }
+      })();
+      mountExecWeekly(document.getElementById('execWeeklyCard'));
+      try { var thk = 'bnkTeachHas:' + session.id, thv = JSON.parse(localStorage.getItem(thk) || 'null'); if (!thv || Date.now() - thv.at > 12 * 3600e3) apiCall('teachHas', {}).then(function (r) { try { localStorage.setItem(thk, JSON.stringify({ at: Date.now(), has: !!r.has })); } catch (e) { /* ข้าม */ } if (r.has && !(thv && thv.has)) mountChrome('executive'); }).catch(function () {}); } catch (e) { /* ข้าม */ }
+    }
 
     var calState = { year: new Date().getFullYear(), month: new Date().getMonth(), events: [] };
     var thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];

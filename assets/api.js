@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.00.5';
-var APP_VERSION = '2.00.6.041126';
+var WORKER_MIN_VERSION = '2.02.1';
+var APP_VERSION = '2.02.1.081126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -121,8 +121,25 @@ function clearSession() {
 }
 // ออกจากระบบแล้วรีเฟรชหน้าเว็บ 1 ครั้งเสมอ (นำทางไปหน้าล็อกอินแบบโหลดใหม่จริง ไม่ใช้แคชหน้าเดิม)
 function logout() {
-  clearSession();
-  location.href = 'index.html?_=' + Date.now();
+  // 2.02.0: แจ้ง Worker ให้เอาเครื่องนี้ออกจาก "อุปกรณ์ที่เข้าสู่ระบบ" (ไม่รอนานเกิน 1.5 วินาที)
+  var go = function () { clearSession(); location.href = 'index.html?_=' + Date.now(); };
+  if (!getToken()) { go(); return; }
+  var done = false, fin = function () { if (!done) { done = true; go(); } };
+  setTimeout(fin, 1500);
+  apiCall('logout', {}).then(fin, fin);
+}
+// 2.02.0: ชื่ออุปกรณ์ที่ส่งไปตอนเข้าสู่ระบบ (แสดงในหน้า "อุปกรณ์ที่เข้าสู่ระบบ") — เบราว์เซอร์ · ระบบ
+function deviceInfo() {
+  var ua = navigator.userAgent || '', b = 'เบราว์เซอร์', o = '';
+  if (/Line\//i.test(ua)) b = 'LINE'; else if (/FBAN|FBAV/i.test(ua)) b = 'Facebook'; else if (/SamsungBrowser/i.test(ua)) b = 'Samsung Internet';
+  else if (/Edg\//i.test(ua)) b = 'Edge'; else if (/OPR\//i.test(ua)) b = 'Opera'; else if (/Firefox|FxiOS/i.test(ua)) b = 'Firefox';
+  else if (/Chrome|CriOS/i.test(ua)) b = 'Chrome'; else if (/Safari/i.test(ua)) b = 'Safari';
+  var ipad = /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (ipad) o = 'iPad'; else if (/iPhone/.test(ua)) o = 'iPhone'; else if (/Android/.test(ua)) o = 'Android'; else if (/Windows/.test(ua)) o = 'Windows';
+  else if (/Mac OS X|Macintosh/.test(ua)) o = 'macOS'; else if (/CrOS/.test(ua)) o = 'ChromeOS'; else if (/Linux/.test(ua)) o = 'Linux';
+  var kind = ipad || (/Android/.test(ua) && !/Mobile/.test(ua)) || /Tablet/i.test(ua) ? 'tablet' : (/Mobi|iPhone|Android/i.test(ua) ? 'mobile' : 'desktop');
+  if (/HUAWEI|HarmonyOS/i.test(ua) && o === 'Android') o = 'Huawei';
+  return { label: b + (o ? ' · ' + o : ''), kind: kind };
 }
 
 // ---------- เซสชันหมดเวลาอัตโนมัติเมื่ออยู่ในระบบครบ 1 ชั่วโมง ----------
@@ -223,7 +240,7 @@ function startSessionWatch() {
     } catch (err) {
       if (err && err.code === 'SESSION_REPLACED') {
         stopSessionWatch();
-        showSessionReplacedModal();
+        showSessionReplacedModal(err.message);
       }
     }
   };
@@ -240,33 +257,43 @@ function syncSessionFlags(u) {
   var s = getSession(); if (!s || s.id !== u.id) return;
   var before = (s.respCount > 0) + '|' + !!s.isSysAdmin;
   s.respCount = u.respCount || 0; s.isSysAdmin = !!u.isSysAdmin;
+  if (u.role === 'intern' || s.role === 'intern') { s.role = u.role; s.intern = u.intern || null; s.mentorId = u.mentorId || ''; } // 2.02.0: สิทธิ์ที่ครูพี่เลี้ยงเปิด-ปิด
   updateCachedSessionUser(s);
   void before; // เมนูข้างอัปเดตเมื่อเปิดหน้าถัดไป
 }
 function stopSessionWatch() {
   if (_sessionWatchHandle) { clearInterval(_sessionWatchHandle); _sessionWatchHandle = null; }
 }
-function showSessionReplacedModal() {
+function showSessionReplacedModal(msg) {
   clearSession();
   if (_sessionTimeoutHandle) { clearTimeout(_sessionTimeoutHandle); _sessionTimeoutHandle = null; } // ไม่ต้องรอเด้งซ้ำจากตัวจับเวลาหมดอายุอีก
   ensureSharedModals();
   var modal = document.getElementById('sharedSessionReplacedModal');
   if (!modal) { location.href = 'index.html?_=' + Date.now(); return; }
+  var mm = document.getElementById('sharedSessionReplacedMsg'); if (mm && msg) mm.textContent = msg; // 2.02.0: ข้อความจาก Worker (ออกจากอุปกรณ์ / ครบกำหนดฝึกสอน / บัญชีเดิมก่อนรัน SQL)
   showModalEl(modal);
 }
 
 function homePageFor(session) {
   if (!session) return 'index.html';
   if (session.role === 'teacher') return 'dashboard.html';
+  if (session.role === 'intern') return 'intern.html'; // 2.02.0: นักศึกษาฝึกสอน
   if (session.role === 'executive') return 'executive.html'; // ผู้บริหาร (ตั้งแต่ 1.32.101026): หน้าแรก = ปฏิทิน + สรุปภาพรวมการส่งงาน (อ่านอย่างเดียว)
   if (session.role === 'admin' && session.hasHub) return 'dashboard.html';
   if (session.devHome) return session.devHome; // เฉพาะเครื่องทดสอบ (Worker ตั้ง DEV_SA_HOME)
   return 'overview.html'; // Super Admin (ไม่มีหน้าฮับ) — 1.79: หน้าภาพรวมระบบ (เดิม summary.html)
 }
 
+// 2.02.0: หน้าที่นักศึกษาฝึกสอนเปิดได้ (หน้าอื่นพากลับหน้าแรกของนักศึกษา) — ส่วน Worker ปฏิเสธคำสั่งอื่นอีกชั้น
+var INTERN_PAGES = ['intern', 'teach', 'club', 'schoolcalendar', 'supervision', 'directory', 'gallery', 'settings'];
+function internPerm(s, k) { var p = s && s.intern && s.intern.perm; return !!(p && p[k]); }
 function requireLogin() {
   var s = getSession();
   if (!s || !getToken()) { location.href = 'index.html'; return null; }
+  if (s.role === 'intern') {
+    var pg = (location.pathname.split('/').pop() || '').replace(/\.html$/, '');
+    if (INTERN_PAGES.indexOf(pg) === -1 || (pg === 'schoolcalendar' && !internPerm(s, 'cal')) || (pg === 'supervision' && !internPerm(s, 'sup'))) { location.href = 'intern.html'; return null; }
+  }
   return s;
 }
 function requireHubAccess() {
@@ -306,6 +333,7 @@ function requireAdminAccess() {
 function roleLabel(session) {
   if (!session) return '';
   if (session.role === 'teacher') return 'ครู';
+  if (session.role === 'intern') return 'นักศึกษาฝึกสอน';
   if (session.role === 'executive') return session.position || 'ผู้บริหาร';
   // 1.41.111026: เจ้าหน้าที่ = สมาชิกกลุ่มบริหารงานที่ได้สิทธิ์แอดมิน — ป้ายแสดงชื่อกลุ่มเต็ม เช่น "เจ้าหน้าที่กลุ่มบริหารงานวิชาการ"
   if (session.role === 'admin') return session.hasHub ? (session.isSysAdmin ? 'แอดมินระบบ' : 'เจ้าหน้าที่' + groupLabel(session.department)) : 'Super Admin';
@@ -319,6 +347,7 @@ function accountInfoLines(session) {
   var lines = [];
   var isExec = session.role === 'executive';
   var isSuper = session.role === 'admin' && !session.hasHub;
+  if (session.role === 'intern') { lines.push({ label: 'ประเภทบัญชี', value: 'นักศึกษาฝึกสอน' }); if (session.intern && session.intern.until) lines.push({ label: 'ฝึกสอนถึง', value: formatDateThai(session.intern.until) }); return lines; }
   var type = session.role === 'teacher' ? 'ครู' : isExec ? 'ผู้บริหาร' : (isSuper ? 'Super Admin' : (session.isSysAdmin ? 'แอดมินระบบ' : 'เจ้าหน้าที่'));
   lines.push({ label: 'ประเภทบัญชี', value: type + (isExec && session.position ? ' (' + session.position + ')' : '') });
   if (!isExec && !isSuper) {
@@ -1073,6 +1102,8 @@ function isReddish(hex) {
   var s = d / (1 - Math.abs(mx + mn - 1)), h = mx === r ? ((g - b) / d + 6) % 6 * 60 : mx === g ? ((b - r) / d + 2) * 60 : ((r - g) / d + 4) * 60;
   return s > 0.45 && (h < 14 || h > 340);
 }
+// 2.01.0: แท็กในปฏิทินบอกว่ามีลิงก์ / ไฟล์แนบ (กดดูในรายละเอียด)
+function evLinkMark(e) { var n = e ? ((e.links || []).length + (e.sampleFiles || []).length) : 0; return n ? '<i class="fa-solid ' + ((e.links || []).length ? 'fa-link' : 'fa-paperclip') + ' cal-lk" aria-label="มีลิงก์ / ไฟล์แนบ"></i>' : ''; }
 function isHolidayEv(e) { return isActivityEv(e) && e.attMode === 'holiday'; }
 function calCellC(d, ds, acts, opts) {
   opts = opts || {};
@@ -1083,7 +1114,7 @@ function calCellC(d, ds, acts, opts) {
     if (!list.length) return '';
     var f = list.filter(isFirst)[0], more = list.length - (f ? 1 : 0);
     if (!f) return more > 0 && list.length > 1 ? '<div class="cal-c-lab" style="color:' + color(list[0]) + '">+' + more + '</div>' : '';
-    return '<div class="cal-c-lab" style="color:' + color(f) + '">' + escapeHtml(f.title) + (list.length > 1 ? ' +' + (list.length - 1) : '') + '</div>';
+    return '<div class="cal-c-lab" style="color:' + color(f) + '">' + evLinkMark(f) + escapeHtml(f.title) + (list.length > 1 ? ' +' + (list.length - 1) : '') + '</div>';
   };
   if (hol.length || opts.holiday) {
     return { cls: ' cal-hol', style: '', num: '<div class="day-num">' + d + '</div>', label: '<span class="cal-hol-rib" aria-hidden="true">หยุด</span>' + lab(hol.concat(oth), function (e) { return isHolidayEv(e) ? '#dc2626' : activityColor(e); }) };
@@ -1098,7 +1129,7 @@ var CAL_C_LEGEND = '<span><i class="cal-c-sw" aria-hidden="true"></i>ช่อ�
 function activityBarsHtml(acts) {
   if (!acts.length) return '';
   return '<div class="cal-acts">' + acts.slice(0, 2).map(function (e) {
-    return '<span class="cal-act" style="background:' + activityColor(e) + '" title="' + escapeHtml(e.title) + '">' + escapeHtml(e.title) + '</span>';
+    return '<span class="cal-act" style="background:' + activityColor(e) + '" title="' + escapeHtml(e.title) + '">' + evLinkMark(e) + escapeHtml(e.title) + '</span>';
   }).join('') + (acts.length > 2 ? '<span class="cal-act-more">+' + (acts.length - 2) + '</span>' : '') + '</div>';
 }
 // 1.92: ป้ายการเช็คชื่อของกิจกรรม (วันหยุด / หยุดเรียนบางคาบ / จัดกิจกรรม) + นักเรียนที่เกี่ยวข้อง
@@ -1269,6 +1300,8 @@ function downloadBlob(blob, filename) {
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
   document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
 }
+// 2.01.0: พิมพ์ค้นหาแล้วไม่วาดรายการใหม่ทุกตัวอักษร (หน้ากระพริบ) — รอหยุดพิมพ์ครู่หนึ่งค่อยวาด
+function debounce(fn, ms) { var t = null; return function () { var a = arguments, self = this; clearTimeout(t); t = setTimeout(function () { t = null; fn.apply(self, a); }, ms || 200); }; }
 function loadScriptOnce(src) {
   window._loadedScripts = window._loadedScripts || {};
   if (!window._loadedScripts[src]) window._loadedScripts[src] = new Promise(function (res, rej) { var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function () { delete window._loadedScripts[src]; rej(new Error('โหลดตัวสร้างไฟล์ไม่สำเร็จ')); }; document.head.appendChild(s); });
@@ -1468,8 +1501,8 @@ function ensureSharedModals() {
     '<div class="modal-backdrop" id="sharedSessionReplacedModal" hidden>' +
       '<div class="modal-box">' +
         '<button type="button" class="modal-close-x" id="sharedSessionReplacedCloseX" aria-label="ปิด">✕</button>' +
-        '<h3>เข้าสู่ระบบจากที่อื่น</h3>' +
-        '<p style="color:var(--text-muted); font-size:0.9rem;">บัญชีนี้เพิ่งถูกเข้าสู่ระบบจากอุปกรณ์หรือเบราว์เซอร์อื่น เพื่อความปลอดภัยระบบอนุญาตให้ใช้งานได้ทีละ 1 ที่เท่านั้น จึงนำคุณออกจากระบบที่นี่โดยอัตโนมัติ</p>' +
+        '<h3 id="sharedSessionReplacedTitle">ออกจากระบบที่เครื่องนี้แล้ว</h3>' +
+        '<p id="sharedSessionReplacedMsg" style="color:var(--text-muted); font-size:0.9rem;">เครื่องนี้ถูกออกจากระบบ (ออกจากอุปกรณ์นี้จากเครื่องอื่น เปลี่ยนรหัสผ่าน หรือเข้าสู่ระบบเกิน 3 เครื่อง) กรุณาเข้าสู่ระบบใหม่</p>' +
         '<div class="modal-actions">' +
           '<button type="button" class="btn btn-primary" id="sharedSessionReplacedOk">เข้าสู่ระบบอีกครั้ง</button>' +
         '</div>' +
@@ -1835,6 +1868,8 @@ function currentNavOrder() {
   var s = _settingsCache && !_settingsCache.__fallback ? _settingsCache : cachedBrand();
   return normalizeNavOrder(s && s.navOrder);
 }
+// 2.01.0: ผู้บริหารมีคาบสอนไหม (ตรวจจากหน้าแรกผู้บริหาร · จำไว้ 12 ชั่วโมง)
+function execTeaches(session) { try { var v = JSON.parse(localStorage.getItem('bnkTeachHas:' + session.id) || 'null'); return !!(v && v.has); } catch (e) { return false; } }
 function navSlotOf(key) { return key === 'dashboard' || key === 'executive' || key === 'overview' ? 'home' : key; }
 // เรียงเมนูในแถบข้างที่วาดไปแล้วใหม่ (ค่าตั้งค่าโหลดเสร็จทีหลัง/เพิ่งบันทึกลำดับใหม่)
 function reorderSideNav(order) {
@@ -1847,6 +1882,17 @@ function reorderSideNav(order) {
 }
 function navLinksFor(session) {
   var links = [];
+  if (session && session.role === 'intern') { // 2.02.0: นักศึกษาฝึกสอน — เมนูตามที่ครูพี่เลี้ยงเปิดให้
+    links.push({ href: 'intern.html', label: 'หน้าแรก', key: 'intern', icon: 'home', slot: 'home' });
+    links.push({ href: 'teach.html', label: 'วิชาที่สอน', key: 'teach', icon: 'teach', slot: 'teach' });
+    if (session.intern && session.intern.club) links.push({ href: 'club.html', label: 'ชุมนุม', key: 'club', icon: 'club', slot: 'club' });
+    if (internPerm(session, 'cal')) links.push({ href: 'schoolcalendar.html', label: 'ปฏิทินโรงเรียน', key: 'schoolcal', icon: 'schoolcal', slot: 'schoolcal' });
+    if (internPerm(session, 'sup')) links.push({ href: 'supervision.html', label: 'นิเทศการสอน', key: 'supervision', icon: 'supervision', slot: 'supervision' });
+    links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory', slot: 'directory' });
+    links.push({ href: 'gallery.html', label: 'คลังรูปภาพ', key: 'gallery', icon: 'gallery', slot: 'gallery' });
+    links.push({ href: 'settings.html', label: 'ตั้งค่า', key: 'settings', icon: 'settings', slot: 'settings' });
+    return links;
+  }
   var isExec = !!session && session.role === 'executive';
   var isAdmin = !!session && session.role === 'admin';
   // ตั้งแต่ 1.29.091026: "จัดทำบันทึกข้อความ" เป็นแท็บในเมนูบนสุด (ไปหน้า memo.html ในแท็บเบราว์เซอร์เดิม ไม่เปิดหน้าใหม่) ของทุกบัญชีที่มี
@@ -1870,7 +1916,7 @@ function navLinksFor(session) {
   // 1.93: "ปฏิทินโรงเรียน" — ทุกบัญชีที่ล็อกอินเห็น (กำหนดส่งงาน + กิจกรรมทั้งโรงเรียน รายเดือน)
   if (session) links.push({ href: 'schoolcalendar.html', label: 'ปฏิทินโรงเรียน', key: 'schoolcal', icon: 'schoolcal' });
   if (session) links.push({ href: 'supervision.html', label: 'นิเทศการสอน', key: 'supervision', icon: 'supervision' }); // 1.98
-  if (session && !isExec) links.push({ href: 'teach.html', label: 'วิชาที่สอน', key: 'teach', icon: 'teach' }); // 1.99
+  if (session && (!isExec || execTeaches(session))) links.push({ href: 'teach.html', label: 'วิชาที่สอน', key: 'teach', icon: 'teach' }); // 1.99 · 2.01.0: ผู้บริหารที่มีคาบสอน
   if (session && !isExec) links.push({ href: 'club.html', label: 'ชุมนุม', key: 'club', icon: 'club' }); // 1.99
   if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
   // "คลังคำสั่ง" (ตั้งแต่ 1.41.111026 ชื่อเดิม "ไฟล์คำสั่ง"; เปลี่ยนชื่อใน 1.43.111026): ทุกบทบาทที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ — แก้ไข/ลบได้เฉพาะเจ้าของ
@@ -1960,6 +2006,49 @@ function mountSideNav(links, activePage) {
   requestAnimationFrame(function () { requestAnimationFrame(function () { document.documentElement.classList.remove('nav-noanim'); }); });
 }
 
+// ---------- 2.02.0: เมนูล่างจอ (มือถือ < 768px) — หน้าแรก · ปฏิทินโรงเรียน · ปุ่มที่ 3 ตามบัญชี · เมนู (เปิดลิ้นชักเมนูข้าง) ----------
+// ปุ่มที่ 3: ครู/เจ้าหน้าที่/นักศึกษา = วิชาที่สอน · ผู้บริหาร = เช็คชื่อ (หรือวิชาที่สอนถ้ามีคาบสอน) · Super Admin = สรุปการส่งงาน
+function bottomNavItems(session, links) {
+  var by = {}; links.forEach(function (l) { by[l.key] = l; });
+  var home = links.filter(function (l) { return (l.slot || navSlotOf(l.key)) === 'home'; })[0] || { href: homePageFor(session), key: 'home', label: 'หน้าแรก' };
+  var items = [{ href: home.href, key: home.key, label: 'หน้าแรก', fa: 'fa-house', keys: ['dashboard', 'executive', 'overview', 'intern', 'home'] }];
+  if (by.schoolcal) items.push({ href: 'schoolcalendar.html', key: 'schoolcal', label: 'ปฏิทินโรงเรียน', fa: 'fa-calendar-days', keys: ['schoolcal'] });
+  var isSuper = session.role === 'admin' && !session.hasHub;
+  if (isSuper && by.summary) items.push({ href: 'summary.html', key: 'summary', label: 'สรุปการส่งงาน', fa: 'fa-chart-column', keys: ['summary'] });
+  else if (by.teach) items.push({ href: 'teach.html', key: 'teach', label: 'วิชาที่สอน', fa: 'fa-book-open-reader', keys: ['teach'] });
+  else if (session.role === 'executive') items.push({ href: 'executive.html#execWeeklyCard', key: 'execatt', label: 'เช็คชื่อ', fa: 'fa-clipboard-user', keys: [] });
+  else if (by.summary) items.push({ href: 'summary.html', key: 'summary', label: 'สรุปการส่งงาน', fa: 'fa-chart-column', keys: ['summary'] });
+  return items;
+}
+function mountBottomNav(session, links, activePage) {
+  var old = document.getElementById('app-bnav'); if (old) old.remove();
+  var items = bottomNavItems(session, links);
+  var nav = document.createElement('nav');
+  nav.id = 'app-bnav'; nav.className = 'bnav no-print'; nav.setAttribute('aria-label', 'เมนูลัด');
+  nav.style.gridTemplateColumns = 'repeat(' + (items.length + 1) + ', 1fr)';
+  nav.innerHTML = items.map(function (it) {
+    var on = it.keys.indexOf(activePage) !== -1;
+    return '<a class="bnav-i' + (on ? ' on' : '') + '" href="' + it.href + '"' + (on ? ' aria-current="page"' : '') + '><i class="fa-solid ' + it.fa + '" aria-hidden="true"></i><span>' + escapeHtml(it.label) + '</span></a>';
+  }).join('') + '<button type="button" class="bnav-i" id="bnavMenu" aria-label="เปิดเมนูทั้งหมด"><i class="fa-solid fa-bars" aria-hidden="true"></i><span>เมนู</span></button>';
+  document.body.appendChild(nav);
+  document.body.classList.add('has-bnav');
+  document.getElementById('bnavMenu').addEventListener('click', function () { var t = document.getElementById('navToggle'); if (t) t.click(); });
+  // หัวลิ้นชักเมนู (มือถือ): รูป + ชื่อ + ประเภทบัญชี · ท้ายลิ้นชัก: อุปกรณ์ที่เข้าสู่ระบบ / ออกจากระบบ
+  var aside = document.getElementById('app-sidenav');
+  if (aside && !aside.querySelector('.sidenav-mhead')) {
+    var head = document.createElement('div'); head.className = 'sidenav-mhead';
+    head.innerHTML = '<span class="profile-avatar">' + avatarInnerHtml(session.avatarUrl) + '</span><div class="smh-t"><b>' + escapeHtml(session.name) + '</b><span>' + escapeHtml(roleLabel(session)) + '</span></div>';
+    aside.insertBefore(head, aside.firstChild);
+    var foot = document.createElement('div'); foot.className = 'sidenav-mfoot';
+    foot.innerHTML = '<button type="button" class="sidenav-item" id="smfManual"><span class="sidenav-icon"><i class="fa-solid fa-book-open" aria-hidden="true"></i></span><span class="sidenav-label">คู่มือการใช้งาน</span></button>' + // 2.02.1
+      '<a class="sidenav-item" href="settings.html#devices"><span class="sidenav-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span><span class="sidenav-label">อุปกรณ์ที่เข้าสู่ระบบ</span></a>' +
+      '<button type="button" class="sidenav-item smf-out" id="smfLogout"><span class="sidenav-icon">' + icon('logout', 17) + '</span><span class="sidenav-label">ออกจากระบบ</span></button>';
+    aside.appendChild(foot);
+    document.getElementById('smfManual').addEventListener('click', function () { var t = document.getElementById('navToggle'); if (t && document.body.classList.contains('nav-mobile-open')) t.click(); if (typeof openManual === 'function') openManual(); });
+    document.getElementById('smfLogout').addEventListener('click', async function () { if (await askConfirm('ต้องการออกจากระบบใช่หรือไม่?', 'ยืนยันการออกจากระบบ')) logout(); });
+  }
+}
+
 function mountChrome(activePage) {
   var session = getSession();
   var topbarRoot = document.getElementById('app-topbar');
@@ -2002,6 +2091,7 @@ function mountChrome(activePage) {
               '<div class="dd-divider"></div>' +
               '<button class="dd-item" id="ddChangeAvatar" type="button"><span class="dd-icon">' + icon('image', 16) + '</span> เปลี่ยนรูปโปรไฟล์</button>' +
               '<button class="dd-item" id="ddChangePw" type="button"><span class="dd-icon">' + icon('key', 16) + '</span> เปลี่ยนรหัสผ่าน</button>' +
+              '<a class="dd-item" id="ddDevices" href="settings.html#devices"><span class="dd-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span> อุปกรณ์ที่เข้าสู่ระบบ</a>' + // 2.02.0
               '<button class="dd-item" id="ddReport" type="button"><span class="dd-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></span> แจ้งปัญหา</button>' +
               '<div class="dd-divider"></div>' +
               '<button class="dd-item danger" id="ddLogout" type="button"><span class="dd-icon">' + icon('logout', 16) + '</span> ออกจากระบบ</button>' +
@@ -2013,6 +2103,7 @@ function mountChrome(activePage) {
     document.querySelector('.js-home-btn').addEventListener('click', function () { location.href = homePageFor(session); });
     renderBrand(cachedBrand()); // 1.53: วาดแบรนด์จากค่าที่จำไว้ทันที (applyBranding อัปเดตตามค่าจริงอีกครั้ง)
     mountSideNav(links, activePage);
+    mountBottomNav(session, links, activePage); // 2.02.0: มือถือ — เมนูลัดล่างจอ
     // ซ่อนเมนู "ทำเนียบบุคลากร" ถ้า Super Admin ปิดทำเนียบไว้ (settings.directoryMode = 'off') — ตั้งแต่ 1.32.101026
     getSiteSettings().then(function (st) {
       if (st && st.directoryMode === 'off') {
@@ -2870,7 +2961,7 @@ function openWelcome() {
 var _annPopRunning = false;
 // 1.85.1: จำแยกตามการเข้าระบบแต่ละครั้งของแต่ละคน (uid + sv ใน token — เข้าระบบใหม่ sv เปลี่ยน) — ออกแล้วเข้าใหม่ / คนอื่นเข้าต่อในแท็บเดิม = แสดงอีก
 function _annPopLoginKey() {
-  try { var t = getToken() || '', b = t.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'); var o = JSON.parse(decodeURIComponent(escape(atob(b + '==='.slice((b.length + 3) % 4))))); return (o.uid || '') + '.' + (o.sv || 0); } catch (e) { return ''; }
+  try { var t = getToken() || '', b = t.split('.')[0].replace(/-/g, '+').replace(/_/g, '/'); var o = JSON.parse(decodeURIComponent(escape(atob(b + '==='.slice((b.length + 3) % 4))))); return (o.uid || '') + '.' + (o.sid || o.sv || 0); /* 2.02.0: เข้าสู่ระบบใหม่ = รหัสอุปกรณ์ใหม่ (sv ไม่เปลี่ยนแล้ว) */ } catch (e) { return ''; }
 }
 function _annPopShownKey(id) { return 'bnkah_annpop_' + _annPopLoginKey() + '_' + id; }
 async function showAnnouncementPopups() {

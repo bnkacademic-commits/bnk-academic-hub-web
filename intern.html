@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<title>หน้าแรก — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
+<link rel="stylesheet" href="assets/club.css?v=2.02.1.081126" />
+<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
+</head>
+<body>
+  <div id="app-topbar"></div>
+  <!-- 2.02.0: หน้าแรกของนักศึกษาฝึกสอน — ครูพี่เลี้ยง · ตารางสอนของฉัน (คาบที่ครูพี่เลี้ยงเปิดให้) · งานจากครูพี่เลี้ยง (ส่งไฟล์)
+       Worker: internHome / internFilePrepare / internTaskSubmit (handlers/intern.js) · assets/intern.js -->
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1 id="ihHello">สวัสดี</h1>
+        <p><span class="it-tag"><i class="fa-solid fa-user-graduate" aria-hidden="true"></i> นักศึกษาฝึกสอน</span></p>
+      </div>
+    </div>
+    <div id="ihRoot"><div class="loading">กำลังโหลด</div></div>
+  </div>
+  <div id="app-footer"></div>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
+  <script src="assets/intern.js?v=2.02.1.081126"></script>
+  <script>
+    (function () {
+      var session = requireLogin();
+      if (!session) return;
+      if (session.role !== 'intern') { location.href = homePageFor(session); return; }
+      mountChrome('intern');
+      var h = new Date().getHours();
+      document.getElementById('ihHello').textContent = (h < 12 ? 'สวัสดีตอนเช้า ' : h < 17 ? 'สวัสดีตอนบ่าย ' : 'สวัสดีตอนเย็น ') + session.name;
+      mountInternHome(document.getElementById('ihRoot'));
+      window.__refreshPageData = function () { mountInternHome(document.getElementById('ihRoot')); return Promise.resolve(); };
+    })();
+  </script>
+</body>
+</html>

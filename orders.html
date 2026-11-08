@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -156,7 +156,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -562,7 +562,7 @@
       $('ordCloseX').addEventListener('click', closeModal);
       ['ordTitle', 'ordNoNum', 'ordNoYear', 'ordAcYear'].forEach(function (id) { $(id).addEventListener('input', updateDriveName); });
       $('ordSem').addEventListener('change', updateDriveName);
-      $('ordRespSearch').addEventListener('input', renderResp);
+      $('ordRespSearch').addEventListener('input', debounce(renderResp, 200));
       $('ordRespList').addEventListener('change', function (ev) {
         var id = ev.target.getAttribute && ev.target.getAttribute('data-resp-id');
         if (!id) return;
@@ -578,7 +578,7 @@
         if (i >= 0) respSelected.splice(i, 1);
         renderResp();
       });
-      ['ordSearch'].forEach(function (id) { $(id).addEventListener('input', rerender); });
+      ['ordSearch'].forEach(function (id) { $(id).addEventListener('input', debounce(rerender, 200)); });
       ['ordSubject', 'ordSem', 'ordMine'].forEach(function (id) { $(id).addEventListener('change', rerender); });
       $('ordYear').addEventListener('change', function () { loadYear(this.value); });
       $('ordYearHint').addEventListener('click', function (e) { if (e.target.closest('#ordSearchAllYears')) { $('ordYear').value = ''; loadYear(''); } });

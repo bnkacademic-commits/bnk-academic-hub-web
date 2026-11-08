@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -147,7 +147,7 @@
 
   <div id="app-footer" class="no-print"></div>
 
-  <script src="assets/api.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireHubAccess();
@@ -250,11 +250,12 @@
     }
 
     var subjectTouched = false, bodyTouched = false;
-    document.getElementById('memoSubject').addEventListener('input', function () { subjectTouched = true; renderMemoPaper(); });
-    document.getElementById('memoBody').addEventListener('input', function () { bodyTouched = true; renderMemoPaper(); });
-    document.getElementById('memoTo').addEventListener('input', renderMemoPaper);
-    document.getElementById('memoNumber').addEventListener('input', renderMemoPaper);
-    document.getElementById('memoDate').addEventListener('input', renderMemoPaper);
+    document.getElementById('memoSubject').addEventListener('input', function () { subjectTouched = true; renderMemoPaperD(); });
+    document.getElementById('memoBody').addEventListener('input', function () { bodyTouched = true; renderMemoPaperD(); });
+    var renderMemoPaperD = debounce(function () { renderMemoPaper(); }, 120); // 2.01.0
+    document.getElementById('memoTo').addEventListener('input', debounce(renderMemoPaper, 120));
+    document.getElementById('memoNumber').addEventListener('input', debounce(renderMemoPaper, 120));
+    document.getElementById('memoDate').addEventListener('input', debounce(renderMemoPaper, 120));
     ['memoYear', 'memoSemester'].forEach(function (id) {
       document.getElementById(id).addEventListener('change', function () {
         if (!subjectTouched) document.getElementById('memoSubject').value = defaultSubjectAndBody().subject;

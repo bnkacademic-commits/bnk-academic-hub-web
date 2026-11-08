@@ -41,7 +41,7 @@
     var t = [];
     if (D) t.push(['info', 'fa-circle-info', 'ข้อมูลชุมนุม'], ['stu', 'fa-users', 'นักเรียน (' + activeMembers().length + ')'], ['check', 'fa-clipboard-check', 'เช็คชื่อ'], ['photo', 'fa-camera', 'รูปกิจกรรม (' + D.club.photos.length + '/4)'], ['sum', 'fa-file-pdf', 'สรุปและส่งเล่ม']);
     else if (B.term && !B.isPast) t.push(['info', 'fa-plus', B.myClubId ? 'ข้อมูลชุมนุม' : 'สร้างชุมนุม']);
-    if (B.viewer) t.push(['all', 'fa-layer-group', 'ทุกชุมนุม'], ['who', 'fa-user-check', 'นักเรียนกับชุมนุม']);
+    if (B.viewer) t.push(['all', 'fa-layer-group', 'ทุกชุมนุม'], ['who', 'fa-user-check', 'นักเรียนกับชุมนุม'], ['room', 'fa-door-open', 'สรุปรายห้อง']); // 2.01.0
     if (B.manager && !B.isPast) t.push(['cfg', 'fa-gear', 'ตั้งค่าชุมนุม']);
     if (B.superAdmin) t.push(['mgr', 'fa-user-shield', 'ผู้ดูแลงานชุมนุม']); // 2.00.4
     return t;
@@ -67,7 +67,7 @@
   tabsEl.addEventListener('change', function (e) { if (e.target.id !== 'cbTerm') return; var k = e.target.value, curK = B.curTerm ? B.curTerm.year + '_' + B.curTerm.semester : ''; st.term = k === curK ? '' : k; st.clubId = ''; st.stu = null; cfgDraft = null; boot(false); });
   function show() {
     if (!B.term && !D) { body.innerHTML = '<div class="card cb-empty"><i class="fa-solid fa-sun"></i><p>ช่วงนี้ไม่ใช่ภาคเรียนปกติ (ภาคฤดูร้อน)</p></div>'; return; }
-    var f = { info: renderInfo, stu: renderStu, check: renderCheck, photo: renderPhoto, sum: renderSum, all: renderAll, who: renderWho, cfg: renderCfg, mgr: renderMgr }[st.tab];
+    var f = { info: renderInfo, stu: renderStu, check: renderCheck, photo: renderPhoto, sum: renderSum, all: renderAll, who: renderWho, room: renderByRoom, cfg: renderCfg, mgr: renderMgr }[st.tab];
     if (f) Promise.resolve(f()).catch(function (e) { body.innerHTML = err(e.message); });
   }
   function headHtml() {
@@ -401,6 +401,46 @@
       (L.length ? '' : '<tr><td colspan="4" class="cb-mut">ไม่มีรายการ</td></tr>') + '</tbody></table>' + (L.length > 600 ? '<p class="cb-mut">แสดง 600 คนแรก — กรองเพิ่มเพื่อดูส่วนที่เหลือ</p>' : '') + '</div></div>');
     st.__whoList = L;
   }
+  // ---------- 2.01.0: สรุปนักเรียนกับชุมนุม รายห้อง (ใครยังไม่มีชุมนุม) ----------
+  function byRoomData() {
+    var r = st.stu, map = r.map || {}, rooms = {};
+    (r.students || []).forEach(function (s) { (rooms[s.roomId] = rooms[s.roomId] || []).push(s); });
+    var ids = Object.keys(rooms).sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true }); });
+    ids.forEach(function (id) { rooms[id].sort(function (a, b) { return (+a.number || 999) - (+b.number || 999) || String(a.name).localeCompare(String(b.name), 'th'); }); });
+    return { map: map, rooms: rooms, ids: ids, miss: function (id) { return rooms[id].filter(function (s) { return !(map[s.id] || []).length; }).length; } };
+  }
+  async function renderByRoom() {
+    if (!st.stu) { var stop = lazyLoad(); try { st.stu = await apiCall('clubStudents', st.term ? { term: st.term } : {}); } finally { stop(); } }
+    var R = byRoomData(), f = st.rf || (st.rf = { room: '', onlyMiss: false });
+    var ids = R.ids.filter(function (id) { return !f.onlyMiss || R.miss(id); });
+    if (!f.room || ids.indexOf(f.room) === -1) f.room = ids[0] || '';
+    var list = f.room ? R.rooms[f.room] : [], nMiss = f.room ? R.miss(f.room) : 0, cn = {};
+    (B.clubsLite || []).forEach(function (c) { cn[c.id] = c.name; });
+    var cname = function (cs) { return cs.map(function (c) { return esc(typeof c === 'object' ? c.name : (cn[c] || c)); }).join(', '); };
+    setBody('<div class="card"><div class="cb-toolbar"><h3 style="margin:0">สรุปนักเรียนกับชุมนุม รายห้อง</h3><span class="cb-sp"></span><button type="button" class="btn btn-secondary btn-sm" data-rf-pdf><i class="fa-solid fa-file-pdf"></i> ส่งออก PDF (' + (f.onlyMiss ? 'ห้องที่ยังไม่ครบ' : 'ทุกห้อง') + ')</button><button type="button" class="btn btn-success btn-sm" data-rf-xls><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button></div>' +
+      '<p class="cb-mut" style="margin:0 0 8px">ตัวเลขสีแดง = จำนวนนักเรียนที่ยังไม่มีชุมนุม · ครูที่ปรึกษาใช้ตามตัวนักเรียนได้</p>' +
+      '<div class="cb-rooms">' + ids.map(function (id) { var m = R.miss(id); return '<button type="button" class="cb-roomb' + (id === f.room ? ' on' : '') + '" data-rf-room="' + esc(id) + '">' + room(id) + (m ? ' <em>' + m + '</em>' : ' <i class="fa-solid fa-check"></i>') + '</button>'; }).join('') +
+      '<button type="button" class="cb-roomb miss' + (f.onlyMiss ? ' on' : '') + '" data-rf-only>เฉพาะห้องที่ยังไม่ครบ</button></div>' +
+      (f.room ? '<div class="cb-toolbar" style="margin-top:10px"><b>' + room(f.room) + '</b><span class="cb-sp"></span><span class="cb-tag ok">มีชุมนุม ' + (list.length - nMiss) + '</span> <span class="cb-tag no">ยังไม่มี ' + nMiss + '</span></div>' +
+        '<div class="cb-tbl-wrap"><table class="cb-tbl"><thead><tr><th style="width:60px">เลขที่</th><th>ชื่อ – สกุล</th><th>ชุมนุม</th></tr></thead><tbody>' + list.map(function (s) { var cs = R.map[s.id] || []; return '<tr' + (cs.length ? '' : ' class="cb-rowmiss"') + '><td>' + esc(s.number || '-') + '</td><td>' + esc(s.name) + '</td><td>' + (cs.length ? cname(cs) : '<b style="color:#dc2626">ยังไม่มีชุมนุม</b>') + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="cb-mut">ไม่มีห้อง</p>') + '</div>');
+  }
+  async function byRoomPdf() {
+    var R = byRoomData(), f = st.rf || {}, ids = R.ids.filter(function (id) { return !f.onlyMiss || R.miss(id); });
+    if (!ids.length) { showToast('ไม่มีรายการ', true); return; }
+    var cname = function (cs) { return cs.map(function (c) { return typeof c === 'object' ? c.name : c; }).join(', '); };
+    var pages = []; ids.forEach(function (id) { var L = R.rooms[id]; for (var i = 0; i < L.length; i += 32) pages.push({ id: id, rows: L.slice(i, i + 32), cont: i > 0 }); });
+    var termTxt = B.term ? 'ภาคเรียนที่ ' + B.term.semester + '/' + B.term.year : '';
+    await withProgress('กำลังสร้าง PDF', async function () {
+      await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js');
+      var box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-30000px;top:0';
+      var css = '.rp{position:relative;width:794px;height:1123px;box-sizing:border-box;padding:66px 38px 50px;background:#fff;font-family:Sarabun,"Noto Sans Thai",sans-serif;color:#0f172a;line-height:1.6}.rp .bd{position:absolute;left:38px;right:38px;top:0;height:48px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #4338ca;font-size:11px;color:#475569}.rp .ft{position:absolute;left:38px;right:38px;bottom:0;height:36px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#94a3b8}.rp h1{font-size:22px;margin:0;color:#1e1b4b}.rp table{width:100%;border-collapse:separate;border-spacing:0;border-top:1px solid #cbd5e1;border-left:1px solid #cbd5e1;margin-top:10px}.rp th,.rp td{border-right:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;padding:3px 8px;font-size:12px;text-align:left}.rp th{background:#eef2ff;color:#312e81}.rp tr.m td{background:#fef2f2}';
+      box.innerHTML = '<style>' + css + '</style>' + pages.map(function (pg, i) { var m = R.miss(pg.id), n = R.rooms[pg.id].length; return '<div class="rp"><div class="bd"><b style="color:#312e81">' + esc(schoolNameText()) + '</b><span>สรุปนักเรียนกับชุมนุม รายห้อง</span></div><div style="display:flex;justify-content:space-between;align-items:flex-end"><div><h1>' + room(pg.id) + ' · นักเรียนกับชุมนุม' + (pg.cont ? ' (ต่อ)' : '') + '</h1><div style="font-size:12px;color:#64748b">' + esc(termTxt) + '</div></div><div style="font-size:13px;font-weight:700"><span style="color:#16a34a">มีชุมนุม ' + (n - m) + '</span> · <span style="color:#dc2626">ยังไม่มี ' + m + '</span></div></div><table><thead><tr><th style="width:60px">เลขที่</th><th>ชื่อ – สกุล</th><th>ชุมนุม</th></tr></thead><tbody>' + pg.rows.map(function (s) { var cs = R.map[s.id] || []; return '<tr' + (cs.length ? '' : ' class="m"') + '><td>' + esc(s.number || '-') + '</td><td>' + esc(s.name) + '</td><td>' + (cs.length ? esc(cname(cs)) : '<b style="color:#dc2626">ยังไม่มีชุมนุม</b>') + '</td></tr>'; }).join('') + '</tbody></table><div class="ft"><span>' + esc(termTxt) + '</span><span>หน้า ' + (i + 1) + ' / ' + pages.length + '</span></div></div>'; }).join('');
+      document.body.appendChild(box);
+      try { var pdf = new jspdf.jsPDF('p', 'pt', 'a4'), els = box.querySelectorAll('.rp'); for (var i = 0; i < els.length; i++) { var cv = await html2canvas(els[i], { scale: 1.6, backgroundColor: '#ffffff', logging: false, windowWidth: 794 }); if (i) pdf.addPage(); pdf.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 595.28, 841.89); } pdf.save('สรุปนักเรียนกับชุมนุม_รายห้อง' + (f.onlyMiss ? '_ยังไม่ครบ' : '') + '.pdf'); } finally { box.remove(); }
+      return true;
+    }, { successLabel: 'สร้างไฟล์ PDF แล้ว' });
+  }
+  function schoolNameText() { try { return (window.__siteSettings && window.__siteSettings.schoolName) || document.title.split('—').pop().trim() || 'BNKAcademicHub'; } catch (e) { return 'BNKAcademicHub'; } }
   // ---------- แอดมิน: ตั้งค่า ----------
   var cfgDraft = null;
   async function renderCfg() {
@@ -508,6 +548,10 @@
     }
     if ((t = e.target.closest('[data-wmode]'))) { st.filt.mode = t.getAttribute('data-wmode'); renderWho(); return; }
     if (e.target.closest('[data-wre]')) { st.stu = null; renderWho(); return; }
+    if ((t = e.target.closest('[data-rf-room]'))) { st.rf.room = t.getAttribute('data-rf-room'); renderByRoom(); return; }
+    if (e.target.closest('[data-rf-only]')) { st.rf.onlyMiss = !st.rf.onlyMiss; st.rf.room = ''; renderByRoom(); return; }
+    if (e.target.closest('[data-rf-pdf]')) { byRoomPdf(); return; }
+    if (e.target.closest('[data-rf-xls]')) { var RR = byRoomData(), rows = []; RR.ids.filter(function (id) { return !st.rf.onlyMiss || RR.miss(id); }).forEach(function (id) { RR.rooms[id].forEach(function (s) { var cs = RR.map[s.id] || []; rows.push([room(id).replace(/<[^>]+>/g, ''), s.number || '', s.name, cs.length ? cs.map(function (c) { return typeof c === 'object' ? c.name : c; }).join(', ') : 'ยังไม่มีชุมนุม']); }); }); downloadBlob(buildXlsx('สรุปรายห้อง', ['ห้อง', 'เลขที่', 'ชื่อ – สกุล', 'ชุมนุม'], rows, [10, 8, 34, 34], 'สรุปนักเรียนกับชุมนุม รายห้อง'), 'สรุปนักเรียนกับชุมนุม_รายห้อง.xlsx'); return; }
     if (e.target.closest('[data-wx]')) { var L = st.__whoList || []; if (!L.length) { showToast('ไม่มีรายการ', true); return; } var map = st.stu.map || {}; downloadBlob(buildXlsx('นักเรียนกับชุมนุม', ['เลขประจำตัว', 'ชื่อ – สกุล', 'ห้อง', 'ชุมนุม'], L.map(function (s) { return [s.code && s.code !== '00000' ? s.code : '', s.name, room(s.roomId), (map[s.id] || []).map(function (c) { return c.name; }).join(', ') || 'ยังไม่มีชุมนุม']; })), 'นักเรียนกับชุมนุม.xlsx'); return; }
     // ตั้งค่า
     if (e.target.closest('[data-cg-gen]')) { cfgSync(); var s0 = document.getElementById('cgStart').value, n = Math.max(1, Math.min(40, +document.getElementById('cgCount').value || 15)), dow = +document.getElementById('cgDow').value; if (!s0) { showToast('เลือกวันเริ่มก่อน', true); return; } var d0 = dP(s0); while (d0.getDay() !== dow) d0.setDate(d0.getDate() + 1); var out = []; for (var k = 0; k < n; k++) { var dd = new Date(d0); dd.setDate(d0.getDate() + k * 7); out.push(dd.getFullYear() + '-' + ('0' + (dd.getMonth() + 1)).slice(-2) + '-' + ('0' + dd.getDate()).slice(-2)); } cfgDraft.dates = out; cfgDraft.off = cfgDraft.off.filter(function (x) { return out.indexOf(x) !== -1; }); renderCfg(); return; }
@@ -528,7 +572,7 @@
     else if (e.target.matches('[data-wr]')) { st.filt.room = e.target.value; renderWho(); }
   });
   body.addEventListener('input', function (e) {
-    if (e.target.matches('[data-wq]')) { st.filt.q = e.target.value.trim(); var pos = e.target.selectionStart; renderWho(); var n = body.querySelector('[data-wq]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } }
+    if (e.target.matches('[data-wq]')) { var inp = e.target; clearTimeout(st.wqT); st.wqT = setTimeout(function () { st.filt.q = inp.value.trim(); var pos = inp.selectionStart; renderWho(); var n = body.querySelector('[data-wq]'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } }, 220); } // 2.01.0
     else if (e.target.id === 'cbCq') { var q = e.target.value.trim(); body.querySelectorAll('#cbCk tr[data-sid]').forEach(function (tr) { tr.hidden = q && tr.getAttribute('data-name').indexOf(q) === -1; }); }
   });
   boot(false);

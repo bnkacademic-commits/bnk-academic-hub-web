@@ -6,7 +6,11 @@
   if (!session) return;
   mountChrome('teach'); if (typeof mountFooter === 'function') mountFooter();
   var body = document.getElementById('cbBody'), tabsEl = document.getElementById('cbTabs');
-  var B = null, S = null, st = { sub: '', forUser: '', view: location.hash === '#miss' ? 'miss' : 'slots', page: location.hash === '#leave' ? 'leave' : 'teach' };
+  var B = null, S = null, st = { sub: '', forUser: '', view: location.hash === '#miss' ? 'miss' : 'slots', page: location.hash === '#leave' ? 'leave' : location.hash === '#week' ? 'week' : location.hash === '#interns' ? 'interns' : 'teach', wk: '' };
+  // 2.02.0: แท็บ "นักศึกษาฝึกสอน" (ครูพี่เลี้ยง) — แสดงเมื่อมีนักศึกษาในความดูแล
+  var MENT = null;
+  function mountInterns() { tabsEl.innerHTML = pageTabs(); body.innerHTML = '<div id="itRoot"></div>'; if (window.mountMentorInterns) window.mountMentorInterns(document.getElementById('itRoot')); }
+  if (session.role !== 'intern') apiCall('internMine', {}).then(function (r) { if (r && r.interns && r.interns.length) { MENT = r; if (st.page === 'interns') mountInterns(); else if (st.page === 'leave' || !B) tabsEl.innerHTML = pageTabs(); else renderTabs(); } else if (st.page === 'interns') { st.page = 'teach'; boot(); } }, function () { if (st.page === 'interns') { st.page = 'teach'; boot(); } });
   var STATUS = ['มา', 'สาย', 'ลาป่วย', 'ลากิจ', 'ขาด', 'โดดเรียน'], SCOLOR = { 'มา': '#10b981', 'ร่วมกิจกรรม': '#06b6d4', 'สาย': '#f59e0b', 'ลาป่วย': '#3b82f6', 'ลากิจ': '#6366f1', 'ขาด': '#f43f5e', 'โดดเรียน': '#9333ea' };
   var MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
   var TIMES = { '-2': '07.30', '0': '08.00', '1': '08.30', '2': '09.20', '3': '10.20', '4': '11.10', '5': '13.00', '6': '13.50', '7': '14.40', '8': '15.30' };
@@ -39,14 +43,17 @@
     if (!B.subjects.length) { renderCards(); main.innerHTML = '<div class="card cb-empty"><i class="fa-solid fa-book"></i><p>ไม่พบวิชาที่สอนในภาคเรียนนี้</p></div>'; return; }
     if (deep && B.subjects.some(function (s) { return s.id === deep.sub; })) st.sub = deep.sub;
     if (!st.sub || !B.subjects.some(function (s) { return s.id === st.sub; })) st.sub = B.subjects[0].id;
+    if (st.page === 'week') { renderTabs(); renderWeek(); return; }
     renderCards();
     await loadSub();
   }
   // 2.00.5: แท็บแจ้งไปราชการ / ลา — ซ่อนถ้าไม่มีสิทธิ์ (ไม่ได้เปิดให้ครูแจ้งเอง และไม่ใช่ผู้ดูแล)
   function leaveOk() { return !!((B && B.leaveTab) || (L && (L.manage || L.view || L.selfReport || L.isSuper))); }
-  function pageTabs() { if (!leaveOk()) return ''; return '<span class="tc-pages">' + [['teach', 'fa-book-open', 'วิชาที่สอน'], ['leave', 'fa-user-clock', 'แจ้งไปราชการ / ลา']].map(function (x) { return '<button type="button" class="cb-seg' + (st.page === x[0] ? ' on' : '') + '" data-tc-page="' + x[0] + '"><i class="fa-solid ' + x[1] + '"></i> ' + x[2] + '</button>'; }).join('') + '</span>'; }
+  // 2.01.0: แท็บ "ตารางสอนรายสัปดาห์" (แบบหน้าเช็คชื่อ) — แสดงเมื่อมีวิชาที่สอน
+  function pageTabs() { var tabs = [['teach', 'fa-book-open', 'วิชาที่สอน']]; if (!B || (B.subjects && B.subjects.length)) tabs.push(['week', 'fa-table-cells', 'ตารางสอนรายสัปดาห์']); if (MENT && MENT.interns.length) tabs.push(['interns', 'fa-user-graduate', 'นักศึกษาฝึกสอน (' + MENT.interns.length + ')']); if (leaveOk()) tabs.push(['leave', 'fa-user-clock', 'แจ้งไปราชการ / ลา']); if (tabs.length < 2) return ''; return '<span class="tc-pages">' + tabs.map(function (x) { return '<button type="button" class="cb-seg' + (st.page === x[0] ? ' on' : '') + '" data-tc-page="' + x[0] + '"><i class="fa-solid ' + x[1] + '"></i> ' + x[2] + '</button>'; }).join('') + '</span>'; }
   function renderTabs() {
     if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); return; }
+    if (st.page === 'week') { tabsEl.innerHTML = pageTabs() + (B && B.admin && B.teachers && B.teachers.length ? ' <span class="cb-mut">ของ ' + esc(B.teacherName || '') + '</span>' : ''); return; }
     var h = pageTabs() + (B.admin && B.teachers && B.teachers.length ? '<label class="cb-mut" for="tcFor">ดูวิชาของ</label> <select id="tcFor" class="cb-search">' + (B.isSuper ? '<option value="">— เลือกครู —</option>' : '') + B.teachers.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === B.forUser ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select>' : '');
     if (B.isSuper && B.term) h += ' <button type="button" class="btn btn-secondary btn-sm" data-tc-win><i class="fa-solid fa-calendar-days"></i> ตั้งช่วงวันที่เช็คย้อนหลัง</button>';
     tabsEl.innerHTML = h;
@@ -55,8 +62,10 @@
   tabsEl.addEventListener('click', function (e) {
     if (e.target.closest('[data-tc-win]')) { openWindowCfg(); return; }
     var pg = e.target.closest('[data-tc-page]'); if (!pg || pg.getAttribute('data-tc-page') === st.page) return;
-    st.page = pg.getAttribute('data-tc-page'); try { history.replaceState(null, '', st.page === 'leave' ? '#leave' : location.pathname + location.search); } catch (x) { /* ข้าม */ }
+    st.page = pg.getAttribute('data-tc-page'); try { history.replaceState(null, '', st.page === 'leave' ? '#leave' : st.page === 'week' ? '#week' : st.page === 'interns' ? '#interns' : location.pathname + location.search); } catch (x) { /* ข้าม */ }
+    if (st.page === 'interns') { mountInterns(); return; }
     if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); renderLeave(); }
+    else if (st.page === 'week') { if (B && B.linked && B.term) { renderTabs(); renderWeek(); } else { body.innerHTML = ''; boot(); } }
     else if (B && B.linked && B.term && B.subjects.length) { body.innerHTML = ''; layout(); renderTabs(); renderCards(); loadSub(); } // 2.00.5: วาดจากข้อมูลเดิม ไม่โหลดใหม่ (ไม่กระพริบ)
     else { body.innerHTML = ''; boot(); }
   });
@@ -123,6 +132,60 @@
     };
   }
   // ---------- คาบในช่วงที่เช็คย้อนหลังได้ ----------
+  // ---------- 2.01.0: ตารางสอนรายสัปดาห์ (จันทร์–ศุกร์ × คาบ) — ข้อมูลจาก teachBoot ไม่โหลดเพิ่ม ----------
+  var WK_ORDER = [-2, 0, 1, 2, 3, 4, 5, 6, 7, 8], WK_ST = { ok: ['#ecfdf5', '#10b981', 'เช็คแล้ว'], no: ['#fef2f2', '#ef4444', 'ยังไม่เช็ค'], off: ['#f8fafc', '#cbd5e1', 'หยุดเรียน'], act: ['#f0f9ff', '#7dd3fc', 'กิจกรรม'], leave: ['#f1f5f9', '#94a3b8', 'ไปราชการ / ลา'], future: ['#ffffff', '#cbd5e1', 'ยังไม่ถึง'] };
+  function mondayOf(ds) { var d = dP(ds), dw = d.getDay() || 7; d.setDate(d.getDate() - (dw - 1)); return ymd(d); }
+  function addD(ds, n) { var d = dP(ds); d.setDate(d.getDate() + n); return ymd(d); }
+  function renderWeek() {
+    var today = B.today || ymd(new Date()), from = (B.window && B.window.from) || today, minMon = mondayOf(from), maxMon = mondayOf(today);
+    if (!st.wk) st.wk = maxMon; if (st.wk < minMon) st.wk = minMon; if (st.wk > maxMon) st.wk = maxMon;
+    var mon = st.wk, fri = addD(mon, 4), days = [0, 1, 2, 3, 4].map(function (i) { return addD(mon, i); }), grid = {}, used = {};
+    B.subjects.forEach(function (sj) {
+      var keys = {}; ((B.checked || {})[sj.id] || []).forEach(function (k) { keys[k] = 1; });
+      var allowed = null; if (sj.substituteOnly) { allowed = {}; (B.subs || []).forEach(function (x) { if (x.subjectId === sj.id) allowed[x.date + '|' + x.period] = 1; }); }
+      buildOccs(sj, function (k) { return keys[k] ? 1 : null; }, B.holidays, B.blocks, mon < from ? from : mon, fri, allowed, B.leaves).forEach(function (o) {
+        var stt = o.rec ? 'ok' : o.leave ? 'leave' : o.off ? 'off' : o.act ? 'act' : (o.date > today ? 'future' : 'no');
+        var k = o.period + '|' + o.date; (grid[k] = grid[k] || []).push({ sj: sj, o: o, st: stt }); used[o.period] = 1;
+      });
+    });
+    var holOf = function (ds) { var h = holIn(B.holidays, ds); return h && (!h.type || h.type === 'holiday') && (!h.duration || h.duration === 'full') ? (h.label || 'วันหยุด') : ''; };
+    var per = WK_ORDER.filter(function (p) { return used[p]; });
+    var ok = 0, need = 0; Object.keys(grid).forEach(function (k) { grid[k].forEach(function (x) { if (x.st === 'ok') { ok++; need++; } else if (x.st === 'no') need++; }); });
+    var pct = need ? Math.round(ok / need * 100) : null, pc = pct == null ? '#64748b' : pct >= 90 ? '#16a34a' : pct >= 75 ? '#d97706' : '#dc2626';
+    var h = '<div class="card"><div class="tc-wk-top"><div><h3 style="margin:0">ตารางสอนของ' + (B.forUser && B.admin && B.teacherName ? ' ' + esc(B.teacherName) : 'ฉัน') + '</h3><div class="cb-mut">' + esc('ภาคเรียนที่ ' + B.term.term + '/' + B.term.year) + ' · กดช่องเพื่อเช็คชื่อ / แก้ไข</div></div>' +
+      '<div class="tc-wk-nav"><button type="button" class="btn btn-ghost btn-sm" data-wk="-1"' + (mon <= minMon ? ' disabled' : '') + ' aria-label="สัปดาห์ก่อน"><i class="fa-solid fa-chevron-left"></i></button><b>' + thDate(mon).replace(/ \d{4}$/, '') + ' – ' + thDate(fri) + '</b><button type="button" class="btn btn-ghost btn-sm" data-wk="1"' + (mon >= maxMon ? ' disabled' : '') + ' aria-label="สัปดาห์ถัดไป"><i class="fa-solid fa-chevron-right"></i></button>' +
+      '<span class="tc-wk-pct" style="color:' + pc + '">' + (pct == null ? '-' : pct + '%') + ' <small class="cb-mut">(' + ok + '/' + need + ' คาบ)</small></span></div></div>';
+    if (!per.length) h += '<div class="cb-empty" style="padding:30px"><i class="fa-solid fa-mug-hot"></i><p>สัปดาห์นี้ไม่มีคาบสอน</p></div>';
+    else h += '<div class="cb-tbl-wrap"><table class="tc-wk"><thead><tr><th>คาบ</th>' + days.map(function (ds) { var off = holOf(ds); return '<th>' + thD(ds) + (off ? '<div class="tc-wk-off">' + esc(off) + '</div>' : '') + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      per.map(function (p) { return '<tr><th>' + plabel(p) + '<small>' + (TIMES[String(p)] || '') + '</small></th>' + days.map(function (ds) { var L = grid[p + '|' + ds] || []; if (!L.length) return '<td class="tc-wk-e"></td>'; return '<td>' + L.map(function (x) { var C = WK_ST[x.st]; return '<button type="button" class="tc-wk-c" style="background:' + C[0] + ';border-color:' + C[1] + '" data-wk-open="' + esc(x.sj.id) + '|' + x.o.date + '|' + x.o.period + '"' + (x.st === 'future' ? ' disabled' : '') + '><i style="background:' + C[1] + '"></i><div style="min-width:0"><b>' + esc(x.sj.room || '') + ' ' + esc(x.sj.name) + '</b><span>' + esc(x.st === 'off' || x.st === 'act' ? (x.o.label || C[2]) : x.st === 'leave' ? (x.o.label || C[2]) + ' (ไม่นับ)' : C[2]) + '</span></div></button>'; }).join('') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' +
+      (per.length ? wkMobile(days, per, grid, holOf, today) : '') +
+      '<div class="tc-lg" style="margin-top:8px">' + ['ok', 'no', 'off', 'act', 'leave'].map(function (k) { return '<span><i style="background:' + WK_ST[k][1] + '"></i>' + WK_ST[k][2] + '</span>'; }).join('') + '</div>';
+    body.innerHTML = h + '</div>';
+  }
+  // 2.02.0: มือถือ — เลือกวัน แล้วเห็นคาบของวันนั้นเรียงลงมา (แทนตารางกว้าง · ตารางยังอยู่บนจอใหญ่)
+  function wkMobile(days, per, grid, holOf, today) {
+    var di = st.wkDay; if (di == null || di < 0 || di > 4) { di = days.indexOf(today); if (di < 0) di = 0; }
+    st.wkDay = di; var ds = days[di], off = holOf(ds);
+    var h = '<div class="tc-wkm"><div class="tc-wkm-days">' + days.map(function (d, i) { var n = 0; per.forEach(function (p) { n += (grid[p + '|' + d] || []).length; });
+      return '<button type="button" class="' + (i === di ? 'on' : '') + (d === today ? ' td' : '') + '" data-wkd="' + i + '" aria-pressed="' + (i === di) + '">' + ['จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.'][i] + '<b>' + Number(d.slice(8)) + '</b><small>' + (n ? n + ' คาบ' : '-') + '</small></button>'; }).join('') + '</div>';
+    if (off) h += '<div class="tc-wkm-off"><i class="fa-solid fa-umbrella-beach"></i> ' + esc(off) + '</div>';
+    var rows = per.map(function (p) { var L = grid[p + '|' + ds] || []; return { p: p, L: L }; });
+    if (!rows.some(function (r) { return r.L.length; })) return h + '<div class="cb-empty" style="padding:22px"><i class="fa-solid fa-mug-hot"></i><p>วันนี้ไม่มีคาบสอน</p></div></div>';
+    rows.forEach(function (r) {
+      h += '<div class="tc-wkm-r"><div class="tc-wkm-t"><b>' + plabel(r.p) + '</b>' + esc(TIMES[String(r.p)] || '') + '</div><div class="tc-wkm-l">' +
+        (r.L.length ? r.L.map(function (x) { var C = WK_ST[x.st]; return '<button type="button" class="tc-wkm-c" style="border-left-color:' + C[1] + '" data-wk-open="' + esc(x.sj.id) + '|' + x.o.date + '|' + x.o.period + '"' + (x.st === 'future' ? ' disabled' : '') + '><b>' + esc((x.sj.code ? x.sj.code + ' ' : '') + x.sj.name) + '</b><span>' + esc(x.sj.room || '') + ' · <i style="background:' + C[1] + '"></i>' + esc(x.st === 'off' || x.st === 'act' ? (x.o.label || C[2]) : x.st === 'leave' ? (x.o.label || C[2]) + ' (ไม่นับ)' : C[2]) + '</span></button>'; }).join('') : '<div class="tc-wkm-e">ว่าง</div>') + '</div></div>';
+    });
+    return h + '</div>';
+  }
+  body.addEventListener('click', function (e) {
+    if (st.page !== 'week') return;
+    var dd = e.target.closest('[data-wkd]'); if (dd) { st.wkDay = Number(dd.getAttribute('data-wkd')); renderWeek(); return; }
+    var b = e.target.closest('[data-wk]'); if (b) { st.wk = addD(st.wk, Number(b.getAttribute('data-wk')) * 7); st.wkDay = null; renderWeek(); return; }
+    var c = e.target.closest('[data-wk-open]'); if (!c) return;
+    var a = c.getAttribute('data-wk-open').split('|'); deep = { sub: a[0], date: a[1], period: a[2] }; st.sub = a[0]; st.page = 'teach';
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (x) { /* ข้าม */ }
+    body.innerHTML = ''; layout(); renderTabs(); renderCards(); loadSub();
+  }, true);
   function holIn(list, ds) { return (list || []).filter(function (h) { return h.date === ds; })[0] || null; }
   function blockIn(list, sj, ds, p) {
     var g = (/^m(\d)_/.exec(sj.roomId) || [])[1] || '', lab = plabel(p);
@@ -366,7 +429,7 @@
     var y = window.scrollY; body.innerHTML = h; window.scrollTo(0, y);
   }
   function lvKeep() { var f = document.getElementById('lvFrom'), t = document.getElementById('lvTo'), n = document.getElementById('lvNote'); if (f) LV.from = f.value; if (t) LV.to = t.value; if (n) LV.note = n.value; }
-  body.addEventListener('input', function (e) { if (e.target.id === 'lvQ') { lvKeep(); LV.q = e.target.value.trim(); var pos = e.target.selectionStart; renderLeave().then(function () { var q = document.getElementById('lvQ'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } }); } });
+  body.addEventListener('input', debounce(function (e) { if (e.target.id === 'lvQ') { lvKeep(); LV.q = e.target.value.trim(); var pos = e.target.selectionStart; renderLeave().then(function () { var q = document.getElementById('lvQ'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } }); } }, 220)); // 2.01.0
   body.addEventListener('change', async function (e) {
     var t = e.target;
     if (t.matches('[data-lv-pick]')) { lvKeep(); var id = t.getAttribute('data-lv-pick'), i = LV.sel.indexOf(id); if (t.checked && i === -1) LV.sel.push(id); else if (!t.checked && i !== -1) LV.sel.splice(i, 1); renderLeave(); return; }
@@ -387,9 +450,10 @@
   body.addEventListener('click', function (e) {
     var t;
     if (st.page === 'leave') { leaveClick(e); return; }
+    if (st.page === 'interns') return;
     if ((t = e.target.closest('[data-sub]'))) { if (st.sub === t.getAttribute('data-sub')) return; st.sub = t.getAttribute('data-sub'); _occ = null; loadSub(); return; }
     if ((t = e.target.closest('[data-view]'))) { st.view = t.getAttribute('data-view'); render(); return; }
     if ((t = e.target.closest('[data-occ]'))) { var k = t.getAttribute('data-occ').split('|'), o = occs().filter(function (x) { return x.date === k[0] && String(x.period) === k[1]; })[0]; if (o) openOcc(o); }
   });
-  if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); renderLeave(); } else boot();
+  if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); renderLeave(); } else if (st.page === 'interns') tabsEl.innerHTML = pageTabs(); else boot(); // 'week' วาดใน boot() · 'interns' รอผล internMine
 })();

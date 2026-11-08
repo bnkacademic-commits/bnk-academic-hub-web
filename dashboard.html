@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.00.6.041126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.1.081126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -261,9 +261,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.00.6.041126"></script>
+  <script src="assets/api.js?v=2.02.1.081126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=2.00.6.041126"></script>
+  <script src="assets/homeroom.js?v=2.02.1.081126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -976,7 +976,7 @@
         el.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>';
       }
     }
-    document.getElementById('subSearch').addEventListener('input', renderSubmissions);
+    document.getElementById('subSearch').addEventListener('input', debounce(renderSubmissions, 200));
     document.getElementById('subFilterYear').addEventListener('change', renderSubmissions);
     document.getElementById('subFilterSemester').addEventListener('change', renderSubmissions);
     loadSubmissions();
@@ -1707,7 +1707,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       var rooms = rep.roomBased && rep.rooms && rep.rooms.length ? ' · ห้อง ' + rep.rooms.map(function (r) { return escapeHtml(r.roomName); }).join(', ') : '';
       var btn = '<button class="btn ' + (lv === 0 ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-series-open="' + escapeHtml(rep.seriesId) + '"><i class="fa-solid fa-list-check ui-icon" aria-hidden="true"></i> ดูรอบทั้งหมด</button>';
       return '<div class="event-list-item"><div class="event-date-chip' + (lv === 0 ? ' overdue' : '') + '"' + (lv === 0 ? '' : chipDeptAttr(rep.categoryId)) + '>' + dateChip + '</div>' +
-        '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(seriesName(rep)) +
+        '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + evLinkMark(rep) + escapeHtml(seriesName(rep)) +
           (rep.roomBased ? ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> ' + hrModeTag(rep) + '</span>' : '') + categoryDeptBadgeHtml(rep.categoryId) + badge + '</div>' +
           '<div class="sub-item-meta">' + (lv === -1 ? 'ทุกรอบ' : 'รอบ ' + escapeHtml(roundShort(rep))) + rooms +
             ' <span class="up-prog"><span class="up-bar"><i style="width:' + pct + '%"></i></span> ส่งแล้ว ' + sent + '/' + rounds.length + ' รอบ</span></div>' +
@@ -1803,7 +1803,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
     function bindUpToolbar(box) {
       box.querySelector('#upGroup').addEventListener('change', function (ev) { calUpState.group = ev.target.value; renderUpList(); });
       var q = box.querySelector('#upQ');
-      q.addEventListener('input', function () { calUpState.q = q.value; renderUpList(); });
+      q.addEventListener('input', debounce(function () { calUpState.q = q.value; renderUpList(); }, 200));
       box.querySelector('#upType').addEventListener('change', function (ev) { calUpState.type = ev.target.value; renderUpList(); });
       box.querySelector('#upStatus').addEventListener('change', function (ev) { calUpState.status = ev.target.value; renderUpList(); });
       box.querySelector('#upSort').addEventListener('click', function (ev) {
@@ -1851,7 +1851,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
           var overdueBadge = isOverdue ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> เกินกำหนด</span>' : '';
           if (isSubmitted) overdueBadge = e.manualCheck ? '' : '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>';
           return '<div class="event-list-item"><div class="event-date-chip' + (isOverdue ? ' overdue' : '') + '"' + (isOverdue ? '' : chipDeptAttr(e.categoryId)) + '>' + dateChip + '</div>' +
-            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + escapeHtml(e.title) +
+            '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + evLinkMark(e) + escapeHtml(e.title) +
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
               (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + overdueBadge + '</div>' +
             (termLabel ? '<div class="sub-item-meta term-tags-row">' + categoryDotHtml(categoryColorMap[e.categoryId]) + termLabel + '</div>' : '') +
