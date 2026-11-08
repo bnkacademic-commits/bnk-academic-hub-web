@@ -376,12 +376,13 @@ a:hover { text-decoration: underline; }
 .profile-dropdown .dd-header { padding: 8px 10px 10px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
 .profile-dropdown .dd-header .dd-name { font-weight: 700; font-size: 0.92rem; }
 .profile-dropdown .dd-header .dd-role { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
-.profile-dropdown button.dd-item {
+.profile-dropdown button.dd-item, .profile-dropdown a.dd-item {
+  box-sizing: border-box; text-decoration: none;
   width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
   background: none; border: none; padding: 9px 10px; border-radius: 8px; cursor: pointer;
   font-family: inherit; font-size: 0.92rem; color: var(--text);
 }
-.profile-dropdown button.dd-item:hover { background: var(--surface-2); }
+.profile-dropdown button.dd-item:hover, .profile-dropdown a.dd-item:hover { background: var(--surface-2); }
 .profile-dropdown button.dd-item.danger { color: var(--danger); }
 .profile-dropdown .dd-divider { height: 1px; background: var(--border); margin: 6px 2px; }
 .dd-item .dd-icon { width: 18px; text-align: center; flex-shrink: 0; }
@@ -2760,6 +2761,12 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 
 /* ---------- 1.75: ความกว้างหน้า + ปุ่มเว็บไซต์โรงเรียนแถวละ 8 ---------- */
 .container { max-width: 1600px; }
+/* 2.02.3: จอนอก/จอกว้าง (1700px ขึ้นไป เช่น จอ 24 นิ้ว 1920) — เนื้อหากว้างได้ถึง 1820px และจัดกึ่งกลางในพื้นที่ข้างแถบเมนู (เดิมชิดซ้าย เหลือที่ว่างด้านขวา)
+   จอแล็ปท็อป/แท็บเล็ต/มือถือไม่เปลี่ยน · หน้าที่เป็นข้อความยาว (เช่น นโยบาย) มีความกว้างของตัวเองอยู่แล้ว */
+@media (min-width: 1700px) {
+  .container { max-width: 1820px; }
+  body.has-sidenav > .container { margin-left: calc(var(--nav-w) + max(0px, (100% - var(--nav-w) - 1820px) / 2)); }
+}
 /* จอใหญ่มาก (2560px ขึ้นไป) ขยายทั้งเว็บตามสัดส่วน ไม่ให้เหลือที่ว่างมาก */
 @media (min-width: 2560px) { html { zoom: 1.25; } }
 @media (min-width: 3400px) { html { zoom: 1.5; } }
@@ -4642,7 +4649,7 @@ a.sup-up-all { font-size: .86rem; font-weight: 700; color: #7c3aed; }
 .profile-dropdown .dd-tag { display: inline-block; font-size: 0.7rem; font-weight: 700; line-height: 1.5; padding: 0 8px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary-dark); }
 .profile-dropdown .dd-sub { font-size: 0.74rem; color: var(--text-muted); line-height: 1.4; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .profile-dropdown .dd-tag + .dd-sub { margin-top: 3px; }
-.profile-dropdown button.dd-item { padding: 7px 10px; font-size: 0.9rem; line-height: 1.45; }
+.profile-dropdown button.dd-item, .profile-dropdown a.dd-item { padding: 7px 10px; font-size: 0.9rem; line-height: 1.45; }
 .profile-dropdown .dd-divider { margin: 4px 2px; }
 .dd-theme-title { padding: 4px 10px 2px; }
 .dd-themes.dd-seg { gap: 3px; margin: 2px 6px 6px; padding: 3px; background: var(--surface-2); border-radius: 10px; }
@@ -4742,6 +4749,14 @@ td.xw-cell span.xw-ftag { display: inline-block; font-size: .66rem; padding: 0 5
   .sidenav-mfoot .sidenav-item { width: calc(100% - 12px); border: 0; background: none; font: inherit; cursor: pointer; text-align: left; color: inherit; }
   .sidenav-mfoot .smf-out { color: var(--danger); }
   .sidenav.is-open { overflow-y: auto; }
+  /* 2.02.2: ลิ้นชักมือถือ — เต็มความสูงจอ ทับแถบบน · เลื่อนเข้า-ออกนุ่มขึ้น · ฉากหลังค่อยๆ มืด · ซ่อนแถบเลื่อน */
+  .sidenav { top: 0; z-index: 70; visibility: hidden; will-change: transform; overscroll-behavior: contain; scrollbar-width: none;
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 0.28s; }
+  .sidenav.is-open { visibility: visible; transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s; box-shadow: 0 0 32px rgba(0, 0, 0, 0.28); }
+  .sidenav::-webkit-scrollbar { display: none; }
+  .sidenav-backdrop { display: block; position: fixed; inset: 0; z-index: 65; background: rgba(15, 23, 42, 0.45); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.25s ease, visibility 0s linear 0.25s; }
+  body.nav-mobile-open .sidenav-backdrop { z-index: 65; opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 0.25s ease, visibility 0s; }
+  body.nav-mobile-open { overflow: hidden; }
 }
 /* 2.02.0: อุปกรณ์ที่เข้าสู่ระบบ (หน้าตั้งค่า) */
 .dv-card { max-width: 760px; }
