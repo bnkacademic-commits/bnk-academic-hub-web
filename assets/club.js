@@ -49,7 +49,8 @@
   function renderTabs(keep) {
     var t = tabList();
     if (!keep || !t.some(function (x) { return x[0] === st.tab; })) { var h = (location.hash || '').replace('#', ''); st.tab = t.some(function (x) { return x[0] === h; }) ? h : (t[0] ? t[0][0] : ''); }
-    tabsEl.innerHTML = termPickHtml() + (D && B.viewer && D.club.id !== B.myClubId ? '<span class="cb-viewing"><i class="fa-solid fa-eye"></i> ' + esc(D.club.name) + ' <button type="button" class="btn btn-ghost btn-sm" data-cb-leave>กลับ</button></span>' : '') +
+    var tools = termPickHtml() + (D && B.viewer && D.club.id !== B.myClubId ? '<span class="cb-viewing"><i class="fa-solid fa-eye"></i> ' + esc(D.club.name) + ' <button type="button" class="btn btn-ghost btn-sm" data-cb-leave>กลับ</button></span>' : '');
+    tabsEl.innerHTML = (tools ? '<div class="cb-tools">' + tools + '</div>' : '') + // 2.02.6: ภาคเรียน / ดูชุมนุมของคนอื่น = แถวของตัวเอง แยกจากแท็บ
       t.map(function (x) { return '<button type="button" role="tab" data-cb-tab="' + x[0] + '" class="' + (x[0] === st.tab ? 'on' : '') + '"><i class="fa-solid ' + x[1] + '" aria-hidden="true"></i> ' + x[2] + '</button>'; }).join('');
     show();
   }
@@ -268,6 +269,12 @@
   }
   function paraHtml(t) { return String(t || '').split(/\n/).map(function (l) { return l.trim() ? '<p>' + esc(l) + '</p>' : '<p class="sp"></p>'; }).join(''); }
   function secH(title, sub) { return '<div class="bk-sec"><h2>' + title + '</h2>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>'; }
+  // 2.02.6: ส่วนผู้อำนวยการ (เรียน … · อนุมัติ / สั่งการ · ลงชื่อ) ท้ายหน้าลงนาม — เปิดที่ ตั้งค่า › การส่งเล่ม ขั้นที่ 3
+  function dirHtml(d) {
+    if (!d || !d.on) return '';
+    return '<div class="bk-dir"><div class="to">เรียน ' + esc(d.to || '') + '</div><div class="ck"><span><i class="bx"></i> อนุมัติ</span><span><i class="bx"></i> สั่งการ<em></em></span></div>' +
+      '<div class="sg"><div>ลงชื่อ<em class="ln2"></em></div>(' + esc(d.name || '') + ')<br>' + esc(d.title || '') + '</div></div>';
+  }
   function sigHtml(list) { return '<div class="bk-sig">' + list.map(function (x) { return '<div><div class="ln"></div>(' + esc(x[0]) + ')<br><span>' + esc(x[1]) + '</span></div>'; }).join('') + '</div>'; }
   // รูปตัดกลางให้ได้อัตราส่วนพอดีกรอบ (html2canvas ไม่รองรับ object-fit — เดิมรูปถูกบีบ)
   function cropCover(src, W, H) {
@@ -299,7 +306,7 @@
       '<table class="bk-kv"><tr><th>กิจกรรมชุมนุม</th><td>' + esc(c.name) + '</td></tr><tr><th>ครูที่ปรึกษากิจกรรมชุมนุม</th><td>' + esc(tnames.join(' · ')) + '</td></tr></table>' +
       '<div class="bk-h3">การอนุมัติผลการเรียนกิจกรรม</div><div class="bk-stat"><div><span>นักเรียนทั้งหมด</span><b>' + act.length + '</b></div><div class="g"><span>ผ่าน (ผ)</span><b>' + nPass + '</b></div><div class="r"><span>ไม่ผ่าน (มผ.)</span><b>' + nFail + '</b></div></div>' +
       '<div class="bk-h3">การส่งและตรวจในระบบ</div><table class="bk-t"><tr><th>ขั้นตอน</th><th>ผล</th><th>วันที่</th></tr><tr><td class="l">ส่งรายงาน</td><td>' + (rv ? 'ส่งแล้ว' : 'ส่งพร้อมเล่มนี้') + '</td><td>' + thD(String(rv ? rv.at : new Date().toISOString()).slice(0, 10), true) + '</td></tr><tr><td class="l">ตรวจรายงาน</td><td>' + (rv && rv.state === 'ok' ? 'ผ่าน' : 'รอตรวจ') + '</td><td>-</td></tr></table>' +
-      sigHtml(tnames.map(function (n) { return [n, 'ครูที่ปรึกษากิจกรรมชุมนุม']; }).concat((B.signers || []).map(function (x) { return [x.name, x.title]; }))));
+      sigHtml(tnames.map(function (n) { return [n, 'ครูที่ปรึกษากิจกรรมชุมนุม']; }).concat((B.signers || []).map(function (x) { return [x.name, x.title]; }))) + dirHtml(B.director));
     // 2-4. ข้อความคงที่
     [['ขั้นตอนการจัดทำและส่งเล่มเอกสาร', B.texts.steps], ['กิจกรรมชุมนุม', B.texts.aims], ['เกณฑ์การตัดสินและแนวทางการแก้ไข', B.texts.criteria]].forEach(function (x) { parts.push(secH(x[0]) + '<div class="bk-txt">' + paraHtml(x[1]) + '</div>'); });
     // 5. แบบเสนอกิจกรรมชุมนุม
@@ -330,7 +337,7 @@
     '.bk-t.sm th,.bk-t.sm td{font-size:11px;padding:3px 2px}.bk-t th.v{font-size:10.5px;line-height:1.2;padding:2px 1px;min-width:22px}.bk-t th.v small{font-size:9px;font-weight:400}.red{color:#dc2626;font-weight:700}.gr{color:#15803d;font-weight:700}.am{color:#b45309;font-weight:700}' +
     '.bk-kv{border-collapse:separate;border-spacing:0;width:100%;margin:6px 0 4px;border-bottom:1px solid #c7d2fe;border-left:1px solid #c7d2fe}.bk-kv th{width:200px;text-align:left;background:#eef2ff;color:#3730a3;padding:6px 10px;border:0;border-right:1px solid #c7d2fe;border-top:1px solid #c7d2fe;font-size:14px}.bk-kv td{padding:6px 10px;border:0;border-right:1px solid #c7d2fe;border-top:1px solid #c7d2fe;font-size:14.5px;font-weight:700}' +
     '.bk-stat{display:flex;gap:12px}.bk-stat div{flex:1;border:1px solid #c7d2fe;background:#f5f7ff;border-radius:10px;padding:8px 10px;text-align:center}.bk-stat span{display:block;font-size:13px;color:#475569}.bk-stat b{font-size:28px;color:#1e1b4b;line-height:1.3}.bk-stat .g{background:#f0fdf4;border-color:#bbf7d0}.bk-stat .g b{color:#15803d}.bk-stat .r{background:#fef2f2;border-color:#fecaca}.bk-stat .r b{color:#dc2626}' +
-    '.bk-sig{display:grid;grid-template-columns:1fr 1fr;gap:30px 40px;margin-top:34px;text-align:center;font-size:14px}.bk-sig .ln{border-bottom:1px dotted #0f172a;height:26px;margin:0 18px 6px}.bk-sig span{color:#475569;font-size:13px}' +
+    '.bk-dir{margin-top:34px;font-size:14px;page-break-inside:avoid}.bk-dir .to{font-weight:600}.bk-dir .ck{display:flex;gap:46px;justify-content:center;margin:16px 0 22px}.bk-dir .ck span{display:flex;align-items:center;gap:8px}.bk-dir .bx{display:inline-block;width:13px;height:13px;border:1.5px solid #0f172a}.bk-dir .ck em{display:inline-block;width:190px;border-bottom:1px dotted #0f172a;margin-left:4px;height:14px}.bk-dir .sg{text-align:center;line-height:1.8}.bk-dir .sg .ln2{display:inline-block;width:200px;border-bottom:1px dotted #0f172a;margin-left:6px;height:14px}' + '.bk-sig{display:grid;grid-template-columns:1fr 1fr;gap:30px 40px;margin-top:34px;text-align:center;font-size:14px}.bk-sig .ln{border-bottom:1px dotted #0f172a;height:26px;margin:0 18px 6px}.bk-sig span{color:#475569;font-size:13px}' +
     '.bk-txt p{margin:0 0 3px}.bk-txt p.sp{height:8px}.bk-txt.box{border:1px solid #e2e8f0;background:#f8fafc;border-radius:8px;padding:8px 12px;min-height:110px}' +
     '.bk-fld{margin:0 0 12px}.bk-fld .lb{font-weight:700;color:#3730a3;font-size:15px;border-bottom:1px solid #e0e7ff;margin-bottom:4px;padding-bottom:2px}.bk-g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}' +
     '.bk-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;margin-top:6px;color:#475569}' +
@@ -446,7 +453,8 @@
   async function renderCfg() {
     if (!cfgDraft) {
       var info = null; try { info = await apiCall('clubCfgInfo', { term: st.term || '' }); } catch (e) { info = null; } var cats = info && info.cats ? info.cats : []; // 2.02.5
-      cfgDraft = { dates: (B.sessions || []).map(function (s) { return s.date; }), off: (B.sessions || []).filter(function (s) { return s.off; }).map(function (s) { return s.date; }), openTime: B.openTime || '12:00', categoryId: B.categoryId || '', signers: (B.signers || []).slice(), texts: Object.assign({}, B.texts), managers: (B.managers || []).slice(), cats: cats, info: info };
+      cfgDraft = { dates: (B.sessions || []).map(function (s) { return s.date; }), off: (B.sessions || []).filter(function (s) { return s.off; }).map(function (s) { return s.date; }), openTime: B.openTime || '12:00', categoryId: B.categoryId || '', signers: (B.signers || []).map(function (x) { return Object.assign({}, x); }), texts: Object.assign({}, B.texts), managers: (B.managers || []).slice(), cats: cats, info: info,
+        bookFrom: info && info.book ? info.book.from : '', bookUntil: info && info.book ? info.book.until : '', director: Object.assign({ on: false, id: '', name: '', title: 'ผู้อำนวยการโรงเรียน', to: '' }, B.director || {}) }; // 2.02.6
     }
     var c = cfgDraft, nm = {}; B.teachers.forEach(function (t) { nm[t.id] = t.name; });
     setBody('<div class="card"><h3><i class="fa-solid fa-calendar-days"></i> วันชุมนุมของทั้งโรงเรียน · ภาคเรียนที่ ' + esc(B.term ? B.term.semester + '/' + B.term.year : '-') + '</h3>' +
@@ -454,7 +462,7 @@
       '<div class="field"><label>เพิ่มวันเอง</label><input type="date" id="cgAdd" /></div><button type="button" class="btn btn-secondary" data-cg-add><i class="fa-solid fa-plus"></i> เพิ่ม</button><div class="field"><label>เว็บเช็คชื่อเปิดให้เช็คตั้งแต่</label><input type="time" id="cgOpen" value="' + esc(c.openTime) + '" /></div></div>' +
       '<div class="cb-dates">' + c.dates.map(function (d, i) { var off = c.off.indexOf(d) !== -1; return '<span class="cb-date' + (off ? ' off' : '') + '"><b>ครั้งที่ ' + (i + 1) + '</b> ' + thDW(d) + ' <button type="button" class="cb-x" data-cg-off="' + d + '" title="' + (off ? 'ยกเลิกวันหยุด' : 'ตั้งเป็นวันหยุด (ไม่นับ)') + '"><i class="fa-solid ' + (off ? 'fa-rotate-left' : 'fa-ban') + '"></i></button><button type="button" class="cb-x" data-cg-del="' + d + '" title="ลบวันนี้"><i class="fa-solid fa-xmark"></i></button></span>'; }).join('') + (c.dates.length ? '' : '<span class="cb-mut">ยังไม่มีวันชุมนุม — กด "สร้างวัน"</span>') + '</div>' +
       '<p class="cb-mut">วันหยุดทั้งวันในปฏิทินโรงเรียนจะเป็น "หยุด" ให้อัตโนมัติ (ไม่นับใน % การมา) · กด <i class="fa-solid fa-ban"></i> เพื่อตั้งหยุดเอง · เว็บเช็คชื่อแสดงปุ่มชุมนุมเฉพาะวันชุมนุม ตั้งแต่เวลาที่ตั้ง ถึง 23:59 น.</p></div>' +
-      sendCardHtml(c) + // 2.02.5: การส่งเล่ม 3 ขั้นตอน
+      '<div id="csWrap">' + sendCardHtml(c) + '</div>' + // 2.02.5: การส่งเล่ม 3 ขั้นตอน · 2.02.6: เปลี่ยนค่าแล้ววาดเฉพาะส่วนนี้ (ไม่กระพริบทั้งหน้า)
       '<div class="card"><h3><i class="fa-solid fa-align-left"></i> ข้อความคงที่ในเล่ม (ใช้กับทุกชุมนุม)</h3>' + [['steps', 'ขั้นตอนการจัดทำและส่งเล่มเอกสาร'], ['aims', 'กิจกรรมชุมนุม (มุ่งเน้นให้ผู้เรียน)'], ['criteria', 'เกณฑ์การตัดสินและแนวทางการแก้ไข']].map(function (x) { return '<div class="field"><label>' + x[1] + '</label><textarea rows="6" data-tx="' + x[0] + '">' + esc(c.texts[x[0]] || '') + '</textarea></div>'; }).join('') + '</div>' +
       '<div class="cb-actions"><span class="cb-sp"></span><button type="button" class="btn btn-success" data-cg-save><i class="fa-solid fa-check"></i> บันทึกการตั้งค่า</button></div>');
   }
@@ -462,25 +470,47 @@
   function sendCardHtml(c) {
     var info = c.info || {}, sm = info.summary || { total: 0, sent: 0, ok: 0, fix: 0 };
     var cat = (c.cats || []).filter(function (x) { return x.id === c.categoryId; })[0] || (info.category && info.category.id === c.categoryId ? info.category : null);
-    var ok1 = !!cat, rv = ok1 && info.category && info.category.id === c.categoryId ? (info.reviewers || []) : [], ok2 = ok1, ok3 = c.signers.some(function (sg) { return sg.name; });
+    var ok1 = !!cat, rv = info.reviewers || [], ok2 = true, ok3 = c.signers.some(function (sg) { return sg.name; });
     var dot = function (ok) { return '<span class="cs-no ' + (ok ? 'ok' : 'wait') + '"><i class="fa-solid ' + (ok ? 'fa-check' : 'fa-exclamation') + '"></i></span>'; };
-    var tOpts = function (sel) { var has = false; var o = (B.teachers || []).map(function (t) { if (t.id === sel.id) has = true; return '<option value="' + esc(t.id) + '"' + (t.id === sel.id ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join(''); return '<option value="">— เลือกครู —</option>' + (!has && sel.name ? '<option value="__keep" selected>' + esc(sel.name) + ' (ชื่อเดิม)</option>' : '') + o; };
-    var sigs = [['', 'ครูที่ปรึกษาชุมนุม', 'ครูที่ปรึกษากิจกรรมชุมนุม']].concat(c.signers.filter(function (sg) { return sg.name || sg.title; }).map(function (sg) { return ['', sg.name || '…', sg.title || '…']; }));
+    var tOpts = function (sel, ph) { var has = false; var o = (B.teachers || []).map(function (t) { if (t.id === sel.id) has = true; return '<option value="' + esc(t.id) + '"' + (t.id === sel.id ? ' selected' : '') + '>' + esc(t.name) + '</option>'; }).join(''); return '<option value="">' + (ph || '— เลือกครู —') + '</option>' + (!has && sel.name ? '<option value="__keep" selected>' + esc(sel.name) + (sel.id ? ' (ชื่อเดิม)' : '') + '</option>' : '') + o; };
+    var sigs = [['ครูที่ปรึกษาชุมนุม', 'ครูที่ปรึกษากิจกรรมชุมนุม']].concat(c.signers.filter(function (sg) { return sg.name || sg.title; }).map(function (sg) { return [sg.name || '…', sg.title || '…']; }));
+    var d = c.director || {}, n = c.signers.length, canBook = info.canBook !== false;
     return '<div class="cs-sum"><div><b>' + sm.total + '</b>ชุมนุมทั้งหมด</div><div><b class="b">' + sm.sent + '</b>ส่งเล่มแล้ว</div><div><b class="g">' + sm.ok + '</b>ผ่านการตรวจ (ล็อกแล้ว)</div><div><b class="o">' + sm.fix + '</b>ส่งกลับแก้ไข</div></div>' +
       '<div class="card cs-card"><h3><i class="fa-solid fa-paper-plane"></i> การส่งเล่มรายงานชุมนุม <span class="cb-tag ' + (ok1 && ok3 ? 'ok' : 'wt') + '" style="margin-left:auto">' + (ok1 && ok3 ? '<i class="fa-solid fa-circle-check"></i> พร้อมรับเล่ม' : '<i class="fa-solid fa-circle-exclamation"></i> ยังตั้งค่าไม่ครบ') + '</span></h3>' +
-      '<div class="cs-stp">' + dot(ok1) + '<div class="cs-st"><b>ขั้นที่ 1 · ที่รับเล่มรายงาน</b><p>เล่มที่ครูกดส่งจะเข้าไปอยู่ในประเภทงานนี้ (ดูและตรวจได้ที่หน้าสรุปการส่งงาน)</p><div class="cb-inl wrap"><select id="cgCat" class="cs-sel"><option value="">— ยังไม่เลือก —</option>' + (c.cats || []).map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === c.categoryId ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select>' + (ok1 ? '' : '<span class="cb-mut">หรือ</span><button type="button" class="btn btn-secondary" data-cg-mkcat><i class="fa-solid fa-wand-magic-sparkles"></i> สร้างประเภทงานให้อัตโนมัติ</button>') + '</div></div></div>' +
-      '<div class="cs-stp">' + dot(ok2) + '<div class="cs-st"><b>ขั้นที่ 2 · ผู้ตรวจเล่ม</b><p>คนที่กด "ผ่าน / ส่งกลับแก้ไข" = เจ้าหน้าที่และหัวหน้ากลุ่ม' + (info.category && info.category.department ? 'บริหารงาน' + esc(info.category.department) : 'ของประเภทงานนี้') + ' (และผู้ดูแลระบบ)</p>' +
-        (!ok1 ? '<span class="cb-mut">เลือกที่รับเล่มในขั้นที่ 1 ก่อน</span>' : rv.length ? rv.map(function (u) { return '<span class="cs-pill"><i class="fa-solid fa-user-check"></i> ' + esc(u.name) + ' <small>' + esc(u.kind) + '</small></span>'; }).join(' ') : '<span class="cb-mut">ยังไม่มีเจ้าหน้าที่ในกลุ่มนี้ — ผู้ดูแลระบบตรวจได้</span>') +
-        (ok1 && info.superAdmin ? ' <a class="btn btn-secondary btn-sm" href="settings.html#website"><i class="fa-solid fa-pen"></i> แก้ประเภทงาน</a>' : '') + '</div></div>' +
-      '<div class="cs-stp">' + dot(ok3) + '<div class="cs-st"><b>ขั้นที่ 3 · ผู้ลงนามในหน้าแรกของเล่ม</b><p>ต่อจากครูที่ปรึกษาชุมนุม · เลือกชื่อจากครูในระบบ แล้วพิมพ์ตำแหน่งที่จะพิมพ์ในเล่ม</p>' +
-        (c.signers.length ? '<div class="cs-sgh"><span></span><span>ชื่อ (เลือกจากรายชื่อครู)</span><span>ตำแหน่งในเล่ม</span><span></span></div>' : '') +
-        c.signers.map(function (sg, i) { return '<div class="cs-sg"><b>' + (i + 1) + '</b><select data-sg-u="' + i + '" class="cs-sel">' + tOpts(sg) + '</select><input data-sg-t="' + i + '" value="' + esc(sg.title) + '" placeholder="เช่น หัวหน้ากลุ่มบริหารงานวิชาการ" /><button type="button" class="cb-x" data-sg-del="' + i + '" aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button></div>'; }).join('') +
+      '<div class="cs-stp">' + dot(ok1) + '<div class="cs-st"><b>ขั้นที่ 1 · ที่รับเล่มรายงาน และวันส่ง</b><p>เล่มที่ครูกดส่งจะเข้าไปอยู่ในประเภทงานนี้ (ดูและตรวจได้ที่หน้าสรุปการส่งงาน)</p><div class="cb-inl wrap"><select id="cgCat" class="cs-sel"><option value="">— ยังไม่เลือก —</option>' + (c.cats || []).map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === c.categoryId ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select>' +
+        (!ok1 ? '<span class="cb-mut">หรือ</span><button type="button" class="btn btn-secondary" data-cg-mkcat><i class="fa-solid fa-wand-magic-sparkles"></i> สร้างประเภทงานให้อัตโนมัติ</button>' : '') + '</div>' +
+        (canBook ? '<div class="cs-book"><label>ส่งเล่มได้ตั้งแต่</label><input type="date" id="cgBookFrom" value="' + esc(c.bookFrom || '') + '"' + (ok1 ? '' : ' disabled') + ' /><label>ถึง</label><input type="date" id="cgBookUntil" value="' + esc(c.bookUntil || '') + '"' + (ok1 ? '' : ' disabled') + ' />' +
+          (c.bookUntil ? '<button type="button" class="cb-x" data-cg-bookclr title="ไม่กำหนดวันส่ง" aria-label="ไม่กำหนดวันส่ง"><i class="fa-solid fa-xmark"></i></button>' : '') + '</div>' +
+          '<p class="cs-note"><i class="fa-solid fa-bell"></i> ' + (c.bookUntil ? 'ครูที่ปรึกษาชุมนุมจะเห็น "ส่งเล่มรายงานกิจกรรมชุมนุม" ในกำหนดส่งงานหน้าแรกและปฏิทิน พร้อมปุ่มไปส่งเล่ม · พ้นกำหนดยังส่งได้ (ขึ้นว่าเกินกำหนด) · รายการนี้อยู่ใน ประกาศและปฏิทิน › ปฏิทินส่งงาน ด้วย' : 'ไม่บังคับ — ถ้าตั้งวัน ครูที่ปรึกษาชุมนุมจะได้รับแจ้งเตือนในกำหนดส่งงานหน้าแรก') + '</p>' : '') +
+      '</div></div>' +
+      '<div class="cs-stp">' + dot(ok2) + '<div class="cs-st"><b>ขั้นที่ 2 · ผู้ตรวจเล่ม</b><p>ผู้ดูแลชุมนุม (สิทธิ์จัดการ) กด "ผ่าน / ส่งกลับแก้ไข" ได้ที่หน้าสรุปการส่งงาน' + (c.bookUntil ? '' : ' (เมื่อตั้งวันส่งในขั้นที่ 1)') + '</p>' +
+        (rv.length ? rv.map(function (u) { return '<span class="cs-pill"><i class="fa-solid fa-user-check"></i> ' + esc(u.name) + ' <small>' + esc(u.kind) + '</small></span>'; }).join(' ') : '<span class="cb-mut">ยังไม่มีผู้ดูแลชุมนุมที่มีสิทธิ์จัดการ</span>') +
+        (info.superAdmin ? ' <a class="btn btn-secondary btn-sm" href="settings.html#managers"><i class="fa-solid fa-user-gear"></i> แก้ผู้ดูแลชุมนุม</a>' : '') +
+        '<p class="cs-note"><i class="fa-solid fa-circle-info"></i> เจ้าหน้าที่และหัวหน้ากลุ่ม' + (cat && info.category && info.category.department ? 'บริหารงาน' + esc(info.category.department) : 'ของประเภทงาน') + ' และผู้ดูแลระบบ ตรวจได้อยู่แล้วโดยไม่ต้องตั้ง</p></div></div>' +
+      '<div class="cs-stp">' + dot(ok3) + '<div class="cs-st"><b>ขั้นที่ 3 · ผู้ลงนามในหน้าแรกของเล่ม</b><p>ต่อจากครูที่ปรึกษาชุมนุม เรียงจากซ้ายไปขวา · เลือกชื่อจากครูในระบบ แล้วพิมพ์ตำแหน่ง · กดลูกศรเพื่อสลับลำดับ</p>' +
+        (n ? '<div class="cs-sgh"><span></span><span>ชื่อ (เลือกจากรายชื่อครู)</span><span>ตำแหน่งในเล่ม</span><span></span></div>' : '') +
+        c.signers.map(function (sg, i) { return '<div class="cs-sg"><b>' + (i + 1) + '</b><select data-sg-u="' + i + '" class="cs-sel">' + tOpts(sg) + '</select><input data-sg-t="' + i + '" value="' + esc(sg.title) + '" placeholder="เช่น หัวหน้ากลุ่มบริหารงานวิชาการ" /><span class="cs-mv"><button type="button" data-sg-mv="' + i + '|-1"' + (i === 0 ? ' disabled' : '') + ' aria-label="เลื่อนขึ้น"><i class="fa-solid fa-arrow-up"></i></button><button type="button" data-sg-mv="' + i + '|1"' + (i === n - 1 ? ' disabled' : '') + ' aria-label="เลื่อนลง"><i class="fa-solid fa-arrow-down"></i></button></span><button type="button" class="cb-x" data-sg-del="' + i + '" aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button></div>'; }).join('') +
         '<div class="cb-inl wrap"><button type="button" class="btn btn-secondary" data-sg-add><i class="fa-solid fa-plus"></i> เพิ่มผู้ลงนาม</button><span class="cb-mut">เปลี่ยนคนดำรงตำแหน่ง = แก้ที่นี่ที่เดียว เล่มที่สร้างใหม่ใช้ชื่อใหม่</span></div>' +
-        '<div class="cs-prev"><div class="cs-prev-h"><i class="fa-solid fa-eye"></i> ตัวอย่างช่องลงนามในเล่ม</div><div class="cs-sigs">' + sigs.map(function (x) { return '<div><i></i>(' + esc(x[1]) + ')<br>' + esc(x[2]) + '</div>'; }).join('') + '</div></div>' +
+        '<div class="cs-dir"><label class="cs-sw"><input type="checkbox" class="switch" role="switch" id="cgDirOn"' + (d.on ? ' checked' : '') + ' /> <b>ส่วนผู้อำนวยการอนุมัติ</b> ท้ายหน้าลงนาม (อนุมัติ / สั่งการ)</label>' +
+          (d.on ? '<div class="cs-dirf"><div class="field"><label>เรียน</label><input id="cgDirTo" value="' + esc(d.to || '') + '" placeholder="ผู้อำนวยการโรงเรียน…" /></div><div class="field"><label>ชื่อผู้อำนวยการ</label><select id="cgDirU" class="cs-sel">' + tOpts(d.typed ? { id: '', name: '' } : d, '— เลือกจากรายชื่อ —') + '<option value="__type"' + (d.typed ? ' selected' : '') + '>พิมพ์ชื่อเอง…</option></select>' + (d.typed ? '<input id="cgDirName" value="' + esc(d.name || '') + '" placeholder="เช่น ดร.สมชาย ใจดี" />' : '') + '</div><div class="field"><label>ตำแหน่ง</label><input id="cgDirTitle" value="' + esc(d.title || '') + '" /></div></div>' : '') + '</div>' +
+        '<div class="cs-prev"><div class="cs-prev-h"><i class="fa-solid fa-eye"></i> ตัวอย่างหน้าลงนามในเล่ม</div><div class="cs-sigs">' + sigs.map(function (x) { return '<div><i></i>(' + esc(x[0]) + ')<br>' + esc(x[1]) + '</div>'; }).join('') + '</div>' +
+          (d.on ? '<div class="cs-dprev"><div class="cs-dto">เรียน ' + esc(d.to || '…') + '</div><div class="cs-dck"><span><em class="cs-bx"></em> อนุมัติ</span><span><em class="cs-bx"></em> สั่งการ………………………………</span></div><div class="cs-dsig"><i></i>ลงชื่อ<br>(' + esc(d.name || '…') + ')<br>' + esc(d.title || '…') + '</div></div>' : '') + '</div>' +
       '</div></div>' +
       '<p class="cb-mut"><i class="fa-solid fa-circle-info"></i> ยังไม่เลือกที่รับเล่ม (ขั้นที่ 1) = ครูส่งเล่มไม่ได้ · แก้แล้วกด "บันทึกการตั้งค่า" ด้านล่าง</p></div>';
   }
-  function cfgSync() { var c = cfgDraft; if (!c) return; var o = document.getElementById('cgOpen'); if (o) c.openTime = o.value || '12:00'; var cat = document.getElementById('cgCat'); if (cat) c.categoryId = cat.value; body.querySelectorAll('[data-sg-t]').forEach(function (x) { c.signers[+x.getAttribute('data-sg-t')].title = x.value; }); body.querySelectorAll('[data-sg-u]').forEach(function (x) { var sg = c.signers[+x.getAttribute('data-sg-u')], u = (B.teachers || []).filter(function (t) { return t.id === x.value; })[0]; if (x.value === '__keep') return; if (u) { sg.id = u.id; sg.name = u.name; } else if (!x.value) { sg.id = ''; sg.name = ''; } }); /* 2.02.5: เลือกจากรายชื่อครู */ body.querySelectorAll('[data-tx]').forEach(function (x) { c.texts[x.getAttribute('data-tx')] = x.value; }); }
+  // 2.02.6: วาดใหม่เฉพาะการ์ดการส่งเล่ม (โครงสร้างเปลี่ยน) · เปลี่ยนค่า = อัปเดตเฉพาะตัวอย่าง/สถานะ (ไม่กระพริบ)
+  function csRender() { var w = document.getElementById('csWrap'); if (w && cfgDraft) w.innerHTML = sendCardHtml(cfgDraft); }
+  function csRefresh() {
+    var w = document.getElementById('csWrap'); if (!w || !cfgDraft) return;
+    var tmp = document.createElement('div'); tmp.innerHTML = sendCardHtml(cfgDraft);
+    ['.cs-prev', '.cs-card h3 .cb-tag'].forEach(function (sel) { var a = w.querySelector(sel), b = tmp.querySelector(sel); if (a && b) a.replaceWith(b); });
+    var da = w.querySelectorAll('.cs-stp > .cs-no'), db = tmp.querySelectorAll('.cs-stp > .cs-no'); da.forEach(function (x, i) { if (db[i]) x.replaceWith(db[i]); });
+  }
+  function cfgSync() { var c = cfgDraft; if (!c) return; var o = document.getElementById('cgOpen'); if (o) c.openTime = o.value || '12:00'; var cat = document.getElementById('cgCat'); if (cat) c.categoryId = cat.value; body.querySelectorAll('[data-sg-t]').forEach(function (x) { c.signers[+x.getAttribute('data-sg-t')].title = x.value; }); body.querySelectorAll('[data-sg-u]').forEach(function (x) { var sg = c.signers[+x.getAttribute('data-sg-u')], u = (B.teachers || []).filter(function (t) { return t.id === x.value; })[0]; if (x.value === '__keep') return; if (u) { sg.id = u.id; sg.name = u.name; } else if (!x.value) { sg.id = ''; sg.name = ''; } }); /* 2.02.5: เลือกจากรายชื่อครู */ body.querySelectorAll('[data-tx]').forEach(function (x) { c.texts[x.getAttribute('data-tx')] = x.value; });
+    var bf = document.getElementById('cgBookFrom'), bu = document.getElementById('cgBookUntil'); if (bu) { c.bookFrom = bf.value; c.bookUntil = bu.value; } // 2.02.6
+    var dOn = document.getElementById('cgDirOn'); if (dOn) { var d = c.director; d.on = dOn.checked; var du = document.getElementById('cgDirU'), dn = document.getElementById('cgDirName'), dt = document.getElementById('cgDirTitle'), dto = document.getElementById('cgDirTo');
+      if (dto) d.to = dto.value; if (dt) d.title = dt.value;
+      if (du) { if (du.value === '__type') { d.typed = true; d.id = ''; if (dn) d.name = dn.value; } else if (du.value === '__keep') { if (dn) d.name = dn.value; } else { var u2 = (B.teachers || []).filter(function (t) { return t.id === du.value; })[0]; d.typed = false; d.id = u2 ? u2.id : ''; d.name = u2 ? u2.name : ''; } } } }
 
   // ---------- 2.00.4: ผู้ดูแลงานชุมนุม (Super Admin เลือกจากรายชื่อในระบบ · จัดการ / ดูผล) ----------
   var mgrDraft = null;
@@ -495,7 +525,12 @@
       '<p class="cb-mut"><b>จัดการ</b> = ดู/แก้ทุกชุมนุม · ย้ายนักเรียน · ตั้งวันชุมนุม ผู้ลงนาม ข้อความในเล่ม · แก้ภาคเรียนที่ผ่านมาได้ — <b>ดูผล</b> = ดูทุกชุมนุมและนักเรียนกับชุมนุมได้อย่างเดียว</p>' +
       '<div class="cb-actions"><span class="cb-sp"></span><button type="button" class="btn btn-success" data-mg-save><i class="fa-solid fa-check"></i> บันทึก</button></div></div>');
   }
-  body.addEventListener('change', function (e) { if (e.target.matches && e.target.matches('[data-sg-u], #cgCat') && cfgDraft) { cfgSync(); renderCfg(); } }); // 2.02.5: ตัวอย่างช่องลงนาม / สถานะขั้นตอนเปลี่ยนตาม
+  body.addEventListener('change', function (e) { // 2.02.5 · 2.02.6: ไม่วาดทั้งหน้าใหม่ (เดิมกระพริบ)
+    if (!cfgDraft || !e.target.matches) return;
+    if (e.target.matches('#cgCat, #cgDirOn, #cgDirU')) { cfgSync(); csRender(); return; } // โครงสร้างการ์ดเปลี่ยน
+    if (e.target.matches('[data-sg-u], #cgBookFrom, #cgBookUntil')) { cfgSync(); csRefresh(); }
+  });
+  body.addEventListener('input', function (e) { if (cfgDraft && e.target.matches && e.target.matches('[data-sg-t], #cgDirName, #cgDirTitle, #cgDirTo')) { cfgSync(); csRefresh(); } });
   body.addEventListener('change', function (e) {
     var t;
     if (e.target.id === 'cbMgAdd' && e.target.value) { mgrDraft.push({ id: e.target.value, manage: false, view: true }); renderMgr(); return; }
@@ -580,15 +615,18 @@
     if (e.target.closest('[data-cg-add]')) { cfgSync(); var v2 = document.getElementById('cgAdd').value; if (v2 && cfgDraft.dates.indexOf(v2) === -1) { cfgDraft.dates.push(v2); cfgDraft.dates.sort(); } renderCfg(); return; }
     if ((t = e.target.closest('[data-cg-del]'))) { cfgSync(); var dv = t.getAttribute('data-cg-del'); cfgDraft.dates = cfgDraft.dates.filter(function (x) { return x !== dv; }); cfgDraft.off = cfgDraft.off.filter(function (x) { return x !== dv; }); renderCfg(); return; }
     if ((t = e.target.closest('[data-cg-off]'))) { cfgSync(); var ov = t.getAttribute('data-cg-off'), oi = cfgDraft.off.indexOf(ov); if (oi === -1) cfgDraft.off.push(ov); else cfgDraft.off.splice(oi, 1); renderCfg(); return; }
-    if (e.target.closest('[data-sg-add]')) { cfgSync(); cfgDraft.signers.push({ title: '', name: '', id: '' }); renderCfg(); return; }
+    if (e.target.closest('[data-sg-add]')) { cfgSync(); cfgDraft.signers.push({ title: '', name: '', id: '' }); csRender(); return; }
+    if ((t = e.target.closest('[data-sg-mv]'))) { cfgSync(); var mv = t.getAttribute('data-sg-mv').split('|'), i0 = +mv[0], i1 = i0 + (+mv[1]), sl = cfgDraft.signers; if (i1 >= 0 && i1 < sl.length) { var tmp0 = sl[i0]; sl[i0] = sl[i1]; sl[i1] = tmp0; } csRender(); return; } // 2.02.6: สลับลำดับผู้ลงนาม
+    if (e.target.closest('[data-cg-bookclr]')) { cfgSync(); cfgDraft.bookFrom = ''; cfgDraft.bookUntil = ''; csRender(); return; }
     if (e.target.closest('[data-cg-mkcat]')) { // 2.02.5: สร้างประเภทงาน "รายงานกิจกรรมชุมนุม" ให้อัตโนมัติ
       cfgSync(); var rk = await withProgress('กำลังสร้างประเภทงาน', function () { return apiCall('clubCreateCategory', {}); }, { successLabel: 'สร้างและเลือกประเภทงานแล้ว' });
-      if (rk.ok) { var keep = cfgDraft; cfgDraft = null; await renderCfg(); cfgDraft.dates = keep.dates; cfgDraft.off = keep.off; cfgDraft.openTime = keep.openTime; cfgDraft.signers = keep.signers; cfgDraft.texts = keep.texts; cfgDraft.categoryId = rk.data.category.id; renderCfg(); }
+      if (rk.ok) { var keep = cfgDraft; cfgDraft = null; await renderCfg(); cfgDraft.dates = keep.dates; cfgDraft.off = keep.off; cfgDraft.openTime = keep.openTime; cfgDraft.signers = keep.signers; cfgDraft.texts = keep.texts; cfgDraft.director = keep.director; cfgDraft.bookFrom = keep.bookFrom; cfgDraft.bookUntil = keep.bookUntil; cfgDraft.categoryId = rk.data.category.id; renderCfg(); }
       return;
     }
-    if ((t = e.target.closest('[data-sg-del]'))) { cfgSync(); cfgDraft.signers.splice(+t.getAttribute('data-sg-del'), 1); renderCfg(); return; }
+    if ((t = e.target.closest('[data-sg-del]'))) { cfgSync(); cfgDraft.signers.splice(+t.getAttribute('data-sg-del'), 1); csRender(); return; }
     if (e.target.closest('[data-cg-save]')) {
-      cfgSync(); var c = cfgDraft, payload = { dates: c.dates, off: c.off, openTime: c.openTime, categoryId: c.categoryId, signers: c.signers, texts: c.texts };
+      cfgSync(); var c = cfgDraft, payload = { dates: c.dates, off: c.off, openTime: c.openTime, categoryId: c.categoryId, signers: c.signers, texts: c.texts, director: { on: c.director.on, id: c.director.id, name: c.director.name, title: c.director.title, to: c.director.to } };
+      if (document.getElementById('cgBookUntil')) { if (c.bookFrom && !c.bookUntil) { showToast('กรุณาเลือกวันสุดท้ายของการส่งเล่ม', true); return; } payload.bookFrom = c.bookFrom; payload.bookUntil = c.bookUntil; } // 2.02.6
       var rg = await withProgress('กำลังบันทึกการตั้งค่าชุมนุม', function () { return apiCall('clubCfgSave', payload); }, { successLabel: 'บันทึกการตั้งค่าแล้ว' });
       if (rg.ok) { cfgDraft = null; await boot(true); }
       return;

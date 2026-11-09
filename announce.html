@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.02.5.091126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.6.091126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -46,15 +46,15 @@
          (ฝั่ง Worker ก็ปิดสิทธิ์เขียนไว้ด้วย: เรียกได้เฉพาะ endpoint ที่เป็นการอ่าน) -->
     <div class="tabs">
       <!-- 1.85.2: แยกประกาศ (ป็อปอัป) กับประกาศ (ส่วนบน) — ป็อปอัปขึ้นก่อน -->
-      <button class="tab-btn active" data-tab="popups">ประกาศ(ป็อปอัป)<span class="rpm-tabcount pop-tabcount" id="popTabCount" hidden></span></button>
-      <button class="tab-btn" data-tab="announcements">ประกาศ(ส่วนบน)</button>
+      <button class="tab-btn active" data-tab="popups"><i class="fa-solid fa-window-restore" aria-hidden="true"></i> ประกาศ(ป็อปอัป)<span class="rpm-tabcount pop-tabcount" id="popTabCount" hidden></span></button>
+      <button class="tab-btn" data-tab="announcements"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ประกาศ(ส่วนบน)</button>
       <!-- 1.92: แยกปฏิทินส่งงาน / ปฏิทินกิจกรรม (ใช้แผงเดียวกัน กรองตามชนิด) -->
-      <button class="tab-btn" data-tab="calendar">ปฏิทินส่งงาน</button>
-      <button class="tab-btn" data-tab="calact">ปฏิทินกิจกรรม</button>
+      <button class="tab-btn" data-tab="calendar"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> ปฏิทินส่งงาน</button>
+      <button class="tab-btn" data-tab="calact"><i class="fa-solid fa-flag" aria-hidden="true"></i> ปฏิทินกิจกรรม</button>
       <!-- 2.02.5: รายการที่จัดเก็บแล้ว (แยกตามปีการศึกษา) -->
       <button class="tab-btn" data-tab="archive" id="archTabBtn" hidden><i class="fa-solid fa-box-archive" aria-hidden="true"></i> จัดเก็บ<span class="rpm-tabcount arch-tabcount" id="archTabCount" hidden></span></button>
       <!-- 1.75: เรื่องที่แจ้ง (เจ้าหน้าที่ = กลุ่มตัวเอง · Super Admin = ทุกเรื่อง) — ผู้บริหารไม่เห็นแท็บนี้ -->
-      <button class="tab-btn" data-tab="reports" id="reportsTabBtn" hidden>เรื่องที่แจ้ง<span class="rpm-tabcount" id="reportsTabCount" hidden></span></button>
+      <button class="tab-btn" data-tab="reports" id="reportsTabBtn" hidden><i class="fa-solid fa-comment-dots" aria-hidden="true"></i> เรื่องที่แจ้ง<span class="rpm-tabcount" id="reportsTabCount" hidden></span></button>
     </div>
 
     <div class="tab-panel" id="tab-archive">
@@ -461,7 +461,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.02.5.091126"></script>
+  <script src="assets/api.js?v=2.02.6.091126"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.02.5.091126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.6.091126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -261,9 +261,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.02.5.091126"></script>
+  <script src="assets/api.js?v=2.02.6.091126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=2.02.5.091126"></script>
+  <script src="assets/homeroom.js?v=2.02.6.091126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -393,7 +393,7 @@
       document.getElementById('qrLinkText').textContent = url;
       var box = document.getElementById('qrcode-box');
       box.innerHTML = '';
-      new QRCode(box, { text: url, width: 176, height: 176 });
+      qrLogo(box, url, 176);
       showModalEl(qrModal);
     });
     document.getElementById('qrCloseBtn').addEventListener('click', function () { hideModalEl(qrModal); });
@@ -983,6 +983,13 @@
 
     // ---------- Calendar ----------
     var calState = { year: new Date().getFullYear(), month: new Date().getMonth(), events: [] };
+    // 2.02.6: กำหนดส่งเล่มชุมนุม — ปุ่มส่งงานทุกจุด (เช็คลิสต์ / ป็อปอัปรายวัน) พาไปหน้าชุมนุม เพราะเล่มสร้างและส่งจากหน้าชุมนุม
+    document.addEventListener('click', function (ev) {
+      var b = ev.target && ev.target.closest && ev.target.closest('[data-submit-event], [data-group-event]'); if (!b) return;
+      var id = b.getAttribute('data-submit-event') || b.getAttribute('data-group-event');
+      var e = calState.events.filter(function (x) { return x.id === id; })[0]; if (!e || !e.clubBook) return;
+      ev.preventDefault(); ev.stopPropagation(); location.href = 'club.html';
+    }, true);
     var thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
     var thaiDow = ['อา','จ','อ','พ','พฤ','ศ','ส'];
 
@@ -1117,6 +1124,8 @@
       renderCalendar(); renderAssignmentChecklist();
     });
     function isAssignmentSubmitted(e) {
+      if (e.task) return false; // 2.02.6: งานอัตโนมัติ (เลือกคาบนิเทศ) — เสร็จแล้วระบบเอาออกเอง
+      if (e.clubBook && e.clubBook.state === 'fix') return false; // 2.02.6: เล่มชุมนุมถูกส่งกลับแก้ไข = ยังค้าง
       if (e.manualCheck) return !!(e.manual && (e.manual.status === 'received' || e.manual.status === 'late')); // 1.93: ตรวจรายคน = เจ้าหน้าที่ตรวจแล้ว
       if (e.roomBased) return !!(e.rooms && e.rooms.length) && e.rooms.every(function (r) { return !!r.submitted; }); // 1.90: งานตามห้อง = ทุกห้องที่เป็นครูที่ปรึกษาส่งแล้ว
       if (e.seriesId) return allSubmissions.some(function (s) { return s.eventId === e.id; }); // 1.88: รอบ = ไฟล์ที่ผูกรอบนี้
@@ -1698,7 +1707,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       return out;
     }
     function seriesName(e) { return e.categoryName || String(e.title || '').replace(/\s*\([^()]*\)\s*$/, ''); }
-    function seriesRowHtml(g, now) {
+    function seriesRowHtml(g, now, stK, dlK) {
       var rep = g.__rep, rounds = g.__series, sent = rounds.filter(isAssignmentSubmitted).length, lv = seriesRoundOpen(rep);
       var end = rep.endDate || rep.date, dl = daysLeftInfo(end, now);
       var dateChip = evDateChipInner(rep.date, rep.endDate, 'due') + (dl && lv !== -1 ? '<span class="days-left ' + (lv === 0 ? 'late' : dl.cls) + '">(' + dl.text + ')</span>' : '');
@@ -1706,12 +1715,12 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       var badge = lv === -1 ? '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งครบแล้ว</span>' : (lv === 0 ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> ' + (rep.review && rep.review.status === 'revise' ? 'ต้องแก้ไข' : 'เกินกำหนด') + '</span>' : '');
       var rooms = rep.roomBased && rep.rooms && rep.rooms.length ? ' · ห้อง ' + rep.rooms.map(function (r) { return escapeHtml(r.roomName); }).join(', ') : '';
       var btn = '<button class="btn ' + (lv === 0 ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-series-open="' + escapeHtml(rep.seriesId) + '"><i class="fa-solid fa-list-check ui-icon" aria-hidden="true"></i> ดูรอบทั้งหมด</button>';
-      return '<div class="event-list-item"><div class="event-date-chip evd' + (lv === 0 ? ' overdue' : '') + '"' + (lv === 0 ? '' : chipDeptAttr(rep.categoryId)) + '>' + dateChip + '</div>' +
+      return '<div class="event-list-item upi ups">' + upTileHtml(end, lv === -1 ? 'done' : upTileCls(dlK || dl, lv === 0 ? 'overdue' : stK)) + '<div class="event-date-chip evd' + (lv === 0 ? ' overdue' : '') + '"' + (lv === 0 ? '' : chipDeptAttr(rep.categoryId)) + '>' + dateChip + '</div>' +
         '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + evLinkMark(rep) + escapeHtml(seriesName(rep)) +
           (rep.roomBased ? ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> ' + hrModeTag(rep) + '</span>' : '') + categoryDeptBadgeHtml(rep.categoryId) + badge + '</div>' +
           '<div class="sub-item-meta">' + (lv === -1 ? 'ทุกรอบ' : 'รอบ ' + escapeHtml(roundShort(rep))) + rooms +
             ' <span class="up-prog"><span class="up-bar"><i style="width:' + pct + '%"></i></span> ส่งแล้ว ' + sent + '/' + rounds.length + ' รอบ</span></div>' +
-          (rep.message ? '<div class="sub-item-desc">' + escapeHtml(rep.message) + '</div>' : '') + '</div>' + evSideHtml(btn, evLinksOf(rep)) + '</div>';
+          (rep.message ? '<div class="sub-item-desc">' + escapeHtml(rep.message) + '</div>' : '') + upMetaHtml(rep, dlK || dl, lv === -1 ? 'submitted' : lv === 0 ? 'overdue' : 'pending', (lv === -1 ? 'ทุกรอบ' : 'รอบ ' + escapeHtml(roundShort(rep))) + ' · ส่งแล้ว ' + sent + '/' + rounds.length) + '</div>' + evSideHtml(btn, evLinksOf(rep)) + '</div>';
     }
     var seriesModalState = { id: '', room: '' };
     function ensureSeriesModal() {
@@ -1773,9 +1782,10 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
 
     // ---------- 1.92: รายการกำหนดส่งงานใต้ปฏิทิน — ค้นหา / กรองประเภท / กรองสถานะ / เรียงตามวันครบกำหนด ----------
     var calUpState = { all: [], now: new Date(), q: '', type: 'all', status: 'all', sort: 'asc', group: '' }; // 1.93.1: + group = กลุ่มบริหารงาน
-    function upTypeOf(e) { return e.roomBased ? 'room' : (e.categoryId && (!e.noSubmission || e.manualCheck) ? 'submit' : (e.categoryId && e.noSubmission ? 'notice' : 'general')); }
+    function upTypeOf(e) { if (e.task) return 'submit'; return e.roomBased ? 'room' : (e.categoryId && (!e.noSubmission || e.manualCheck) ? 'submit' : (e.categoryId && e.noSubmission ? 'notice' : 'general')); }
     function upStatusOf(e, now) {
       if (e.__series) return e.__status; // 1.92.4
+      if (e.task) return new Date(e.endDate || e.date) < now && todayYmd() > (e.endDate || e.date) ? 'overdue' : 'pending';
       if (upTypeOf(e) === 'notice' || upTypeOf(e) === 'general') return 'none';
       if (e.roomBased) { var pend = (e.rooms || []).some(function (r) { return hrNeedsAction(hrRoundState(e, r.roomId)) || hrRoundState(e, r.roomId) === 'wait'; }); return !pend ? 'submitted' : (todayYmd() > hrWin(e).grace ? 'overdue' : 'pending'); }
       if (isAssignmentSubmitted(e)) return 'submitted';
@@ -1783,12 +1793,16 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
     }
     function upToolbarHtml() {
       var o = function (v, cur, t) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + t + '</option>'; };
-      return '<div class="up-toolbar" role="search">' +
+      return '<div class="up-toolbar' + (calUpState.panel ? ' open' : '') + '" role="search">' +
         '<label class="up-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="upQ" placeholder="ค้นหาชื่องาน" value="' + escapeHtml(calUpState.q) + '" aria-label="ค้นหาชื่องาน" /></label>' +
+        '<button type="button" class="up-fbtn" id="upFiltBtn" aria-label="ตัวกรองและการเรียง"><i class="fa-solid fa-sliders" aria-hidden="true"></i><b id="upFiltN" hidden></b></button>' + // 2.02.6: มือถือ
+        '<div class="up-chips" id="upChips"></div>' +
+        '<div class="up-panel-h"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ตัวกรองและการเรียง<button type="button" class="up-px" id="upPanelX" aria-label="ปิด"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>' +
         upGroupSelectHtml() +
         '<select id="upType" aria-label="ประเภท">' + o('all', calUpState.type, 'ทุกประเภท') + o('submit', calUpState.type, 'งานที่ต้องส่ง') + o('room', calUpState.type, 'งานตามห้อง') + o('notice', calUpState.type, 'แจ้งเตือนอย่างเดียว') + o('general', calUpState.type, 'กำหนดการทั่วไป') + '</select>' +
         '<select id="upStatus" aria-label="สถานะ">' + o('all', calUpState.status, 'ทุกสถานะ') + o('pending', calUpState.status, 'ยังไม่ส่ง') + o('overdue', calUpState.status, 'เกินกำหนด') + o('submitted', calUpState.status, 'ส่งแล้ว') + '</select>' +
         '<button type="button" class="btn btn-secondary btn-sm" id="upSort" aria-label="สลับการเรียง"><i class="fa-solid ' + (calUpState.sort === 'asc' ? 'fa-arrow-down-short-wide' : 'fa-arrow-down-wide-short') + ' ui-icon" aria-hidden="true"></i> ' + (calUpState.sort === 'asc' ? 'ครบกำหนดใกล้สุดก่อน' : 'ครบกำหนดไกลสุดก่อน') + '</button>' +
+        '<button type="button" class="btn btn-success up-pok" id="upPanelOk"><i class="fa-solid fa-check ui-icon" aria-hidden="true"></i> ตกลง</button>' +
         '<span class="up-count" id="upCount"></span></div>';
     }
     // 1.93.1: กรองตามกลุ่มบริหารงาน (กลุ่มที่มีงานในรายการเท่านั้น · งานที่ไม่ผูกกลุ่ม = "ไม่ระบุกลุ่ม")
@@ -1801,6 +1815,12 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       return '<select id="upGroup" aria-label="กลุ่มบริหารงาน">' + o('', 'ทุกกลุ่มบริหารงาน') + keys.map(function (k) { return o(k, String(k).replace(/^กลุ่มบริหารงาน/, '')); }).join('') + (none ? o('__none', 'ไม่ระบุกลุ่ม') : '') + '</select>';
     }
     function bindUpToolbar(box) {
+      var tb = box.querySelector('.up-toolbar');
+      var pnl = function (on) { calUpState.panel = on; tb.classList.toggle('open', on); };
+      box.querySelector('#upFiltBtn').addEventListener('click', function () { pnl(!calUpState.panel); });
+      box.querySelector('#upPanelX').addEventListener('click', function () { pnl(false); });
+      box.querySelector('#upPanelOk').addEventListener('click', function () { pnl(false); });
+      box.querySelector('#upChips').addEventListener('click', function (ev) { var b = ev.target.closest('[data-up-st]'); if (!b) return; calUpState.status = b.getAttribute('data-up-st'); var sel = box.querySelector('#upStatus'); if (sel) sel.value = calUpState.status; renderUpList(); });
       box.querySelector('#upGroup').addEventListener('change', function (ev) { calUpState.group = ev.target.value; renderUpList(); });
       var q = box.querySelector('#upQ');
       q.addEventListener('input', debounce(function () { calUpState.q = q.value; renderUpList(); }, 200));
@@ -1812,21 +1832,56 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
         renderUpList();
       });
     }
+    // ---------- 2.02.6: มือถือ — ช่องวันที่แบบปฏิทิน + บรรทัดสรุปบรรทัดเดียว + หัวข้อตามความใกล้ (คอมพิวเตอร์แสดงแบบเดิม) ----------
+    var UP_MON = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    function upTileHtml(end, cls) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(end || '')); return m ? '<div class="up-tile ' + (cls || '') + '"><b>' + (+m[3]) + '</b><small>' + UP_MON[+m[2] - 1] + '</small></div>' : ''; }
+    function upLeftTxt(dl, st) {
+      if (st === 'submitted') return '<span class="lf ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>';
+      if (!dl) return '';
+      if (dl.days < 0) return '<span class="lf red">' + (st === 'overdue' ? 'เกินกำหนด ' + (-dl.days) + ' วัน' : 'ผ่านไปแล้ว') + '</span>';
+      return '<span class="lf ' + (dl.days <= 1 ? 'red' : dl.days <= 7 ? 'or' : '') + '">' + (dl.days === 0 ? 'วันนี้วันสุดท้าย' : dl.days === 1 ? 'พรุ่งนี้' : 'เหลือ ' + dl.days + ' วัน') + '</span>';
+    }
+    function upMetaHtml(e, dl, st, extra) {
+      var d = (e.task && e.task.dept) || String(evDept(e) || '').replace(/^กลุ่มบริหารงาน/, ''), parts = [upLeftTxt(dl, st)];
+      if (d) parts.push(escapeHtml(d));
+      var cur = calUpState.cur; if (cur && e.academicYear && (String(e.academicYear) !== cur.year || String(e.semester) !== cur.semester)) parts.push(escapeHtml((e.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + e.semester) + '/' + e.academicYear));
+      if (extra) parts.push(extra);
+      return '<div class="up-meta">' + parts.filter(Boolean).join(' · ') + '</div>';
+    }
+    function upTileCls(dl, st) { return st === 'submitted' ? 'done' : (st === 'overdue' || (dl && dl.days <= 1) ? 'red' : ''); }
+    function upBucket(dl, st) { if (st === 'overdue') return 'เกินกำหนด'; if (!dl || dl.days <= 7) return 'ภายใน 7 วัน'; if (dl.days <= 31) return 'ภายใน 1 เดือน'; return 'ถัดไป'; }
+    if (typeof currentAcademicTerm === 'function') currentAcademicTerm().then(function (t) { calUpState.cur = t; try { renderUpList(); } catch (e) { /* ยังไม่วาด */ } }).catch(function () {});
     function renderUpList() {
       var listBox = document.getElementById('calUpList'); if (!listBox) return;
       var now = calUpState.now, q = calUpState.q.trim().toLowerCase();
+      var stCnt = { all: 0, pending: 0, overdue: 0, submitted: 0 };
       var list = calUpState.all.filter(function (e) {
         if (calUpState.type !== 'all' && upTypeOf(e) !== calUpState.type) return false;
         if (calUpState.group && (calUpState.group === '__none' ? !!evDept(e) : evDept(e) !== calUpState.group)) return false;
-        if (calUpState.status !== 'all' && upStatusOf(e, now) !== calUpState.status) return false;
+        if (q && (String(e.title || '') + ' ' + String(e.categoryName || '') + ' ' + String(e.message || '')).toLowerCase().indexOf(q) === -1) return false;
+        var st0 = upStatusOf(e, now); stCnt.all++; if (stCnt[st0] != null) stCnt[st0]++; // 2.02.6: ตัวเลขบนปุ่มสถานะ (มือถือ)
+        if (calUpState.status !== 'all' && st0 !== calUpState.status) return false;
         if (q && (String(e.title || '') + ' ' + String(e.categoryName || '') + ' ' + String(e.message || '')).toLowerCase().indexOf(q) === -1) return false;
         return true;
       }).sort(function (a, b) { var d = String(a.endDate || a.date).localeCompare(String(b.endDate || b.date)) || String(a.date).localeCompare(String(b.date)); return calUpState.sort === 'asc' ? d : -d; });
+      var chips = document.getElementById('upChips');
+      if (chips) chips.innerHTML = [['all', 'ทั้งหมด'], ['pending', 'ยังไม่ส่ง'], ['overdue', 'เกินกำหนด'], ['submitted', 'ส่งแล้ว']].map(function (c) { return '<button type="button" data-up-st="' + c[0] + '" class="' + (calUpState.status === c[0] ? 'on' : '') + (c[0] === 'overdue' ? ' r' : '') + '">' + c[1] + '<em>' + stCnt[c[0]] + '</em></button>'; }).join('');
+      var fn = (calUpState.group ? 1 : 0) + (calUpState.type !== 'all' ? 1 : 0) + (calUpState.sort !== 'asc' ? 1 : 0), fb = document.getElementById('upFiltN'), fbtn = document.getElementById('upFiltBtn');
+      if (fb) { fb.hidden = !fn; fb.textContent = fn; } if (fbtn) fbtn.classList.toggle('on', !!fn);
       var cnt = document.getElementById('upCount'); if (cnt) cnt.textContent = list.length === calUpState.all.length ? list.length + ' รายการ' : list.length + ' จาก ' + calUpState.all.length + ' รายการ';
       if (!list.length) { listBox.innerHTML = '<div class="empty-state">ไม่พบรายการที่ตรงกับตัวกรอง</div>'; return; }
       var upcomingBox = listBox;
+      var lastB = '';
       listBox.innerHTML = '<div class="cal-upcoming-grid">' + list.map(function (e) {
-          if (e.__series) return seriesRowHtml(e, now); // 1.92.4
+          var stK = upStatusOf(e, now), dlK = daysLeftInfo(e.__series ? (e.__rep.endDate || e.__rep.date) : (e.endDate || e.date), now), bk = calUpState.sort === 'asc' ? upBucket(dlK, stK) : '';
+          var gh = bk && bk !== lastB ? '<div class="up-gh">' + bk + '</div>' : ''; if (bk) lastB = bk;
+          return gh + upItemHtml(e, stK, dlK);
+        }).join('') + '</div>';
+      bindUpListButtons(listBox);
+    }
+    function upItemHtml(e, stK, dlK) {
+          var now = calUpState.now;
+          if (e.__series) return seriesRowHtml(e, now, stK, dlK); // 1.92.4
           var dateChip = evDateChipInner(e.date, e.endDate, 'due'); // 2.02.5: วันส่งขึ้นก่อน + เริ่ม … (ช่องกว้างคงที่)
           // 1.57: (เหลือ N วัน) นับถึงวันสุดท้ายของกำหนดส่ง · ส่งแล้วแสดงสีปกติ · เลยกำหนดแสดงเฉพาะงานที่ยังไม่ส่ง
           var trk = e.categoryId && (!e.noSubmission || e.manualCheck); // 1.93: งานตรวจรายคนนับเหมือนงานที่ต้องส่ง
@@ -1840,23 +1895,30 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
           // ตั้งแต่ V12.0: ถ้าเป็นประเภทงาน "แจ้งเตือนอย่างเดียว" ไม่มีปุ่มส่งงานเลย ขึ้นป้ายแจ้งเตือนเฉยๆ แทน
           // 1.49.121026: ส่งแล้ว (มีผลงานประเภทนี้ในภาคเรียน/ปีนี้) -> ปุ่มเปลี่ยนเป็น "ส่งงานเพิ่มหรือแก้ไข" เปิดป็อปอัปชุดผลงาน (ดู/พรีวิว/ลบ/เพิ่มไฟล์)
           var isSubmitted = trk && isAssignmentSubmitted(e);
-          var submitBtn = e.manualCheck ? mcActionHtml(e) : e.roomBased ? hrUpcomingBtn(e, isOverdue) : isSubmitted
+          var cb = e.clubBook; // 2.02.6: กำหนดส่งเล่มชุมนุม = ไปหน้าชุมนุม
+          if (cb && cb.state === 'fix') isOverdue = false;
+          var submitBtn = e.task ? '<a class="btn ' + (stK === 'overdue' ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" href="' + escapeHtml(e.task.href) + '"><i class="fa-solid ' + escapeHtml(e.task.icon || 'fa-arrow-right') + ' ui-icon" aria-hidden="true"></i> ' + escapeHtml(e.task.label) + '</a>'
+            : cb ? (cb.state === 'none' || cb.state === 'fix' ? '<a class="btn ' + (cb.state === 'fix' || (dl && dl.days < 0) ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" href="club.html"><i class="fa-solid ' + (cb.state === 'fix' ? 'fa-pen-to-square' : 'fa-paper-plane') + ' ui-icon" aria-hidden="true"></i> ' + (cb.state === 'fix' ? 'ไปแก้เล่ม' : 'ไปส่งเล่ม') + '</a>' : '<a class="btn btn-secondary btn-sm event-submit-btn" href="club.html"><i class="fa-solid fa-book ui-icon" aria-hidden="true"></i> ดูเล่ม</a>')
+            : e.manualCheck ? mcActionHtml(e) : e.roomBased ? hrUpcomingBtn(e, isOverdue) : isSubmitted
             ? '<button class="btn btn-secondary btn-sm event-submit-btn" data-group-event="' + e.id + '"><i class="fas fa-pen-to-square ui-icon" aria-hidden="true"></i> ' + (e.seriesId ? 'ส่งไฟล์เพิ่มในรอบนี้' : 'ส่งงานเพิ่มหรือแก้ไข') + '</button>'
             : (e.categoryId && !e.noSubmission)
             ? '<button class="btn ' + (isOverdue ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-submit-event="' + e.id + '"><i class="fas fa-paper-plane ui-icon" aria-hidden="true"></i> ส่งงาน</button>'
             : (e.categoryId && e.noSubmission ? '<span class="notice-badge"><i class="fas fa-bullhorn ui-icon" aria-hidden="true"></i> แจ้งเตือน</span>' : '');
           var termLabel = e.categoryId ? termTagsHtml(e.semester, e.academicYear) : ''; // 1.57: ป้ายแทนตัวหนังสือจางๆ
           // ตั้งแต่เวอร์ชันถัดจาก V11.1 หัวข้อกำหนดการที่ผูกประเภทงานจะเป็นชื่อประเภทงานเป๊ะๆ อยู่แล้ว (กรอกเองไม่ได้อีกต่อไป) — ไม่ต้องต่อท้าย "(ชื่อประเภทงาน)" ซ้ำอีกถ้าซ้ำกับหัวข้ออยู่แล้ว (กำหนดการเก่าก่อนอัปเดตที่หัวข้อเคยพิมพ์เองไว้ต่างจากชื่อประเภทงาน ยังโชว์วงเล็บต่อท้ายตามเดิม)
-          var showCategorySuffix = e.categoryName && e.categoryName !== e.title;
+          var showCategorySuffix = e.categoryName && e.categoryName !== e.title && !e.clubBook;
           var overdueBadge = isOverdue ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> เกินกำหนด</span>' : '';
-          if (isSubmitted) overdueBadge = e.manualCheck ? '' : '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>';
-          return '<div class="event-list-item"><div class="event-date-chip evd' + (isOverdue ? ' overdue' : '') + '"' + (isOverdue ? '' : chipDeptAttr(e.categoryId)) + '>' + dateChip + '</div>' +
+          if (isSubmitted) overdueBadge = e.manualCheck ? '' : '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ' + (cb && cb.state === 'ok' ? 'ผ่านการตรวจ' : 'ส่งแล้ว') + '</span>';
+          if (cb && cb.state === 'fix') overdueBadge = '<span class="overdue-badge"><i class="fas fa-rotate-left" aria-hidden="true"></i> ส่งกลับแก้ไข</span>';
+          var mExtra = cb && cb.state === 'fix' ? '<span class="lf red">ส่งกลับแก้ไข</span>' : (e.message ? escapeHtml(e.message) : '');
+          return '<div class="event-list-item upi">' + upTileHtml(e.endDate || e.date, cb && cb.state === 'fix' ? 'red' : upTileCls(dlK, stK)) + '<div class="event-date-chip evd' + (isOverdue ? ' overdue' : '') + '"' + (isOverdue ? '' : chipDeptAttr(e.categoryId)) + '>' + dateChip + '</div>' +
             '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + evLinkMark(e) + escapeHtml(e.title) +
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
               (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + overdueBadge + '</div>' +
             (termLabel ? '<div class="sub-item-meta term-tags-row">' + categoryDotHtml(categoryColorMap[e.categoryId]) + termLabel + '</div>' : '') +
-            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + '</div>' + evSideHtml(submitBtn, evLinksOf(e)) + '</div>';
-        }).join('') + '</div>';
+            (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + upMetaHtml(e, dlK, stK, mExtra) + '</div>' + evSideHtml(submitBtn, evLinksOf(e)) + '</div>';
+    }
+    function bindUpListButtons(upcomingBox) {
         upcomingBox.querySelectorAll('button[data-group-event]').forEach(function (btn) {
           btn.addEventListener('click', function () {
             var ev = calState.events.filter(function (x) { return x.id === btn.getAttribute('data-group-event'); })[0];

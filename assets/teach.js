@@ -53,10 +53,10 @@
   function pageTabs() { var tabs = [['teach', 'fa-book-open', 'วิชาที่สอน']]; if (!B || (B.subjects && B.subjects.length)) tabs.push(['week', 'fa-table-cells', 'ตารางสอนรายสัปดาห์']); if (MENT && MENT.interns.length) tabs.push(['interns', 'fa-user-graduate', 'นักศึกษาฝึกสอน (' + MENT.interns.length + ')']); if (leaveOk()) tabs.push(['leave', 'fa-user-clock', 'แจ้งไปราชการ / ลา']); if (tabs.length < 2) return ''; return '<span class="tc-pages">' + tabs.map(function (x) { return '<button type="button" class="cb-seg' + (st.page === x[0] ? ' on' : '') + '" data-tc-page="' + x[0] + '"><i class="fa-solid ' + x[1] + '"></i> ' + x[2] + '</button>'; }).join('') + '</span>'; }
   function renderTabs() {
     if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); return; }
-    if (st.page === 'week') { tabsEl.innerHTML = pageTabs() + (B && B.admin && B.teachers && B.teachers.length ? ' <span class="cb-mut">ของ ' + esc(B.teacherName || '') + '</span>' : ''); return; }
-    var h = pageTabs() + (B.admin && B.teachers && B.teachers.length ? '<label class="cb-mut" for="tcFor">ดูวิชาของ</label> <select id="tcFor" class="cb-search">' + (B.isSuper ? '<option value="">— เลือกครู —</option>' : '') + B.teachers.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === B.forUser ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select>' : '');
+    if (st.page === 'week') { tabsEl.innerHTML = (B && B.admin && B.teachers && B.teachers.length ? '<div class="cb-tools"><span class="cb-mut">ของ ' + esc(B.teacherName || '') + '</span></div>' : '') + pageTabs(); return; }
+    var h = (B.admin && B.teachers && B.teachers.length ? '<label class="cb-mut" for="tcFor">ดูวิชาของ</label> <select id="tcFor" class="cb-search">' + (B.isSuper ? '<option value="">— เลือกครู —</option>' : '') + B.teachers.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === B.forUser ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select>' : '');
     if (B.isSuper && B.term) h += ' <button type="button" class="btn btn-secondary btn-sm" data-tc-win><i class="fa-solid fa-calendar-days"></i> ตั้งช่วงวันที่เช็คย้อนหลัง</button>';
-    tabsEl.innerHTML = h;
+    tabsEl.innerHTML = (h ? '<div class="cb-tools">' + h + '</div>' : '') + pageTabs(); // 2.02.6: ตัวเลือกครู / ปุ่มตั้งค่า = แถวของตัวเอง แยกจากแท็บ
   }
   tabsEl.addEventListener('change', function (e) { if (e.target.id === 'tcFor') { st.forUser = e.target.value; st.sub = ''; boot(); } });
   tabsEl.addEventListener('click', function (e) {

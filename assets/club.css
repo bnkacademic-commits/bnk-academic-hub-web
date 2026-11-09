@@ -184,3 +184,30 @@ td.tc-wk-e { background: var(--surface); }
 .cs-sigs { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; text-align: center; font-size: .78rem; line-height: 1.6; }
 .cs-sigs i { display: block; border-bottom: 1px dotted var(--text-muted); width: 80%; margin: 14px auto 4px; }
 @media (max-width: 640px) { .cs-sum { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cs-sgh { display: none; } .cs-sg { grid-template-columns: 22px minmax(0, 1fr) 34px; } .cs-sg input { grid-column: 2 / 3; } }
+/* 2.02.6: วันส่งเล่ม · สลับลำดับผู้ลงนาม · ส่วนผู้อำนวยการ */
+.cs-sgh, .cs-sg { grid-template-columns: 22px minmax(0, 1fr) minmax(0, 1.2fr) 72px 34px; }
+.cs-mv { display: flex; gap: 4px; }
+.cs-mv button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface, #fff); color: var(--text-muted); cursor: pointer; }
+.cs-mv button:hover:not(:disabled) { color: var(--primary); border-color: var(--primary); }
+.cs-mv button:disabled { opacity: 0.35; cursor: default; }
+.cs-book { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.cs-book label { font-size: 0.88rem; color: var(--text-muted); font-weight: 600; }
+.cs-book input[type="date"] { width: auto; }
+.cs-note { font-size: 0.85rem; color: var(--text-muted); margin: 8px 0 0; }
+.cs-note i { margin-right: 4px; }
+.cs-dir { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; }
+.cs-sw { display: flex; align-items: center; gap: 8px; cursor: pointer; flex-wrap: wrap; }
+.cs-dirf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.cs-dirf .field { margin: 0; } .cs-dirf input, .cs-dirf select { width: 100%; }
+.cs-dirf input#cgDirName { margin-top: 6px; }
+.cs-dprev { margin-top: 18px; font-size: 0.9rem; }
+.cs-dprev .cs-dto { font-weight: 600; }
+.cs-dprev .cs-dck { display: flex; gap: 30px; justify-content: center; margin: 10px 0 14px; flex-wrap: wrap; }
+.cs-dprev .cs-dsig { text-align: center; line-height: 1.7; }
+.cs-dprev .cs-dsig i { display: block; width: 180px; margin: 0 auto 4px; border-bottom: 1px dotted currentColor; height: 18px; }
+@media (max-width: 640px) {
+  .cs-sg { grid-template-columns: 22px minmax(0, 1fr) 72px 34px; }
+  .cs-sg input { grid-column: 2 / 3; }
+  .cs-dirf { grid-template-columns: 1fr; }
+}
+.cs-bx { display: inline-block; width: 12px; height: 12px; border: 1.5px solid currentColor; margin-right: 6px; vertical-align: -1px; }

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.02.5.091126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.6.091126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -46,18 +46,18 @@
          "ระบบเว็บ" (ตั้งแต่เวอร์ชันถัดไปหลัง 1.21): แยกออกจาก "ทั่วไป" มาเป็นแท็บของตัวเอง ไม่ใช่ super-admin-only เพราะให้เจ้าหน้าที่ฝ่ายวิชาการจัดการ
          "ภาคเรียน/ปีการศึกษาปัจจุบัน" ได้ด้วยตามที่ผู้ใช้ขอ (ส่วนอื่นของ "ทั่วไป" เช่น ชื่อเว็บ/โลโก้/ไอคอน ยังเป็น Super Admin เท่านั้นเหมือนเดิม) -->
     <div class="tabs">
-      <button class="tab-btn active super-admin-only" data-tab="general">ทั่วไป</button>
-      <button class="tab-btn" data-tab="website">ข้อมูลหลัก</button>
-      <button class="tab-btn memo-feature" data-tab="deptinfo">ข้อมูลกลุ่มบริหารงาน</button>
-      <button class="tab-btn super-admin-only" data-tab="accounts">จัดการบัญชี</button>
-      <button class="tab-btn super-admin-only" data-tab="extlinks">เว็บไซต์โรงเรียน</button>
-      <button class="tab-btn super-admin-only" data-tab="managers">จัดการผู้ดูแล</button>
-      <button class="tab-btn super-admin-only" data-tab="log">ประวัติการส่งงานและลบงาน</button>
-      <button class="tab-btn" data-tab="systemlog">ประวัติระบบ</button>
+      <button class="tab-btn active super-admin-only" data-tab="general"><i class="fa-solid fa-sliders" aria-hidden="true"></i> ทั่วไป</button>
+      <button class="tab-btn" data-tab="website"><i class="fa-solid fa-database" aria-hidden="true"></i> ข้อมูลหลัก</button>
+      <button class="tab-btn memo-feature" data-tab="deptinfo"><i class="fa-solid fa-sitemap" aria-hidden="true"></i> ข้อมูลกลุ่มบริหารงาน</button>
+      <button class="tab-btn super-admin-only" data-tab="accounts"><i class="fa-solid fa-users-gear" aria-hidden="true"></i> จัดการบัญชี</button>
+      <button class="tab-btn super-admin-only" data-tab="extlinks"><i class="fa-solid fa-globe" aria-hidden="true"></i> เว็บไซต์โรงเรียน</button>
+      <button class="tab-btn super-admin-only" data-tab="managers"><i class="fa-solid fa-user-shield" aria-hidden="true"></i> จัดการผู้ดูแล</button>
+      <button class="tab-btn super-admin-only" data-tab="log"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> ประวัติการส่งงานและลบงาน</button>
+      <button class="tab-btn" data-tab="systemlog"><i class="fa-solid fa-scroll" aria-hidden="true"></i> ประวัติระบบ</button>
       <!-- ข้อมูลระบบ (1.46.121026): ทุกบัญชีเห็นแท็บนี้ — ส่วนพื้นที่เก็บข้อมูลเห็นเฉพาะ Super Admin ส่วน "เครดิต" ทุกคนเห็น
            (ครู/ผู้บริหารเข้าหน้าตั้งค่าระบบได้ แต่เห็นเฉพาะแท็บนี้) — เดิม 1.45 เป็นแท็บ Signature Credit แยก -->
-      <button class="tab-btn" data-tab="devices">อุปกรณ์ที่เข้าสู่ระบบ</button>
-      <button class="tab-btn" data-tab="sysinfo">ข้อมูลระบบ</button>
+      <button class="tab-btn" data-tab="devices"><i class="fa-solid fa-laptop" aria-hidden="true"></i> อุปกรณ์ที่เข้าสู่ระบบ</button>
+      <button class="tab-btn" data-tab="sysinfo"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ข้อมูลระบบ</button>
     </div>
 
     <!-- General tab (เฉพาะ Super Admin) -->
@@ -1384,8 +1384,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.02.5.091126"></script>
-  <script src="assets/gallery.js?v=2.02.5.091126"></script>
+  <script src="assets/api.js?v=2.02.6.091126"></script>
+  <script src="assets/gallery.js?v=2.02.6.091126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว

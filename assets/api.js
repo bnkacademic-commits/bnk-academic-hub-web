@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.02.5';
-var APP_VERSION = '2.02.5.091126';
+var WORKER_MIN_VERSION = '2.02.6';
+var APP_VERSION = '2.02.6.091126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2661,7 +2661,7 @@ var NOTIF_KIND = {
   due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626'],
   activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'], // 1.81: กิจกรรม
   att_missing: ['fa-clipboard-check', '#7c3aed'], hr_missing: ['fa-book-open', '#0891b2'], // 1.91: เว็บเช็คชื่อ
-  sup_date: ['fa-chalkboard-user', '#7c3aed'], sup_duty: ['fa-clipboard-check', '#7c3aed'], sup_sat: ['fa-face-smile', '#f59e0b'] // 1.98: นิเทศการสอน · 1.98.4 แบบความพึงพอใจพร้อมทำ
+  sup_date: ['fa-chalkboard-user', '#7c3aed'], sup_duty: ['fa-clipboard-check', '#7c3aed'], sup_sat: ['fa-face-smile', '#f59e0b'], sup_pick: ['fa-hand-pointer', '#7c3aed'] /* 2.02.6 เลือกคาบนิเทศ */ // 1.98: นิเทศการสอน · 1.98.4 แบบความพึงพอใจพร้อมทำ
 };
 var _notifCovers = {}; // 1.85.2: รูปปกอัลบั้มในกระดิ่ง
 function applyTopBadges(r) {
@@ -3686,4 +3686,26 @@ function samplesListHtml(list) {
       '<a class="btn btn-sm btn-secondary" href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-eye" aria-hidden="true"></i> เปิดดู</a>' +
       '<a class="btn btn-sm btn-primary" href="' + escapeHtml(driveDownloadUrl(f.url) || f.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-download" aria-hidden="true"></i> ดาวน์โหลด</a></div></div>';
   }).join('') + '</div></div>';
+}
+
+// 2.02.6: QR ปุ่มแชร์ = โลโก้เว็บ (ไอคอนโรงเรียน) ตรงกลาง — ระดับแก้ไขข้อผิดพลาด H (เสียหายได้ ~30%) โลโก้กินพื้นที่ ~6% จึงสแกนได้ปกติ
+// วาดลงในรูป QR เลย (กดค้างบันทึกรูป / คัดลอกรูป ได้โลโก้ด้วย)
+function qrLogo(box, text, size) {
+  var q = new QRCode(box, { text: text, width: size, height: size, correctLevel: QRCode.CorrectLevel.H });
+  try {
+    var cv = box.querySelector('canvas'); if (!cv || !cv.getContext) return q;
+    var lg = new Image();
+    lg.onload = function () {
+      try {
+        var ctx = cv.getContext('2d'), W = cv.width, s = Math.round(W * 0.22), p = Math.round(s * 0.12), x = Math.round((W - s) / 2), r = Math.round(s * 0.22);
+        ctx.fillStyle = '#ffffff'; ctx.beginPath();
+        var bx = x - p, bs = s + p * 2;
+        ctx.moveTo(bx + r, bx); ctx.arcTo(bx + bs, bx, bx + bs, bx + bs, r); ctx.arcTo(bx + bs, bx + bs, bx, bx + bs, r); ctx.arcTo(bx, bx + bs, bx, bx, r); ctx.arcTo(bx, bx, bx + bs, bx, r); ctx.closePath(); ctx.fill();
+        ctx.drawImage(lg, x, x, s, s);
+        var im = box.querySelector('img'); if (im) im.src = cv.toDataURL('image/png');
+      } catch (e) { /* ใช้ QR ปกติ */ }
+    };
+    lg.src = 'icons/icon-192.png';
+  } catch (e) { /* ใช้ QR ปกติ */ }
+  return q;
 }
