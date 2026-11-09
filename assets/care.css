@@ -1,0 +1,61 @@
+/* 2.03.0 กิจการนักเรียน (care.html) */
+.cc-flt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; }
+.cc-flt select, .cc-flt input[type="date"], .cc-flt input[type="search"] { width: auto; min-width: 0; }
+.cc-flt input[type="search"] { flex: 1 1 180px; max-width: 280px; }
+.cc-seg { display: inline-flex; flex-wrap: wrap; background: var(--surface-2, #f1f5f9); border-radius: 12px; padding: 3px; gap: 2px; }
+.cc-seg button { border: 0; background: none; border-radius: 9px; padding: 7px 13px; font: inherit; font-size: .9rem; font-weight: 600; color: var(--text-muted); cursor: pointer; }
+.cc-seg button.on { background: var(--surface, #fff); color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.cc-sp { flex: 1; }
+.cc-rtxt { font-size: .86rem; color: var(--text-muted); font-weight: 600; }
+.cc-sts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.cc-st { background: var(--surface, #fff); border: 1px solid var(--border); border-radius: 14px; padding: 10px 14px; }
+.cc-st span { display: block; font-size: .8rem; color: var(--text-muted); }
+.cc-st b { font-size: 1.6rem; }
+.cc-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.cc-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.cc-card { margin: 0; }
+.cc-card h3 { margin: 0 0 10px; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.cc-card h3 i { color: var(--primary); }
+.cc-bars { display: flex; gap: 6px; align-items: flex-end; height: 190px; padding: 4px 2px 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.cc-bars > div { flex: 1 0 26px; text-align: center; font-size: .72rem; color: var(--text-muted); white-space: nowrap; }
+.cc-bars i { display: block; background: #c8102e; border-radius: 6px 6px 0 0; margin: 0 auto 4px; width: 70%; max-width: 46px; }
+.cc-bars em { display: block; font-style: normal; font-weight: 700; color: var(--text); font-size: .78rem; }
+.cc-tw { overflow-x: auto; }
+.cc-t { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.cc-t th { background: var(--surface-2, #f8fafc); color: var(--text-muted); padding: 8px; text-align: left; font-weight: 700; white-space: nowrap; }
+.cc-t td { padding: 8px; border-top: 1px solid var(--border); }
+.cc-click { cursor: pointer; } .cc-click:hover td { background: var(--primary-light); }
+.cc-tg { display: inline-block; border-radius: 99px; padding: 1px 10px; font-size: .78rem; font-weight: 800; }
+.cc-tg.r { background: #fee2e2; color: #b91c1c; } .cc-tg.o { background: #ffedd5; color: #c2410c; } .cc-tg.g { background: #dcfce7; color: #15803d; } .cc-tg.n { background: var(--surface-2, #f1f5f9); color: var(--text-muted); }
+.cc-rs > div { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: .9rem; }
+.cc-rs span { width: 70px; flex: none; } .cc-rs i { height: 12px; border-radius: 6px; display: block; } .cc-rs b { font-size: .85rem; }
+.cc-stu { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; }
+.cc-ring { width: 84px; height: 84px; border-radius: 50%; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 7px solid #15803d; line-height: 1; }
+.cc-ring.o { border-color: #ea580c; } .cc-ring.r { border-color: #dc2626; }
+.cc-ring b { font-size: 1.5rem; } .cc-ring small { font-size: .7rem; color: var(--text-muted); }
+.cc-hist > div { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--border); }
+.cc-hist small { display: block; color: var(--text-muted); font-size: .78rem; }
+.cc-pt { flex: none; width: 46px; text-align: center; font-weight: 800; border-radius: 8px; padding: 2px 0; }
+.cc-pt.m { background: #fee2e2; color: #b91c1c; } .cc-pt.p { background: #dcfce7; color: #15803d; }
+.cc-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--border); }
+.cc-row:first-of-type { border-top: 0; }
+.cc-row input:not([type]), .cc-row input[type="text"] { width: auto; flex: 1 1 160px; }
+.cc-lb { min-width: 170px; font-size: .92rem; }
+.cc-num { width: 92px !important; padding-left: 6px !important; padding-right: 6px !important; text-align: center; font-weight: 700; flex: none !important; }
+.cc-warn { background: #fef3c7; color: #92400e; border-radius: 10px; padding: 8px 12px; font-size: .86rem; font-weight: 600; margin: 4px 0; }
+.cc-it { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--border); }
+.cc-it input:not(.cc-num) { flex: 1; }
+.cc-x { border: 0; background: none; color: #dc2626; font-size: 1.1rem; cursor: pointer; padding: 4px 8px; }
+.cc-qr { margin-top: 10px; display: inline-block; padding: 8px; background: #fff; border: 1px solid var(--border); border-radius: 12px; }
+.cc-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+[data-theme="dark"] .cc-tg.r, [data-theme="dark"] .cc-pt.m { background: rgba(220,38,38,.2); color: #fca5a5; }
+[data-theme="dark"] .cc-tg.o { background: rgba(234,88,12,.2); color: #fdba74; }
+[data-theme="dark"] .cc-tg.g, [data-theme="dark"] .cc-pt.p { background: rgba(22,163,74,.2); color: #86efac; }
+[data-theme="dark"] .cc-warn { background: rgba(245,158,11,.15); color: #fcd34d; }
+@media (max-width: 900px) { .cc-grid, .cc-grid2 { grid-template-columns: 1fr; } .cc-sts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media print { #app-topbar, #app-footer, .tabs, .cc-flt .btn, .cc-seg, #ccGrade { display: none !important; } .cc-grid { grid-template-columns: 1fr 1fr; } }
+.cc-cg { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin: 4px 0 6px; }
+.cc-cg label { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 1px solid var(--border, #e2e8f0); border-radius: 10px; }
+.cc-cg small { color: var(--text-muted); font-size: .78rem; }
+.cc-cg .cc-cyc { width: 100%; min-width: 0; }
+@media (max-width: 480px) { .cc-cg { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cc-cg label { padding: 6px 8px; } .cc-cg .cc-cyc { font-size: .82rem; padding-left: 6px; padding-right: 22px; } }

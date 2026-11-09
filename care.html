@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<title>กิจการนักเรียน — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=2.03.0.091126" />
+<link rel="stylesheet" href="assets/care.css?v=2.03.0.091126" />
+<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
+</head>
+<body>
+  <div id="app-topbar"></div>
+  <!-- 2.03.0: กิจการนักเรียน — ข้อมูลการมาสาย + คะแนนพฤติกรรมจาก BNK Care Center (เว็บแยก) · เฉพาะผู้ดูแลที่เลือกใน ตั้งค่าระบบ › จัดการผู้ดูแล
+       โค้ดหน้านี้แยกไฟล์ (assets/care.js · care.css) -->
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1><i class="fa-solid fa-user-clock ui-icon" style="color:#c8102e" aria-hidden="true"></i> กิจการนักเรียน</h1>
+        <p id="ccIntro">ข้อมูลการมาสายและคะแนนพฤติกรรมจาก BNK Care Center</p>
+      </div>
+    </div>
+    <div class="tabs" id="ccTabs" role="tablist"></div>
+    <div id="ccBody"><div class="loading">กำลังโหลด...</div></div>
+  </div>
+  <div class="modal-backdrop" id="ccModal" hidden>
+    <div class="modal-box modal-box-wide">
+      <button type="button" class="modal-close-x" data-cc-close aria-label="ปิด">✕</button>
+      <h3 id="ccModalTitle"></h3>
+      <div id="ccModalBody" style="text-align:left"></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" data-cc-close>ปิด</button></div>
+    </div>
+  </div>
+  <div id="app-footer"></div>
+  <script src="assets/qrcode.min.js"></script>
+  <script src="assets/api.js?v=2.03.0.091126"></script>
+  <script src="assets/care.js?v=2.03.0.091126"></script>
+</body>
+</html>

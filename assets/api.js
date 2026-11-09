@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.02.6';
-var APP_VERSION = '2.02.6.091126';
+var WORKER_MIN_VERSION = '2.03.0';
+var APP_VERSION = '2.03.0.091126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -256,7 +256,7 @@ function syncSessionFlags(u) {
   if (!u) return;
   var s = getSession(); if (!s || s.id !== u.id) return;
   var before = (s.respCount > 0) + '|' + !!s.isSysAdmin;
-  s.respCount = u.respCount || 0; s.isSysAdmin = !!u.isSysAdmin;
+  s.respCount = u.respCount || 0; s.isSysAdmin = !!u.isSysAdmin; s.care = u.care || ''; // 2.03.0: กิจการนักเรียน
   if (u.role === 'intern' || s.role === 'intern') { s.role = u.role; s.intern = u.intern || null; s.mentorId = u.mentorId || ''; } // 2.02.0: สิทธิ์ที่ครูพี่เลี้ยงเปิด-ปิด
   updateCachedSessionUser(s);
   void before; // เมนูข้างอัปเดตเมื่อเปิดหน้าถัดไป
@@ -897,7 +897,7 @@ var ICON_FA = {
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
   sun: 'fa-sun', palette: 'fa-palette', layout: 'fa-table-cells-large', pin: 'fa-thumbtack', clock: 'fa-clock',
-  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images', schoolcal: 'fa-calendar-week', supervision: 'fa-chalkboard-user', teach: 'fa-book-open-reader', club: 'fa-people-group'
+  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images', schoolcal: 'fa-calendar-week', supervision: 'fa-chalkboard-user', teach: 'fa-book-open-reader', club: 'fa-people-group', care: 'fa-user-clock'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -1857,6 +1857,7 @@ var NAV_SLOTS = [
   { slot: 'supervision', label: 'นิเทศการสอน', icon: 'supervision', who: ['all'] }, // 1.98
   { slot: 'teach', label: 'วิชาที่สอน', icon: 'teach', who: ['teacher', 'staff', 'super'] }, // 1.99
   { slot: 'club', label: 'ชุมนุม', icon: 'club', who: ['teacher', 'staff', 'super'] }, // 1.99
+  { slot: 'care', label: 'กิจการนักเรียน', icon: 'care', who: ['teacher', 'staff', 'super'] }, // 2.03.0 (เฉพาะผู้ดูแลกิจการนักเรียน)
   { slot: 'directory', label: 'ทำเนียบบุคลากร', icon: 'directory', who: ['all'] },
   { slot: 'orders', label: 'คลังคำสั่ง', icon: 'orders', who: ['all'] },
   { slot: 'certs', label: 'คลังเกียรติบัตร', icon: 'certs', who: ['all'] },
@@ -1929,6 +1930,7 @@ function navLinksFor(session) {
   if (session) links.push({ href: 'supervision.html', label: 'นิเทศการสอน', key: 'supervision', icon: 'supervision' }); // 1.98
   if (session && (!isExec || execTeaches(session))) links.push({ href: 'teach.html', label: 'วิชาที่สอน', key: 'teach', icon: 'teach' }); // 1.99 · 2.01.0: ผู้บริหารที่มีคาบสอน
   if (session && !isExec) links.push({ href: 'club.html', label: 'ชุมนุม', key: 'club', icon: 'club' }); // 1.99
+  if (session && (session.care || (isAdmin && !session.hasHub))) links.push({ href: 'care.html', label: 'กิจการนักเรียน', key: 'care', icon: 'care' }); // 2.03.0: ผู้ดูแลกิจการนักเรียน (BNK Care Center)
   if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
   // "คลังคำสั่ง" (ตั้งแต่ 1.41.111026 ชื่อเดิม "ไฟล์คำสั่ง"; เปลี่ยนชื่อใน 1.43.111026): ทุกบทบาทที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ — แก้ไข/ลบได้เฉพาะเจ้าของ
   if (session) links.push({ href: 'orders.html', label: 'คลังคำสั่ง', key: 'orders', icon: 'orders' });
@@ -2661,7 +2663,7 @@ var NOTIF_KIND = {
   due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626'],
   activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'], // 1.81: กิจกรรม
   att_missing: ['fa-clipboard-check', '#7c3aed'], hr_missing: ['fa-book-open', '#0891b2'], // 1.91: เว็บเช็คชื่อ
-  sup_date: ['fa-chalkboard-user', '#7c3aed'], sup_duty: ['fa-clipboard-check', '#7c3aed'], sup_sat: ['fa-face-smile', '#f59e0b'], sup_pick: ['fa-hand-pointer', '#7c3aed'] /* 2.02.6 เลือกคาบนิเทศ */ // 1.98: นิเทศการสอน · 1.98.4 แบบความพึงพอใจพร้อมทำ
+  sup_date: ['fa-chalkboard-user', '#7c3aed'], sup_duty: ['fa-clipboard-check', '#7c3aed'], sup_sat: ['fa-face-smile', '#f59e0b'], sup_pick: ['fa-hand-pointer', '#7c3aed'] /* 2.02.6 เลือกคาบนิเทศ */, care_late: ['fa-user-clock', '#c8102e'] /* 2.03.0 */ // 1.98: นิเทศการสอน · 1.98.4 แบบความพึงพอใจพร้อมทำ
 };
 var _notifCovers = {}; // 1.85.2: รูปปกอัลบั้มในกระดิ่ง
 function applyTopBadges(r) {
