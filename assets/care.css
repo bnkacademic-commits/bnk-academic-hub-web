@@ -59,3 +59,51 @@
 .cc-cg small { color: var(--text-muted); font-size: .78rem; }
 .cc-cg .cc-cyc { width: 100%; min-width: 0; }
 @media (max-width: 480px) { .cc-cg { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cc-cg label { padding: 6px 8px; } .cc-cg .cc-cyc { font-size: .82rem; padding-left: 6px; padding-right: 22px; } }
+/* 2.04.0 สรุปรายห้อง · ส่งออก PDF/รูปภาพ/Excel · ตั้งค่าสภานักเรียน/หน้านักเรียน */
+.cc-ex { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.cc-ex .btn { color: #fff; border: 0; }
+.cc-ex-pdf { background: #dc2626; } .cc-ex-pdf:hover { background: #b91c1c; }
+.cc-ex-img { background: #7c3aed; } .cc-ex-img:hover { background: #6d28d9; }
+.cc-st small { display: block; font-size: .76rem; color: var(--text-muted); margin-top: 2px; }
+.cc-caphead { display: none; }
+.cc-exporting .cc-cap { padding: 18px 20px; background: #fff; color: #0f172a; }
+.cc-exporting .cc-caphead { display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px; border-bottom: 2px solid #c8102e; padding-bottom: 8px; }
+.cc-exporting .cc-caphead b { font-size: 1.25rem; } .cc-exporting .cc-caphead span { color: #475569; font-size: .9rem; }
+.cc-exporting .cc-noexp { display: none !important; }
+.cc-exporting .cc-cap .card, .cc-exporting .cc-cap .cc-st { background: #fff !important; color: #0f172a !important; border-color: #e2e8f0 !important; box-shadow: none !important; }
+.cc-m { color: #b91c1c; font-weight: 700; } .cc-p { color: #15803d; font-weight: 700; }
+.cc-rt tfoot td { border-top: 2px solid var(--border); background: var(--surface-2, #f8fafc); font-weight: 600; }
+.cc-lv { display: inline-block; min-width: 30px; text-align: center; border-radius: 6px; padding: 0 6px; margin-right: 3px; font-weight: 800; font-size: .82rem; }
+.cc-lv.g { background: #dcfce7; color: #15803d; } .cc-lv.o { background: #ffedd5; color: #c2410c; } .cc-lv.r { background: #fee2e2; color: #b91c1c; }
+.cc-gb span { width: 46px; }
+.cc-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.cc-chip { display: inline-flex; align-items: center; gap: 6px; background: #efe9ff; color: #2b1a6e; border-radius: 99px; padding: 3px 4px 3px 12px; font-size: .88rem; font-weight: 600; }
+.cc-chip small { font-weight: 500; opacity: .75; }
+.cc-chip button { border: 0; background: rgba(0,0,0,.06); color: inherit; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: .75rem; }
+.cc-chip-add { border: 1px dashed var(--primary); color: var(--primary); background: none; border-radius: 99px; padding: 4px 12px; font: inherit; font-size: .88rem; font-weight: 600; cursor: pointer; }
+.cc-chip-in { display: inline-flex; gap: 4px; } .cc-chip-in input { width: 150px !important; padding: 4px 10px !important; border-radius: 99px !important; }
+.cc-chip-in button { border: 1px solid var(--primary); background: var(--primary); color: #fff; border-radius: 99px; width: 30px; cursor: pointer; }
+.cc-time { width: 150px !important; flex: none !important; }
+.cc-link { display: flex; gap: 6px; align-items: center; padding: 8px 0; border-top: 1px solid var(--border); }
+.cc-link > span { flex: 1; min-width: 0; } .cc-link small { display: block; color: var(--text-muted); font-size: .78rem; overflow-wrap: anywhere; }
+.cc-ith { font-size: .8rem; color: var(--text-muted); font-weight: 700; border-top: 0 !important; padding-bottom: 0 !important; }
+.cc-ith .cc-num { text-align: center; }
+.cc-tcol { width: 104px; flex: none; text-align: center; font-size: .8rem; }
+.cc-pk { max-height: 52vh; overflow-y: auto; }
+.cc-pkr { display: flex; width: 100%; align-items: center; gap: 10px; padding: 8px 6px; border: 0; border-top: 1px solid var(--border); background: none; font: inherit; color: var(--text); text-align: left; cursor: pointer; }
+.cc-pkr span:first-child { width: 96px; flex: none; font-size: .82rem; } .cc-pkr span:nth-child(2) { flex: 1; }
+.cc-pkr b { font-size: .8rem; color: var(--primary); border: 1px solid currentColor; border-radius: 99px; padding: 1px 10px; flex: none; }
+.cc-pkr.on b { background: #15803d; color: #fff; border-color: #15803d; }
+.cc-pkr:hover { background: var(--primary-light); }
+[data-theme="dark"] .cc-chip { background: rgba(124,58,237,.22); color: #ddd6fe; }
+[data-theme="dark"] .cc-lv.g { background: rgba(22,163,74,.2); color: #86efac; } [data-theme="dark"] .cc-lv.o { background: rgba(234,88,12,.2); color: #fdba74; } [data-theme="dark"] .cc-lv.r { background: rgba(220,38,38,.2); color: #fca5a5; }
+@media print { .cc-caphead { display: flex !important; flex-direction: column; margin-bottom: 10px; } .cc-ex, .cc-noexp { display: none !important; } }
+.cc-st b span { display: inline; font-size: inherit; color: inherit; }
+.cc-rs span { width: 110px; }
+.cc-gb span { width: 46px; }
+.cc-exporting .cc-cap, .cc-exporting .cc-cap * { animation: none !important; transition: none !important; }
+.cc-exporting .cc-cap .card { opacity: 1 !important; transform: none !important; }
+.cc-exporting .cc-cap { display: inline-block; min-width: 100%; }
+.cc-exporting .cc-tw { overflow: visible !important; }
+.cc-rt tfoot td:first-child, .cc-rt td:first-child { white-space: nowrap; }
+.cc-qr[hidden] { display: none !important; }
