@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.02.4.091126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.5.091126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -51,8 +51,26 @@
       <!-- 1.92: แยกปฏิทินส่งงาน / ปฏิทินกิจกรรม (ใช้แผงเดียวกัน กรองตามชนิด) -->
       <button class="tab-btn" data-tab="calendar">ปฏิทินส่งงาน</button>
       <button class="tab-btn" data-tab="calact">ปฏิทินกิจกรรม</button>
+      <!-- 2.02.5: รายการที่จัดเก็บแล้ว (แยกตามปีการศึกษา) -->
+      <button class="tab-btn" data-tab="archive" id="archTabBtn" hidden><i class="fa-solid fa-box-archive" aria-hidden="true"></i> จัดเก็บ<span class="rpm-tabcount arch-tabcount" id="archTabCount" hidden></span></button>
       <!-- 1.75: เรื่องที่แจ้ง (เจ้าหน้าที่ = กลุ่มตัวเอง · Super Admin = ทุกเรื่อง) — ผู้บริหารไม่เห็นแท็บนี้ -->
       <button class="tab-btn" data-tab="reports" id="reportsTabBtn" hidden>เรื่องที่แจ้ง<span class="rpm-tabcount" id="reportsTabCount" hidden></span></button>
+    </div>
+
+    <div class="tab-panel" id="tab-archive">
+      <div class="card">
+        <div class="section-title"><span><i class="fa-solid fa-box-archive ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการที่จัดเก็บ</span></div>
+        <p class="hint" style="margin-top:-6px">จัดเก็บ = ซ่อนจากปฏิทินส่งงาน / ปฏิทินกิจกรรมในหน้านี้เท่านั้น · ครูยังเห็นในปฏิทินโรงเรียนและประวัติการส่งงาน · กำหนดส่งงานที่จัดเก็บแล้วครูยังส่งช้าได้</p>
+        <div class="arc-flt">
+          <select id="arcYear" aria-label="ปีการศึกษา"></select>
+          <select id="arcSem" aria-label="ภาคเรียน"><option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select>
+          <span class="evl-seg" id="arcKind"><button type="button" data-arc-kind="activity" class="on"><i class="fa-solid fa-flag" aria-hidden="true"></i> กิจกรรม <b id="arcNAct">0</b></button><button type="button" data-arc-kind="deadline"><i class="fa-solid fa-file-arrow-up" aria-hidden="true"></i> กำหนดส่งงาน <b id="arcNDl">0</b></button></span>
+          <input type="search" id="arcQ" placeholder="ค้นหาในปีนี้" aria-label="ค้นหาในปีนี้" />
+        </div>
+        <div id="arcSum" class="hint"></div>
+        <div id="arcList"><div class="loading">กำลังโหลด</div></div>
+        <div class="ph-more-wrap" id="arcMoreWrap"></div>
+      </div>
     </div>
 
     <div class="tab-panel" id="tab-reports">
@@ -443,7 +461,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.02.4.091126"></script>
+  <script src="assets/api.js?v=2.02.5.091126"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -485,6 +503,7 @@
       },
       popups: function () { return tabLoaders.announcements(); }, // 1.85.2
       calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); },
+      archive: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadArchive(false); }); }, // 2.02.5
       reports: function () { return loadReportsManage(); }
     };
     function loadTabIfNeeded(tabKey) {
@@ -654,6 +673,33 @@
       var b = e.target.closest('[data-evg]'); if (!b) return;
       var sel = document.getElementById('evlGroup'); sel.value = b.getAttribute('data-evg'); sel.dispatchEvent(new Event('change', { bubbles: true }));
     });
+    // ---------- 2.02.5: เรียงลำดับรายการ (จำไว้ในเครื่อง) ----------
+    var EVL_SORT_KEY = 'bnkah_evl_sort', evlSort = 'near';
+    try { evlSort = localStorage.getItem(EVL_SORT_KEY) || 'near'; } catch (e) { /* ข้าม */ }
+    if (['near', 'far', 'new'].indexOf(evlSort) === -1) evlSort = 'near';
+    function evlSorted(list, today) {
+      var a = list.slice(), endOf = function (e) { return e.endDate || e.date; };
+      if (evlSort === 'new') return a.sort(function (x, y) { return String(y.createdAt || '').localeCompare(String(x.createdAt || '')); });
+      if (evlSort === 'far') return a.sort(function (x, y) { return String(y.date).localeCompare(String(x.date)) || String(endOf(y)).localeCompare(String(endOf(x))); });
+      // ใกล้ → ไกล: ยังไม่จบ (รวมกำลังดำเนินอยู่) เรียงวันเริ่มจากใกล้ไปไกล · ผ่านไปแล้วไว้ท้าย (ล่าสุดก่อน)
+      return a.sort(function (x, y) {
+        var px = endOf(x) < today, py = endOf(y) < today;
+        if (px !== py) return px ? 1 : -1;
+        if (!px) return String(x.date).localeCompare(String(y.date)) || String(endOf(x)).localeCompare(String(endOf(y)));
+        return String(endOf(y)).localeCompare(String(endOf(x)));
+      });
+    }
+    function renderEvlSort() {
+      var host = document.getElementById('evlSortBar');
+      if (!host) { var g = document.getElementById('evlGChips') || document.getElementById('eventListWrap'); if (!g) return; g.insertAdjacentHTML('beforebegin', '<div id="evlSortBar" class="evl-sort"></div>'); host = document.getElementById('evlSortBar'); }
+      host.innerHTML = '<span class="evl-sort-l"><i class="fa-solid fa-arrow-down-wide-short" aria-hidden="true"></i> เรียงตาม</span><span class="evl-seg" role="group" aria-label="เรียงตาม">' +
+        [['near', 'วันที่จะถึง (ใกล้ → ไกล)'], ['far', 'ไกล → ใกล้'], ['new', 'เพิ่มล่าสุด']].map(function (o) { return '<button type="button" data-evl-sort="' + o[0] + '" class="' + (evlSort === o[0] ? 'on' : '') + '" aria-pressed="' + (evlSort === o[0]) + '">' + o[1] + '</button>'; }).join('') + '</span>';
+    }
+    document.getElementById('tab-calendar').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-evl-sort]'); if (!b) return;
+      evlSort = b.getAttribute('data-evl-sort'); try { localStorage.setItem(EVL_SORT_KEY, evlSort); } catch (x) { /* ข้าม */ }
+      evlShown = LIST_PAGE; renderEvents();
+    });
     function evTimeText(ev) { return ev.timeStart ? (ev.timeStart + (ev.timeEnd ? '–' + ev.timeEnd : '') + ' น.') : ''; }
     function renderEvents() {
       var wrap = document.getElementById('eventListWrap');
@@ -667,12 +713,17 @@
       });
       evlBar.update(list.length);
       renderEvlGChips(); // 2.01.0
+      renderEvlSort(); // 2.02.5
       if (!lastEvents.length) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีกำหนดการ</div>'; return; }
       if (!list.length) { wrap.innerHTML = '<div class="empty-state">ไม่พบกำหนดการตามตัวกรอง</div>'; return; }
       var html = '';
+      list = evlSorted(list, srToday); // 2.02.5: เรียงลำดับ
+      var pastAll = canManage && archReady ? list.filter(function (ev) { return ev.canEdit && (ev.endDate || ev.date) < srToday; }) : [];
+      evlPastIds = { ids: pastAll.filter(function (ev) { return !ev.seriesId; }).map(function (ev) { return ev.id; }), sids: pastAll.filter(function (ev) { return ev.seriesId; }).map(function (ev) { return ev.seriesId; }) };
+      if (pastAll.length) html += '<div class="arc-ban"><i class="fa-solid fa-box-archive" aria-hidden="true"></i><span>มี <b>' + pastAll.length + ' รายการ</b> ที่' + (evlKind === 'activity' ? 'ผ่านช่วงไปแล้ว' : 'ครบกำหนดแล้ว') + ' (ตามตัวกรองที่เลือก)</span><button type="button" class="btn btn-secondary btn-sm" data-arch-all><i class="fa-solid fa-box-archive" aria-hidden="true"></i> จัดเก็บทั้งหมด ' + pastAll.length + ' รายการ</button></div>';
       list.slice(0, evlShown).forEach(function (ev) {
-        var isAct = ev.kind === 'activity';
-        var dateChip = ev.endDate && ev.endDate !== ev.date ? formatDateThai(ev.date) + ' – ' + formatDateThai(ev.endDate) : formatDateThai(ev.date);
+        var isAct = ev.kind === 'activity', isPast = (ev.endDate || ev.date) < srToday;
+        var dateChip = evDateChipInner(ev.date, ev.endDate, 'range'); // 2.02.5: ช่องวันที่กว้างคงที่ 2 บรรทัด
         var meta = [];
         if (isAct) {
           if (ev.timeStart) meta.push('<i class="fa-solid fa-clock" aria-hidden="true"></i> ' + escapeHtml(evTimeText(ev)));
@@ -699,12 +750,13 @@
         var seriesActs = ev.seriesId ? '<button class="btn btn-primary btn-sm" data-series-view="' + ev.seriesId + '"><i class="fa-solid fa-list" aria-hidden="true"></i> ดูทุกรอบ (' + nSeries + ')</button><button class="btn btn-secondary btn-sm" data-add-round="' + ev.seriesId + '"><i class="fa-solid fa-plus" aria-hidden="true"></i> เพิ่มรอบ</button><button class="btn btn-danger btn-sm" data-del-series="' + ev.seriesId + '">ลบทั้งชุด</button>' : '';
         var by = ev.createdByName ? '<div class="evl-by"><i class="fa-solid fa-user-pen" aria-hidden="true"></i> เพิ่มโดย ' + escapeHtml(ev.createdByName) + (ev.createdAt ? ' · ' + formatDateThai(String(ev.createdAt).slice(0, 10)) : '') + '</div>' : '';
         var mcBtn = ev.manualCheck && !ev.seriesId ? '<button class="btn btn-success btn-sm" data-mc-ev="' + ev.id + '"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ตรวจรายคน</button>' : ''; // 1.93
+        var archBtn = canManage && ev.canEdit && isPast && archReady ? '<button class="btn btn-sm btn-arch" ' + (ev.seriesId ? 'data-arch-sid="' + ev.seriesId + '"' : 'data-arch-id="' + ev.id + '"') + '><i class="fa-solid fa-box-archive" aria-hidden="true"></i> จัดเก็บ</button>' : ''; // 2.02.5
         var acts = canManage && ev.canEdit
-          ? '<div class="evl-acts">' + mcBtn + (ev.seriesId ? seriesActs : '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>') + '</div>'
+          ? '<div class="evl-acts">' + archBtn + mcBtn + (ev.seriesId ? seriesActs : '<button class="btn btn-secondary btn-sm" data-edit-id="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-id="' + ev.id + '">ลบ</button>') + '</div>'
           : (ev.seriesId ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-series-view="' + ev.seriesId + '"><i class="fa-solid fa-list" aria-hidden="true"></i> ดูทุกรอบ (' + nSeries + ')</button></div>' : '') + (canManage ? '<div class="evl-lock" title="แก้ไขได้เฉพาะผู้เพิ่ม เจ้าหน้าที่กลุ่มเจ้าของ และผู้ดูแลระบบ"><i class="fa-solid fa-lock" aria-hidden="true"></i> ดูได้อย่างเดียว</div>' : '');
         var gC = evGroupColor(evGroupOf(ev));
         html += '<div class="event-list-item evl-item" style="border-left:6px solid ' + gC + '">' +
-          '<div class="event-date-chip' + (isAct ? ' act' : '') + '">' + dateChip + '</div>' +
+          '<div class="event-date-chip evd' + (isAct ? ' act' : '') + (isPast ? ' past' : '') + '">' + dateChip + (isPast ? '<span class="evd-p">ผ่านไปแล้ว</span>' : '') + '</div>' +
           '<div class="evl-body">' +
             '<div class="sub-item-title"><span class="evl-tp ' + (isAct ? 'ac' : 'dl') + '"><i class="fa-solid ' + (isAct ? 'fa-flag' : 'fa-file-arrow-up') + '" aria-hidden="true"></i> ' + (isAct ? 'กิจกรรม' : 'กำหนดส่งงาน') + '</span>' + escapeHtml(ev.title) + roundBadge + ' ' + evOwnerBadge(ev) + '</div>' +
             (ev.message ? '<div class="sub-item-desc">' + escapeHtml(ev.message) + '</div>' : '') +
@@ -751,6 +803,15 @@
     document.getElementById('evlFlt').addEventListener('input', function (e) { if (e.target.id === 'evlQ') { clearTimeout(window.__evlQT); window.__evlQT = setTimeout(function () { evlShown = LIST_PAGE; renderEvents(); }, 220); } }); // 2.01.0: พิมพ์ค้นหาไม่วาดใหม่ทุกตัวอักษร
     document.getElementById('eventListWrap').addEventListener('click', evListClick);
     async function evListClick(e) {
+      var abtn = e.target.closest('[data-arch-id], [data-arch-sid], [data-arch-all]'); // 2.02.5: จัดเก็บ
+      if (abtn) {
+        var pl = abtn.hasAttribute('data-arch-all') ? { ids: evlPastIds.ids, seriesIds: evlPastIds.sids } : abtn.hasAttribute('data-arch-sid') ? { seriesIds: [abtn.getAttribute('data-arch-sid')] } : { ids: [abtn.getAttribute('data-arch-id')] };
+        var n = (pl.ids || []).length + (pl.seriesIds || []).length;
+        if (abtn.hasAttribute('data-arch-all') && !(await askConfirm('จัดเก็บ ' + n + ' รายการที่ผ่านไปแล้ว?\nย้ายไปแท็บ "จัดเก็บ" · ครูยังเห็นในปฏิทินโรงเรียนและประวัติการส่งงานเหมือนเดิม · นำกลับได้ทุกเมื่อ', 'จัดเก็บรายการ'))) return;
+        var ra = await withProgress('กำลังจัดเก็บ', function () { return apiCall('adminArchiveEvents', pl); }, { successLabel: 'จัดเก็บแล้ว' });
+        if (ra.ok) { _tabLoaded.archive = false; loadEvents(); }
+        return;
+      }
       var mcb = e.target.closest('button[data-mc-ev]'); // 1.93: ตรวจรายคน
       if (mcb) { openManualCheck(mcb.getAttribute('data-mc-ev')); return; }
       var sv = e.target.closest('button[data-series-view]');
@@ -779,12 +840,74 @@
         if (r.ok) { loadEvents(); }
       }
     }
+    // ---------- 2.02.5: จัดเก็บ ----------
+    var archReady = false, evlPastIds = { ids: [], sids: [] }, arc = { year: '', sem: '', kind: 'activity', q: '', items: [], next: 0, more: false };
+    function setArchCount(n) {
+      n = Number(n) || 0;
+      var b = document.getElementById('archTabBtn'), c = document.getElementById('archTabCount');
+      b.hidden = !(archReady && (n > 0 || canManage)); c.hidden = !n; c.textContent = n;
+    }
+    async function loadArchive(append) {
+      var box = document.getElementById('arcList');
+      if (!append) { arc.next = 0; box.innerHTML = '<div class="loading">กำลังโหลด</div>'; }
+      try {
+        var d = await apiCall('adminListArchived', { year: arc.year, semester: arc.sem, kind: arc.kind, q: arc.q, offset: arc.next });
+        var ys = document.getElementById('arcYear');
+        ys.innerHTML = (d.years || []).map(function (y) { return '<option value="' + escapeHtml(y) + '">ปีการศึกษา ' + escapeHtml(y) + '</option>'; }).join('') || '<option value="">ยังไม่มีรายการที่จัดเก็บ</option>';
+        arc.year = d.year || ''; ys.value = arc.year;
+        document.getElementById('arcNAct').textContent = (d.counts || {}).activity || 0; document.getElementById('arcNDl').textContent = (d.counts || {}).deadline || 0;
+        document.querySelectorAll('[data-arc-kind]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-arc-kind') === arc.kind); });
+        arc.items = append ? arc.items.concat(d.items || []) : (d.items || []); arc.next = d.nextOffset || 0; arc.more = !!d.more;
+        document.getElementById('arcSum').textContent = arc.year ? 'ปีการศึกษา ' + arc.year + ' · ' + (arc.kind === 'activity' ? 'กิจกรรม' : 'กำหนดส่งงาน') + 'ที่จัดเก็บ ' + (d.total || 0) + ' รายการ' : '';
+        renderArchive();
+      } catch (err) { box.innerHTML = '<div class="error-box">' + escapeHtml(err.message) + '</div>'; }
+    }
+    function renderArchive() {
+      var box = document.getElementById('arcList');
+      if (!arc.items.length) { box.innerHTML = '<div class="empty-state">' + (arc.year ? 'ไม่พบรายการที่จัดเก็บตามตัวกรอง' : 'ยังไม่มีรายการที่จัดเก็บ — กดปุ่ม "จัดเก็บ" ที่รายการที่ผ่านไปแล้วในแท็บปฏิทินส่งงาน / ปฏิทินกิจกรรม') + '</div>'; document.getElementById('arcMoreWrap').innerHTML = ''; return; }
+      box.innerHTML = arc.items.map(function (ev) {
+        var isAct = ev.kind === 'activity', gC = evGroupColor(evGroupOf(ev));
+        var meta = [isAct ? 'สำหรับ: ' + escapeHtml(audienceLabel_(ev.audience)) : (ev.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + escapeHtml(ev.semester)) + ' ปีการศึกษา ' + escapeHtml(ev.academicYear)];
+        if (ev.sampleFiles && ev.sampleFiles.length) meta.push('<i class="fa-solid fa-paperclip" aria-hidden="true"></i> ไฟล์แนบ ' + ev.sampleFiles.length);
+        if (ev.links && ev.links.length) meta.push('<i class="fa-solid fa-link" aria-hidden="true"></i> ลิงก์ ' + ev.links.length);
+        var acts = canManage && ev.canEdit ? '<div class="evl-acts"><button class="btn btn-secondary btn-sm" data-arc-undo="' + ev.id + '"' + (ev.seriesId ? ' data-arc-sid="' + ev.seriesId + '"' : '') + '><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> นำกลับ</button>' + (ev.seriesId ? '' : '<button class="btn btn-secondary btn-sm" data-arc-edit="' + ev.id + '">แก้ไข</button><button class="btn btn-danger btn-sm" data-arc-del="' + ev.id + '">ลบ</button>') + '</div>' : '';
+        return '<div class="event-list-item evl-item" style="border-left:6px solid ' + gC + '"><div class="event-date-chip evd past' + (isAct ? ' act' : '') + '">' + evDateChipInner(ev.date, ev.endDate, 'range') + '</div>' +
+          '<div class="evl-body"><div class="sub-item-title"><span class="evl-tp ' + (isAct ? 'ac' : 'dl') + '"><i class="fa-solid ' + (isAct ? 'fa-flag' : 'fa-file-arrow-up') + '" aria-hidden="true"></i> ' + (isAct ? 'กิจกรรม' : 'กำหนดส่งงาน') + '</span>' + escapeHtml(ev.title) + ' ' + evOwnerBadge(ev) + '</div>' +
+          '<div class="sub-item-meta evl-meta">' + meta.join(' · ') + '</div><div class="evl-by"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> จัดเก็บเมื่อ ' + escapeHtml(ev.archivedAt ? formatDateThai(ev.archivedAt) : '-') + (ev.archivedByName ? ' โดย ' + escapeHtml(ev.archivedByName) : '') + '</div></div>' + acts + '</div>';
+      }).join('');
+      document.getElementById('arcMoreWrap').innerHTML = arc.more ? '<button type="button" class="btn btn-secondary" data-arc-more>แสดงเพิ่มอีก 20 รายการ</button>' : '';
+    }
+    document.getElementById('arcYear').addEventListener('change', function () { arc.year = this.value; loadArchive(false); });
+    document.getElementById('arcSem').addEventListener('change', function () { arc.sem = this.value; loadArchive(false); });
+    document.getElementById('arcQ').addEventListener('input', function () { var v = this.value.trim(); clearTimeout(window.__arcQT); window.__arcQT = setTimeout(function () { arc.q = v; loadArchive(false); }, 300); });
+    document.getElementById('tab-archive').addEventListener('click', async function (e) {
+      var k = e.target.closest('[data-arc-kind]'); if (k) { arc.kind = k.getAttribute('data-arc-kind'); loadArchive(false); return; }
+      if (e.target.closest('[data-arc-more]')) { loadArchive(true); return; }
+      var u = e.target.closest('[data-arc-undo]');
+      if (u) {
+        var pl = u.getAttribute('data-arc-sid') ? { seriesIds: [u.getAttribute('data-arc-sid')], undo: 1 } : { ids: [u.getAttribute('data-arc-undo')], undo: 1 };
+        var r = await withProgress('กำลังนำกลับ', function () { return apiCall('adminArchiveEvents', pl); }, { successLabel: 'นำกลับไปที่ปฏิทินแล้ว' });
+        if (r.ok) { _tabLoaded.calendar = false; loadArchive(false); loadEvents(); }
+        return;
+      }
+      var ed = e.target.closest('[data-arc-edit]');
+      if (ed) { var ev = arc.items.filter(function (x) { return x.id === ed.getAttribute('data-arc-edit'); })[0]; if (ev) startEditEvent(ev); return; }
+      var dl = e.target.closest('[data-arc-del]');
+      if (dl) {
+        if (!(await askConfirm('ลบกำหนดการนี้?', 'ยืนยันการลบกำหนดการ'))) return;
+        var id = dl.getAttribute('data-arc-del');
+        var rd = await withProgress('กำลังลบกำหนดการ', function () { return apiCall('adminDeleteEvent', { eventId: id }); }, { successLabel: 'ลบกำหนดการแล้ว' });
+        if (rd.ok) loadArchive(false);
+      }
+    });
     async function loadEvents() {
       var wrap = document.getElementById('eventListWrap');
       try {
-        var res = await Promise.all([apiCall('adminListEvents', {}), evlTerm ? Promise.resolve(evlTerm) : currentAcademicTerm().catch(function () { return null; })]);
+        var res = await Promise.all([apiCall('adminListEvents', { active: 1 }), evlTerm ? Promise.resolve(evlTerm) : currentAcademicTerm().catch(function () { return null; })]);
         var firstTime = !evlTerm;
-        lastEvents = res[0]; evlTerm = res[1] || { year: '' };
+        var d0 = res[0]; // 2.02.5: { events, archivedCount, archiveReady } (Worker รุ่นเก่า = array)
+        lastEvents = Array.isArray(d0) ? d0 : (d0.events || []); evlTerm = res[1] || { year: '' };
+        archReady = !Array.isArray(d0) && !!d0.archiveReady; setArchCount(Array.isArray(d0) ? 0 : d0.archivedCount);
         evlFillYears();
         if (firstTime && evlTerm.year) document.getElementById('evlYear').value = String(evlTerm.year);
         renderEvents();
@@ -1244,6 +1367,7 @@
         fillActYears(ev.academicYear);
         document.getElementById('evActSem').value = ev.semester || '1';
         setEvExtras(ev, 'activity'); // 1.93
+        setEvLinks(ev.links || []); // 2.02.5: โหลดลิงก์เดิมขึ้นฟอร์ม (เดิมไม่โหลด = ดูเหมือนไม่มีลิงก์ แก้/ลบไม่ได้ และบันทึกแล้วลิงก์หาย)
         document.getElementById('eventModalTitle').textContent = 'แก้ไขกิจกรรม: ' + ev.title;
         showModalEl(eventModalEl);
         return;

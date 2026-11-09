@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.02.4.091126" />
+<link rel="stylesheet" href="assets/style.css?v=2.02.5.091126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -261,9 +261,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.02.4.091126"></script>
+  <script src="assets/api.js?v=2.02.5.091126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=2.02.4.091126"></script>
+  <script src="assets/homeroom.js?v=2.02.5.091126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -1701,12 +1701,12 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
     function seriesRowHtml(g, now) {
       var rep = g.__rep, rounds = g.__series, sent = rounds.filter(isAssignmentSubmitted).length, lv = seriesRoundOpen(rep);
       var end = rep.endDate || rep.date, dl = daysLeftInfo(end, now);
-      var dateChip = formatDateThai(end) + (dl && lv !== -1 ? '<span class="days-left ' + (lv === 0 ? 'late' : dl.cls) + '">(' + dl.text + ')</span>' : '');
+      var dateChip = evDateChipInner(rep.date, rep.endDate, 'due') + (dl && lv !== -1 ? '<span class="days-left ' + (lv === 0 ? 'late' : dl.cls) + '">(' + dl.text + ')</span>' : '');
       var pct = Math.round(sent / rounds.length * 100);
       var badge = lv === -1 ? '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งครบแล้ว</span>' : (lv === 0 ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> ' + (rep.review && rep.review.status === 'revise' ? 'ต้องแก้ไข' : 'เกินกำหนด') + '</span>' : '');
       var rooms = rep.roomBased && rep.rooms && rep.rooms.length ? ' · ห้อง ' + rep.rooms.map(function (r) { return escapeHtml(r.roomName); }).join(', ') : '';
       var btn = '<button class="btn ' + (lv === 0 ? 'btn-danger' : 'btn-primary') + ' btn-sm event-submit-btn" data-series-open="' + escapeHtml(rep.seriesId) + '"><i class="fa-solid fa-list-check ui-icon" aria-hidden="true"></i> ดูรอบทั้งหมด</button>';
-      return '<div class="event-list-item"><div class="event-date-chip' + (lv === 0 ? ' overdue' : '') + '"' + (lv === 0 ? '' : chipDeptAttr(rep.categoryId)) + '>' + dateChip + '</div>' +
+      return '<div class="event-list-item"><div class="event-date-chip evd' + (lv === 0 ? ' overdue' : '') + '"' + (lv === 0 ? '' : chipDeptAttr(rep.categoryId)) + '>' + dateChip + '</div>' +
         '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + evLinkMark(rep) + escapeHtml(seriesName(rep)) +
           (rep.roomBased ? ' <span class="hr-tag"><i class="fa-solid fa-door-open" aria-hidden="true"></i> ' + hrModeTag(rep) + '</span>' : '') + categoryDeptBadgeHtml(rep.categoryId) + badge + '</div>' +
           '<div class="sub-item-meta">' + (lv === -1 ? 'ทุกรอบ' : 'รอบ ' + escapeHtml(roundShort(rep))) + rooms +
@@ -1827,7 +1827,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       var upcomingBox = listBox;
       listBox.innerHTML = '<div class="cal-upcoming-grid">' + list.map(function (e) {
           if (e.__series) return seriesRowHtml(e, now); // 1.92.4
-          var dateChip = e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date);
+          var dateChip = evDateChipInner(e.date, e.endDate, 'due'); // 2.02.5: วันส่งขึ้นก่อน + เริ่ม … (ช่องกว้างคงที่)
           // 1.57: (เหลือ N วัน) นับถึงวันสุดท้ายของกำหนดส่ง · ส่งแล้วแสดงสีปกติ · เลยกำหนดแสดงเฉพาะงานที่ยังไม่ส่ง
           var trk = e.categoryId && (!e.noSubmission || e.manualCheck); // 1.93: งานตรวจรายคนนับเหมือนงานที่ต้องส่ง
           var dl = daysLeftInfo(e.endDate || e.date, now), submittedNow = trk && isAssignmentSubmitted(e);
@@ -1850,7 +1850,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
           var showCategorySuffix = e.categoryName && e.categoryName !== e.title;
           var overdueBadge = isOverdue ? '<span class="overdue-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> เกินกำหนด</span>' : '';
           if (isSubmitted) overdueBadge = e.manualCheck ? '' : '<span class="submitted-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> ส่งแล้ว</span>';
-          return '<div class="event-list-item"><div class="event-date-chip' + (isOverdue ? ' overdue' : '') + '"' + (isOverdue ? '' : chipDeptAttr(e.categoryId)) + '>' + dateChip + '</div>' +
+          return '<div class="event-list-item"><div class="event-date-chip evd' + (isOverdue ? ' overdue' : '') + '"' + (isOverdue ? '' : chipDeptAttr(e.categoryId)) + '>' + dateChip + '</div>' +
             '<div style="flex:1 1 220px; min-width:220px;"><div class="sub-item-title">' + evLinkMark(e) + escapeHtml(e.title) +
               (showCategorySuffix ? ' <span style="font-weight:400; color:var(--text-muted); font-size:0.92em;">(' + escapeHtml(e.categoryName) + ')</span>' : '') +
               (e.categoryId ? categoryDeptBadgeHtml(e.categoryId) : '') + overdueBadge + '</div>' +

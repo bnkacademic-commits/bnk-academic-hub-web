@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.02.4';
-var APP_VERSION = '2.02.4.091126';
+var WORKER_MIN_VERSION = '2.02.5';
+var APP_VERSION = '2.02.5.091126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1050,6 +1050,15 @@ function activityOwnerBadgeHtml(e) {
   return e.ownerType === 'subject' ? '<span class="evl-gb sub">กลุ่มสาระฯ ' + escapeHtml(e.ownerGroup) + '</span>' : '<span class="evl-gb">' + escapeHtml(groupLabel(e.ownerGroup)) + '</span>';
 }
 function activityTimeText(e) { return e.timeStart ? e.timeStart + (e.timeEnd ? '–' + e.timeEnd : '') + ' น.' : ''; }
+// 2.02.5: ช่องวันที่กว้างคงที่ 2 บรรทัด (รายการที่มีช่วงวันไม่ดันชื่อรายการ) — mode 'range' = วันเริ่ม + "ถึง … · N วัน" · 'due' = วันส่ง (วันสุดท้าย) + "เริ่ม …"
+function evDateChipInner(start, end, mode) {
+  var multi = !!end && end !== start;
+  var noYear = function (d, ref) { var t = formatDateThai(d); return String(d).slice(0, 4) === String(ref).slice(0, 4) ? t.replace(/\s*\d{4}$/, '') : t; };
+  if (mode === 'due') { var e2 = end || start; return '<b>' + escapeHtml(formatDateThai(e2)) + '</b>' + (multi ? '<span class="evd-s">เริ่ม ' + escapeHtml(noYear(start, e2)) + '</span>' : ''); }
+  if (!multi) return '<b>' + escapeHtml(formatDateThai(start)) + '</b>';
+  var n = Math.round((Date.parse(end + 'T00:00:00Z') - Date.parse(start + 'T00:00:00Z')) / 864e5) + 1;
+  return '<b>' + escapeHtml(formatDateThai(start)) + '</b><span class="evd-s">ถึง ' + escapeHtml(noYear(end, start)) + ' · ' + n + ' วัน</span>';
+}
 function eventRangeText(e) { return e.endDate && e.endDate !== e.date ? formatDateThai(e.date) + ' – ' + formatDateThai(e.endDate) : formatDateThai(e.date); }
 // เพิ่มกิจกรรม "ทำซ้ำทุกปี" ของปีถัดไปที่ทับช่วง fromYmd–toYmd (id = <id>@<ปี ค.ศ.>) — ไม่ฉายย้อนไปก่อนปีที่เพิ่ม
 function expandRepeatEvents(events, fromYmd, toYmd) {
@@ -1176,7 +1185,8 @@ function activityUpcomingHtml(acts, emptyText) {
     if (tt) meta.push('<i class="fa-solid fa-clock" aria-hidden="true"></i> ' + escapeHtml(tt));
     if (e.location) meta.push('<i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(e.location));
     return '<div class="event-list-item cal-act-row" data-act-date="' + escapeHtml(e.date) + '">' +
-      '<div class="event-date-chip act">' + escapeHtml(eventRangeText(e)) + (dl && dl.days > 0 ? '<span class="days-left">(อีก ' + dl.days + ' วัน)</span>' : (e.date <= today ? '<span class="days-left">(วันนี้)</span>' : '')) + '</div>' +
+      '<div class="event-date-chip evd act">' + evDateChipInner(e.date, e.endDate, 'range') + // 2.02.5
+ (dl && dl.days > 0 ? '<span class="days-left">(อีก ' + dl.days + ' วัน)</span>' : (e.date <= today ? '<span class="days-left">(วันนี้)</span>' : '')) + '</div>' +
       '<div style="flex:1 1 220px; min-width:0;"><div class="sub-item-title"><i class="fa-solid fa-flag" style="color:' + activityColor(e) + '; margin-right:4px;" aria-hidden="true"></i>' + escapeHtml(e.title) + ' ' + activityOwnerBadgeHtml(e) + '</div>' +
       (meta.length ? '<div class="sub-item-meta evl-meta">' + meta.join(' · ') + '</div>' : '') +
       (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') + eventLinksHtml(evLinksOf(e), false) + '</div></div>';
