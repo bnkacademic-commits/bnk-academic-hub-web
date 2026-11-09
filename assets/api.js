@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.04.0';
-var APP_VERSION = '2.04.0.091126';
+var APP_VERSION = '2.04.1.091126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2862,7 +2862,7 @@ function openIosInstallHelp() {
     m.className = 'modal-backdrop'; m.id = 'iosInstallModal'; m.hidden = true;
     m.innerHTML = '<div class="modal-box ios-install-box" role="dialog" aria-modal="true" aria-labelledby="iosInstallTitle">' +
       '<button type="button" class="modal-close-x" data-ios-close aria-label="ปิด">✕</button>' +
-      '<div class="ios-install-head"><img src="icons/apple-touch-icon.png" alt="" /><div><h3 id="iosInstallTitle">ติดตั้ง BNK Hub บน iPhone / iPad</h3><p class="hint">ใช้เวลาไม่ถึงนาที ทำครั้งเดียว</p></div></div>' +
+      '<div class="ios-install-head"><img src="icons/apple-touch-icon.png" alt="" /><div><h3 id="iosInstallTitle">ติดตั้ง BNK Academic Hub บน iPhone / iPad</h3><p class="hint">ใช้เวลาไม่ถึงนาที ทำครั้งเดียว</p></div></div>' +
       '<ol class="ios-install-steps">' +
         '<li>แตะปุ่ม <span class="ios-ic"><i class="fa-solid fa-arrow-up-from-bracket" aria-hidden="true"></i></span> <b>แชร์</b> ที่แถบของ Safari</li>' +
         '<li>เลื่อนลงแล้วแตะ <b>"เพิ่มไปยังหน้าจอโฮม"</b> <span class="ios-ic"><i class="fa-solid fa-square-plus" aria-hidden="true"></i></span></li>' +
