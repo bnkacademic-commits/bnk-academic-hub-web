@@ -194,7 +194,7 @@
         var r = await withProgress('กำลังบันทึกการตั้งค่า', function () { return apiCall('careSettingsSave', { pinOn: d.pinOn, pin: d.pin || undefined, notifyOn: d.notifyOn, notifyN: d.notifyN, startPoints: d.startPoints, latePoints: d.latePoints, good: d.good, fair: d.fair, items: items, cycle: d.cycle, siteUrl: d.siteUrl }); }, { successLabel: 'บันทึกการตั้งค่าแล้ว' });
         if (r.ok) { B.settings = r.data.settings; B.periods = r.data.periods || B.periods; B.siteUrl = r.data.siteUrl; draft = null; C.sc = {}; C.ov = {}; showSettings(); }
       };
-      if (!d.pinOn && B.settings.pinOn) askConfirm('ปิดรหัส PIN', 'ปิดแล้ว ใครมีลิงก์ก็เปิดเว็บ เห็นรายชื่อนักเรียนทั้งโรงเรียน และบันทึกการมาสายได้ — ยืนยันปิดหรือไม่?', go); else go();
+      if (!d.pinOn && B.settings.pinOn) { if (await askConfirm('ปิดแล้ว ใครมีลิงก์ก็เปิดเว็บ เห็นรายชื่อนักเรียนทั้งโรงเรียน และบันทึกการมาสายได้ — ยืนยันปิดหรือไม่?', 'ปิดรหัส PIN')) await go(); } else await go();
     }
   });
   body.addEventListener('change', function (e) {
