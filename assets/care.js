@@ -19,6 +19,14 @@
   function err(m) { return '<div class="error-box">' + esc(m) + '</div>'; }
   function lvCls(lv) { return lv === 'good' ? 'g' : (lv === 'fair' ? 'o' : 'r'); }
   function lvTxt(lv) { return lv === 'good' ? 'ดี' : (lv === 'fair' ? 'พอใช้' : 'ต้องปรับปรุง'); }
+  var scoreRing = function (score, start) { // 1.03.1: เขียว 0–คะแนนเริ่มต้น · น้ำเงินซ้อนเมื่อเกิน (เต็มวง +250) · แดงเมื่อติดลบ (เต็มวง −250)
+    score = Number(score) || 0; start = Number(start) || 100; var R = 56, C = 2 * Math.PI * R, CAP = 250;
+    var arc = function (f, col) { f = Math.max(0, Math.min(1, f)); return f <= 0 ? '' : '<circle cx="66" cy="66" r="56" fill="none" stroke="' + col + '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + (f * C).toFixed(1) + ' ' + C.toFixed(1) + '"/>'; };
+    var s = '<circle cx="66" cy="66" r="56" fill="none" stroke="var(--ring-track,#e5e7eb)" stroke-width="12"/>';
+    if (score < 0) s += arc(-score / CAP, '#dc2626'); else { s += arc(score / start, '#16a34a'); if (score > start) s += arc((score - start) / CAP, '#2563eb'); }
+    var cls = score < 0 ? 'neg' : (score > start ? 'over' : ''), sub = score < 0 ? 'ติดลบ' : (score > start ? 'เกิน +' + (score - start) : 'จาก ' + start);
+    return '<div class="sring ' + cls + '" title="คะแนน ' + score + '"><svg viewBox="0 0 132 132" aria-hidden="true">' + s + '</svg><div class="in"><b>' + score + '</b><small>' + sub + '</small></div></div>';
+  };
   function sgn(n) { return n > 0 ? '+' + n : String(n); }
   function ic(n) { return '<i class="fa-solid ' + n + '" aria-hidden="true"></i>'; }
 
@@ -183,7 +191,7 @@
     var mb = document.getElementById('ccModalBody'); mb.innerHTML = '<div class="loading">กำลังโหลด...</div>'; showModalEl(document.getElementById('ccModal'));
     try {
       var d = await apiCall('careStudent', { key: key });
-      mb.innerHTML = '<div class="cc-stu"><div class="cc-ring ' + lvCls(d.level) + '"><b>' + d.score + '</b><small>คะแนน</small></div><div><b style="font-size:1.1rem">' + esc(d.student.name) + '</b><div class="mut">' + esc(d.student.room) + ' เลขที่ ' + esc(d.student.no) + ' · ' + esc(d.period || ('ภาคเรียนที่ ' + d.term + '/' + d.year)) + '</div><span class="cc-tg ' + lvCls(d.level) + '">ระดับ ' + lvTxt(d.level) + '</span> <span class="cc-tg n">มาสาย ' + d.late + ' ครั้ง</span></div></div>' +
+      mb.innerHTML = '<div class="cc-stu">' + scoreRing(d.score, (B.settings || {}).startPoints) + '<div><b style="font-size:1.1rem">' + esc(d.student.name) + '</b><div class="mut">' + esc(d.student.room) + ' เลขที่ ' + esc(d.student.no) + ' · ' + esc(d.period || ('ภาคเรียนที่ ' + d.term + '/' + d.year)) + '</div><span class="cc-tg ' + lvCls(d.level) + '">ระดับ ' + lvTxt(d.level) + '</span> <span class="cc-tg n">มาสาย ' + d.late + ' ครั้ง</span></div></div>' +
         (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span>' + (h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' (' + esc(h.reason) + ')' : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + '<small>' + thD(h.date, true) + ' · ' + (h.kind === 'late' ? 'บันทึกโดย ' + esc(h.by || '-') : 'โดย ' + esc(h.by || '-')) + '</small></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>');
     } catch (e) { mb.innerHTML = err(e.message); }
   }

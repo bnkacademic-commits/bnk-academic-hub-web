@@ -118,3 +118,10 @@
 .cc-itl { white-space: nowrap; min-width: 0; }
 .cc-tcol { width: 66px; font-size: .78rem; }
 .cc-neg input { width: 56px !important; flex: none !important; }
+
+/* 2.05.1: วงกลมคะแนน (เขียว/น้ำเงินซ้อน/แดง) */
+.sring{position:relative;width:96px;height:96px;flex:none}.sring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.sring .in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.sring b{font-size:26px;font-weight:800}.sring small{font-size:10.5px;color:var(--text-muted);margin-top:3px;white-space:nowrap}
+.sring.neg b{color:#dc2626}.sring.over b{color:#2563eb}
+[data-theme="dark"] .sring { --ring-track: #334155; }
