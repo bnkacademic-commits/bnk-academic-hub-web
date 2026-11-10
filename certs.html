@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.05.1.101126" />
+<link rel="stylesheet" href="assets/style.css?v=2.05.2.101126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -208,7 +208,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.05.1.101126"></script>
+  <script src="assets/api.js?v=2.05.2.101126"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -607,10 +607,13 @@
       }
       renderGroups();
     }
-    function personOptions(sel) {
+    function personOptions(sel, typed) {
       var opts = people.slice();
+      // 2.05.2: เกียรติบัตรภายใน — ไม่มีชื่อในระบบ (ครูย้ายเข้า/ออก) พิมพ์ชื่อเองได้
+      var tOpt = mScope === 'internal' ? '<option value="__typed"' + (typed ? ' selected' : '') + '>✏️ ไม่มีในรายชื่อ — พิมพ์ชื่อเอง</option>' : '';
+      if (typed) return '<option value="">— เลือกครู —</option>' + tOpt + opts.map(function (p) { return '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name + (me && p.id === me.id ? ' (ฉัน)' : '')) + '</option>'; }).join('');
       if (sel && !opts.some(function (p) { return p.id === sel; })) opts.unshift({ id: sel, name: 'บัญชีที่ถูกระงับ/ลบ' });
-      return '<option value="">— เลือกครู —</option>' + opts.map(function (p) { return '<option value="' + escapeHtml(p.id) + '"' + (p.id === sel ? ' selected' : '') + '>' + escapeHtml(p.name + (me && p.id === me.id ? ' (ฉัน)' : '')) + '</option>'; }).join('');
+      return '<option value="">— เลือกครู —</option>' + tOpt + opts.map(function (p) { return '<option value="' + escapeHtml(p.id) + '"' + (p.id === sel ? ' selected' : '') + '>' + escapeHtml(p.name + (me && p.id === me.id ? ' (ฉัน)' : '')) + '</option>'; }).join('');
     }
     function previewNumbers() {
       // เลขที่ตัวอย่างของคนใหม่ (ภายใน) — เลขจริงออกตอนบันทึก
@@ -623,7 +626,7 @@
       groups.forEach(function (g, gi) { g.people.forEach(function (p, pi) { if (personFilled(p) && !p.certNo) out[gi + ':' + pi] = formatCertNo(numbering.format, numbering.digits, year, next++, $('certFSem').value, be); }); });
       return out;
     }
-    function personFilled(p) { if (p.cancelled) return false; if (p.blank) return mScope === 'internal'; return mKind === 'teacher' ? !!p.userId : mKind === 'school' ? true : !!String(p.name || '').trim(); }
+    function personFilled(p) { if (p.cancelled) return false; if (p.blank) return mScope === 'internal'; return mKind === 'teacher' ? (!!p.userId || (!!p.typed && mScope === 'internal' && !!String(p.name || '').trim())) : mKind === 'school' ? true : !!String(p.name || '').trim(); }
     // ---- 1.64: วางรายชื่อครูจาก Excel -> จับคู่กับบัญชีในระบบ (ไม่สนคำนำหน้า/ช่องว่าง/จุด) ----
     var pasteMatch = null; // [{raw, userId, status: ok|q|no|set}]
     var NAME_PREFIX = /^(ว่าที่\s*(ร\.?\s*ต\.?|ร้อยตรี)(\s*หญิง)?|นางสาว|น\.\s*ส\.|นาง|นาย|ครู|ดร\.|ผศ\.|รศ\.|ศ\.|mr\.?|mrs\.?|ms\.?|miss)\s*/i;
@@ -651,7 +654,7 @@
       var rows = pasteMatch.map(function (m, i) {
         if (m.status === 'ok') nOk++; else if (m.status === 'q') nQ++; else if (!m.userId) nNo++;
         var badge = m.status === 'ok' ? '<span class="cm-st ok"><i class="fa-solid fa-circle-check"></i> ตรงกัน</span>' : m.status === 'q' ? '<span class="cm-st q"><i class="fa-solid fa-circle-question"></i> ใกล้เคียง</span>' : m.userId ? '<span class="cm-st ok"><i class="fa-solid fa-user-check"></i> เลือกแล้ว</span>' : '<span class="cm-st no"><i class="fa-solid fa-circle-xmark"></i> ไม่พบ</span>';
-        var opts = '<option value="">' + (internal ? '— เว้นว่างไว้ก่อน (จองเลข) —' : '— ไม่เพิ่มคนนี้ —') + '</option>' + people.map(function (p) { return '<option value="' + escapeHtml(p.id) + '"' + (p.id === m.userId ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>'; }).join('');
+        var opts = '<option value="">' + (internal ? '— เว้นว่างไว้ก่อน (จองเลข) —' : '— ไม่เพิ่มคนนี้ —') + '</option>' + (internal ? '<option value="__typed"' + (m.typed ? ' selected' : '') + '>✏️ ใช้ชื่อตามที่วาง (ไม่มีในระบบ)</option>' : '') + people.map(function (p) { return '<option value="' + escapeHtml(p.id) + '"' + (p.id === m.userId ? ' selected' : '') + '>' + escapeHtml(p.name) + '</option>'; }).join('');
         return '<div class="cm-row"><span class="cm-raw">' + escapeHtml(m.raw) + '</span><i class="fa-solid fa-arrow-right cm-ar"></i>' + badge + '<select data-match-sel="' + i + '" aria-label="บัญชีของ ' + escapeHtml(m.raw) + '">' + opts + '</select></div>';
       }).join('');
       return '<div class="cert-paste cert-match"><div class="cm-sum">ตรงกัน ' + nOk + ' · ใกล้เคียง ' + nQ + ' (ตรวจก่อน) · ไม่พบ ' + nNo + (internal ? ' — คนที่ไม่พบเลือกเองได้ หรือเว้นว่างไว้ (จองเลขไว้ก่อน)' : ' — คนที่ไม่พบเลือกเองได้ ไม่เลือก = ไม่เพิ่ม') + '</div>' + rows +
@@ -705,7 +708,9 @@
         var at = ' data-g="' + gi + '" data-p="' + pi + '"';
         var who;
         if (p.blank) who = '<button type="button" class="cert-blank' + (mKind === 'student' ? ' wide' : '') + '" data-p-unblank' + at + ' title="กดเพื่อใส่ชื่อ"><i class="fa-solid fa-user-clock"></i> ยังไม่ระบุชื่อ <span>— กดเพื่อใส่ชื่อ</span></button>';
-        else if (mKind === 'teacher') who = '<select data-p-user' + at + ' aria-label="ครูผู้ได้รับ">' + personOptions(p.userId) + '</select>';
+        else if (mKind === 'teacher') who = p.typed && mScope === 'internal'
+          ? '<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><select data-p-user' + at + ' aria-label="ครูผู้ได้รับ">' + personOptions(p.userId, true) + '</select><input data-p-tname' + at + ' maxlength="120" placeholder="พิมพ์ชื่อ-สกุลครู เช่น นายสมชาย ใจดี" value="' + escapeHtml(p.name) + '" aria-label="ชื่อครู (พิมพ์เอง)" /></div>'
+          : '<select data-p-user' + at + ' aria-label="ครูผู้ได้รับ">' + personOptions(p.userId, false) + '</select>';
         else if (mKind === 'school') who = '<div class="cert-school-box"><i class="fa-solid fa-school" aria-hidden="true"></i> ' + escapeHtml(p.name || schoolName || 'โรงเรียน') + '</div>';
         else who = '<input data-p-name' + at + ' maxlength="120" placeholder="ชื่อ-สกุล เช่น ด.ญ.กมลชนก ใจดี" value="' + escapeHtml(p.name) + '" aria-label="ชื่อนักเรียน" />' +
           // 1.86.3: ช่องชั้น/ห้องมี "ม." ให้แล้ว — พิมพ์ 51 หรือ 5/1 ระบบจัดเป็น ม.5/1 (ค่าอื่นเช่น ป.6 คงตามที่พิมพ์ ไม่แสดง ม.)
@@ -832,7 +837,7 @@
       syncCertDate();
       if (c) {
         groups = groupsOf(c, c.scope === 'internal').map(function (g) { // 1.87: ภายใน — แสดงคนที่ยกเลิกไว้ด้วย (นำกลับมาใช้ได้)
-          return { competition: g.competition, award: g.award, awardLevel: (g.items[0] && g.items[0].awardLevel) || '', people: g.items.map(function (it) { var off = it.status !== 'active'; return { id: it.id, name: it.name, cls: it.cls, userId: it.userId, certNo: it.certNo, file: off ? null : it.file, blank: !!it.unnamed, cancelled: off, wasCancelled: off }; }) };
+          return { competition: g.competition, award: g.award, awardLevel: (g.items[0] && g.items[0].awardLevel) || '', people: g.items.map(function (it) { var off = it.status !== 'active'; return { id: it.id, name: it.name, cls: it.cls, userId: it.userId, typed: c.kind === 'teacher' && !it.userId && !it.unnamed, certNo: it.certNo, file: off ? null : it.file, blank: !!it.unnamed, cancelled: off, wasCancelled: off }; }) };
         });
         mKind = c.kind;
       }
@@ -912,7 +917,7 @@
         var ps = g.people.filter(personFilled);
         ps.forEach(function (p) { flat.push(p); });
         return { competition: g.competition.replace(/\s+/g, ' ').trim(), award: g.award.replace(/\s+/g, ' ').trim(), awardLevel: String(g.awardLevel || '').replace(/\s+/g, ' ').trim(),
-          people: ps.map(function (p) { return p.blank ? { id: p.id || '', blank: true } : { id: p.id || '', name: (p.name || '').trim(), cls: (p.cls || '').trim(), userId: p.userId || '' }; }) };
+          people: ps.map(function (p) { return p.blank ? { id: p.id || '', blank: true } : { id: p.id || '', name: (p.name || '').trim(), cls: (p.cls || '').trim(), userId: p.typed ? '' : (p.userId || ''), typed: !!p.typed }; }) };
       });
       return { groups: gs, flat: flat };
     }
@@ -1109,13 +1114,14 @@
         if (t.hasAttribute('data-g-comp')) groups[Number(t.getAttribute('data-g-comp'))].competition = t.value;
         else if (t.hasAttribute('data-g-award')) groups[Number(t.getAttribute('data-g-award'))].award = t.value;
         else if (t.hasAttribute('data-g-level')) groups[Number(t.getAttribute('data-g-level'))].awardLevel = t.value;
+        else if (t.hasAttribute('data-p-tname')) { groups[Number(gi)].people[Number(pi)].name = t.value; if (mScope === 'internal') refreshNumbers(); else updateNote(); }
         else if (t.hasAttribute('data-p-name')) { groups[Number(gi)].people[Number(pi)].name = t.value; if (mScope === 'internal') refreshNumbers(); else updateNote(); }
         else if (t.hasAttribute('data-p-cls')) groups[Number(gi)].people[Number(pi)].cls = normCls(t.value); // 1.86.3
       });
       G.addEventListener('change', function (e) {
         var t = e.target;
-        if (t.hasAttribute('data-match-sel')) { var mi = Number(t.getAttribute('data-match-sel')); pasteMatch[mi].userId = t.value; pasteMatch[mi].status = t.value ? (pasteMatch[mi].status === 'no' ? 'set' : pasteMatch[mi].status) : 'no'; return; }
-        if (t.hasAttribute('data-p-user')) { groups[Number(t.getAttribute('data-g'))].people[Number(t.getAttribute('data-p'))].userId = t.value; renderGroups(); }
+        if (t.hasAttribute('data-match-sel')) { var mi = Number(t.getAttribute('data-match-sel')); pasteMatch[mi].typed = t.value === '__typed'; if (pasteMatch[mi].typed) { pasteMatch[mi].status = 'set'; pasteMatch[mi].userId = ''; return; } pasteMatch[mi].userId = t.value; pasteMatch[mi].status = t.value ? (pasteMatch[mi].status === 'no' ? 'set' : pasteMatch[mi].status) : 'no'; return; }
+        if (t.hasAttribute('data-p-user')) { var pu = groups[Number(t.getAttribute('data-g'))].people[Number(t.getAttribute('data-p'))]; if (t.value === '__typed') { pu.typed = true; pu.userId = ''; pu.name = ''; } else { pu.typed = false; pu.userId = t.value; } renderGroups(); if (pu.typed) { var tn = G.querySelector('[data-g="' + t.getAttribute('data-g') + '"][data-p="' + t.getAttribute('data-p') + '"][data-p-tname]'); if (tn) tn.focus(); } }
       });
       // อัปเดตเฉพาะป้ายเลขที่ตัวอย่าง (ไม่วาดช่องพิมพ์ใหม่ ช่องพิมพ์ไม่หลุดโฟกัส)
       function refreshNumbers() {
@@ -1161,6 +1167,7 @@
           var have = {}; groups[gm].people.forEach(function (x) { if (x.userId && !x.blank) have[x.userId] = 1; });
           pasteMatch.forEach(function (m) {
             if (m.userId && have[m.userId]) { dup++; return; } // มีในรายการแล้ว — ไม่เพิ่มซ้ำ
+            if (m.typed && mScope === 'internal') { addM.push({ userId: '', typed: true, name: m.raw, cls: '' }); return; } // 2.05.2
             if (m.userId) { have[m.userId] = 1; addM.push({ userId: m.userId, name: '', cls: '' }); }
           });
           groups[gm].people = groups[gm].people.filter(personFilled).concat(addM);
