@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.05.2.101126" />
+<link rel="stylesheet" href="assets/style.css?v=2.06.0.101126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -140,6 +140,17 @@
               <button type="button" role="radio" data-mode="online"><i class="fa-solid fa-laptop"></i> Online</button><button type="button" role="radio" data-mode="onsite"><i class="fa-solid fa-location-dot"></i> On-site</button><button type="button" role="radio" data-mode="hybrid"><i class="fa-solid fa-shuffle"></i> Hybrid</button>
             </div></div>
         </div>
+        <!-- 2.06.0: เกียรติบัตรภายใน — กลุ่มบริหารงาน · กลุ่มสาระการเรียนรู้ (ถ้ามี) · ผู้รับผิดชอบ -->
+        <div id="certIntMeta" hidden>
+          <div class="cert-meta-row">
+            <div class="field"><label for="certFDept">กลุ่มบริหารงาน</label><select id="certFDept"></select></div>
+            <div class="field"><label for="certFSubj">กลุ่มสาระการเรียนรู้ (ถ้ามี)</label><select id="certFSubj"></select></div>
+          </div>
+          <div class="field"><label for="certRespSearch">ผู้รับผิดชอบ (เลือกได้หลายคน)</label>
+            <div class="resp-chips" id="certRespChips"></div>
+            <input type="search" id="certRespSearch" placeholder="พิมพ์ชื่อเพื่อค้นหา" autocomplete="off" />
+            <div class="resp-list" id="certRespList"></div></div>
+        </div>
         <div class="cert-note" id="certModalNote"></div>
         <datalist id="certCompDL"></datalist>
         <datalist id="certAwardDL"></datalist>
@@ -208,10 +219,11 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.05.2.101126"></script>
+  <script src="assets/api.js?v=2.06.0.101126"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
+    var certDepts = [], certSubjs = [], myDept = '', respSel = []; // 2.06.0
     var allYears = [], pendingMine = [], selYear = null, shownN = LIST_PAGE, agencies = [], levels = [], certs = [], activities = [], people = [], me = null, canAdd = false, canMerge = false, schoolName = '', summerOn = true;
     var numbering = { format: 'บนค. {ปีการศึกษา}/{เลขที่}', digits: 4, counters: {} };
     var scope = 'internal', kindFilter = '', expanded = {}, curTerm = null, yearDefaulted = false;
@@ -511,6 +523,10 @@
         ['ภาคเรียน / ปีการศึกษา', escapeHtml(semText(c.semester) + ' ปีการศึกษา ' + c.academicYear)],
         ['เพิ่มโดย', c.createdByName ? escapeHtml(c.createdByName) : '—']
       ];
+      if (c.scope === 'internal' && (c.department || c.subjectGroup || (c.responsible || []).length)) rows.splice(4, 0, // 2.06.0
+        ['กลุ่มบริหารงาน', c.department ? escapeHtml(groupLabel(c.department)) : '—'],
+        ['กลุ่มสาระการเรียนรู้', c.subjectGroup ? escapeHtml(c.subjectGroup) : '—'],
+        ['ผู้รับผิดชอบ', (c.responsible || []).length ? c.responsible.map(function (x) { return escapeHtml(x.name); }).join(', ') : '—']);
       var canShare = c.kind === 'student' && !cancelled;
       return '<li class="ordc-item orders-row cert-row' + (open ? ' open' : '') + (miss ? ' pending' : '') + (cancelled ? ' cancelled' : '') + '" data-id="' + escapeHtml(c.id) + '">' +
         '<div class="ordc-main" data-expand="' + escapeHtml(c.id) + '" role="button" tabindex="0" aria-expanded="' + open + '">' +
@@ -560,7 +576,7 @@
     function applyCertRes(res) {
       certs = res.certs || []; activities = res.activities || []; agencies = res.agencies || []; levels = res.levels || []; people = res.people || []; me = res.me;
       allYears = res.years || []; pendingMine = res.pendingMine || [];
-      canAdd = !!res.canAdd; canMerge = !!res.canMergeActivities; schoolName = res.schoolName || ''; summerOn = res.summerEnabled !== false;
+      canAdd = !!res.canAdd; canMerge = !!res.canMergeActivities; schoolName = res.schoolName || ''; certDepts = res.departments || []; certSubjs = res.subjectGroups || []; myDept = res.myDepartment || ''; summerOn = res.summerEnabled !== false;
       if (res.numbering) numbering = res.numbering;
       $('certAddIntBtn').hidden = !canAdd; $('certAddExtBtn').hidden = !canAdd;
       $('certMergeBtn').hidden = !canMerge || !(activities.length || agencies.length || levels.length);
@@ -844,6 +860,16 @@
       mType = c ? (c.certType || 'training') : 'training';
       mMode = c ? (c.attendMode || 'onsite') : 'onsite';
       $('certFAgency').value = c ? (c.agency || '') : (internal ? (schoolName || '') : '');
+      // 2.06.0: กลุ่มบริหารงาน / กลุ่มสาระฯ / ผู้รับผิดชอบ (เฉพาะภายใน)
+      $('certIntMeta').hidden = !internal;
+      var dv = c ? (c.department || '') : (certDepts.indexOf(myDept) !== -1 ? myDept : '');
+      $('certFDept').innerHTML = '<option value="">— เลือกกลุ่มบริหารงาน —</option>' + certDepts.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(groupLabel(x)) + '</option>'; }).join('');
+      $('certFDept').value = dv;
+      $('certFSubj').innerHTML = '<option value="">— ไม่ระบุ —</option>' + certSubjs.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(x) + '</option>'; }).join('');
+      $('certFSubj').value = c ? (c.subjectGroup || '') : '';
+      respSel = c ? (c.responsible || []).map(function (x) { return x.id; }) : (me ? [me.id] : []);
+      respNames = {}; (c ? c.responsible || [] : []).forEach(function (x) { respNames[x.id] = x.name; });
+      $('certRespSearch').value = ''; renderCertResp();
       hasComp = !!c && mType === 'award' && (groups.length > 1 || groups.some(function (g) { return !!g.competition; }));
       renderTypeMode();
       // 1.67: เกียรติบัตรภายใน โรงเรียนเป็นผู้ออก — ไม่มีผู้รับ "โรงเรียน"
@@ -854,6 +880,14 @@
       showModalEl($('certModal'));
     }
     function closeModal() { hideModalEl($('certModal')); }
+    var respNames = {};
+    function renderCertResp() {
+      var nm = function (id) { var p = people.filter(function (x) { return x.id === id; })[0]; return p ? p.name : (respNames[id] || 'บัญชีที่ถูกระงับ/ลบ'); };
+      $('certRespChips').innerHTML = respSel.length ? respSel.map(function (id) { return '<span class="resp-chip">' + escapeHtml(nm(id)) + '<button type="button" data-cresp-rm="' + escapeHtml(id) + '" aria-label="เอาออก">✕</button></span>'; }).join('') : '<span class="hint">ยังไม่ได้เลือก</span>';
+      var q = $('certRespSearch').value.replace(/\s+/g, '').toLowerCase();
+      var list = people.filter(function (p) { return !q || String(p.name).replace(/\s+/g, '').toLowerCase().indexOf(q) >= 0; });
+      $('certRespList').innerHTML = list.length ? list.map(function (p) { return '<label class="resp-item"><input type="checkbox" data-cresp="' + escapeHtml(p.id) + '"' + (respSel.indexOf(p.id) >= 0 ? ' checked' : '') + ' /> ' + escapeHtml(p.name) + '</label>'; }).join('') : '<div class="hint" style="padding:8px;">ไม่พบชื่อ</div>';
+    }
     function syncCertDate() { var v = $('certFDate').value; $('certFDateThai').textContent = v ? '(' + formatDateThai(v) + ')' : ''; }
 
     // ----- ชื่อกิจกรรม: รายการแนะนำ + เตือนชื่อคล้าย -----
@@ -932,6 +966,10 @@
       if (!/^\d{4}$/.test(head.academicYear)) return showErr('กรุณากรอกปีการศึกษา (พ.ศ. 4 หลัก เช่น 2569)');
       if (!head.activity) return showErr(mType === 'award' ? 'กรุณากรอกชื่อผลงาน/รางวัล' : 'กรุณากรอกชื่อกิจกรรม/โครงการ/หลักสูตร');
       if (!head.agency) { $('certFAgency').focus(); return showErr('กรุณากรอกหน่วยงาน'); }
+      if (mScope === 'internal') { // 2.06.0
+        head.department = $('certFDept').value; head.subjectGroup = $('certFSubj').value; head.responsibleIds = respSel.slice();
+        if (!head.department && !(editing && !editing.department)) { $('certFDept').focus(); return showErr('กรุณาเลือกกลุ่มบริหารงาน'); }
+      }
       if (!head.certDate) return showErr('กรุณาเลือกวันที่ตามเกียรติบัตร');
       if (!pg.groups.length) return showErr('ยกเลิกผู้รับครบทุกคนแล้ว — ถ้าไม่ใช้เกียรติบัตรชุดนี้ ให้ปิดหน้าต่างแล้วกด "ยกเลิก" ทั้งชุดในรายการ'); // 1.87
       var newCancel = []; groups.forEach(function (g) { g.people.forEach(function (p) { if (p.cancelled && !p.wasCancelled) newCancel.push(p); }); });
@@ -967,6 +1005,7 @@
         }
         expanded[certId] = true;
         if (failed.length) throw Object.assign(new Error('บันทึกแล้ว แต่อัปไฟล์ไม่สำเร็จ ' + failed.length + '/' + jobs.length + ' ไฟล์ — ' + failed.join('; ')), { retryLabel: 'ส่งใหม่ ' + failed.length + ' ไฟล์' });
+        if (res.metaSkipped) showToast('บันทึกแล้ว แต่ยังไม่ได้เก็บกลุ่มบริหารงาน/ผู้รับผิดชอบ — ผู้ดูแลต้องรัน SQL ชุดที่ 41 ก่อน', true);
         if (res.driveSynced === false) showToast('บันทึกข้อมูลแล้ว แต่ยังเปลี่ยนชื่อไฟล์ใน Google Drive ไม่ครบ', true);
         return res;
       }, { successLabel: wasEdit ? 'บันทึกแล้ว' : (sc === 'internal' ? 'จองเลขและบันทึกแล้ว' : 'เพิ่มเกียรติบัตรแล้ว'), upload: nUp > 0 });
@@ -1094,6 +1133,10 @@
       $('certFSem').addEventListener('change', renderGroups);
       $('certFDate').addEventListener('input', function () { syncCertDate(); if (mScope === 'internal' && numbering.yearMode === 'be') refreshNumbers(); });
       $('certFType').addEventListener('click', function (e) { var b = e.target.closest('[data-type]'); if (b) setType(b.getAttribute('data-type')); });
+      // 2.06.0: ผู้รับผิดชอบ
+      $('certRespSearch').addEventListener('input', renderCertResp);
+      $('certRespList').addEventListener('change', function (e) { var id = e.target.getAttribute('data-cresp'); if (!id) return; var i = respSel.indexOf(id); if (e.target.checked && i < 0) { if (respSel.length >= 20) { e.target.checked = false; return showToast('เลือกได้สูงสุด 20 คน', true); } respSel.push(id); } else if (!e.target.checked && i >= 0) respSel.splice(i, 1); renderCertResp(); });
+      $('certRespChips').addEventListener('click', function (e) { var b = e.target.closest('[data-cresp-rm]'); if (!b) return; var id = b.getAttribute('data-cresp-rm'); respSel = respSel.filter(function (x) { return x !== id; }); renderCertResp(); });
       $('certFMode').addEventListener('click', function (e) { var b = e.target.closest('[data-mode]'); if (b) { mMode = b.getAttribute('data-mode'); renderTypeMode(); } });
       $('certCompTg').addEventListener('click', function (e) { var b = e.target.closest('[data-comp]'); if (b) setHasComp(b.getAttribute('data-comp') === '1'); });
       $('certAddGroup').addEventListener('click', function () {

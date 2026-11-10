@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.05.2.101126" />
+<link rel="stylesheet" href="assets/style.css?v=2.06.0.101126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -92,11 +92,11 @@
         <div class="field-row">
           <div class="field">
             <label for="ordAcYear">ปีการศึกษา</label>
-            <input id="ordAcYear" maxlength="4" inputmode="numeric" placeholder="2569" />
+            <select id="ordAcYear" aria-label="ปีการศึกษา"></select>
           </div>
           <div class="field">
-            <label for="ordSem">ภาคเรียน</label>
-            <select id="ordSem"></select>
+            <label for="ordFSem">ภาคเรียน</label>
+            <select id="ordFSem"></select>
           </div>
         </div>
         <div class="field-row">
@@ -156,7 +156,7 @@
   </div>
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.05.2.101126"></script>
+  <script src="assets/api.js?v=2.06.0.101126"></script>
   <script>
     var session = requireLogin();
     var orders = [], departments = [], subjectGroups = [], people = [], myDepartment = '', summerOn = true, retentionYears = 0;
@@ -373,7 +373,7 @@
 
     // ตัวอย่างชื่อไฟล์ที่จะบันทึกใน Google Drive (ฝั่ง Worker ตั้งชื่อจริงให้ — ตรงกับ orderDriveFileName ใน handlers/orders.js)
     function updateDriveName() {
-      var num = $('ordNoNum').value.trim(), y = $('ordNoYear').value.trim(), title = $('ordTitle').value.trim(), ay = $('ordAcYear').value.trim(), sem = $('ordSem').value;
+      var num = $('ordNoNum').value.trim(), y = $('ordNoYear').value.trim(), title = $('ordTitle').value.trim(), ay = $('ordAcYear').value.trim(), sem = $('ordFSem').value;
       if (!title || !ay) { $('ordDriveName').textContent = ''; return; }
       var name = [num && y ? num + '-' + y : '', title, semText(sem), 'ปีการศึกษา ' + ay].filter(Boolean).join(' ').replace(/[\\/:*?"<>|%]/g, ' ').replace(/\s+/g, ' ').trim() + '.pdf';
       $('ordDriveName').innerHTML = '<i class="fa-solid fa-folder-tree"></i> ชื่อไฟล์ใน Google Drive: <b>' + escapeHtml(name) + '</b> <span class="hint">(ในระบบจะแสดงตามที่กรอก)</span>';
@@ -392,12 +392,12 @@
       $('ordDate').value = o ? o.orderDate : '';
       $('ordActStart').value = o ? o.activityStart : '';
       $('ordActEnd').value = o ? o.activityEnd : '';
-      $('ordSem').innerHTML = '<option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option>' + (summerOn ? '<option value="summer">ภาคฤดูร้อน</option>' : '');
+      $('ordFSem').innerHTML = '<option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option>' + (summerOn ? '<option value="summer">ภาคฤดูร้อน</option>' : '');
       var term = { year: '', semester: '1' };
       try { term = await currentAcademicTerm(); } catch (e) { /* ใช้ค่าว่าง */ }
-      $('ordAcYear').value = o && o.academicYear ? o.academicYear : term.year;
-      $('ordSem').value = o && o.semester ? o.semester : term.semester;
-      if (!$('ordSem').value) $('ordSem').value = '1';
+      var ayCur = Number(term.year) || (new Date().getFullYear() + 543), ayVal = String(o && o.academicYear ? o.academicYear : (term.year || ayCur)), ays = []; for (var yy = ayCur + 1; yy >= ayCur - 4; yy--) ays.push(String(yy)); if (ays.indexOf(ayVal) === -1) ays.push(ayVal); $('ordAcYear').innerHTML = ays.map(function (v) { return '<option value="' + v + '">' + v + '</option>'; }).join(''); $('ordAcYear').value = ayVal; // 2.05.3: เลือกปีการศึกษา
+      $('ordFSem').value = o && o.semester ? o.semester : term.semester;
+      if (!$('ordFSem').value) $('ordFSem').value = '1';
       if (!o && !$('ordNoYear').value) $('ordNoYear').placeholder = String(new Date().getFullYear() + 543);
       $('ordDeptSel').innerHTML = departments.map(function (x) { return '<option value="' + escapeHtml(x) + '">' + escapeHtml(groupLabel(x)) + '</option>'; }).join('');
       $('ordDeptSel').value = o ? o.department : (departments.indexOf(myDepartment) >= 0 ? myDepartment : departments[0] || '');
@@ -488,7 +488,7 @@
       showErr('');
       var fields = {
         title: $('ordTitle').value.trim(), orderNoNumber: $('ordNoNum').value.trim(), orderNoYear: $('ordNoYear').value.trim(), orderDate: $('ordDate').value,
-        academicYear: $('ordAcYear').value.trim(), semester: $('ordSem').value,
+        academicYear: $('ordAcYear').value.trim(), semester: $('ordFSem').value,
         activityStart: $('ordActStart').value, activityEnd: $('ordActEnd').value,
         department: $('ordDeptSel').value, subjectGroup: $('ordSubjectSel').value, responsibleIds: respSelected.slice()
       };
@@ -560,8 +560,8 @@
       $('ordForm').addEventListener('submit', onSubmit);
       $('ordCancel').addEventListener('click', closeModal);
       $('ordCloseX').addEventListener('click', closeModal);
-      ['ordTitle', 'ordNoNum', 'ordNoYear', 'ordAcYear'].forEach(function (id) { $(id).addEventListener('input', updateDriveName); });
-      $('ordSem').addEventListener('change', updateDriveName);
+      ['ordTitle', 'ordNoNum', 'ordNoYear'].forEach(function (id) { $(id).addEventListener('input', updateDriveName); }); $('ordAcYear').addEventListener('change', updateDriveName);
+      $('ordFSem').addEventListener('change', updateDriveName);
       $('ordRespSearch').addEventListener('input', debounce(renderResp, 200));
       $('ordRespList').addEventListener('change', function (ev) {
         var id = ev.target.getAttribute && ev.target.getAttribute('data-resp-id');
