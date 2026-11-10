@@ -107,3 +107,14 @@
 .cc-exporting .cc-tw { overflow: visible !important; }
 .cc-rt tfoot td:first-child, .cc-rt td:first-child { white-space: nowrap; }
 .cc-qr[hidden] { display: none !important; }
+/* 2.05.0: แถวมาสาย + สวิตช์สภานักเรียน */
+.cc-tcol { width: 92px; }
+.cc-itlate { background: var(--primary-light, #eef2ff); border-radius: 10px; padding: 6px 4px !important; }
+.cc-itl { flex: 1; display: flex; align-items: center; gap: 6px; }
+.cc-itl .fa-lock { font-size: .75rem; color: var(--text-muted); }
+.cc-neg { display: inline-flex; align-items: center; gap: 2px; }
+.cc-neg b { color: #b91c1c; }
+.cc-neg input { width: 52px; }
+.cc-itl { white-space: nowrap; min-width: 0; }
+.cc-tcol { width: 66px; font-size: .78rem; }
+.cc-neg input { width: 56px !important; flex: none !important; }

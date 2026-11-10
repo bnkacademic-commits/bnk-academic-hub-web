@@ -259,7 +259,7 @@
   function showSettings() {
     var s = B.settings;
     draft = draft || { pinOn: s.pinOn, pin: '', notifyOn: s.notifyOn, notifyN: s.notifyN, startPoints: s.startPoints, latePoints: s.latePoints, good: s.good, fair: s.fair,
-      items: (s.items || []).map(function (x) { return { label: x.label, delta: x.delta, t: !!x.t }; }), siteUrl: B.siteUrl, cycle: JSON.parse(JSON.stringify(s.cycle || { mode: 'all', all: 'term', g: {} })),
+      items: (s.items || []).map(function (x) { return { label: x.label, delta: x.delta, t: !!x.t, c: !!x.c }; }), siteUrl: B.siteUrl, cycle: JSON.parse(JSON.stringify(s.cycle || { mode: 'all', all: 'term', g: {} })),
       advisorView: !!s.advisorView, council: (s.council || []).map(function (c) { return { k: c.k, n: c.n, r: c.r }; }), selfOn: s.selfOn !== false, selfFrom: s.selfFrom || '06:00', selfTo: s.selfTo || '17:30', reasons: (s.reasons || []).slice() };
     var d = draft, sw = function (id, on, attr) { return '<input type="checkbox" class="switch" role="switch" id="' + id + '"' + (attr || '') + (on ? ' checked' : '') + ' />'; }, base = siteBase(d.siteUrl);
     var links = [['', 'หน้าครู (หน้าหลัก)', 'fa-chalkboard-user'], ['council.html', 'หน้าสภานักเรียน (ใช้ PIN)', 'fa-people-group'], ['student.html', 'หน้านักเรียน (แจ้งมาสายเอง)', 'fa-user-graduate']];
@@ -287,11 +287,13 @@
       '<div><div class="card cc-card"><h3>' + ic('fa-star') + ' คะแนนพฤติกรรม</h3>' +
       '<div class="cc-row"><span class="cc-lb">คะแนนเริ่มต้น</span><input id="ccStart" type="number" min="0" max="1000" class="cc-num" value="' + d.startPoints + '" /></div>' +
       cycleHtml(d.cycle) +
-      '<div class="cc-row"><span class="cc-lb">มาสาย หักอัตโนมัติ</span><input id="ccLate" type="number" min="0" max="50" class="cc-num" value="' + d.latePoints + '" /><span>คะแนน / ครั้ง</span></div>' +
       '<div class="cc-row"><span class="cc-lb">ระดับ</span><span class="cc-tg g">ดี ≥</span><input id="ccGood" type="number" class="cc-num" value="' + d.good + '" /><span class="cc-tg o">พอใช้ ≥</span><input id="ccFair" type="number" class="cc-num" value="' + d.fair + '" /><span class="cc-tg r">ต่ำกว่านั้น = ต้องปรับปรุง</span></div>' +
-      '<h3 style="margin-top:14px">' + ic('fa-list-check') + ' รายการเพิ่ม / หักคะแนน</h3><div class="cc-it cc-ith"><span class="cc-num">คะแนน</span><span style="flex:1">รายการ</span><span class="cc-tcol">ครูทั่วไปใช้ได้</span><span style="width:34px"></span></div><div id="ccItems">' +
-      d.items.map(function (x, i) { return '<div class="cc-it"><input type="number" class="cc-num" data-cc-it-d="' + i + '" value="' + x.delta + '" /><input data-cc-it-l="' + i + '" value="' + esc(x.label) + '" placeholder="ชื่อรายการ" /><span class="cc-tcol">' + sw('ccIt' + i, x.t, ' data-cc-it-t="' + i + '" aria-label="ครูทั่วไปใช้ได้"') + '</span><button type="button" class="cc-x" data-cc-it-del="' + i + '" aria-label="ลบ">' + ic('fa-xmark') + '</button></div>'; }).join('') + '</div>' +
+      '<h3 style="margin-top:14px">' + ic('fa-list-check') + ' รายการเพิ่ม / หักคะแนน</h3><div class="cc-it cc-ith"><span class="cc-num">คะแนน</span><span style="flex:1">รายการ</span><span class="cc-tcol">ครูทั่วไป</span><span class="cc-tcol">สภานักเรียน</span><span style="width:34px"></span></div>' +
+      // 2.05.0: "มาสาย" เป็นแถวแรก (ลบ/เปลี่ยนชื่อไม่ได้ · เปิดให้ครูและสภาเสมอ) · ช่องคะแนน = หักต่อครั้ง
+      '<div class="cc-it cc-itlate"><span class="cc-num cc-neg"><b>−</b><input id="ccLate" type="number" min="0" max="50" value="' + d.latePoints + '" aria-label="มาสาย หักคะแนนต่อครั้ง" /></span><span class="cc-itl">' + ic('fa-clock') + ' <b>มาสาย</b> ' + ic('fa-lock') + '</span><span class="cc-tcol">' + sw('ccLtT', true, ' disabled') + '</span><span class="cc-tcol">' + sw('ccLtC', true, ' disabled') + '</span><span style="width:34px"></span></div><div id="ccItems">' +
+      d.items.map(function (x, i) { return '<div class="cc-it"><input type="number" class="cc-num" data-cc-it-d="' + i + '" value="' + x.delta + '" /><input data-cc-it-l="' + i + '" value="' + esc(x.label) + '" placeholder="ชื่อรายการ" /><span class="cc-tcol">' + sw('ccIt' + i, x.t, ' data-cc-it-t="' + i + '" aria-label="ครูทั่วไปใช้ได้"') + '</span><span class="cc-tcol">' + sw('ccIc' + i, x.c, ' data-cc-it-c="' + i + '" aria-label="สภานักเรียนใช้ได้"') + '</span><button type="button" class="cc-x" data-cc-it-del="' + i + '" aria-label="ลบ">' + ic('fa-xmark') + '</button></div>'; }).join('') + '</div>' +
       '<div class="cc-row"><button type="button" class="btn btn-secondary btn-sm" data-cc-it-add>' + ic('fa-plus') + ' เพิ่มรายการ</button><span class="hint" style="margin:0">ติดลบ = หัก · บวก = เพิ่ม · ครูกิจการนักเรียนใช้ได้ทุกรายการ และพิมพ์เรื่องอื่นเองได้</span></div>' +
+      '<p class="hint">' + ic('fa-circle-info') + ' มาสาย: เปลี่ยนคะแนนแล้ว การมาสายที่บันทึกไว้แล้วจะคิดตามค่าใหม่ทั้งหมด (รายการอื่นคิดตามค่า ณ วันที่บันทึก) · ใส่ 0 = บันทึกการมาสายแต่ไม่หักคะแนน</p>' +
       '<h3 style="margin-top:14px">' + ic('fa-user-shield') + ' สิทธิ์ครูทั่วไป</h3><label class="cc-row">' + sw('ccAdvView', d.advisorView) + '<span>ครูที่ปรึกษาดูคะแนนของห้องตัวเองได้ (ในหน้าครู)</span></label>' +
       '<p class="hint">ครูกิจการนักเรียน = ผู้ดูแลกิจการนักเรียน (สิทธิ์จัดการ) และเจ้าหน้าที่กลุ่มบริหารงานกิจการนักเรียน · ครูทั่วไปยกเลิกได้เฉพาะรายการที่ตัวเองบันทึกในวันเดียวกัน</p>' +
       '<h3 style="margin-top:14px">' + ic('fa-bell') + ' แจ้งเตือนครูที่ปรึกษา</h3><div class="cc-row">' + sw('ccNotifyOn', d.notifyOn) + '<span>แจ้งผ่านกระดิ่งเมื่อนักเรียนสายครบ</span><input id="ccNotifyN" type="number" min="1" max="31" class="cc-num" value="' + d.notifyN + '" /><span>ครั้ง / เดือน</span></div>' +
@@ -323,6 +325,7 @@
     document.querySelectorAll('[data-cc-it-l]').forEach(function (e) { d.items[+e.getAttribute('data-cc-it-l')].label = e.value; });
     document.querySelectorAll('[data-cc-it-d]').forEach(function (e) { d.items[+e.getAttribute('data-cc-it-d')].delta = Math.trunc(+e.value || 0); });
     document.querySelectorAll('[data-cc-it-t]').forEach(function (e) { d.items[+e.getAttribute('data-cc-it-t')].t = e.checked; });
+    document.querySelectorAll('[data-cc-it-c]').forEach(function (e) { d.items[+e.getAttribute('data-cc-it-c')].c = e.checked; });
   }
   // เลือกสมาชิกสภานักเรียน (รายชื่อจาก BNKSA ผ่าน Care Center — โหลดครั้งเดียวต่อการเปิดหน้า)
   var pk = { room: '', q: '' };
@@ -350,7 +353,7 @@
     if ((t = e.target.closest('[data-cc-room]'))) { st.rroom = t.getAttribute('data-cc-room'); showRooms(); return; }
     if ((t = e.target.closest('[data-cc-ex]'))) { var k = t.getAttribute('data-cc-ex'); if (k === 'pdf') exportPdf(); else if (k === 'img') exportImg(); else exportXls(); return; }
     if ((t = e.target.closest('[data-cc-cm]'))) { syncDraft(); var m = t.getAttribute('data-cc-cm'); if (m === 'grade' && draft.cycle.mode !== 'grade') { for (var i = 1; i <= 6; i++) draft.cycle.g['m' + i] = draft.cycle.all || 'term'; } draft.cycle.mode = m; showSettings(); return; }
-    if (e.target.closest('[data-cc-it-add]')) { syncDraft(); draft.items.push({ label: '', delta: -5, t: false }); showSettings(); return; }
+    if (e.target.closest('[data-cc-it-add]')) { syncDraft(); draft.items.push({ label: '', delta: -5, t: false, c: false }); showSettings(); return; }
     if ((t = e.target.closest('[data-cc-it-del]'))) { syncDraft(); draft.items.splice(+t.getAttribute('data-cc-it-del'), 1); showSettings(); return; }
     if ((t = e.target.closest('[data-cc-cdel]'))) { syncDraft(); draft.council.splice(+t.getAttribute('data-cc-cdel'), 1); showSettings(); return; }
     if (e.target.closest('[data-cc-cadd]')) { syncDraft(); openCouncilPicker(); return; }
@@ -364,6 +367,7 @@
       if (d.pinOn && !d.pin && !B.settings.pinSet) { showToast('ตั้งรหัส PIN ก่อนเปิดใช้', true); return; }
       if (!d.selfFrom || !d.selfTo || d.selfFrom >= d.selfTo) { showToast('เวลาเปิดหน้านักเรียน: เวลาเริ่มต้องก่อนเวลาสิ้นสุด', true); return; }
       var items = d.items.filter(function (x) { return String(x.label).trim() && x.delta; });
+      if (items.some(function (x) { return String(x.label).trim() === 'มาสาย'; })) { showToast('ชื่อ "มาสาย" ใช้กับแถวมาสายแล้ว — ตั้งชื่ออื่น', true); return; }
       var go = async function () {
         var r = await withProgress('กำลังบันทึกการตั้งค่า', function () {
           return apiCall('careSettingsSave', { pinOn: d.pinOn, pin: d.pin || undefined, notifyOn: d.notifyOn, notifyN: d.notifyN, startPoints: d.startPoints, latePoints: d.latePoints, good: d.good, fair: d.fair, items: items, cycle: d.cycle, siteUrl: d.siteUrl,
