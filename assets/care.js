@@ -227,19 +227,52 @@
     var cnt = { good: 0, fair: 0, low: 0 }; S.list.forEach(function (x) { cnt[x.level]++; });
     var tot = L.length; L = L.slice(0, st.room ? 200 : 150);
     box.innerHTML = capHead('คะแนนพฤติกรรม' + (st.room ? ' ห้อง ' + ((S.rooms.find(function (r) { return r.id === st.room; }) || {}).name || '') : '')) + '<div class="cc-sts">' + [['ดี (≥ ' + S.settings.good + ')', cnt.good, '#15803d'], ['พอใช้', cnt.fair, '#c2410c'], ['ต้องปรับปรุง (< ' + S.settings.fair + ')', cnt.low, '#b91c1c'], ['นักเรียนทั้งหมด', S.list.length, '']].map(function (x) { return stat(x[0], x[1], x[2]); }).join('') + '</div>' +
-      '<div class="card cc-card"><div class="cc-tw"><table class="cc-t"><thead><tr>' + (st.room ? '<th>เลขที่</th>' : '<th>ห้อง</th>') + '<th>ชื่อ</th><th>มาสาย</th><th>ครูเพิ่ม/หัก</th><th>คะแนน</th></tr></thead><tbody>' +
-      L.map(function (x) { return '<tr class="cc-click" data-cc-stu="' + esc(x.key) + '"><td>' + esc(st.room ? x.no : x.room) + '</td><td>' + esc(x.name) + (st.room ? '' : ' <small class="mut">เลขที่ ' + esc(x.no) + '</small>') + '</td><td>' + (x.late || '-') + '</td><td>' + (x.adj ? sgn(x.adj) : '-') + '</td><td><span class="cc-tg ' + lvCls(x.level) + '">' + x.score + '</span></td></tr>'; }).join('') +
+      '<div class="card cc-card"><div class="cc-tw"><table class="cc-t"><thead><tr>' + (st.room ? '<th>เลขที่</th>' : '<th>ห้อง</th>') + '<th>ชื่อ</th><th>หักคะแนน</th><th>เพิ่มคะแนน</th><th>คะแนน</th></tr></thead><tbody>' +
+      L.map(function (x) { return '<tr class="cc-click" data-cc-stu="' + esc(x.key) + '"><td>' + esc(st.room ? x.no : x.room) + '</td><td>' + esc(x.name) + (st.room ? '' : ' <small class="mut">เลขที่ ' + esc(x.no) + '</small>') + '</td><td>' + mnCell(x) + '</td><td>' + (plusOf(x) ? '<span class="cc-pl">+' + plusOf(x) + '</span>' : '-') + '</td><td><span class="cc-tg ' + lvCls(x.level) + '">' + x.score + '</span></td></tr>'; }).join('') +
       '</tbody></table></div>' + (tot > L.length ? '<p class="hint">แสดง ' + L.length + ' จาก ' + tot + ' คน — เลือกห้องหรือค้นหาชื่อเพื่อดูคนอื่น (Excel ส่งออกครบทุกคน)</p>' : '') +
       '<p class="hint cc-noexp">' + ic('fa-circle-info') + ' เพิ่ม/หักคะแนนทำได้ที่ BNK Care Center หน้าครู (เข้าสู่ระบบด้วยบัญชีเว็บส่งงาน)</p></div>';
   }
+  // 2.07.1: หัก (รวมมาสาย) / เพิ่ม — Care Center เก่าที่ยังไม่ส่ง minus/plus = แยกจากยอดสุทธิแบบประมาณ
+  function minusOf(x) { return x.minus !== undefined ? x.minus : (Math.min(0, x.adj || 0) - (x.late || 0) * ((B.settings || {}).latePoints || 0)); }
+  function plusOf(x) { return x.plus !== undefined ? x.plus : Math.max(0, x.adj || 0); }
+  function mnCell(x) { var m = minusOf(x); return (m ? '<span class="cc-m">' + m + '</span>' : '-') + (x.late ? '<small class="cc-sl">สาย ' + x.late + ' ครั้ง</small>' : ''); }
+  var stuD = null;
   async function openStudent(key) {
     document.getElementById('ccModalTitle').innerHTML = ic('fa-user') + ' ประวัตินักเรียน';
     var mb = document.getElementById('ccModalBody'); mb.innerHTML = '<div class="loading">กำลังโหลด...</div>'; showModalEl(document.getElementById('ccModal'));
     try {
-      var d = await apiCall('careStudent', { key: key });
+      var d = await apiCall('careStudent', { key: key }); stuD = d;
       mb.innerHTML = '<div class="cc-stu">' + scoreRing(d.score, (B.settings || {}).startPoints) + '<div><b style="font-size:1.1rem">' + esc(d.student.name) + '</b><div class="mut">' + esc(d.student.room) + ' เลขที่ ' + esc(d.student.no) + ' · ' + esc(d.period || ('ภาคเรียนที่ ' + d.term + '/' + d.year)) + '</div><span class="cc-tg ' + lvCls(d.level) + '">ระดับ ' + lvTxt(d.level) + '</span> <span class="cc-tg n">มาสาย ' + d.late + ' ครั้ง</span></div></div>' +
-        (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span>' + (h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' (' + esc(h.reason) + ')' : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + '<small>' + thD(h.date, true) + ' · ' + (h.kind === 'late' ? 'บันทึกโดย ' + esc(h.by || '-') : 'โดย ' + esc(h.by || '-')) + '</small></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>');
+        (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span>' + (h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' (' + esc(h.reason) + ')' : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + '<small>' + thD(h.date, true) + ' · ' + (h.kind === 'late' ? 'บันทึกโดย ' + esc(h.by || '-') : 'โดย ' + esc(h.by || '-')) + '</small></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>') +
+        '<div class="cc-mf"><label><input type="checkbox" id="ccShotBy" /> แสดงชื่อผู้บันทึก</label><button type="button" class="btn btn-sm cc-ex-img" data-cc-shot>' + ic('fa-image') + ' บันทึกเป็นรูป / แชร์</button></div>';
     } catch (e) { mb.innerHTML = err(e.message); }
+  }
+
+  // ---------- 2.07.1: รูปรายคน (แชร์ให้ผู้ปกครอง ฯลฯ) — สร้างในเครื่อง ไม่ใช้โควต้า ----------
+  async function studentShot() {
+    var d = stuD; if (!d) return;
+    var by = !!(document.getElementById('ccShotBy') || {}).checked, st0 = (B.settings || {}).startPoints || 100;
+    var mn = 0, pl = 0; d.hist.forEach(function (h) { if (h.delta < 0) mn += h.delta; else pl += h.delta; });
+    var now = new Date(), stamp = now.getDate() + ' ' + MS[now.getMonth()] + ' ' + (now.getFullYear() + 543) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ' น.';
+    var el = document.createElement('div'); el.className = 'cc-shot';
+    el.innerHTML = '<div class="cc-shh"><b>รายงานคะแนนพฤติกรรมรายบุคคล</b><span>โรงเรียนบุ่งคล้านคร · BNK Care Center · ' + esc(d.period || ('ภาคเรียนที่ ' + d.term + '/' + d.year)) + '</span></div>' +
+      '<div class="cc-stu">' + scoreRing(d.score, st0) + '<div><b style="font-size:1.1rem">' + esc(d.student.name) + '</b><div class="mut">' + esc(d.student.room) + ' เลขที่ ' + esc(d.student.no) + '</div><span class="cc-tg ' + lvCls(d.level) + '">ระดับ ' + lvTxt(d.level) + '</span></div></div>' +
+      '<div class="cc-shs"><div>เริ่มต้น<b>' + st0 + '</b></div><div>หัก<b class="cc-m">' + (mn || 0) + '</b></div><div>เพิ่ม<b class="cc-pl">' + (pl ? '+' + pl : 0) + '</b></div><div>มาสาย<b>' + d.late + ' ครั้ง</b></div></div>' +
+      (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span>' + (h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' (' + esc(h.reason) + ')' : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + '<small>' + thD(h.date, true) + (by ? ' · ' + (h.kind === 'late' ? 'บันทึกโดย ' : 'โดย ') + esc(h.by || '-') : '') + '</small></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>') +
+      '<div class="cc-shf">ออกรูปเมื่อ ' + stamp + ' · ข้อมูล ณ เวลาที่ออกรูป</div>';
+    var name = 'คะแนนพฤติกรรม_' + String(d.student.room || '').replace('ม.', 'ม').replace('/', '-') + '_' + d.student.no + '_' + String(d.student.name).replace(/\s+/g, '_') + '.png';
+    return withProgress('กำลังสร้างรูปภาพ', async function () {
+      await loadScriptOnce('assets/html2canvas.min.js');
+      var html = document.documentElement, th = html.getAttribute('data-theme'), vars = document.getElementById('bnkahThemeVars');
+      html.setAttribute('data-theme', 'light'); html.classList.add('cc-exporting'); if (vars) vars.disabled = true; document.body.appendChild(el);
+      var c; try { c = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', logging: false }); }
+      finally { el.remove(); if (th) html.setAttribute('data-theme', th); else html.removeAttribute('data-theme'); html.classList.remove('cc-exporting'); if (vars) vars.disabled = false; }
+      var b = await new Promise(function (ok) { c.toBlob(ok, 'image/png'); });
+      var f = null; try { f = new File([b], name, { type: 'image/png' }); } catch (x) { f = null; }
+      var touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      if (touch && f && navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], title: 'คะแนนพฤติกรรม ' + d.student.name }); return 'shared'; } catch (x) { if (x && x.name === 'AbortError') return 'shared'; } }
+      downloadBlob(b, name); return true;
+    }, { successLabel: 'สร้างรูปแล้ว' });
   }
 
   // ---------- 2.04.0: ส่งออก PDF / รูปภาพ / Excel ----------
@@ -296,8 +329,8 @@
       title += 'สรุปรวมคะแนนพฤติกรรม · กิจกรรม ' + rangeTxt() + (st.grade ? ' · ม.' + st.grade.slice(1) : '');
     } else if (st.tab === 'scores') {
       if (!C.sc[st.room || 'all']) return showToast('รอโหลดข้อมูลก่อน', true);
-      H = ['ห้อง', 'เลขที่', 'ชื่อ-นามสกุล', 'มาสาย (ครั้ง)', 'ครูเพิ่ม/หัก', 'คะแนน', 'ระดับ']; W = [10, 8, 32, 12, 12, 10, 14]; sheet = 'คะแนนพฤติกรรม';
-      rows = scoreRows().map(function (x) { return [x.room, +x.no || x.no, x.name, x.late, x.adj, x.score, lvTxt(x.level)]; }); title += 'คะแนนพฤติกรรม (' + periodTxt() + ')';
+      H = ['ห้อง', 'เลขที่', 'ชื่อ-นามสกุล', 'มาสาย (ครั้ง)', 'หักคะแนน (รวมมาสาย)', 'เพิ่มคะแนน', 'คะแนน', 'ระดับ']; W = [10, 8, 32, 12, 18, 12, 10, 14]; sheet = 'คะแนนพฤติกรรม';
+      rows = scoreRows().map(function (x) { return [x.room, +x.no || x.no, x.name, x.late, minusOf(x), plusOf(x), x.score, lvTxt(x.level)]; }); title += 'คะแนนพฤติกรรม (' + periodTxt() + ')';
     } else if (st.tab === 'rooms' && st.rroom) {
       var D = C.rd[r[0] + '|' + r[1] + '|' + st.rroom]; if (!D) return showToast('รอโหลดข้อมูลก่อน', true);
       H = ['เลขที่', 'ชื่อ-นามสกุล', 'มาสาย (ครั้ง)', 'หักคะแนน', 'เพิ่มคะแนน', 'คะแนน', 'ระดับ']; W = [8, 32, 12, 12, 12, 10, 14]; sheet = 'ห้อง ' + D.room.replace('/', '-');
@@ -463,6 +496,7 @@
   modal.addEventListener('click', function (e) {
     var t;
     if (e.target.closest('[data-cc-close]')) { hideModalEl(modal); return; }
+    if (e.target.closest('[data-cc-shot]')) { studentShot(); return; }
     if ((t = e.target.closest('[data-cc-pick]'))) {
       syncDraft(); var k = t.getAttribute('data-cc-pick'), i = draft.council.findIndex(function (c) { return c.k === k; });
       if (i === -1) { if (draft.council.length >= 80) { showToast('สมาชิกสภานักเรียนได้สูงสุด 80 คน', true); return; } draft.council.push({ k: k, n: t.getAttribute('data-n'), r: t.getAttribute('data-r') }); } else draft.council.splice(i, 1);

@@ -157,3 +157,18 @@
 @media (max-width: 1100px) { .cc-sts6 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .cc-sts6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cc-2c { grid-template-columns: 1fr; } .cc-stk small { display: none; } }
 .cc-st span.cc-pp { display: inline-block; font-size: .66rem; margin-left: 2px; }
+
+/* 2.07.1: คอลัมน์หัก/เพิ่ม · รูปรายคน */
+.cc-sl { display: block; font-size: .74rem; color: var(--text-muted); font-weight: 500; }
+.cc-mf { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
+.cc-mf label { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; cursor: pointer; }
+.cc-mf .btn { color: #fff; border: 0; }
+.cc-shot { position: fixed; left: -10000px; top: 0; width: 420px; background: #fff; color: #0f172a; padding: 18px 20px; font-family: inherit; }
+.cc-shh { border-bottom: 3px solid #c8102e; padding-bottom: 8px; margin-bottom: 12px; }
+.cc-shh b { display: block; font-size: 1.1rem; } .cc-shh span { font-size: .8rem; color: #475569; }
+.cc-shs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 4px 0 8px; }
+.cc-shs div { background: #f8fafc; border-radius: 10px; padding: 6px 4px; text-align: center; font-size: .76rem; color: #64748b; }
+.cc-shs b { display: block; font-size: 1.05rem; color: #0f172a; }
+.cc-shs b.cc-m { color: #b91c1c; } .cc-shs b.cc-pl { color: #2563eb; }
+.cc-shf { font-size: .7rem; color: #94a3b8; text-align: center; margin-top: 10px; }
+.cc-shot .mut { color: #64748b; }
