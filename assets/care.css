@@ -172,3 +172,18 @@
 .cc-shs b.cc-m { color: #b91c1c; } .cc-shs b.cc-pl { color: #2563eb; }
 .cc-shf { font-size: .7rem; color: #94a3b8; text-align: center; margin-top: 10px; }
 .cc-shot .mut { color: #64748b; }
+
+/* 2.07.2: สีระดับ (ดี เขียว · พอใช้ เหลือง · ต้องปรับปรุง ส้ม · ติดลบ แดง) · แบ่งหน้าคะแนนพฤติกรรม */
+.cc-tg.y, .cc-lv.y { background: #fef9c3; color: #a16207; }
+[data-theme="dark"] .cc-tg.y, [data-theme="dark"] .cc-lv.y { background: rgba(234,179,8,.2); color: #fde047; }
+.cc-sts5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 900px) { .cc-sts5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cc-ix { width: 44px; color: var(--text-muted); font-size: .82rem; }
+.cc-pg { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-top: 12px; font-size: .88rem; }
+.cc-pgs { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.cc-pgs button { border: 1px solid var(--border); background: var(--surface, #fff); color: var(--text); border-radius: 8px; min-width: 34px; padding: 5px 9px; font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer; }
+.cc-pgs button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.cc-pgs button:disabled { opacity: .45; cursor: default; }
+.cc-pgd { color: var(--text-muted); padding: 0 2px; }
+.cc-ppl { display: inline-flex; gap: 6px; align-items: center; } .cc-ppl select { width: auto; padding-top: 4px; padding-bottom: 4px; }
+.cc-pdfmore .cc-sts { display: none; }
