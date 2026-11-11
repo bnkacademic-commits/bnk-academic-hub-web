@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.08.0';
-var APP_VERSION = '2.08.0.111126';
+var WORKER_MIN_VERSION = '2.09.0';
+var APP_VERSION = '2.09.0.111126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -897,7 +897,7 @@ var ICON_FA = {
   edit: 'fa-pen', plus: 'fa-plus', link: 'fa-link', checklist: 'fa-list-check', upload: 'fa-cloud-arrow-up',
   image: 'fa-image', key: 'fa-key', logout: 'fa-right-from-bracket', history: 'fa-clock-rotate-left',
   sun: 'fa-sun', palette: 'fa-palette', layout: 'fa-table-cells-large', pin: 'fa-thumbtack', clock: 'fa-clock',
-  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images', schoolcal: 'fa-calendar-week', supervision: 'fa-chalkboard-user', teach: 'fa-book-open-reader', club: 'fa-people-group', care: 'fa-user-clock'
+  file: 'fa-file-lines', directory: 'fa-address-book', orders: 'fa-file-signature', certs: 'fa-award', gallery: 'fa-images', schoolcal: 'fa-calendar-week', guide: 'fa-graduation-cap', supervision: 'fa-chalkboard-user', teach: 'fa-book-open-reader', club: 'fa-people-group', care: 'fa-user-clock'
 };
 function icon(name, size) {
   var s = size || 16;
@@ -1856,7 +1856,8 @@ var NAV_SLOTS = [
   { slot: 'schoolcal', label: 'ปฏิทินโรงเรียน', icon: 'schoolcal', who: ['all'] }, // 1.93
   { slot: 'supervision', label: 'นิเทศการสอน', icon: 'supervision', who: ['all'] }, // 1.98
   { slot: 'teach', label: 'วิชาที่สอน', icon: 'teach', who: ['teacher', 'staff', 'super'] }, // 1.99
-  { slot: 'club', label: 'ชุมนุม', icon: 'club', who: ['teacher', 'staff', 'super'] }, // 1.99
+  { slot: 'club', label: 'ชุมนุม', icon: 'club', who: ['teacher', 'staff', 'exec', 'super'] }, // 1.99 · 2.09.0: ผู้บริหารดูครูที่ยังไม่เปิดชุมนุม
+  { slot: 'guide', label: 'แนะแนว', icon: 'guide', who: ['teacher', 'staff', 'exec', 'super'] }, // 2.09.0 (เฉพาะผู้ดูแล/ผู้บริหาร/ครูที่ปรึกษา ม.6 ที่เปิดสิทธิ์)
   { slot: 'care', label: 'กิจการนักเรียน', icon: 'care', who: ['teacher', 'staff', 'exec', 'super'] }, // 2.03.0 (เฉพาะผู้ดูแลกิจการนักเรียน)
   { slot: 'directory', label: 'ทำเนียบบุคลากร', icon: 'directory', who: ['all'] },
   { slot: 'orders', label: 'คลังคำสั่ง', icon: 'orders', who: ['all'] },
@@ -1929,7 +1930,8 @@ function navLinksFor(session) {
   if (session) links.push({ href: 'schoolcalendar.html', label: 'ปฏิทินโรงเรียน', key: 'schoolcal', icon: 'schoolcal' });
   if (session) links.push({ href: 'supervision.html', label: 'นิเทศการสอน', key: 'supervision', icon: 'supervision' }); // 1.98
   if (session && (!isExec || execTeaches(session))) links.push({ href: 'teach.html', label: 'วิชาที่สอน', key: 'teach', icon: 'teach' }); // 1.99 · 2.01.0: ผู้บริหารที่มีคาบสอน
-  if (session && !isExec) links.push({ href: 'club.html', label: 'ชุมนุม', key: 'club', icon: 'club' }); // 1.99
+  if (session) links.push({ href: 'club.html', label: 'ชุมนุม', key: 'club', icon: 'club' }); // 1.99 · 2.09.0: ผู้บริหารเห็นด้วย (แท็บครูที่ยังไม่เปิดชุมนุม)
+  if (session && session.guide) links.push({ href: 'guidance.html', label: 'แนะแนว', key: 'guide', icon: 'guide' }); // 2.09.0
   if (session && (session.care || (isAdmin && !session.hasHub))) links.push({ href: 'care.html', label: 'กิจการนักเรียน', key: 'care', icon: 'care' }); // 2.03.0: ผู้ดูแลกิจการนักเรียน (BNK Care Center)
   if (session) links.push({ href: 'directory.html', label: 'ทำเนียบบุคลากร', key: 'directory', icon: 'directory' });
   // "คลังคำสั่ง" (ตั้งแต่ 1.41.111026 ชื่อเดิม "ไฟล์คำสั่ง"; เปลี่ยนชื่อใน 1.43.111026): ทุกบทบาทที่ล็อกอินดู/พรีวิว/เพิ่มคำสั่งได้ — แก้ไข/ลบได้เฉพาะเจ้าของ

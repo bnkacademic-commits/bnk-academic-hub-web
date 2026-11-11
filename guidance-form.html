@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#4f46e5" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2.04.1" />
+<title>รายงานผลการศึกษาต่อ ม.6</title>
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=2.09.0.111126" />
+<style>
+  /* 2.09.0: หน้านักเรียน (ไม่ต้องล็อกอิน · ไม่มีเมนู) — ธีมสว่างเสมอ */
+  body.gf { background: #eef1f8; margin: 0; font-family: Sarabun, 'Noto Sans Thai', sans-serif; color: #0f172a; }
+  .gf-hero { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; padding: 22px 16px 34px; text-align: center; }
+  .gf-hero h1 { margin: 6px 0 2px; font-size: 1.35rem; } .gf-hero p { margin: 0; opacity: .9; font-size: .92rem; } .gf-hero i { font-size: 1.8rem; }
+  .gf-main { max-width: 560px; margin: -22px auto 30px; padding: 0 12px; }
+  .gf-card { background: #fff; border-radius: 16px; box-shadow: 0 4px 18px rgba(15,23,42,.08); padding: 16px; margin-bottom: 12px; }
+  .gf-step { display: flex; gap: 8px; align-items: center; font-weight: 800; margin: 12px 0 6px; } .gf-step:first-child { margin-top: 0; }
+  .gf-step i { width: 24px; height: 24px; border-radius: 50%; background: #4f46e5; color: #fff; font-style: normal; display: inline-flex; align-items: center; justify-content: center; font-size: .8rem; }
+  .gf input, .gf select, .gf textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: #0f172a; }
+  .gf-btn { display: block; width: 100%; border: 0; border-radius: 12px; padding: 12px; font: inherit; font-weight: 800; font-size: 1rem; background: #4f46e5; color: #fff; cursor: pointer; margin-top: 12px; }
+  .gf-btn:disabled { opacity: .5; } .gf-btn.gh { background: #eef2ff; color: #4338ca; } .gf-btn.sm { display: inline-block; width: auto; padding: 7px 12px; font-size: .88rem; margin: 0; }
+  .gf-sg { border: 1px solid #c7d2fe; border-radius: 10px; margin-top: 4px; overflow: hidden; background: #fff; } .gf-sg:empty { display: none; }
+  .gf-sg button { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid #eef2ff; background: #fff; padding: 9px 12px; font: inherit; cursor: pointer; } .gf-sg button:last-child { border-bottom: 0; } .gf-sg button:hover { background: #eef2ff; }
+  .gf-sel { display: flex; justify-content: space-between; align-items: center; background: #eef2ff; border-radius: 10px; padding: 10px 12px; font-weight: 700; }
+  .gf-sel button { border: 0; background: none; color: #4f46e5; text-decoration: underline; font: inherit; cursor: pointer; }
+  .gf-chips { display: flex; flex-wrap: wrap; gap: 6px; } .gf-chips button { border: 1px solid #c7d2fe; background: #fff; color: #312e81; border-radius: 99px; padding: 7px 13px; font: inherit; font-size: .92rem; cursor: pointer; } .gf-chips button.on { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+  .gf-ent { border: 1px solid #c7d2fe; border-radius: 12px; padding: 10px 12px; margin: 8px 0; } .gf-ent b { display: block; } .gf-ent small { color: #64748b; }
+  .gf-ent .row { display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+  .gf-cf { background: #e0e7ff; color: #4338ca; border-radius: 99px; padding: 2px 10px; font-size: .8rem; font-weight: 700; }
+  .gf-lnk { border: 0; background: none; color: #4f46e5; font: inherit; font-size: .86rem; cursor: pointer; text-decoration: underline; padding: 0; } .gf-lnk.red { color: #b91c1c; }
+  .gf-add { display: block; width: 100%; border: 2px dashed #a5b4fc; background: #fff; color: #4f46e5; border-radius: 12px; padding: 10px; font: inherit; font-weight: 700; cursor: pointer; }
+  .gf-ed { border: 2px solid #4f46e5; border-radius: 12px; padding: 12px; margin: 8px 0; background: #fafaff; } .gf-ed label { display: block; font-weight: 700; font-size: .88rem; margin: 8px 0 3px; }
+  .gf-ph { display: flex; gap: 12px; align-items: center; } .gf-ph img, .gf-ph .no { width: 84px; height: 100px; border-radius: 12px; object-fit: cover; background: #e0e7ff; display: flex; align-items: center; justify-content: center; color: #818cf8; font-size: 1.8rem; flex: none; }
+  .gf-ck { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: .92rem; } .gf-ck input { width: 20px; height: 20px; flex: none; margin-top: 2px; }
+  .gf-ban { border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: .92rem; } .gf-ban.wait { background: #fef9c3; color: #854d0e; } .gf-ban.ok { background: #dcfce7; color: #166534; } .gf-ban.back { background: #ffedd5; color: #9a3412; }
+  .gf-mut { color: #64748b; font-size: .86rem; } .gf-err { color: #b91c1c; text-align: center; margin-top: 8px; min-height: 1em; }
+  .gf-center { text-align: center; padding: 26px 12px; } .gf-center i { font-size: 2rem; color: #a5b4fc; }
+</style>
+</head>
+<body class="gf">
+  <header class="gf-hero"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i><h1>รายงานผลการศึกษาต่อ ม.6</h1><p id="gfSub">โรงเรียนบุ่งคล้านคร</p></header>
+  <main class="gf-main" id="gfMain"><div class="gf-card gf-center">กำลังโหลด…</div></main>
+  <input type="file" id="gfFile" accept="image/*" hidden />
+  <script src="assets/api.js?v=2.09.0.111126"></script>
+  <script>
+  /* หน้านักเรียน: เลือกห้อง → ชื่อ (พิมพ์แล้วขึ้นชื่อใกล้เคียง) → (รหัสนักเรียน ถ้าเปิด) → กรอก/แก้ข้อมูลของตัวเอง
+     ชื่อมหาวิทยาลัย/คณะ/สาขา: แนะนำจากข้อมูลที่ผ่านการตรวจของรุ่นก่อน ๆ (พิมพ์เองได้เสมอ) */
+  (function () {
+    var main = document.getElementById('gfMain'), esc = function (s) { return escapeHtml(s == null ? '' : String(s)); };
+    var B = null, room = '', names = null, q = '', pick = null, code = '', T = null, me = null, F = null, ed = null, edI = -1;
+    var ST = [['study', 'ศึกษาต่อ'], ['wait', 'รอผล'], ['work', 'ไม่ศึกษาต่อ / ทำงาน'], ['other', 'อื่น ๆ']];
+    var RD = [['1', 'รอบ 1 Portfolio'], ['2', 'รอบ 2 Quota'], ['3', 'รอบ 3 Admission'], ['4', 'รอบ 4 Direct'], ['other', 'รับตรง/อื่น ๆ']];
+    var norm = function (s) { return String(s || '').replace(/\s+/g, '').toLowerCase(); };
+    function err(m) { var e = document.getElementById('gfErr'); if (e) e.textContent = m || ''; else if (m) showToast(m, true); }
+    async function start() {
+      try { B = await apiCall('publicGuideBoot', {}); } catch (e) { main.innerHTML = '<div class="gf-card gf-center"><p>' + esc(e.message) + '</p><button class="gf-btn" onclick="location.reload()">ลองใหม่</button></div>'; return; }
+      document.getElementById('gfSub').textContent = 'โรงเรียนบุ่งคล้านคร · ปีการศึกษา ' + B.year;
+      if (!B.open) { main.innerHTML = '<div class="gf-card gf-center"><i class="fa-solid fa-lock"></i><p><b>' + (B.on ? 'ยังไม่อยู่ในช่วงเปิดรับข้อมูล' : 'ปิดรับข้อมูลชั่วคราว') + '</b></p>' + (B.on && (B.from || B.to) ? '<p class="gf-mut">เปิดรับ ' + esc(B.from || '') + ' – ' + esc(B.to || '') + '</p>' : '<p class="gf-mut">ติดต่อครูแนะแนว</p>') + '</div>'; return; }
+      renderPick();
+    }
+    // ---------- เลือกตัวเอง ----------
+    function renderPick() {
+      main.innerHTML = '<div class="gf-card"><div class="gf-step"><i>1</i>เลือกห้อง</div><select id="gfRoom"><option value="">— เลือกห้อง —</option>' + B.rooms.map(function (r) { return '<option value="' + esc(r.id) + '"' + (r.id === room ? ' selected' : '') + '>' + esc(r.name) + '</option>'; }).join('') + '</select>' +
+        '<div class="gf-step"><i>2</i>พิมพ์ชื่อของตัวเอง</div><div id="gfName"></div>' +
+        (B.verifyCode ? '<div class="gf-step"><i>3</i>รหัสนักเรียน</div><input id="gfCode" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="เลขประจำตัวนักเรียน" value="' + esc(code) + '">' : '') +
+        '<button class="gf-btn" id="gfGo" disabled>ถัดไป</button><div class="gf-err" id="gfErr"></div></div>';
+      paintName(); paintGo();
+    }
+    function paintName() {
+      var b = document.getElementById('gfName'); if (!b) return;
+      if (!room) { b.innerHTML = '<input disabled placeholder="เลือกห้องก่อน">'; return; }
+      if (!names) { b.innerHTML = '<p class="gf-mut">กำลังโหลดรายชื่อ…</p>'; return; }
+      if (pick) { b.innerHTML = '<div class="gf-sel"><span>✓ ' + esc(pick.name) + '</span><button type="button" id="gfUnpick">เปลี่ยน</button></div>'; return; }
+      var a = document.activeElement && document.activeElement.id === 'gfQ';
+      b.innerHTML = '<input id="gfQ" autocomplete="off" placeholder="พิมพ์ชื่อ (ไม่ต้องใส่คำนำหน้า)" value="' + esc(q) + '"><div class="gf-sg" id="gfNs"></div><p class="gf-mut" style="margin:4px 0 0">พิมพ์อย่างน้อย 2 ตัวอักษร แล้วแตะชื่อของตัวเอง</p>';
+      paintNs(); if (a) { var i = document.getElementById('gfQ'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+    }
+    function paintNs() {
+      var b = document.getElementById('gfNs'); if (!b) return; var k = norm(q);
+      if (k.length < 2) { b.innerHTML = ''; return; }
+      var L = names.filter(function (s) { return norm(s.name).replace(/^(นาย|นางสาว|นาง|เด็กชาย|เด็กหญิง|ด\.ช\.|ด\.ญ\.|น\.ส\.)/, '').indexOf(k) !== -1 || norm(s.name).indexOf(k) !== -1; }).slice(0, 6);
+      b.innerHTML = L.length ? L.map(function (s) { return '<button type="button" data-nm="' + esc(s.id) + '">' + esc(s.name) + ' <span class="gf-mut">เลขที่ ' + esc(s.no) + '</span></button>'; }).join('') : '<p class="gf-mut" style="padding:8px 12px;margin:0">ไม่พบชื่อในห้องนี้ — ตรวจสอบห้องหรือการสะกด</p>';
+    }
+    function paintGo() { var g = document.getElementById('gfGo'); if (g) g.disabled = !pick || (B.verifyCode && !code.trim()); }
+    async function loadRoom() { names = null; pick = null; paintName(); paintGo(); try { var d = await apiCall('publicGuideRoom', { roomId: room }); names = d.names; } catch (e) { err(e.message); } paintName(); }
+    async function login() {
+      var g = document.getElementById('gfGo'); g.disabled = true; g.textContent = 'กำลังตรวจสอบ…'; err('');
+      try { var d = await apiCall('publicGuideLogin', { roomId: room, studentId: pick.id, code: code }); T = d.ticket; me = d.student; setForm(d.mine); renderForm(); }
+      catch (e) { err(e.message); g.disabled = false; g.textContent = 'ถัดไป'; }
+    }
+    // ---------- ฟอร์ม ----------
+    function setForm(m) { F = m ? { status: m.status, statusNote: m.statusNote || '', consent: !!m.consent, entries: (m.entries || []).map(function (e) { return { university: e.university, faculty: e.faculty, major: e.major, round: e.round, confirmed: e.confirmed }; }), photo: m.photo, review: m.review, reviewNote: m.reviewNote } : { status: '', statusNote: '', consent: false, entries: [], photo: null, review: '' }; ed = null; edI = -1; }
+    function banner() {
+      if (F.review === 'pending') return '<div class="gf-ban wait"><i class="fa-solid fa-hourglass-half"></i> ส่งแล้ว — รอครูตรวจ (แก้ไขเพิ่มเติมได้)</div>';
+      if (F.review === 'ok') return '<div class="gf-ban ok"><i class="fa-solid fa-circle-check"></i> ครูตรวจแล้ว — ถ้าติดที่ใหม่เพิ่ม/แก้ไขได้ (จะกลับไปรอตรวจ)</div>';
+      if (F.review === 'back') return '<div class="gf-ban back"><i class="fa-solid fa-rotate-left"></i> <b>ครูส่งกลับให้แก้:</b> ' + esc(F.reviewNote || '') + '</div>';
+      return '';
+    }
+    function renderForm() {
+      var showEnt = F.status === 'study' || F.status === 'wait';
+      main.innerHTML = '<div class="gf-card"><div class="gf-sel" style="margin-bottom:10px"><span>' + esc(me.name) + ' · ' + esc(me.room) + ' เลขที่ ' + esc(me.no) + '</span><button type="button" id="gfOut">ไม่ใช่ฉัน</button></div>' + banner() +
+        '<div class="gf-step">สถานะ</div><div class="gf-chips">' + ST.map(function (s) { return '<button type="button" data-st="' + s[0] + '" class="' + (F.status === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div>' +
+        (F.status && F.status !== 'study' ? '<input id="gfNote" style="margin-top:8px" maxlength="200" placeholder="' + (F.status === 'work' ? 'เช่น ทำงานที่… / ช่วยงานที่บ้าน' : F.status === 'wait' ? 'เช่น รอผลรอบ 3' : 'รายละเอียด') + '" value="' + esc(F.statusNote) + '">' : '') +
+        (showEnt ? '<div class="gf-step">ที่สอบติด' + (F.status === 'study' ? '' : ' (ถ้ามี)') + ' <span class="gf-mut" style="font-weight:500">เพิ่มได้หลายแห่ง</span></div><div id="gfEnts"></div>' : '') +
+        '<div class="gf-step">รูปนักเรียน (1 รูป)</div><div class="gf-ph">' + (F.photo ? '<img src="' + esc(F.photo.src) + '" alt="" referrerpolicy="no-referrer">' : '<span class="no"><i class="fa-solid fa-user"></i></span>') + '<div><p class="gf-mut" style="margin:0 0 6px">รูปหน้าตรง / ชุดนักเรียน</p><button type="button" class="gf-btn gh sm" id="gfPh">' + (F.photo ? 'เปลี่ยนรูป' : 'เลือกรูป') + '</button></div></div>' +
+        '<label class="gf-ck"><input type="checkbox" id="gfCon"' + (F.consent ? ' checked' : '') + '> <span>ยินยอมให้โรงเรียนเผยแพร่ชื่อและรูปเพื่อแสดงความยินดี</span></label>' +
+        '<button class="gf-btn" id="gfSave">บันทึก</button><div class="gf-err" id="gfErr"></div><p class="gf-mut" style="text-align:center">กลับมาแก้/เพิ่มได้ตลอดช่วงที่เปิดรับข้อมูล</p></div>';
+      paintEnts();
+    }
+    function sugs(field) {
+      var S = B.suggest || {};
+      if (field === 'university') return Object.keys(S);
+      var u = ed && S[ed.university] || {};
+      if (field === 'faculty') return Object.keys(u);
+      return (ed && u[ed.faculty]) || [];
+    }
+    function paintEnts() {
+      var b = document.getElementById('gfEnts'); if (!b) return;
+      b.innerHTML = F.entries.map(function (e, i) {
+        if (i === edI) return edHtml();
+        return '<div class="gf-ent"><b>' + esc(e.university) + '</b><small>' + [e.faculty, e.major, (RD.filter(function (r) { return r[0] === e.round; })[0] || [0, ''])[1]].filter(Boolean).map(esc).join(' · ') + '</small><div class="row">' + (e.confirmed ? '<span class="gf-cf">✓ ยืนยันสิทธิ์ (เลือกเรียนที่นี่)</span>' : '<button type="button" class="gf-lnk" data-cf="' + i + '">ตั้งเป็นที่เลือกเรียน</button>') + '<span style="flex:1"></span><button type="button" class="gf-lnk" data-ed="' + i + '">แก้</button><button type="button" class="gf-lnk red" data-del="' + i + '">ลบ</button></div></div>';
+      }).join('') + (edI === F.entries.length ? edHtml() : '') + (edI === -1 && F.entries.length < 12 ? '<button type="button" class="gf-add" id="gfAdd">＋ เพิ่มที่ที่สอบติด</button>' : '');
+    }
+    function edHtml() {
+      return '<div class="gf-ed"><label>มหาวิทยาลัย / สถาบัน</label><input data-f="university" autocomplete="off" maxlength="150" value="' + esc(ed.university) + '" placeholder="พิมพ์ชื่อเต็ม เช่น มหาวิทยาลัยขอนแก่น"><div class="gf-sg" data-sg="university"></div>' +
+        '<label>คณะ</label><input data-f="faculty" autocomplete="off" maxlength="150" value="' + esc(ed.faculty) + '" placeholder="เช่น คณะวิศวกรรมศาสตร์"><div class="gf-sg" data-sg="faculty"></div>' +
+        '<label>สาขาวิชา</label><input data-f="major" autocomplete="off" maxlength="150" value="' + esc(ed.major) + '" placeholder="เช่น วิศวกรรมคอมพิวเตอร์"><div class="gf-sg" data-sg="major"></div>' +
+        '<label>รอบ</label><div class="gf-chips">' + RD.map(function (r) { return '<button type="button" data-rd="' + r[0] + '" class="' + (ed.round === r[0] ? 'on' : '') + '">' + r[1] + '</button>'; }).join('') + '</div>' +
+        '<label class="gf-ck" style="font-weight:500"><input type="checkbox" id="gfEdCf"' + (ed.confirmed ? ' checked' : '') + '> <span>ยืนยันสิทธิ์ (เลือกเรียนที่นี่)</span></label>' +
+        '<div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="gf-btn gh" id="gfEdX" style="margin:0">ยกเลิก</button><button type="button" class="gf-btn" id="gfEdOk" style="margin:0">ตกลง</button></div></div>';
+    }
+    function paintSg(f) {
+      var box = document.querySelector('[data-sg="' + f + '"]'); if (!box) return; var k = norm(ed[f]);
+      var L = sugs(f).filter(function (n) { return !k || norm(n).indexOf(k) !== -1; }).filter(function (n) { return n !== ed[f]; }).slice(0, 8);
+      box.innerHTML = (k || f !== 'university') && L.length ? L.map(function (n) { return '<button type="button" data-pk="' + esc(f) + '" data-v="' + esc(n) + '">' + esc(n) + '</button>'; }).join('') : '';
+    }
+    function sync() { var n = document.getElementById('gfNote'); if (n) F.statusNote = n.value; var c = document.getElementById('gfCon'); if (c) F.consent = c.checked; }
+    async function save(silent) {
+      sync();
+      if (edI !== -1) { err('กด "ตกลง" ที่ช่องที่สอบติดก่อน'); return false; }
+      if (!F.status) { err('กรุณาเลือกสถานะ'); return false; }
+      if (F.status === 'study' && !F.entries.length) { err('กรุณาเพิ่มที่ที่สอบติดอย่างน้อย 1 แห่ง'); return false; }
+      var b = document.getElementById('gfSave'); if (b) { b.disabled = true; b.textContent = 'กำลังบันทึก…'; } err('');
+      try { var d = await apiCall('publicGuideSave', { ticket: T, status: F.status, statusNote: F.statusNote, consent: F.consent, entries: F.status === 'study' || F.status === 'wait' ? F.entries : [] }); setForm(d.mine); renderForm(); if (!silent) showToast('บันทึกแล้ว ✓'); return true; }
+      catch (e) { if (b) { b.disabled = false; b.textContent = 'บันทึก'; } err(e.message); return false; }
+    }
+    function shrink(file) {
+      return new Promise(function (res, rej) {
+        var img = new Image(), url = URL.createObjectURL(file);
+        img.onload = function () { var max = 1200, k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); c.toBlob(function (b) { b ? res(new File([b], 'photo.jpg', { type: 'image/jpeg' })) : rej(new Error('ย่อรูปไม่สำเร็จ')); }, 'image/jpeg', 0.85); };
+        img.onerror = function () { URL.revokeObjectURL(url); rej(new Error('เปิดรูปนี้ไม่ได้')); };
+        img.src = url;
+      });
+    }
+    document.getElementById('gfFile').addEventListener('change', async function () {
+      var file = this.files && this.files[0]; this.value = ''; if (!file) return;
+      if (!F.review && !(await save(true))) return; // ต้องมีข้อมูลก่อน
+      var r = await withProgress('กำลังอัปโหลดรูป', async function (p) {
+        var jf = await shrink(file);
+        var prep = await apiCall('publicGuidePhotoPrepare', { ticket: T, fileName: 'photo.jpg', mimeType: 'image/jpeg', fileSize: jf.size, direct: 1, origin: location.origin });
+        var res = await sendPreparedFileProgress(prep, jf, p, 10, 92, 'กำลังอัปโหลดรูป', { filename: prep.uploadFileName, mimeType: 'image/jpeg' });
+        return apiCall('publicGuidePhotoFinalize', { ticket: T, pid: prep.pid, fileId: res.fileId, fileUrl: res.url });
+      }, { successLabel: 'อัปโหลดรูปแล้ว', upload: true });
+      if (r.ok) { var keep = { statusNote: F.statusNote, consent: F.consent }; setForm(r.data.mine); renderForm(); }
+    });
+    main.addEventListener('change', function (e) {
+      if (e.target.id === 'gfRoom') { room = e.target.value; q = ''; if (room) loadRoom(); else { names = null; pick = null; paintName(); paintGo(); } }
+    });
+    main.addEventListener('input', function (e) {
+      var t = e.target;
+      if (t.id === 'gfQ') { q = t.value; paintNs(); return; }
+      if (t.id === 'gfCode') { code = t.value; paintGo(); return; }
+      var f = t.getAttribute('data-f'); if (f && ed) { ed[f] = t.value; paintSg(f); if (f === 'university') paintSg('faculty'); }
+    });
+    main.addEventListener('focusin', function (e) { var f = e.target.getAttribute && e.target.getAttribute('data-f'); if (f && ed) paintSg(f); });
+    main.addEventListener('click', function (e) {
+      var t = e.target, x;
+      if ((x = t.closest('[data-nm]'))) { pick = names.filter(function (s) { return s.id === x.getAttribute('data-nm'); })[0] || null; paintName(); paintGo(); return; }
+      if (t.closest('#gfUnpick')) { pick = null; paintName(); paintGo(); return; }
+      if (t.closest('#gfGo')) { login(); return; }
+      if (t.closest('#gfOut')) { T = null; me = null; pick = null; code = ''; renderPick(); return; }
+      if ((x = t.closest('[data-st]'))) { sync(); F.status = x.getAttribute('data-st'); renderForm(); return; }
+      if (t.closest('#gfAdd')) { sync(); ed = { university: '', faculty: '', major: '', round: '', confirmed: !F.entries.some(function (z) { return z.confirmed; }) && F.status === 'study' }; edI = F.entries.length; paintEnts(); var u = document.querySelector('[data-f="university"]'); if (u) u.focus(); return; }
+      if ((x = t.closest('[data-ed]'))) { edI = +x.getAttribute('data-ed'); ed = Object.assign({}, F.entries[edI]); paintEnts(); return; }
+      if ((x = t.closest('[data-del]'))) { if (!confirm('ลบที่นี้?')) return; F.entries.splice(+x.getAttribute('data-del'), 1); paintEnts(); return; }
+      if ((x = t.closest('[data-cf]'))) { var ci = +x.getAttribute('data-cf'); F.entries.forEach(function (z, i) { z.confirmed = i === ci; }); paintEnts(); return; }
+      if ((x = t.closest('[data-pk]'))) { var f = x.getAttribute('data-pk'); ed[f] = x.getAttribute('data-v'); var inp = document.querySelector('[data-f="' + f + '"]'); inp.value = ed[f]; x.parentNode.innerHTML = ''; var nx = { university: 'faculty', faculty: 'major' }[f]; if (nx) { var ni = document.querySelector('[data-f="' + nx + '"]'); if (ni) { ni.focus(); paintSg(nx); } } return; }
+      if ((x = t.closest('[data-rd]'))) { ed.round = x.getAttribute('data-rd'); document.querySelectorAll('[data-rd]').forEach(function (b) { b.classList.toggle('on', b === x); }); return; }
+      if (t.closest('#gfEdX')) { ed = null; edI = -1; paintEnts(); return; }
+      if (t.closest('#gfEdOk')) {
+        ['university', 'faculty', 'major'].forEach(function (k) { var i = document.querySelector('[data-f="' + k + '"]'); ed[k] = i.value.replace(/\s+/g, ' ').trim(); });
+        ed.confirmed = document.getElementById('gfEdCf').checked;
+        if (!ed.university) { err('กรุณากรอกชื่อมหาวิทยาลัย/สถาบัน'); return; } if (!ed.major && !ed.faculty) { err('กรุณากรอกคณะหรือสาขาวิชา'); return; } err('');
+        if (ed.confirmed) F.entries.forEach(function (z) { z.confirmed = false; });
+        if (edI >= F.entries.length) F.entries.push(ed); else F.entries[edI] = ed;
+        ed = null; edI = -1; paintEnts(); return;
+      }
+      if (t.closest('#gfPh')) { document.getElementById('gfFile').click(); return; }
+      if (t.closest('#gfSave')) { save(); return; }
+    });
+    start();
+  })();
+  </script>
+</body>
+</html>

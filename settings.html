@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.08.0.111126" />
+<link rel="stylesheet" href="assets/style.css?v=2.09.0.111126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -689,6 +689,12 @@
         <div class="mg-wrap"><div class="loading">กำลังโหลด</div></div>
         <p class="hint"><b>จัดการ</b> = ตั้งค่า (รหัส PIN · คะแนน) + เข้าส่วนคะแนนพฤติกรรมใน BNK Care Center ด้วยบัญชีเว็บส่งงาน &nbsp;|&nbsp; <b>ดูผล</b> = ดูรายงานในหน้ากิจการนักเรียนอย่างเดียว</p>
         <div style="text-align:right"><button type="button" class="btn btn-success" data-mg-save="care"><i class="fa-solid fa-check" aria-hidden="true"></i> บันทึกผู้ดูแลกิจการนักเรียน</button></div>
+      </div>
+      <div class="card mg-card" data-mgk="guide">
+        <div class="section-title"><span><i class="fa-solid fa-graduation-cap ui-icon" aria-hidden="true"></i> ผู้ดูแลงานแนะแนว (ผลการศึกษาต่อ ม.6)</span></div>
+        <div class="mg-wrap"><div class="loading">กำลังโหลด</div></div>
+        <p class="hint"><b>จัดการ</b> = ตรวจ/แก้ข้อมูลนักเรียน · เปิด-ปิดฟอร์มนักเรียน · ปรับรวมชื่อมหาวิทยาลัย/คณะ/สาขา · <b>ดูผล</b> = ดูรายงานทุกห้อง · ผู้บริหารดูผลได้อัตโนมัติ</p>
+        <div style="text-align:right"><button type="button" class="btn btn-success" data-mg-save="guide"><i class="fa-solid fa-check" aria-hidden="true"></i> บันทึกผู้ดูแลงานแนะแนว</button></div>
       </div>
       <div class="card mg-card" data-mgk="leave">
         <div class="section-title"><span><i class="fa-solid fa-plane-departure ui-icon" aria-hidden="true"></i> ผู้ดูแลการแจ้งลา / ไปราชการ</span></div>
@@ -1390,8 +1396,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.08.0.111126"></script>
-  <script src="assets/gallery.js?v=2.08.0.111126"></script>
+  <script src="assets/api.js?v=2.09.0.111126"></script>
+  <script src="assets/gallery.js?v=2.09.0.111126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1488,8 +1494,8 @@
     }
 
     // ---------- 2.02.4: จัดการผู้ดูแล (ชุมนุม / คลังรูปภาพ / การแจ้งลา-ไปราชการ) — งานนิเทศใช้ส่วน supPerm ด้านล่าง ----------
-    var MG = { people: [], nm: {}, dep: {}, data: { club: [], gallery: [], leave: [], care: [] }, dirty: {} };
-    var MG_TWO = { club: 1, leave: 1, care: 1 }; // มี จัดการ / ดูผล · คลังรูปภาพ = เป็นผู้ดูแลหรือไม่
+    var MG = { people: [], nm: {}, dep: {}, data: { club: [], gallery: [], leave: [], care: [], guide: [] }, dirty: {} };
+    var MG_TWO = { club: 1, leave: 1, care: 1, guide: 1 }; // มี จัดการ / ดูผล · คลังรูปภาพ = เป็นผู้ดูแลหรือไม่
     async function loadMgrAll() {
       try {
         var d = await apiCall('managersGet', {});
@@ -1498,7 +1504,8 @@
         MG.data.leave = (d.leave || []).map(function (m) { return { id: m.id, manage: !!m.manage, view: !!m.view || !!m.manage }; });
         MG.data.gallery = (d.gallery || []).map(function (id) { return { id: id, manage: true, view: true }; });
         MG.data.care = (d.care || []).map(function (m) { return { id: m.id, manage: !!m.manage, view: !!m.view || !!m.manage }; }); // 2.03.0
-        MG.dirty = {}; ['club', 'gallery', 'leave', 'care'].forEach(renderMgr);
+        MG.data.guide = (d.guide || []).map(function (m) { return { id: m.id, manage: !!m.manage, view: !!m.view || !!m.manage }; }); // 2.09.0
+        MG.dirty = {}; ['club', 'gallery', 'leave', 'care', 'guide'].forEach(renderMgr);
       } catch (e) { document.querySelectorAll('.mg-card .mg-wrap').forEach(function (w) { w.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; }); }
     }
     function renderMgr(k) {
@@ -1529,6 +1536,7 @@
       var call = k === 'gallery' ? function () { return apiCall('galleryMgrSave', { managers: list.map(function (m) { return m.id; }) }); }
         : k === 'club' ? function () { return apiCall('clubCfgSave', { managers: list }); }
         : k === 'care' ? function () { return apiCall('careManagersSave', { managers: list }); }
+        : k === 'guide' ? function () { return apiCall('guideCfgSave', { managers: list }); }
         : function () { return apiCall('leaveCfgSave', { managers: list }); };
       var r = await withProgress('กำลังบันทึก', call, { successLabel: 'บันทึกผู้ดูแลแล้ว' });
       if (r.ok) { MG.dirty[k] = 0; renderMgr(k); if (k === 'care' && r.data && r.data.pushed === false) showToast('บันทึกแล้ว แต่ส่งรายชื่อไปที่ BNK Care Center ไม่สำเร็จ: ' + (r.data.warn || ''), true); }

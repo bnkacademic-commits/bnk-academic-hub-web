@@ -41,8 +41,9 @@
   function tabList() {
     var t = [];
     if (D) t.push(['info', 'fa-circle-info', 'ข้อมูลชุมนุม'], ['stu', 'fa-users', 'นักเรียน (' + activeMembers().length + ')'], ['check', 'fa-clipboard-check', 'เช็คชื่อ'], ['photo', 'fa-camera', 'รูปกิจกรรม (' + D.club.photos.length + '/4)'], ['sum', 'fa-file-pdf', 'สรุปและส่งเล่ม']);
-    else if (B.term && !B.isPast) t.push(['info', 'fa-plus', B.myClubId ? 'ข้อมูลชุมนุม' : 'สร้างชุมนุม']);
+    else if (B.term && !B.isPast && !(B.exec && !B.myClubId)) t.push(['info', 'fa-plus', B.myClubId ? 'ข้อมูลชุมนุม' : 'สร้างชุมนุม']); // 2.09.0: ผู้บริหารไม่สร้างชุมนุม
     if (B.viewer) t.push(['all', 'fa-layer-group', 'ทุกชุมนุม'], ['who', 'fa-user-check', 'นักเรียนกับชุมนุม'], ['room', 'fa-door-open', 'สรุปรายห้อง']); // 2.01.0
+    if (B.viewer || B.exec) t.push(['nocl', 'fa-user-clock', 'ครูที่ยังไม่เปิด']); // 2.09.0: ผู้ดูแล + ผู้บริหาร
     if (B.manager && !B.isPast) t.push(['cfg', 'fa-gear', 'ตั้งค่าชุมนุม']);
     // 2.02.4: ผู้ดูแลงานชุมนุมย้ายไปตั้งค่าระบบ › จัดการผู้ดูแล
     return t;
@@ -66,10 +67,10 @@
     if (L.length < 2) return '';
     return '<label class="cb-term"><i class="fa-solid fa-calendar"></i> <select id="cbTerm" aria-label="ภาคเรียน">' + L.map(function (x) { return '<option value="' + x.key + '"' + (x.key === selK ? ' selected' : '') + '>ภาคเรียนที่ ' + x.semester + '/' + x.year + (x.key === curK ? ' (ปัจจุบัน)' : '') + '</option>'; }).join('') + '</select></label>';
   }
-  tabsEl.addEventListener('change', function (e) { if (e.target.id !== 'cbTerm') return; var k = e.target.value, curK = B.curTerm ? B.curTerm.year + '_' + B.curTerm.semester : ''; st.term = k === curK ? '' : k; st.clubId = ''; st.stu = null; cfgDraft = null; boot(false); });
+  tabsEl.addEventListener('change', function (e) { if (e.target.id !== 'cbTerm') return; var k = e.target.value, curK = B.curTerm ? B.curTerm.year + '_' + B.curTerm.semester : ''; st.term = k === curK ? '' : k; st.nc = null; st.clubId = ''; st.stu = null; cfgDraft = null; boot(false); });
   function show() {
     if (!B.term && !D) { body.innerHTML = '<div class="card cb-empty"><i class="fa-solid fa-sun"></i><p>ช่วงนี้ไม่ใช่ภาคเรียนปกติ (ภาคฤดูร้อน)</p></div>'; return; }
-    var f = { info: renderInfo, stu: renderStu, check: renderCheck, photo: renderPhoto, sum: renderSum, all: renderAll, who: renderWho, room: renderByRoom, cfg: renderCfg, mgr: renderMgr }[st.tab];
+    var f = { info: renderInfo, stu: renderStu, check: renderCheck, photo: renderPhoto, sum: renderSum, all: renderAll, who: renderWho, room: renderByRoom, cfg: renderCfg, mgr: renderMgr, nocl: renderNoClub }[st.tab];
     if (f) Promise.resolve(f()).catch(function (e) { body.innerHTML = err(e.message); });
   }
   function headHtml() {
@@ -391,6 +392,29 @@
       rows.map(function (c) { return '<tr><td><b>' + esc(c.name) + '</b></td><td>' + esc(c.teachers.join(', ')) + '</td><td>' + c.members + '</td><td>' + c.checks + '/' + countable().length + '</td><td>' + c.photos + '/4</td><td>' + tag(c.review) + '</td><td class="r"><button type="button" class="btn btn-secondary btn-sm" data-open-club="' + esc(c.id) + '"><i class="fa-solid fa-arrow-right"></i> เปิด</button></td></tr>'; }).join('') +
       (rows.length ? '' : '<tr><td colspan="7" class="cb-mut">ยังไม่มีชุมนุมในภาคเรียนนี้</td></tr>') + '</tbody></table></div></div>');
   }
+  // ---------- 2.09.0: ครูที่ยังไม่เปิดชุมนุม ----------
+  async function renderNoClub(fresh) {
+    if (!st.nc || fresh === true) { var stop = lazyLoad(); try { st.nc = await apiCall('clubNoClub', st.term ? { term: st.term } : {}); } catch (x) { stop(); setBody('<div class="card">' + err(x.message) + '</div>'); return; } stop(); }
+    var R = st.nc, L = R.list || [], ed = R.canEdit;
+    var opened = L.filter(function (u) { return u.club; }), ex = L.filter(function (u) { return !u.club && u.exemptOn; }), miss = L.filter(function (u) { return !u.club && !u.exemptOn; });
+    var groups = {}; miss.forEach(function (u) { var g = u.group || 'ไม่ระบุกลุ่มสาระ'; (groups[g] = groups[g] || []).push(u); });
+    var gk = Object.keys(groups).sort(function (a, b) { return a.localeCompare(b, 'th'); });
+    var row = function (u) { return '<div class="cb-nc-row"><span>' + esc(u.name) + '</span>' + (u.notified ? '<span class="cb-tag">แจ้งเตือนแล้ว ' + esc(thShort(u.notified)) + '</span>' : '') + (ed ? '<button type="button" class="btn btn-ghost btn-sm" data-nc-n="' + esc(u.id) + '" title="แจ้งเตือน"><i class="fa-solid fa-bell"></i></button><button type="button" class="btn btn-ghost btn-sm" data-nc-x="' + esc(u.id) + '">ยกเว้น</button>' : '') + '</div>'; };
+    setBody('<div class="card"><div class="cb-kpis">' + [['ครูทั้งหมด (ไม่รวมผู้บริหาร)', L.length, ''], ['เปิดแล้ว', opened.length, '#15803d'], ['ยังไม่เปิด', miss.length, miss.length ? '#b91c1c' : ''], ['ยกเว้น', ex.length, '#64748b']].map(function (k) { return '<div><small>' + k[0] + '</small><b' + (k[2] ? ' style="color:' + k[2] + '"' : '') + '>' + k[1] + '</b></div>'; }).join('') + '</div>' +
+      '<div class="cb-toolbar">' + (ed && miss.length && !B.isPast ? '<button type="button" class="btn btn-primary btn-sm" data-nc-all><i class="fa-solid fa-bell"></i> แจ้งเตือนทุกคนที่ยังไม่เปิด (' + miss.length + ')</button>' : '') + '<button type="button" class="btn btn-secondary btn-sm" data-nc-xls><i class="fa-solid fa-file-excel"></i> Excel</button><span class="cb-mut" style="margin-left:auto">ภาคเรียนที่ ' + esc(B.term ? B.term.semester + '/' + B.term.year : '-') + ' · ครูร่วมนับว่าเปิดแล้ว</span></div>' +
+      (miss.length ? gk.map(function (g) { return '<div class="cb-nc-g">' + esc(g) + ' · ' + groups[g].length + ' คน</div>' + groups[g].map(row).join(''); }).join('') : '<p class="cb-mut" style="text-align:center;padding:14px">ครูเปิดชุมนุมครบทุกคนแล้ว 🎉</p>') +
+      (ex.length ? '<div class="cb-nc-g" style="color:var(--text-muted)">ยกเว้น · ' + ex.length + ' คน</div>' + ex.map(function (u) { return '<div class="cb-nc-row cb-mut"><span>' + esc(u.name) + (u.exempt ? ' <small>— ' + esc(u.exempt) + '</small>' : '') + '</span>' + (ed ? '<button type="button" class="btn btn-ghost btn-sm" data-nc-u="' + esc(u.id) + '">เลิกยกเว้น</button>' : '') + '</div>'; }).join('') : '') + '</div>');
+  }
+  function thShort(d) { var p = String(d).split('-'); return p.length === 3 ? (+p[2]) + '/' + (+p[1]) : d; }
+  async function ncSave(data) { try { await apiCall('clubNoClubSave', Object.assign(st.term ? { term: st.term } : {}, data)); } catch (x) { showToast(x.message, true); return false; } await renderNoClub(true); return true; }
+  body.addEventListener('click', async function (e) {
+    var t;
+    if ((t = e.target.closest('[data-nc-n]'))) { if (await ncSave({ op: 'notify', userId: t.getAttribute('data-nc-n') })) showToast('ส่งแจ้งเตือนแล้ว'); return; }
+    if (e.target.closest('[data-nc-all]')) { var ids = (st.nc.list || []).filter(function (u) { return !u.club && !u.exemptOn; }).map(function (u) { return u.id; }); if (!confirm('ส่งแจ้งเตือนให้ครู ' + ids.length + ' คนที่ยังไม่เปิดชุมนุม?')) return; if (await ncSave({ op: 'notify', userIds: ids })) showToast('ส่งแจ้งเตือน ' + ids.length + ' คนแล้ว'); return; }
+    if ((t = e.target.closest('[data-nc-x]'))) { var why = prompt('เหตุผลที่ยกเว้น (ไม่บังคับ) เช่น ลาคลอด / ไปช่วยราชการ', ''); if (why === null) return; await ncSave({ op: 'exempt', userId: t.getAttribute('data-nc-x'), reason: why }); return; }
+    if ((t = e.target.closest('[data-nc-u]'))) { await ncSave({ op: 'unexempt', userId: t.getAttribute('data-nc-u') }); return; }
+    if (e.target.closest('[data-nc-xls]')) { var L = (st.nc && st.nc.list) || []; downloadBlob(buildXlsx('ครูกับชุมนุม', ['ชื่อ – สกุล', 'กลุ่มสาระ', 'สถานะ', 'ชุมนุม / เหตุผลที่ยกเว้น', 'แจ้งเตือนล่าสุด'], L.slice().sort(function (a, b) { return (a.club ? 2 : a.exemptOn ? 1 : 0) - (b.club ? 2 : b.exemptOn ? 1 : 0) || String(a.group).localeCompare(String(b.group), 'th'); }).map(function (u) { return [u.name, u.group || '', u.club ? 'เปิดแล้ว' : u.exemptOn ? 'ยกเว้น' : 'ยังไม่เปิด', u.club || u.exempt || '', u.notified || '']; }), [30, 32, 12, 34, 14], 'ครูกับชุมนุม ภาคเรียนที่ ' + (B.term ? B.term.semester + '/' + B.term.year : '')), 'ครูที่ยังไม่เปิดชุมนุม.xlsx'); return; }
+  });
   // ---------- แอดมิน: นักเรียนกับชุมนุม ----------
   async function renderWho() {
     if (!st.stu) { var stop = lazyLoad(); try { st.stu = await apiCall('clubStudents', st.term ? { term: st.term } : {}); } finally { stop(); } }

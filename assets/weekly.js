@@ -34,8 +34,17 @@
         '<div class="xw-chips"><button type="button" class="xw-chip' + (st.view === 'sum' ? ' on' : '') + '" data-xw-view="sum">ทุกห้อง (สรุป)</button><button type="button" class="xw-chip' + (st.view === 'room' ? ' on' : '') + '" data-xw-view="room">รายห้อง</button><span class="xw-sep"></span>' +
         '<button type="button" class="xw-chip sm' + (!st.grade ? ' on' : '') + '" data-xw-g="">ทุกระดับ</button>' + grades.map(function (g) { return '<button type="button" class="xw-chip sm' + (st.grade === g ? ' on' : '') + '" data-xw-g="' + g + '">ม.' + g + '</button>'; }).join('') + '</div>';
     }
+    // 2.09.0: เวลาบันทึกครั้งแรก (วันเดียวกับคาบ = "บันทึก HH:MM" · วันถัดไป = "ย้อนหลัง วันที่ เวลา")
+    function atTxt(x) {
+      if (x.st !== 'ok' || !x.at) return '';
+      var d = x.at.slice(0, 10), hm = x.at.slice(11, 16);
+      return x.backdated ? '<span class="xw-at late">ย้อนหลัง ' + esc(th(d)) + ' ' + esc(hm) + '</span>' : '<span class="xw-at">บันทึก ' + esc(hm) + ' น.</span>';
+    }
     function kpis(list) {
-      var ok = 0, tot = 0; list.forEach(function (r) { ok += r.ok; tot += r.tot; }); var p = tot ? Math.round(ok / tot * 1000) / 10 : null;
+      var ok = 0, tot = 0, bd = 0; list.forEach(function (r) { ok += r.ok; tot += r.tot; bd += r.backdated || 0; }); var p = tot ? Math.round(ok / tot * 1000) / 10 : null;
+      return kpis0(ok, tot, p) + (bd ? '<div class="xw-bd"><i class="fa-solid fa-clock-rotate-left"></i> บันทึกย้อนหลัง ' + bd + ' คาบ <small>(บันทึกหลังวันที่ของคาบ)</small></div>' : '');
+    }
+    function kpis0(ok, tot, p) {
       return '<div class="xw-kp">' + [['คาบที่ต้องเช็ค', tot, '#0f172a', '#f8fafc', '#e5e7eb'], ['เช็คแล้ว', ok, '#16a34a', '#f0fdf4', '#bbf7d0'], ['ยังไม่เช็ค', tot - ok, '#dc2626', '#fef2f2', '#fecaca'], ['ภาพรวม', p == null ? '-' : p + '%', pc(p), '#eef2ff', '#c7d2fe']].map(function (x) { return '<div class="xw-k" style="background:' + x[3] + ';border-color:' + x[4] + '"><span>' + x[0] + '</span><b style="color:' + x[2] + '">' + x[1] + '</b></div>'; }).join('') + '</div>';
     }
     function bar(p) { return '<span class="xw-bar"><i style="width:' + (p || 0) + '%;background:' + pc(p) + '"></i></span><b style="color:' + pc(p) + '">' + (p == null ? '-' : p + '%') + '</b>'; }
@@ -50,7 +59,7 @@
     }
     function slotCell(x) {
       var c = C[x.st] || C.empty, nm = x.name ? (x.code ? x.code + ' ' : '') + x.name : 'ว่าง', lab = x.st === 'leave' ? 'ครู' + (x.lv || 'ไปราชการ (ไม่นับ)') : c[2];
-      return '<td class="xw-cell" style="background:' + c[0] + (x.foreign ? ';box-shadow:inset 3px 0 0 #0ea5e9' : '') + '"><i style="background:' + c[1] + '"></i><div><b' + (x.name ? '' : ' class="xw-empty"') + '>' + esc(nm) + '</b>' + (x.teachers && x.teachers.length ? '<span>' + esc(x.teachers.join(', ')) + '</span>' : '') + (x.name ? '<span style="color:' + c[3] + ';font-weight:700">' + esc(lab) + (x.foreign ? ' <span class="xw-ftag">ครูต่างชาติ</span>' : '') + '</span>' : '') + '</div></td>';
+      return '<td class="xw-cell" style="background:' + c[0] + (x.foreign ? ';box-shadow:inset 3px 0 0 #0ea5e9' : '') + '"><i style="background:' + c[1] + '"></i><div><b' + (x.name ? '' : ' class="xw-empty"') + '>' + esc(nm) + '</b>' + (x.teachers && x.teachers.length ? '<span>' + esc(x.teachers.join(', ')) + '</span>' : '') + (x.name ? '<span style="color:' + c[3] + ';font-weight:700">' + esc(lab) + (x.foreign ? ' <span class="xw-ftag">ครูต่างชาติ</span>' : '') + '</span>' : '') + atTxt(x) + '</div></td>';
     }
     function roomGrid(r) {
       var slots = (D.slots || []), off = {};

@@ -211,3 +211,13 @@ td.tc-wk-e { background: var(--surface); }
   .cs-dirf { grid-template-columns: 1fr; }
 }
 .cs-bx { display: inline-block; width: 12px; height: 12px; border: 1.5px solid currentColor; margin-right: 6px; vertical-align: -1px; }
+
+/* 2.09.0: ครูที่ยังไม่เปิดชุมนุม */
+.cb-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+.cb-kpis div { background: var(--surface-2, #f8fafc); border: 1px solid var(--border); border-radius: 12px; padding: 8px 12px; }
+.cb-kpis small { display: block; color: var(--text-muted); font-size: .8rem; } .cb-kpis b { font-size: 1.5rem; }
+.cb-nc-g { font-weight: 800; color: var(--primary); margin: 14px 0 4px; font-size: .92rem; }
+.cb-nc-row { display: flex; align-items: center; gap: 8px; padding: 6px 4px; border-bottom: 1px dashed var(--border); }
+.cb-nc-row > span:first-child { flex: 1; min-width: 0; }
+.cb-nc-row .cb-tag { background: var(--surface-2, #f1f5f9); color: var(--text-muted); }
+@media (max-width: 640px) { .cb-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

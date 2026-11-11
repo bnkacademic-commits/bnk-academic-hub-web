@@ -5077,3 +5077,9 @@ button.ev-lbtn { font-family: inherit; cursor: pointer; } .ev-lbtn.fld { backgro
   table.sub-files.cert-items td.cert-nm { grid-area: name; min-width: 0; overflow-wrap: anywhere; }
   table.sub-files.cert-items td.a { grid-area: a; }
 }
+
+/* 2.09.0: หน้าแรกผู้บริหาร — เวลาบันทึกการเช็คชื่อ */
+td.xw-cell span.xw-at { display: block; font-size: .68rem; font-weight: 700; color: #15803d; margin-top: 1px; }
+td.xw-cell span.xw-at.late { color: #c2410c; }
+.xw-bd { margin: -4px 0 10px; display: inline-flex; gap: 6px; align-items: center; background: #fff7ed; color: #9a3412; border-radius: 10px; padding: 5px 10px; font-size: .86rem; font-weight: 700; }
+.xw-bd small { font-weight: 500; }

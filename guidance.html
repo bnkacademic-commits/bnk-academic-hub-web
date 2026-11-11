@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b6fcc" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2.04.1" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2.04.1" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="BNK Academic Hub" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<title>แนะแนว — BNKAcademicHub</title>
+<link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
+<link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/style.css?v=2.09.0.111126" />
+<link rel="stylesheet" href="assets/guidance.css?v=2.09.0.111126" />
+<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
+</head>
+<body>
+  <div id="app-topbar"></div>
+  <!-- 2.09.0: แนะแนว — ผลการศึกษาต่อ ม.6 (โค้ด assets/guidance.js · guidance.css) · หน้านักเรียน = guidance-form.html -->
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1><i class="fa-solid fa-graduation-cap ui-icon" style="color:var(--primary)" aria-hidden="true"></i> แนะแนว</h1>
+        <p>ผลการศึกษาต่อของนักเรียน ม.6 · ตรวจข้อมูลที่นักเรียนกรอก · สรุป</p>
+      </div>
+    </div>
+    <div class="gd-tabs" id="gdTabs" role="tablist"></div>
+    <div id="gdBody"><div class="loading">กำลังโหลด...</div></div>
+  </div>
+  <div class="modal-backdrop" id="gdModal" hidden>
+    <div class="modal-box modal-box-wide">
+      <button type="button" class="modal-close-x" data-gd-close aria-label="ปิด">✕</button>
+      <h3 id="gdModalTitle"></h3>
+      <div id="gdModalBody" style="text-align:left"></div>
+      <div class="modal-actions" id="gdModalActions"></div>
+    </div>
+  </div>
+  <div id="app-footer"></div>
+  <script src="assets/api.js?v=2.09.0.111126"></script>
+  <script src="assets/qrcode.min.js"></script>
+  <script src="assets/guidance.js?v=2.09.0.111126"></script>
+</body>
+</html>
