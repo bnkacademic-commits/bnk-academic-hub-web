@@ -125,3 +125,35 @@
 .sring b{font-size:26px;font-weight:800}.sring small{font-size:10.5px;color:var(--text-muted);margin-top:3px;white-space:nowrap}
 .sring.neg b{color:#dc2626}.sring.over b{color:#2563eb}
 [data-theme="dark"] .sring { --ring-track: #334155; }
+
+/* 2.07.0: สรุปรวม (พฤติกรรม) · แท็บย่อยมาสาย */
+.cc-sub { display: inline-flex; flex-wrap: wrap; gap: 3px; background: var(--surface, #fff); border: 1px solid var(--border); border-radius: 12px; padding: 4px; margin: 0 0 12px; }
+.cc-sub button { border: 0; background: none; border-radius: 9px; padding: 7px 14px; font: inherit; font-size: .9rem; font-weight: 700; color: var(--text-muted); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.cc-sub button.on { background: var(--primary-light, #eef2ff); color: var(--primary); }
+.cc-sts6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.cc-pp { display: inline-block; font-size: .68rem; font-weight: 700; padding: 0 6px; border-radius: 5px; background: #eef2ff; color: #4338ca; vertical-align: middle; margin-left: 4px; white-space: nowrap; }
+.cc-pp.r { background: #fef3c7; color: #92400e; }
+.cc-card h3 .cc-pp { margin-left: auto; }
+.cc-lg { display: flex; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--text-muted); margin: -4px 0 8px; }
+.cc-lg i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+.cc-stk > div { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: .9rem; }
+.cc-stk span { width: 40px; flex: none; font-weight: 700; }
+.cc-stb { flex: 1; display: flex; height: 16px; border-radius: 6px; overflow: hidden; background: var(--surface-2, #f1f5f9); }
+.cc-stb i { display: block; height: 100%; }
+.cc-stk b { width: 64px; text-align: right; font-size: .85rem; flex: none; } .cc-stk small { width: 76px; color: var(--text-muted); font-size: .78rem; flex: none; }
+.cc-il > div { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px dashed var(--border); font-size: .9rem; }
+.cc-il > div:last-child { border-bottom: 0; }
+.cc-il > div > span { flex: 1; min-width: 0; }
+.cc-il > div > small { color: var(--text-muted); white-space: nowrap; }
+.cc-il > div > b { min-width: 44px; text-align: right; }
+.cc-pl { color: #2563eb; font-weight: 700; }
+.cc-2c { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cc-2c h4 { margin: 0 0 4px; font-size: .9rem; }
+.cc-bars2 { height: 170px; }
+.cc-bp { display: flex; justify-content: center; align-items: flex-end; gap: 2px; height: 124px; margin-bottom: 4px; }
+.cc-bp i { margin: 0 !important; display: block; width: 42%; max-width: 18px; border-radius: 4px 4px 0 0; }
+.cc-bp i.m { background: #ef4444; } .cc-bp i.p { background: #3b82f6; }
+[data-theme="dark"] .cc-pp { background: rgba(99,102,241,.22); color: #c7d2fe; } [data-theme="dark"] .cc-pp.r { background: rgba(245,158,11,.18); color: #fcd34d; }
+@media (max-width: 1100px) { .cc-sts6 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .cc-sts6 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cc-2c { grid-template-columns: 1fr; } .cc-stk small { display: none; } }
+.cc-st span.cc-pp { display: inline-block; font-size: .66rem; margin-left: 2px; }
