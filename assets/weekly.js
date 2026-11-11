@@ -2,7 +2,7 @@
  * สรุปทุกห้อง · รายระดับชั้น · คาบที่ยังไม่เช็ค · ตารางรายห้อง (คาบ × วัน) · ส่งออก PDF แบบเดียวกับรายงานของเว็บเช็คชื่อ */
 (function () {
   var MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'], DL = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-  var C = { ok: ['#ecfdf5', '#10b981', 'เช็คแล้ว', '#047857'], no: ['#fef2f2', '#ef4444', 'ยังไม่เช็ค', '#b91c1c'], off: ['#f8fafc', '#cbd5e1', 'หยุดเรียน', '#64748b'], act: ['#f0f9ff', '#7dd3fc', 'กิจกรรม', '#0369a1'], future: ['#f8fafc', '#cbd5e1', 'ยังไม่ถึง', '#94a3b8'], club: ['#fefce8', '#facc15', 'ชุมนุม (ไม่นับ)', '#a16207'], leave: ['#f1f5f9', '#94a3b8', 'ครูไปราชการ (ไม่นับ)', '#475569'], empty: ['#ffffff', '#e2e8f0', '', '#94a3b8'] };
+  var C = { ok: ['#ecfdf5', '#10b981', 'เช็คแล้ว', '#047857'], no: ['#fef2f2', '#ef4444', 'ยังไม่เช็ค', '#b91c1c'], off: ['#f8fafc', '#cbd5e1', 'หยุดเรียน', '#64748b'], act: ['#f0f9ff', '#7dd3fc', 'กิจกรรม (ไม่นับ)', '#0369a1'], future: ['#f8fafc', '#cbd5e1', 'ยังไม่ถึง', '#94a3b8'], club: ['#fefce8', '#facc15', 'ชุมนุม (ไม่นับ)', '#a16207'], leave: ['#f1f5f9', '#94a3b8', 'ครูไปราชการ (ไม่นับ)', '#475569'], empty: ['#ffffff', '#e2e8f0', '', '#94a3b8'] };
   function esc(s) { return escapeHtml(s == null ? '' : String(s)); }
   function dP(ds) { var p = String(ds).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function ymd(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
@@ -31,12 +31,12 @@
       var grades = []; D.rooms.forEach(function (r) { var g = gradeOf(r.roomId); if (g && grades.indexOf(g) === -1) grades.push(g); }); grades.sort();
       return '<div class="xw-top"><div class="section-title" style="margin:0"><i class="fa-solid fa-clipboard-check ui-icon" style="font-size:17px" aria-hidden="true"></i> การเช็คชื่อประจำสัปดาห์</div>' +
         '<div class="xw-wk"><button type="button" class="btn btn-ghost btn-sm" data-xw-wk="-1" aria-label="สัปดาห์ก่อน"><i class="fa-solid fa-chevron-left"></i></button><b>' + esc(weekTxt(D)) + '</b><button type="button" class="btn btn-ghost btn-sm" data-xw-wk="1" aria-label="สัปดาห์ถัดไป"' + (D.monday >= D.maxMonday ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button></div></div>' +
-        '<div class="xw-chips"><button type="button" class="xw-chip' + (st.view === 'sum' ? ' on' : '') + '" data-xw-view="sum">ทุกห้อง (สรุป)</button><button type="button" class="xw-chip' + (st.view === 'room' ? ' on' : '') + '" data-xw-view="room">รายห้อง</button><span class="xw-sep"></span>' +
+        '<div class="xw-chips"><button type="button" class="xw-chip' + (st.view === 'sum' ? ' on' : '') + '" data-xw-view="sum">ทุกห้อง (สรุป)</button><button type="button" class="xw-chip' + (st.view === 'room' ? ' on' : '') + '" data-xw-view="room">รายห้อง</button><button type="button" class="xw-chip' + (st.view === 'tch' ? ' on' : '') + '" data-xw-view="tch">ครูที่ไม่เช็ค</button><span class="xw-sep"></span>' +
         '<button type="button" class="xw-chip sm' + (!st.grade ? ' on' : '') + '" data-xw-g="">ทุกระดับ</button>' + grades.map(function (g) { return '<button type="button" class="xw-chip sm' + (st.grade === g ? ' on' : '') + '" data-xw-g="' + g + '">ม.' + g + '</button>'; }).join('') + '</div>';
     }
     // 2.09.0: เวลาบันทึกครั้งแรก (วันเดียวกับคาบ = "บันทึก HH:MM" · วันถัดไป = "ย้อนหลัง วันที่ เวลา")
     function atTxt(x) {
-      if (x.st !== 'ok' || !x.at) return '';
+      if (!x.at || (x.st !== 'ok' && x.st !== 'act')) return '';
       var d = x.at.slice(0, 10), hm = x.at.slice(11, 16);
       return x.backdated ? '<span class="xw-at late">ย้อนหลัง ' + esc(th(d)) + ' ' + esc(hm) + '</span>' : '<span class="xw-at">บันทึก ' + esc(hm) + ' น.</span>';
     }
@@ -52,7 +52,7 @@
       var list = rooms(), byG = {};
       list.forEach(function (r) { var g = st.grade ? r.roomId : 'ม.' + gradeOf(r.roomId); var o = byG[g] = byG[g] || { label: st.grade ? r.room : g, ok: 0, tot: 0 }; o.ok += r.ok; o.tot += r.tot; });
       var rows = Object.keys(byG).sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true }); }).map(function (k) { var o = byG[k], p = pctOf(o.ok, o.tot); return '<div class="xw-row"><b>' + esc(o.label) + '</b>' + bar(p) + '<small class="cb-mut">' + o.ok + '/' + o.tot + '</small></div>'; }).join('');
-      var miss = (D.missing || []).filter(function (m) { return !st.grade || gradeOf(m.roomId) === st.grade; }).slice().reverse();
+      var miss = (D.missing || []).filter(function (m) { return !m.leave && (!st.grade || gradeOf(m.roomId) === st.grade); }).slice().reverse();
       var shown = st.showAll ? miss : miss.slice(0, 5);
       return kpis(list) + '<div class="xw-two"><div><div class="xw-h">' + (st.grade ? 'รายห้อง ม.' + st.grade : 'รายระดับชั้น') + '</div>' + (rows || '<div class="cb-mut">ไม่มีข้อมูล</div>') + '</div>' +
         '<div><div class="xw-h" style="color:#b91c1c">คาบที่ยังไม่เช็ค' + (miss.length ? ' (' + miss.length + ')' : '') + '</div>' + (miss.length ? shown.map(function (m) { return '<div class="xw-miss"><span class="cb-mut">' + DS[dP(m.ds).getDay()] + ' ' + th(m.ds) + '</span><b>' + esc(m.room) + '</b> คาบ ' + plab(m.p) + ' · ' + esc((m.code ? m.code + ' ' : '') + m.name) + ' · ' + esc((m.teachers || []).join(', ')) + (m.foreign ? ' <span class="xw-ftag">ครูต่างชาติ</span>' : '') + (m.lvNote ? ' <span class="cb-mut">(' + esc(m.lvNote) + ')</span>' : '') + '</div>'; }).join('') + (miss.length > 5 ? '<button type="button" class="xw-more" data-xw-all>' + (st.showAll ? 'ย่อรายการ' : 'ดูทั้งหมด ' + miss.length + ' คาบ') + ' <i class="fa-solid fa-chevron-' + (st.showAll ? 'up' : 'down') + '"></i></button>' : '') : '<div style="color:#16a34a;font-weight:700">เช็คชื่อครบทุกคาบ</div>') + '</div></div>';
@@ -78,14 +78,30 @@
       return chips + '<div class="xw-rh"><b>' + esc(r.room) + ' · ครูที่ปรึกษา: ' + esc((r.advisors || []).join(', ') || '-') + '</b><b style="color:' + pc(r.pct) + ';font-size:1.2rem">' + (r.pct == null ? '-' : r.pct + '%') + ' <small class="cb-mut">(' + r.ok + '/' + r.tot + ' คาบ)</small></b></div><div class="cb-tbl-wrap">' + roomGrid(r) + '</div>' +
         '<div class="xw-lg">' + ['ok', 'no', 'off', 'club', 'act', 'leave'].map(function (k) { return '<span><i style="background:' + C[k][1] + '"></i>' + C[k][2] + '</span>'; }).join('') + '<span><i style="background:#0ea5e9"></i>ขอบฟ้า = คาบของครูต่างชาติ</span></div>';
     }
+    // 2.10.0: ครูที่ไม่เช็คมากที่สุด — รวมคาบที่ครูลา/ไปราชการ (ดูว่าคนสอนแทนไม่ได้เช็ค) · กดชื่อดูรายละเอียด
+    function renderTch() {
+      var by = {};
+      (D.missing || []).filter(function (m) { return !st.grade || gradeOf(m.roomId) === st.grade; }).forEach(function (m) {
+        (m.teachers && m.teachers.length ? m.teachers : ['(ไม่ระบุครู)']).forEach(function (t) { var o = by[t] = by[t] || { name: t, n: 0, lv: 0, list: [] }; o.n++; if (m.leave) o.lv++; o.list.push(m); });
+      });
+      var L = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.n - a.n || a.name.localeCompare(b.name, 'th'); });
+      st.tOpen = st.tOpen || {};
+      if (!L.length) return '<div class="xw-ok">เช็คชื่อครบทุกคาบในสัปดาห์นี้ 🎉</div>';
+      return '<div class="cb-mut" style="margin-bottom:8px">' + L.length + ' คน · นับคาบที่ไม่ได้เช็ค รวมคาบที่ครูลา/ไปราชการ (<span style="color:#7c3aed;font-weight:700">ม่วง</span> = คาบที่ครูไม่อยู่ — คนสอนแทนไม่ได้เช็ค)</div>' + L.map(function (t, i) {
+        var o = !!st.tOpen[t.name];
+        return '<div class="xw-t' + (o ? ' open' : '') + '"><button type="button" class="xw-th" data-xw-t="' + esc(t.name) + '"><span class="xw-rk">' + (i + 1) + '</span><b>' + esc(t.name) + '</b><span class="xw-tn">' + t.n + ' คาบ' + (t.lv ? ' <small>(ลา/ไปราชการ ' + t.lv + ')</small>' : '') + '</span><i class="fa-solid fa-chevron-' + (o ? 'up' : 'down') + '"></i></button>' +
+          (o ? '<div class="xw-tl">' + t.list.slice().sort(function (a, b) { return a.ds.localeCompare(b.ds) || a.p - b.p; }).map(function (m) { return '<div class="' + (m.leave ? 'lv' : '') + '"><span>' + DS[dP(m.ds).getDay()] + ' ' + th(m.ds) + ' · คาบ ' + plab(m.p) + '</span><span><b>' + esc(m.room) + '</b> ' + esc((m.code ? m.code + ' ' : '') + m.name) + '</span><span>' + (m.leave ? 'ครูไม่อยู่: ' + esc(m.lvNote || 'ลา/ไปราชการ') : m.lvNote ? esc(m.lvNote) : 'ไม่ได้เช็ค') + '</span></div>'; }).join('') + '</div>' : '') + '</div>';
+      }).join('');
+    }
     function render() {
-      el.innerHTML = head() + '<div class="xw-body">' + (st.view === 'room' ? renderRoom() : renderSum()) + '</div><div class="xw-act"><button type="button" class="btn btn-success btn-sm" data-xw-pdf><i class="fa-solid fa-file-pdf"></i> ส่งออก PDF' + (st.grade ? ' (ม.' + st.grade + ')' : '') + '</button></div>';
+      el.innerHTML = head() + '<div class="xw-body">' + (st.view === 'room' ? renderRoom() : st.view === 'tch' ? renderTch() : renderSum()) + '</div><div class="xw-act"><button type="button" class="btn btn-success btn-sm" data-xw-pdf><i class="fa-solid fa-file-pdf"></i> ส่งออก PDF' + (st.grade ? ' (ม.' + st.grade + ')' : '') + '</button></div>';
     }
     el.addEventListener('click', function (e) {
       var b;
       if ((b = e.target.closest('[data-xw-wk]'))) { st.monday = add(st.monday, Number(b.getAttribute('data-xw-wk')) * 7); load(); return; }
       if ((b = e.target.closest('[data-xw-view]'))) { st.view = b.getAttribute('data-xw-view'); render(); return; }
       if ((b = e.target.closest('[data-xw-g]'))) { st.grade = b.getAttribute('data-xw-g'); st.showAll = false; render(); return; }
+      if ((b = e.target.closest('[data-xw-t]'))) { st.tOpen = st.tOpen || {}; var tn = b.getAttribute('data-xw-t'); if (st.tOpen[tn]) delete st.tOpen[tn]; else st.tOpen[tn] = 1; render(); return; }
       if ((b = e.target.closest('[data-xw-room]'))) { st.room = b.getAttribute('data-xw-room'); render(); return; }
       if (e.target.closest('[data-xw-all]')) { st.showAll = !st.showAll; render(); return; }
       if (e.target.closest('[data-xw-pdf]')) exportPdf();
@@ -102,7 +118,7 @@
     function pKp(list) { var ok = 0, tot = 0; list.forEach(function (r) { ok += r.ok; tot += r.tot; }); var p = tot ? Math.round(ok / tot * 1000) / 10 : null; return '<div class="kp">' + [['คาบที่ต้องเช็ค', tot, '#0f172a', '#f8fafc', '#e2e8f0'], ['เช็คแล้ว', ok, '#16a34a', '#f0fdf4', '#bbf7d0'], ['ยังไม่เช็ค', tot - ok, '#dc2626', '#fef2f2', '#fecaca'], ['ภาพรวม', p == null ? '-' : p + '%', pc(p), '#eef2ff', '#c7d2fe']].map(function (x) { return '<div class="k" style="background:' + x[3] + ';border-color:' + x[4] + '"><span>' + x[0] + '</span><b style="color:' + x[2] + '">' + x[1] + '</b></div>'; }).join('') + '</div>'; }
     function cellBg(ok, tot) { if (!tot) return ''; var p = ok / tot * 100; return p >= 100 ? '#dcfce7' : p >= 75 ? '#fef9c3' : '#fee2e2'; }
     function sumPages(list) {
-      var wt = weekTxt(D), miss = D.missing.filter(function (m) { return !st.grade || gradeOf(m.roomId) === st.grade; });
+      var wt = weekTxt(D), miss = (D.missing || []).filter(function (m) { return !m.leave && (!st.grade || gradeOf(m.roomId) === st.grade); });
       var rRow = function (r) { return '<tr><td><b>' + esc(r.room) + '</b></td>' + r.days.map(function (d) { return '<td style="text-align:center;' + (d.off ? 'color:#94a3b8' : d.tot ? 'background:' + cellBg(d.ok, d.tot) : '') + '">' + (d.off ? 'หยุด' : d.tot ? d.ok + '/' + d.tot : '-') + '</td>'; }).join('') + '<td style="text-align:center">' + r.ok + '/' + r.tot + '</td><td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:7px;border-radius:9px;background:#e2e8f0;overflow:hidden"><div style="height:7px;width:' + (r.pct || 0) + '%;background:' + pc(r.pct) + '"></div></div><b style="color:' + pc(r.pct) + ';width:36px;text-align:right">' + (r.pct == null ? '-' : r.pct + '%') + '</b></div></td></tr>'; };
       var rHead = '<tr><th style="width:62px">ห้อง</th>' + D.dates.map(function (ds) { return '<th>' + DS[dP(ds).getDay()] + ' ' + dP(ds).getDate() + '</th>'; }).join('') + '<th style="width:64px">รวม</th><th style="width:140px">%</th></tr>';
       var mRow = function (m) { return '<tr><td style="text-align:center;white-space:nowrap">' + DS[dP(m.ds).getDay()] + ' ' + th(m.ds) + '</td><td style="text-align:center"><b>' + esc(m.room) + '</b></td><td style="text-align:center">' + plab(m.p) + '</td><td>' + esc((m.code ? m.code + ' ' : '') + m.name) + '</td><td>' + esc((m.teachers || []).join(', ') || '-') + (m.foreign ? '<span class="ft">ครูต่างชาติ</span>' : '') + (m.lvNote ? '<span style="color:#64748b"> (' + esc(m.lvNote) + ')</span>' : '') + '</td></tr>'; };

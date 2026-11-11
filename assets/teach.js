@@ -6,9 +6,11 @@
   if (!session) return;
   mountChrome('teach'); if (typeof mountFooter === 'function') mountFooter();
   var body = document.getElementById('cbBody'), tabsEl = document.getElementById('cbTabs');
-  var B = null, S = null, st = { sub: '', forUser: '', view: location.hash === '#miss' ? 'miss' : 'slots', page: location.hash === '#leave' ? 'leave' : location.hash === '#week' ? 'week' : location.hash === '#interns' ? 'interns' : 'teach', wk: '' };
+  var ATT_OK = (session.role === 'admin' && !session.hasHub) || !!session.isSysAdmin; // 2.10.0: การเช็คชื่อประจำสัปดาห์ = Super Admin + แอดมินระบบ
+  var B = null, S = null, st = { sub: '', forUser: '', view: location.hash === '#miss' ? 'miss' : 'slots', page: location.hash === '#leave' ? 'leave' : location.hash === '#week' ? 'week' : location.hash === '#att' && ATT_OK ? 'att' : location.hash === '#interns' ? 'interns' : 'teach', wk: '' };
   // 2.02.0: แท็บ "นักศึกษาฝึกสอน" (ครูพี่เลี้ยง) — แสดงเมื่อมีนักศึกษาในความดูแล
   var MENT = null;
+  async function mountAtt() { tabsEl.innerHTML = pageTabs(); body.innerHTML = '<div class="card xw-card" id="tcAtt"><div class="loading">กำลังโหลด...</div></div>'; try { if (!window.mountExecWeekly) await loadScriptOnce('assets/weekly.js?v=' + APP_VERSION); window.mountExecWeekly(document.getElementById('tcAtt')); } catch (e) { body.innerHTML = '<div class="card"><div class="error-box">' + esc(e.message) + '</div></div>'; } }
   function mountInterns() { tabsEl.innerHTML = pageTabs(); body.innerHTML = '<div id="itRoot"></div>'; if (window.mountMentorInterns) window.mountMentorInterns(document.getElementById('itRoot')); }
   if (session.role !== 'intern') apiCall('internMine', {}).then(function (r) { if (r && r.interns && r.interns.length) { MENT = r; if (st.page === 'interns') mountInterns(); else if (st.page === 'leave' || !B) tabsEl.innerHTML = pageTabs(); else renderTabs(); } else if (st.page === 'interns') { st.page = 'teach'; boot(); } }, function () { if (st.page === 'interns') { st.page = 'teach'; boot(); } });
   var STATUS = ['มา', 'สาย', 'ลาป่วย', 'ลากิจ', 'ขาด', 'โดดเรียน'], SCOLOR = { 'มา': '#10b981', 'ร่วมกิจกรรม': '#06b6d4', 'สาย': '#f59e0b', 'ลาป่วย': '#3b82f6', 'ลากิจ': '#6366f1', 'ขาด': '#f43f5e', 'โดดเรียน': '#9333ea' };
@@ -50,7 +52,7 @@
   // 2.00.5: แท็บแจ้งไปราชการ / ลา — ซ่อนถ้าไม่มีสิทธิ์ (ไม่ได้เปิดให้ครูแจ้งเอง และไม่ใช่ผู้ดูแล)
   function leaveOk() { return !!((B && B.leaveTab) || (L && (L.manage || L.view || L.selfReport || L.isSuper))); }
   // 2.01.0: แท็บ "ตารางสอนรายสัปดาห์" (แบบหน้าเช็คชื่อ) — แสดงเมื่อมีวิชาที่สอน
-  function pageTabs() { var tabs = [['teach', 'fa-book-open', 'วิชาที่สอน']]; if (!B || (B.subjects && B.subjects.length)) tabs.push(['week', 'fa-table-cells', 'ตารางสอนรายสัปดาห์']); if (MENT && MENT.interns.length) tabs.push(['interns', 'fa-user-graduate', 'นักศึกษาฝึกสอน (' + MENT.interns.length + ')']); if (leaveOk()) tabs.push(['leave', 'fa-user-clock', 'แจ้งไปราชการ / ลา']); if (tabs.length < 2) return ''; return '<span class="tc-pages">' + tabs.map(function (x) { return '<button type="button" class="cb-seg' + (st.page === x[0] ? ' on' : '') + '" data-tc-page="' + x[0] + '"><i class="fa-solid ' + x[1] + '"></i> ' + x[2] + '</button>'; }).join('') + '</span>'; }
+  function pageTabs() { var tabs = [['teach', 'fa-book-open', 'วิชาที่สอน']]; if (!B || (B.subjects && B.subjects.length)) tabs.push(['week', 'fa-table-cells', 'ตารางสอนรายสัปดาห์']); if (MENT && MENT.interns.length) tabs.push(['interns', 'fa-user-graduate', 'นักศึกษาฝึกสอน (' + MENT.interns.length + ')']); if (leaveOk()) tabs.push(['leave', 'fa-user-clock', 'แจ้งไปราชการ / ลา']); if (ATT_OK) tabs.push(['att', 'fa-clipboard-check', 'การเช็คชื่อประจำสัปดาห์']); if (tabs.length < 2) return ''; return '<span class="tc-pages">' + tabs.map(function (x) { return '<button type="button" class="cb-seg' + (st.page === x[0] ? ' on' : '') + '" data-tc-page="' + x[0] + '"><i class="fa-solid ' + x[1] + '"></i> ' + x[2] + '</button>'; }).join('') + '</span>'; }
   function renderTabs() {
     if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); return; }
     if (st.page === 'week') { tabsEl.innerHTML = (B && B.admin && B.teachers && B.teachers.length ? '<div class="cb-tools"><span class="cb-mut">ของ ' + esc(B.teacherName || '') + '</span></div>' : '') + pageTabs(); return; }
@@ -62,8 +64,9 @@
   tabsEl.addEventListener('click', function (e) {
     if (e.target.closest('[data-tc-win]')) { openWindowCfg(); return; }
     var pg = e.target.closest('[data-tc-page]'); if (!pg || pg.getAttribute('data-tc-page') === st.page) return;
-    st.page = pg.getAttribute('data-tc-page'); try { history.replaceState(null, '', st.page === 'leave' ? '#leave' : st.page === 'week' ? '#week' : st.page === 'interns' ? '#interns' : location.pathname + location.search); } catch (x) { /* ข้าม */ }
+    st.page = pg.getAttribute('data-tc-page'); try { history.replaceState(null, '', st.page === 'leave' ? '#leave' : st.page === 'week' ? '#week' : st.page === 'interns' ? '#interns' : st.page === 'att' ? '#att' : location.pathname + location.search); } catch (x) { /* ข้าม */ }
     if (st.page === 'interns') { mountInterns(); return; }
+    if (st.page === 'att') { mountAtt(); return; }
     if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); renderLeave(); }
     else if (st.page === 'week') { if (B && B.linked && B.term) { renderTabs(); renderWeek(); } else { body.innerHTML = ''; boot(); } }
     else if (B && B.linked && B.term && B.subjects.length) { body.innerHTML = ''; layout(); renderTabs(); renderCards(); loadSub(); } // 2.00.5: วาดจากข้อมูลเดิม ไม่โหลดใหม่ (ไม่กระพริบ)
@@ -449,10 +452,10 @@
   body.addEventListener('click', function (e) {
     var t;
     if (st.page === 'leave') { leaveClick(e); return; }
-    if (st.page === 'interns') return;
+    if (st.page === 'interns' || st.page === 'att') return;
     if ((t = e.target.closest('[data-sub]'))) { if (st.sub === t.getAttribute('data-sub')) return; st.sub = t.getAttribute('data-sub'); _occ = null; loadSub(); return; }
     if ((t = e.target.closest('[data-view]'))) { st.view = t.getAttribute('data-view'); render(); return; }
     if ((t = e.target.closest('[data-occ]'))) { var k = t.getAttribute('data-occ').split('|'), o = occs().filter(function (x) { return x.date === k[0] && String(x.period) === k[1]; })[0]; if (o) openOcc(o); }
   });
-  if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); renderLeave(); } else if (st.page === 'interns') tabsEl.innerHTML = pageTabs(); else boot(); // 'week' วาดใน boot() · 'interns' รอผล internMine
+  if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); renderLeave(); } else if (st.page === 'interns') tabsEl.innerHTML = pageTabs(); else if (st.page === 'att') mountAtt(); else boot(); // 'week' วาดใน boot() · 'interns' รอผล internMine
 })();
