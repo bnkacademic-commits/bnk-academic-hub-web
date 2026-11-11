@@ -5068,3 +5068,12 @@ button.ev-lbtn { font-family: inherit; cursor: pointer; } .ev-lbtn.fld { backgro
 .cb-tabs.cb-tabs .tc-pages > .cb-seg.on > i { color: #fff; }
 [data-theme="dark"] .cb-tabs.cb-tabs .tc-pages > .cb-seg:not(.on) > i { color: #a78bfa; }
 @media (max-width: 640px) { .cb-tabs.cb-tabs .tc-pages { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .cb-tabs.cb-tabs .tc-pages > .cb-seg { padding: 7px 13px; font-size: 0.86rem; } }
+
+/* 2.08.0: เกียรติบัตร — รายชื่อผู้รับบนมือถือ (เลขที่บรรทัดบน · ชื่อบรรทัดล่าง · ปุ่มขวา) */
+@media (max-width: 640px) {
+  table.sub-files.cert-items tr { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "no a" "name a"; column-gap: 8px; }
+  table.sub-files.cert-items td.cert-no-cell { grid-area: no; width: auto; }
+  table.sub-files.cert-items td.cert-no-cell:empty { display: none; }
+  table.sub-files.cert-items td.cert-nm { grid-area: name; min-width: 0; overflow-wrap: anywhere; }
+  table.sub-files.cert-items td.a { grid-area: a; }
+}

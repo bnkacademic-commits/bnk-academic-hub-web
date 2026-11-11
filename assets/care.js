@@ -31,14 +31,15 @@
   function ic(n) { return '<i class="fa-solid ' + n + '" aria-hidden="true"></i>'; }
 
   // ---------- ช่วงวันที่ ----------
-  var TERM_START = '';
-  getSiteSettings().then(function (s) { try { var sch = termScheduleOf(s), now = new Date(), md = pad(now.getMonth() + 1) + '-' + pad(now.getDate()), y = now.getFullYear(); TERM_START = md >= sch.term2Start ? y + '-' + sch.term2Start : (md >= sch.term1Start ? y + '-' + sch.term1Start : (y - 1) + '-' + sch.term2Start); } catch (e) { TERM_START = ''; } });
+  var TERM_START = '', YEAR_START = '';
+  getSiteSettings().then(function (s) { try { var sch = termScheduleOf(s), now = new Date(), md = pad(now.getMonth() + 1) + '-' + pad(now.getDate()), y = now.getFullYear(); TERM_START = md >= sch.term2Start ? y + '-' + sch.term2Start : (md >= sch.term1Start ? y + '-' + sch.term1Start : (y - 1) + '-' + sch.term2Start); YEAR_START = (md >= sch.term1Start ? y : y - 1) + '-' + sch.term1Start; } catch (e) { TERM_START = ''; YEAR_START = ''; } });
   function rangeOf() {
     var t = B ? B.today : ymd(new Date()), d = dP(t);
     if (st.range === 'today') return [t, t];
     if (st.range === 'week') { var m = new Date(d); m.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return [ymd(m), t]; }
     if (st.range === 'month') return [t.slice(0, 8) + '01', t];
     if (st.range === 'term') return [TERM_START && TERM_START <= t ? TERM_START : t.slice(0, 5) + '01-01', t];
+    if (st.range === 'year') return [YEAR_START && YEAR_START <= t ? YEAR_START : (+t.slice(0, 4) - (t.slice(5) < '05-01' ? 1 : 0)) + '-05-01', t]; // 2.08.0: ปีการศึกษานี้
     return [st.from || t, st.to || t];
   }
   function rangeTxt() { var r = rangeOf(); return thD(r[0], true) + (r[0] !== r[1] ? ' – ' + thD(r[1], true) : ''); }
@@ -72,7 +73,7 @@
       '<button type="button" class="btn btn-sm btn-success" data-cc-ex="xls">' + ic('fa-file-excel') + ' Excel</button></span>';
   }
   function filterBar(extra, noRange) {
-    var r = rangeOf(), seg = [['today', 'วันนี้'], ['week', 'สัปดาห์นี้'], ['month', 'เดือนนี้'], ['term', 'ภาคเรียนนี้'], ['custom', 'กำหนดเอง']];
+    var r = rangeOf(), seg = [['today', 'วันนี้'], ['week', 'สัปดาห์นี้'], ['month', 'เดือนนี้'], ['term', 'ภาคเรียนนี้'], ['year', 'ปีการศึกษานี้'], ['custom', 'กำหนดเอง']];
     return subBar() + '<div class="cc-flt">' + (noRange ? '' : '<div class="cc-seg">' + seg.map(function (x) { return '<button type="button" data-cc-rg="' + x[0] + '" class="' + (st.range === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
       (st.range === 'custom' ? '<input type="date" id="ccFrom" value="' + r[0] + '" max="' + B.today + '" /> – <input type="date" id="ccTo" value="' + r[1] + '" max="' + B.today + '" />' : '')) +
       '<select id="ccGrade" aria-label="ระดับชั้น"><option value="">ทุกระดับชั้น</option>' + [1, 2, 3, 4, 5, 6].map(function (g) { return '<option value="m' + g + '"' + (st.grade === 'm' + g ? ' selected' : '') + '>ม.' + g + '</option>'; }).join('') + '</select>' + (extra || '') +
@@ -106,16 +107,17 @@
       '<h3 style="margin-top:16px">' + ic('fa-layer-group') + ' มาสายรายระดับชั้น</h3>' +
       (gk.length ? '<div class="cc-rs cc-gb">' + gk.map(function (k) { return '<div><span>' + esc(k) + '</span><i style="width:' + Math.max(3, Math.round(gr[k] / gmx * 100)) + '%;background:#c8102e"></i><b>' + gr[k] + '</b></div>'; }).join('') + '</div>' : '<p class="hint">-</p>') +
       '<p class="hint cc-noexp"><a href="#" data-cc-go="rooms">' + ic('fa-door-open') + ' ดูสรุปรายห้อง</a></p></div>';
-    h += '<div class="card cc-card"><h3>' + ic('fa-triangle-exclamation') + ' สายบ่อยในช่วงนี้</h3>' + freqTable(O.frequent.slice(0, 10)) +
-      (O.frequent.length > 10 ? '<p class="hint"><a href="#" data-cc-go="frequent">ดูทั้งหมด ' + O.frequent.length + ' คน</a></p>' : '') +
+    var fN = Math.min(O.frequent.length, st.fqN || 10);
+    h += '<div class="card cc-card"><h3>' + ic('fa-triangle-exclamation') + ' สายบ่อยในช่วงนี้ <small class="mut" style="font-weight:500">· ' + O.frequent.length + ' คน</small></h3>' + freqTable(O.frequent.slice(0, fN)) +
+      (O.frequent.length > fN ? '<p class="cc-more cc-noexp"><button type="button" class="btn btn-secondary btn-sm" data-cc-fmore>' + ic('fa-chevron-down') + ' แสดงเพิ่ม (' + fN + ' จาก ' + O.frequent.length + ' คน)</button></p>' : '') +
       '<h3 style="margin-top:16px">' + ic('fa-list') + ' สาเหตุ</h3>' +
       (O.reasons.length ? '<div class="cc-rs">' + O.reasons.slice().sort(function (a, b) { return (a.reason ? 0 : 1) - (b.reason ? 0 : 1) || b.n - a.n; }).map(function (x, i) { return '<div><span' + (x.reason ? '' : ' class="mut"') + '>' + esc(x.reason || 'ไม่ระบุ') + '</span><i style="width:' + Math.max(3, Math.round(x.n / rmx * 100)) + '%;background:' + (x.reason ? PAL[i % PAL.length] : '#cbd5e1') + '"></i><b>' + x.n + '</b></div>'; }).join('') + '</div>' : '<p class="hint">-</p>') + '</div></div>';
     box.innerHTML = h;
   }
   function freqTable(list) {
     if (!list.length) return '<p class="hint">ไม่มีข้อมูล</p>';
-    return '<div class="cc-tw"><table class="cc-t"><thead><tr><th>นักเรียน</th><th>ห้อง</th><th>ครั้ง</th><th>คะแนน</th></tr></thead><tbody>' + list.map(function (x) {
-      return '<tr class="cc-click" data-cc-stu="' + esc(x.key) + '"><td>' + esc(x.name) + ' <small class="mut">เลขที่ ' + esc(x.no) + '</small></td><td>' + esc(x.room) + '</td><td><span class="cc-tg ' + (x.n >= 5 ? 'r' : (x.n >= 3 ? 'o' : 'n')) + '">' + x.n + '</span></td><td>' + x.score + '</td></tr>';
+    return '<div class="cc-tw"><table class="cc-t cc-ft"><thead><tr><th>นักเรียน</th><th class="cc-dk">ห้อง</th><th>ครั้ง</th><th class="cc-dk">คะแนน</th></tr></thead><tbody>' + list.map(function (x) { // 2.08.0: มือถือ = ชื่อ + (ห้อง · เลขที่ · คะแนน) บรรทัดเดียว
+      return '<tr class="cc-click" data-cc-stu="' + esc(x.key) + '"><td><span class="cc-fn">' + esc(x.name) + '</span> <small class="mut cc-dk">เลขที่ ' + esc(x.no) + '</small><small class="mut cc-mo">' + esc(x.room) + ' เลขที่ ' + esc(x.no) + ' · คะแนน ' + x.score + '</small></td><td class="cc-dk">' + esc(x.room) + '</td><td><span class="cc-tg ' + (x.n >= 5 ? 'r' : (x.n >= 3 ? 'o' : 'n')) + '">' + x.n + (x.n ? ' ครั้ง' : '') + '</span></td><td class="cc-dk">' + x.score + '</td></tr>';
     }).join('') + '</tbody></table></div>';
   }
   function freqList(O) { return O.frequent.filter(function (x) { return x.n >= st.min; }); }
@@ -246,15 +248,33 @@
   // 2.07.1: หัก (รวมมาสาย) / เพิ่ม — Care Center เก่าที่ยังไม่ส่ง minus/plus = แยกจากยอดสุทธิแบบประมาณ
   function minusOf(x) { return x.minus !== undefined ? x.minus : (Math.min(0, x.adj || 0) - (x.late || 0) * ((B.settings || {}).latePoints || 0)); }
   function plusOf(x) { return x.plus !== undefined ? x.plus : Math.max(0, x.adj || 0); }
-  var stuD = null;
+  var stuD = null, EVC = {};
+  // 2.08.0: รูปหลักฐาน (โหลดเมื่อแตะป้าย 📷 เท่านั้น) · รายงาน PDF รายบุคคล (แนบบันทึกข้อความ / ทัณฑ์บน)
+  async function evPhoto(eventId, pid) { if (!EVC[pid]) { var r = await apiCall('careEvidence', { eventId: eventId, pid: pid }); EVC[pid] = 'data:' + r.mime + ';base64,' + r.base64; } return EVC[pid]; }
+  async function evShow(eventId, pids, box) {
+    box.innerHTML = pids.map(function (p, i) { return '<span class="cc-evt" data-evi="' + i + '">' + (EVC[p] ? '<img src="' + EVC[p] + '" alt="">' : '<span class="mut">กำลังโหลด…</span>') + '</span>'; }).join('');
+    for (var i = 0; i < pids.length; i++) {
+      var sl = box.querySelector('[data-evi="' + i + '"]');
+      try { var src = await evPhoto(eventId, pids[i]); if (sl) sl.innerHTML = '<img src="' + src + '" alt="">'; } catch (e) { if (sl) sl.innerHTML = '<span class="cc-m" style="font-size:.75rem">' + esc(e.message) + '</span>'; }
+    }
+  }
+  function zoom(src) { var z = document.createElement('div'); z.className = 'cc-zoom'; z.innerHTML = '<img src="' + src + '" alt=""><button type="button" aria-label="ปิด">✕</button>'; z.addEventListener('click', function () { z.remove(); }); document.body.appendChild(z); }
+  async function report() {
+    var d = stuD; if (!d) return;
+    await loadScriptOnce('assets/carereport.js?v=' + APP_VERSION);
+    CareReport.open({ data: Object.assign({ startPoints: (B.settings || {}).startPoints || 100 }, d), school: 'โรงเรียนบุ่งคล้านคร',
+      fileName: 'รายงานพฤติกรรม_' + String(d.student.room || '').replace('ม.', 'ม').replace('/', '-') + '_' + d.student.no + '_' + String(d.student.name).replace(/\s+/g, '_') + '.pdf',
+      load: async function () { await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js'); return { h2c: window.html2canvas, jsPDF: window.jspdf.jsPDF }; },
+      getPhoto: evPhoto });
+  }
   async function openStudent(key) {
     document.getElementById('ccModalTitle').innerHTML = ic('fa-user') + ' ประวัตินักเรียน';
     var mb = document.getElementById('ccModalBody'); mb.innerHTML = '<div class="loading">กำลังโหลด...</div>'; showModalEl(document.getElementById('ccModal'));
     try {
       var d = await apiCall('careStudent', { key: key }); stuD = d;
       mb.innerHTML = '<div class="cc-stu">' + scoreRing(d.score, (B.settings || {}).startPoints) + '<div><b style="font-size:1.1rem">' + esc(d.student.name) + '</b><div class="mut">' + esc(d.student.room) + ' เลขที่ ' + esc(d.student.no) + ' · ' + esc(d.period || ('ภาคเรียนที่ ' + d.term + '/' + d.year)) + '</div><span class="cc-tg ' + lvCls(d.level, d.score) + '">ระดับ ' + lvTxt(d.level) + '</span> <span class="cc-tg n">มาสาย ' + d.late + ' ครั้ง</span></div></div>' +
-        (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span>' + (h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' (' + esc(h.reason) + ')' : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + '<small>' + thD(h.date, true) + ' · ' + (h.kind === 'late' ? 'บันทึกโดย ' + esc(h.by || '-') : 'โดย ' + esc(h.by || '-')) + '</small></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>') +
-        '<div class="cc-mf"><label><input type="checkbox" id="ccShotBy" /> แสดงชื่อผู้บันทึก</label><button type="button" class="btn btn-sm cc-ex-img" data-cc-shot>' + ic('fa-image') + ' บันทึกเป็นรูป / แชร์</button></div>';
+        (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { var ph = h.photos || []; return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span>' + (h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' (' + esc(h.reason) + ')' : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + (ph.length ? ' <button type="button" class="cc-phb" data-cc-ev="' + h.id + '" data-p="' + esc(ph.join(',')) + '">' + ic('fa-camera') + ' ' + ph.length + '</button>' : '') + '<small>' + thD(h.date, true) + ' · ' + (h.kind === 'late' ? 'บันทึกโดย ' + esc(h.by || '-') : 'โดย ' + esc(h.by || '-')) + '</small><span class="cc-evs" id="ccEvs' + (h.id || '') + '"></span></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>') +
+        '<div class="cc-mf"><label><input type="checkbox" id="ccShotBy" /> แสดงชื่อผู้บันทึก</label><span class="cc-mfb"><button type="button" class="btn btn-sm cc-ex-img" data-cc-shot>' + ic('fa-image') + ' บันทึกเป็นรูป / แชร์</button><button type="button" class="btn btn-sm cc-ex-pdf" data-cc-rpt>' + ic('fa-file-pdf') + ' รายงาน PDF</button></span></div>';
     } catch (e) { mb.innerHTML = err(e.message); }
   }
 
@@ -487,6 +507,7 @@
     if ((t = e.target.closest('[data-cc-pg]'))) { if (t.disabled) return; st.pg = +t.getAttribute('data-cc-pg'); renderScores(); var tb = document.getElementById('ccSc'); if (tb) tb.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
     if ((t = e.target.closest('[data-cc-rg]'))) { st.range = t.getAttribute('data-cc-rg'); show(); return; }
     if ((t = e.target.closest('[data-cc-go]'))) { e.preventDefault(); st.rroom = t.getAttribute('data-r') || ''; goTab(t.getAttribute('data-cc-go')); return; }
+    if (e.target.closest('[data-cc-fmore]')) { st.fqN = (st.fqN || 10) + 20; showOverview(); return; }
     if (e.target.closest('[data-cc-wall]')) { e.preventDefault(); st.watchAll = true; var bk = rangeOf(); document.getElementById('ccBh').innerHTML = summaryHtml(C.bh[bk[0] + '|' + bk[1] + '|' + st.grade]); return; }
     if ((t = e.target.closest('[data-cc-stu]'))) { openStudent(t.getAttribute('data-cc-stu')); return; }
     if ((t = e.target.closest('[data-cc-room]'))) { st.rroom = t.getAttribute('data-cc-room'); showRooms(); return; }
@@ -534,6 +555,9 @@
     var t;
     if (e.target.closest('[data-cc-close]')) { hideModalEl(modal); return; }
     if (e.target.closest('[data-cc-shot]')) { studentShot(); return; }
+    if (e.target.closest('[data-cc-rpt]')) { report(); return; }
+    if ((t = e.target.closest('[data-cc-ev]'))) { var bx = document.getElementById('ccEvs' + t.getAttribute('data-cc-ev')); if (bx) { if (bx.innerHTML) bx.innerHTML = ''; else evShow(+t.getAttribute('data-cc-ev'), t.getAttribute('data-p').split(','), bx); } return; }
+    if ((t = e.target.closest('.cc-evt img'))) { zoom(t.src); return; }
     if ((t = e.target.closest('[data-cc-pick]'))) {
       syncDraft(); var k = t.getAttribute('data-cc-pick'), i = draft.council.findIndex(function (c) { return c.k === k; });
       if (i === -1) { if (draft.council.length >= 80) { showToast('สมาชิกสภานักเรียนได้สูงสุด 80 คน', true); return; } draft.council.push({ k: k, n: t.getAttribute('data-n'), r: t.getAttribute('data-r') }); } else draft.council.splice(i, 1);

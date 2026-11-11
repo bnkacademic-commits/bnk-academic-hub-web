@@ -187,3 +187,26 @@
 .cc-pgd { color: var(--text-muted); padding: 0 2px; }
 .cc-ppl { display: inline-flex; gap: 6px; align-items: center; } .cc-ppl select { width: auto; padding-top: 4px; padding-bottom: 4px; }
 .cc-pdfmore .cc-sts { display: none; }
+
+/* 2.08.0: สายบ่อย — แสดงเพิ่ม · มือถือแถวเดียว */
+.cc-more { text-align: center; margin: 10px 0 0; }
+.cc-mo { display: none; }
+@media (max-width: 640px) {
+  .cc-ft .cc-dk { display: none; }
+  .cc-ft .cc-mo { display: block; font-size: .78rem; margin-top: 1px; }
+  .cc-ft td { padding: 7px 6px; } .cc-ft td:last-child, .cc-ft th:last-child { text-align: right; }
+  .cc-ft .cc-fn { font-weight: 600; }
+  .cc-ft td:nth-child(3) { text-align: right; white-space: nowrap; }
+  .cc-ft th:nth-child(3) { text-align: right; }
+}
+
+/* 2.08.0: รูปหลักฐาน · รายงาน PDF */
+.cc-mfb { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.cc-phb { border: 0; background: #eef2ff; color: #4338ca; border-radius: 99px; padding: 0 8px; font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; margin-left: 4px; }
+.cc-evs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; } .cc-evs:empty { display: none; }
+.cc-evt { width: 96px; height: 72px; border-radius: 8px; overflow: hidden; background: var(--surface-2, #f1f5f9); display: flex; align-items: center; justify-content: center; font-size: .72rem; cursor: zoom-in; }
+.cc-evt img { width: 100%; height: 100%; object-fit: cover; }
+.cc-zoom { position: fixed; inset: 0; z-index: 99998; background: rgba(0,0,0,.88); display: flex; align-items: center; justify-content: center; padding: 12px; }
+.cc-zoom img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.cc-zoom button { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.18); color: #fff; font-size: 18px; }
+[data-theme="dark"] .cc-phb { background: rgba(99,102,241,.25); color: #c7d2fe; }

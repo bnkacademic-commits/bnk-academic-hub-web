@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.07.2';
-var APP_VERSION = '2.07.2.111126';
+var WORKER_MIN_VERSION = '2.08.0';
+var APP_VERSION = '2.08.0.111126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1857,7 +1857,7 @@ var NAV_SLOTS = [
   { slot: 'supervision', label: 'นิเทศการสอน', icon: 'supervision', who: ['all'] }, // 1.98
   { slot: 'teach', label: 'วิชาที่สอน', icon: 'teach', who: ['teacher', 'staff', 'super'] }, // 1.99
   { slot: 'club', label: 'ชุมนุม', icon: 'club', who: ['teacher', 'staff', 'super'] }, // 1.99
-  { slot: 'care', label: 'กิจการนักเรียน', icon: 'care', who: ['teacher', 'staff', 'super'] }, // 2.03.0 (เฉพาะผู้ดูแลกิจการนักเรียน)
+  { slot: 'care', label: 'กิจการนักเรียน', icon: 'care', who: ['teacher', 'staff', 'exec', 'super'] }, // 2.03.0 (เฉพาะผู้ดูแลกิจการนักเรียน)
   { slot: 'directory', label: 'ทำเนียบบุคลากร', icon: 'directory', who: ['all'] },
   { slot: 'orders', label: 'คลังคำสั่ง', icon: 'orders', who: ['all'] },
   { slot: 'certs', label: 'คลังเกียรติบัตร', icon: 'certs', who: ['all'] },

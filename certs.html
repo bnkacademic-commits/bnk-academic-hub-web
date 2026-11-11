@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.07.2.111126" />
+<link rel="stylesheet" href="assets/style.css?v=2.08.0.111126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -219,7 +219,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.07.2.111126"></script>
+  <script src="assets/api.js?v=2.08.0.111126"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -501,7 +501,7 @@
           else act = c.canManage ? '<button type="button" class="btn btn-primary btn-sm" data-it-up="' + escapeHtml(c.id) + '" data-it="' + escapeHtml(it.id) + '"><i class="fa-solid fa-upload"></i> อัปไฟล์</button>' : '<span class="hint">ยังไม่มีไฟล์</span>';
           return '<tr class="' + (off || cancelled ? 'off' : (!it.file ? 'miss' : '')) + '">' +
             (internal ? '<td class="cert-no-cell">' + (it.certNo ? '<span class="cert-no">' + escapeHtml(it.certNo) + '</span>' : '') + '</td>' : '') +
-            '<td>' + (it.unnamed ? '<span class="cert-blank-tag"><i class="fa-solid fa-user-clock"></i> ยังไม่ระบุชื่อ</span>' + (c.canManage && !off && !cancelled ? ' <button type="button" class="btn btn-secondary btn-sm" data-edit="' + escapeHtml(c.id) + '"><i class="fa-solid fa-user-pen"></i> ใส่ชื่อ</button>' : '') : '<span class="cert-it-name">' + escapeHtml(it.name) + '</span>') + (it.cls ? ' <span class="hint">' + escapeHtml(it.cls) + '</span>' : '') + (it.file && !off ? ' <span class="cert-it-file">' + fileIcon(it.file) + '</span>' : '') + '</td>' +
+            '<td class="cert-nm">' + (it.unnamed ? '<span class="cert-blank-tag"><i class="fa-solid fa-user-clock"></i> ยังไม่ระบุชื่อ</span>' + (c.canManage && !off && !cancelled ? ' <button type="button" class="btn btn-secondary btn-sm" data-edit="' + escapeHtml(c.id) + '"><i class="fa-solid fa-user-pen"></i> ใส่ชื่อ</button>' : '') : '<span class="cert-it-name">' + escapeHtml(it.name) + '</span>') + (it.cls ? ' <span class="hint">' + escapeHtml(it.cls) + '</span>' : '') + (it.file && !off ? ' <span class="cert-it-file">' + fileIcon(it.file) + '</span>' : '') + '</td>' +
             '<td class="a">' + act + '</td></tr>';
         }).join('') + '</tbody></table>';
       }).join('');
