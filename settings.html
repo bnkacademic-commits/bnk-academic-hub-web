@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.12.3.121126" />
+<link rel="stylesheet" href="assets/style.css?v=2.12.4.121126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -420,6 +420,13 @@
             <button class="btn btn-primary" type="submit">บันทึก</button>
           </div>
         </form>
+      </div>
+      <!-- 2.12.4: ระยะเวลาการเช็คชื่อ (ช่วงที่นักเรียนมาเรียน) — ใช้เป็นหลักทุกเว็บ -->
+      <div class="card super-admin-only" id="attWinCard">
+        <div class="section-title"><i class="fas fa-calendar-check ui-icon" style="font-size:17px" aria-hidden="true"></i> ระยะเวลาการเช็คชื่อ</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:12px;">ช่วงที่<b>นักเรียนมาเรียน</b> (อยู่ภายในช่วงเปิดเทอมด้านบน — ครูเปิดก่อน/ปิดหลังได้) · ใช้เป็นหลักทุกเว็บ: <b>เว็บเช็คชื่อห้ามเช็คนอกช่วง</b> · สรุป/รายงานการเช็คชื่อ (ไม่เช็ค · เช็คย้อนหลัง) และเตือนในกระดิ่งไม่นับวันนอกช่วง · วิชาที่สอนเช็คย้อนหลังได้เฉพาะในช่วง · ยังไม่ตั้ง = ใช้วันเริ่มภาคเรียน</p>
+        <div class="aw-yr"><button type="button" class="btn btn-ghost btn-sm" data-aw-yr="-1" aria-label="ปีก่อน"><i class="fas fa-chevron-left"></i></button><b id="awYear">ปีการศึกษา –</b><button type="button" class="btn btn-ghost btn-sm" data-aw-yr="1" aria-label="ปีถัดไป"><i class="fas fa-chevron-right"></i></button></div>
+        <div id="awTerms" class="aw-terms"><p class="hint">กำลังโหลด...</p></div>
       </div>
       <!-- 2.02.4: ย้ายสวิตช์ระบบนิเทศการสอนมาจากแท็บนิเทศการสอนเดิม -->
       <div class="card">
@@ -1418,8 +1425,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.12.3.121126"></script>
-  <script src="assets/gallery.js?v=2.12.3.121126"></script>
+  <script src="assets/api.js?v=2.12.4.121126"></script>
+  <script src="assets/gallery.js?v=2.12.4.121126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1771,6 +1778,7 @@
       loadThemeCard(s);
       loadNavOrderCard(s);
       loadHmCard(s);
+      if (isSuperAdminSession) loadAttWin();
       loadCertNoCard(s);
       document.getElementById('loginHeroRemoveBtn').hidden = !s.loginHeroDataUrl;
       document.getElementById('loginHeroPreviewName').textContent = s.siteName || 'BNKAcademicHub';
@@ -1962,6 +1970,38 @@
         var r = await withProgress('กำลังบันทึกลำดับเมนู', function () { return apiCall('adminUpdateSettings', { navOrder: isDefault ? [] : navOrderState.order }); }, { successLabel: 'บันทึกลำดับเมนูแล้ว' });
         if (r.ok) { resetSettingsCache(); var st = await applyBranding(); loadNavOrderCard(st); }
         else showToast(r.error.message, true);
+      });
+    }
+    // ---------- 2.12.4: ระยะเวลาการเช็คชื่อ ----------
+    var AW = { year: '', data: null };
+    function awThai(ds) { if (!ds) return ''; var p = ds.split('-'); return +p[2] + ' ' + ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][+p[1] - 1] + ' ' + (+p[0] + 543); }
+    async function loadAttWin(year) {
+      var box = document.getElementById('awTerms'); if (!box) return;
+      try { AW.data = await apiCall('attWinGet', year ? { year: year } : {}); } catch (e) { box.innerHTML = '<p class="hint">' + escapeHtml(e.message) + '</p>'; return; }
+      AW.year = AW.data.year; document.getElementById('awYear').textContent = 'ปีการศึกษา ' + AW.year; renderAttWin();
+    }
+    function renderAttWin() {
+      var d = AW.data, today = d.today, cur = d.cur || {};
+      document.getElementById('awTerms').innerHTML = d.terms.map(function (t) {
+        var isCur = cur.year === d.year && cur.term === t.t, inWin = t.from && today >= t.from && (!t.to || today <= t.to);
+        var stt = !t.from ? '<span class="aw-st warn"><i class="fas fa-triangle-exclamation"></i> ยังไม่ได้ตั้ง — ใช้วันเริ่มภาคเรียน ' + awThai(t.ts) + '</span>' : (isCur ? (inWin ? '<span class="aw-st ok"><i class="fas fa-circle-check"></i> วันนี้อยู่ในระยะเวลาการเช็คชื่อ</span>' : '<span class="aw-st off"><i class="fas fa-circle-pause"></i> วันนี้อยู่นอกระยะเวลาการเช็คชื่อ — ห้ามเช็คชื่อ</span>') : '');
+        return '<div class="aw-t' + (isCur ? ' cur' : '') + '" data-aw-t="' + t.t + '"><div class="aw-h"><b>ภาคเรียนที่ ' + t.t + '/' + escapeHtml(d.year) + '</b>' + (isCur ? '<span class="aw-cur">ภาคเรียนปัจจุบัน</span>' : '') + '<span class="hint" style="margin:0">ช่วงเปิดเทอม ' + awThai(t.ts) + ' – ' + awThai(t.te) + '</span></div>' +
+          '<div class="field-row"><div class="field"><label>วันเริ่มเช็คชื่อ (นักเรียนเริ่มมาเรียน)</label><input type="date" data-aw-from value="' + escapeHtml(t.from) + '" min="' + t.ts + '" max="' + t.te + '" /></div>' +
+          '<div class="field"><label>วันสุดท้าย (ปล่อยว่าง = ยังไม่กำหนด)</label><input type="date" data-aw-to value="' + escapeHtml(t.to) + '" min="' + t.ts + '" max="' + t.te + '" /></div></div>' +
+          '<div class="aw-f">' + stt + '<span style="flex:1"></span>' + (t.from ? '<button type="button" class="btn btn-ghost btn-sm" data-aw-clr>ล้าง</button>' : '') + '<button type="button" class="btn btn-success btn-sm" data-aw-save><i class="fas fa-check"></i> บันทึกภาคเรียนที่ ' + t.t + '</button></div>' +
+          (t.by ? '<div class="hint" style="margin:6px 0 0">ตั้งโดย ' + escapeHtml(t.by) + '</div>' : '') + '</div>';
+      }).join('');
+    }
+    if (document.getElementById('attWinCard')) {
+      document.getElementById('attWinCard').addEventListener('click', async function (e) {
+        var b = e.target.closest('[data-aw-yr]'); if (b) { loadAttWin(String(+AW.year + +b.getAttribute('data-aw-yr'))); return; }
+        var box = e.target.closest('[data-aw-t]'); if (!box) return;
+        var clr = !!e.target.closest('[data-aw-clr]'); if (!clr && !e.target.closest('[data-aw-save]')) return;
+        var from = clr ? '' : box.querySelector('[data-aw-from]').value, to = clr ? '' : box.querySelector('[data-aw-to]').value;
+        if (!clr && !from) { showToast('กรุณาเลือกวันเริ่มเช็คชื่อ', true); return; }
+        if (clr && !(await askConfirm('ล้างระยะเวลาการเช็คชื่อของภาคเรียนนี้? (กลับไปใช้วันเริ่มภาคเรียน)', 'ระยะเวลาการเช็คชื่อ'))) return;
+        var r = await withProgress('กำลังบันทึก', function () { return apiCall('attWinSave', { year: AW.year, term: box.getAttribute('data-aw-t'), from: from, to: to }); }, { successLabel: 'บันทึกแล้ว — เว็บเช็คชื่อรับค่าใหม่แล้ว' });
+        if (r.ok) { AW.data = r.data; renderAttWin(); }
       });
     }
     // ---------- 2.12.2: เมนูทั้งหมดในหน้าแรก ----------

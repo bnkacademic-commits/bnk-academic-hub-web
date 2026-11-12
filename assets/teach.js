@@ -60,12 +60,12 @@
     if (st.page === 'leave') { tabsEl.innerHTML = pageTabs(); return; }
     if (st.page === 'week') { tabsEl.innerHTML = (B && B.admin && B.teachers && B.teachers.length ? '<div class="cb-tools"><span class="cb-mut">ของ ' + esc(B.teacherName || '') + '</span></div>' : '') + pageTabs(); return; }
     var h = (B.admin && B.teachers && B.teachers.length ? '<label class="cb-mut" for="tcFor">ดูวิชาของ</label> <select id="tcFor" class="cb-search">' + (B.isSuper ? '<option value="">— เลือกครู —</option>' : '') + B.teachers.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === B.forUser ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select>' : '');
-    if (B.isSuper && B.term) h += ' <button type="button" class="btn btn-secondary btn-sm" data-tc-win><i class="fa-solid fa-calendar-days"></i> ตั้งช่วงวันที่เช็คย้อนหลัง</button>';
+    if (B.isSuper && B.term) h += ' <button type="button" class="btn btn-secondary btn-sm" data-tc-win><i class="fa-solid fa-calendar-days"></i> ตั้งระยะเวลาการเช็คชื่อ</button>';
     tabsEl.innerHTML = (h ? '<div class="cb-tools">' + h + '</div>' : '') + pageTabs(); // 2.02.6: ตัวเลือกครู / ปุ่มตั้งค่า = แถวของตัวเอง แยกจากแท็บ
   }
   tabsEl.addEventListener('change', function (e) { if (e.target.id === 'tcFor') { st.forUser = e.target.value; st.sub = ''; boot(); } });
   tabsEl.addEventListener('click', function (e) {
-    if (e.target.closest('[data-tc-win]')) { openWindowCfg(); return; }
+    if (e.target.closest('[data-tc-win]')) { location.href = 'settings.html#attWinCard'; return; } // 2.12.4: ตั้งที่ ตั้งค่าระบบ › ทั่วไป › ระยะเวลาการเช็คชื่อ
     var pg = e.target.closest('[data-tc-page]'); if (!pg || pg.getAttribute('data-tc-page') === st.page) return;
     st.page = pg.getAttribute('data-tc-page'); try { history.replaceState(null, '', st.page === 'leave' ? '#leave' : st.page === 'week' ? '#week' : st.page === 'interns' ? '#interns' : st.page === 'att' ? '#att' : location.pathname + location.search); } catch (x) { /* ข้าม */ }
     if (st.page === 'interns') { mountInterns(); return; }
@@ -90,7 +90,7 @@
     var groups = [], gmap = {};
     reg.forEach(function (s) { var k = (s.code || '') + '|' + s.name; if (!gmap[k]) { gmap[k] = { code: s.code, name: s.name, list: [] }; groups.push(gmap[k]); } gmap[k].list.push(s); });
     var W = B.window, h = '<div class="card tc-card"><h3>วิชาที่สอน · ภาคเรียนที่ ' + esc(B.term.term) + '/' + esc(B.term.year) + (B.teacherName ? ' · ' + esc(B.teacherName) : '') + '</h3>' +
-      '<p class="cb-mut tc-win"><i class="fa-solid fa-calendar-check"></i> เช็คย้อนหลังได้ ' + thDate(W.from) + ' – ' + (W.to ? thDate(W.to) : 'วันนี้') + (W.set ? '' : ' (ยังไม่ได้ตั้งช่วงวันที่ · ใช้วันเริ่มภาคเรียนของระบบ)') + ' · กดวิชา/ห้องเพื่อดูและบันทึก</p>';
+      '<p class="cb-mut tc-win"><i class="fa-solid fa-calendar-check"></i> ระยะเวลาการเช็คชื่อ ' + thDate(W.from) + ' – ' + (W.to ? thDate(W.to) : 'วันนี้') + (W.set ? '' : ' (ยังไม่ได้ตั้ง · ใช้วันเริ่มภาคเรียน)') + ' · กดวิชา/ห้องเพื่อดูและบันทึก</p>';
     if (sys.length) {
       var rooms = {}; sys.forEach(function (s) { rooms[s.room] = 1; });
       h += '<div class="tc-sec"><i class="fa-solid fa-user-group"></i> คาบระบบ · ครูที่ปรึกษา ' + esc(Object.keys(rooms).join(', ')) + '</div><div class="tc-sys">' + sys.map(function (s) {
@@ -366,9 +366,10 @@
   var PLIST = [-2, 0, 1, 2, 3, 4, 5, 6, 7, 8];
   async function leaveClick(e) {
     var t;
+    if (e.target.closest('[data-lv-rep]')) { lvReport(); return; }
     if ((t = e.target.closest('[data-lv-kind]'))) { lvKeep(); LV.kind = t.getAttribute('data-lv-kind'); renderLeave(); return; }
     if ((t = e.target.closest('[data-lv-all]'))) { lvKeep(); LV.allDay = t.getAttribute('data-lv-all') === '1'; renderLeave(); return; }
-    if ((t = e.target.closest('[data-lv-unsel]'))) { lvKeep(); LV.sel = LV.sel.filter(function (x) { return x !== t.getAttribute('data-lv-unsel'); }); renderLeave(); return; }
+    if ((t = e.target.closest('[data-lv-unsel]'))) { var uid = t.getAttribute('data-lv-unsel'); LV.sel = LV.sel.filter(function (x) { return x !== uid; }); document.querySelectorAll('[data-lv-pick]').forEach(function (cb) { if (cb.getAttribute('data-lv-pick') === uid) cb.checked = false; }); lvPaintSel(); return; }
     if (e.target.closest('[data-lv-ev]')) { document.getElementById('lvEvIn').click(); return; }
     if (e.target.closest('[data-lv-evrm]')) { lvKeep(); LV.ev = null; renderLeave(); return; }
     if ((t = e.target.closest('[data-lm-rm]'))) { lvKeep(); LV.mgr.splice(+t.getAttribute('data-lm-rm'), 1); renderLeave(); return; }
@@ -408,9 +409,9 @@
     else {
       h += '<div class="tc-lf">';
       if (L.manage) {
-        var ppl = (L.people || []).filter(function (u) { return !LV.q || u.name.indexOf(LV.q) !== -1; });
-        h += '<div class="field"><label>ครู <span class="cb-mut">(เลือกได้หลายคน · เลือกแล้ว ' + LV.sel.length + ' คน)</span></label><div class="cb-chips">' + LV.sel.map(function (id) { var u = (L.people || []).filter(function (x) { return x.id === id; })[0]; return '<span class="cb-chip">' + esc(u ? u.name : id) + ' <button type="button" class="cb-x" data-lv-unsel="' + esc(id) + '" aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button></span>'; }).join('') + '</div>' +
-          '<input type="search" class="cb-search" id="lvQ" placeholder="ค้นหาชื่อครู" value="' + esc(LV.q) + '" /><div class="cb-pick tc-lp">' + ppl.slice(0, 200).map(function (u) { return '<label class="cb-prow"><input type="checkbox" data-lv-pick="' + esc(u.id) + '"' + (LV.sel.indexOf(u.id) !== -1 ? ' checked' : '') + ' /> ' + esc(u.name) + '</label>'; }).join('') + '</div></div>';
+        // 2.12.4: เลือก/ค้นหาครู = อัปเดตเฉพาะส่วนนั้น (ไม่วาดทั้งหน้าใหม่ → ไม่กระพริบ · รายชื่อไม่เด้งกลับบนสุด)
+        h += '<div class="field"><label>ครู <span class="cb-mut">(เลือกได้หลายคน · เลือกแล้ว <b id="lvCnt">' + LV.sel.length + '</b> คน)</span></label><div class="cb-chips" id="lvChips">' + lvChipsHtml() + '</div>' +
+          '<input type="search" class="cb-search" id="lvQ" placeholder="ค้นหาชื่อครู" value="' + esc(LV.q) + '" /><div class="cb-pick tc-lp" id="lvPick">' + (L.people || []).map(function (u) { return '<label class="cb-prow"' + (LV.q && u.name.indexOf(LV.q) === -1 ? ' hidden' : '') + '><input type="checkbox" data-lv-pick="' + esc(u.id) + '"' + (LV.sel.indexOf(u.id) !== -1 ? ' checked' : '') + ' /> ' + esc(u.name) + '</label>'; }).join('') + '</div></div>';
       } else h += '<div class="field"><label>ครู</label><div><b>' + esc(L.me.name) + '</b> (แจ้งของตัวเอง)</div></div>';
       h += '<div class="field"><label>ประเภท</label><div class="cb-seg-row">' + Object.keys(L.kinds).map(function (k) { return '<button type="button" class="cb-seg' + (LV.kind === k ? ' on' : '') + '" data-lv-kind="' + k + '">' + esc(L.kinds[k]) + '</button>'; }).join('') + '</div></div>' +
         '<div class="field-row"><div class="field"><label for="lvFrom">ตั้งแต่วันที่</label><input type="date" id="lvFrom" min="' + esc(L.from) + '"' + (L.to ? ' max="' + esc(L.to) + '"' : '') + ' value="' + esc(LV.from || L.today || '') + '" /></div><div class="field"><label for="lvTo">ถึงวันที่</label><input type="date" id="lvTo" min="' + esc(L.from) + '"' + (L.to ? ' max="' + esc(L.to) + '"' : '') + ' value="' + esc(LV.to || '') + '" /></div></div>' +
@@ -420,7 +421,7 @@
         (L.evidence ? '<div class="field"><label>หลักฐาน (ไม่บังคับ)</label><div class="cb-inl">' + (LV.ev ? '<a href="' + esc(LV.ev.url) + '" target="_blank" rel="noopener">' + esc(LV.ev.name) + '</a> <button type="button" class="cb-x" data-lv-evrm aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button>' : LV.evBusy ? '<span class="cb-mut"><i class="fa-solid fa-spinner fa-spin"></i> กำลังอัปโหลด…</span>' : '<button type="button" class="btn btn-secondary btn-sm" data-lv-ev><i class="fa-solid fa-upload"></i> แนบไฟล์</button>') + '<input type="file" id="lvEvIn" hidden /></div></div>' : '') +
         '<div class="cb-actions"><span class="cb-sp"></span><button type="button" class="btn btn-success" data-lv-save><i class="fa-solid fa-check"></i> บันทึกการแจ้ง</button></div></div>';
     }
-    h += '</div><div class="card"><div class="cb-toolbar"><h3 style="margin:0">รายการที่แจ้ง' + (L.manage || L.view ? ' (ทุกคน)' : ' (ของฉัน)') + ' · ' + LV.items.length + ' รายการ</h3></div><div class="cb-tbl-wrap"><table class="cb-tbl"><thead><tr><th>วันที่</th>' + (L.manage || L.view ? '<th>ครู</th>' : '') + '<th>ประเภท</th><th>คาบ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>' +
+    h += '</div><div class="card"><div class="cb-toolbar"><h3 style="margin:0">รายการที่แจ้ง' + (L.manage || L.view ? ' (ทุกคน)' : ' (ของฉัน)') + ' · ' + LV.items.length + ' รายการ</h3><span class="cb-sp"></span><button type="button" class="btn btn-danger btn-sm" data-lv-rep><i class="fa-solid fa-file-pdf"></i> รายงาน PDF</button></div><div class="cb-tbl-wrap"><table class="cb-tbl"><thead><tr><th>วันที่</th>' + (L.manage || L.view ? '<th>ครู</th>' : '') + '<th>ประเภท</th><th>คาบ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody>' +
       LV.items.map(function (x) { return '<tr><td class="nw"><b>' + thD(x.date) + '</b></td>' + (L.manage || L.view ? '<td>' + esc(x.name) + '</td>' : '') + '<td><span class="cb-tag ' + (x.kind === 'official' ? 'wt' : 'gr') + '">' + esc(x.kindLabel) + '</span></td><td>' + (x.periods.length ? x.periods.map(plabel).join(', ') : 'ทั้งวัน') + '</td><td>' + esc(x.note) + (x.evidence ? ' <a href="' + esc(x.evidence.url) + '" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip"></i> ' + esc(x.evidence.name) + '</a>' : '') + '</td><td class="r">' + (x.canDelete ? '<button type="button" class="btn btn-ghost btn-sm" data-lv-del="' + esc(x.id) + '"><i class="fa-solid fa-trash"></i> ลบ</button>' : '') + '</td></tr>'; }).join('') +
       (LV.items.length ? '' : '<tr><td colspan="6" class="cb-mut">ยังไม่มีรายการในภาคเรียนนี้</td></tr>') + '</tbody></table></div></div>';
     if (L.isSuper) {
@@ -434,11 +435,88 @@
     }
     var y = window.scrollY; body.innerHTML = h; window.scrollTo(0, y);
   }
+  // ---------- 2.12.4: รายงาน PDF แจ้งไปราชการ / ลา (ฟอร์มเดียวกับรายงานการเช็คชื่อประจำสัปดาห์) ----------
+  // หน้าสรุปรายคน (ทั้งวัน = นับวัน แยกประเภท · เฉพาะบางคาบ = แยกนับเป็นครั้ง/คาบ) + รายการทั้งหมด · ผู้ดูแล/ผู้ดูผล = ทุกคน · ครู = ของตัวเอง
+  var LVK = { official: ['#eef2ff', '#c7d2fe', '#4338ca'], sick: ['#fef2f2', '#fecaca', '#b91c1c'], personal: ['#fffbeb', '#fde68a', '#b45309'] };
+  function ymdOf(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function lvReport() {
+    var now = new Date(), y = now.getFullYear(), m = now.getMonth();
+    var R = { this: [ymdOf(new Date(y, m, 1)), ymdOf(new Date(y, m + 1, 0))], last: [ymdOf(new Date(y, m - 1, 1)), ymdOf(new Date(y, m, 0))], term: [L.from || ymdOf(now), (L.to && L.to < ymdOf(now)) ? L.to : ymdOf(now)] };
+    var cur = 'this';
+    modal('<i class="fa-solid fa-file-pdf"></i> รายงานการแจ้งไปราชการ / ลา',
+      '<div class="cb-seg-row" id="lrRng">' + [['this', 'เดือนนี้'], ['last', 'เดือนที่แล้ว'], ['term', 'ภาคเรียนนี้'], ['custom', 'กำหนดเอง']].map(function (x) { return '<button type="button" class="cb-seg' + (x[0] === cur ? ' on' : '') + '" data-lr="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="field-row" style="margin-top:10px"><div class="field"><label for="lrFrom">ตั้งแต่วันที่</label><input type="date" id="lrFrom" value="' + R.this[0] + '" /></div><div class="field"><label for="lrTo">ถึงวันที่</label><input type="date" id="lrTo" value="' + R.this[1] + '" /></div></div>' +
+      '<label class="evk-chk"><input type="checkbox" id="lrSum" checked /><span><b>หน้าสรุปรายคน</b><small>ทั้งวันนับเป็นวัน แยกประเภท · เฉพาะบางคาบแยกนับเป็นครั้ง</small></span></label>' +
+      '<label class="evk-chk"><input type="checkbox" id="lrList" checked /><span><b>รายการทั้งหมด</b><small>เรียงตามวันที่</small></span></label>' +
+      '<label class="evk-chk"><input type="checkbox" id="lrSign" /><span><b>ช่องลงชื่อผู้รายงาน</b><small>ท้ายรายงาน</small></span></label>' +
+      '<p class="cb-mut">' + (L.manage || L.view ? 'รายงานของครูทุกคน' : 'รายงานเฉพาะของคุณ') + '</p>',
+      '<button type="button" class="btn btn-secondary" data-cb-close>ยกเลิก</button><button type="button" class="btn btn-danger" data-lr-go><i class="fa-solid fa-file-pdf"></i> สร้าง PDF</button>');
+    var mb = document.getElementById('cbModalBody');
+    mb.onclick = function (e) { var b = e.target.closest('[data-lr]'); if (!b) return; cur = b.getAttribute('data-lr'); mb.querySelectorAll('[data-lr]').forEach(function (x) { x.classList.toggle('on', x === b); }); if (R[cur]) { document.getElementById('lrFrom').value = R[cur][0]; document.getElementById('lrTo').value = R[cur][1]; } };
+    ['lrFrom', 'lrTo'].forEach(function (id) { document.getElementById(id).onchange = function () { cur = 'custom'; mb.querySelectorAll('[data-lr]').forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-lr') === 'custom'); }); }; });
+    document.getElementById('cbModalActions').onclick = async function (e) {
+      if (e.target.closest('[data-cb-close]')) { closeModal(); return; }
+      if (!e.target.closest('[data-lr-go]')) return;
+      var f = document.getElementById('lrFrom').value, t = document.getElementById('lrTo').value, o = { sum: document.getElementById('lrSum').checked, list: document.getElementById('lrList').checked, sign: document.getElementById('lrSign').checked };
+      if (!f || !t || t < f) { showToast('เลือกช่วงวันที่ให้ถูกต้อง', true); return; }
+      if (!o.sum && !o.list) { showToast('เลือกอย่างน้อย 1 ส่วน', true); return; }
+      closeModal(); lvMakePdf(f, t, o);
+    };
+  }
+  async function lvMakePdf(from, to, o) {
+    await withProgress('กำลังสร้างรายงาน PDF', async function (ctl) { var setLabel = ctl && ctl.setLabel;
+      var items = ((await apiCall('leaveList', { report: 1, from: from, to: to })) || {}).items || [];
+      await loadScriptOnce('assets/weekly.js?v=' + APP_VERSION); await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js');
+      var st0 = await getSiteSettings().catch(function () { return {}; }), school = (st0 && st0.schoolName) || 'โรงเรียน';
+      var K = L.kinds || { official: 'ไปราชการ', sick: 'ลาป่วย', personal: 'ลากิจ' }, KS = Object.keys(K);
+      var rng = thDate(from) + (from === to ? '' : ' – ' + thDate(to));
+      var tag = function (k) { var c = LVK[k] || ['#f1f5f9', '#cbd5e1', '#334155']; return '<span style="background:' + c[0] + ';color:' + c[2] + ';border-radius:6px;padding:0 6px;font-weight:700;white-space:nowrap">' + esc(K[k] || k) + '</span>'; };
+      var hd = function (sub) { return '<div class="hd"><div><h1>รายงานการแจ้งครูไปราชการ / ลา</h1><div class="sub">' + sub + '</div></div><div style="text-align:right"><span class="pill">' + esc(rng) + '</span></div></div>'; };
+      var parts = [];
+      // สรุปรายคน
+      var by = {}, full = 0, part = 0, kc = {}; KS.forEach(function (k) { kc[k] = 0; });
+      items.forEach(function (x) { var u = by[x.userId] = by[x.userId] || { name: x.name, d: {}, pn: 0, pp: 0, tot: 0 }; if (x.periods && x.periods.length) { u.pn++; u.pp += x.periods.length; part++; } else { u.d[x.kind] = (u.d[x.kind] || 0) + 1; u.tot++; full++; kc[x.kind] = (kc[x.kind] || 0) + 1; } });
+      var ppl = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.tot - a.tot || b.pn - a.pn || a.name.localeCompare(b.name, 'th'); });
+      if (o.sum) {
+        var kp = '<div class="kp" style="grid-template-columns:repeat(' + (KS.length + 2) + ',minmax(0,1fr))">' + [['รายการทั้งหมด', items.length, '#0f172a', '#f8fafc', '#e2e8f0']].concat(KS.map(function (k) { var c = LVK[k] || ['#f8fafc', '#e2e8f0', '#0f172a']; return [K[k] + ' (วัน)', kc[k] || 0, c[2], c[0], c[1]]; })).concat([['เฉพาะบางคาบ (ครั้ง)', part, '#0e7490', '#ecfeff', '#a5f3fc']]).map(function (x) { return '<div class="k" style="background:' + x[3] + ';border-color:' + x[4] + '"><span>' + x[0] + '</span><b style="color:' + x[2] + '">' + x[1] + '</b></div>'; }).join('') + '</div>';
+        var th = '<tr><th style="width:30px;text-align:center">ที่</th><th>ชื่อ – สกุล</th>' + KS.map(function (k) { return '<th style="width:70px;text-align:center">' + esc(K[k]) + '<div style="font-weight:400;font-size:9px">(วัน)</div></th>'; }).join('') + '<th style="width:70px;text-align:center">รวม<div style="font-weight:400;font-size:9px">(วัน)</div></th><th style="width:92px;text-align:center">เฉพาะบางคาบ<div style="font-weight:400;font-size:9px">(ครั้ง · คาบ)</div></th></tr>';
+        var row = function (u, i) { return '<tr><td style="text-align:center">' + (i + 1) + '</td><td>' + esc(u.name) + '</td>' + KS.map(function (k) { return '<td style="text-align:center">' + (u.d[k] || '-') + '</td>'; }).join('') + '<td style="text-align:center"><b>' + (u.tot || '-') + '</b></td><td style="text-align:center">' + (u.pn ? u.pn + ' ครั้ง · ' + u.pp + ' คาบ' : '-') + '</td></tr>'; };
+        var N1 = 22, N = 30, i0 = 0;
+        do {
+          var first = i0 === 0, n = first ? N1 : N, ch = ppl.slice(i0, i0 + n);
+          parts.push(hd('สรุปรายคน · ' + (L.manage || L.view ? 'ครูทุกคน' : esc(L.me.name)) + ' · ทั้งวันนับเป็นวัน (แยกประเภท) · เฉพาะบางคาบแยกนับเป็นครั้ง') + (first ? kp : '') + '<div class="sec">สรุปรายคน' + (first ? '' : ' (ต่อ)') + ' <small>' + ppl.length + ' คน · เรียงตามจำนวนวันมากไปน้อย</small></div>' +
+            (ppl.length ? '<table><thead>' + th + '</thead><tbody>' + ch.map(function (u, j) { return row(u, i0 + j); }).join('') + '</tbody></table>' : '<div style="color:#16a34a;font-weight:800;font-size:14px;margin-top:10px">ไม่มีการแจ้งในช่วงนี้</div>'));
+          i0 += n;
+        } while (i0 < ppl.length);
+      }
+      if (o.list && items.length) {
+        var lh = '<tr><th style="width:84px">วันที่</th><th>ชื่อ – สกุล</th><th style="width:70px">ประเภท</th><th style="width:70px;text-align:center">คาบ</th><th>หมายเหตุ</th><th style="width:50px;text-align:center">หลักฐาน</th></tr>';
+        var lr = function (x) { return '<tr><td style="white-space:nowrap">' + thD(x.date) + '</td><td>' + esc(x.name) + '</td><td>' + tag(x.kind) + '</td><td style="text-align:center">' + (x.periods && x.periods.length ? x.periods.map(plabel).join(', ') : 'ทั้งวัน') + '</td><td>' + esc(x.note || '') + '</td><td style="text-align:center">' + (x.evidence ? 'มี' : '-') + '</td></tr>'; };
+        var sorted = items.slice().sort(function (a, b) { return a.date.localeCompare(b.date) || a.name.localeCompare(b.name, 'th'); });
+        for (var k = 0; k < sorted.length; k += 32) parts.push(hd('รายการทั้งหมด · เรียงตามวันที่') + '<div class="sec">รายการที่แจ้ง' + (k ? ' (ต่อ)' : '') + ' <small>' + items.length + ' รายการ</small></div><table><thead>' + lh + '</thead><tbody>' + sorted.slice(k, k + 32).map(lr).join('') + '</tbody></table>');
+      } else if (o.list && !o.sum) parts.push(hd('รายการทั้งหมด') + '<div style="color:#16a34a;font-weight:800;font-size:14px;margin-top:10px">ไม่มีการแจ้งในช่วงนี้</div>');
+      if (o.sign && parts.length) parts[parts.length - 1] += '<div style="margin-top:auto;display:flex;justify-content:flex-end;font-size:12px;padding:0 20px 24px"><div style="text-align:center;line-height:2">ลงชื่อ ........................................ ผู้รายงาน<br>(........................................)<br>ตำแหน่ง ........................................</div></div>';
+      var stamp = now2();
+      var box = document.createElement('div'); box.className = 'xp';
+      box.innerHTML = '<style>' + window.XW_PCSS + '</style>' + parts.map(function (x, i) { return '<div class="pg"><div class="band"><b>' + esc(school) + '</b><span>รายงานการแจ้งครูไปราชการ / ลา</span></div>' + x + '<div class="foot"><span>' + (L.term ? 'ภาคเรียนที่ ' + esc(L.term.term + '/' + L.term.year) + ' · ' : '') + 'ข้อมูล ณ ' + stamp + '</span><span>หน้า ' + (i + 1) + ' / ' + parts.length + '</span></div></div>'; }).join('');
+      document.body.appendChild(box);
+      try {
+        await new Promise(function (r) { setTimeout(r, 250); });
+        var pdf = new jspdf.jsPDF('p', 'pt', 'a4'), els = box.querySelectorAll('.pg');
+        for (var i = 0; i < els.length; i++) { if (setLabel) setLabel('กำลังสร้างหน้า ' + (i + 1) + ' / ' + els.length); var cv = await html2canvas(els[i], { scale: 1.6, backgroundColor: '#ffffff', logging: false, windowWidth: 794 }); if (i) pdf.addPage(); pdf.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 595.28, 841.89); }
+        pdf.save('รายงานแจ้งไปราชการ-ลา_' + from + '_' + to + '.pdf');
+      } finally { box.remove(); }
+      return true;
+    }, { successLabel: 'สร้างไฟล์ PDF แล้ว' });
+  }
+  function now2() { var d = new Date(); return d.getDate() + ' ' + MS[d.getMonth()] + ' ' + (d.getFullYear() + 543) + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ' น.'; }
+  function lvChipsHtml() { return LV.sel.map(function (id) { var u = (L.people || []).filter(function (x) { return x.id === id; })[0]; return '<span class="cb-chip">' + esc(u ? u.name : id) + ' <button type="button" class="cb-x" data-lv-unsel="' + esc(id) + '" aria-label="เอาออก"><i class="fa-solid fa-xmark"></i></button></span>'; }).join(''); }
+  function lvPaintSel() { var c = document.getElementById('lvChips'), n = document.getElementById('lvCnt'); if (c) c.innerHTML = lvChipsHtml(); if (n) n.textContent = LV.sel.length; }
   function lvKeep() { var f = document.getElementById('lvFrom'), t = document.getElementById('lvTo'), n = document.getElementById('lvNote'); if (f) LV.from = f.value; if (t) LV.to = t.value; if (n) LV.note = n.value; }
-  body.addEventListener('input', debounce(function (e) { if (e.target.id === 'lvQ') { lvKeep(); LV.q = e.target.value.trim(); var pos = e.target.selectionStart; renderLeave().then(function () { var q = document.getElementById('lvQ'); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } }); } }, 220)); // 2.01.0
+  body.addEventListener('input', function (e) { if (e.target.id === 'lvQ') { LV.q = e.target.value.trim(); document.querySelectorAll('#lvPick .cb-prow').forEach(function (r) { r.hidden = !!LV.q && r.textContent.indexOf(LV.q) === -1; }); } }); // 2.12.4: กรองในที่ (ไม่วาดหน้าใหม่)
   body.addEventListener('change', async function (e) {
     var t = e.target;
-    if (t.matches('[data-lv-pick]')) { lvKeep(); var id = t.getAttribute('data-lv-pick'), i = LV.sel.indexOf(id); if (t.checked && i === -1) LV.sel.push(id); else if (!t.checked && i !== -1) LV.sel.splice(i, 1); renderLeave(); return; }
+    if (t.matches('[data-lv-pick]')) { var id = t.getAttribute('data-lv-pick'), i = LV.sel.indexOf(id); if (t.checked && i === -1) LV.sel.push(id); else if (!t.checked && i !== -1) LV.sel.splice(i, 1); lvPaintSel(); return; }
     if (t.matches('[data-lv-p]')) { var p = Number(t.getAttribute('data-lv-p')), j = LV.periods.indexOf(p); if (t.checked && j === -1) LV.periods.push(p); else if (!t.checked && j !== -1) LV.periods.splice(j, 1); return; }
     if (t.id === 'lmAdd' && t.value) { lvKeep(); LV.mgr.push({ id: t.value, manage: false, view: true }); renderLeave(); return; }
     if (t.matches('[data-lm-m]')) { var m = LV.mgr[+t.getAttribute('data-lm-m')]; m.manage = t.checked; if (m.manage) m.view = true; lvKeep(); renderLeave(); return; }

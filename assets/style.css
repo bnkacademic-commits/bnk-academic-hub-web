@@ -5202,3 +5202,13 @@ button.hm-head { width: 100%; background: none; border: 0; border-bottom: 1px so
 #homeMenuCard.hm-folded .hm-body { display: none; }
 #homeMenuCard.hm-folded .hm-head { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
 #homeMenuCard.hm-folded .hm-chev { transform: rotate(180deg); }
+/* 2.12.4: ระยะเวลาการเช็คชื่อ */
+.aw-yr { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.aw-terms { display: grid; gap: 10px; }
+.aw-t { border: 1px solid var(--border); border-radius: 14px; padding: 12px; background: var(--surface); }
+.aw-t.cur { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent); }
+.aw-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.aw-cur { background: var(--primary); color: #fff; border-radius: 99px; padding: 1px 9px; font-size: .75rem; font-weight: 700; }
+.aw-f { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.aw-st { font-size: .85rem; font-weight: 600; }
+.aw-st.ok { color: #047857; } .aw-st.off { color: #b45309; } .aw-st.warn { color: #b91c1c; }
