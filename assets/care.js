@@ -419,6 +419,46 @@
   // ---------- ตั้งค่า (สิทธิ์จัดการ) ----------
   var draft = null;
   function siteBase(u) { u = String(u || '').trim(); u = u.replace(/(index|council|student)\.html.*$/i, ''); return u && !/\/$/.test(u) ? u + '/' : u; }
+  // 2.12.2: แบนเนอร์ BNK Care Center — บันทึกทันทีเมื่อเลือกรูป (ไม่ต้องกดบันทึกการตั้งค่า) · ย่อ/ครอปเป็น 1300×433 ในเบราว์เซอร์
+  var BN_PAGES = [['t', 'หน้าครู', 'fa-chalkboard-user'], ['c', 'หน้าสภานักเรียน', 'fa-users'], ['s', 'หน้านักเรียน', 'fa-user-graduate']];
+  function bnOf() { var b = (B.settings && B.settings.banner) || {}; return { mode: b.mode === 'each' ? 'each' : 'all', a: b.a || '', t: b.t || '', c: b.c || '', s: b.s || '' }; }
+  function bnSrc(slot, ver, base) { return ver ? API_URL.replace(/\/$/, '') + '/care-banner/' + slot + '?v=' + ver : (base ? base + 'assets/banner.jpg' : ''); }
+  function bnImg(src) { return src ? '<img class="cc-bn-img" src="' + esc(src) + '" alt="" loading="lazy" />' : '<div class="cc-bn-img cc-bn-def">รูปเดิม (banner.jpg)</div>'; }
+  function bannerHtml(base) {
+    var b = bnOf(), all = bnSrc('a', b.a, base);
+    var h = '<div class="card cc-card"><h3>' + ic('fa-image') + ' แบนเนอร์ BNK Care Center</h3>' +
+      '<div class="cc-seg cc-bn-seg"><button type="button" data-cc-bn-mode="all" class="' + (b.mode === 'all' ? 'on' : '') + '">ใช้รูปเดียวกันทั้ง 3 หน้า</button><button type="button" data-cc-bn-mode="each" class="' + (b.mode === 'each' ? 'on' : '') + '">แยกรายหน้า</button></div>' +
+      '<div class="cc-bn-main">' + bnImg(all) + '<div><div class="hint" style="margin:0 0 6px">' + (b.mode === 'each' ? 'รูปรวม — ใช้กับหน้าที่ยังไม่ได้ตั้งรูปของตัวเอง' : 'ใช้กับหน้าครู · หน้าสภานักเรียน · หน้านักเรียน') + '<br>ขนาดแนะนำ 1300 × 433 (3:1) — ระบบย่อและครอปให้เอง</div>' +
+      '<button type="button" class="btn btn-primary btn-sm" data-cc-bn-pick="a">' + ic('fa-upload') + ' เลือกรูปใหม่</button> ' + (b.a ? '<button type="button" class="btn btn-secondary btn-sm" data-cc-bn-reset="a">' + ic('fa-rotate-left') + ' ใช้รูปเดิม</button>' : '') + '</div></div>';
+    if (b.mode === 'each') h += '<div class="cc-bn-each">' + BN_PAGES.map(function (pg) {
+      var own = b[pg[0]], src = own ? bnSrc(pg[0], own, base) : all;
+      return '<div class="cc-bn-it">' + bnImg(src) + '<b>' + ic(pg[2]) + ' ' + pg[1] + '</b><small class="mut">' + (own ? 'รูปของหน้านี้' : 'ใช้รูปรวม') + '</small><div><button type="button" class="btn btn-secondary btn-sm" data-cc-bn-pick="' + pg[0] + '">เปลี่ยนรูป</button>' + (own ? ' <button type="button" class="btn btn-secondary btn-sm" data-cc-bn-reset="' + pg[0] + '">ใช้รูปรวม</button>' : '') + '</div></div>';
+    }).join('') + '</div>';
+    return h + '<input type="file" id="ccBnFile" accept="image/*" hidden /><p class="hint">เปลี่ยนแล้วมีผลทันที · ครู/นักเรียนที่เปิดหน้าอยู่จะเห็นรูปใหม่เมื่อโหลดหน้าใหม่</p></div>';
+  }
+  function bnShrink(file) {
+    return new Promise(function (ok, no) {
+      var u = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        var W = 1300, H = 433, c = document.createElement('canvas'); c.width = W; c.height = H;
+        var r = Math.max(W / im.width, H / im.height), w = im.width * r, h = im.height * r, g = c.getContext('2d');
+        g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.drawImage(im, (W - w) / 2, (H - h) / 2, w, h); URL.revokeObjectURL(u);
+        var q = 0.86, d = c.toDataURL('image/jpeg', q); while (d.length > 1300000 && q > 0.5) { q -= 0.08; d = c.toDataURL('image/jpeg', q); }
+        ok(d);
+      };
+      im.onerror = function () { URL.revokeObjectURL(u); no(new Error('เปิดรูปนี้ไม่ได้ — ลองใช้ไฟล์ JPG หรือ PNG')); };
+      im.src = u;
+    });
+  }
+  async function bnSave(payload, label) {
+    var r = await withProgress(label, function () { return apiCall('careBannerSave', payload); }, { successLabel: 'บันทึกแล้ว' });
+    if (r.ok) { B.settings.banner = r.data.banner; if (draft) syncDraft(); showSettings(); }
+  }
+  var bnSlot = '';
+  document.addEventListener('change', async function (e) {
+    if (e.target.id !== 'ccBnFile') return; var f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { var d = await bnShrink(f); await bnSave({ slot: bnSlot, image: d }, 'กำลังอัปแบนเนอร์'); } catch (x) { showToast(x.message, true); }
+  });
   function showSettings() {
     var s = B.settings;
     draft = draft || { pinOn: s.pinOn, pin: '', notifyOn: s.notifyOn, notifyN: s.notifyN, startPoints: s.startPoints, latePoints: s.latePoints, good: s.good, fair: s.fair,
@@ -446,6 +486,7 @@
       '<div class="card cc-card"><h3>' + ic('fa-link') + ' ลิงก์ BNK Care Center</h3><div class="cc-row"><span class="cc-lb">ที่อยู่เว็บ</span><input id="ccSite" value="' + esc(d.siteUrl) + '" style="flex:1" /></div>' +
       links.map(function (l, i) { var u = base + l[0]; return '<div class="cc-link"><span>' + ic(l[2]) + ' <b>' + l[1] + '</b><small>' + esc(u) + '</small></span><button type="button" class="btn btn-secondary btn-sm" data-cc-copy="' + esc(u) + '">' + ic('fa-copy') + '</button><button type="button" class="btn btn-secondary btn-sm" data-cc-qr="' + i + '" data-u="' + esc(u) + '">' + ic('fa-qrcode') + '</button></div><div id="ccQr' + i + '" class="cc-qr" hidden></div>'; }).join('') +
       '<p class="hint">หน้าสภานักเรียนและหน้านักเรียนไม่มีปุ่มกลับหน้าครู — พิมพ์ QR ติดไว้ได้เลย</p></div></div>' +
+      bannerHtml(base) +
       // --- คอลัมน์ขวา: คะแนน
       '<div><div class="card cc-card"><h3>' + ic('fa-star') + ' คะแนนพฤติกรรม</h3>' +
       '<div class="cc-row"><span class="cc-lb">คะแนนเริ่มต้น</span><input id="ccStart" type="number" min="0" max="1000" class="cc-num" value="' + d.startPoints + '" /></div>' +
@@ -527,6 +568,9 @@
     if (e.target.closest('[data-cc-radd]')) { syncDraft(); var nv = (document.getElementById('ccRNew').value || '').trim(); if (nv && draft.reasons.indexOf(nv) === -1 && draft.reasons.length < 12) draft.reasons.push(nv); showSettings(); var ri = document.getElementById('ccRNew'); if (ri) ri.focus(); return; }
     if ((t = e.target.closest('[data-cc-copy]'))) { try { await navigator.clipboard.writeText(t.getAttribute('data-cc-copy')); showToast('คัดลอกลิงก์แล้ว'); } catch (x) { showToast('คัดลอกไม่สำเร็จ', true); } return; }
     if ((t = e.target.closest('[data-cc-qr]'))) { var q = document.getElementById('ccQr' + t.getAttribute('data-cc-qr')); q.hidden = !q.hidden; q.innerHTML = ''; if (!q.hidden) { try { qrLogo(q, t.getAttribute('data-u'), 180); } catch (x) { q.textContent = 'สร้าง QR ไม่ได้'; } } return; }
+    if ((t = e.target.closest('[data-cc-bn-mode]'))) { var m = t.getAttribute('data-cc-bn-mode'); if (m !== bnOf().mode) bnSave({ mode: m }, 'กำลังบันทึก'); return; }
+    if ((t = e.target.closest('[data-cc-bn-pick]'))) { bnSlot = t.getAttribute('data-cc-bn-pick'); document.getElementById('ccBnFile').click(); return; }
+    if ((t = e.target.closest('[data-cc-bn-reset]'))) { var sl = t.getAttribute('data-cc-bn-reset'); if (await askConfirm(sl === 'a' ? 'กลับไปใช้แบนเนอร์เดิม (banner.jpg)?' : 'หน้านี้กลับไปใช้รูปรวม?', 'แบนเนอร์')) bnSave({ slot: sl, reset: true }, 'กำลังบันทึก'); return; }
     if (e.target.closest('[data-cc-save]')) {
       syncDraft(); var d = draft;
       if (d.pin && !/^\d{4,6}$/.test(d.pin)) { showToast('รหัส PIN ต้องเป็นตัวเลข 4–6 หลัก', true); return; }

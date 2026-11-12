@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.12.1.121126" />
+<link rel="stylesheet" href="assets/style.css?v=2.12.2.121126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -41,6 +41,11 @@
     <div class="card" id="extLinksCard" hidden>
       <div class="section-title"><i class="fas fa-up-right-from-square ui-icon" style="font-size:17px" aria-hidden="true"></i> เว็บไซต์โรงเรียน</div>
       <div class="ext-links-grid" id="extLinksGrid"></div>
+    </div>
+    <!-- 2.12.2: เมนูทั้งหมด — แท็บตามกลุ่ม (ผู้ดูแลระบบสูงสุดจัดกลุ่มได้ที่ ตั้งค่าระบบ › ทั่วไป) -->
+    <div class="card" id="homeMenuCard" hidden>
+      <div class="section-title"><i class="fa-solid fa-grip ui-icon" style="font-size:17px" aria-hidden="true"></i> เมนูทั้งหมด</div>
+      <div class="hm-body"></div>
     </div>
 
     <!-- ตั้งแต่ 1.41.111026: การ์ด "เว็บไซต์โรงเรียน" อยู่บนสุด เหนือข้อความต้อนรับ · ปุ่ม "หน้าผลงานของฉัน" และ "จัดทำบันทึกข้อความ" อยู่ฝั่งขวาของข้อความต้อนรับ
@@ -261,9 +266,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.12.1.121126"></script>
+  <script src="assets/api.js?v=2.12.2.121126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=2.12.1.121126"></script>
+  <script src="assets/homeroom.js?v=2.12.2.121126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -385,6 +390,9 @@
       }
     }
     loadExternalLinks();
+    // 2.12.2: เมนูทั้งหมด (ใช้ค่าตั้งค่าที่โหลดแล้ว — ไม่เรียก API เพิ่ม)
+    function loadHomeMenu() { return getSiteSettings().then(function (st) { try { mountHomeMenu(document.getElementById('homeMenuCard'), st, getSession() || session); } catch (e) { /* ข้าม */ } }); }
+    loadHomeMenu();
 
     // ---------- QR modal ----------
     var qrModal = document.getElementById('qrModal');
@@ -2051,7 +2059,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
     window.__refreshPageData = function () {
       resetSettingsCache();
       currentTermLabel().then(function (label) { document.getElementById('currentTermBadge').textContent = label; });
-      return Promise.all([applyBranding(), loadHubAnnouncements(), loadExternalLinks(), loadSubmissions(), loadCalendar(), refreshCategoryColors()]);
+      return Promise.all([applyBranding(), loadHubAnnouncements(), loadExternalLinks(), loadHomeMenu(), loadSubmissions(), loadCalendar(), refreshCategoryColors()]);
     };
   </script>
 </body>

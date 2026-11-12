@@ -5154,3 +5154,37 @@ td.xw-cell span.xw-at.late { color: #c2410c; }
 .xw-lsub { display: block; color: var(--text-muted) !important; font-weight: 600 !important; font-size: .74rem; }
 .xw-tl > div.r > span:last-child { color: #dc2626; } .xw-tl > div.r3 > span:last-child { color: #991b1b; font-weight: 800; } .xw-tl > div.o > span:last-child { color: #d97706; }
 @media (max-width: 640px) { .xw-rtx { margin-left: 0; flex-basis: 100%; } .xw-t.lt .xw-th { flex-wrap: wrap; } .xw-t.lt .xw-th b { flex: 1 1 0; } .xw-t.lt .xw-tn { order: 3; flex-basis: 100%; text-align: left; padding-left: 36px; white-space: normal; } }
+
+/* 2.12.2: เมนูทั้งหมดในหน้าแรก (การ์ดแท็บกลุ่ม) */
+.hm-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.hm-tab { --hm: #2563eb; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 999px; padding: 7px 14px; font: inherit; font-weight: 700; font-size: .9rem; background: var(--surface-2, #f1f5f9); color: var(--text-muted); cursor: pointer; }
+.hm-tab i { color: var(--hm); font-size: .85rem; }
+.hm-tab.on { background: var(--hm); color: #fff; }
+.hm-tab.on i { color: #fff; }
+.hm-grid { --hm: #2563eb; display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 10px; }
+.hm-b { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; min-height: 84px; padding: 8px 6px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-weight: 700; font-size: .88rem; line-height: 1.25; text-align: center; text-decoration: none; transition: transform .12s, box-shadow .12s, border-color .12s; }
+.hm-b .ui-icon { color: var(--hm); }
+.hm-b:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--hm); }
+.hm-b.hm-ext { color: #fff; border: 0; }
+@media (max-width: 600px) { .hm-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } .hm-b { min-height: 76px; font-size: .8rem; } .hm-tab { padding: 6px 11px; font-size: .84rem; } }
+/* 2.12.2: ตั้งค่าเมนูทั้งหมดในหน้าแรก */
+.hm-on { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.hm-g { border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; margin-bottom: 10px; background: var(--surface); }
+.hm-gh { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hm-gh input[type=color] { width: 34px; height: 30px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: none; }
+.hm-gh select { font: inherit; font-size: .85rem; border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; background: var(--surface); color: var(--text); max-width: 130px; }
+.hm-gic { width: 28px; height: 28px; border-radius: 8px; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: .8rem; flex: none; }
+.hm-gn { flex: 1 1 160px; min-width: 120px; font: inherit; font-weight: 800; border: 1px solid var(--border); border-radius: 9px; padding: 6px 9px; background: var(--surface); color: var(--text); }
+.hm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.hm-chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); border-radius: 10px; padding: 3px 4px 3px 2px; font-size: .85rem; font-weight: 600; background: var(--surface-2, #f8fafc); }
+.hm-chip.ext { background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
+.hm-chip button { border: 0; background: none; color: var(--text-muted); font: inherit; padding: 2px 5px; border-radius: 6px; cursor: pointer; }
+.hm-chip button:disabled { opacity: .3; cursor: default; }
+.hm-chip button:hover:not(:disabled) { background: var(--border); }
+.hm-add { font: inherit; font-size: .85rem; font-weight: 600; border: 1px dashed var(--primary); color: var(--primary); background: var(--surface); border-radius: 10px; padding: 4px 9px; cursor: pointer; }
+.hm-lk { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+.hm-lk[hidden] { display: none; }
+.hm-lk input:not([type=color]) { font: inherit; font-size: .88rem; border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; flex: 1 1 140px; background: var(--surface); color: var(--text); }
+.hm-lk input[type=color] { width: 34px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 8px; }
+.hm-unused { font-size: .85rem; color: var(--text-muted); }
+.hm-chips select.hm-add { width: auto; max-width: 220px; }

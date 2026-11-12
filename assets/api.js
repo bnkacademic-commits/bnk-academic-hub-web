@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.12.0';
-var APP_VERSION = '2.12.1.121126';
+var APP_VERSION = '2.12.2.121126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -3842,3 +3842,65 @@ var BackNav = (function () {
     sync: later, leave: function () { leaving = true; }                                     // leave = บันทึกแล้ว/ออกได้เลย
   };
 })();
+
+// ---------- 2.12.2: "เมนูทั้งหมด" ในหน้าแรก — การ์ดแท็บกลุ่ม (ใต้การ์ดเว็บไซต์โรงเรียน) ----------
+// settings.homeMenu = { on, groups: [{ n: ชื่อกลุ่ม, c: สี, i: ไอคอน, items: ['slot' | { n, u, c } (ลิงก์ภายนอก)] }] } · ว่าง = กลุ่มเริ่มต้น
+// ปุ่มเมนูในเว็บเห็นเฉพาะคนที่มีสิทธิ์ (ตามเมนูข้างของบัญชีนั้น) · กลุ่มที่ไม่เหลือปุ่ม = ซ่อน
+var HOME_MENU_DEFAULT = [
+  { n: 'งานประจำวัน', c: '#2563eb', i: 'sun', items: ['teach', 'club', 'memo', 'schoolcal'] },
+  { n: 'งานดูแลนักเรียน', c: '#db2777', i: 'children', items: ['guide', 'care', 'interns'] },
+  { n: 'ติดตาม / ประเมิน', c: '#059669', i: 'chart-line', items: ['supervision', 'summary', 'announce'] },
+  { n: 'คลังและค้นหา', c: '#d97706', i: 'box-archive', items: ['orders', 'certs', 'gallery', 'directory'] }
+];
+var HOME_MENU_ICONS = ['sun', 'children', 'chart-line', 'box-archive', 'book-open', 'users', 'star', 'link', 'folder-open', 'briefcase', 'school', 'clipboard-list', 'calendar-days', 'graduation-cap', 'heart', 'gear'];
+function homeMenuConf(s) {
+  var hm = s && s.homeMenu;
+  if (hm && Array.isArray(hm.groups)) return { on: hm.on !== false, groups: hm.groups, custom: true };
+  return { on: true, groups: JSON.parse(JSON.stringify(HOME_MENU_DEFAULT)), custom: false };
+}
+function homeMenuSlotLabel(slot) { var x = NAV_SLOTS.filter(function (n) { return n.slot === slot; })[0]; return x ? x.label : slot; }
+// links = navLinksFor(session) (null = แสดงทุกเมนู — ใช้ในตัวอย่างหน้าตั้งค่า)
+function homeMenuGroupsFor(conf, links) {
+  var by = {}; if (links) links.forEach(function (l) { by[l.slot || navSlotOf(l.key)] = l; });
+  return conf.groups.map(function (g) {
+    var items = (g.items || []).map(function (x) {
+      if (typeof x === 'string') {
+        if (x === 'home' || x === 'settings') return null;
+        var info = NAV_SLOTS.filter(function (n) { return n.slot === x; })[0]; if (!info) return null;
+        if (links && !by[x]) return null;
+        return { slot: x, label: (by[x] && by[x].label) || info.label, icon: info.icon, href: by[x] ? by[x].href : '#' };
+      }
+      return x && x.u ? { ext: true, label: x.n, href: x.u, color: x.c || '#3457d5' } : null;
+    }).filter(Boolean);
+    return { n: g.n, c: g.c || '#2563eb', i: g.i || 'star', items: items };
+  }).filter(function (g) { return g.items.length; });
+}
+var HM_TAB_KEY = 'bnkah_hm_tab';
+function homeMenuHtml(groups, tab, preview) {
+  if (!groups.length) return '';
+  var t = Math.max(0, Math.min(groups.length - 1, tab || 0)), g = groups[t];
+  return '<div class="hm-tabs" role="tablist">' + groups.map(function (x, i) {
+    return '<button type="button" role="tab" class="hm-tab' + (i === t ? ' on' : '') + '" data-hm-tab="' + i + '" style="--hm:' + escapeHtml(x.c) + '" aria-selected="' + (i === t) + '"><i class="fa-solid fa-' + escapeHtml(x.i) + '" aria-hidden="true"></i>' + escapeHtml(x.n) + '</button>';
+  }).join('') + '</div><div class="hm-grid" style="--hm:' + escapeHtml(g.c) + '">' + g.items.map(function (it) {
+    var href = preview ? '#' : escapeHtml(it.href), ex = preview ? ' tabindex="-1"' : (it.ext ? ' target="_blank" rel="noopener noreferrer"' : '');
+    if (it.ext) return '<a class="hm-b hm-ext" href="' + href + '"' + ex + ' style="background:' + escapeHtml(it.color) + '"><span>' + escapeHtml(it.label) + '</span></a>';
+    return '<a class="hm-b" href="' + href + '"' + ex + '>' + icon(it.icon, 22) + '<span>' + escapeHtml(it.label) + '</span></a>';
+  }).join('') + '</div>';
+}
+// วาดการ์ดในหน้าแรก · คืน false ถ้าไม่มีอะไรแสดง
+function mountHomeMenu(card, settings, session) {
+  var conf = homeMenuConf(settings), box = card.querySelector('.hm-body');
+  if (!conf.on) { card.hidden = true; return false; }
+  var groups = homeMenuGroupsFor(conf, navLinksFor(session));
+  if (!groups.length) { card.hidden = true; return false; }
+  var tab = 0; try { tab = +localStorage.getItem(HM_TAB_KEY) || 0; } catch (e) { /* ข้าม */ }
+  function draw() { box.innerHTML = homeMenuHtml(groups, tab); }
+  if (!card.__hm) {
+    card.__hm = true;
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-hm-tab]'); if (!b) return;
+      tab = +b.getAttribute('data-hm-tab'); try { localStorage.setItem(HM_TAB_KEY, String(tab)); } catch (x) { /* ข้าม */ } draw();
+    });
+  }
+  draw(); card.hidden = false; return true;
+}

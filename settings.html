@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.12.1.121126" />
+<link rel="stylesheet" href="assets/style.css?v=2.12.2.121126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -169,6 +169,22 @@
           <button type="button" class="btn btn-primary" id="navOrderSave" disabled><i class="fas fa-floppy-disk ui-icon" aria-hidden="true"></i> บันทึกลำดับเมนู</button>
           <button type="button" class="btn btn-ghost" id="navOrderReset"><i class="fas fa-rotate-left ui-icon" aria-hidden="true"></i> คืนค่าเริ่มต้น</button>
         </div>
+      </div>
+
+      <!-- 2.12.2: เมนูทั้งหมดในหน้าแรก (การ์ดแท็บกลุ่ม ใต้เว็บไซต์โรงเรียน) -->
+      <div class="card" id="hmCard">
+        <div class="section-title"><i class="fa-solid fa-grip ui-icon" style="font-size:17px" aria-hidden="true"></i> เมนูทั้งหมดในหน้าแรก</div>
+        <p class="hint" style="margin-top:-8px; margin-bottom:12px;">การ์ดใต้ "เว็บไซต์โรงเรียน" ในหน้าแรก — แบ่งเมนูเป็นกลุ่ม (แท็บ) · ครูเห็นเฉพาะเมนูที่ตัวเองมีสิทธิ์ (เหมือนเมนูข้าง) · ลิงก์ภายนอกตั้งชื่อและสีได้เหมือนปุ่มเว็บไซต์โรงเรียน</p>
+        <label class="hm-on"><input type="checkbox" class="switch" role="switch" id="hmOn" /> <b>แสดงการ์ดเมนูทั้งหมดในหน้าแรก</b></label>
+        <div id="hmGroups"></div>
+        <div class="hm-unused" id="hmUnused"></div>
+        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary" id="hmAddGroup"><i class="fas fa-plus ui-icon" aria-hidden="true"></i> เพิ่มกลุ่ม</button>
+          <span style="flex:1"></span>
+          <button type="button" class="btn btn-ghost" id="hmReset"><i class="fas fa-rotate-left ui-icon" aria-hidden="true"></i> คืนค่าเริ่มต้น</button>
+          <button type="button" class="btn btn-primary" id="hmSave" disabled><i class="fas fa-floppy-disk ui-icon" aria-hidden="true"></i> บันทึกเมนู</button>
+        </div>
+        <div class="hm-prev"><div class="hint" style="margin:14px 0 6px;"><i class="fas fa-eye" aria-hidden="true"></i> ตัวอย่าง (แสดงทุกเมนู — ครูแต่ละคนเห็นเฉพาะที่มีสิทธิ์)</div><div class="card" style="margin:0"><div class="hm-body" id="hmPrev"></div></div></div>
       </div>
 
       <!-- 1.60: รูปแบบเลขที่เกียรติบัตรภายใน (คลังเกียรติบัตร) — รันเลขใหม่ทุกปีการศึกษา · ตั้งเลขถัดไปได้ (ต่อจากเกียรติบัตรกระดาษที่เคยออก) -->
@@ -1402,8 +1418,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.12.1.121126"></script>
-  <script src="assets/gallery.js?v=2.12.1.121126"></script>
+  <script src="assets/api.js?v=2.12.2.121126"></script>
+  <script src="assets/gallery.js?v=2.12.2.121126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1754,6 +1770,7 @@
       renderLoginHeroPreview(s.loginHeroDataUrl || '');
       loadThemeCard(s);
       loadNavOrderCard(s);
+      loadHmCard(s);
       loadCertNoCard(s);
       document.getElementById('loginHeroRemoveBtn').hidden = !s.loginHeroDataUrl;
       document.getElementById('loginHeroPreviewName').textContent = s.siteName || 'BNKAcademicHub';
@@ -1945,6 +1962,89 @@
         var r = await withProgress('กำลังบันทึกลำดับเมนู', function () { return apiCall('adminUpdateSettings', { navOrder: isDefault ? [] : navOrderState.order }); }, { successLabel: 'บันทึกลำดับเมนูแล้ว' });
         if (r.ok) { resetSettingsCache(); var st = await applyBranding(); loadNavOrderCard(st); }
         else showToast(r.error.message, true);
+      });
+    }
+    // ---------- 2.12.2: เมนูทั้งหมดในหน้าแรก ----------
+    var HM_ICON_TH = { sun: 'งานประจำวัน', children: 'นักเรียน', 'chart-line': 'กราฟ', 'box-archive': 'คลัง', 'book-open': 'หนังสือ', users: 'กลุ่มคน', star: 'ดาว', link: 'ลิงก์', 'folder-open': 'แฟ้ม', briefcase: 'กระเป๋า', school: 'โรงเรียน', 'clipboard-list': 'รายการ', 'calendar-days': 'ปฏิทิน', 'graduation-cap': 'หมวกรับปริญญา', heart: 'หัวใจ', gear: 'ฟันเฟือง' };
+    var hmState = { on: true, groups: [], saved: '', tab: 0, custom: false };
+    function hmSig() { return JSON.stringify({ on: hmState.on, groups: hmState.groups }); }
+    function loadHmCard(s) {
+      if (!document.getElementById('hmCard')) return;
+      var c = homeMenuConf(s); hmState.on = c.on; hmState.groups = JSON.parse(JSON.stringify(c.groups)); hmState.custom = c.custom; hmState.saved = hmSig(); renderHm();
+    }
+    function hmSlots() { return NAV_SLOTS.filter(function (x) { return x.slot !== 'home' && x.slot !== 'settings'; }); }
+    function renderHm() {
+      document.getElementById('hmOn').checked = hmState.on;
+      var used = {}; hmState.groups.forEach(function (g) { g.items.forEach(function (x) { if (typeof x === 'string') used[x] = 1; }); });
+      var n = hmState.groups.length;
+      document.getElementById('hmGroups').innerHTML = hmState.groups.map(function (g, gi) {
+        var m = g.items.length;
+        return '<div class="hm-g" data-g="' + gi + '"><div class="hm-gh">' +
+          '<input type="color" value="' + escapeHtml(g.c) + '" data-hm-c aria-label="สีกลุ่ม" />' +
+          '<select data-hm-i aria-label="ไอคอนกลุ่ม">' + HOME_MENU_ICONS.map(function (ic) { return '<option value="' + ic + '"' + (ic === g.i ? ' selected' : '') + '>' + (HM_ICON_TH[ic] || ic) + '</option>'; }).join('') + '</select>' +
+          '<span class="hm-gic" style="background:' + escapeHtml(g.c) + '"><i class="fa-solid fa-' + escapeHtml(g.i) + '"></i></span>' +
+          '<input class="hm-gn" value="' + escapeHtml(g.n) + '" maxlength="40" data-hm-n aria-label="ชื่อกลุ่ม" />' +
+          '<button type="button" class="nav-mv" data-hm-gmv="-1" aria-label="เลื่อนกลุ่มขึ้น"' + (gi === 0 ? ' disabled' : '') + '><i class="fas fa-chevron-up"></i></button>' +
+          '<button type="button" class="nav-mv" data-hm-gmv="1" aria-label="เลื่อนกลุ่มลง"' + (gi === n - 1 ? ' disabled' : '') + '><i class="fas fa-chevron-down"></i></button>' +
+          '<button type="button" class="nav-mv" data-hm-gdel aria-label="ลบกลุ่ม"><i class="fas fa-trash"></i></button></div>' +
+          '<div class="hm-chips">' + g.items.map(function (x, ii) {
+            var lab = typeof x === 'string' ? escapeHtml(homeMenuSlotLabel(x)) : '<i class="fas fa-link" style="color:' + escapeHtml(x.c) + '"></i> ' + escapeHtml(x.n);
+            return '<span class="hm-chip' + (typeof x === 'string' ? '' : ' ext') + '" data-i="' + ii + '"><button type="button" data-hm-imv="-1" aria-label="เลื่อนซ้าย"' + (ii === 0 ? ' disabled' : '') + '>‹</button>' + lab +
+              '<button type="button" data-hm-imv="1" aria-label="เลื่อนขวา"' + (ii === m - 1 ? ' disabled' : '') + '>›</button><button type="button" data-hm-idel aria-label="เอาออก">✕</button></span>';
+          }).join('') +
+          '<select class="hm-add" data-hm-add><option value="">+ เมนู</option>' + hmSlots().filter(function (x) { return g.items.indexOf(x.slot) === -1; }).map(function (x) { return '<option value="' + x.slot + '">' + escapeHtml(x.label) + (used[x.slot] ? ' (อยู่กลุ่มอื่นแล้ว)' : '') + '</option>'; }).join('') + '</select>' +
+          '<button type="button" class="hm-add" data-hm-addlink><i class="fas fa-link"></i> ลิงก์ภายนอก</button></div>' +
+          '<div class="hm-lk" hidden><input data-lk-n maxlength="40" placeholder="ชื่อปุ่ม" /><input data-lk-u maxlength="300" placeholder="https://…" /><input type="color" data-lk-c value="#3457d5" aria-label="สีปุ่ม" /><button type="button" class="btn btn-primary btn-sm" data-lk-ok>เพิ่ม</button><button type="button" class="btn btn-ghost btn-sm" data-lk-x>ยกเลิก</button></div></div>';
+      }).join('') || '<p class="hint">ยังไม่มีกลุ่ม — กด "เพิ่มกลุ่ม"</p>';
+      var un = hmSlots().filter(function (x) { return !used[x.slot]; });
+      document.getElementById('hmUnused').innerHTML = un.length ? '<i class="fas fa-circle-info"></i> เมนูที่ยังไม่อยู่กลุ่มไหน: ' + un.map(function (x) { return '<b>' + escapeHtml(x.label) + '</b>'; }).join(' · ') : '';
+      document.getElementById('hmSave').disabled = hmSig() === hmState.saved;
+      var groups = homeMenuGroupsFor({ groups: hmState.groups }, null);
+      hmState.tab = Math.min(hmState.tab, Math.max(0, groups.length - 1));
+      document.getElementById('hmPrev').innerHTML = hmState.on ? (homeMenuHtml(groups, hmState.tab, true) || '<p class="hint">ไม่มีเมนูให้แสดง</p>') : '<p class="hint">ปิดการ์ดไว้ — หน้าแรกจะไม่แสดงการ์ดนี้</p>';
+    }
+    if (document.getElementById('hmCard')) {
+      var hmc = document.getElementById('hmCard');
+      var hmG = function (el) { var b = el.closest('[data-g]'); return b ? hmState.groups[+b.getAttribute('data-g')] : null; };
+      hmc.addEventListener('input', function (e) {
+        var g = hmG(e.target); if (!g) return;
+        if (e.target.matches('[data-hm-n]')) { g.n = e.target.value; document.getElementById('hmSave').disabled = hmSig() === hmState.saved; var pv = document.getElementById('hmPrev'); pv.innerHTML = homeMenuHtml(homeMenuGroupsFor({ groups: hmState.groups }, null), hmState.tab, true); }
+      });
+      hmc.addEventListener('change', function (e) {
+        if (e.target.id === 'hmOn') { hmState.on = e.target.checked; renderHm(); return; }
+        var g = hmG(e.target); if (!g) return;
+        if (e.target.matches('[data-hm-c]')) { g.c = e.target.value; renderHm(); }
+        else if (e.target.matches('[data-hm-i]')) { g.i = e.target.value; renderHm(); }
+        else if (e.target.matches('[data-hm-add]') && e.target.value) { g.items.push(e.target.value); renderHm(); }
+      });
+      hmc.addEventListener('click', async function (e) {
+        var t = e.target, g = hmG(t), gi = g ? hmState.groups.indexOf(g) : -1, ch = t.closest('[data-i]'), ii = ch ? +ch.getAttribute('data-i') : -1, b;
+        if ((b = t.closest('[data-hm-tab]')) && t.closest('#hmPrev')) { hmState.tab = +b.getAttribute('data-hm-tab'); renderHm(); return; }
+        if (t.closest('#hmPrev a')) { e.preventDefault(); return; }
+        if (t.closest('#hmAddGroup')) { hmState.groups.push({ n: 'กลุ่มใหม่', c: '#7c3aed', i: 'star', items: [] }); renderHm(); return; }
+        if (t.closest('#hmReset')) { if (await askConfirm('คืนค่าเมนูเป็นกลุ่มเริ่มต้น? (ยังไม่บันทึกจนกว่าจะกด "บันทึกเมนู")', 'คืนค่าเริ่มต้น')) { hmState.groups = JSON.parse(JSON.stringify(HOME_MENU_DEFAULT)); hmState.on = true; hmState.reset = true; renderHm(); document.getElementById('hmSave').disabled = false; } return; }
+        if (t.closest('#hmSave')) {
+          var empty = hmState.groups.filter(function (x) { return !x.items.length; }).length;
+          if (empty && !(await askConfirm('มีกลุ่มที่ยังไม่มีเมนู ' + empty + ' กลุ่ม (จะไม่แสดงในหน้าแรก) — บันทึกเลย?', 'บันทึกเมนู'))) return;
+          var isDef = JSON.stringify(hmState.groups) === JSON.stringify(HOME_MENU_DEFAULT) && hmState.on;
+          var r = await withProgress('กำลังบันทึกเมนู', function () { return apiCall('adminUpdateSettings', { homeMenu: isDef ? null : { on: hmState.on, groups: hmState.groups } }); }, { successLabel: 'บันทึกเมนูแล้ว' });
+          if (r.ok) { hmState.reset = false; resetSettingsCache(); var st = await applyBranding(); loadHmCard(st); }
+          return;
+        }
+        if (!g) return;
+        if ((b = t.closest('[data-hm-gmv]'))) { var j = gi + +b.getAttribute('data-hm-gmv'); hmState.groups.splice(gi, 1); hmState.groups.splice(j, 0, g); renderHm(); return; }
+        if (t.closest('[data-hm-gdel]')) { if (!g.items.length || await askConfirm('ลบกลุ่ม "' + g.n + '"?', 'ลบกลุ่ม')) { hmState.groups.splice(gi, 1); renderHm(); } return; }
+        if ((b = t.closest('[data-hm-imv]'))) { var k = ii + +b.getAttribute('data-hm-imv'), x = g.items.splice(ii, 1)[0]; g.items.splice(k, 0, x); renderHm(); return; }
+        if (t.closest('[data-hm-idel]')) { g.items.splice(ii, 1); renderHm(); return; }
+        var box = t.closest('.hm-g'), lk = box && box.querySelector('.hm-lk');
+        if (t.closest('[data-hm-addlink]')) { lk.hidden = false; lk.querySelector('[data-lk-n]').focus(); return; }
+        if (t.closest('[data-lk-x]')) { lk.hidden = true; return; }
+        if (t.closest('[data-lk-ok]')) {
+          var nm = lk.querySelector('[data-lk-n]').value.trim(), u = lk.querySelector('[data-lk-u]').value.trim();
+          if (!nm) { showToast('กรอกชื่อปุ่ม', true); return; }
+          if (!/^https:\/\/\S+$/i.test(u)) { showToast('ลิงก์ต้องขึ้นต้นด้วย https://', true); return; }
+          g.items.push({ n: nm, u: u, c: lk.querySelector('[data-lk-c]').value }); renderHm(); return;
+        }
       });
     }
     // ---------- 1.60: รูปแบบเลขที่เกียรติบัตรภายใน ----------
