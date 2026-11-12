@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.12.4';
-var APP_VERSION = '2.12.4.121126';
+var APP_VERSION = '2.12.5.121126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -3860,12 +3860,14 @@ function homeMenuConf(s) {
 }
 function homeMenuSlotLabel(slot) { var x = NAV_SLOTS.filter(function (n) { return n.slot === slot; })[0]; return x ? x.label : slot; }
 // links = navLinksFor(session) (null = แสดงทุกเมนู — ใช้ในตัวอย่างหน้าตั้งค่า)
-function homeMenuGroupsFor(conf, links) {
+function homeMenuGroupsFor(conf, links, st) {
   var by = {}; if (links) links.forEach(function (l) { by[l.slot || navSlotOf(l.key)] = l; });
+  // 2.12.4: ระบบที่ปิดไว้ในตั้งค่า = ไม่แสดงปุ่ม (เหมือนเมนูข้าง) — จัดทำบันทึกข้อความ · นิเทศการสอน
+  var offSlot = { memo: !isMemoEnabled(st), supervision: !!(st && st.supEnabled === false) };
   return conf.groups.map(function (g) {
     var items = (g.items || []).map(function (x) {
       if (typeof x === 'string') {
-        if (x === 'home' || x === 'settings') return null;
+        if (x === 'home' || x === 'settings' || offSlot[x]) return null;
         var info = NAV_SLOTS.filter(function (n) { return n.slot === x; })[0]; if (!info) return null;
         if (links && !by[x]) return null;
         return { slot: x, label: (by[x] && by[x].label) || info.label, icon: info.icon, href: by[x] ? by[x].href : '#' };
@@ -3891,7 +3893,7 @@ function homeMenuHtml(groups, tab, preview) {
 function mountHomeMenu(card, settings, session) {
   var conf = homeMenuConf(settings), box = card.querySelector('.hm-body');
   if (!conf.on) { card.hidden = true; return false; }
-  var groups = homeMenuGroupsFor(conf, navLinksFor(session));
+  var groups = homeMenuGroupsFor(conf, navLinksFor(session), settings);
   if (!groups.length) { card.hidden = true; return false; }
   var tab = 0; try { tab = +localStorage.getItem(HM_TAB_KEY) || 0; } catch (e) { /* ข้าม */ }
   function draw() { box.innerHTML = homeMenuHtml(groups, tab); }

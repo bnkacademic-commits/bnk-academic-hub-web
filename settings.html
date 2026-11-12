@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.12.4.121126" />
+<link rel="stylesheet" href="assets/style.css?v=2.12.5.121126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -1425,8 +1425,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.12.4.121126"></script>
-  <script src="assets/gallery.js?v=2.12.4.121126"></script>
+  <script src="assets/api.js?v=2.12.5.121126"></script>
+  <script src="assets/gallery.js?v=2.12.5.121126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -2039,7 +2039,7 @@
       var un = hmSlots().filter(function (x) { return !used[x.slot]; });
       document.getElementById('hmUnused').innerHTML = un.length ? '<i class="fas fa-circle-info"></i> เมนูที่ยังไม่อยู่กลุ่มไหน: ' + un.map(function (x) { return '<b>' + escapeHtml(x.label) + '</b>'; }).join(' · ') : '';
       document.getElementById('hmSave').disabled = hmSig() === hmState.saved;
-      var groups = homeMenuGroupsFor({ groups: hmState.groups }, null);
+      var groups = homeMenuGroupsFor({ groups: hmState.groups }, null, _settingsCache);
       hmState.tab = Math.min(hmState.tab, Math.max(0, groups.length - 1));
       document.getElementById('hmPrev').innerHTML = hmState.on ? (homeMenuHtml(groups, hmState.tab, true) || '<p class="hint">ไม่มีเมนูให้แสดง</p>') : '<p class="hint">ปิดการ์ดไว้ — หน้าแรกจะไม่แสดงการ์ดนี้</p>';
     }
@@ -2048,7 +2048,7 @@
       var hmG = function (el) { var b = el.closest('[data-g]'); return b ? hmState.groups[+b.getAttribute('data-g')] : null; };
       hmc.addEventListener('input', function (e) {
         var g = hmG(e.target); if (!g) return;
-        if (e.target.matches('[data-hm-n]')) { g.n = e.target.value; document.getElementById('hmSave').disabled = hmSig() === hmState.saved; var pv = document.getElementById('hmPrev'); pv.innerHTML = homeMenuHtml(homeMenuGroupsFor({ groups: hmState.groups }, null), hmState.tab, true); }
+        if (e.target.matches('[data-hm-n]')) { g.n = e.target.value; document.getElementById('hmSave').disabled = hmSig() === hmState.saved; var pv = document.getElementById('hmPrev'); pv.innerHTML = homeMenuHtml(homeMenuGroupsFor({ groups: hmState.groups }, null, _settingsCache), hmState.tab, true); }
       });
       hmc.addEventListener('change', function (e) {
         if (e.target.id === 'hmOn') { hmState.on = e.target.checked; renderHm(); return; }
