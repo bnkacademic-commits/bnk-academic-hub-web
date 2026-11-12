@@ -162,12 +162,35 @@
     function render() {
       var m = H.mentor, me = H.me, open = H.tasks.filter(function (t) { return t.status === 'todo' || t.status === 'fix'; }), done = H.tasks.filter(function (t) { return t.status === 'pass'; }).length;
       el.innerHTML =
-        '<div class="card ih-ban"><span class="it-av it-av-l">' + (m && m.avatarUrl ? '<img src="' + esc(m.avatarUrl) + '" alt="">' : '<i class="fa-solid fa-user-tie"></i>') + '</span><div class="it-ht"><b>ครูพี่เลี้ยง: ' + esc(m ? m.name : '-') + '</b><small>' + esc([m && m.subjectGroup, me.until ? 'ฝึกสอนถึง ' + thD(me.until) : ''].filter(Boolean).join(' · ')) + '</small></div>' +
+        '<div class="card ih-ban"><span class="it-av it-av-l">' + (m && m.avatarUrl ? '<img src="' + esc(m.avatarUrl) + '" alt="">' : '<i class="fa-solid fa-user-tie"></i>') + '</span><div class="it-ht"><b>ครูพี่เลี้ยง: ' + esc(m ? m.name : '-') + '</b>' + (H.co && H.co.length ? '<small>ครูพี่เลี้ยงร่วม: ' + H.co.map(function (c) { return esc(c.name); }).join(', ') + '</small>' : '') + '<small>' + esc([m && m.subjectGroup, me.until ? 'ฝึกสอนถึง ' + thD(me.until) : ''].filter(Boolean).join(' · ')) + '</small></div>' +
           '<span class="it-tag">ช่วยสอน ' + me.subs.length + ' ห้อง' + (H.club ? ' · ชุมนุม 1' : '') + '</span></div>' +
         '<div class="ih-kp"><div class="card"><b class="it-late">' + open.length + '</b><small>งานที่ต้องส่ง</small></div><div class="card"><b style="color:var(--accent)">' + done + '/' + H.tasks.length + '</b><small>งานที่ผ่านแล้ว</small></div></div>' +
         '<div class="ih-grid"><section class="card ih-sec" id="ihWeek"><h3><i class="fa-solid fa-table-cells"></i> ตารางสอนของฉัน <a class="ih-more" href="teach.html#week">ดูทั้งหมด</a></h3><div class="loading">กำลังโหลด</div></section>' +
         '<section class="card ih-sec"><h3><i class="fa-solid fa-clipboard-list"></i> งานจากครูพี่เลี้ยง</h3>' + (H.tasks.map(taskRow).join('') || '<div class="hint">ยังไม่มีงานที่มอบหมาย</div>') + '</section></div>' +
+        obsSec() +
         '<div class="ih-links">' + [['teach.html', 'fa-book-open-reader', 'วิชาที่สอน / เช็คชื่อ'], H.club ? ['club.html', 'fa-people-group', 'ชุมนุม ' + H.club.name] : null, internPerm(getSession(), 'cal') ? ['schoolcalendar.html', 'fa-calendar-days', 'ปฏิทินโรงเรียน'] : null, ['directory.html', 'fa-address-book', 'ทำเนียบบุคลากร']].filter(Boolean).map(function (x) { return '<a class="card ih-link" href="' + x[0] + '"><i class="fa-solid ' + x[1] + '"></i><span>' + esc(x[2]) + '</span></a>'; }).join('') + '</div>';
+    }
+    // 2.11.0: บันทึกการสังเกตการสอน / นิเทศ (ที่ครูพี่เลี้ยงส่งให้) — รับทราบ + บันทึกสะท้อนคิด
+    function obsSec() {
+      var L = H.obs || []; if (!L.length) return '';
+      var wait = L.filter(function (o) { return o.status === 'sent'; }).length;
+      return '<section class="card ih-sec" style="margin-top:12px"><h3><i class="fa-solid fa-clipboard-check"></i> บันทึกการสังเกตการสอน / นิเทศ' + (wait ? ' <span class="it-st it-st-review">รอรับทราบ ' + wait + '</span>' : '') + '</h3>' +
+        L.map(function (o) { return '<button type="button" class="it-task' + (o.status === 'sent' ? ' it-open' : '') + '" data-ih-obs="' + esc(o.id) + '"><span class="it-tt"><b>' + (o.kind === 'sup' ? 'นิเทศ' : 'สังเกตการสอน') + ' · ' + thD(o.date) + '</b><small>' + esc([o.subject, o.room, o.topic].filter(Boolean).concat([o.kind === 'sup' && o.observer ? o.observer : o.authorName]).join(' · ')) + '</small></span>' + (o.status === 'sent' ? '<span class="btn btn-primary btn-sm">อ่าน / รับทราบ</span>' : '<span class="it-st it-st-pass"><i class="fa-solid fa-check"></i> รับทราบแล้ว</span>') + '</button>'; }).join('') + '</section>';
+    }
+    function openObs(id) {
+      var o = (H.obs || []).filter(function (x) { return x.id === id; })[0]; if (!o) return;
+      var t = o.tpl || {};
+      var html = '<p class="hint">' + esc([o.subject, o.room, o.topic ? 'เรื่อง ' + o.topic : ''].filter(Boolean).concat([o.kind === 'sup' && o.observer ? 'ผู้นิเทศ ' + o.observer : 'โดย ' + o.authorName]).join(' · ')) + '</p>' +
+        (o.scoreHidden ? '' : (t.sections || []).map(function (s) { return '<div class="it-sub">' + esc(s.title) + '</div>' + (s.items || []).map(function (q) { return '<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed var(--border)"><span>' + esc(q.text) + '</span><b>' + (o.scores[q.id] || '-') + ' / ' + (t.scale || 5) + '</b></div>'; }).join(''); }).join('')) +
+        (t.texts || []).filter(function (x) { return o.texts[x.id]; }).map(function (x) { return '<div class="it-sub">' + esc(x.label) + '</div><div>' + esc(o.texts[x.id]).replace(/\n/g, '<br>') + '</div>'; }).join('') +
+        (o.scoreHidden ? '<p class="hint">(คะแนนรายด้าน: ครูพี่เลี้ยงไม่ได้เปิดให้เห็น)</p>' : '') +
+        (o.photos && o.photos.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + o.photos.map(function (p) { return '<img src="' + esc(p.src) + '" alt="" referrerpolicy="no-referrer" style="width:100px;height:76px;object-fit:cover;border-radius:8px">'; }).join('') + '</div>' : '') +
+        '<div class="field" style="margin-top:12px"><label for="ihRef">บันทึกสะท้อนคิดของฉัน</label><textarea id="ihRef" rows="3" maxlength="3000">' + esc(o.reflection || '') + '</textarea></div><div class="error-box" id="ihErr" hidden></div>';
+      modal((o.kind === 'sup' ? 'บันทึกการนิเทศ' : 'บันทึกการสังเกตการสอน') + ' · ' + thD(o.date), html, '<button type="button" class="btn btn-success" data-ih-ack><i class="fa-solid fa-check"></i> ' + (o.status === 'ack' ? 'บันทึก' : 'รับทราบ') + '</button>', async function (e) {
+        if (!e.target.closest('[data-ih-ack]')) return;
+        try { await apiCall('internObsAck', { id: o.id, reflection: document.getElementById('ihRef').value }); closeModal(); showToast('รับทราบแล้ว'); load(); }
+        catch (x) { var eb = document.getElementById('ihErr'); eb.textContent = x.message; eb.hidden = false; }
+      });
     }
     function renderWeek() {
       var box = document.getElementById('ihWeek'); if (!box) return;
@@ -187,6 +210,7 @@
       var t;
       if ((t = e.target.closest('[data-ih-day]'))) { day = +t.getAttribute('data-ih-day'); renderWeek(); return; }
       if ((t = e.target.closest('[data-ih-task]'))) openSubmit(t.getAttribute('data-ih-task'));
+      if ((t = e.target.closest('[data-ih-obs]'))) openObs(t.getAttribute('data-ih-obs'));
     });
     function openSubmit(id) {
       var t = H.tasks.filter(function (x) { return x.id === id; })[0]; if (!t) return;

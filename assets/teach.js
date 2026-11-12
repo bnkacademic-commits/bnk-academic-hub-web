@@ -11,7 +11,7 @@
   // 2.02.0: แท็บ "นักศึกษาฝึกสอน" (ครูพี่เลี้ยง) — แสดงเมื่อมีนักศึกษาในความดูแล
   var MENT = null;
   async function mountAtt() { tabsEl.innerHTML = pageTabs(); body.innerHTML = '<div class="card xw-card" id="tcAtt"><div class="loading">กำลังโหลด...</div></div>'; try { if (!window.mountExecWeekly) await loadScriptOnce('assets/weekly.js?v=' + APP_VERSION); window.mountExecWeekly(document.getElementById('tcAtt')); } catch (e) { body.innerHTML = '<div class="card"><div class="error-box">' + esc(e.message) + '</div></div>'; } }
-  function mountInterns() { tabsEl.innerHTML = pageTabs(); body.innerHTML = '<div id="itRoot"></div>'; if (window.mountMentorInterns) window.mountMentorInterns(document.getElementById('itRoot')); }
+  function mountInterns() { location.href = 'interns.html'; } // 2.11.0: ย้ายไปหน้า "นักศึกษาฝึกสอน" (interns.html)
   if (session.role !== 'intern') apiCall('internMine', {}).then(function (r) { if (r && r.interns && r.interns.length) { MENT = r; if (st.page === 'interns') mountInterns(); else if (st.page === 'leave' || !B) tabsEl.innerHTML = pageTabs(); else renderTabs(); } else if (st.page === 'interns') { st.page = 'teach'; boot(); } }, function () { if (st.page === 'interns') { st.page = 'teach'; boot(); } });
   var STATUS = ['มา', 'สาย', 'ลาป่วย', 'ลากิจ', 'ขาด', 'โดดเรียน'], SCOLOR = { 'มา': '#10b981', 'ร่วมกิจกรรม': '#06b6d4', 'สาย': '#f59e0b', 'ลาป่วย': '#3b82f6', 'ลากิจ': '#6366f1', 'ขาด': '#f43f5e', 'โดดเรียน': '#9333ea' };
   var MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
