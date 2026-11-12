@@ -6,6 +6,9 @@
   if (!session) return;
   mountChrome('club'); if (typeof mountFooter === 'function') mountFooter();
   var body = document.getElementById('cbBody'), tabsEl = document.getElementById('cbTabs');
+  // 2.12.1: เช็คชื่อแล้วยังไม่กดบันทึก → กด Back / ปิดหน้า = ถามก่อนออก
+  var ckSig0 = null;
+  if (window.BackNav) BackNav.dirty(function () { return ckSig0 !== null && !!body.querySelector('#cbCk') && !!body.querySelector('[data-ck-save]') && BackNav.sig(body) !== ckSig0; }, 'ยังไม่ได้บันทึกการเช็คชื่อชุมนุม ออกจากหน้านี้เลยไหม?');
   var B = null, D = null, st = { tab: '', clubId: '', sel: '', stu: null, filt: { g: '', room: '', q: '', mode: 'none' }, add: { g: '', room: '', q: '', pick: {} } };
   var STATUS = ['มา', 'ขาด', 'สาย', 'ร่วมกิจกรรม', 'ลาป่วย', 'ลากิจ', 'โดดเรียน'], CODE = { 'มา': '✓', 'สาย': 'ส', 'ร่วมกิจกรรม': 'ก', 'ลาป่วย': 'ป', 'ลากิจ': 'ล', 'ขาด': 'ข', 'โดดเรียน': 'ด' }; // 2.04.2: 7 สถานะเหมือนเช็คคาบ
   var SCOLOR = { 'มา': '#10b981', 'สาย': '#f59e0b', 'ร่วมกิจกรรม': '#06b6d4', 'ลาป่วย': '#3b82f6', 'ลากิจ': '#6366f1', 'ขาด': '#f43f5e', 'โดดเรียน': '#9333ea' };
@@ -200,7 +203,7 @@
       mem.map(function (m, i) { return '<tr data-sid="' + esc(m.id) + '" data-name="' + esc(m.name) + '"><td>' + (i + 1) + '</td><td>' + esc(m.name) + (m.removedAt ? ' <span class="cb-tag gr">ออกแล้ว</span>' : '') + '</td><td>' + room(m.roomId) + '</td><td><div class="cb-st">' + STATUS.map(function (x) { return '<button type="button" data-st="' + x + '" class="' + (data[m.id] === x ? 'on' : '') + '" style="--c:' + SCOLOR[x] + '"' + (ro ? ' disabled' : '') + '>' + x + '</button>'; }).join('') + '</div></td></tr>'; }).join('') +
       (mem.length ? '' : '<tr><td colspan="4" class="cb-mut">ยังไม่มีนักเรียนในชุมนุม</td></tr>') + '</tbody></table></div>' +
       (ro ? '' : '<div class="cb-actions"><span class="cb-sp"></span><button type="button" class="btn btn-success" data-ck-save><i class="fa-solid fa-check"></i> บันทึกการเช็คชื่อ</button></div>') + '</div>';
-    setBody(h); countCk();
+    setBody(h); countCk(); ckSig0 = ro || !window.BackNav ? null : BackNav.sig(body);
   }
   function countCk() { var el = document.getElementById('cbCount'); if (!el) return; var n = { 'มา': 0, 'สาย': 0, 'ร่วมกิจกรรม': 0, 'ลาป่วย': 0, 'ลากิจ': 0, 'ขาด': 0, 'โดดเรียน': 0 }, empty = 0; body.querySelectorAll('#cbCk tr[data-sid]').forEach(function (tr) { var on = tr.querySelector('button.on'); if (on) n[on.getAttribute('data-st')]++; else empty++; }); el.textContent = 'มา ' + n['มา'] + ' · สาย ' + n['สาย'] + (n['ร่วมกิจกรรม'] ? ' · กิจกรรม ' + n['ร่วมกิจกรรม'] : '') + ' · ลา ' + (n['ลาป่วย'] + n['ลากิจ']) + ' · ขาด ' + n['ขาด'] + (n['โดดเรียน'] ? ' · โดด ' + n['โดดเรียน'] : '') + (empty ? ' · ยังไม่เลือก ' + empty : ''); }
 

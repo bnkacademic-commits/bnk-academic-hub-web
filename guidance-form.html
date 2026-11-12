@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.12.0.121126" />
+<link rel="stylesheet" href="assets/style.css?v=2.12.1.121126" />
 <style>
   /* 2.09.0: หน้านักเรียน (ไม่ต้องล็อกอิน · ไม่มีเมนู) — ธีมสว่างเสมอ */
   body.gf { background: #eef1f8; margin: 0; font-family: Sarabun, 'Noto Sans Thai', sans-serif; color: #0f172a; }
@@ -41,6 +41,8 @@
   .gf-mut { color: #64748b; font-size: .86rem; } .gf-err { color: #b91c1c; text-align: center; margin-top: 8px; min-height: 1em; }
   /* 2.12.0: ประเภทสถาบัน · ตัวเลือกยืนยันสิทธิ์ · การ์ดโปรไฟล์ */
   .gf-tg { display: inline-block; border-radius: 99px; padding: 0 8px; font-size: .72rem; font-weight: 700; margin-right: 4px; vertical-align: 1px; } .gf-tg.u { background: #e0e7ff; color: #4338ca; } .gf-tg.v { background: #ffedd5; color: #c2410c; }
+  .gf-st { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 6px; } .gf-st button { border: 1.5px solid #c7d2fe; background: #fff; color: #312e81; border-radius: 12px; padding: 8px 4px; font: inherit; font-size: .9rem; line-height: 1.2; font-weight: 600; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 64px; cursor: pointer; } .gf-st button i { font-size: 1.15rem; color: #6366f1; } .gf-st button.on { background: #4f46e5; border-color: #4f46e5; color: #fff; } .gf-st button.on i { color: #fff; }
+  .gf-kd button i { font-size: 1.1rem; color: #6366f1; } .pc-top .bd i, .pc-st i, .pc-ed i, .pc-main .k i, .gf-rd em i, .gf-rd b i, .pc-note i { margin-right: 3px; }
   .gf-kd { display: flex; gap: 6px; } .gf-kd button { flex: 1; border: 2px solid #c7d2fe; background: #fff; border-radius: 12px; padding: 9px 6px; font: inherit; font-weight: 700; color: #312e81; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: .9rem; cursor: pointer; } .gf-kd button small { font-weight: 400; color: #64748b; font-size: .72rem; } .gf-kd button.on { border-color: #4f46e5; background: #eef2ff; }
   .gf-rd { display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left; border: 2px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; margin: 8px 0; background: #fff; font: inherit; color: inherit; cursor: pointer; }
   .gf-rd .o { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #94a3b8; flex: none; margin-top: 2px; box-sizing: border-box; } .gf-rd b { display: block; } .gf-rd small { color: #64748b; } .gf-rd em { display: block; font-style: normal; color: #15803d; font-weight: 800; font-size: .86rem; margin-top: 3px; }
@@ -63,7 +65,7 @@
   <header class="gf-hero"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i><h1>รายงานผลการศึกษาต่อ ม.6</h1><p id="gfSub">โรงเรียนบุ่งคล้านคร</p></header>
   <main class="gf-main" id="gfMain"><div class="gf-card gf-center">กำลังโหลด…</div></main>
   <input type="file" id="gfFile" accept="image/*" hidden />
-  <script src="assets/api.js?v=2.12.0.121126"></script>
+  <script src="assets/api.js?v=2.12.1.121126"></script>
   <script>
   /* หน้านักเรียน: เลือกห้อง → ชื่อ (พิมพ์แล้วขึ้นชื่อใกล้เคียง) → (รหัสนักเรียน ถ้าเปิด) → กรอก/แก้ข้อมูลของตัวเอง
      2.12.0: สถานะ 3 แบบ · สถาบันแยก มหาวิทยาลัย/สถาบัน กับ สายอาชีพ · เลือกยืนยันสิทธิ์ หรือ รอผล · ส่งแล้วเห็นเป็นการ์ดโปรไฟล์ (แก้ไขได้จนครูตรวจ)
@@ -71,7 +73,7 @@
   (function () {
     var main = document.getElementById('gfMain'), esc = function (s) { return escapeHtml(s == null ? '' : String(s)); };
     var B = null, room = '', names = null, q = '', pick = null, code = '', T = null, me = null, F = null, ed = null, edI = -1;
-    var ST = [['study', 'ศึกษาต่อ'], ['work', 'ไม่ศึกษาต่อ / ทำงาน'], ['other', 'อื่น ๆ']]; // 2.12.0: "รอผล" ย้ายไปอยู่ขั้นยืนยันสิทธิ์
+    var ST = [['study', 'ศึกษาต่อ', 'graduation-cap'], ['work', 'ไม่ศึกษาต่อ /<br>ทำงาน', 'briefcase'], ['other', 'อื่น ๆ', 'pen']]; // 2.12.0: "รอผล" ย้ายไปอยู่ขั้นยืนยันสิทธิ์
     var WHY = ['ทำงาน', 'ช่วยงานที่บ้าน', 'ปัญหาค่าใช้จ่าย', 'รอสมัครปีหน้า', 'เข้ารับราชการทหาร/ตำรวจ', 'อื่น ๆ']; // 2.11.1: เหตุผลที่ไม่ศึกษาต่อ (แตะเลือกเร็ว)
     var RD = [['1', 'รอบ 1 Portfolio'], ['2', 'รอบ 2 Quota'], ['3', 'รอบ 3 Admission'], ['4', 'รอบ 4 Direct'], ['other', 'รับตรง/อื่น ๆ']];
     var RDV = [['vq', 'รอบโควตา'], ['vg', 'รอบทั่วไป'], ['vo', 'รับตรง/อื่น ๆ']]; // 2.12.0: สายอาชีพ
@@ -116,6 +118,16 @@
     // ---------- ฟอร์ม / การ์ด (2.12.0) ----------
     // F.choice: ตำแหน่งของที่ยืนยันสิทธิ์ (ตัวเลข) · 'wait' = รอผล · '' = ยังไม่เลือก · mode: card = การ์ดโปรไฟล์ (ส่งแล้ว) / form = กรอก/แก้ไข
     var mode = 'form', LAST = null;
+    // 2.12.1: กด Back = แก้ไขอยู่ → กลับการ์ด · การ์ด/ฟอร์ม → กลับหน้าเลือกชื่อ (มีที่ยังไม่บันทึก = ถามก่อน) · ปิดแท็บ/รีเฟรช = เบราว์เซอร์ถาม
+    var SNAP = '';
+    function snap() { SNAP = JSON.stringify(F || null); }
+    function changed() { if (!me || mode !== 'form' || !F) return false; sync(); return !!ed || JSON.stringify(F) !== SNAP; }
+    function confirmIf(fn) { if (!changed()) { fn(); return; } askConfirm('ข้อมูลที่กรอกยังไม่ได้บันทึก ออกจากหน้านี้เลยไหม?', 'ยังไม่ได้บันทึก').then(function (ok) { if (ok) fn(); }); }
+    if (window.BackNav) {
+      BackNav.sub(function () { return !!me; }, function () { confirmIf(function () { T = null; me = null; pick = null; code = ''; renderPick(); window.scrollTo(0, 0); }); });
+      BackNav.sub(function () { return !!me && mode === 'form' && !!F && !!F.saved; }, function () { confirmIf(function () { setForm(LAST); show(); window.scrollTo(0, 0); }); });
+      BackNav.dirty(changed);
+    }
     function kindOf(e) { return e && (e.kind === 'v' || /^v/.test(e.round || '')) ? 'v' : 'u'; }
     function rdLabel(e) { var L = kindOf(e) === 'v' ? RDV : RD; return (L.filter(function (r) { return r[0] === e.round; })[0] || [0, ''])[1]; }
     function tagOf(e) { return kindOf(e) === 'v' ? '<span class="gf-tg v">สายอาชีพ</span>' : '<span class="gf-tg u">มหาวิทยาลัย</span>'; }
@@ -125,7 +137,7 @@
       F = m ? { status: m.status === 'wait' ? 'study' : m.status, statusNote: m.statusNote || '', consent: !!m.consent, entries: (m.entries || []).map(function (e) { return { kind: kindOf(e), university: e.university, faculty: e.faculty, major: e.major, round: e.round, confirmed: e.confirmed }; }), photo: m.photo, review: m.review, reviewNote: m.reviewNote, reviewedAt: m.reviewedAt || '', saved: true } : { status: '', statusNote: '', consent: false, entries: [], photo: null, review: '', saved: false };
       var ci = -1; F.entries.forEach(function (e, i) { if (e.confirmed) ci = i; });
       F.choice = F.status === 'study' ? (ci !== -1 ? ci : (F.saved ? 'wait' : '')) : '';
-      ed = null; edI = -1; mode = F.saved && F.status ? 'card' : 'form';
+      ed = null; edI = -1; mode = F.saved && F.status ? 'card' : 'form'; snap();
     }
     function locked() { return !!(B.review && F.review === 'ok' && F.reviewedAt); }
     function thD(iso) { var d = new Date(iso); if (!iso || isNaN(d)) return ''; return d.getDate() + ' ' + ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][d.getMonth()] + ' ' + (d.getFullYear() + 543); }
@@ -133,19 +145,19 @@
     function who() { return '<div class="gf-sel" style="margin-bottom:10px"><span>' + esc(me.name) + ' · ' + esc(me.room) + ' เลขที่ ' + esc(me.no) + '</span><button type="button" id="gfOut">ไม่ใช่ฉัน</button></div>'; }
     function renderCard() {
       var st = F.status, cf = typeof F.choice === 'number' ? F.entries[F.choice] : null, wait = st === 'study' && !cf, lk = locked();
-      var top = st === 'study' ? (cf ? ['', '🎉 ยืนยันสิทธิ์แล้ว'] : ['w', '⏳ รอผล']) : ['o', st === 'work' ? 'ไม่ศึกษาต่อ / ทำงาน' : 'อื่น ๆ'];
-      var mainBox = cf ? '<div class="pc-main"><div class="k">✓ ยืนยันสิทธิ์และเลือกเรียนที่นี่</div><b>' + tagOf(cf) + ' ' + esc(cf.university) + '</b><small>' + subOf(cf) + '</small></div>'
-        : wait ? '<div class="pc-main w"><div class="k">รอผล — ยังไม่ได้ยืนยันสิทธิ์</div><b>สมัครไว้ ' + F.entries.length + ' แห่ง</b>' + (lk ? '' : '<small>ผลออกแล้วกด "แก้ไขข้อมูล" เพื่อเลือกที่ยืนยันสิทธิ์</small>') + '</div>'
+      var top = st === 'study' ? (cf ? ['', '<i class="fa-solid fa-circle-check"></i> ยืนยันสิทธิ์แล้ว'] : ['w', '<i class="fa-solid fa-hourglass-half"></i> รอผล']) : ['o', st === 'work' ? '<i class="fa-solid fa-briefcase"></i> ไม่ศึกษาต่อ / ทำงาน' : '<i class="fa-solid fa-pen"></i> อื่น ๆ'];
+      var mainBox = cf ? '<div class="pc-main"><div class="k"><i class="fa-solid fa-circle-check"></i> ยืนยันสิทธิ์และเลือกเรียนที่นี่</div><b>' + tagOf(cf) + ' ' + esc(cf.university) + '</b><small>' + subOf(cf) + '</small></div>'
+        : wait ? '<div class="pc-main w"><div class="k">รอผล — ยังไม่ได้ยืนยันสิทธิ์</div><b>มีสิทธิ์เข้าศึกษาต่อ ' + F.entries.length + ' แห่ง</b>' + (lk ? '' : '<small>ผลออกแล้วกด "แก้ไขข้อมูล" เพื่อเลือกที่ยืนยันสิทธิ์</small>') + '</div>'
         : '<div class="pc-main o"><div class="k">' + (st === 'work' ? 'เหตุผล / สิ่งที่ทำ' : 'รายละเอียด') + '</div><b>' + esc(F.statusNote || '-') + '</b></div>';
       var oth = F.entries.filter(function (e) { return e !== cf; });
-      var stLine = F.review === 'pending' ? '<div class="pc-st wait">⏳ ส่งแล้ว — รอครูตรวจ</div>' : F.review === 'back' ? '<div class="pc-st back"><span><b>↩ ครูส่งกลับให้แก้:</b> ' + esc(F.reviewNote || '') + '</span></div>' : F.review === 'ok' && F.reviewedAt ? '<div class="pc-st ok">✓ ครูตรวจแล้ว' + (thD(F.reviewedAt) ? ' · ' + thD(F.reviewedAt) : '') + '</div>' : '<div class="pc-st ok">✓ บันทึกแล้ว</div>';
+      var stLine = F.review === 'pending' ? '<div class="pc-st wait"><i class="fa-solid fa-hourglass-half"></i> ส่งแล้ว — รอครูตรวจ</div>' : F.review === 'back' ? '<div class="pc-st back"><span><b><i class="fa-solid fa-reply"></i> ครูส่งกลับให้แก้:</b> ' + esc(F.reviewNote || '') + '</span></div>' : F.review === 'ok' && F.reviewedAt ? '<div class="pc-st ok"><i class="fa-solid fa-circle-check"></i> ครูตรวจแล้ว' + (thD(F.reviewedAt) ? ' · ' + thD(F.reviewedAt) : '') + '</div>' : '<div class="pc-st ok"><i class="fa-solid fa-circle-check"></i> บันทึกแล้ว</div>';
       main.innerHTML = '<div class="pc"><div class="pc-top ' + top[0] + '"><span class="bd">' + top[1] + '</span></div>' +
         (F.photo ? '<img class="pc-av" src="' + esc(F.photo.src.replace('sz=w400', 'sz=w600')) + '" alt="" referrerpolicy="no-referrer">' : '<span class="pc-av no"><i class="fa-solid fa-user-graduate"></i></span>') +
         '<div class="pc-b"><h2>' + esc(me.name) + '</h2><div class="rm">' + esc(me.room) + ' เลขที่ ' + esc(me.no) + '</div>' + mainBox +
-        (oth.length ? '<div class="pc-oth"><div class="k">' + (cf ? 'สถาบันอื่นที่สมัคร / สอบติด' : 'สถาบันที่สมัครไว้') + '</div>' + oth.map(function (e) { return '<div>' + tagOf(e) + ' ' + esc(e.university) + '<br><small>' + subOf(e) + '</small></div>'; }).join('') + '</div>' : '') +
-        stLine + '<button type="button" class="pc-ed" id="gfEdit"' + (lk ? ' disabled' : '') + '>' + (lk ? '🔒 แก้ไขไม่ได้ — ครูตรวจแล้ว' : '✏️ แก้ไขข้อมูล') + '</button>' +
+        (oth.length ? '<div class="pc-oth"><div class="k">' + (cf ? 'สถาบันอื่นที่มีสิทธิ์เข้าศึกษาต่อ' : 'สถาบันที่มีสิทธิ์เข้าศึกษาต่อ') + '</div>' + oth.map(function (e) { return '<div>' + tagOf(e) + ' ' + esc(e.university) + '<br><small>' + subOf(e) + '</small></div>'; }).join('') + '</div>' : '') +
+        stLine + '<button type="button" class="pc-ed" id="gfEdit"' + (lk ? ' disabled' : '') + '>' + (lk ? '<i class="fa-solid fa-lock"></i> แก้ไขไม่ได้ — ครูตรวจแล้ว' : '<i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูล') + '</button>' +
         '<div class="pc-note">' + (lk ? 'ถ้าต้องแก้ไข ติดต่อครูแนะแนว' : B.review ? 'แก้ได้จนกว่าครูจะตรวจ' : 'แก้ได้ตลอดช่วงที่เปิดรับข้อมูล') + '</div>' +
-        '<div class="pc-note">' + (F.consent ? 'ยินยอมให้โรงเรียนเผยแพร่ชื่อและรูป ✓' : 'ไม่ยินยอมเผยแพร่') + ' · <button type="button" class="gf-lnk" id="gfOut">ไม่ใช่ฉัน</button></div></div></div>';
+        '<div class="pc-note">' + (F.consent ? '<i class="fa-solid fa-check"></i> ยินยอมให้โรงเรียนเผยแพร่ชื่อและรูป' : 'ไม่ยินยอมเผยแพร่') + ' · <button type="button" class="gf-lnk" id="gfOut">ไม่ใช่ฉัน</button></div></div></div>';
     }
     function banner() {
       if (F.review === 'back') return '<div class="gf-ban back"><i class="fa-solid fa-rotate-left"></i> <b>ครูส่งกลับให้แก้:</b> ' + esc(F.reviewNote || '') + '</div>';
@@ -154,7 +166,7 @@
     }
     function renderForm() {
       var n = 1, step = function (t, req) { return '<div class="gf-step"><i>' + (n++) + '</i> ' + t + (req ? ' <span style="color:#dc2626">*</span>' : '') + '</div>'; };
-      var h = '<div class="gf-card">' + who() + banner() + step('สถานะ') + '<div class="gf-chips">' + ST.map(function (s) { return '<button type="button" data-st="' + s[0] + '" class="' + (F.status === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div>';
+      var h = '<div class="gf-card">' + who() + banner() + step('สถานะ') + '<div class="gf-st">' + ST.map(function (s) { return '<button type="button" data-st="' + s[0] + '" class="' + (F.status === s[0] ? 'on' : '') + '"><i class="fa-solid fa-' + s[2] + '"></i><span>' + s[1] + '</span></button>'; }).join('') + '</div>';
       if (F.status === 'work' || F.status === 'other') h += step(F.status === 'work' ? 'เหตุผล / สิ่งที่ทำ' : 'รายละเอียด', true) + (F.status === 'work' ? '<div class="gf-chips gf-why">' + WHY.map(function (w) { return '<button type="button" data-why="' + esc(w) + '">' + esc(w) + '</button>'; }).join('') + '</div>' : '') +
         '<input id="gfNote" style="margin-top:8px" maxlength="200" placeholder="' + (F.status === 'work' ? 'แตะเลือกด้านบน หรือพิมพ์เอง เช่น ทำงานที่…' : 'เช่น …') + '" value="' + esc(F.statusNote) + '">';
       if (F.status === 'study') h += step('สถาบันที่สมัคร / สอบติด') + '<p class="gf-mut" style="margin:-2px 0 4px">เพิ่มได้หลายแห่ง (มหาวิทยาลัย / สถาบัน · สายอาชีพ)</p><div id="gfEnts"></div>' + step('ยืนยันสิทธิ์', true) + '<div id="gfChoice"></div>';
@@ -183,12 +195,12 @@
       var b = document.getElementById('gfChoice'); if (!b) return;
       if (!F.entries.length) { b.innerHTML = '<p class="gf-mut" style="margin:0">เพิ่มสถาบันก่อน แล้วเลือกที่ยืนยันสิทธิ์ หรือ "รอผล"</p>'; return; }
       b.innerHTML = '<p class="gf-mut" style="margin:0 0 4px">เลือกที่ที่ยืนยันสิทธิ์และจะเรียนจริง (1 แห่ง) — ถ้าผลยังไม่ออกเลือก "รอผล" แล้วกลับมาแก้ภายหลัง</p>' +
-        F.entries.map(function (e, i) { var on = F.choice === i; return '<button type="button" class="gf-rd' + (on ? ' on' : '') + '" data-ch="' + i + '"><span class="o"></span><span><b>' + esc(e.university) + '</b><small>' + tagOf(e) + subOf(e) + '</small>' + (on ? '<em>✓ ยืนยันสิทธิ์และเลือกเรียนที่นี่</em>' : '') + '</span></button>'; }).join('') +
-        '<button type="button" class="gf-rd w' + (F.choice === 'wait' ? ' on' : '') + '" data-ch="wait"><span class="o"></span><span><b>⏳ รอผล</b><small>ผลยังไม่ออก / ยังไม่ได้ยืนยันสิทธิ์ที่ไหน — กลับมาเลือกภายหลังได้</small></span></button>';
+        F.entries.map(function (e, i) { var on = F.choice === i; return '<button type="button" class="gf-rd' + (on ? ' on' : '') + '" data-ch="' + i + '"><span class="o"></span><span><b>' + esc(e.university) + '</b><small>' + tagOf(e) + subOf(e) + '</small>' + (on ? '<em><i class="fa-solid fa-circle-check"></i> ยืนยันสิทธิ์และเลือกเรียนที่นี่</em>' : '') + '</span></button>'; }).join('') +
+        '<button type="button" class="gf-rd w' + (F.choice === 'wait' ? ' on' : '') + '" data-ch="wait"><span class="o"></span><span><b><i class="fa-solid fa-hourglass-half"></i> รอผล</b><small>ผลยังไม่ออก / ยังไม่ได้ยืนยันสิทธิ์ที่ไหน — กลับมาเลือกภายหลังได้</small></span></button>';
     }
     function edHtml() {
       var v = ed.kind === 'v', R = v ? RDV : RD;
-      return '<div class="gf-ed"><label>ประเภทสถาบัน</label><div class="gf-kd"><button type="button" data-kd="u" class="' + (v ? '' : 'on') + '">🎓 มหาวิทยาลัย / สถาบัน<small>ปริญญาตรี · ทหาร · ตำรวจ · พยาบาล</small></button><button type="button" data-kd="v" class="' + (v ? 'on' : '') + '">🔧 สายอาชีพ<small>อาชีวศึกษา (ปวส.)</small></button></div>' +
+      return '<div class="gf-ed"><label>ประเภทสถาบัน</label><div class="gf-kd"><button type="button" data-kd="u" class="' + (v ? '' : 'on') + '"><i class="fa-solid fa-building-columns"></i>มหาวิทยาลัย / สถาบัน<small>ปริญญาตรี · ทหาร · ตำรวจ · พยาบาล</small></button><button type="button" data-kd="v" class="' + (v ? 'on' : '') + '"><i class="fa-solid fa-screwdriver-wrench"></i>สายอาชีพ<small>อาชีวศึกษา (ปวส.)</small></button></div>' +
         '<label>' + (v ? 'วิทยาลัย / สถาบัน' : 'มหาวิทยาลัย / สถาบัน') + '</label><input data-f="university" autocomplete="off" maxlength="150" value="' + esc(ed.university) + '" placeholder="' + (v ? 'เช่น วิทยาลัยเทคนิคบึงกาฬ' : 'เช่น มหาวิทยาลัยขอนแก่น / โรงเรียนนายร้อยตำรวจ') + '"><div class="gf-sg" data-sg="university"></div>' +
         '<label>' + (v ? 'ประเภทวิชา' : 'คณะ <span class="gf-mut" style="font-weight:400">(ถ้ามี)</span>') + '</label><input data-f="faculty" autocomplete="off" maxlength="150" value="' + esc(ed.faculty) + '" placeholder="' + (v ? 'เช่น อุตสาหกรรม' : 'เช่น คณะวิศวกรรมศาสตร์') + '"><div class="gf-sg" data-sg="faculty"></div>' +
         '<label>สาขาวิชา</label><input data-f="major" autocomplete="off" maxlength="150" value="' + esc(ed.major) + '" placeholder="' + (v ? 'เช่น ช่างไฟฟ้ากำลัง' : 'เช่น วิศวกรรมคอมพิวเตอร์') + '"><div class="gf-sg" data-sg="major"></div>' +
@@ -253,7 +265,7 @@
       if (t.closest('#gfOut')) { T = null; me = null; pick = null; code = ''; renderPick(); return; }
       if ((x = t.closest('[data-st]'))) { sync(); F.status = x.getAttribute('data-st'); if (F.status === 'study') F.statusNote = ''; renderForm(); return; }
       if ((x = t.closest('[data-why]'))) { var ni = document.getElementById('gfNote'), w = x.getAttribute('data-why'), cur = ni.value.trim(); ni.value = !cur || WHY.indexOf(cur) !== -1 ? (w === 'อื่น ๆ' ? '' : w) : cur + ' · ' + w; F.statusNote = ni.value; ni.focus(); return; } // 2.11.1
-      if (t.closest('#gfEdit')) { if (locked()) return; mode = 'form'; renderForm(); window.scrollTo(0, 0); return; }
+      if (t.closest('#gfEdit')) { if (locked()) return; mode = 'form'; snap(); renderForm(); window.scrollTo(0, 0); return; }
       if (t.closest('#gfCancel')) { setForm(LAST); show(); window.scrollTo(0, 0); return; }
       if (t.closest('#gfAdd')) { sync(); ed = { kind: 'u', university: '', faculty: '', major: '', round: '' }; edI = F.entries.length; paintEnts(); var u = document.querySelector('[data-f="university"]'); if (u) u.focus(); return; }
       if ((x = t.closest('[data-ed]'))) { edI = +x.getAttribute('data-ed'); ed = Object.assign({}, F.entries[edI]); paintEnts(); return; }

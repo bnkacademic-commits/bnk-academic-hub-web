@@ -332,6 +332,8 @@
 
   // ---------- เหตุการณ์ ----------
   body.addEventListener('input', teInput);
+  // 2.12.1: กด Back ตอนดูรายคน = กลับรายชื่อ
+  if (window.BackNav) BackNav.sub(function () { return !!st.id && !!body.querySelector('[data-ip-back]'); }, function () { var b = body.querySelector('[data-ip-back]'); if (b) b.click(); });
   body.addEventListener('click', function (e) {
     var b;
     if (st.tab === 'tpl') { teClick(e); return; }

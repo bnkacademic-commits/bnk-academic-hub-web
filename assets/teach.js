@@ -24,6 +24,9 @@
   function err(m) { return '<div class="cb-err"><i class="fa-solid fa-circle-exclamation"></i> ' + esc(m) + '</div>'; }
   function modal(title, html, actions) { var mb = document.getElementById('cbModalBody'), ma = document.getElementById('cbModalActions'); mb.onclick = null; ma.onclick = null; document.getElementById('cbModalTitle').innerHTML = title; mb.innerHTML = html; ma.innerHTML = (actions || '') + '<button type="button" class="btn btn-ghost btn-close" data-cb-close>ปิด</button>'; showModalEl(document.getElementById('cbModal')); }
   function closeModal() { hideModalEl(document.getElementById('cbModal')); }
+  // 2.12.1: กด Back ระหว่างเช็คชื่อที่ยังไม่บันทึก = ถามก่อนปิด
+  var tcSig0 = null;
+  if (window.BackNav) BackNav.guard(document.getElementById('cbModal'), function () { var mb = document.getElementById('cbModalBody'); return tcSig0 !== null && !!mb.querySelector('#tcRows') && BackNav.sig(mb) !== tcSig0; }, 'ยังไม่ได้บันทึกการเช็คชื่อ ปิดเลยไหม?');
   document.getElementById('cbModal').addEventListener('click', function (e) { if (e.target.closest('[data-cb-close]')) closeModal(); });
   var qs = new URLSearchParams(location.search), deep = qs.get('subject') ? { sub: qs.get('subject'), date: qs.get('date') || '', period: qs.get('period') } : null;
 
@@ -302,6 +305,7 @@
       (S.students || []).map(function (s) { return '<tr data-sid="' + esc(s.id) + '"><td>' + esc(s.number) + '</td><td>' + esc(s.name) + '</td><td><div class="cb-st">' + list.map(function (x) { return '<button type="button" data-st="' + x + '" class="' + (recs[s.id] === x ? 'on' : '') + '" style="--c:' + SCOLOR[x] + '">' + x + '</button>'; }).join('') + '</div></td></tr>'; }).join('') + '</tbody></table></div>' + recSectionHtml(o, r),
       '<button type="button" class="btn btn-success" data-tc-save><i class="fa-solid fa-check"></i> บันทึก</button>');
     var mb = document.getElementById('cbModalBody'), held = lg ? lg.held : null;
+    tcSig0 = window.BackNav ? BackNav.sig(mb) : null;
     function cnt() { var n = 0, e = 0; mb.querySelectorAll('#tcRows tr').forEach(function (tr) { if (tr.querySelector('button.on')) n++; else e++; }); document.getElementById('tcCnt').textContent = 'เลือกแล้ว ' + n + (e ? ' · ยังไม่เลือก ' + e : ''); }
     cnt();
     mb.onclick = async function (e) {

@@ -8,6 +8,8 @@
   if (!session) return;
   mountChrome('care'); if (typeof mountFooter === 'function') mountFooter();
   var body = document.getElementById('ccBody'), tabsEl = document.getElementById('ccTabs');
+  // 2.12.1: กด Back ตอนดูสรุปห้องเดียว = กลับทุกห้อง
+  if (window.BackNav) BackNav.sub(function () { return st.tab === 'rooms' && !!st.rroom && !!body.querySelector('[data-cc-room=""]'); }, function () { var b = body.querySelector('[data-cc-room=""]'); if (b) b.click(); });
   var B = null, st = { tab: 'summary', late: 'overview', pg: 1, pp: (function () { try { var v = +localStorage.getItem('bnkah_cc_pp'); return [50, 100, 200, 0].indexOf(v) >= 0 && localStorage.getItem('bnkah_cc_pp') !== null ? v : 50; } catch (e) { return 50; } })(), allRows: false, range: 'week', from: '', to: '', grade: '', min: 3, room: '', q: '', rroom: '' }, C = { ov: {}, sc: {}, rm: {}, rd: {}, bh: {} }, ROSTER = null;
   var MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
   var PAL = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
@@ -204,12 +206,12 @@
   // ---------- คะแนนพฤติกรรม ----------
   async function showScores() {
     var k = st.room || 'all';
-    body.innerHTML = '<div class="cc-flt"><select id="ccRoom" aria-label="ห้อง"><option value="">ทุกห้อง (คะแนนน้อยก่อน)</option></select><input type="search" id="ccQ" placeholder="ค้นหาชื่อ" value="' + esc(st.q) + '" />' +
+    body.innerHTML = '<div class="cc-flt"><select id="ccRoom" aria-label="ห้อง"><option value="">ทุกห้อง</option></select>' + sortSel() + '<input type="search" id="ccQ" placeholder="ค้นหาชื่อ" value="' + esc(st.q) + '" />' +
       '<span class="cc-sp"></span><span class="cc-rtxt">' + esc(periodTxt()) + ' · เริ่มต้น ' + B.settings.startPoints + ' คะแนน · มาสาย −' + B.settings.latePoints + '/ครั้ง</span>' + exportBtns() + '</div><div id="ccSc" class="cc-cap"><div class="loading">กำลังโหลด...</div></div>';
     var box = document.getElementById('ccSc'), S;
     try { if (!C.sc[k]) C.sc[k] = await apiCall('careScores', { roomId: st.room }); S = C.sc[k]; } catch (e) { box.innerHTML = err(e.message); return; }
     if (st.tab !== 'scores') return;
-    document.getElementById('ccRoom').innerHTML = '<option value="">ทุกห้อง (คะแนนน้อยก่อน)</option>' + S.rooms.map(function (r) { return '<option value="' + esc(r.id) + '"' + (r.id === st.room ? ' selected' : '') + '>' + esc(r.name) + '</option>'; }).join('');
+    document.getElementById('ccRoom').innerHTML = '<option value="">ทุกห้อง</option>' + S.rooms.map(function (r) { return '<option value="' + esc(r.id) + '"' + (r.id === st.room ? ' selected' : '') + '>' + esc(r.name) + '</option>'; }).join('');
     renderScores();
   }
   function periodTxt() {
@@ -220,9 +222,13 @@
   function scoreRows() {
     var S = C.sc[st.room || 'all']; if (!S) return [];
     var L = S.list.filter(function (x) { return !st.q || x.name.indexOf(st.q) !== -1; });
-    if (!st.room) L = L.slice().sort(function (a, b) { return a.score - b.score || a.room.localeCompare(b.room) || a.no - b.no; });
+    // 2.12.1: เรียงคะแนน น้อย→มาก / มาก→น้อย (ห้องเดียวเลือกเรียงตามเลขที่ได้ = ค่าเริ่มต้นของห้อง)
+    var so = sortOf(), d = so === 'desc' ? -1 : 1;
+    if (so !== 'no') L = L.slice().sort(function (a, b) { return d * (a.score - b.score) || a.room.localeCompare(b.room) || a.no - b.no; });
     return L;
   }
+  function sortOf() { var v = st.sort || ''; if (v === 'no' && !st.room) v = ''; return v || (st.room ? 'no' : 'asc'); }
+  function sortSel() { var v = sortOf(); return '<select id="ccSort" aria-label="เรียงลำดับ">' + [['asc', 'คะแนนน้อย → มาก'], ['desc', 'คะแนนมาก → น้อย']].concat(st.room ? [['no', 'เรียงตามเลขที่']] : []).map(function (o) { return '<option value="' + o[0] + '"' + (v === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>'; }
   function renderScores() {
     var S = C.sc[st.room || 'all'], box = document.getElementById('ccSc'); if (!S || !box) return;
     var A = scoreRows(), tot = A.length;
@@ -545,6 +551,7 @@
     else if (id === 'ccFrom' || id === 'ccTo') { var a = document.getElementById('ccFrom').value, b = document.getElementById('ccTo').value; if (a && b && a <= b) { st.from = a; st.to = b; show(); } }
     else if (id === 'ccMin') { st.min = +e.target.value; show(); }
     else if (id === 'ccRoom') { st.room = e.target.value; st.pg = 1; showScores(); }
+    else if (id === 'ccSort') { st.sort = e.target.value; st.pg = 1; renderScores(); }
     else if (id === 'ccPP') { st.pp = +e.target.value; st.pg = 1; try { localStorage.setItem('bnkah_cc_pp', String(st.pp)); } catch (x) { /* ไม่เป็นไร */ } renderScores(); }
     else if (id === 'ccPinOn' || /^ccCyc/.test(id)) { syncDraft(); showSettings(); }
     else if (id === 'ccSite') { syncDraft(); showSettings(); }

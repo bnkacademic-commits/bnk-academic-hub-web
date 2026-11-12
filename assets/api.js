@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.12.0';
-var APP_VERSION = '2.12.0.121126';
+var APP_VERSION = '2.12.1.121126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -3754,3 +3754,91 @@ function qrLogo(box, text, size) {
   } catch (e) { /* ใช้ QR ปกติ */ }
   return q;
 }
+
+// ---------- 2.12.1: ปุ่ม Back / ปัดย้อนกลับ (มือถือ · เบราว์เซอร์) = ปิดสิ่งที่เปิดซ้อนอยู่บนสุดก่อน ----------
+// ชั้นที่นับ: รูปเต็มจอ · พรีวิวไฟล์ · ป็อปอัปทุกอัน (.modal-backdrop) · ตัวกรอง · กล่องแจ้งเตือน/เมนูโปรไฟล์ · เมนูข้างมือถือ
+//   · หน้ารายละเอียดในหน้า (หน้าต่างๆ ลงทะเบียนด้วย BackNav.sub) · งานที่ยังไม่บันทึก (BackNav.dirty = ถามก่อนออก)
+//   · เปิดเป็นแอปที่หน้าแรก = "กด Back อีกครั้งเพื่อออก"
+// เปิดชั้นใหม่ = เพิ่มประวัติ 1 ช่อง · กด Back = ปิดชั้นบนสุด · ปิดด้วยปุ่ม = ถอยประวัติคืนเอง (กด Back ไม่ต้องกดซ้ำ)
+var BackNav = (function () {
+  var off = false; try { off = window.top !== window; } catch (e) { off = true; } // ฝังในหน้าอื่น (iframe) = ไม่ยุ่งกับประวัติของหน้าหลัก
+  var depth = 0, skip = 0, subs = [], dirties = [], guards = [], leaving = false, armed = false, act = false, qd = false, busy = false;
+  var NOCLOSE = { sharedProgressModal: 1, sharedIdleModal: 1 };
+  function shown(el) { return !!el && !el.hidden && el.getClientRects().length > 0; }
+  function esc() { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); }
+  function modalClose(m) {
+    var b = Array.prototype.find.call(m.querySelectorAll('.modal-close-x, .file-preview-close'), shown);
+    if (!b) b = Array.prototype.find.call(m.querySelectorAll('button'), function (x) { return shown(x) && !x.disabled && /^(ยกเลิก|ปิด)$/.test((x.textContent || '').trim()); });
+    return b ? function () { b.click(); } : null;
+  }
+  function standalone() { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } }
+  function isHome() {
+    try { var s = typeof getSession === 'function' ? getSession() : null; var h = s ? homePageFor(s) : ''; return !!h && location.pathname.split('/').pop() === h; } catch (e) { return false; }
+  }
+  function layers() {
+    var L = [];
+    if (!leaving) {
+      if (act && !armed && standalone() && isHome()) L.push({ z: 1, close: function () { armed = true; showToast('กด Back อีกครั้งเพื่อออก'); setTimeout(function () { armed = false; sync(); }, 2200); } });
+      dirties.forEach(function (d) { try { if (d.fn()) L.push({ z: 5, close: function () { askLeave(d.msg); } }); } catch (e) { /* ข้าม */ } });
+    }
+    subs.forEach(function (s, i) { try { if (s.open()) L.push({ z: 20 + i, close: s.close }); } catch (e) { /* ข้าม */ } });
+    if (document.body && document.body.classList.contains('nav-mobile-open')) L.push({ z: 50, close: esc });
+    var dd = document.getElementById('profileDropdown'); if (dd && dd.classList.contains('open')) L.push({ z: 55, close: function () { dd.classList.remove('open'); } });
+    var np = document.getElementById('notifPanel'); if (np && !np.hidden) L.push({ z: 55, close: esc });
+    if (document.documentElement.classList.contains('flt-lock')) L.push({ z: 60, close: esc });
+    Array.prototype.forEach.call(document.querySelectorAll('.modal-backdrop'), function (m, i) {
+      if (m.hidden || !m.classList.contains('show')) return;
+      var c = NOCLOSE[m.id] ? null : modalClose(m), g = guards.filter(function (x) { return x.el === m; })[0];
+      if (c && g) { var c0 = c; c = function () { var d = false; try { d = g.fn(); } catch (e) { /* ข้าม */ } if (!d) { c0(); return; } askConfirm(g.msg || 'ยังไม่ได้บันทึก ปิดหน้านี้เลยไหม?', 'ยังไม่ได้บันทึก').then(function (ok) { if (ok) c0(); }); }; }
+      L.push({ z: 100 + i, close: c });
+    });
+    var fp = document.querySelector('.file-preview-overlay.show'); if (fp) L.push({ z: 990, close: esc });
+    if (document.getElementById('imgZoomView')) L.push({ z: 1000, close: esc });
+    return L.sort(function (a, b) { return a.z - b.z; });
+  }
+  function sync() {
+    qd = false; if (off || busy || skip) return;
+    var n = layers().length;
+    while (depth < n) { depth++; try { history.pushState({ bk: depth }, ''); } catch (e) { return; } }
+    if (depth > n) { skip = 1; var k = depth - n; depth = n; history.go(-k); }
+  }
+  function later() { if (!qd) { qd = true; setTimeout(sync, 60); } }
+  function askLeave(msg) {
+    busy = true;
+    askConfirm(msg || 'ยังไม่ได้บันทึก ออกจากหน้านี้เลยไหม?', 'ยังไม่ได้บันทึก').then(function (ok) {
+      if (ok) { leaving = true; var k = depth + 1; depth = 0; history.go(-k); }
+      else { busy = false; sync(); }
+    });
+    // ป็อปอัปถามเอง ไม่นับเป็นชั้น (กด Back ซ้ำระหว่างถาม = ไม่ทำอะไร)
+  }
+  window.addEventListener('popstate', function () {
+    if (skip) { skip = 0; later(); return; }
+    if (busy) { depth = Math.max(0, depth - 1); try { history.pushState({ bk: ++depth }, ''); } catch (e) { /* ข้าม */ } return; }
+    if (depth <= 0) return; // ประวัติเก่าที่ค้าง — ปล่อยตามปกติ
+    depth--;
+    var L = layers(), top = L[L.length - 1];
+    if (top && top.close) { try { top.close(); } catch (e) { /* ข้าม */ } }
+    later();
+  });
+  window.addEventListener('beforeunload', function (e) {
+    if (leaving) return;
+    if (dirties.concat(guards.filter(function (g) { return shown(g.el); })).some(function (d) { try { return d.fn(); } catch (x) { return false; } })) { e.preventDefault(); e.returnValue = ''; }
+  });
+  function onAct() { if (!act) { act = true; later(); } }
+  document.addEventListener('pointerdown', onAct, true); document.addEventListener('keydown', onAct, true);
+  function start() {
+    if (off) return;
+    try { if (history.state && history.state.bk) history.replaceState(null, ''); } catch (e) { /* ข้าม */ }
+    new MutationObserver(later).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class'] });
+    later();
+  }
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+  return {
+    sub: function (open, close) { subs.push({ open: open, close: close }); later(); },   // หน้ารายละเอียดในหน้า
+    dirty: function (fn, msg) { dirties.push({ fn: fn, msg: msg }); },                     // งานที่ยังไม่บันทึก (ทั้งหน้า)
+    guard: function (el, fn, msg) { guards.push({ el: el, fn: fn, msg: msg }); },          // ป็อปอัปที่มีงานยังไม่บันทึก (กด Back = ถามก่อนปิด)
+    // ลายเซ็นของสิ่งที่เลือก/พิมพ์ในกล่อง (เทียบก่อน-หลัง ว่าแก้แล้วหรือยัง) — ไม่นับช่องค้นหา
+    sig: function (root) { if (!root) return ''; return Array.prototype.map.call(root.querySelectorAll('button.on, input:not([type=search]):not([type=file]), textarea, select'), function (x) { if (x.tagName === 'BUTTON') { var r = x.closest('[data-sid],[data-rec]'); return (r ? r.getAttribute('data-sid') || r.getAttribute('data-rec') : '') + ':' + (x.getAttribute('data-st') || x.getAttribute('data-held') || x.textContent.trim()); } return x.type === 'checkbox' || x.type === 'radio' ? (x.checked ? 1 : 0) : x.value; }).join('|'); },
+    sync: later, leave: function () { leaving = true; }                                     // leave = บันทึกแล้ว/ออกได้เลย
+  };
+})();
