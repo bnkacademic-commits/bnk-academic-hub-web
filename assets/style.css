@@ -5188,3 +5188,17 @@ td.xw-cell span.xw-at.late { color: #c2410c; }
 .hm-lk input[type=color] { width: 34px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 8px; }
 .hm-unused { font-size: .85rem; color: var(--text-muted); }
 .hm-chips select.hm-add { width: auto; max-width: 220px; }
+/* 2.12.3: ปุ่มเมนูทั้งหมด — ไม่ขีดเส้นใต้ · ชี้แล้วพื้นเปลี่ยนสีอ่อนตามสีกลุ่ม */
+.hm-b, .hm-b:hover, .hm-b:focus, .hm-b span { text-decoration: none !important; }
+.hm-b:hover, .hm-b:focus-visible { background: color-mix(in srgb, var(--hm) 10%, var(--surface)); }
+.hm-b:active { background: color-mix(in srgb, var(--hm) 16%, var(--surface)); transform: translateY(0); }
+.hm-b.hm-ext:hover, .hm-b.hm-ext:focus-visible { filter: brightness(1.08); }
+.hm-tab:not(.on):hover { background: color-mix(in srgb, var(--hm) 12%, var(--surface-2, #f1f5f9)); color: var(--text); }
+/* 2.12.3: หัวการ์ดเมนูทั้งหมด = ปุ่มซ่อน/แสดง */
+button.hm-head { width: 100%; background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; font-family: inherit; color: var(--text); cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; }
+.hm-head .hm-sp { flex: 1; }
+.hm-head .hm-hint { font-size: .8rem; font-weight: 600; color: var(--text-muted); }
+.hm-head .hm-chev { font-size: .85rem; color: var(--text-muted); transition: transform .2s; }
+#homeMenuCard.hm-folded .hm-body { display: none; }
+#homeMenuCard.hm-folded .hm-head { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+#homeMenuCard.hm-folded .hm-chev { transform: rotate(180deg); }

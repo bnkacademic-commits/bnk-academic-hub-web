@@ -219,3 +219,10 @@
 .cc-bn-each { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-top: 12px; }
 .cc-bn-it { border: 1px solid var(--border); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 4px; font-size: .88rem; }
 .cc-bn-it small { font-size: .78rem; }
+/* 2.12.3: แท็บย่อยหน้าตั้งค่า */
+.cc-ssub { margin-bottom: 12px; }
+.cc-ssub button { display: inline-flex; align-items: center; gap: 6px; }
+.cc-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; }
+.cc-secw { max-width: 860px; }
+.cc-secw .cc-actions { align-items: center; gap: 10px; }
+.cc-unsaved { color: #b45309; font-size: .88rem; font-weight: 600; }

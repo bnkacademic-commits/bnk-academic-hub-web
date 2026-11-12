@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.12.0';
-var APP_VERSION = '2.12.2.121126';
+var APP_VERSION = '2.12.3.121126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -3875,7 +3875,7 @@ function homeMenuGroupsFor(conf, links) {
     return { n: g.n, c: g.c || '#2563eb', i: g.i || 'star', items: items };
   }).filter(function (g) { return g.items.length; });
 }
-var HM_TAB_KEY = 'bnkah_hm_tab';
+var HM_TAB_KEY = 'bnkah_hm_tab', HM_FOLD_KEY = 'bnkah_hm_folded';
 function homeMenuHtml(groups, tab, preview) {
   if (!groups.length) return '';
   var t = Math.max(0, Math.min(groups.length - 1, tab || 0)), g = groups[t];
@@ -3895,6 +3895,12 @@ function mountHomeMenu(card, settings, session) {
   if (!groups.length) { card.hidden = true; return false; }
   var tab = 0; try { tab = +localStorage.getItem(HM_TAB_KEY) || 0; } catch (e) { /* ข้าม */ }
   function draw() { box.innerHTML = homeMenuHtml(groups, tab); }
+  // 2.12.3: ซ่อน/แสดงการ์ด (จำไว้ในเครื่อง) — คนที่ไม่ใช้พับเก็บเหลือแค่หัวการ์ด
+  var head = card.querySelector('.hm-head');
+  function fold(on) { card.classList.toggle('hm-folded', on); if (head) { head.setAttribute('aria-expanded', String(!on)); var h = head.querySelector('.hm-hint'); if (h) h.textContent = on ? 'แสดง' : 'ซ่อน'; } }
+  var folded = false; try { folded = localStorage.getItem(HM_FOLD_KEY) === '1'; } catch (e) { /* ข้าม */ }
+  fold(folded);
+  if (head && !head.__hm) { head.__hm = true; head.addEventListener('click', function () { var on = !card.classList.contains('hm-folded'); fold(on); try { if (on) localStorage.setItem(HM_FOLD_KEY, '1'); else localStorage.removeItem(HM_FOLD_KEY); } catch (x) { /* ข้าม */ } }); }
   if (!card.__hm) {
     card.__hm = true;
     box.addEventListener('click', function (e) {
