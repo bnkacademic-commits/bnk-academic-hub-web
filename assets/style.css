@@ -3088,6 +3088,19 @@ a.ov-alert:hover { text-decoration: underline; }
 .ov-two { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; }
 @media (max-width: 860px) { .ov-two { grid-template-columns: 1fr; } }
 .ov-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; min-width: 0; }
+/* 2.11.1: ใช้โควต้าที่ไหน */
+.ov-mut { color: var(--text-muted); font-size: .84rem; }
+.ov-ubs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; } .ov-ub > b { display: block; margin-bottom: 6px; font-size: .9rem; }
+.ov-ur { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(60px, 1fr) auto 42px; gap: 8px; align-items: center; font-size: .86rem; padding: 3px 0; } .ov-ur small { color: var(--text-muted); font-size: .74rem; } .ov-ur em { font-style: normal; color: var(--text-muted); text-align: right; font-size: .8rem; }
+.ov-ubar { display: block; height: 8px; border-radius: 99px; background: var(--surface-2, #eef2f7); overflow: hidden; } .ov-ubar > i { display: block; height: 100%; background: linear-gradient(90deg, #8b5cf6, #6366f1); border-radius: 99px; }
+.ov-utool { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.ov-seg { display: inline-flex; gap: 2px; background: var(--surface-2, #f1f5f9); border-radius: 10px; padding: 3px; } .ov-seg button { border: 0; background: none; border-radius: 8px; padding: 5px 11px; font: inherit; font-weight: 700; font-size: .82rem; color: var(--text-muted); cursor: pointer; } .ov-seg button.on { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.ov-utw { overflow-x: auto; } .ov-ut-t { width: 100%; border-collapse: collapse; font-size: .86rem; min-width: 760px; } .ov-ut-t th, .ov-ut-t td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; } .ov-ut-t th { color: var(--text-muted); font-size: .76rem; }
+.ov-ut-t td.n { text-align: right; font-variant-numeric: tabular-nums; } .ov-ut-t td.b { width: 150px; } .ov-ut-t td.b .ov-ubar { display: inline-block; width: 100px; vertical-align: middle; margin-right: 6px; } .ov-ut-t td.b span { font-size: .78rem; color: var(--text-muted); }
+.ov-ut-t tr.ch td { background: var(--surface-2, #f8fafc); font-size: .82rem; } .ov-ut-t tr.ch td:first-child { padding-left: 30px; } .ov-ut-t tr.hot td:first-child { font-weight: 800; } .ov-ut-t code { font-size: .8rem; }
+.ov-ut { border: 0; background: none; font: inherit; font-weight: 700; color: inherit; cursor: pointer; padding: 0; } .ov-ut i { width: 12px; color: var(--text-muted); font-size: .72rem; }
+.ov-tip { display: inline-block; background: #fef3c7; color: #a16207; border-radius: 99px; padding: 0 8px; font-size: .7rem; font-weight: 700; }
+@media (max-width: 760px) { .ov-ubs { grid-template-columns: 1fr; } }
 .ov-box-h { font-size: .9rem; display: block; margin-bottom: 8px; }
 .ov-bars { display: flex; gap: 2px; height: 180px; }
 .ov-bar { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -3579,17 +3592,43 @@ a.ov-alert:hover { text-decoration: underline; }
 .ann-pop-tag { background: #ede9fe; color: #6d28d9; border-radius: 99px; padding: 1px 9px; font-weight: 700; }
 .ann-pop-stat { background: #dcfce7; color: #15803d; border-radius: 99px; padding: 1px 9px; }
 /* ป็อปอัปที่ผู้ใช้เห็น */
-.annp-box { max-width: 480px; padding: 0; overflow: hidden; text-align: left; }
+.annp-box { max-width: 480px; padding: 0; overflow-x: hidden; overflow-y: auto; text-align: left; }
 .annp-hd { background: linear-gradient(135deg, var(--primary), #7c3aed); color: #fff; padding: 16px 52px 14px 18px; position: relative; }
 .annp-hd small { display: flex; gap: 6px; align-items: center; opacity: .9; font-size: .8rem; }
-.annp-hd h3 { margin: 4px 0 0; font-size: 1.15rem; color: #fff; text-align: left; }
+.annp-hd h3 { margin: 4px 0 0; font-size: 1.15rem; color: #fff; text-align: left; line-height: 1.45; }
 .annp-n { display: inline-block; background: rgba(255,255,255,.25); border-radius: 99px; padding: 0 9px; font-size: .75rem; font-weight: 700; margin-left: 6px; }
-.annp-bd { padding: 14px 18px 4px; font-size: .92rem; line-height: 1.7; white-space: pre-wrap; max-height: 55vh; overflow-y: auto; }
-.annp-bd img { display: block; max-width: 100%; border-radius: 10px; margin-top: 10px; }
-.annp-ft { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px 16px; flex-wrap: wrap; }
+.annp-bd { padding: 14px 18px 6px; font-size: .95rem; line-height: 1.75; }
+.annp-msg { white-space: pre-wrap; }
+.annp-ft { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 18px 16px; flex-wrap: wrap; position: sticky; bottom: 0; background: var(--surface); border-top: 1px solid var(--border); }
 .annp-ck { display: flex; gap: 8px; align-items: center; font-size: .86rem; margin: 0; cursor: pointer; }
 .annp-ck input { width: auto; margin: 0; }
-.annp-box .modal-close-x { z-index: 2; }
+.annp-box .modal-close-x { z-index: 3; background: #ef4444; color: #fff; border-radius: 50%; }
+/* 2.11.1: รูปประกอบ — อยู่ใต้หัวข้อ เหนือข้อความ · กดเพื่อดูเต็มจอ */
+.annp-media { display: block; position: relative; width: 100%; padding: 0; margin: 0; border: 0; background: #0f172a; cursor: zoom-in; }
+.annp-media img { display: block; width: 100%; max-height: 60vh; object-fit: contain; margin: 0 auto; }
+.annp-zm { position: absolute; right: 10px; bottom: 10px; display: inline-flex; gap: 6px; align-items: center; background: rgba(15,23,42,.75); color: #fff; border-radius: 99px; padding: 5px 12px; font-size: .8rem; font-weight: 700; pointer-events: none; }
+.annp-media:hover .annp-zm { background: var(--primary); }
+@media (min-width: 900px) {
+  .annp-box.annp-img { max-width: min(760px, 94vw); }
+  .annp-box.annp-img .annp-hd h3 { font-size: 1.3rem; }
+  /* รูปแนวตั้ง (โปสเตอร์): สองคอลัมน์ — รูปซ้ายสูงพอดีจอ · หัวข้อ/ข้อความ/ปุ่ม อยู่ขวา */
+  .annp-box.annp-port { max-width: min(1040px, 96vw); width: auto; height: min(760px, calc(100vh - 40px)); display: grid; grid-template-columns: auto minmax(380px, 460px); grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+  .annp-port .annp-media { grid-column: 1; grid-row: 1 / 4; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .annp-port .annp-media img { width: auto; height: 100%; max-height: none; max-width: 56vw; }
+  .annp-port .annp-hd { grid-column: 2; grid-row: 1; }
+  .annp-port .annp-bd { grid-column: 2; grid-row: 2; overflow-y: auto; padding: 16px 22px 8px; }
+  .annp-port .annp-ft { grid-column: 2; grid-row: 3; padding: 12px 22px 16px; }
+}
+/* 2.11.1: ดูรูปเต็มจอ */
+.imgzv { position: fixed; inset: 0; z-index: 100000; background: rgba(0,0,0,.92); }
+.imgzv-sc { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; overflow: auto; }
+.imgzv-sc img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; }
+.imgzv.full .imgzv-sc { display: block; text-align: center; }
+.imgzv.full .imgzv-sc img { max-width: none; max-height: none; cursor: zoom-out; }
+.imgzv-tb { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 2; }
+.imgzv-tb button, .imgzv-tb a { display: inline-flex; gap: 6px; align-items: center; border: 0; border-radius: 99px; padding: 8px 14px; background: rgba(255,255,255,.18); color: #fff; font: inherit; font-weight: 700; font-size: .88rem; cursor: pointer; text-decoration: none; backdrop-filter: blur(4px); }
+.imgzv-tb button:hover, .imgzv-tb a:hover { background: rgba(255,255,255,.3); }
+@media (max-width: 520px) { .imgzv-tb a, .imgzv-tb [data-zv="zoom"] span { display: none; } .imgzv-tb a { display: inline-flex; font-size: 0; gap: 0; } .imgzv-tb a i { font-size: .95rem; } }
 
 /* 1.85.2: คอลัมน์การตรวจ — ป้าย + หมายเหตุ + ปุ่ม ในช่องเดียว */
 .asg-rvh { min-width: 240px; }
@@ -3758,9 +3797,22 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 .ev-round-info[hidden] { display: none; }
 .ev-round-info .field { margin: 8px 0 0; }
 .ev-lbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.ev-lbtn { display: inline-flex; align-items: center; gap: 7px; border-radius: 10px; padding: 6px 12px; font-weight: 700; font-size: 0.84rem; background: var(--primary-light); color: var(--primary-dark); border: 1px solid var(--primary); text-decoration: none; max-width: 100%; }
-.ev-lbtn:hover { filter: brightness(0.97); text-decoration: none; }
-.ev-lbtn small { font-weight: 500; color: var(--text-muted); font-size: 0.72rem; }
+/* 2.11.1: ปุ่มลิงก์เด่นขึ้น — แคปซูลไล่สี + ไอคอนในวง · .fld = โฟลเดอร์ (ส้ม) · .smp = ไฟล์ตัวอย่าง (เขียว) · .big = ปุ่มใหญ่เต็มแถว + บรรทัดชื่อเว็บ */
+.ev-lbtn { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 5px 14px 5px 5px; font: inherit; font-weight: 700; font-size: 0.86rem; line-height: 1.3; color: #fff !important; background: linear-gradient(135deg, #2563eb, #7c3aed); border: 0; box-shadow: 0 4px 12px rgba(37,99,235,.28); text-decoration: none !important; max-width: 100%; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; text-align: left; }
+.ev-lbtn:hover { transform: translateY(-1px); box-shadow: 0 7px 18px rgba(37,99,235,.38); filter: brightness(1.06); }
+.ev-lbtn:active { transform: translateY(0); }
+.ev-lbtn .ev-li { width: 26px; height: 26px; flex: none; border-radius: 50%; background: rgba(255,255,255,.24); display: inline-flex; align-items: center; justify-content: center; font-size: .78rem; }
+.ev-lbtn .ev-lt { min-width: 0; overflow-wrap: anywhere; }
+.ev-lbtn .ev-lt small { font-weight: 500; opacity: .85; font-size: 0.74rem; margin-left: 4px; }
+.ev-lbtn .ev-la { font-size: .74rem; opacity: .9; }
+.ev-lbtn.fld { background: linear-gradient(135deg, #f59e0b, #ea580c); box-shadow: 0 4px 12px rgba(234,88,12,.26); }
+.ev-lbtn.smp { background: linear-gradient(135deg, #059669, #0d9488); box-shadow: 0 4px 12px rgba(5,150,105,.26); }
+.ev-lbtns.big { flex-direction: column; align-items: stretch; gap: 10px; margin-top: 12px; }
+.ev-lbtns.big .ev-lbtn { display: flex; border-radius: 14px; padding: 9px 16px 9px 9px; gap: 12px; font-size: 1rem; }
+.ev-lbtns.big .ev-li { width: 40px; height: 40px; border-radius: 11px; font-size: 1.05rem; }
+.ev-lbtns.big .ev-lt { flex: 1; }
+.ev-lbtns.big .ev-lt small { display: block; margin: 1px 0 0; font-size: .78rem; }
+.ev-lbtns.big .ev-la { font-size: 1.05rem; }
 .evl-round { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; font-weight: 700; border-radius: 999px; padding: 1px 8px; background: var(--primary-light); color: var(--primary-dark); margin-left: 6px; }
 .evk-chk[hidden], #evReviewField[hidden], #evRoundsField[hidden], #evOnceDates[hidden], #evEndDateField[hidden] { display: none; }
 #eventModal .modal-box.modal-box-wide { max-width: 780px; }
@@ -4940,7 +4992,6 @@ td.xw-cell span.xw-ftag { display: inline-block; font-size: .66rem; padding: 0 5
 }
 .ph-flt select { flex: 1 1 140px; min-width: 0; }
 @media (max-width: 480px) { .ph-flt select { font-size: 0.7rem; padding: 8px 6px; } }
-button.ev-lbtn { font-family: inherit; cursor: pointer; } .ev-lbtn.fld { background: #fef3c7; color: #92400e; border-color: #f59e0b; } [data-theme="dark"] .ev-lbtn.fld { background: #3b2f12; color: #fcd34d; } /* 2.02.4 เปิดโฟลเดอร์ไฟล์แนบ */
 /* 2.02.4: ไฟล์แนบของกำหนดการ/กิจกรรม — หลายไฟล์ */
 .ev-smp-sum { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-weight: 700; font-size: .86rem; margin-bottom: 6px; } .ev-smp-sum small { font-weight: 500; color: var(--text-muted); }
 .ev-smp-list.scroll { max-height: 320px; overflow-y: auto; padding-right: 4px; }
@@ -5016,7 +5067,7 @@ button.ev-lbtn { font-family: inherit; cursor: pointer; } .ev-lbtn.fld { backgro
   .upi .ev-side { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; max-width: none; }
   .upi .ev-side .ev-lbtns { flex-direction: row; flex-wrap: wrap; align-items: center; }
   .upi .ev-side > .event-submit-btn, .upi .ev-side > .notice-badge { align-self: center; }
-  .upi .btn, .upi .ev-lbtn, .upi .notice-badge { width: auto; border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; }
+  .upi .btn, .upi .notice-badge { width: auto; border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; }
   .upi .sub-item-title { font-size: 0.97rem; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .upi.ups .sub-item-meta, .upi .term-tags-row, .upi .sub-item-desc, .upi .sub-item-title .cat-dept-badge, .upi .sub-item-title .overdue-badge, .upi .sub-item-title .submitted-badge { display: none; }
   .upi .up-meta { display: block; font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -5096,3 +5147,10 @@ td.xw-cell span.xw-at.late { color: #c2410c; }
 .xw-tl > div:last-child { border-bottom: 0; } .xw-tl > div > span:last-child { color: #b91c1c; } .xw-tl > div.lv > span:last-child { color: #7c3aed; font-weight: 600; }
 .xw-ok { color: #16a34a; font-weight: 800; padding: 14px 0; }
 @media (max-width: 640px) { .xw-tl > div { grid-template-columns: 1fr; gap: 0; } }
+/* 2.11.1: ช่วงเวลาแท็บครู + แท็บครูที่เช็คย้อนหลัง */
+.xw-rng { margin-bottom: 8px; } .xw-rtx { margin-left: auto; font-size: .82rem; }
+.xw-tn small.xw-of { color: var(--text-muted); font-weight: 600; }
+.xw-t.lt.open { border-color: #fdba74; } .xw-t.lt .xw-rk { background: #ffedd5; color: #c2410c; } .xw-t.lt .xw-tn { color: #c2410c; text-align: right; }
+.xw-lsub { display: block; color: var(--text-muted) !important; font-weight: 600 !important; font-size: .74rem; }
+.xw-tl > div.r > span:last-child { color: #dc2626; } .xw-tl > div.r3 > span:last-child { color: #991b1b; font-weight: 800; } .xw-tl > div.o > span:last-child { color: #d97706; }
+@media (max-width: 640px) { .xw-rtx { margin-left: 0; flex-basis: 100%; } .xw-t.lt .xw-th { flex-wrap: wrap; } .xw-t.lt .xw-th b { flex: 1 1 0; } .xw-t.lt .xw-tn { order: 3; flex-basis: 100%; text-align: left; padding-left: 36px; white-space: normal; } }

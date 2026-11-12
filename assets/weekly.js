@@ -16,7 +16,7 @@
 
   window.mountExecWeekly = function (el) {
     if (!el) return;
-    var st = { monday: '', view: 'sum', grade: '', room: '', showAll: false }, D = null, tok = 0;
+    var st = { monday: '', view: 'sum', grade: '', room: '', showAll: false, rng: 'wk', th: 120 }, D = null, tok = 0, RC = {}, RG = null, rgTok = 0; // 2.11.1: rng = ช่วงของแท็บครู (wk/4w/term) · th = ช้าในวันเดียวกันเกินกี่นาทีจึงนับ (0 = นับเฉพาะข้ามวัน)
     async function load(fresh) {
       var my = ++tok;
       if (!D) el.innerHTML = '<div class="xw-skel"><div class="loading">กำลังโหลดข้อมูลจากเว็บเช็คชื่อ...</div></div>';
@@ -31,7 +31,7 @@
       var grades = []; D.rooms.forEach(function (r) { var g = gradeOf(r.roomId); if (g && grades.indexOf(g) === -1) grades.push(g); }); grades.sort();
       return '<div class="xw-top"><div class="section-title" style="margin:0"><i class="fa-solid fa-clipboard-check ui-icon" style="font-size:17px" aria-hidden="true"></i> การเช็คชื่อประจำสัปดาห์</div>' +
         '<div class="xw-wk"><button type="button" class="btn btn-ghost btn-sm" data-xw-wk="-1" aria-label="สัปดาห์ก่อน"><i class="fa-solid fa-chevron-left"></i></button><b>' + esc(weekTxt(D)) + '</b><button type="button" class="btn btn-ghost btn-sm" data-xw-wk="1" aria-label="สัปดาห์ถัดไป"' + (D.monday >= D.maxMonday ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button></div></div>' +
-        '<div class="xw-chips"><button type="button" class="xw-chip' + (st.view === 'sum' ? ' on' : '') + '" data-xw-view="sum">ทุกห้อง (สรุป)</button><button type="button" class="xw-chip' + (st.view === 'room' ? ' on' : '') + '" data-xw-view="room">รายห้อง</button><button type="button" class="xw-chip' + (st.view === 'tch' ? ' on' : '') + '" data-xw-view="tch">ครูที่ไม่เช็ค</button><span class="xw-sep"></span>' +
+        '<div class="xw-chips"><button type="button" class="xw-chip' + (st.view === 'sum' ? ' on' : '') + '" data-xw-view="sum">ทุกห้อง (สรุป)</button><button type="button" class="xw-chip' + (st.view === 'room' ? ' on' : '') + '" data-xw-view="room">รายห้อง</button><button type="button" class="xw-chip' + (st.view === 'tch' ? ' on' : '') + '" data-xw-view="tch">ครูที่ไม่เช็ค</button><button type="button" class="xw-chip' + (st.view === 'late' ? ' on' : '') + '" data-xw-view="late">ครูที่เช็คย้อนหลัง</button><span class="xw-sep"></span>' +
         '<button type="button" class="xw-chip sm' + (!st.grade ? ' on' : '') + '" data-xw-g="">ทุกระดับ</button>' + grades.map(function (g) { return '<button type="button" class="xw-chip sm' + (st.grade === g ? ' on' : '') + '" data-xw-g="' + g + '">ม.' + g + '</button>'; }).join('') + '</div>';
     }
     // 2.09.0: เวลาบันทึกครั้งแรก (วันเดียวกับคาบ = "บันทึก HH:MM" · วันถัดไป = "ย้อนหลัง วันที่ เวลา")
@@ -78,34 +78,107 @@
       return chips + '<div class="xw-rh"><b>' + esc(r.room) + ' · ครูที่ปรึกษา: ' + esc((r.advisors || []).join(', ') || '-') + '</b><b style="color:' + pc(r.pct) + ';font-size:1.2rem">' + (r.pct == null ? '-' : r.pct + '%') + ' <small class="cb-mut">(' + r.ok + '/' + r.tot + ' คาบ)</small></b></div><div class="cb-tbl-wrap">' + roomGrid(r) + '</div>' +
         '<div class="xw-lg">' + ['ok', 'no', 'off', 'club', 'act', 'leave'].map(function (k) { return '<span><i style="background:' + C[k][1] + '"></i>' + C[k][2] + '</span>'; }).join('') + '<span><i style="background:#0ea5e9"></i>ขอบฟ้า = คาบของครูต่างชาติ</span></div>';
     }
+    // ---------- 2.11.1: ช่วงเวลาของแท็บครู (สัปดาห์นี้ / 4 สัปดาห์ / ทั้งภาคเรียน) — ดึงทีละสัปดาห์แบบย่อ (lite) · จำไว้ในหน้า ----------
+    function rngWeeks() {
+      if (st.rng === 'wk') return [D.monday];
+      var from = st.rng === '4w' ? add(D.monday, -21) : (D.termStart || add(D.monday, -21)), out = [];
+      if (from > D.monday) from = D.monday;
+      for (var m = from; m <= D.monday; m = add(m, 7)) out.push(m);
+      return out;
+    }
+    function rngTxt() { var w = rngWeeks(); return w.length === 1 ? 'สัปดาห์ ' + weekTxt(D) : th(w[0]) + ' – ' + th(add(D.monday, 4), true) + ' (' + w.length + ' สัปดาห์)'; }
+    async function loadRange() {
+      var my = ++rgTok, weeks = rngWeeks(), need = weeks.filter(function (m) { return !RC[m] || !RC[m].at || (m === D.maxMonday && Date.now() - RC[m].at > 180000); });
+      if (need.length) {
+        var done = 0, prog = function () { var b = el.querySelector('.xw-body'); if (b && my === rgTok) b.innerHTML = rngBar() + '<div class="loading">กำลังรวมข้อมูล ' + done + ' / ' + need.length + ' สัปดาห์...</div>'; };
+        prog();
+        var q = need.slice(), worker = async function () { while (q.length) { var m = q.shift(); try { var r = await apiCall('execWeekly', { monday: m, lite: 1 }); RC[m] = { at: Date.now(), d: r }; } catch (e) { RC[m] = { at: 0, d: { missing: [], late: [], tcount: {}, err: e.message } }; } done++; prog(); } };
+        await Promise.all([worker(), worker(), worker()]);
+      }
+      if (my !== rgTok) return;
+      var agg = { missing: [], late: [], tcount: {}, weeks: weeks.length, err: 0 };
+      weeks.forEach(function (m) { var d = (RC[m] || {}).d || {}; if (d.err) agg.err++; agg.missing = agg.missing.concat(d.missing || []); agg.late = agg.late.concat(d.late || []); Object.keys(d.tcount || {}).forEach(function (k) { var a = agg.tcount[k] = agg.tcount[k] || { tot: 0, ok: 0 }; a.tot += d.tcount[k].tot; a.ok += d.tcount[k].ok; }); });
+      RG = agg; render();
+    }
+    function src() { return st.rng === 'wk' ? { missing: D.missing || [], late: D.late || [], tcount: D.tcount || {}, weeks: 1 } : RG; }
+    function rngBar(extra) {
+      return '<div class="xw-chips xw-rng"><span class="cb-mut" style="font-weight:700">ช่วง:</span>' + [['wk', 'สัปดาห์นี้'], ['4w', '4 สัปดาห์'], ['term', 'ทั้งภาคเรียน']].map(function (x) { return '<button type="button" class="xw-chip sm' + (st.rng === x[0] ? ' on' : '') + '" data-xw-rng="' + x[0] + '">' + x[1] + '</button>'; }).join('') + (extra || '') +
+        '<span class="cb-mut xw-rtx">' + esc(rngTxt()) + '</span></div>';
+    }
+    function dly(m) { return m >= 1440 ? 'ช้า ' + (m / 1440).toFixed(1).replace(/\.0$/, '') + ' วัน' : 'ช้า ' + Math.floor(m / 60) + ' ชม.' + (m % 60 ? ' ' + (m % 60) + ' นาที' : ''); }
+    function dDiff(l) { return Math.round((dP(l.at.slice(0, 10)) - dP(l.ds)) / 864e5); } // วันที่บันทึก − วันของคาบ
+    function dlyOf(l) { return l.bd ? 'ช้า ' + dDiff(l) + ' วัน' : dly(l.lm); }
+    function lateOn(l) { return l.bd || (st.th > 0 && l.lm >= st.th); }
+    function lateRows() {
+      var S = src(), by = {};
+      S.late.filter(function (l) { return lateOn(l) && (!st.grade || gradeOf(l.roomId) === st.grade); }).forEach(function (l) {
+        var who = l.by ? [l.by] : (l.teachers && l.teachers.length ? l.teachers : ['(ไม่ระบุครู)']);
+        who.forEach(function (t) { var o = by[t] = by[t] || { name: t, n: 0, bd: 0, sum: 0, list: [] }; o.n++; if (l.bd) o.bd++; o.sum += l.lm; o.list.push(l); });
+      });
+      return Object.keys(by).map(function (k) { var o = by[k], c = S.tcount[k]; o.tot = c ? c.ok : 0; return o; }).sort(function (a, b) { return b.n - a.n || b.sum - a.sum || a.name.localeCompare(b.name, 'th'); });
+    }
+    function renderLate() {
+      var thBar = '<span class="xw-sep"></span><span class="cb-mut" style="font-weight:700">เช็คช้าในวันเดียวกัน:</span>' + [[0, 'ไม่นับ'], [60, 'เกิน 1 ชม.'], [120, 'เกิน 2 ชม.'], [180, 'เกิน 3 ชม.']].map(function (x) { return '<button type="button" class="xw-chip sm' + (st.th === x[0] ? ' on' : '') + '" data-xw-th="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+      var S = src(); if (!S) return rngBar(thBar) + '<div class="loading">กำลังรวมข้อมูล...</div>';
+      var L = lateRows(); st.lOpen = st.lOpen || {};
+      var head = rngBar(thBar) + '<div class="cb-mut" style="margin-bottom:8px">' + (L.length ? L.length + ' คน · ' : '') + '<span style="color:#dc2626;font-weight:700">แดง</span> = บันทึกวันถัดไปขึ้นไป · <span style="color:#d97706;font-weight:700">ส้ม</span> = วันเดียวกันแต่หลังจบคาบ' + (st.th ? 'เกิน ' + st.th / 60 + ' ชม.' : '') + ' · นับให้คนที่บันทึกจริง (เช่น ครูสอนแทน)' + (S.err ? ' · <span style="color:#dc2626">โหลดไม่สำเร็จ ' + S.err + ' สัปดาห์</span>' : '') + '</div>';
+      if (!L.length) return head + '<div class="xw-ok">ไม่มีการเช็คย้อนหลังในช่วงนี้ 🎉</div>';
+      return head + L.map(function (t, i) {
+        var o = !!st.lOpen[t.name], avg = Math.round(t.sum / t.n);
+        return '<div class="xw-t lt' + (o ? ' open' : '') + '"><button type="button" class="xw-th" data-xw-lt="' + esc(t.name) + '"><span class="xw-rk">' + (i + 1) + '</span><b>' + esc(t.name) + '</b><span class="xw-tn">' + t.n + ' คาบ' + (t.tot ? ' <small class="xw-of">/ เช็ค ' + t.tot + '</small>' : '') + '<small class="xw-lsub">ข้ามวัน ' + t.bd + ' · เฉลี่ย' + dly(avg) + '</small></span><i class="fa-solid fa-chevron-' + (o ? 'up' : 'down') + '"></i></button>' +
+          (o ? '<div class="xw-tl">' + t.list.slice().sort(function (a, b) { return a.ds.localeCompare(b.ds) || a.p - b.p; }).map(function (l) { var sub = l.by && (l.teachers || []).length && (l.teachers || []).indexOf(l.by) === -1; return '<div class="' + (l.bd ? (dDiff(l) >= 3 ? 'r3' : 'r') : 'o') + '"><span>' + DS[dP(l.ds).getDay()] + ' ' + th(l.ds) + ' · คาบ ' + plab(l.p) + '</span><span><b>' + esc(l.room) + '</b> ' + esc((l.code ? l.code + ' ' : '') + l.name) + (sub ? ' <span class="cb-mut">(สอนแทน ' + esc(l.teachers.join(', ')) + ')</span>' : '') + '</span><span>บันทึก ' + esc(th(l.at.slice(0, 10))) + ' ' + esc(l.at.slice(11, 16)) + ' น. · ' + dlyOf(l) + '</span></div>'; }).join('') + '</div>' : '') + '</div>';
+      }).join('');
+    }
     // 2.10.0: ครูที่ไม่เช็คมากที่สุด — รวมคาบที่ครูลา/ไปราชการ (ดูว่าคนสอนแทนไม่ได้เช็ค) · กดชื่อดูรายละเอียด
     function renderTch() {
-      var by = {};
-      (D.missing || []).filter(function (m) { return !st.grade || gradeOf(m.roomId) === st.grade; }).forEach(function (m) {
+      var by = {}, S = src(); if (!S) return rngBar() + '<div class="loading">กำลังรวมข้อมูล...</div>';
+      (S.missing || []).filter(function (m) { return !st.grade || gradeOf(m.roomId) === st.grade; }).forEach(function (m) {
         (m.teachers && m.teachers.length ? m.teachers : ['(ไม่ระบุครู)']).forEach(function (t) { var o = by[t] = by[t] || { name: t, n: 0, lv: 0, list: [] }; o.n++; if (m.leave) o.lv++; o.list.push(m); });
       });
-      var L = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.n - a.n || a.name.localeCompare(b.name, 'th'); });
+      var L = Object.keys(by).map(function (k) { var c = S.tcount[k]; by[k].tot = c ? c.tot : 0; return by[k]; }).sort(function (a, b) { return b.n - a.n || a.name.localeCompare(b.name, 'th'); });
       st.tOpen = st.tOpen || {};
-      if (!L.length) return '<div class="xw-ok">เช็คชื่อครบทุกคาบในสัปดาห์นี้ 🎉</div>';
-      return '<div class="cb-mut" style="margin-bottom:8px">' + L.length + ' คน · นับคาบที่ไม่ได้เช็ค รวมคาบที่ครูลา/ไปราชการ (<span style="color:#7c3aed;font-weight:700">ม่วง</span> = คาบที่ครูไม่อยู่ — คนสอนแทนไม่ได้เช็ค)</div>' + L.map(function (t, i) {
+      if (!L.length) return rngBar() + '<div class="xw-ok">เช็คชื่อครบทุกคาบในช่วงนี้ 🎉</div>';
+      return rngBar() + '<div class="cb-mut" style="margin-bottom:8px">' + L.length + ' คน · นับคาบที่ไม่ได้เช็ค รวมคาบที่ครูลา/ไปราชการ (<span style="color:#7c3aed;font-weight:700">ม่วง</span> = คาบที่ครูไม่อยู่ — คนสอนแทนไม่ได้เช็ค)</div>' + L.map(function (t, i) {
         var o = !!st.tOpen[t.name];
-        return '<div class="xw-t' + (o ? ' open' : '') + '"><button type="button" class="xw-th" data-xw-t="' + esc(t.name) + '"><span class="xw-rk">' + (i + 1) + '</span><b>' + esc(t.name) + '</b><span class="xw-tn">' + t.n + ' คาบ' + (t.lv ? ' <small>(ลา/ไปราชการ ' + t.lv + ')</small>' : '') + '</span><i class="fa-solid fa-chevron-' + (o ? 'up' : 'down') + '"></i></button>' +
+        return '<div class="xw-t' + (o ? ' open' : '') + '"><button type="button" class="xw-th" data-xw-t="' + esc(t.name) + '"><span class="xw-rk">' + (i + 1) + '</span><b>' + esc(t.name) + '</b><span class="xw-tn">' + t.n + ' คาบ' + (t.tot ? ' <small class="xw-of">/ ' + t.tot + '</small>' : '') + (t.lv ? ' <small>(ลา/ไปราชการ ' + t.lv + ')</small>' : '') + '</span><i class="fa-solid fa-chevron-' + (o ? 'up' : 'down') + '"></i></button>' +
           (o ? '<div class="xw-tl">' + t.list.slice().sort(function (a, b) { return a.ds.localeCompare(b.ds) || a.p - b.p; }).map(function (m) { return '<div class="' + (m.leave ? 'lv' : '') + '"><span>' + DS[dP(m.ds).getDay()] + ' ' + th(m.ds) + ' · คาบ ' + plab(m.p) + '</span><span><b>' + esc(m.room) + '</b> ' + esc((m.code ? m.code + ' ' : '') + m.name) + '</span><span>' + (m.leave ? 'ครูไม่อยู่: ' + esc(m.lvNote || 'ลา/ไปราชการ') : m.lvNote ? esc(m.lvNote) : 'ไม่ได้เช็ค') + '</span></div>'; }).join('') + '</div>' : '') + '</div>';
       }).join('');
     }
     function render() {
-      el.innerHTML = head() + '<div class="xw-body">' + (st.view === 'room' ? renderRoom() : st.view === 'tch' ? renderTch() : renderSum()) + '</div><div class="xw-act"><button type="button" class="btn btn-success btn-sm" data-xw-pdf><i class="fa-solid fa-file-pdf"></i> ส่งออก PDF' + (st.grade ? ' (ม.' + st.grade + ')' : '') + '</button></div>';
+      var tv = st.view === 'tch' || st.view === 'late';
+      el.innerHTML = head() + '<div class="xw-body">' + (st.view === 'room' ? renderRoom() : st.view === 'tch' ? renderTch() : st.view === 'late' ? renderLate() : renderSum()) + '</div><div class="xw-act">' +
+        (tv ? '<button type="button" class="btn btn-success btn-sm" data-xw-xls' + (src() ? '' : ' disabled') + '><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>' : '<button type="button" class="btn btn-success btn-sm" data-xw-pdf><i class="fa-solid fa-file-pdf"></i> ส่งออก PDF' + (st.grade ? ' (ม.' + st.grade + ')' : '') + '</button>') + '</div>';
+      if (tv && st.rng !== 'wk' && !RG) loadRange();
     }
     el.addEventListener('click', function (e) {
       var b;
-      if ((b = e.target.closest('[data-xw-wk]'))) { st.monday = add(st.monday, Number(b.getAttribute('data-xw-wk')) * 7); load(); return; }
+      if ((b = e.target.closest('[data-xw-wk]'))) { st.monday = add(st.monday, Number(b.getAttribute('data-xw-wk')) * 7); RG = null; rgTok++; load(); return; }
       if ((b = e.target.closest('[data-xw-view]'))) { st.view = b.getAttribute('data-xw-view'); render(); return; }
+      if ((b = e.target.closest('[data-xw-rng]'))) { st.rng = b.getAttribute('data-xw-rng'); RG = null; rgTok++; render(); return; }
+      if ((b = e.target.closest('[data-xw-th]'))) { st.th = Number(b.getAttribute('data-xw-th')); render(); return; }
+      if ((b = e.target.closest('[data-xw-lt]'))) { st.lOpen = st.lOpen || {}; var ln = b.getAttribute('data-xw-lt'); if (st.lOpen[ln]) delete st.lOpen[ln]; else st.lOpen[ln] = 1; render(); return; }
+      if (e.target.closest('[data-xw-xls]')) { exportXls(); return; }
       if ((b = e.target.closest('[data-xw-g]'))) { st.grade = b.getAttribute('data-xw-g'); st.showAll = false; render(); return; }
       if ((b = e.target.closest('[data-xw-t]'))) { st.tOpen = st.tOpen || {}; var tn = b.getAttribute('data-xw-t'); if (st.tOpen[tn]) delete st.tOpen[tn]; else st.tOpen[tn] = 1; render(); return; }
       if ((b = e.target.closest('[data-xw-room]'))) { st.room = b.getAttribute('data-xw-room'); render(); return; }
       if (e.target.closest('[data-xw-all]')) { st.showAll = !st.showAll; render(); return; }
       if (e.target.closest('[data-xw-pdf]')) exportPdf();
     });
+    // 2.11.1: ส่งออก Excel แท็บครู
+    function exportXls() {
+      var S = src(); if (!S) return;
+      var rows = [], head, w, title;
+      if (st.view === 'late') {
+        title = 'ครูที่เช็คย้อนหลัง ' + rngTxt(); head = ['ครูที่บันทึก', 'วันที่', 'คาบ', 'ห้อง', 'วิชา', 'ครูประจำวิชา', 'บันทึกเมื่อ', 'ช้า (นาที)', 'ประเภท']; w = [24, 12, 6, 8, 30, 24, 18, 10, 18];
+        lateRows().forEach(function (t) { t.list.forEach(function (l) { rows.push([t.name, l.ds, plab(l.p), l.room, (l.code ? l.code + ' ' : '') + l.name, (l.teachers || []).join(', '), l.at, l.lm, l.bd ? 'ย้อนหลัง (ข้ามวัน)' : 'ช้าในวันเดียวกัน']); }); });
+      } else {
+        title = 'ครูที่ไม่เช็คชื่อ ' + rngTxt(); head = ['ครู', 'วันที่', 'คาบ', 'ห้อง', 'วิชา', 'หมายเหตุ']; w = [24, 12, 6, 8, 30, 34];
+        (S.missing || []).filter(function (m) { return !st.grade || gradeOf(m.roomId) === st.grade; }).forEach(function (m) { (m.teachers && m.teachers.length ? m.teachers : ['(ไม่ระบุครู)']).forEach(function (t) { rows.push([t, m.ds, plab(m.p), m.room, (m.code ? m.code + ' ' : '') + m.name, m.leave ? 'ครูไม่อยู่: ' + (m.lvNote || 'ลา/ไปราชการ') : m.lvNote || 'ไม่ได้เช็ค']); }); });
+        rows.sort(function (a, b) { return String(a[0]).localeCompare(String(b[0]), 'th') || String(a[1]).localeCompare(String(b[1])); });
+      }
+      var wks = rngWeeks();
+      downloadBlob(buildXlsx(st.view === 'late' ? 'เช็คย้อนหลัง' : 'ไม่เช็ค', head, rows, w, title), (st.view === 'late' ? 'ครูที่เช็คย้อนหลัง_' : 'ครูที่ไม่เช็คชื่อ_') + wks[0] + '_' + add(D.monday, 4) + '.xlsx');
+    }
     // ---------- PDF (หน้าตาเดียวกับรายงานประจำสัปดาห์ของเว็บเช็คชื่อ) ----------
     var PCSS = '.xp{position:fixed;left:-30000px;top:0;font-family:Sarabun,"Noto Sans Thai",sans-serif;color:#0f172a}.xp .pg{position:relative;width:794px;height:1123px;box-sizing:border-box;padding:66px 38px 50px;background:#fff;overflow:hidden;display:flex;flex-direction:column}.xp *{line-height:1.6}' +
       '.xp .band{position:absolute;left:38px;right:38px;top:0;height:48px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #4338ca;font-size:11px;color:#475569}.xp .band b{color:#312e81}.xp .foot{position:absolute;left:38px;right:38px;bottom:0;height:36px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#94a3b8}' +

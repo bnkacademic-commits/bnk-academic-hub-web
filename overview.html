@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.11.0.121126" />
+<link rel="stylesheet" href="assets/style.css?v=2.11.1.121126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -38,6 +38,9 @@
       <span class="ov-view" role="group" aria-label="รูปแบบการแสดงโควต้า"><button type="button" data-qview="cards" title="แบบการ์ด"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i> การ์ด</button><button type="button" data-qview="list" title="แบบรายการ"><i class="fa-solid fa-list" aria-hidden="true"></i> รายการ</button></span></div>
     <div class="ov-quota" id="ovQuota"><div class="loading">กำลังโหลด</div></div>
 
+    <div class="ov-sec"><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i> ใช้โควต้าที่ไหน <small>ดูว่าส่วนไหนใช้มาก เผื่อปรับให้ประหยัดลง</small></div>
+    <div class="ov-box" id="ovUse"><div class="loading">กำลังโหลด</div></div>
+
     <div class="ov-sec"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i> ข้อมูลในระบบ <small id="ovTermNote"></small></div>
     <div class="ov-stats" id="ovStats"><div class="loading">กำลังโหลด</div></div>
 
@@ -51,7 +54,7 @@
   </div>
   <div id="app-footer"></div>
 
-<script src="assets/api.js?v=2.11.0.121126"></script>
+<script src="assets/api.js?v=2.11.1.121126"></script>
 <script>
   var session = requireLogin();
   // เฉพาะ Super Admin — บทบาทอื่นไปหน้าแรกของตัวเอง
@@ -229,6 +232,56 @@
     }
     state.backingUp = false; render();
   });
+  // ---------- 2.11.1: ใช้โควต้าที่ไหน (มาตรวัดรายฟังก์ชันของเว็บส่งงาน + แยกตาม Worker / ฐานข้อมูลจาก Cloudflare) ----------
+  var UG = [[/^(login|logout|checkSession|mySessions|sessionRevoke|changePassword|setMyTheme|welcomeSeen|bootstrapAdmin)$/, 'เข้าระบบ / ตรวจสถานะ (ทุกครั้งที่เปิดหน้า)'], [/^notif/, 'การแจ้งเตือน'], [/^(hubAnnouncement|adminAnnouncement|adminCreateAnnouncement|adminUpdateAnnouncement|adminDeleteAnnouncement|hubListAnnouncements|adminListAnnouncement)/, 'ประกาศ'],
+    [/^(teacherListCalendar|schoolCalendar|calendarList|adminListEvents|adminCreateEvent|adminUpdateEvent|adminDeleteEvent|adminAddEventRound|adminDeleteEventSeries|adminArchiveEvents|adminListArchived|linkHolidays)/, 'ปฏิทิน / กำหนดการ'], [/^(teacher(Upload|ListMine|Delete|UpdateFields)|sample|review|manualCheck|teacherManualReport|adminGetAssignmentSummary|adminListAllSubmissions)/, 'ส่งงาน / ตรวจงาน'],
+    [/^(teach|hr|attRoomList|ttMine)/, 'วิชาที่สอน / เช็คชื่อ / โฮมรูม'], [/^execWeekly$|^attViewers/, 'สรุปการเช็คชื่อประจำสัปดาห์'], [/^club|^linkClub/, 'ชุมนุม'], [/^sup|^teacherSurvey/, 'นิเทศการสอน'], [/^care/, 'กิจการนักเรียน (Care)'], [/^leave|^linkLeaves/, 'แจ้งลา / ไปราชการ'],
+    [/^intern|^adminIntern/, 'นักศึกษาฝึกสอน'], [/^(publicGuide|guide)/, 'แนะแนว'], [/^(album|publicAlbum|gallery|adminGalleryRoot)/, 'คลังรูปภาพ'], [/^cert|^publicCert/, 'เกียรติบัตร'], [/^order/, 'คลังคำสั่ง'], [/^report/, 'แจ้งเรื่อง / รายงาน'], [/^(hubListMemo|adminCreateMemo|adminUpdateMemo|adminDeleteMemo|adminListMemo)/, 'บันทึกข้อความ'],
+    [/^(publicGet|hubListDirectory|hubListExternal|hubListWorkCategories)/, 'ข้อมูลพื้นฐานของหน้าเว็บ'], [/^link/, 'เว็บเช็คชื่อเรียกมา'], [/^admin|^managers/, 'งานผู้ดูแลระบบ']];
+  function ugOf(a) { for (var i = 0; i < UG.length; i++) if (UG[i][0].test(a)) return UG[i][1]; return 'อื่นๆ'; }
+  var use = { days: 1, by: 'rr', grp: true, open: {}, d: null, err: '' };
+  async function loadUse() { use.d = null; renderUse(); try { use.d = await apiCall('adminUsageStats', { days: use.days }); use.err = ''; } catch (e) { use.err = e.message; } renderUse(); }
+  function wkName(n) { return /academic-hub|hub-api/i.test(n) ? 'เว็บส่งงาน' : /care/i.test(n) ? 'BNK Care Center' : /att|bnksa|check/i.test(n) ? 'เว็บเช็คชื่อ' : n; }
+  function renderUse() {
+    var el = $('ovUse'); if (!el) return;
+    var cf = state.cf, L = (state.ov && state.ov.limits) || {}, sys = '';
+    if (cf && cf.workers && (cf.workers.byScript || []).length) sys += '<div class="ov-ub"><b>คำขอ Worker วันนี้ แยกตามระบบ</b>' + cf.workers.byScript.map(function (x) { var p = L.workerRequests ? x.requests / L.workerRequests * 100 : 0; return '<div class="ov-ur"><span>' + escapeHtml(wkName(x.key)) + ' <small>' + escapeHtml(x.key) + '</small></span><i class="ov-ubar"><i style="width:' + Math.min(100, Math.max(p, .5)) + '%"></i></i><b>' + fmtN(x.requests) + '</b><em>' + (p < 1 && p > 0 ? '<1' : Math.round(p)) + '%</em></div>'; }).join('') + '</div>';
+    if (cf && cf.d1 && (cf.d1.byDb || []).length) sys += '<div class="ov-ub"><b>D1 อ่าน (แถว) วันนี้ แยกตามฐานข้อมูล</b>' + cf.d1.byDb.map(function (x) { var p = L.d1RowsRead ? x.rowsRead / L.d1RowsRead * 100 : 0; return '<div class="ov-ur"><span>' + (x.mine ? 'เว็บส่งงาน' : 'ฐานข้อมูลอื่น') + ' <small>' + escapeHtml(x.key.slice(0, 8)) + '… · เขียน ' + fmtN(x.rowsWritten) + '</small></span><i class="ov-ubar"><i style="width:' + Math.min(100, Math.max(p, .5)) + '%"></i></i><b>' + fmtN(x.rowsRead) + '</b><em>' + (p < 1 && p > 0 ? '<1' : Math.round(p)) + '%</em></div>'; }).join('') + '<small class="ov-mut">ฐานข้อมูลอื่น = เว็บเช็คชื่อ / Care Center (ใช้บัญชี Cloudflare เดียวกัน)</small></div>';
+    var seg = function (k, opts) { return '<span class="ov-seg">' + opts.map(function (o) { return '<button type="button" data-use-' + k + '="' + o[0] + '" class="' + (String(use[k]) === String(o[0]) ? 'on' : '') + '">' + o[1] + '</button>'; }).join('') + '</span>'; };
+    var bar = '<div class="ov-utool">' + seg('days', [[1, 'วันนี้'], [7, '7 วัน'], [30, '30 วัน']]) + seg('by', [['rr', 'D1 อ่าน'], ['rw', 'D1 เขียน'], ['n', 'จำนวนครั้ง'], ['att', 'เรียกเว็บเช็คชื่อ'], ['kr', 'KV']]) + seg('grp', [[true, 'ตามระบบย่อย'], [false, 'ตามคำสั่ง']]) + '</div>';
+    var body;
+    if (use.err) body = '<div class="error-box">' + escapeHtml(use.err) + '</div>';
+    else if (!use.d) body = '<div class="loading">กำลังโหลด</div>';
+    else if (!use.d.ready) body = '<div class="ov-mut" style="padding:8px 0">ยังไม่เริ่มวัด — รัน <b>SQL ชุดที่สี่สิบสี่</b> (ตาราง usage_stats) แล้วระบบจะเริ่มนับเอง</div>';
+    else {
+      var rows = use.d.rows, tot = { n: 0, rr: 0, rw: 0, kr: 0, kw: 0, att: 0, care: 0, ms: 0 }; rows.forEach(function (r) { Object.keys(tot).forEach(function (f) { tot[f] += r[f]; }); });
+      var key = use.by, val = function (r) { return key === 'kr' ? r.kr + r.kw : r[key]; }, totV = key === 'kr' ? tot.kr + tot.kw : tot[key];
+      var list;
+      if (use.grp) { var g = {}; rows.forEach(function (r) { var k = ugOf(r.action), o = g[k] = g[k] || { action: k, n: 0, rr: 0, rw: 0, kr: 0, kw: 0, att: 0, care: 0, ms: 0, sub: [] }; Object.keys(tot).forEach(function (f) { o[f] += r[f]; }); o.sub.push(r); }); list = Object.keys(g).map(function (k) { return g[k]; }); }
+      else list = rows.slice();
+      list.sort(function (a, b) { return val(b) - val(a); });
+      var mx = Math.max.apply(null, list.map(val).concat([1]));
+      var row = function (r, child) {
+        var per = r.n ? Math.round(r.rr / r.n) : 0, v = val(r), pc = totV ? v / totV * 100 : 0, hot = !child && pc >= 25;
+        var tip = per >= 2000 ? 'อ่านเยอะต่อครั้ง' : r.n >= 2000 && use.days === 1 ? 'เรียกบ่อย' : '';
+        return '<tr class="' + (child ? 'ch' : '') + (hot ? ' hot' : '') + '">' + '<td>' + (use.grp && !child ? '<button type="button" class="ov-ut" data-use-open="' + escapeHtml(r.action) + '"><i class="fa-solid fa-chevron-' + (use.open[r.action] ? 'down' : 'right') + '"></i> ' + escapeHtml(r.action) + '</button>' : '<code>' + escapeHtml(r.action) + '</code>') + (tip ? ' <span class="ov-tip">' + tip + '</span>' : '') + '</td>' +
+          '<td class="b"><i class="ov-ubar"><i style="width:' + Math.max(1, v / mx * 100) + '%"></i></i><span>' + (pc < 1 && pc > 0 ? '<1' : Math.round(pc)) + '%</span></td>' +
+          '<td class="n">' + fmtN(r.n) + '</td><td class="n">' + fmtN(r.rr) + '</td><td class="n">' + fmtN(per) + '</td><td class="n">' + fmtN(r.rw) + '</td><td class="n">' + fmtN(r.kr) + ' / ' + fmtN(r.kw) + '</td><td class="n">' + fmtN(r.att) + '</td><td class="n">' + fmtN(r.n ? Math.round(r.ms / r.n) : 0) + '</td></tr>' +
+          (use.grp && !child && use.open[r.action] ? r.sub.sort(function (a, b) { return val(b) - val(a); }).map(function (s) { return row(s, true); }).join('') : '');
+      };
+      body = '<div class="ov-mut" style="margin-bottom:6px">เฉพาะเว็บส่งงาน · ค่าประมาณ (นับทุกคำขอ แล้วบันทึกทุก 10 นาที) · เริ่มวัด ' + escapeHtml(use.d.since ? formatDateThai(use.d.since) : 'วันนี้') + ' · รวม ' + fmtN(tot.n) + ' ครั้ง · D1 อ่าน ' + fmtN(tot.rr) + ' แถว · เขียน ' + fmtN(tot.rw) + ' แถว · เรียกเว็บเช็คชื่อ ' + fmtN(tot.att) + ' ครั้ง</div>' +
+        '<div class="ov-utw"><table class="ov-ut-t"><thead><tr><th>' + (use.grp ? 'ระบบย่อย' : 'คำสั่ง') + '</th><th>สัดส่วน</th><th>ครั้ง</th><th>D1 อ่าน</th><th>อ่าน/ครั้ง</th><th>D1 เขียน</th><th>KV อ่าน/เขียน</th><th>เรียกเว็บเช็คชื่อ</th><th>ms/ครั้ง</th></tr></thead><tbody>' + list.map(function (r) { return row(r, false); }).join('') + '</tbody></table></div>';
+    }
+    el.innerHTML = (sys ? '<div class="ov-ubs">' + sys + '</div>' : '') + bar + body;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('#ovUse [data-use-days],#ovUse [data-use-by],#ovUse [data-use-grp],#ovUse [data-use-open]'); if (!b) return;
+    if (b.hasAttribute('data-use-days')) { use.days = Number(b.getAttribute('data-use-days')); loadUse(); return; }
+    if (b.hasAttribute('data-use-by')) use.by = b.getAttribute('data-use-by');
+    if (b.hasAttribute('data-use-grp')) { use.grp = b.getAttribute('data-use-grp') === 'true'; use.open = {}; }
+    if (b.hasAttribute('data-use-open')) { var k = b.getAttribute('data-use-open'); use.open[k] = !use.open[k]; }
+    renderUse();
+  });
   async function load() {
     $('ovSub').textContent = 'หน้าแรกของผู้ดูแลระบบ · ข้อมูล ณ ' + formatDateTimeThai(new Date().toISOString());
     var term = await currentAcademicTerm();
@@ -240,7 +293,8 @@
     var t0 = Date.now();
     apiCall('adminSystemInfo', {}).then(function (r) { state.sys = r; state.sysMs = Date.now() - t0; render(); }, function (e) { state.sysErr = e.message; render(); });
     apiCall('adminGalleryRoot', {}).then(function (r) { state.galRoot = r; render(); }, function (e) { state.galRoot = { error: e.message }; render(); });
-    apiCall('adminCloudUsage', {}).then(function (r) { state.cf = r; render(); }, function (e) { state.cf = { configured: true, errors: { workers: e.message, d1: e.message, kv: e.message } }; render(); });
+    loadUse();
+    apiCall('adminCloudUsage', {}).then(function (r) { state.cf = r; render(); renderUse(); }, function (e) { state.cf = { configured: true, errors: { workers: e.message, d1: e.message, kv: e.message } }; render(); });
   }
   if (session) {
     $('ovRefresh').addEventListener('click', async function () { var b = this; b.classList.add('spinning'); state.sys = null; state.cf = null; state.sysErr = ''; state.galRoot = null; try { await load(); } finally { b.classList.remove('spinning'); } });

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.11.0.121126" />
+<link rel="stylesheet" href="assets/style.css?v=2.11.1.121126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -261,9 +261,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.11.0.121126"></script>
+  <script src="assets/api.js?v=2.11.1.121126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=2.11.0.121126"></script>
+  <script src="assets/homeroom.js?v=2.11.1.121126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -329,7 +329,7 @@
           '<div class="hub-ann-m">' + formatDateTimeThai(a.createdAt) + '</div></div></div>';
       }).join('') + (rows.length > ANN_SHOW ? '<button type="button" class="btn btn-ghost btn-sm ann-more" id="annMore">' + (annState.showAll ? '<i class="fa-solid fa-chevron-up"></i> แสดงน้อยลง' : '<i class="fa-solid fa-chevron-down"></i> ดูทั้งหมด (' + rows.length + ')') + '</button>' : '');
     }
-    setTimeout(function () { if (typeof showAnnouncementPopups === 'function') showAnnouncementPopups(); }, 600); // 1.85: ประกาศแบบป็อปอัป
+    if (typeof showAnnouncementPopups === 'function') showAnnouncementPopups(); // 1.85: ประกาศแบบป็อปอัป · 2.11.1: เริ่มโหลดทันที (เดิมหน่วง 0.6 วิ + 0.9 วิ)
     async function loadHubAnnouncements() {
       var card = document.getElementById('annCard');
       var wrap = document.getElementById('hubAnnList');

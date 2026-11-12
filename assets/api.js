@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.11.0';
-var APP_VERSION = '2.11.0.121126';
+var APP_VERSION = '2.11.1.121126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1168,7 +1168,7 @@ function activityDayHtml(e) {
       (e.location ? '<div class="day-ev-meta"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(e.location) + '</div>' : '') +
       (e.ownerGroup ? '<div class="day-ev-meta"><i class="fa-solid ' + (e.ownerType === 'subject' ? 'fa-book' : 'fa-sitemap') + '" aria-hidden="true"></i> ' + escapeHtml(activityOwnerLabel(e)) + '</div>' : '') +
       (e.message ? '<div class="sub-item-desc">' + escapeHtml(e.message) + '</div>' : '') +
-      eventLinksHtml(evLinksOf(e), false) + // 2.00.1: ไฟล์แนบ/ลิงก์ของกิจกรรม
+      eventLinksHtml(evLinksOf(e), false, true) + // 2.00.1: ไฟล์แนบ/ลิงก์ของกิจกรรม (2.11.1: ปุ่มใหญ่)
     '</div></div>';
 }
 // "กิจกรรมที่จะถึง" ใต้ปฏิทิน — กิจกรรมที่ยังไม่จบ ภายใน 60 วัน (รวมที่ทำซ้ำทุกปี)
@@ -1245,14 +1245,40 @@ function previewRounds(r, startDate) {
 }
 function linkHost(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
 // ปุ่มลิงก์แนบของกำหนดการ (withHost = แสดงชื่อเว็บต่อท้าย)
-function eventLinksHtml(links, withHost) {
+// 2.11.1: ปุ่มเด่นขึ้น — ลิงก์เว็บ = น้ำเงิน-ม่วง · โฟลเดอร์ไฟล์แนบ = ส้ม · ไฟล์ตัวอย่าง = เขียว
+//         big = ปุ่มใหญ่เต็มแถว + บรรทัดชื่อเว็บ (ป็อปอัปประกาศ / รายละเอียดกิจกรรม) · ปกติ = ปุ่มแคปซูล
+function eventLinksHtml(links, withHost, big) {
   if (!links || !links.length) return '';
-  return '<div class="ev-lbtns">' + links.map(function (l) {
-    if (l.folder) return '<button type="button" class="ev-lbtn fld" data-sfolder="' + escapeHtml(l.folder) + '"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> ' + (l.more ? 'ไฟล์แนบทั้งหมด ' + l.n + ' ไฟล์' : 'เปิดโฟลเดอร์ไฟล์แนบ') + '</button>'; // 2.02.4
-    if (l.sample) return '<a class="ev-lbtn smp" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(l.name || '') + '"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> ' + escapeHtml(l.label) + '</a>'; // 1.97: ฟอร์ม/ไฟล์ตัวอย่าง
+  function btn(tag, cls, attrs, icon, label, sub) {
+    return '<' + tag + ' class="ev-lbtn' + (cls ? ' ' + cls : '') + '" ' + attrs + '><span class="ev-li"><i class="fa-solid ' + icon + '" aria-hidden="true"></i></span><span class="ev-lt">' + label + (sub ? '<small>' + escapeHtml(sub) + '</small>' : '') + '</span>' +
+      (big || !cls ? '<i class="fa-solid fa-arrow-right ev-la" aria-hidden="true"></i>' : '') + '</' + tag + '>';
+  }
+  return '<div class="ev-lbtns' + (big ? ' big' : '') + '">' + links.map(function (l) {
+    if (l.folder) return btn('button', 'fld', 'type="button" data-sfolder="' + escapeHtml(l.folder) + '"', 'fa-folder-open', l.more ? 'ไฟล์แนบทั้งหมด ' + l.n + ' ไฟล์' : 'เปิดโฟลเดอร์ไฟล์แนบ', big ? 'เปิดโฟลเดอร์ใน Google Drive' : ''); // 2.02.4
+    if (l.sample) return btn('a', 'smp', 'href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(l.name || '') + '"', 'fa-file-arrow-down', escapeHtml(l.label), big ? (l.name || 'ไฟล์ตัวอย่าง / แบบฟอร์ม') : ''); // 1.97: ฟอร์ม/ไฟล์ตัวอย่าง
     var h = linkHost(l.url);
-    return '<a class="ev-lbtn" href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> ' + escapeHtml(l.label || 'เปิดลิงก์') + (withHost && h ? ' <small>' + escapeHtml(h) + '</small>' : '') + '</a>';
+    return btn('a', '', 'href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer"', 'fa-arrow-up-right-from-square', escapeHtml(l.label || 'เปิดลิงก์'), (withHost || big) && h ? h : '');
   }).join('') + '</div>';
+}
+// 2.11.1: ดูรูปเต็มจอ (กดรูปในประกาศ) — คลิกรูป/ปุ่มซูม = สลับพอดีจอ ↔ ขนาดจริง (เลื่อนดูได้) · Esc = ปิด
+function openImageZoom(src, name) {
+  var old = document.getElementById('imgZoomView'); if (old) old.remove();
+  var v = document.createElement('div'); v.id = 'imgZoomView'; v.className = 'imgzv'; v.setAttribute('role', 'dialog'); v.setAttribute('aria-label', 'ดูรูปเต็มจอ');
+  v.innerHTML = '<div class="imgzv-sc"><img src="' + escapeHtml(src) + '" alt="" referrerpolicy="no-referrer"></div><div class="imgzv-tb">' +
+    '<button type="button" data-zv="zoom"><i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i> <span>ซูม</span></button>' +
+    '<a href="' + escapeHtml(src) + '" download="' + escapeHtml(name || 'รูปประกาศ.jpg') + '" target="_blank" rel="noopener"><i class="fa-solid fa-download" aria-hidden="true"></i> ดาวน์โหลด</a>' +
+    '<button type="button" data-zv="close"><i class="fa-solid fa-xmark" aria-hidden="true"></i> ปิด</button></div>';
+  document.body.appendChild(v);
+  function close() { document.removeEventListener('keydown', key, true); v.remove(); }
+  function key(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
+  function zoom() { var on = v.classList.toggle('full'); var z = v.querySelector('[data-zv="zoom"]'); z.innerHTML = '<i class="fa-solid fa-magnifying-glass-' + (on ? 'minus' : 'plus') + '" aria-hidden="true"></i> <span>' + (on ? 'พอดีจอ' : 'ซูม') + '</span>'; }
+  document.addEventListener('keydown', key, true);
+  v.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-zv]');
+    if (b) { if (b.getAttribute('data-zv') === 'close') close(); else zoom(); return; }
+    if (e.target.tagName === 'IMG') { zoom(); return; }
+    if (!e.target.closest('.imgzv-tb')) close();
+  });
 }
 // ---------- 1.87: สร้างไฟล์ Excel (.xlsx) ในเบราว์เซอร์ — ไม่ใช้ไลบรารีภายนอก (zip แบบไม่บีบอัด + XML ของ Office Open XML) ----------
 // header = ['คอลัมน์', ...] · rows = [[ค่า, ...], ...] (ข้อความ/ตัวเลข) · widths = ความกว้างคอลัมน์ (จำนวนตัวอักษร) · title = แถวหัวเรื่องบนสุด (ไม่บังคับ)
@@ -2670,8 +2696,10 @@ var NOTIF_KIND = {
   sup_date: ['fa-chalkboard-user', '#7c3aed'], sup_duty: ['fa-clipboard-check', '#7c3aed'], sup_sat: ['fa-face-smile', '#f59e0b'], sup_pick: ['fa-hand-pointer', '#7c3aed'] /* 2.02.6 เลือกคาบนิเทศ */, care_late: ['fa-user-clock', '#c8102e'] /* 2.03.0 */ // 1.98: นิเทศการสอน · 1.98.4 แบบความพึงพอใจพร้อมทำ
 };
 var _notifCovers = {}; // 1.85.2: รูปปกอัลบั้มในกระดิ่ง
+var _topBadgesLoaded = false; // 2.11.1: ป็อปอัปประกาศรอให้รู้ก่อนว่าจะมีป็อปอัปต้อนรับไหม
 function applyTopBadges(r) {
   if (!r) return;
+  _topBadgesLoaded = true;
   if (r.welcome) openWelcome(); // 1.79: ป็อปอัปต้อนรับครั้งแรกของบัญชี
   var b = document.getElementById('notifBadge');
   if (b && typeof r.notifUnread === 'number') {
@@ -2988,9 +3016,16 @@ async function showAnnouncementPopups() {
     var r = await apiCall('hubAnnouncementPopups', {});
     var list = (r.items || []).filter(function (a) { try { return !sessionStorage.getItem(_annPopShownKey(a.id)); } catch (e) { return true; } });
     if (!list.length) return;
-    // รอป็อปอัปต้อนรับ (ครั้งแรกของบัญชี) ปิดก่อน
-    await new Promise(function (res) { var t0 = Date.now(); (function wait() { if (!_welcomeOpen && !document.getElementById('welcomeModal') && Date.now() - t0 > 900) res(); else setTimeout(wait, 300); })(); });
-    for (var i = 0; i < list.length; i++) await _showAnnPopup(list[i], i, list.length);
+    // 2.11.1: รูปมาเป็นลิงก์ (แคชในเบราว์เซอร์) — เริ่มโหลดรูปทุกประกาศทันที
+    var base = String(typeof API_URL !== 'undefined' ? API_URL : '').replace(/\/+$/, '');
+    list.forEach(function (a) { if (a.imagePath && !a.image) { a.image = base + a.imagePath; a._img = new Image(); a._img.src = a.image; } });
+    // รอป็อปอัปต้อนรับ (ครั้งแรกของบัญชี) ปิดก่อน · 2.11.1: ไม่หน่วงคงที่แล้ว — รอแค่ผลแจ้งเตือน (บอกว่ามีป็อปอัปต้อนรับไหม)
+    await new Promise(function (res) { (function wait() { if (!_welcomeOpen && !document.getElementById('welcomeModal') && (_topBadgesLoaded || !window.performance || performance.now() > 4000)) res(); else setTimeout(wait, 150); })(); });
+    for (var i = 0; i < list.length; i++) {
+      var im = list[i]._img; // รอรูปโหลดเสร็จ (ไม่เกิน 2.5 วิ) ป็อปอัปจะได้ขึ้นพร้อมรูป ไม่กระตุก
+      if (im && !(im.complete && im.naturalWidth)) await new Promise(function (res) { var t = setTimeout(res, 2500); im.onload = im.onerror = function () { clearTimeout(t); res(); }; });
+      await _showAnnPopup(list[i], i, list.length);
+    }
   } catch (e) { /* ไม่มีป็อปอัป / Worker รุ่นเก่า — ข้าม */ }
   finally { _annPopRunning = false; }
 }
@@ -2999,12 +3034,16 @@ function _showAnnPopup(a, i, n) {
     var from = a.department ? groupLabel(a.department) : 'โรงเรียน';
     var el = document.createElement('div');
     el.className = 'modal-backdrop'; el.id = 'annPopupModal'; el.hidden = true;
-    el.innerHTML = '<div class="modal-box annp-box" role="dialog" aria-modal="true" aria-labelledby="annpTitle">' +
+    // 2.11.1: รูปอยู่บน ข้อความ/ปุ่มลิงก์อยู่ล่าง · จอคอม + รูปแนวตั้ง = สองคอลัมน์ (รูปซ้ายสูงพอดีจอ) · กดรูป = ดูเต็มจอ
+    el.innerHTML = '<div class="modal-box annp-box' + (a.image ? ' annp-img' : '') + '" role="dialog" aria-modal="true" aria-labelledby="annpTitle">' +
       '<button type="button" class="modal-close-x" data-annp="close" aria-label="ปิด">✕</button>' +
       '<div class="annp-hd"><small><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ประกาศจาก' + escapeHtml(from) + ' · ' + escapeHtml(formatDateThai(a.createdAt)) + (n > 1 ? '<span class="annp-n">' + (i + 1) + ' / ' + n + '</span>' : '') + '</small><h3 id="annpTitle">' + escapeHtml(a.title) + '</h3></div>' +
-      '<div class="annp-bd">' + (a.message ? escapeHtml(a.message) : '') + (a.image ? '<img src="' + a.image + '" alt="" />' : '') + eventLinksHtml(evLinksOf(a), false) + '</div>' +
+      (a.image ? '<button type="button" class="annp-media" data-annp-zoom title="กดเพื่อดูรูปเต็มจอ"><img src="' + a.image + '" alt="" /><span class="annp-zm"><i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i> กดเพื่อขยาย</span></button>' : '') +
+      '<div class="annp-bd">' + (a.message ? '<div class="annp-msg">' + escapeHtml(a.message) + '</div>' : '') + eventLinksHtml(evLinksOf(a), false, true) + '</div>' +
       '<div class="annp-ft">' + (a.popup === 'until' ? '<label class="annp-ck"><input type="checkbox" id="annpNever" /> ไม่ต้องแสดงประกาศนี้อีก</label>' : '<span></span>') +
       '<button type="button" class="btn btn-success" data-annp="ok">รับทราบ' + (i < n - 1 ? ' <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>' : '') + '</button></div></div>';
+    var im = el.querySelector('.annp-media img');
+    if (im) { var lay = function () { if (im.naturalHeight > im.naturalWidth * 1.05) el.querySelector('.annp-box').classList.add('annp-port'); }; if (im.complete && im.naturalWidth) lay(); else im.addEventListener('load', lay); }
     document.body.appendChild(el);
     function done() {
       var never = !!(el.querySelector('#annpNever') && el.querySelector('#annpNever').checked);
@@ -3013,7 +3052,7 @@ function _showAnnPopup(a, i, n) {
       hideModalEl(el);
       setTimeout(function () { el.remove(); resolve(); }, 260);
     }
-    el.addEventListener('click', function (e) { if (e.target.closest('[data-annp]')) done(); });
+    el.addEventListener('click', function (e) { if (e.target.closest('[data-annp-zoom]')) { openImageZoom(a.image, (a.title || 'ประกาศ') + '.jpg'); return; } if (e.target.closest('[data-annp]')) done(); });
     showModalEl(el);
   });
 }

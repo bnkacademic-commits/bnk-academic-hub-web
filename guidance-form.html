@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.11.0.121126" />
+<link rel="stylesheet" href="assets/style.css?v=2.11.1.121126" />
 <style>
   /* 2.09.0: หน้านักเรียน (ไม่ต้องล็อกอิน · ไม่มีเมนู) — ธีมสว่างเสมอ */
   body.gf { background: #eef1f8; margin: 0; font-family: Sarabun, 'Noto Sans Thai', sans-serif; color: #0f172a; }
@@ -35,6 +35,7 @@
   .gf-add { display: block; width: 100%; border: 2px dashed #a5b4fc; background: #fff; color: #4f46e5; border-radius: 12px; padding: 10px; font: inherit; font-weight: 700; cursor: pointer; }
   .gf-ed { border: 2px solid #4f46e5; border-radius: 12px; padding: 12px; margin: 8px 0; background: #fafaff; } .gf-ed label { display: block; font-weight: 700; font-size: .88rem; margin: 8px 0 3px; }
   .gf-ph { display: flex; gap: 12px; align-items: center; } .gf-ph img, .gf-ph .no { width: 84px; height: 100px; border-radius: 12px; object-fit: cover; background: #e0e7ff; display: flex; align-items: center; justify-content: center; color: #818cf8; font-size: 1.8rem; flex: none; }
+  .gf-why { margin-top: 4px; } .gf-why button { font-size: .84rem; padding: 5px 11px; }
   .gf-ck { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: .92rem; } .gf-ck input { width: 20px; height: 20px; flex: none; margin-top: 2px; }
   .gf-ban { border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: .92rem; } .gf-ban.wait { background: #fef9c3; color: #854d0e; } .gf-ban.ok { background: #dcfce7; color: #166534; } .gf-ban.back { background: #ffedd5; color: #9a3412; }
   .gf-mut { color: #64748b; font-size: .86rem; } .gf-err { color: #b91c1c; text-align: center; margin-top: 8px; min-height: 1em; }
@@ -45,7 +46,7 @@
   <header class="gf-hero"><i class="fa-solid fa-graduation-cap" aria-hidden="true"></i><h1>รายงานผลการศึกษาต่อ ม.6</h1><p id="gfSub">โรงเรียนบุ่งคล้านคร</p></header>
   <main class="gf-main" id="gfMain"><div class="gf-card gf-center">กำลังโหลด…</div></main>
   <input type="file" id="gfFile" accept="image/*" hidden />
-  <script src="assets/api.js?v=2.11.0.121126"></script>
+  <script src="assets/api.js?v=2.11.1.121126"></script>
   <script>
   /* หน้านักเรียน: เลือกห้อง → ชื่อ (พิมพ์แล้วขึ้นชื่อใกล้เคียง) → (รหัสนักเรียน ถ้าเปิด) → กรอก/แก้ข้อมูลของตัวเอง
      ชื่อมหาวิทยาลัย/คณะ/สาขา: แนะนำจากข้อมูลที่ผ่านการตรวจของรุ่นก่อน ๆ (พิมพ์เองได้เสมอ) */
@@ -53,6 +54,7 @@
     var main = document.getElementById('gfMain'), esc = function (s) { return escapeHtml(s == null ? '' : String(s)); };
     var B = null, room = '', names = null, q = '', pick = null, code = '', T = null, me = null, F = null, ed = null, edI = -1;
     var ST = [['study', 'ศึกษาต่อ'], ['wait', 'รอผล'], ['work', 'ไม่ศึกษาต่อ / ทำงาน'], ['other', 'อื่น ๆ']];
+    var WHY = ['ทำงาน', 'ช่วยงานที่บ้าน', 'ปัญหาค่าใช้จ่าย', 'รอสมัครปีหน้า', 'เข้ารับราชการทหาร/ตำรวจ', 'อื่น ๆ']; // 2.11.1: เหตุผลที่ไม่ศึกษาต่อ (แตะเลือกเร็ว)
     var RD = [['1', 'รอบ 1 Portfolio'], ['2', 'รอบ 2 Quota'], ['3', 'รอบ 3 Admission'], ['4', 'รอบ 4 Direct'], ['other', 'รับตรง/อื่น ๆ']];
     var norm = function (s) { return String(s || '').replace(/\s+/g, '').toLowerCase(); };
     function err(m) { var e = document.getElementById('gfErr'); if (e) e.textContent = m || ''; else if (m) showToast(m, true); }
@@ -104,7 +106,8 @@
       var showEnt = F.status === 'study' || F.status === 'wait';
       main.innerHTML = '<div class="gf-card"><div class="gf-sel" style="margin-bottom:10px"><span>' + esc(me.name) + ' · ' + esc(me.room) + ' เลขที่ ' + esc(me.no) + '</span><button type="button" id="gfOut">ไม่ใช่ฉัน</button></div>' + banner() +
         '<div class="gf-step">สถานะ</div><div class="gf-chips">' + ST.map(function (s) { return '<button type="button" data-st="' + s[0] + '" class="' + (F.status === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div>' +
-        (F.status && F.status !== 'study' ? '<input id="gfNote" style="margin-top:8px" maxlength="200" placeholder="' + (F.status === 'work' ? 'เช่น ทำงานที่… / ช่วยงานที่บ้าน' : F.status === 'wait' ? 'เช่น รอผลรอบ 3' : 'รายละเอียด') + '" value="' + esc(F.statusNote) + '">' : '') +
+        (F.status && F.status !== 'study' ? (F.status === 'wait' ? '' : '<div class="gf-step">' + (F.status === 'work' ? 'เหตุผล / สิ่งที่ทำ' : 'รายละเอียด') + ' <span style="color:#dc2626">*</span></div>') + (F.status === 'work' ? '<div class="gf-chips gf-why">' + WHY.map(function (w) { return '<button type="button" data-why="' + esc(w) + '">' + esc(w) + '</button>'; }).join('') + '</div>' : '') +
+          '<input id="gfNote" style="margin-top:8px" maxlength="200" placeholder="' + (F.status === 'work' ? 'แตะเลือกด้านบน หรือพิมพ์เอง เช่น ทำงานที่…' : F.status === 'wait' ? 'เช่น รอผลรอบ 3 (ไม่บังคับ)' : 'เช่น …') + '" value="' + esc(F.statusNote) + '">' : '') +
         (showEnt ? '<div class="gf-step">ที่สอบติด' + (F.status === 'study' ? '' : ' (ถ้ามี)') + ' <span class="gf-mut" style="font-weight:500">เพิ่มได้หลายแห่ง</span></div><div id="gfEnts"></div>' : '') +
         '<div class="gf-step">รูปนักเรียน (1 รูป)</div><div class="gf-ph">' + (F.photo ? '<img src="' + esc(F.photo.src) + '" alt="" referrerpolicy="no-referrer">' : '<span class="no"><i class="fa-solid fa-user"></i></span>') + '<div><p class="gf-mut" style="margin:0 0 6px">รูปหน้าตรง / ชุดนักเรียน</p><button type="button" class="gf-btn gh sm" id="gfPh">' + (F.photo ? 'เปลี่ยนรูป' : 'เลือกรูป') + '</button></div></div>' +
         '<label class="gf-ck"><input type="checkbox" id="gfCon"' + (F.consent ? ' checked' : '') + '> <span>ยินยอมให้โรงเรียนเผยแพร่ชื่อและรูปเพื่อแสดงความยินดี</span></label>' +
@@ -144,6 +147,7 @@
       if (edI !== -1) { err('กด "ตกลง" ที่ช่องที่สอบติดก่อน'); return false; }
       if (!F.status) { err('กรุณาเลือกสถานะ'); return false; }
       if (F.status === 'study' && !F.entries.length) { err('กรุณาเพิ่มที่ที่สอบติดอย่างน้อย 1 แห่ง'); return false; }
+      if ((F.status === 'work' || F.status === 'other') && !String(F.statusNote || '').trim()) { err(F.status === 'work' ? 'กรุณาระบุเหตุผล / สิ่งที่ทำ' : 'กรุณาระบุรายละเอียด'); var nn = document.getElementById('gfNote'); if (nn) nn.focus(); return false; } // 2.11.1
       var b = document.getElementById('gfSave'); if (b) { b.disabled = true; b.textContent = 'กำลังบันทึก…'; } err('');
       try { var d = await apiCall('publicGuideSave', { ticket: T, status: F.status, statusNote: F.statusNote, consent: F.consent, entries: F.status === 'study' || F.status === 'wait' ? F.entries : [] }); setForm(d.mine); renderForm(); if (!silent) showToast('บันทึกแล้ว ✓'); return true; }
       catch (e) { if (b) { b.disabled = false; b.textContent = 'บันทึก'; } err(e.message); return false; }
@@ -184,6 +188,7 @@
       if (t.closest('#gfGo')) { login(); return; }
       if (t.closest('#gfOut')) { T = null; me = null; pick = null; code = ''; renderPick(); return; }
       if ((x = t.closest('[data-st]'))) { sync(); F.status = x.getAttribute('data-st'); renderForm(); return; }
+      if ((x = t.closest('[data-why]'))) { var ni = document.getElementById('gfNote'), w = x.getAttribute('data-why'), cur = ni.value.trim(); ni.value = !cur || WHY.indexOf(cur) !== -1 ? (w === 'อื่น ๆ' ? '' : w) : cur + ' · ' + w; F.statusNote = ni.value; ni.focus(); return; } // 2.11.1
       if (t.closest('#gfAdd')) { sync(); ed = { university: '', faculty: '', major: '', round: '', confirmed: !F.entries.some(function (z) { return z.confirmed; }) && F.status === 'study' }; edI = F.entries.length; paintEnts(); var u = document.querySelector('[data-f="university"]'); if (u) u.focus(); return; }
       if ((x = t.closest('[data-ed]'))) { edI = +x.getAttribute('data-ed'); ed = Object.assign({}, F.entries[edI]); paintEnts(); return; }
       if ((x = t.closest('[data-del]'))) { if (!confirm('ลบที่นี้?')) return; F.entries.splice(+x.getAttribute('data-del'), 1); paintEnts(); return; }

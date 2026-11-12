@@ -6,7 +6,7 @@
   if (!session) return;
   mountChrome('teach'); if (typeof mountFooter === 'function') mountFooter();
   var body = document.getElementById('cbBody'), tabsEl = document.getElementById('cbTabs');
-  var ATT_OK = (session.role === 'admin' && !session.hasHub) || !!session.isSysAdmin; // 2.10.0: การเช็คชื่อประจำสัปดาห์ = Super Admin + แอดมินระบบ
+  var ATT_OK = (session.role === 'admin' && !session.hasHub) || !!session.isSysAdmin || !!session.attView; // 2.10.0: การเช็คชื่อประจำสัปดาห์ = Super Admin + แอดมินระบบ · 2.11.1: + ครูที่ Super Admin ให้สิทธิ์ดู
   var B = null, S = null, st = { sub: '', forUser: '', view: location.hash === '#miss' ? 'miss' : 'slots', page: location.hash === '#leave' ? 'leave' : location.hash === '#week' ? 'week' : location.hash === '#att' && ATT_OK ? 'att' : location.hash === '#interns' ? 'interns' : 'teach', wk: '' };
   // 2.02.0: แท็บ "นักศึกษาฝึกสอน" (ครูพี่เลี้ยง) — แสดงเมื่อมีนักศึกษาในความดูแล
   var MENT = null;
