@@ -13,6 +13,8 @@
   var TST = { todo: ['ยังไม่ส่ง', ''], review: ['รอตรวจ', 'w'], fix: ['ให้แก้ไข', 'r'], pass: ['ผ่าน', 'ok'] };
   function esc(s) { return escapeHtml(s == null ? '' : String(s)); }
   function ic(n) { return '<i class="fa-solid ' + n + '" aria-hidden="true"></i>'; }
+  // 2.12.7: เขียนทับเฉพาะเมื่อเนื้อหาเปลี่ยน (กันกระพริบ)
+  function put(el, html) { if (!el) return; if (el._h === html && el.innerHTML === el._raw) return; el.innerHTML = html; el._h = html; el._raw = el.innerHTML; }
   function err(m) { return '<div class="error-box">' + esc(m) + '</div>'; }
   function thD(ds, short) { var p = String(ds || '').split('-'); if (p.length < 3) return ''; var y = +p[0] + 543; return (+p[2]) + ' ' + MS[+p[1] - 1] + ' ' + (short ? String(y).slice(2) : y); }
   function today() { return (B && B.today) || new Date().toISOString().slice(0, 10); }
@@ -36,7 +38,7 @@
   function renderTabs() {
     var t = [['list', 'fa-user-graduate', 'นักศึกษาฝึกสอน (' + B.list.length + ')']];
     if (B.admin) t.push(['tpl', 'fa-list-check', 'แม่แบบแบบฟอร์ม']);
-    tabsEl.innerHTML = t.length > 1 ? t.map(function (x) { return '<button type="button" data-ip-tab="' + x[0] + '" class="' + (x[0] === st.tab ? 'on' : '') + '">' + ic(x[1]) + ' ' + x[2] + '</button>'; }).join('') : '';
+    put(tabsEl, t.length > 1 ? t.map(function (x) { return '<button type="button" data-ip-tab="' + x[0] + '" class="' + (x[0] === st.tab ? 'on' : '') + '">' + ic(x[1]) + ' ' + x[2] + '</button>'; }).join('') : '');
     if (st.tab === 'tpl') renderTpl(); else if (st.id) openIntern(st.id); else renderList();
   }
   tabsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-ip-tab]'); if (b) { st.tab = b.getAttribute('data-ip-tab'); st.id = ''; renderTabs(); } });
@@ -52,18 +54,24 @@
       esc([x.uni, x.major].filter(Boolean).join(' · ')) + (x.expired ? ' · <span class="ip-red">ครบกำหนดแล้ว</span>' : dl != null ? ' · เหลือ ' + dl + ' วัน' : '') + '</small><div class="ip-ml">' + who + '</div>' + tags + '</span></button>';
   }
   function renderList() {
-    var q = st.q.trim().toLowerCase(), L = B.list.filter(function (x) { return (st.flt === 'all' || (st.flt === 'active' ? !x.expired : x.expired)) && (!q || (x.name + ' ' + x.uni + ' ' + x.major + ' ' + x.mentor.name + ' ' + x.co.map(function (c) { return c.name; }).join(' ')).toLowerCase().indexOf(q) !== -1); });
+    var L = B.list.filter(function (x) { return st.flt === 'all' || (st.flt === 'active' ? !x.expired : x.expired); });
     var nAct = B.list.filter(function (x) { return !x.expired; }).length;
-    body.innerHTML = '<div class="card">' + (B.sqlReady ? '' : '<div class="error-box">บันทึกการสังเกต/นิเทศยังใช้ไม่ได้ — ผู้ดูแลระบบต้องรัน SQL ชุดที่สี่สิบสามก่อน</div>') +
+    put(body, '<div class="card">' + (B.sqlReady ? '' : '<div class="error-box">บันทึกการสังเกต/นิเทศยังใช้ไม่ได้ — ผู้ดูแลระบบต้องรัน SQL ชุดที่สี่สิบสามก่อน</div>') +
       '<div class="ip-bar"><h3>นักศึกษาฝึกสอน ' + nAct + ' คน <span class="ip-mut">กำลังฝึก' + (B.exec ? ' · ดูได้อย่างเดียว' : '') + '</span></h3><input type="search" id="ipQ" placeholder="ค้นหา" value="' + esc(st.q) + '"><select id="ipFlt">' + [['active', 'กำลังฝึก'], ['expired', 'ครบกำหนดแล้ว'], ['all', 'ทั้งหมด']].map(function (o) { return '<option value="' + o[0] + '"' + (st.flt === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
-      (L.length ? '<div class="ip-cards">' + L.map(card).join('') + '</div>' : '<p class="ip-mut" style="text-align:center;padding:24px">' + (B.list.length ? 'ไม่พบรายชื่อตามที่เลือก' : 'ยังไม่มีนักศึกษาฝึกสอน — Super Admin เพิ่มบัญชีได้ที่หน้าตั้งค่า › บัญชีผู้ใช้') + '</p>') +
-      (B.superAdmin ? '<div class="ip-rows" style="margin-top:14px"><div><span>เมนู "นักศึกษาฝึกสอน"<small>อัตโนมัติ = แสดงเฉพาะช่วงที่มีนักศึกษาฝึกสอนอยู่ในช่วงฝึก (ปีที่ไม่มีจะซ่อนเอง)</small></span><select id="ipNav">' + [['auto', 'อัตโนมัติ'], ['on', 'แสดงเสมอ'], ['off', 'ปิด']].map(function (o) { return '<option value="' + o[0] + '"' + (B.nav === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div></div>' : '') + '</div>';
+      (L.length ? '<div class="ip-cards">' + L.map(card).join('') + '</div>' : '') + '<p class="ip-mut" id="ipNone" style="text-align:center;padding:24px"' + (L.length ? ' hidden' : '') + '>' + (B.list.length ? 'ไม่พบรายชื่อตามที่เลือก' : 'ยังไม่มีนักศึกษาฝึกสอน — Super Admin เพิ่มบัญชีได้ที่หน้าตั้งค่า › บัญชีผู้ใช้') + '</p>' +
+      (B.superAdmin ? '<div class="ip-rows" style="margin-top:14px"><div><span>เมนู "นักศึกษาฝึกสอน"<small>อัตโนมัติ = แสดงเฉพาะช่วงที่มีนักศึกษาฝึกสอนอยู่ในช่วงฝึก (ปีที่ไม่มีจะซ่อนเอง)</small></span><select id="ipNav">' + [['auto', 'อัตโนมัติ'], ['on', 'แสดงเสมอ'], ['off', 'ปิด']].map(function (o) { return '<option value="' + o[0] + '"' + (B.nav === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div></div>' : '') + '</div>');
+    filterList();
   }
-  body.addEventListener('input', function (e) { if (e.target.id === 'ipQ') { st.q = e.target.value; var p = e.target.selectionStart; renderList(); var i = document.getElementById('ipQ'); i.focus(); try { i.setSelectionRange(p, p); } catch (x) { /* ข้าม */ } } });
+  function filterList() {
+    var q = st.q.trim().toLowerCase(), n = 0;
+    body.querySelectorAll('.ip-card').forEach(function (c) { var x = B.list.filter(function (y) { return y.id === c.getAttribute('data-ip-open'); })[0], on = !q || !x || (x.name + ' ' + x.uni + ' ' + x.major + ' ' + x.mentor.name + ' ' + x.co.map(function (k) { return k.name; }).join(' ')).toLowerCase().indexOf(q) !== -1; c.hidden = !on; if (on) n++; });
+    var e = document.getElementById('ipNone'); if (e) e.hidden = !!n;
+  }
+  body.addEventListener('input', function (e) { if (e.target.id === 'ipQ') { st.q = e.target.value; filterList(); } });
 
   // ---------- รายคน ----------
   async function openIntern(id, keepSub) {
-    st.id = id; if (!keepSub) st.sub = 'info'; H = null;
+    if (st.id !== id || !keepSub) H = null; st.id = id; if (!keepSub) st.sub = 'info';
     try { history.replaceState(null, '', '#i=' + id); } catch (x) { /* ข้าม */ }
     if (!D || D.intern.id !== id) body.innerHTML = '<div class="card"><div class="loading">กำลังโหลด...</div></div>';
     try { D = await apiCall('internDetail', { id: id }); } catch (e) { body.innerHTML = '<div class="card"><button type="button" class="ip-back" data-ip-back>' + ic('fa-arrow-left') + ' กลับ</button>' + err(e.message) + '</div>'; return; }
@@ -73,11 +81,12 @@
   function renderDetail() {
     var I = D.intern, nObs = obsOf('obs').length, nSup = obsOf('sup').length;
     var subs = [['info', 'ข้อมูล / ตั้งค่า'], ['task', 'งาน (' + D.tasks.length + ')'], ['obs', 'สังเกตการสอน (' + nObs + ')'], ['sup', 'นิเทศ (' + nSup + ')'], ['hours', 'ชั่วโมงสอน']];
-    body.innerHTML = '<div class="card"><button type="button" class="ip-back" data-ip-back>' + ic('fa-arrow-left') + ' นักศึกษาฝึกสอนทั้งหมด</button>' +
-      '<div class="ip-head">' + av(I.avatarUrl, true) + '<div class="ip-hm"><h2>' + esc(I.name) + '</h2><small>' + esc([I.uni, I.major].filter(Boolean).join(' · ')) + (I.from || I.until ? ' · ' + thD(I.from) + ' – ' + thD(I.until) : '') + (I.expired ? ' · <span class="ip-red">ครบกำหนดแล้ว</span>' : '') + '</small>' +
+    var head = '<div class="ip-head">' + av(I.avatarUrl, true) + '<div class="ip-hm"><h2>' + esc(I.name) + '</h2><small>' + esc([I.uni, I.major].filter(Boolean).join(' · ')) + (I.from || I.until ? ' · ' + thD(I.from) + ' – ' + thD(I.until) : '') + (I.expired ? ' · <span class="ip-red">ครบกำหนดแล้ว</span>' : '') + '</small>' +
       '<div>' + (D.role === 'exec' ? tg('ดูได้อย่างเดียว') : D.role === 'co' ? tg('คุณเป็นครูพี่เลี้ยงร่วม', 'c') : D.role === 'primary' ? tg('คุณเป็นครูพี่เลี้ยงหลัก', 'p') : '') + '</div></div>' +
-      '<button type="button" class="btn btn-primary" data-ip-pdf>' + ic('fa-file-pdf') + ' รายงาน PDF</button></div>' +
-      '<div class="ip-sub">' + subs.map(function (x) { return '<button type="button" data-ip-sub="' + x[0] + '" class="' + (st.sub === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div><div id="ipSubBody"></div></div>';
+      '<button type="button" class="btn btn-primary" data-ip-pdf>' + ic('fa-file-pdf') + ' รายงาน PDF</button></div>', tabs = subs.map(function (x) { return '<button type="button" data-ip-sub="' + x[0] + '" class="' + (st.sub === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('');
+    var box = document.getElementById('ipDet');
+    if (box && box.getAttribute('data-id') === I.id) { put(document.getElementById('ipHeadBox'), head); put(document.getElementById('ipSubs'), tabs); }
+    else { body.innerHTML = '<div class="card" id="ipDet" data-id="' + esc(I.id) + '"><button type="button" class="ip-back" data-ip-back>' + ic('fa-arrow-left') + ' นักศึกษาฝึกสอนทั้งหมด</button><div id="ipHeadBox"></div><div class="ip-sub" id="ipSubs"></div><div id="ipSubBody"></div></div>'; put(document.getElementById('ipHeadBox'), head); put(document.getElementById('ipSubs'), tabs); body._h = null; }
     ({ info: renderInfo, task: renderTasks, obs: renderObs, sup: renderObs, hours: renderHours })[st.sub]();
   }
   function sb() { return document.getElementById('ipSubBody'); }
@@ -104,7 +113,7 @@
           (m.subjects.map(function (s) { return '<label class="ip-opt"><input type="checkbox" data-ip-subj="' + esc(s.id) + '" data-m="' + esc(m.id) + '"' + (s.on ? ' checked' : '') + (ed ? '' : ' disabled') + '><span>' + esc((s.code ? s.code + ' ' : '') + s.name) + ' · ' + esc(s.room) + '<small>' + s.periods + ' คาบ/สัปดาห์</small></span></label>'; }).join('') || '<div class="ip-mut">ไม่มีวิชาในภาคเรียนนี้</div>') +
           (m.club ? '<label class="ip-opt"><input type="checkbox" data-ip-club="' + esc(m.id) + '"' + (m.club.on ? ' checked' : '') + (ed ? '' : ' disabled') + '><span>ชุมนุม ' + esc(m.club.name) + '<small>เป็นครูร่วมของชุมนุม</small></span></label>' : '');
       }).join('') + '</div>';
-    sb().innerHTML = '<div class="ip-grid2">' + left + right + '</div>';
+    put(sb(), '<div class="ip-grid2">' + left + right + '</div>');
   }
   async function act(action, payload, okMsg) {
     try { await apiCall(action, payload); showToast(okMsg || 'บันทึกแล้ว'); } catch (e) { showToast(e.message, true); }
@@ -114,8 +123,8 @@
   // งาน
   function renderTasks() {
     var T = D.tasks;
-    sb().innerHTML = '<div class="ip-bar"><span class="ip-mut" style="flex:1">งานที่ครูพี่เลี้ยงมอบหมาย · ครูพี่เลี้ยงทุกคนตรวจได้</span>' + (canE() && !D.intern.expired ? '<button type="button" class="btn btn-primary" data-ip-tnew>' + ic('fa-plus') + ' มอบหมายงาน</button>' : '') + '</div>' +
-      (T.map(function (t) { var s = TST[t.status] || TST.todo; return '<button type="button" class="ip-item" data-ip-task="' + esc(t.id) + '"><span class="ip-im"><b>' + esc(t.title) + '</b><small>โดย ' + esc(t.mentorName) + (t.due ? ' · กำหนดส่ง ' + thD(t.due) : '') + (t.files.length ? ' · ไฟล์ ' + t.files.length : '') + '</small></span>' + tg(s[0], s[1]) + '</button>'; }).join('') || '<p class="ip-mut">ยังไม่มีงาน</p>');
+    put(sb(), '<div class="ip-bar"><span class="ip-mut" style="flex:1">งานที่ครูพี่เลี้ยงมอบหมาย · ครูพี่เลี้ยงทุกคนตรวจได้</span>' + (canE() && !D.intern.expired ? '<button type="button" class="btn btn-primary" data-ip-tnew>' + ic('fa-plus') + ' มอบหมายงาน</button>' : '') + '</div>' +
+      (T.map(function (t) { var s = TST[t.status] || TST.todo; return '<button type="button" class="ip-item" data-ip-task="' + esc(t.id) + '"><span class="ip-im"><b>' + esc(t.title) + '</b><small>โดย ' + esc(t.mentorName) + (t.due ? ' · กำหนดส่ง ' + thD(t.due) : '') + (t.files.length ? ' · ไฟล์ ' + t.files.length : '') + '</small></span>' + tg(s[0], s[1]) + '</button>'; }).join('') || '<p class="ip-mut">ยังไม่มีงาน</p>'));
   }
   function openTaskForm(t) {
     openModal(t ? 'แก้ไขงาน' : 'มอบหมายงานให้ ' + esc(D.intern.name), '<div class="ip-fm"><label>ชื่องาน<input id="ipTT" maxlength="200" value="' + esc(t ? t.title : '') + '"></label><label>รายละเอียด<textarea id="ipTD" rows="4" maxlength="3000">' + esc(t ? t.detail : '') + '</textarea></label><label>กำหนดส่ง<input type="date" id="ipTDue" value="' + esc(t ? t.due : '') + '"></label></div><div class="error-box" id="ipErr" hidden></div>',
@@ -163,7 +172,7 @@
         return '<div class="ip-dr"><span>' + esc(s.title) + '</span><div>' + same.map(function (o) { var v = secAvg(o, s); return '<i style="height:' + (v ? Math.round(v / (tpl.scale || 5) * 100) : 0) + '%" title="' + thD(o.date) + '">' + (v ? '<em>' + v.toFixed(1) + '</em>' : '') + '</i>'; }).join('') + '</div></div>';
       }).join('') + '</div>';
     }
-    sb().innerHTML = html;
+    put(sb(), html);
   }
   function shrink(file) {
     return new Promise(function (res, rej) {
@@ -241,12 +250,12 @@
     if (!H.linked) { box.innerHTML = '<p class="ip-mut">ยังไม่ได้เชื่อมกับเว็บเช็คชื่อ</p>'; return; }
     var reg = H.subjects.filter(function (s) { return !s.club; }), club = H.subjects.filter(function (s) { return s.club; }), nClub = club.reduce(function (a, s) { return a + s.n; }, 0);
     var mx = Math.max.apply(null, H.weeks.map(function (w) { return w.n; }).concat([1]));
-    box.innerHTML = '<div class="ip-bar"><span class="ip-mut" style="flex:1">นับคาบที่นักศึกษาเป็นคนเช็คชื่อในเว็บเช็คชื่อ · ' + thD(H.from) + ' – ' + thD(H.until) + '</span><button type="button" class="btn btn-secondary btn-sm" data-ip-hxls>' + ic('fa-file-excel') + ' Excel</button></div>' +
+    put(box, '<div class="ip-bar"><span class="ip-mut" style="flex:1">นับคาบที่นักศึกษาเป็นคนเช็คชื่อในเว็บเช็คชื่อ · ' + thD(H.from) + ' – ' + thD(H.until) + '</span><button type="button" class="btn btn-secondary btn-sm" data-ip-hxls>' + ic('fa-file-excel') + ' Excel</button></div>' +
       '<table class="ip-t"><thead><tr><th>วิชา</th><th>ห้อง</th><th>ครูประจำวิชา</th><th style="text-align:right">คาบ</th></tr></thead><tbody>' +
       (reg.map(function (s) { return '<tr><td>' + esc((s.code ? s.code + ' ' : '') + s.name) + '</td><td>' + esc(s.room) + '</td><td>' + esc(s.teacher) + '</td><td class="n">' + s.n + ' คาบ</td></tr>'; }).join('') + (nClub ? '<tr><td>ชุมนุม</td><td></td><td></td><td class="n">' + nClub + ' ครั้ง</td></tr>' : '') || '<tr><td colspan="4" class="ip-mut">ยังไม่มีคาบที่นักศึกษาเช็คชื่อ</td></tr>') +
       '</tbody><tfoot><tr><td colspan="3">รวม</td><td class="n">' + H.total + ' คาบ · ≈ ' + (H.total * 50 / 60).toFixed(1) + ' ชม.</td></tr></tfoot></table>' +
       (H.weeks.length ? '<div class="ip-mh" style="margin-top:14px">รายสัปดาห์</div><div class="ip-wk">' + H.weeks.map(function (w) { return '<div><i style="height:' + Math.round(w.n / mx * 100) + '%"><em>' + w.n + '</em></i>' + thD(w.monday, true).replace(/ \d+$/, '') + '</div>'; }).join('') + '</div>' : '') +
-      '<p class="ip-mut" style="margin-top:8px">คิดชั่วโมง 1 คาบ = 50 นาที</p>';
+      '<p class="ip-mut" style="margin-top:8px">คิดชั่วโมง 1 คาบ = 50 นาที</p>');
   }
 
   // ---------- แม่แบบแบบฟอร์ม (แอดมิน) ----------
@@ -338,7 +347,7 @@
     var b;
     if (st.tab === 'tpl') { teClick(e); return; }
     if ((b = e.target.closest('[data-ip-open]'))) { openIntern(b.getAttribute('data-ip-open')); return; }
-    if (e.target.closest('[data-ip-back]')) { st.id = ''; D = null; try { history.replaceState(null, '', location.pathname); } catch (x) { /* ข้าม */ } boot(); return; }
+    if (e.target.closest('[data-ip-back]')) { st.id = ''; D = null; try { history.replaceState(null, '', location.pathname); } catch (x) { /* ข้าม */ } if (B) renderTabs(); boot(); return; }
     if ((b = e.target.closest('[data-ip-sub]'))) { st.sub = b.getAttribute('data-ip-sub'); renderDetail(); return; }
     if (e.target.closest('[data-ip-pdf]')) { pdfReport(); return; }
     if ((b = e.target.closest('[data-ip-corm]'))) { var id = b.getAttribute('data-ip-corm'); act('internSetInfo', { id: D.intern.id, co: D.intern.co.map(function (c) { return c.id; }).filter(function (x) { return x !== id; }) }, 'เอาออกแล้ว'); return; }

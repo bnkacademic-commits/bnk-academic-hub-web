@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.12.6.131126" />
+<link rel="stylesheet" href="assets/style.css?v=2.12.7.131126" />
 <style>
   /* 2.09.0: หน้านักเรียน (ไม่ต้องล็อกอิน · ไม่มีเมนู) — ธีมสว่างเสมอ */
   body.gf { background: #eef1f8; margin: 0; font-family: Sarabun, 'Noto Sans Thai', sans-serif; color: #0f172a; }
@@ -56,6 +56,7 @@
   .pc-main.w { border-color: #fde68a; background: #fffbeb; } .pc-main.w .k { color: #b45309; } .pc-main.o { border-color: #e2e8f0; background: #f8fafc; } .pc-main.o .k { color: #475569; }
   .pc-oth { text-align: left; margin-top: 10px; } .pc-oth .k { font-size: .8rem; font-weight: 800; color: #64748b; margin-bottom: 4px; } .pc-oth > div:not(.k) { font-size: .9rem; padding: 6px 0; border-bottom: 1px dashed #e2e8f0; } .pc-oth > div:last-child { border: 0; } .pc-oth small { color: #64748b; }
   .pc-st { border-radius: 12px; padding: 9px 12px; margin-top: 12px; font-weight: 700; font-size: .92rem; } .pc-st.wait { background: #fef9c3; color: #854d0e; } .pc-st.ok { background: #dcfce7; color: #166534; } .pc-st.back { background: #ffedd5; color: #9a3412; text-align: left; font-weight: 500; }
+  .gf-phn { margin: 0 0 6px; font-size: .84rem; font-weight: 700; color: #b45309; } .gf-phn.ok { color: #15803d; } .gf-phn.bad { color: #b91c1c; } .pc-phc { margin: 10px 0 0; text-align: center; } .pc-phc .gf-phn { text-align: center; }
   .pc-ed { display: block; width: 100%; border: 0; border-radius: 12px; padding: 12px; font: inherit; font-weight: 800; font-size: 1rem; background: #eef2ff; color: #4338ca; margin-top: 10px; cursor: pointer; } .pc-ed[disabled] { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
   .pc-note { font-size: .82rem; color: #64748b; margin-top: 6px; }
   .gf-center { text-align: center; padding: 26px 12px; } .gf-center i { font-size: 2rem; color: #a5b4fc; }
@@ -66,7 +67,7 @@
   <main class="gf-main" id="gfMain"><div class="gf-card gf-center">กำลังโหลด…</div></main>
   <input type="file" id="gfFile" accept="image/*" hidden />
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.12.6.131126"></script>
+  <script src="assets/api.js?v=2.12.7.131126"></script>
   <script>
   try { mountFooter({ compact: true }); } catch (e) { /* ข้าม */ } // 2.12.3: footer แบบย่อ (เหมือนหน้าล็อกอิน)
   /* หน้านักเรียน: เลือกห้อง → ชื่อ (พิมพ์แล้วขึ้นชื่อใกล้เคียง) → (รหัสนักเรียน ถ้าเปิด) → กรอก/แก้ข้อมูลของตัวเอง
@@ -136,12 +137,21 @@
     function subOf(e) { return [e.faculty, e.major, rdLabel(e)].filter(Boolean).map(esc).join(' · '); }
     function setForm(m) {
       LAST = m;
-      F = m ? { status: m.status === 'wait' ? 'study' : m.status, statusNote: m.statusNote || '', consent: !!m.consent, entries: (m.entries || []).map(function (e) { return { kind: kindOf(e), university: e.university, faculty: e.faculty, major: e.major, round: e.round, confirmed: e.confirmed }; }), photo: m.photo, review: m.review, reviewNote: m.reviewNote, reviewedAt: m.reviewedAt || '', saved: true } : { status: '', statusNote: '', consent: false, entries: [], photo: null, review: '', saved: false };
+      F = m ? { status: m.status === 'wait' ? 'study' : m.status, statusNote: m.statusNote || '', consent: !!m.consent, entries: (m.entries || []).map(function (e) { return { kind: kindOf(e), university: e.university, faculty: e.faculty, major: e.major, round: e.round, confirmed: e.confirmed }; }), photo: m.photo, ps: m.photoSt || {}, review: m.review, reviewNote: m.reviewNote, reviewedAt: m.reviewedAt || '', saved: true } : { status: '', statusNote: '', consent: false, entries: [], photo: null, ps: {}, review: '', saved: false };
       var ci = -1; F.entries.forEach(function (e, i) { if (e.confirmed) ci = i; });
       F.choice = F.status === 'study' ? (ci !== -1 ? ci : (F.saved ? 'wait' : '')) : '';
       ed = null; edI = -1; mode = F.saved && F.status ? 'card' : 'form'; snap();
     }
-    function locked() { return !!(B.review && F.review === 'ok' && F.reviewedAt); }
+    // 2.12.7: รูปที่ส่งแล้วเปลี่ยนเองไม่ได้ — ขอเปลี่ยน → ครูอนุมัติ · ครูลบรูป = ให้อัปใหม่
+    function phCtl() {
+      var ps = F.ps || {};
+      if (!F.photo) return (ps.rej ? '<p class="gf-phn bad"><i class="fa-solid fa-triangle-exclamation"></i> ครูแนะแนวลบรูปเดิม (ไม่ผ่าน) — กรุณาอัปรูปใหม่</p>' : '') + '<button type="button" class="gf-btn gh sm" data-gf-ph>' + (ps.rej ? 'อัปรูปใหม่' : 'เลือกรูป') + '</button>';
+      if (ps.unlock) return '<p class="gf-phn ok"><i class="fa-solid fa-circle-check"></i> ครูอนุมัติให้เปลี่ยนรูปแล้ว</p><button type="button" class="gf-btn gh sm" data-gf-ph>เปลี่ยนรูป</button>';
+      if (ps.req) return '<p class="gf-phn"><i class="fa-solid fa-hourglass-half"></i> ขอเปลี่ยนรูปแล้ว — รอครูแนะแนวอนุมัติ</p><button type="button" class="gf-lnk" data-gf-phreq="cancel">ยกเลิกคำขอ</button>';
+      return '<button type="button" class="gf-btn gh sm" data-gf-phreq="req"><i class="fa-solid fa-hand"></i> ขอเปลี่ยนรูป</button>';
+    }
+    function waitRes() { return F.status === 'study' && !F.entries.some(function (e) { return e.confirmed; }); } // 2.12.7: รอผล = อัปเดตผลได้แม้ครูตรวจแล้ว
+    function locked() { return !!(B.review && F.review === 'ok' && F.reviewedAt) && !waitRes(); }
     function thD(iso) { var d = new Date(iso); if (!iso || isNaN(d)) return ''; return d.getDate() + ' ' + ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][d.getMonth()] + ' ' + (d.getFullYear() + 543); }
     function show() { if (mode === 'card') renderCard(); else renderForm(); }
     function who() { return '<div class="gf-sel" style="margin-bottom:10px"><span>' + esc(me.name) + ' · ' + esc(me.room) + ' เลขที่ ' + esc(me.no) + '</span><button type="button" id="gfOut">ไม่ใช่ฉัน</button></div>'; }
@@ -157,8 +167,8 @@
         (F.photo ? '<img class="pc-av" src="' + esc(F.photo.src.replace('sz=w400', 'sz=w600')) + '" alt="" referrerpolicy="no-referrer">' : '<span class="pc-av no"><i class="fa-solid fa-user-graduate"></i></span>') +
         '<div class="pc-b"><h2>' + esc(me.name) + '</h2><div class="rm">' + esc(me.room) + ' เลขที่ ' + esc(me.no) + '</div>' + mainBox +
         (oth.length ? '<div class="pc-oth"><div class="k">' + (cf ? 'สถาบันอื่นที่มีสิทธิ์เข้าศึกษาต่อ' : 'สถาบันที่มีสิทธิ์เข้าศึกษาต่อ') + '</div>' + oth.map(function (e) { return '<div>' + tagOf(e) + ' ' + esc(e.university) + '<br><small>' + subOf(e) + '</small></div>'; }).join('') + '</div>' : '') +
-        stLine + '<button type="button" class="pc-ed" id="gfEdit"' + (lk ? ' disabled' : '') + '>' + (lk ? '<i class="fa-solid fa-lock"></i> แก้ไขไม่ได้ — ครูตรวจแล้ว' : '<i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูล') + '</button>' +
-        '<div class="pc-note">' + (lk ? 'ถ้าต้องแก้ไข ติดต่อครูแนะแนว' : B.review ? 'แก้ได้จนกว่าครูจะตรวจ' : 'แก้ได้ตลอดช่วงที่เปิดรับข้อมูล') + '</div>' +
+        '<div class="pc-phc">' + phCtl() + '</div>' + stLine + '<button type="button" class="pc-ed" id="gfEdit"' + (lk ? ' disabled' : '') + '>' + (lk ? '<i class="fa-solid fa-lock"></i> แก้ไขไม่ได้ — ครูตรวจแล้ว' : B.review && F.review === 'ok' && F.reviewedAt ? '<i class="fa-solid fa-arrows-rotate"></i> อัปเดตผล — เพิ่มสถาบัน / ยืนยันสิทธิ์' : '<i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูล') + '</button>' +
+        '<div class="pc-note">' + (lk ? 'ถ้าต้องแก้ไข ติดต่อครูแนะแนว' : B.review && F.review === 'ok' && F.reviewedAt ? 'สอบติด / ตัดสินใจเลือกที่เรียนแล้ว อัปเดตได้เลย — ครูจะตรวจอีกครั้ง' : B.review ? 'แก้ได้จนกว่าครูจะตรวจ' : 'แก้ได้ตลอดช่วงที่เปิดรับข้อมูล') + '</div>' +
         '<div class="pc-note">' + (F.consent ? '<i class="fa-solid fa-check"></i> ยินยอมให้โรงเรียนเผยแพร่ชื่อและรูป' : 'ไม่ยินยอมเผยแพร่') + ' · <button type="button" class="gf-lnk" id="gfOut">ไม่ใช่ฉัน</button></div></div></div>';
     }
     function banner() {
@@ -172,7 +182,7 @@
       if (F.status === 'work' || F.status === 'other') h += step(F.status === 'work' ? 'เหตุผล / สิ่งที่ทำ' : 'รายละเอียด', true) + (F.status === 'work' ? '<div class="gf-chips gf-why">' + WHY.map(function (w) { return '<button type="button" data-why="' + esc(w) + '">' + esc(w) + '</button>'; }).join('') + '</div>' : '') +
         '<input id="gfNote" style="margin-top:8px" maxlength="200" placeholder="' + (F.status === 'work' ? 'แตะเลือกด้านบน หรือพิมพ์เอง เช่น ทำงานที่…' : 'เช่น …') + '" value="' + esc(F.statusNote) + '">';
       if (F.status === 'study') h += step('สถาบันที่สมัคร / สอบติด') + '<p class="gf-mut" style="margin:-2px 0 4px">เพิ่มได้หลายแห่ง (มหาวิทยาลัย / สถาบัน · สายอาชีพ)</p><div id="gfEnts"></div>' + step('ยืนยันสิทธิ์', true) + '<div id="gfChoice"></div>';
-      h += step('รูปนักเรียน (1 รูป)') + '<div class="gf-ph">' + (F.photo ? '<img src="' + esc(F.photo.src) + '" alt="" referrerpolicy="no-referrer">' : '<span class="no"><i class="fa-solid fa-user"></i></span>') + '<div><p class="gf-mut" style="margin:0 0 6px">รูปหน้าตรง / ชุดนักเรียน</p><button type="button" class="gf-btn gh sm" id="gfPh">' + (F.photo ? 'เปลี่ยนรูป' : 'เลือกรูป') + '</button></div></div>' +
+      h += step('รูปนักเรียน (1 รูป)') + '<div class="gf-ph">' + (F.photo ? '<img src="' + esc(F.photo.src) + '" alt="" referrerpolicy="no-referrer">' : '<span class="no"><i class="fa-solid fa-user"></i></span>') + '<div><p class="gf-mut" style="margin:0 0 6px">รูปหน้าตรง / ชุดนักเรียน' + (F.photo ? '' : ' · ส่งแล้วเปลี่ยนเองไม่ได้ (ขอครูเปลี่ยนได้)') + '</p>' + phCtl() + '</div></div>' +
         '<label class="gf-ck"><input type="checkbox" id="gfCon"' + (F.consent ? ' checked' : '') + '> <span>ยินยอมให้โรงเรียนเผยแพร่ชื่อและรูปเพื่อแสดงความยินดี</span></label>' +
         '<button class="gf-btn" id="gfSave">บันทึก</button>' + (F.saved ? '<button class="gf-btn gh" id="gfCancel">ยกเลิกการแก้ไข</button>' : '') + '<div class="gf-err" id="gfErr"></div></div>';
       main.innerHTML = h;
@@ -247,8 +257,13 @@
         var res = await sendPreparedFileProgress(prep, jf, p, 10, 92, 'กำลังอัปโหลดรูป', { filename: prep.uploadFileName, mimeType: 'image/jpeg' });
         return apiCall('publicGuidePhotoFinalize', { ticket: T, pid: prep.pid, fileId: res.fileId, fileUrl: res.url });
       }, { successLabel: 'อัปโหลดรูปแล้ว', upload: true });
-      if (r.ok) { var m = r.data.mine; if (LAST) LAST.photo = m.photo; else LAST = m; F.photo = m.photo; F.review = m.review; F.reviewedAt = m.reviewedAt || ''; F.saved = true; sync(); show(); } // 2.12.0: เก็บสิ่งที่กำลังแก้ไว้ (ไม่ทับฟอร์ม)
+      if (r.ok) { var m = r.data.mine; if (LAST) LAST.photo = m.photo; else LAST = m; F.photo = m.photo; F.ps = m.photoSt || {}; F.review = m.review; F.reviewedAt = m.reviewedAt || ''; F.saved = true; sync(); show(); } // 2.12.0: เก็บสิ่งที่กำลังแก้ไว้ (ไม่ทับฟอร์ม)
     });
+    async function phReq(op) {
+      if (op === 'req' && !(await askConfirm('ส่งคำขอเปลี่ยนรูปให้ครูแนะแนว? เมื่อครูอนุมัติแล้วจะเปลี่ยนรูปได้', 'ขอเปลี่ยนรูป'))) return;
+      var r = await withProgress(op === 'req' ? 'กำลังส่งคำขอ' : 'กำลังยกเลิก', function () { return apiCall('publicGuidePhotoRequest', { ticket: T, op: op }); }, { successLabel: op === 'req' ? 'ส่งคำขอแล้ว' : 'ยกเลิกแล้ว' });
+      if (r.ok) { var m = r.data.mine; if (LAST) LAST.photoSt = m.photoSt; F.ps = m.photoSt || {}; if (mode === 'form') renderForm(); else show(); }
+    }
     main.addEventListener('change', function (e) {
       if (e.target.id === 'gfRoom') { room = e.target.value; q = ''; if (room) loadRoom(); else { names = null; pick = null; paintName(); paintGo(); } }
     });
@@ -283,7 +298,8 @@
         if (edI >= F.entries.length) F.entries.push(ed); else F.entries[edI] = ed;
         ed = null; edI = -1; paintEnts(); return;
       }
-      if (t.closest('#gfPh')) { document.getElementById('gfFile').click(); return; }
+      if (t.closest('[data-gf-ph]')) { document.getElementById('gfFile').click(); return; }
+      if ((x = t.closest('[data-gf-phreq]'))) { phReq(x.getAttribute('data-gf-phreq')); return; }
       if (t.closest('#gfSave')) { save(); return; }
     });
     start();
