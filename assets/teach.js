@@ -224,8 +224,9 @@
   function occs() {
     if (_occ && _occ.s === S) return _occ.list;
     var rows = {}; (S.rows || []).forEach(function (r) { rows[r.date + '|' + r.period] = r; });
-    var subOnly = B.subjects.filter(function (x) { return x.id === S.subject.id; })[0], allowed = null;
-    if (subOnly && subOnly.substituteOnly) { allowed = {}; (B.subs || []).forEach(function (x) { if (x.subjectId === S.subject.id) allowed[x.date + '|' + x.period] = 1; }); }
+    var sid = S.subject ? S.subject.id : ''; // 2.13.0: กันข้อมูลวิชายังไม่มา
+    var subOnly = B.subjects.filter(function (x) { return x.id === sid; })[0], allowed = null;
+    if (subOnly && subOnly.substituteOnly) { allowed = {}; (B.subs || []).forEach(function (x) { if (x.subjectId === sid) allowed[x.date + '|' + x.period] = 1; }); }
     var W = S.window || { from: S.termStart }, list = buildOccs(S.subject, function (k) { return rows[k] || null; }, S.holidays, S.blocks, W.from, lastDay(W, S.today), allowed, S.leaves);
     _occ = { s: S, list: list }; return list;
   }

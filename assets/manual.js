@@ -306,7 +306,7 @@ MANUAL_TOPICS.push({
   ],
   tips: ['ติ๊ก "เข้าสู่ระบบอัตโนมัติ" ตอนเข้าสู่ระบบ = จดจำเครื่อง 7 วัน · ไม่ติ๊ก = ออกเองเมื่อไม่ได้ใช้งาน 60 นาที', 'เปลี่ยนรหัสผ่านแล้ว เครื่องอื่นทั้งหมดออกจากระบบอัตโนมัติ', 'มือถือหาย / ลืมออกจากคอมส่วนกลาง: กด "ออกจากเครื่องนั้น" จากเครื่องอื่น หรือแจ้งผู้ดูแลระบบให้สั่งออกจากทุกเครื่อง', 'บัญชีผู้ดูแลระบบสูงสุดเข้าได้ทีละ 1 เครื่อง']
 });
-var MANUAL_SLOT = { homemenu: 'settings', attweekly: 'teach', guidance: 'guide', quota: 'home', care: 'care', managers: 'settings', start: '_first', internhome: '_first', mobile: '_first', teach: 'teach', mentor: 'interns', club: 'club', supervision: 'supervision', internadmin: 'settings', devices: '_last', home: 'home', submit: 'home', manualcheck: 'home', schoolcal: 'schoolcal', portfolio: 'home', exec: 'home', memo: 'memo', summary: 'summary', announce: 'announce', reports: 'announce',
+var MANUAL_SLOT = { homemenu: 'settings', attweekly: 'teach', guidance: 'guide', quota: 'home', care: 'care', managers: 'settings', start: '_first', sidenav: '_first', internhome: '_first', mobile: '_first', teach: 'teach', mentor: 'interns', club: 'club', supervision: 'supervision', internadmin: 'settings', devices: '_last', home: 'home', submit: 'home', manualcheck: 'home', schoolcal: 'schoolcal', portfolio: 'home', exec: 'home', memo: 'memo', summary: 'summary', announce: 'announce', reports: 'announce',
   directory: 'directory', orders: 'orders', certs: 'certs', gallery: 'gallery', bell: '_last', report: '_last', tips: '_last' };
 function manualTopicsFor(s) {
   var r = manualRoleOf(s);
@@ -332,7 +332,7 @@ function manualOpen(topicId) {
     el.className = 'modal-backdrop'; el.id = 'manualModal'; el.hidden = true;
     el.innerHTML = '<div class="modal-box mn-box" role="dialog" aria-modal="true" aria-labelledby="manualTitle">' +
       '<button type="button" class="modal-close-x" id="manualCloseX" aria-label="ปิด">✕</button>' +
-      '<h3 id="manualTitle"><i class="fa-solid fa-book-open" aria-hidden="true"></i> คู่มือการใช้งาน</h3>' +
+      '<h3 id="manualTitle"><i class="fa-solid fa-book-open" aria-hidden="true"></i> คู่มือการใช้งาน <button type="button" class="btn btn-secondary btn-sm mn-book" id="manualBook" title="ดาวน์โหลดคู่มือทั้งเล่มสำหรับครู (PDF)"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> <span class="bk-t">ดาวน์โหลดเป็นเล่ม </span>(PDF)</button></h3>' +
       '<select id="manualSelect" class="mn-select" aria-label="เลือกหัวข้อ"></select>' +
       '<div class="mn-wrap"><nav class="mn-toc" id="manualToc" aria-label="หัวข้อคู่มือ"></nav><div class="mn-main" id="manualMain" tabindex="-1"></div></div>' +
       '<div class="mn-zoom" id="manualZoom" hidden><img alt="" /><button type="button" class="modal-close-x" aria-label="ปิดภาพ">✕</button></div>' +
@@ -340,6 +340,7 @@ function manualOpen(topicId) {
     document.body.appendChild(el);
     _manual = { el: el, topics: topics, cur: '' };
     el.querySelector('#manualCloseX').addEventListener('click', manualClose);
+    el.querySelector('#manualBook').addEventListener('click', function () { manualBook(); });
     el.querySelector('#manualToc').addEventListener('click', function (e) { var b = e.target.closest('[data-mn]'); if (b) manualShow(b.getAttribute('data-mn')); });
     el.querySelector('#manualSelect').addEventListener('change', function (e) { manualShow(e.target.value); });
     el.querySelector('#manualMain').addEventListener('click', function (e) {
@@ -430,13 +431,14 @@ MANUAL_TOPICS.push({
     { img: 'guidance-2', cap: 'สรุป', steps: ['ภาพรวมทั้งระดับ', 'ความคืบหน้ารายห้อง: รายงานแล้ว · ยืนยันสิทธิ์ · รอผล · ไม่ศึกษาต่อ/อื่น ๆ', 'ประเภทที่เลือกเรียน (มหาวิทยาลัย / สายอาชีพ) · รอบ · สถาบัน และคณะ/ประเภทวิชาที่เลือกเรียน (10 อันดับ)'] },
     { img: 'guidance-3', cap: 'ตั้งค่า (ผู้ดูแลงานแนะแนว)', steps: ['สวิตช์: เปิดรับข้อมูล · ยืนยันด้วยรหัสนักเรียน · ข้อมูลใหม่ต้องรอตรวจ · ครูที่ปรึกษา ม.6 เห็นห้องตัวเอง', 'ช่วงวันที่เปิดรับ (ไม่ใส่ = เปิดตลอด)', 'ล้างข้อมูลทั้งปีการศึกษา — พิมพ์คำว่า "ลบ" แล้วกดปุ่ม (เช่น หลังทดลองระบบ · รูปย้ายลงถังขยะ Google Drive)', 'ลิงก์และ QR สำหรับนักเรียน · ด้านขวา: รวมชื่อมหาวิทยาลัย/คณะ/สาขาที่พิมพ์ต่างกัน'] },
     { img: 'guidance-form', cap: 'ฟอร์มของนักเรียน (2.12.0)', steps: ['สถานะ: ศึกษาต่อ · ไม่ศึกษาต่อ / ทำงาน (ต้องระบุเหตุผล) · อื่น ๆ (ต้องระบุรายละเอียด)', 'สถาบันที่สมัคร / สอบติด — เพิ่มได้หลายแห่ง เลือกประเภท: 🎓 มหาวิทยาลัย / สถาบัน (ปริญญาตรี · ทหาร · ตำรวจ · พยาบาล — กรอก สถาบัน · คณะ (ถ้ามี) · สาขา · รอบ TCAS) หรือ 🔧 สายอาชีพ (วิทยาลัย · ประเภทวิชา · สาขา · รอบโควตา/ทั่วไป)', 'ยืนยันสิทธิ์ (บังคับ) — เลือก 1 แห่งที่ "ยืนยันสิทธิ์และเลือกเรียนที่นี่" หรือเลือก "⏳ รอผล" ถ้าผลยังไม่ออก'] },
-    { img: 'guidance-card', cap: 'การ์ดของนักเรียน (หลังบันทึก)', steps: ['ป้ายผล: เขียว = ยืนยันสิทธิ์แล้ว · ส้ม = รอผล · เทา = ไม่ศึกษาต่อ / อื่น ๆ', 'ที่ยืนยันสิทธิ์และเลือกเรียน (ป้ายบอกประเภท)', 'สถาบันอื่นที่สมัคร / สอบติด', 'สถานะการตรวจ: รอครูตรวจ · ครูตรวจแล้ว · ครูส่งกลับให้แก้ (พร้อมเหตุผล)', 'แก้ไขข้อมูล — แก้ได้จนกว่าครูจะตรวจ · ครูตรวจแล้วปุ่มล็อก (ติดต่อครูแนะแนว) · ครูส่งกลับ = แก้ได้อีกครั้ง'] }
+    { img: 'guidance-card', cap: 'การ์ดของนักเรียน (หลังบันทึก)', steps: ['ป้ายผล: เขียว = ยืนยันสิทธิ์แล้ว · ส้ม = รอผล · เทา = ไม่ศึกษาต่อ / อื่น ๆ', 'ที่ยืนยันสิทธิ์และเลือกเรียน (ป้ายบอกประเภท)', 'สถาบันอื่นที่สมัคร / สอบติด', 'สถานะการตรวจ: รอครูตรวจ · ครูตรวจแล้ว · ครูส่งกลับให้แก้ (พร้อมเหตุผล)', 'แก้ไขข้อมูล — แก้ได้จนกว่าครูจะตรวจ · ครูตรวจแล้วปุ่มล็อก (ติดต่อครูแนะแนว) · ครูส่งกลับ = แก้ได้อีกครั้ง'] },
+    { img: 'guidance-photo', cap: 'นักเรียนขอเปลี่ยนรูป (2.12.7)', steps: ['คำขอเปลี่ยนรูป — กด "อนุมัติ" แล้วนักเรียนอัปรูปใหม่ได้ (รูปใหม่กลับมารอตรวจ) · "ไม่อนุมัติ" = ใช้รูปเดิม', 'ข้อมูลที่ตรวจผ่านแล้ว (มีแค่คำขอเปลี่ยนรูป) ไม่มีปุ่ม "ผ่าน" — ยังกด แก้ / ส่งกลับ ได้'] }
   ],
-  tips: ['โรงเรียนนายร้อย / พยาบาล / ทหาร / ตำรวจ — เลือก "มหาวิทยาลัย / สถาบัน" แล้วใส่ชื่อโรงเรียนนั้นในช่องสถาบัน (สรุปจะนับตามชื่อสถาบัน)', 'ปิด "ข้อมูลใหม่ต้องรอตรวจ" = นักเรียนแก้ได้ตลอดช่วงที่เปิดรับ', 'ครูแก้แทนได้เสมอ (บันทึกแล้วถือว่าผ่านการตรวจ) — ในหน้าแก้เลือกประเภท รอบ และยืนยันสิทธิ์/รอผลได้เหมือนนักเรียน', 'Super Admin เลือกผู้ดูแลงานแนะแนวที่ ตั้งค่าระบบ → จัดการผู้ดูแล → แนะแนว']
+  tips: ['นักเรียนที่ "รอผล" (ยังไม่ยืนยันสิทธิ์) อัปเดตผลเองได้แม้ครูตรวจแล้ว — เพิ่มสถาบัน / เลือกที่ยืนยันสิทธิ์ แล้วข้อมูลกลับมารอครูตรวจอีกครั้ง (2.12.7)', 'รูปนักเรียน: ส่งแล้วนักเรียนเปลี่ยนเองไม่ได้ — นักเรียนกด "ขอเปลี่ยนรูป" → ครูกด อนุมัติ / ไม่อนุมัติ ในแท็บ รอตรวจ / แก้ไข · รูปไม่ผ่าน กด "ลบรูป (ให้อัปใหม่)" นักเรียนจะเห็นข้อความให้อัปรูปใหม่ (2.12.7)', 'โรงเรียนนายร้อย / พยาบาล / ทหาร / ตำรวจ — เลือก "มหาวิทยาลัย / สถาบัน" แล้วใส่ชื่อโรงเรียนนั้นในช่องสถาบัน (สรุปจะนับตามชื่อสถาบัน)', 'ปิด "ข้อมูลใหม่ต้องรอตรวจ" = นักเรียนแก้ได้ตลอดช่วงที่เปิดรับ', 'ครูแก้แทนได้เสมอ (บันทึกแล้วถือว่าผ่านการตรวจ) — ในหน้าแก้เลือกประเภท รอบ และยืนยันสิทธิ์/รอผลได้เหมือนนักเรียน', 'Super Admin เลือกผู้ดูแลงานแนะแนวที่ ตั้งค่าระบบ → จัดการผู้ดูแล → แนะแนว']
 });
 MANUAL_TOPICS.push({
   id: 'homemenu', group: 'staff', title: 'จัดเมนูทั้งหมดในหน้าแรก', icon: 'fa-grip', roles: 'a',
-  lead: 'ตั้งค่าระบบ › ทั่วไป › "เมนูทั้งหมดในหน้าแรก" (2.12.2) — จัดกลุ่มปุ่มเมนูในการ์ดใต้เว็บไซต์โรงเรียน และเพิ่มปุ่มลิงก์ภายนอก',
+  lead: 'ตั้งค่าระบบ › ทั่วไป › "เมนูทั้งหมดในหน้าแรก" (2.12.2) — จัดกลุ่มปุ่มเมนูในการ์ดใต้เว็บไซต์โรงเรียน และเพิ่มปุ่มลิงก์ภายนอก · ตั้งแต่ 2.13.0 กลุ่มและลำดับนี้ใช้กับเมนูด้านซ้ายด้วย (การ์ด "ลำดับเมนูข้าง" เดิมเลิกใช้)',
   figs: [
     { img: 'settings-homemenu', cap: 'เมนูทั้งหมดในหน้าแรก', steps: ['เปิด/ปิดการ์ดในหน้าแรก', 'กลุ่ม: สี · ไอคอน · ชื่อ · เลื่อนขึ้น/ลง · ลบกลุ่ม', 'ปุ่มในกลุ่ม: ‹ › เลื่อนตำแหน่ง · ✕ เอาออก · "+ เมนู" เพิ่มเมนูในเว็บ · "ลิงก์ภายนอก" ตั้งชื่อ ลิงก์ และสีปุ่ม', 'บันทึกเมนู (คืนค่าเริ่มต้นได้)', 'ตัวอย่างการ์ด — แสดงทุกเมนู แต่ครูแต่ละคนเห็นเฉพาะเมนูที่มีสิทธิ์'] }
   ],
@@ -450,3 +452,91 @@ MANUAL_TOPICS.push({
   ],
   tips: ['ตัวเลขรายคำสั่งเป็นค่าประมาณของเว็บส่งงาน (นับทุกคำขอ บันทึกทุก 10 นาที) — ต้องรัน SQL ชุดที่สี่สิบสี่ก่อนจึงเริ่มนับ', 'ด้านบนของกล่อง (เมื่อตั้งค่า Cloudflare API แล้ว) แสดงคำขอแยกตามระบบ (เว็บส่งงาน · เว็บเช็คชื่อ · Care) และ D1 แยกตามฐานข้อมูล — ตัวเลขจริงจาก Cloudflare', 'เก็บข้อมูลไว้ 35 วัน']
 });
+MANUAL_TOPICS.push({
+  id: 'sidenav', group: 'common', title: 'เมนูด้านซ้าย / รายการโปรด', icon: 'fa-star', roles: 'tsea',
+  lead: 'เมนูด้านซ้ายแบ่งเป็นกลุ่ม (เหมือนการ์ด "เมนูทั้งหมด" ในหน้าแรก) และปักหมุดเมนูที่ใช้บ่อยไว้บนสุดได้สูงสุด 6 เมนู (2.13.0) — ปักไว้ในบัญชี เปลี่ยนเครื่องก็ยังอยู่',
+  figs: [
+    { img: 'sidenav-fav', cap: 'เมนูด้านซ้ายบนคอมพิวเตอร์', steps: ['รายการโปรด — เมนูที่ปักหมุดไว้ อยู่ใต้หน้าแรก (ลากเพื่อเรียงลำดับได้)', 'หัวข้อกลุ่ม — สีเดียวกับแท็บในการ์ด "เมนูทั้งหมด"', 'ชี้ที่เมนูแล้วกดรูปดาว = ปักหมุด · ดาวสีเหลือง = ปักแล้ว (กดอีกครั้งเพื่อเลิกปัก)'] },
+    { img: 'sidenav-mobile', cap: 'บนมือถือ', steps: ['กดปุ่ม ⋮ ท้ายเมนู (หรือกดค้างที่เมนู)', 'ปักหมุด / เลิกปักหมุด · เลื่อนขึ้นในรายการโปรด · เปิดในแท็บใหม่'] }
+  ],
+  tips: ['ย่อเมนู (ปุ่ม ☰) = เหลือแต่ไอคอน — รายการโปรดอยู่บนสุดในกรอบสีเหลือง กลุ่มอื่นคั่นด้วยขีดสี', 'ยังไม่ปักอะไร = ไม่มีหมวดรายการโปรด', 'หน้าแรก กับ ตั้งค่าระบบ อยู่ที่เดิมเสมอ']
+});
+
+// ---------- 2.13.0: ดาวน์โหลดคู่มือเป็นเล่ม (PDF) — เน้นครูทั่วไป: หัวข้อของครูทั้งหมด (หัวข้อที่ใช้เฉพาะบางคนมีหมายเหตุ) ----------
+function manualBookTopics() {
+  var st = (typeof _settingsCache !== 'undefined' && _settingsCache) ? _settingsCache : (typeof cachedBrand === 'function' ? cachedBrand() : null);
+  var memoOn = typeof isMemoEnabled === 'function' ? isMemoEnabled(st) : true, dirOn = !(st && st.directoryMode === 'off');
+  var list = MANUAL_TOPICS.filter(function (t) { return t.roles.indexOf('t') !== -1 && (!t.needMemo || memoOn) && (!t.needDirectory || dirOn); });
+  var order = ['start', 'sidenav', 'mobile', 'home', 'submit', 'manualcheck', 'portfolio', 'teach', 'attweekly', 'club', 'schoolcal', 'memo', 'supervision', 'care', 'guidance', 'mentor', 'directory', 'orders', 'certs', 'gallery', 'bell', 'report', 'devices', 'install', 'tips'];
+  var rank = function (t) { var i = order.indexOf(t.id); return i === -1 ? 900 : i; };
+  return list.map(function (t, i) { return { t: t, i: i }; }).sort(function (a, b) { return rank(a.t) - rank(b.t) || a.i - b.i; }).map(function (x) { return x.t; });
+}
+var MANUAL_BOOK_NOTE = { attweekly: 'ครูที่ปรึกษา', guidance: 'ครูที่ปรึกษา ม.6 / ครูแนะแนว', mentor: 'ครูพี่เลี้ยง', care: 'ผู้ดูแลกิจการนักเรียน', memo: '' };
+async function manualBook() {
+  var topics = manualBookTopics(), site = '', school = '';
+  try { var s0 = (typeof _settingsCache !== 'undefined' && _settingsCache) || cachedBrand() || {}; site = s0.siteName || 'BNKAcademicHub'; school = s0.schoolName || 'โรงเรียนบุ่งคล้านคร'; } catch (e) { site = 'BNKAcademicHub'; school = 'โรงเรียนบุ่งคล้านคร'; }
+  var ver = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '', d = new Date(), MS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  var today = d.getDate() + ' ' + MS[d.getMonth()] + ' ' + (d.getFullYear() + 543);
+  var E = function (x) { return escapeHtml(x == null ? '' : String(x)); };
+  return withProgress('กำลังสร้างคู่มือ (PDF)', async function (ctl) {
+    ctl.setLabel('กำลังเตรียมไฟล์...');
+    await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js');
+    var W = 794, H = 1123, PAD = 54, font = getComputedStyle(document.body).fontFamily;
+    var host = document.createElement('div');
+    host.className = 'mb-host';
+    host.style.cssText = 'position:fixed;left:-30000px;top:0;width:' + W + 'px;z-index:-1';
+    host.innerHTML = '<style>.mb-host .pg{width:' + W + 'px;height:' + H + 'px;box-sizing:border-box;padding:' + PAD + 'px ' + PAD + 'px 70px;background:#fff;color:#0f172a;font-family:' + font + ';font-size:14px;line-height:1.6;position:relative;overflow:hidden}' +
+      '.mb-host .pg *{color:inherit}.mb-host .ft{position:absolute;left:' + PAD + 'px;right:' + PAD + 'px;bottom:28px;display:flex;justify-content:space-between;font-size:11.5px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:8px}' +
+      '.mb-host h2{font-size:22px;margin:0 0 8px;display:flex;align-items:center;gap:10px;color:#1e3a8a}.mb-host h2 .n{display:inline-flex;width:34px;height:34px;border-radius:10px;background:#1d4ed8;color:#fff;align-items:center;justify-content:center;font-size:16px}' +
+      '.mb-host .lead{color:#334155;margin:0 0 14px;font-size:14.5px}.mb-host .who{display:inline-block;background:#fef3c7;color:#92400e;border-radius:99px;padding:1px 10px;font-size:12px;font-weight:700;margin:0 0 10px}' +
+      '.mb-host .cap{font-weight:800;font-size:15px;margin:6px 0 6px;color:#0f172a}.mb-host .im{display:block;max-width:100%;max-height:470px;margin:0 auto 8px;border:1px solid #e2e8f0;border-radius:8px}' +
+      '.mb-host ol{margin:0 0 14px;padding:0;list-style:none}.mb-host ol li{display:flex;gap:8px;margin:0 0 5px}.mb-host ol li b{flex:none;width:22px;height:22px;border-radius:50%;background:#e11d48;color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center;margin-top:1px}' +
+      '.mb-host .tips{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin:4px 0 14px}.mb-host .tips h4{margin:0 0 4px;color:#92400e;font-size:14px}.mb-host .tips ul{margin:0;padding-left:20px}' +
+      '.mb-host .cover{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(160deg,#1e3a8a,#2563eb 60%,#60a5fa)}.mb-host .cover *{color:#fff}.mb-host .cover img{width:150px;height:150px;border-radius:32px;background:#fff;padding:10px;margin-bottom:26px}' +
+      '.mb-host .cover h1{font-size:36px;margin:0 0 6px}.mb-host .cover .s{font-size:20px;opacity:.95}.mb-host .cover .v{margin-top:40px;font-size:14px;opacity:.85}' +
+      '.mb-host .toc h1{font-size:26px;margin:0 0 16px;color:#1e3a8a}.mb-host .toc .r{display:flex;gap:8px;padding:5px 0;border-bottom:1px dotted #cbd5e1;font-size:15px}.mb-host .toc .r span:first-child{width:28px;color:#64748b}.mb-host .toc .r span:last-child{margin-left:auto;font-weight:700}</style>';
+    document.body.appendChild(host);
+    try {
+      var pages = [];
+      function newPage(cls) { var p = document.createElement('div'); p.className = 'pg' + (cls ? ' ' + cls : ''); var b = document.createElement('div'); b.className = 'bd'; p.appendChild(b); host.appendChild(p); pages.push(p); return b; }
+      function fits(bd) { return bd.offsetHeight <= H - PAD - 70; }
+      // ปก + สารบัญ
+      newPage('cover').innerHTML = '<img src="icons/icon-512.png" alt="" onerror="this.src=\'icons/icon-192.png\'"><h1>คู่มือการใช้งาน ' + E(site) + '</h1><div class="s">สำหรับครู · ' + E(school) + '</div><div class="v">เวอร์ชัน ' + E(ver) + ' · ' + E(today) + '</div>';
+      var toc = newPage('toc');
+      var cur = null, tocRows = [];
+      function add(html, keepNew) {
+        if (!cur || keepNew) cur = newPage();
+        var w = document.createElement('div'); w.innerHTML = html; cur.appendChild(w);
+        if (!fits(cur) && cur.children.length > 1) { cur.removeChild(w); cur = newPage(); cur.appendChild(w); }
+        return w;
+      }
+      for (var ti = 0; ti < topics.length; ti++) {
+        var t = topics[ti], note = MANUAL_BOOK_NOTE[t.id] || (t.need ? 'ครูที่ได้รับมอบหมาย' : '');
+        ctl.setLabel('กำลังจัดหน้า: ' + t.title); ctl.setProgress(5 + Math.round(ti / topics.length * 35));
+        // หัวข้อใหม่ = ขึ้นหน้าใหม่ · หัวเรื่องติดกับภาพแรก
+        cur = newPage(); tocRows.push({ t: t, pg: pages.length });
+        add('<h2><span class="n">' + (ti + 1) + '</span>' + E(t.title) + '</h2>' + (note ? '<div class="who">ใช้เฉพาะ: ' + E(note) + '</div>' : '') + '<p class="lead">' + E(t.lead) + '</p>');
+        for (var fi = 0; fi < t.figs.length; fi++) {
+          var f = t.figs[fi];
+          var w = add('<div class="cap">' + E(f.cap) + '</div><img class="im" src="' + manualImg(f.img) + '" alt="">');
+          var im = w.querySelector('img'); await new Promise(function (r) { if (im.complete && im.naturalWidth) return r(); im.onload = im.onerror = r; setTimeout(r, 8000); });
+          if (!fits(cur) && cur.children.length > 1) { cur.removeChild(w); cur = newPage(); cur.appendChild(w); }
+          if (f.steps.length) add('<ol>' + f.steps.map(function (x, k) { return '<li><b>' + (k + 1) + '</b><span>' + E(x) + '</span></li>'; }).join('') + '</ol>');
+        }
+        if (t.tips && t.tips.length) add('<div class="tips"><h4>ควรรู้</h4><ul>' + t.tips.map(function (x) { return '<li>' + E(x) + '</li>'; }).join('') + '</ul></div>');
+      }
+      toc.innerHTML = '<h1>สารบัญ</h1>' + tocRows.map(function (r, i) { return '<div class="r"><span>' + (i + 1) + '.</span><span>' + E(r.t.title) + '</span><span>' + r.pg + '</span></div>'; }).join('');
+      pages.forEach(function (p, i) { if (i === 0) return; var ft = document.createElement('div'); ft.className = 'ft'; ft.innerHTML = '<span>คู่มือการใช้งาน ' + E(site) + ' สำหรับครู</span><span>หน้า ' + (i + 1) + ' / ' + pages.length + '</span>'; p.appendChild(ft); });
+      await new Promise(function (r) { setTimeout(r, 200); });
+      var pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+      for (var i = 0; i < pages.length; i++) {
+        ctl.setLabel('กำลังสร้างหน้า ' + (i + 1) + ' / ' + pages.length); ctl.setProgress(40 + Math.round(i / pages.length * 58));
+        var cv = await html2canvas(pages[i], { scale: 1.3, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: W });
+        if (i) pdf.addPage();
+        pdf.addImage(cv.toDataURL('image/jpeg', 0.78), 'JPEG', 0, 0, 210, 297);
+      }
+      pdf.save('คู่มือการใช้งาน_' + site + '_สำหรับครู_' + ver + '.pdf');
+      return true;
+    } finally { host.remove(); }
+  }, { successLabel: 'ดาวน์โหลดคู่มือแล้ว' });
+}

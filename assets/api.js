@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.12.7';
-var APP_VERSION = '2.12.7.131126';
+var WORKER_MIN_VERSION = '2.13.0';
+var APP_VERSION = '2.13.0.131126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -116,6 +116,7 @@ function clearSession() {
     localStorage.removeItem(SESSION_USER_KEY);
     localStorage.removeItem(SESSION_LOGIN_AT_KEY);
     localStorage.removeItem(SESSION_ACTIVE_KEY);
+    localStorage.removeItem(NAV_FAV_KEY); // 2.13.0: เมนูโปรดเป็นของบัญชี
     localStorage.removeItem(THEME_KEY); // 1.41.111026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
   } catch (e) {}
 }
@@ -418,7 +419,7 @@ async function getSiteSettings() {
 var BRAND_CACHE_KEY = 'bnkah_brand';
 function cachedBrand() { try { return JSON.parse(localStorage.getItem(BRAND_CACHE_KEY) || 'null'); } catch (e) { return null; } }
 function cacheBrand(s) {
-  try { localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ siteName: s.siteName || '', logoDataUrl: s.logoDataUrl || '', logoWideDataUrl: s.logoWideDataUrl || '', loginHeroDataUrl: s.loginHeroDataUrl || '', topbarShowName: s.topbarShowName !== false, navOrder: Array.isArray(s.navOrder) ? s.navOrder : [], themeMode: s.themeMode || 'system', themeColor: s.themeColor || '', departmentColors: s.departmentColors || {} })); } catch (e) { /* เต็ม/ไม่มี localStorage — ไม่เป็นไร */ }
+  try { localStorage.setItem(BRAND_CACHE_KEY, JSON.stringify({ siteName: s.siteName || '', logoDataUrl: s.logoDataUrl || '', logoWideDataUrl: s.logoWideDataUrl || '', loginHeroDataUrl: s.loginHeroDataUrl || '', topbarShowName: s.topbarShowName !== false, navOrder: Array.isArray(s.navOrder) ? s.navOrder : [], themeMode: s.themeMode || 'system', themeColor: s.themeColor || '', departmentColors: s.departmentColors || {}, homeMenu: s.homeMenu || null })); } catch (e) { /* เต็ม/ไม่มี localStorage — ไม่เป็นไร */ }
 }
 // วาดส่วนแบรนด์ (ไม่ต้องรอ) จาก object ค่าตั้งค่า
 function renderBrand(s) {
@@ -1023,6 +1024,12 @@ function listMoreHtml(shown, total) {
     '<button type="button" class="btn btn-ghost btn-sm" data-more="all" data-more-all="1"><i class="fa-solid fa-angles-down"></i> แสดงทั้งหมด (' + total + ')</button></div>';
 }
 // ข้อความแจ้งระหว่างโหลดปีการศึกษาอื่น/ทุกปี
+// 2.13.0: โหลดข้อมูลชุดใหม่ทับของเดิม = ของเดิมจางค้าง + ตัวหมุน (ไม่ล้างเป็นข้อความกำลังโหลดให้กระพริบ) · ยังไม่มีเนื้อหา = แสดง html ที่ส่งมา
+function softLoad(el, html) {
+  if (!el) return;
+  if (el.children.length && !el.querySelector('.loading, .error-box, .year-loading') && el.textContent.trim()) { if (!el.querySelector(':scope > .is-reloading')) el.innerHTML = '<div class="is-reloading">' + el.innerHTML + '</div>'; return; }
+  el.innerHTML = html;
+}
 function yearLoadingHtml(year) {
   return '<div class="loading">' + (year ? 'กำลังโหลดข้อมูลปีการศึกษา ' + escapeHtml(year) + '...' : 'กำลังโหลดข้อมูลทุกปีการศึกษา — อาจใช้เวลาสักครู่...') + '</div>';
 }
@@ -1912,13 +1919,10 @@ function currentNavOrder() {
 function execTeaches(session) { try { var v = JSON.parse(localStorage.getItem('bnkTeachHas:' + session.id) || 'null'); return !!(v && v.has); } catch (e) { return false; } }
 function navSlotOf(key) { return key === 'dashboard' || key === 'executive' || key === 'overview' ? 'home' : key; }
 // เรียงเมนูในแถบข้างที่วาดไปแล้วใหม่ (ค่าตั้งค่าโหลดเสร็จทีหลัง/เพิ่งบันทึกลำดับใหม่)
-function reorderSideNav(order) {
+function reorderSideNav() { // 2.13.0: เมนูข้างจัดกลุ่มตามการ์ด "เมนูทั้งหมด" — ค่าตั้งค่าโหลดเสร็จ = วาดรายการใหม่ (ถ้าเปลี่ยน)
   var list = document.querySelector('#app-sidenav .sidenav-list');
-  if (!list) return;
-  normalizeNavOrder(order).forEach(function (slot) {
-    var a = list.querySelector('a[data-nav-slot="' + slot + '"]');
-    if (a) list.appendChild(a);
-  });
+  if (!list || !_snLinks) return;
+  var h = sideNavListHtml(); if (list._h !== h) { list.innerHTML = h; list._h = h; }
 }
 function navLinksFor(session) {
   var links = [];
@@ -1992,6 +1996,86 @@ function _navGetPinned() {
   try { var v = localStorage.getItem(NAV_PIN_KEY); if (v === '1') return true; if (v === '0') return false; } catch (e) { /* ใช้ค่าเริ่มต้น */ }
   return true; // 1.96: ใช้ครั้งแรก = ขยาย (แบบ Google Keep) · กดปุ่ม 3 ขีดเพื่อย่อ แล้วระบบจำไว้ (1.68 เคยเริ่มแบบย่อ)
 }
+// ---------- 2.13.0: เมนูข้างแบบหัวข้อกลุ่ม (ตามการ์ด "เมนูทั้งหมด" หน้าแรก) + เมนูโปรด (ปักหมุด สูงสุด 6 · เก็บในบัญชี) ----------
+var NAV_FAV_KEY = 'bnkah_navfav', NAV_FAV_MAX = 6, _snLinks = null, _snActive = '';
+function getNavFav() { try { var v = JSON.parse(localStorage.getItem(NAV_FAV_KEY) || '[]'); return Array.isArray(v) ? v.slice(0, NAV_FAV_MAX) : []; } catch (e) { return []; } }
+function storeNavFav(list) { try { localStorage.setItem(NAV_FAV_KEY, JSON.stringify((list || []).slice(0, NAV_FAV_MAX))); } catch (e) { /* ไม่เป็นไร */ } }
+function setNavFav(list) { storeNavFav(list); reorderSideNav(); try { if (getToken()) apiCall('setMyNavFav', { list: list }).catch(function () {}); } catch (e) { /* ข้าม */ } }
+function sideNavGroups() {
+  var s = _settingsCache && !_settingsCache.__fallback ? _settingsCache : cachedBrand();
+  try { return homeMenuConf(s || {}).groups || []; } catch (e) { return []; }
+}
+function sideNavListHtml() {
+  var links = _snLinks || [], act = _snActive, by = {}, order = [];
+  links.forEach(function (l) { var k = l.slot || navSlotOf(l.key); by[k] = l; order.push(k); });
+  var fav = getNavFav().filter(function (k) { return by[k] && k !== 'home' && k !== 'settings'; });
+  function item(k, extra) {
+    var l = by[k], on = l.key === act, f = fav.indexOf(k) !== -1;
+    return '<a href="' + l.href + '" data-nav-slot="' + escapeHtml(k) + '" class="sidenav-item' + (on ? ' active' : '') + (f ? ' is-fav' : '') + (extra || '') + '" title="' + escapeHtml(l.label) + '"' + (on ? ' aria-current="page"' : '') + '>' +
+      '<span class="sidenav-icon">' + icon(l.icon, 19) + '</span><span class="sidenav-label">' + escapeHtml(l.label) + '</span>' +
+      (k !== 'home' && k !== 'settings' ? '<span class="sn-star" role="button" tabindex="0" data-nav-star="' + escapeHtml(k) + '" title="' + (f ? 'เลิกปักหมุด' : 'ปักหมุดเป็นรายการโปรด') + '" aria-label="' + (f ? 'เลิกปักหมุด ' : 'ปักหมุด ') + escapeHtml(l.label) + '"><i class="fa-solid fa-star" aria-hidden="true"></i></span><span class="sn-more" role="button" tabindex="0" data-nav-more="' + escapeHtml(k) + '" aria-label="ตัวเลือกเมนู ' + escapeHtml(l.label) + '"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></span>' : '') + '</a>';
+  }
+  function head(t, c, cls) { return '<div class="sn-gh' + (cls ? ' ' + cls : '') + '" style="--gc:' + escapeHtml(c || '#94a3b8') + '"><span class="sn-dot"></span><span class="sidenav-label">' + t + '</span></div>'; }
+  var used = { home: 1, settings: 1 }, h = by.home ? item('home') : '';
+  if (fav.length) h += '<div class="sn-fav">' + head('<i class="fa-solid fa-star" aria-hidden="true"></i> รายการโปรด', '#f59e0b', 'fav') + fav.map(function (k) { return item(k, ' in-fav" draggable="true'); }).join('') + '</div>';
+  sideNavGroups().forEach(function (g) {
+    var ks = (g.items || []).filter(function (k) { return typeof k === 'string' && by[k] && !used[k]; });
+    if (!ks.length) return;
+    ks.forEach(function (k) { used[k] = 1; });
+    h += head(escapeHtml(g.n || ''), g.c) + ks.map(function (k) { return item(k, fav.indexOf(k) !== -1 ? ' fav-dup' : ''); }).join('');
+  });
+  var rest = order.filter(function (k) { return !used[k]; });
+  if (rest.length) h += (h.indexOf('sn-gh') !== -1 ? head('อื่น ๆ', '#94a3b8') : '') + rest.map(function (k) { return item(k, fav.indexOf(k) !== -1 ? ' fav-dup' : ''); }).join('');
+  if (by.settings) h += '<div class="sn-sep"></div>' + item('settings');
+  return h;
+}
+function bindSideNavFav(aside) {
+  function toggle(k) {
+    var f = getNavFav(), i = f.indexOf(k);
+    if (i !== -1) { f.splice(i, 1); setNavFav(f); showToast('เลิกปักหมุดแล้ว'); return; }
+    if (f.length >= NAV_FAV_MAX) { showToast('ปักหมุดได้สูงสุด ' + NAV_FAV_MAX + ' เมนู — เลิกปักเมนูอื่นก่อน', true); return; }
+    f.push(k); setNavFav(f); showToast('ปักหมุดเป็นรายการโปรดแล้ว');
+  }
+  function sheet(k) {
+    var old = document.getElementById('snSheet'); if (old) old.remove();
+    var a = aside.querySelector('a[data-nav-slot="' + k + '"]'); if (!a) return;
+    var f = getNavFav(), on = f.indexOf(k) !== -1, idx = f.indexOf(k);
+    var el = document.createElement('div'); el.id = 'snSheet'; el.className = 'sn-sheet-bd';
+    el.innerHTML = '<div class="sn-sheet" role="dialog" aria-label="ตัวเลือกเมนู"><b>' + escapeHtml(a.title) + '</b>' +
+      '<button type="button" data-sh="fav"><i class="fa-solid fa-star" aria-hidden="true"></i> ' + (on ? 'เลิกปักหมุด' : 'ปักหมุดเป็นรายการโปรด') + '</button>' +
+      (on && idx > 0 ? '<button type="button" data-sh="up"><i class="fa-solid fa-arrow-up" aria-hidden="true"></i> เลื่อนขึ้นในรายการโปรด</button>' : '') +
+      '<button type="button" data-sh="tab"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> เปิดในแท็บใหม่</button>' +
+      '<button type="button" data-sh="x" class="sn-sh-x">ปิด</button></div>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add('show'); });
+    function close() { el.classList.remove('show'); setTimeout(function () { el.remove(); }, 180); }
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-sh]'); if (!b) { if (e.target === el) close(); return; }
+      var w = b.getAttribute('data-sh'); close();
+      if (w === 'fav') toggle(k);
+      else if (w === 'up') { var g = getNavFav(), i = g.indexOf(k); if (i > 0) { g.splice(i - 1, 0, g.splice(i, 1)[0]); setNavFav(g); } }
+      else if (w === 'tab') window.open(a.href, '_blank');
+    });
+  }
+  aside.addEventListener('click', function (e) {
+    var st = e.target.closest('[data-nav-star]'), mo = e.target.closest('[data-nav-more]');
+    if (!st && !mo) return;
+    e.preventDefault(); e.stopPropagation();
+    if (st) toggle(st.getAttribute('data-nav-star')); else sheet(mo.getAttribute('data-nav-more'));
+  }, true);
+  aside.addEventListener('keydown', function (e) { var st = e.target.closest && e.target.closest('[data-nav-star],[data-nav-more]'); if (st && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); st.click(); } });
+  // มือถือ: กดค้างที่เมนู = ตัวเลือก (ปักหมุด/เปิดแท็บใหม่)
+  var lp = null;
+  aside.addEventListener('touchstart', function (e) { var a = e.target.closest('a.sidenav-item[data-nav-slot]'); if (!a || e.target.closest('[data-nav-star],[data-nav-more]')) return; var k = a.getAttribute('data-nav-slot'); if (k === 'home' || k === 'settings') return; lp = setTimeout(function () { lp = 'done'; sheet(k); }, 550); }, { passive: true });
+  ['touchend', 'touchmove', 'touchcancel'].forEach(function (ev) { aside.addEventListener(ev, function (e) { if (lp === 'done' && ev === 'touchend') e.preventDefault(); if (lp && lp !== 'done') clearTimeout(lp); lp = null; }); });
+  aside.addEventListener('contextmenu', function (e) { if (e.target.closest('a.sidenav-item[data-nav-slot]') && _navIsMobile()) e.preventDefault(); });
+  // คอม: ลากเรียงลำดับในรายการโปรด
+  var drag = null;
+  aside.addEventListener('dragstart', function (e) { var a = e.target.closest && e.target.closest('a.in-fav'); if (!a) return; drag = a.getAttribute('data-nav-slot'); try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', drag); } catch (x) { /* ข้าม */ } a.classList.add('sn-drag'); });
+  aside.addEventListener('dragover', function (e) { if (drag && e.target.closest('a.in-fav')) e.preventDefault(); });
+  aside.addEventListener('drop', function (e) { var a = e.target.closest('a.in-fav'); if (!drag || !a) return; e.preventDefault(); var to = a.getAttribute('data-nav-slot'), f = getNavFav(), i = f.indexOf(drag), j = f.indexOf(to); if (i === -1 || j === -1 || i === j) return; f.splice(j, 0, f.splice(i, 1)[0]); setNavFav(f); });
+  aside.addEventListener('dragend', function () { drag = null; var d = aside.querySelector('.sn-drag'); if (d) d.classList.remove('sn-drag'); });
+}
 function mountSideNav(links, activePage) {
   var old = document.getElementById('app-sidenav');
   if (old) old.remove();
@@ -2001,10 +2085,9 @@ function mountSideNav(links, activePage) {
   aside.id = 'app-sidenav';
   aside.className = 'sidenav no-print';
   aside.setAttribute('aria-label', 'เมนูหลัก');
-  aside.innerHTML = '<nav class="sidenav-list">' + links.map(function (l) {
-    return '<a href="' + l.href + '" data-nav-slot="' + escapeHtml(l.slot || navSlotOf(l.key)) + '" class="sidenav-item' + (l.key === activePage ? ' active' : '') + '" title="' + escapeHtml(l.label) + '"' + (l.key === activePage ? ' aria-current="page"' : '') + '>' +
-      '<span class="sidenav-icon">' + icon(l.icon, 19) + '</span><span class="sidenav-label">' + escapeHtml(l.label) + '</span></a>';
-  }).join('') + '</nav>';
+  _snLinks = links; _snActive = activePage;
+  aside.innerHTML = '<nav class="sidenav-list sn-grouped">' + sideNavListHtml() + '</nav>';
+  bindSideNavFav(aside);
   var backdrop = document.createElement('div');
   backdrop.id = 'app-sidenav-backdrop';
   backdrop.className = 'sidenav-backdrop no-print';
@@ -2563,9 +2646,11 @@ function _isLoginPage() {
 // หน้าแสดงผลงานสาธารณะ (view.html) ก็บังคับใช้ธีมสว่างเท่านั้นเสมอเช่นกัน (ตั้งแต่ V9.9) — เป็นหน้าที่คนภายนอกเปิดดูได้โดยไม่ล็อกอิน
 // ไม่ควรพึ่งค่า localStorage ของเบราว์เซอร์คนดู (ซึ่งอาจไม่ใช่เจ้าของบัญชีเลยด้วยซ้ำ) มากำหนดหน้าตาของหน้านี้
 function _isForcedLightPage() {
-  return _isLoginPage() || /\/(view|certificate|photos)\.html$/.test(location.pathname); // 1.75: หน้าค้นหาเกียรติบัตร · 1.76: หน้าคลังรูปภาพสาธารณะ
+  return _isLoginPage() || /\/(view|certificate|photos|guidance-form|embed)\.html$/.test(location.pathname); // 2.12.8: + ฟอร์มแนะแนวนักเรียน · อัลบั้มฝัง (หน้าสาธารณะ ออกแบบธีมสว่างอย่างเดียว) // 1.75: หน้าค้นหาเกียรติบัตร · 1.76: หน้าคลังรูปภาพสาธารณะ
 }
 applyTheme(_isForcedLightPage() ? 'light' : getTheme());
+// 2.13.0: การ์ดค่อยๆ ขึ้นเฉพาะช่วงเปิดหน้า (ดู html.pg-in ใน style.css)
+try { document.documentElement.classList.add('pg-in'); setTimeout(function () { document.documentElement.classList.remove('pg-in'); }, 1500); } catch (e) { /* ข้าม */ }
 
 // ---------- 1.68: ตัวเลือกกลุ่มเป้าหมาย (สำหรับ) ของกำหนดการ/ประกาศ ----------
 // ค่าที่เก็บ: 'all' | 'g:กลุ่ม|กลุ่ม' | 'u:id|id' (ค่าเดิม = userId คนเดียว) — Worker ตรวจ/กรองด้วยรูปแบบเดียวกัน (lib/util.js)
@@ -3735,23 +3820,27 @@ function samplesListHtml(list) {
 
 // 2.02.6: QR ปุ่มแชร์ = โลโก้เว็บ (ไอคอนโรงเรียน) ตรงกลาง — ระดับแก้ไขข้อผิดพลาด H (เสียหายได้ ~30%) โลโก้กินพื้นที่ ~6% จึงสแกนได้ปกติ
 // วาดลงในรูป QR เลย (กดค้างบันทึกรูป / คัดลอกรูป ได้โลโก้ด้วย)
-function qrLogo(box, text, size) {
+function qrLogo(box, text, size, logo) { // 2.13.0: logo = รูปโลโก้กลาง (ค่าเริ่มต้น = ไอคอนเว็บ)
   var q = new QRCode(box, { text: text, width: size, height: size, correctLevel: QRCode.CorrectLevel.H });
-  try {
-    var cv = box.querySelector('canvas'); if (!cv || !cv.getContext) return q;
-    var lg = new Image();
-    lg.onload = function () {
-      try {
-        var ctx = cv.getContext('2d'), W = cv.width, s = Math.round(W * 0.22), p = Math.round(s * 0.12), x = Math.round((W - s) / 2), r = Math.round(s * 0.22);
-        ctx.fillStyle = '#ffffff'; ctx.beginPath();
-        var bx = x - p, bs = s + p * 2;
-        ctx.moveTo(bx + r, bx); ctx.arcTo(bx + bs, bx, bx + bs, bx + bs, r); ctx.arcTo(bx + bs, bx + bs, bx, bx + bs, r); ctx.arcTo(bx, bx + bs, bx, bx, r); ctx.arcTo(bx, bx, bx + bs, bx, r); ctx.closePath(); ctx.fill();
-        ctx.drawImage(lg, x, x, s, s);
-        var im = box.querySelector('img'); if (im) im.src = cv.toDataURL('image/png');
-      } catch (e) { /* ใช้ QR ปกติ */ }
-    };
-    lg.src = 'icons/icon-192.png';
-  } catch (e) { /* ใช้ QR ปกติ */ }
+  // 2.12.8: ขอบขาวรอบ QR (quiet zone) อยู่ในรูปเลย — ธีมกลางคืนพื้นมืดชิดตัว QR ทำให้สแกนไม่ติด · บันทึก/คัดลอกรูปก็มีขอบขาว
+  var cv = box.querySelector('canvas'), out = null;
+  function paint(withLogo) {
+    try {
+      var W = cv.width, m = Math.max(8, Math.round(W * 0.08)), c = document.createElement('canvas'); c.width = c.height = W + m * 2;
+      var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(cv, m, m);
+      if (withLogo) {
+        var s = Math.round(W * 0.22), p = Math.round(s * 0.12), x = m + Math.round((W - s) / 2), r = Math.round(s * 0.22), bx = x - p, bs = s + p * 2;
+        ctx.beginPath(); ctx.moveTo(bx + r, bx); ctx.arcTo(bx + bs, bx, bx + bs, bx + bs, r); ctx.arcTo(bx + bs, bx + bs, bx, bx + bs, r); ctx.arcTo(bx, bx + bs, bx, bx, r); ctx.arcTo(bx, bx, bx + bs, bx, r); ctx.closePath(); ctx.fill();
+        ctx.drawImage(withLogo, x, x, s, s);
+      }
+      if (!out) { out = document.createElement('img'); out.alt = 'QR Code'; out.className = 'qr-img'; out.style.cssText = 'display:block;width:' + size + 'px;height:' + size + 'px;max-width:100%;border-radius:8px;background:#fff;margin:0 auto'; }
+      out.src = c.toDataURL('image/png');
+      if (out.parentNode !== box) { box.innerHTML = ''; box.appendChild(out); }
+    } catch (e) { /* ใช้ QR ปกติ */ }
+  }
+  if (!cv || !cv.getContext) return q;
+  paint(null);
+  try { var lg = new Image(); lg.onload = function () { paint(lg); }; lg.src = logo || 'icons/icon-192.png'; } catch (e) { /* ใช้ QR ไม่มีโลโก้ */ }
   return q;
 }
 

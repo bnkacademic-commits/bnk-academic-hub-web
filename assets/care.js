@@ -61,7 +61,7 @@
   // 2.07.0: แท็บ "มาสาย" มีแท็บย่อย ภาพรวม · รายห้อง · สายบ่อย (st.tab = แท็บย่อย · st.late = แท็บย่อยล่าสุด)
   function isLate(t) { t = t || st.tab; return t === 'overview' || t === 'rooms' || t === 'frequent'; }
   function goTab(t) { if (t === 'late') t = st.late || 'overview'; if (isLate(t)) st.late = t; st.tab = t; renderTabs(); show(); }
-  tabsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-cc-tab]'); if (!b) return; goTab(b.getAttribute('data-cc-tab')); });
+  tabsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-cc-tab]'); if (!b) return; var t = b.getAttribute('data-cc-tab'); if ((t === st.tab || (t === 'late' && isLate(st.tab))) && body.querySelector('.cc-cap, .card')) return; /* 2.13.0: กดแท็บเดิมซ้ำ = ไม่วาดใหม่ */ goTab(t); });
   function show() { if (st.tab === 'summary') return showSummary(); if (st.tab === 'scores') return showScores(); if (st.tab === 'settings') return showSettings(); if (st.tab === 'rooms') return showRooms(); return showOverview(); }
   function subBar() {
     if (!isLate()) return '';
@@ -91,10 +91,14 @@
     if (!C.ov[k]) C.ov[k] = await apiCall('careOverview', { from: r[0], to: r[1], grade: st.grade });
     return C.ov[k];
   }
+  // 2.13.0: โหลดข้อมูลชุดใหม่ = ของเดิมจางค้างไว้ (ไม่ล้างเป็น "กำลังโหลด" ให้กระพริบ) · วาดผลใหม่ทับเมื่อมาถึง
+  function keepOf(id) { var o = document.getElementById(id); return o && o.innerHTML && !o.querySelector('.loading, .error-box') ? o.innerHTML : ''; }
+  function restore(id, k) { var n = document.getElementById(id); if (n && k) n.innerHTML = '<div class="is-reloading">' + k + '</div>'; }
   function stat(t, v, c, sub) { return '<div class="cc-st"><span>' + t + '</span><b' + (c ? ' style="color:' + c + '"' : '') + '>' + v + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
   async function showOverview() {
     var freq = st.tab === 'frequent';
-    body.innerHTML = filterBar(freq ? '<select id="ccMin" aria-label="จำนวนครั้ง">' + [2, 3, 5, 10].map(function (n) { return '<option value="' + n + '"' + (st.min === n ? ' selected' : '') + '>สาย ' + n + ' ครั้งขึ้นไป</option>'; }).join('') + '</select>' : '') + '<div id="ccOv" class="cc-cap"><div class="loading">กำลังโหลด...</div></div>';
+    var kp = keepOf('ccOv');
+    body.innerHTML = filterBar(freq ? '<select id="ccMin" aria-label="จำนวนครั้ง">' + [2, 3, 5, 10].map(function (n) { return '<option value="' + n + '"' + (st.min === n ? ' selected' : '') + '>สาย ' + n + ' ครั้งขึ้นไป</option>'; }).join('') + '</select>' : '') + '<div id="ccOv" class="cc-cap"><div class="loading">กำลังโหลด...</div></div>'; restore('ccOv', kp);
     var box = document.getElementById('ccOv'), O;
     try { O = await loadOv(); } catch (e) { box.innerHTML = err(e.message); return; }
     if (st.tab !== (freq ? 'frequent' : 'overview')) return;
@@ -131,7 +135,8 @@
   // ---------- 2.07.0: สรุปรวม (พฤติกรรม) ----------
   async function showSummary() {
     var r = rangeOf(), k = r[0] + '|' + r[1] + '|' + st.grade;
-    body.innerHTML = filterBar('') + '<div id="ccBh" class="cc-cap"><div class="loading">กำลังโหลด...</div></div>';
+    var kp = keepOf('ccBh');
+    body.innerHTML = filterBar('') + '<div id="ccBh" class="cc-cap"><div class="loading">กำลังโหลด...</div></div>'; restore('ccBh', kp);
     var box = document.getElementById('ccBh'), S;
     try { if (!C.bh[k]) C.bh[k] = await apiCall('careBehavior', { from: r[0], to: r[1], grade: st.grade }); S = C.bh[k]; } catch (e) { box.innerHTML = err(e.message); return; }
     if (st.tab !== 'summary') return;
@@ -174,7 +179,8 @@
   // ---------- 2.04.0: สรุปรายห้อง ----------
   async function showRooms() {
     var r = rangeOf();
-    body.innerHTML = filterBar('') + '<div id="ccRm" class="cc-cap"><div class="loading">กำลังโหลด...</div></div>';
+    var kp = keepOf('ccRm');
+    body.innerHTML = filterBar('') + '<div id="ccRm" class="cc-cap"><div class="loading">กำลังโหลด...</div></div>'; restore('ccRm', kp);
     var box = document.getElementById('ccRm');
     try {
       if (st.rroom) { var k = r[0] + '|' + r[1] + '|' + st.rroom; if (!C.rd[k]) C.rd[k] = await apiCall('careRoomDetail', { from: r[0], to: r[1], roomId: st.rroom }); if (st.tab === 'rooms') box.innerHTML = roomDetailHtml(C.rd[k]); return; }
@@ -585,7 +591,7 @@
     if ((t = e.target.closest('[data-cc-rdel]'))) { syncDraft(); draft.reasons.splice(+t.getAttribute('data-cc-rdel'), 1); showSettings(); return; }
     if (e.target.closest('[data-cc-radd]')) { syncDraft(); var nv = (document.getElementById('ccRNew').value || '').trim(); if (nv && draft.reasons.indexOf(nv) === -1 && draft.reasons.length < 12) draft.reasons.push(nv); showSettings(); var ri = document.getElementById('ccRNew'); if (ri) ri.focus(); return; }
     if ((t = e.target.closest('[data-cc-copy]'))) { try { await navigator.clipboard.writeText(t.getAttribute('data-cc-copy')); showToast('คัดลอกลิงก์แล้ว'); } catch (x) { showToast('คัดลอกไม่สำเร็จ', true); } return; }
-    if ((t = e.target.closest('[data-cc-qr]'))) { var q = document.getElementById('ccQr' + t.getAttribute('data-cc-qr')); q.hidden = !q.hidden; q.innerHTML = ''; if (!q.hidden) { try { qrLogo(q, t.getAttribute('data-u'), 180); } catch (x) { q.textContent = 'สร้าง QR ไม่ได้'; } } return; }
+    if ((t = e.target.closest('[data-cc-qr]'))) { var q = document.getElementById('ccQr' + t.getAttribute('data-cc-qr')); q.hidden = !q.hidden; q.innerHTML = ''; if (!q.hidden) { try { qrLogo(q, t.getAttribute('data-u'), 180, 'icons/care-192.png'); } catch (x) { q.textContent = 'สร้าง QR ไม่ได้'; } } return; }
     if ((t = e.target.closest('[data-cc-bn-mode]'))) { var m = t.getAttribute('data-cc-bn-mode'); if (m !== bnOf().mode) bnSave({ mode: m }, 'กำลังบันทึก'); return; }
     if ((t = e.target.closest('[data-cc-bn-pick]'))) { bnSlot = t.getAttribute('data-cc-bn-pick'); document.getElementById('ccBnFile').click(); return; }
     if ((t = e.target.closest('[data-cc-bn-reset]'))) { var sl = t.getAttribute('data-cc-bn-reset'); if (await askConfirm(sl === 'a' ? 'กลับไปใช้แบนเนอร์เดิม (banner.jpg)?' : 'หน้านี้กลับไปใช้รูปรวม?', 'แบนเนอร์')) bnSave({ slot: sl, reset: true }, 'กำลังบันทึก'); return; }
