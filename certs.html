@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.13.0.131126" />
+<link rel="stylesheet" href="assets/style.css?v=2.14.0.141126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -219,12 +219,13 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.13.0.131126"></script>
+  <script src="assets/api.js?v=2.14.0.141126"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
     var certDepts = [], certSubjs = [], myDept = '', respSel = []; // 2.06.0
     var allYears = [], pendingMine = [], selYear = null, shownN = LIST_PAGE, agencies = [], levels = [], certs = [], activities = [], people = [], me = null, canAdd = false, canMerge = false, schoolName = '', summerOn = true;
+    (function () { try { var u = new URLSearchParams(location.search); if (/^\d{4}$/.test(u.get('y') || '')) selYear = u.get('y'); if (u.get('q')) $('certSearch').value = u.get('q').slice(0, 80); if (u.get('y') || u.get('q')) history.replaceState(null, '', location.pathname); } catch (e) { /* ข้าม */ } })(); // 2.14.0: มาจากช่องค้นหา (แถบด้านบน)
     var numbering = { format: 'บนค. {ปีการศึกษา}/{เลขที่}', digits: 4, counters: {} };
     var scope = 'internal', kindFilter = '', expanded = {}, curTerm = null, yearDefaulted = false;
     var fltBar = initFilterBar('certFlt', { unit: 'รายการ', defaults: function () { return { certYear: curTerm ? String(curTerm.year || '') : '', certSem: '', certActivity: '', certMine: '' }; } });

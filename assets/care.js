@@ -11,6 +11,7 @@
   // 2.12.1: กด Back ตอนดูสรุปห้องเดียว = กลับทุกห้อง
   if (window.BackNav) BackNav.sub(function () { return st.tab === 'rooms' && !!st.rroom && !!body.querySelector('[data-cc-room=""]'); }, function () { var b = body.querySelector('[data-cc-room=""]'); if (b) b.click(); });
   var B = null, st = { tab: 'summary', late: 'overview', pg: 1, pp: (function () { try { var v = +localStorage.getItem('bnkah_cc_pp'); return [50, 100, 200, 0].indexOf(v) >= 0 && localStorage.getItem('bnkah_cc_pp') !== null ? v : 50; } catch (e) { return 50; } })(), allRows: false, range: 'week', from: '', to: '', grade: '', min: 3, room: '', q: '', rroom: '' }, C = { ov: {}, sc: {}, rm: {}, rd: {}, bh: {} }, ROSTER = null;
+  var SK = { d: null, n: 0, cat: 'pend', sel: {}, busy: false }; // 2.13.0: โดด / ขาดเรียน
   var MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
   var PAL = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
   function esc(s) { return escapeHtml(s == null ? '' : String(s)); }
@@ -29,6 +30,7 @@
     var cls = score < 0 ? 'neg' : (score > start ? 'over' : ''), sub = score < 0 ? 'ติดลบ' : (score > start ? 'เกิน +' + (score - start) : 'จาก ' + start);
     return '<div class="sring ' + cls + '" title="คะแนน ' + score + '"><svg viewBox="0 0 132 132" aria-hidden="true">' + s + '</svg><div class="in"><b>' + score + '</b><small>' + sub + '</small></div></div>';
   };
+  function put(el, html) { if (!el) return; if (el._h === html && el.innerHTML === el._raw) return; el.innerHTML = html; el._h = html; el._raw = el.innerHTML; } // 2.13.0: เขียนทับเฉพาะเมื่อเนื้อหาเปลี่ยน
   function sgn(n) { return n > 0 ? '+' + n : String(n); }
   function ic(n) { return '<i class="fa-solid ' + n + '" aria-hidden="true"></i>'; }
 
@@ -51,18 +53,71 @@
     try { B = await apiCall('careBoot', {}); } catch (e) { tabsEl.innerHTML = ''; body.innerHTML = '<div class="card">' + err(e.message) + '</div>'; return; }
     document.getElementById('ccIntro').textContent = 'ข้อมูลการมาสายและคะแนนพฤติกรรมจาก BNK Care Center · ภาคเรียนที่ ' + B.term + '/' + B.year;
     renderTabs(); show();
+    if (B.role === 'm' && B.settings && B.settings.skipOn && st.tab !== 'skip') loadSkip(true); // ตัวเลขรอยืนยันบนแท็บ (โหลดเบื้องหลัง)
+  }
+  // ---------- 2.13.0: โดด / ขาดเรียน (จากเว็บเช็คชื่อ) — ยืนยันก่อนหักคะแนน ----------
+  var SK_CAT = [['pend', 'รอยืนยัน'], ['ok', 'ยืนยันแล้ว'], ['no', 'ไม่หัก'], ['back', 'ต้องคืนคะแนน']];
+  function skBadge() { var e = document.getElementById('ccSkipN'); if (!e) return; e.textContent = SK.n; e.hidden = !SK.n; }
+  async function loadSkip(quiet) {
+    try { var r = await apiCall('careSkipList', {}); SK.d = r; SK.n = (r.items || []).filter(function (x) { return x.cat === 'pend' || x.cat === 'back'; }).length; skBadge(); if (st.tab === 'skip') paintSkip(); }
+    catch (e) { if (!quiet) body.innerHTML = '<div class="card">' + err(e.message) + '</div>'; }
+  }
+  function showSkip() {
+    if (SK.d) paintSkip(); else body.innerHTML = '<div class="loading">กำลังดึงข้อมูลจากเว็บเช็คชื่อ...</div>';
+    loadSkip(!!SK.d);
+  }
+  function paintSkip() {
+    var D = SK.d; if (!D) return;
+    if (D.off) { body.innerHTML = '<div class="card">' + err('ยังไม่ได้เปิดใช้ โดด / ขาดเรียน — เปิดได้ที่แท็บ ตั้งค่า › โดด / ขาดเรียน') + '</div>'; return; }
+    var all = D.items || [], cnt = {}, sum = {}, r = D.rules || {};
+    all.forEach(function (x) { cnt[x.cat] = (cnt[x.cat] || 0) + 1; sum[x.cat] = (sum[x.cat] || 0) + (Number(x.delta) || 0); });
+    var L = all.filter(function (x) { return x.cat === SK.cat; }), by = {}, days = [];
+    if (SK.cat !== 'pend') L.sort(function (a, b) { return b.d.localeCompare(a.d); });
+    L.forEach(function (x) { if (!by[x.d]) { by[x.d] = []; days.push(x.d); } by[x.d].push(x); });
+    Object.keys(SK.sel).forEach(function (k) { if (!L.some(function (x) { return x.k === k; })) delete SK.sel[k]; });
+    var nSel = Object.keys(SK.sel).length, selSum = L.reduce(function (a, x) { return a + (SK.sel[x.k] ? Number(x.delta) || 0 : 0); }, 0);
+    var st4 = function (t, v, c, sub) { return '<div class="cc-st"><span>' + t + '</span><b style="color:' + c + '">' + v + '</b><small>' + sub + '</small></div>'; };
+    var rule = '-' + r.skipPts + ' / คาบ' + (r.skipPartial ? ' · ขาดบางคาบ = โดด' : '') + (r.absOn ? ' · ขาดทั้งวัน -' + r.absPts + ' / วัน' : ' · ขาดทั้งวัน: ไม่หัก') + (r.skipMax ? ' · สูงสุด -' + r.skipMax + ' / วัน' : '');
+    var row = function (x) {
+      var kc = x.kind === 'skip' ? 'sk' : 'ab';
+      return '<label class="cc-skr"><input type="checkbox" data-cc-skk="' + esc(x.k) + '"' + (SK.sel[x.k] ? ' checked' : '') + ' /><span class="cc-skm"><b>' + esc(x.name) + '</b> <span class="cc-mut">· ' + esc(x.room) + (x.no ? ' เลขที่ ' + esc(x.no) : '') + '</span>' +
+        '<small>' + esc(x.note || '') + (x.by ? ' · เช็คโดย ' + esc(x.by) : '') + (x.mBy && x.cat !== 'pend' ? ' · ' + (x.cat === 'no' ? 'ไม่หักโดย ' : 'ยืนยันโดย ') + esc(x.mBy) : '') + (x.cat === 'back' ? ' · ครูแก้สถานะในเว็บเช็คชื่อแล้ว' : '') + '</small></span>' +
+        '<span class="cc-skb ' + kc + '">' + esc(x.label) + '</span><b class="cc-skd">' + (x.cat === 'no' ? '0' : sgn(Number(x.delta) || 0)) + (x.capped ? '<small title="ถึงเพดานหักต่อวัน">เพดาน</small>' : '') + '</b></label>';
+    };
+    var acts = SK.cat === 'pend' ? '<button type="button" class="btn btn-ghost btn-sm" data-cc-skop="no">' + ic('fa-ban') + ' ไม่หัก</button><button type="button" class="btn btn-sm cc-skok" data-cc-skop="ok">' + ic('fa-check') + ' ยืนยันหักคะแนน</button>'
+      : SK.cat === 'back' ? '<button type="button" class="btn btn-sm cc-skok" data-cc-skop="undo">' + ic('fa-rotate-left') + ' คืนคะแนน</button>'
+      : '<button type="button" class="btn btn-ghost btn-sm" data-cc-skop="undo">' + ic('fa-rotate-left') + (SK.cat === 'ok' ? ' ยกเลิกการหัก (คืนคะแนน → กลับไปรอยืนยัน)' : ' กลับไปรอยืนยัน') + '</button>';
+    put(body, '<div class="cc-skh">' + ic('fa-rotate') + ' ข้อมูลจากเว็บเช็คชื่อ ' + esc(thD(D.from, 1)) + ' – ' + esc(thD(D.to, 1)) + ' (ระยะเวลาการเช็คชื่อ) · ดึงเมื่อ ' + esc(new Date(D.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })) + ' น. <button type="button" class="btn btn-secondary btn-sm" data-cc-skre>' + ic('fa-rotate') + ' ดึงใหม่</button></div>' +
+      (D.more ? '<div class="cc-warn">' + ic('fa-triangle-exclamation') + ' รายการมากเกิน 5,000 แถว — แสดงเฉพาะส่วนแรก</div>' : '') +
+      '<div class="cc-sts">' + st4('รอยืนยัน', cnt.pend || 0, '#e11d48', 'หักรวม ' + sgn(sum.pend || 0) + ' ถ้ายืนยันทั้งหมด') + st4('ยืนยันแล้ว', cnt.ok || 0, '#15803d', 'หักไปแล้ว ' + sgn(sum.ok || 0)) + st4('ต้องคืนคะแนน', cnt.back || 0, '#c2410c', 'ครูแก้สถานะภายหลัง') + st4('กฎที่ใช้', '-' + r.skipPts + ' / คาบ', '#334155', esc(rule.replace(/^-\d+ \/ คาบ( · )?/, '') || '—')) + '</div>' +
+      '<div class="cc-seg cc-sks" role="tablist">' + SK_CAT.map(function (c) { return '<button type="button" data-cc-skc="' + c[0] + '" class="' + (SK.cat === c[0] ? 'on' : '') + '">' + c[1] + (cnt[c[0]] ? ' <span class="cc-skn' + (c[0] === 'back' ? ' o' : '') + '">' + cnt[c[0]] + '</span>' : '') + '</button>'; }).join('') + '</div>' +
+      (L.length ? '<div class="card cc-skl">' + days.map(function (d) { var all1 = by[d].every(function (x) { return SK.sel[x.k]; }); return '<label class="cc-skday"><input type="checkbox" data-cc-skday="' + d + '"' + (all1 ? ' checked' : '') + ' /> ' + esc(thD(d, 1)) + ' <span class="cc-mut">· ' + by[d].length + ' รายการ</span></label>' + by[d].map(row).join(''); }).join('') +
+        '<div class="cc-skbar"><b>เลือก ' + nSel + ' รายการ' + (SK.cat === 'pend' && nSel ? ' · หักรวม ' + sgn(selSum) : '') + '</b><button type="button" class="btn btn-ghost btn-sm" data-cc-skall>' + (nSel === L.length ? 'ไม่เลือกเลย' : 'เลือกทั้งหมด') + '</button><span class="cc-skacts">' + acts + '</span></div></div>'
+        : '<div class="card"><p class="cc-mut" style="text-align:center;padding:18px">' + (SK.cat === 'pend' ? 'ไม่มีรายการรอยืนยัน 🎉' : 'ไม่มีรายการ') + '</p></div>'));
+  }
+  async function skipDo(op) {
+    var keys = Object.keys(SK.sel); if (!keys.length) { showToast('ยังไม่ได้เลือกรายการ', true); return; }
+    if (op !== 'ok' && !(await askConfirm(op === 'no' ? 'ไม่หักคะแนน ' + keys.length + ' รายการ?' : (SK.cat === 'pend' ? '' : 'ยกเลิก / คืนคะแนน ' + keys.length + ' รายการ? (คะแนนที่หักไปจะถูกลบออก)'), op === 'no' ? 'ไม่หัก' : 'ยืนยัน'))) return;
+    var r = await withProgress(op === 'ok' ? 'กำลังหักคะแนน' : 'กำลังบันทึก', async function (ctl) {
+      for (var i = 0; i < keys.length; i += 60) { ctl.setProgress(Math.round(i / keys.length * 100)); await apiCall('careSkipApply', { op: op, keys: keys.slice(i, i + 60) }); }
+      return true;
+    }, { successLabel: op === 'ok' ? 'หักคะแนนแล้ว ' + keys.length + ' รายการ' : 'บันทึกแล้ว' });
+    if (!r.ok) return;
+    SK.sel = {}; C.sc = {}; C.ov = {}; C.bh = {}; C.rm = {}; C.rd = {};
+    await loadSkip();
   }
   function renderTabs() {
     var t = [['summary', 'fa-chart-pie', 'สรุปรวม'], ['late', 'fa-clock', 'มาสาย'], ['scores', 'fa-star', 'คะแนนพฤติกรรม']];
+    if (B.role === 'm' && B.settings && B.settings.skipOn) t.push(['skip', 'fa-person-walking-arrow-right', 'โดด / ขาดเรียน']); // 2.13.0
     if (B.role === 'm') t.push(['settings', 'fa-sliders', 'ตั้งค่า']);
     var cur = isLate() ? 'late' : st.tab;
-    tabsEl.innerHTML = t.map(function (x) { return '<button type="button" class="tab-btn' + (x[0] === cur ? ' active' : '') + '" data-cc-tab="' + x[0] + '">' + ic(x[1]) + ' ' + x[2] + '</button>'; }).join('');
+    tabsEl.innerHTML = t.map(function (x) { return '<button type="button" class="tab-btn' + (x[0] === cur ? ' active' : '') + '" data-cc-tab="' + x[0] + '">' + ic(x[1]) + ' ' + x[2] + (x[0] === 'skip' ? '<span class="cc-skn" id="ccSkipN"' + (SK.n ? '' : ' hidden') + '>' + SK.n + '</span>' : '') + '</button>'; }).join('');
   }
   // 2.07.0: แท็บ "มาสาย" มีแท็บย่อย ภาพรวม · รายห้อง · สายบ่อย (st.tab = แท็บย่อย · st.late = แท็บย่อยล่าสุด)
   function isLate(t) { t = t || st.tab; return t === 'overview' || t === 'rooms' || t === 'frequent'; }
   function goTab(t) { if (t === 'late') t = st.late || 'overview'; if (isLate(t)) st.late = t; st.tab = t; renderTabs(); show(); }
   tabsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-cc-tab]'); if (!b) return; var t = b.getAttribute('data-cc-tab'); if ((t === st.tab || (t === 'late' && isLate(st.tab))) && body.querySelector('.cc-cap, .card')) return; /* 2.13.0: กดแท็บเดิมซ้ำ = ไม่วาดใหม่ */ goTab(t); });
-  function show() { if (st.tab === 'summary') return showSummary(); if (st.tab === 'scores') return showScores(); if (st.tab === 'settings') return showSettings(); if (st.tab === 'rooms') return showRooms(); return showOverview(); }
+  function show() { if (st.tab === 'skip') return showSkip(); if (st.tab === 'summary') return showSummary(); if (st.tab === 'scores') return showScores(); if (st.tab === 'settings') return showSettings(); if (st.tab === 'rooms') return showRooms(); return showOverview(); }
   function subBar() {
     if (!isLate()) return '';
     return '<div class="cc-sub cc-noexp" role="tablist">' + [['overview', 'fa-chart-column', 'ภาพรวม'], ['rooms', 'fa-door-open', 'รายห้อง'], ['frequent', 'fa-user-clock', 'สายบ่อย']].map(function (x) { return '<button type="button" class="' + (st.tab === x[0] ? 'on' : '') + '" data-cc-go="' + x[0] + '">' + ic(x[1]) + ' ' + x[2] + '</button>'; }).join('') + '</div>';
@@ -426,7 +481,7 @@
   var draft = null;
   function siteBase(u) { u = String(u || '').trim(); u = u.replace(/(index|council|student)\.html.*$/i, ''); return u && !/\/$/.test(u) ? u + '/' : u; }
   // 2.12.2: แบนเนอร์ BNK Care Center — บันทึกทันทีเมื่อเลือกรูป (ไม่ต้องกดบันทึกการตั้งค่า) · ย่อ/ครอปเป็น 1300×433 ในเบราว์เซอร์
-  var BN_PAGES = [['t', 'หน้าครู', 'fa-chalkboard-user'], ['c', 'หน้าสภานักเรียน', 'fa-users'], ['s', 'หน้านักเรียน', 'fa-user-graduate']];
+  var BN_PAGES = [['t', 'หน้าครู', 'fa-chalkboard-user'], ['c', 'หน้าสภานักเรียน', 'fa-users'], ['s', 'หน้านักเรียน', 'fa-user-graduate'], ['v', 'หน้าดูคะแนน', 'fa-id-card']];
   function bnOf() { var b = (B.settings && B.settings.banner) || {}; return { mode: b.mode === 'each' ? 'each' : 'all', a: b.a || '', t: b.t || '', c: b.c || '', s: b.s || '' }; }
   function bnSrc(slot, ver, base) { return ver ? API_URL.replace(/\/$/, '') + '/care-banner/' + slot + '?v=' + ver : (base ? base + 'assets/banner.jpg' : ''); }
   function bnImg(src) { return src ? '<img class="cc-bn-img" src="' + esc(src) + '" alt="" loading="lazy" />' : '<div class="cc-bn-img cc-bn-def">รูปเดิม (banner.jpg)</div>'; }
@@ -466,12 +521,14 @@
     try { var d = await bnShrink(f); await bnSave({ slot: bnSlot, image: d }, 'กำลังอัปแบนเนอร์'); } catch (x) { showToast(x.message, true); }
   });
   // 2.12.3: แท็บย่อยในหน้าตั้งค่า — แต่ละหัวข้อกดบันทึกของตัวเอง (ค่าที่แก้ค้างในหัวข้ออื่นยังอยู่ · มีจุดเตือนที่แท็บ)
-  var CC_SSUB = [['council', 'หน้าสภานักเรียน', 'fa-people-group'], ['student', 'หน้านักเรียน', 'fa-user-graduate'], ['score', 'คะแนนพฤติกรรม', 'fa-star'], ['items', 'รายการคะแนน', 'fa-list-check'], ['perm', 'สิทธิ์และแจ้งเตือน', 'fa-user-shield'], ['site', 'ลิงก์และแบนเนอร์', 'fa-link']];
-  var CC_FIELDS = { council: ['pinOn', 'pin', 'council'], student: ['selfOn', 'selfFrom', 'selfTo', 'reasons'], score: ['startPoints', 'cycle', 'good', 'fair'], items: ['latePoints', 'items'], perm: ['advisorView', 'notifyOn', 'notifyN'], site: ['siteUrl'] };
+  var CC_SSUB = [['council', 'หน้าสภานักเรียน', 'fa-people-group'], ['student', 'หน้านักเรียน', 'fa-user-graduate'], ['score', 'คะแนนพฤติกรรม', 'fa-star'], ['items', 'รายการคะแนน', 'fa-list-check'], ['perm', 'สิทธิ์และแจ้งเตือน', 'fa-user-shield'], ['site', 'ลิงก์และแบนเนอร์', 'fa-link'], ['skip', 'โดด / ขาดเรียน', 'fa-person-walking-arrow-right'], ['view', 'หน้าดูคะแนน', 'fa-id-card']];
+  var CC_FIELDS = { council: ['pinOn', 'pin', 'council'], student: ['selfOn', 'selfFrom', 'selfTo', 'reasons'], score: ['startPoints', 'cycle', 'good', 'fair'], items: ['latePoints', 'items'], perm: ['advisorView', 'notifyOn', 'notifyN'], site: ['siteUrl'], skip: ['skipOn', 'skipPts', 'skipPartial', 'absOn', 'absPts', 'skipMax'], view: ['viewOn', 'viewId', 'viewLate', 'viewHist'] };
   var ssub = (function () { try { var v = localStorage.getItem('bnkah_cc_ssub'); return CC_FIELDS[v] ? v : 'council'; } catch (e) { return 'council'; } })();
   function baseDraft() { var s = B.settings; return { pinOn: s.pinOn, pin: '', notifyOn: s.notifyOn, notifyN: s.notifyN, startPoints: s.startPoints, latePoints: s.latePoints, good: s.good, fair: s.fair,
       items: (s.items || []).map(function (x) { return { label: x.label, delta: x.delta, t: !!x.t, c: !!x.c }; }), siteUrl: B.siteUrl, cycle: JSON.parse(JSON.stringify(s.cycle || { mode: 'all', all: 'term', g: {} })),
-      advisorView: !!s.advisorView, council: (s.council || []).map(function (c) { return { k: c.k, n: c.n, r: c.r }; }), selfOn: s.selfOn !== false, selfFrom: s.selfFrom || '06:00', selfTo: s.selfTo || '17:30', reasons: (s.reasons || []).slice() }; }
+      advisorView: !!s.advisorView, council: (s.council || []).map(function (c) { return { k: c.k, n: c.n, r: c.r }; }), selfOn: s.selfOn !== false, selfFrom: s.selfFrom || '06:00', selfTo: s.selfTo || '17:30', reasons: (s.reasons || []).slice(),
+      skipOn: !!s.skipOn, skipPts: s.skipPts == null ? 5 : s.skipPts, skipPartial: s.skipPartial !== false, absOn: !!s.absOn, absPts: s.absPts == null ? 5 : s.absPts, skipMax: s.skipMax == null ? 15 : s.skipMax,
+      viewOn: !!s.viewOn, viewId: s.viewId !== false, viewLate: s.viewLate !== false, viewHist: s.viewHist !== false }; }
   function cycN(c) { c = c || {}; var g = {}; for (var i = 1; i <= 6; i++) g['m' + i] = (c.g || {})['m' + i] || c.all || 'term'; return { mode: c.mode === 'grade' ? 'grade' : 'all', all: c.all || 'term', g: c.mode === 'grade' ? g : {} }; }
   function secVal(d, k) { return JSON.stringify(CC_FIELDS[k].map(function (f) { var v = d[f]; if (f === 'cycle') return cycN(v); if (f === 'items') return (v || []).map(function (x) { return [String(x.label || '').trim(), Math.trunc(+x.delta || 0), !!x.t, !!x.c]; }); if (f === 'council') return (v || []).map(function (c) { return c.k; }); if (f === 'pin') return ''; if (typeof v === 'number') return +v; return v; })); }
   function secDirty(k) { if (!draft || !B || !B.settings) return false; if (k === 'council' && draft.pin) return true; return secVal(draft, k) !== secVal(baseDraft(), k); }
@@ -481,7 +538,7 @@
     var s = B.settings;
     draft = draft || baseDraft();
     var d = draft, sw = function (id, on, attr) { return '<input type="checkbox" class="switch" role="switch" id="' + id + '"' + (attr || '') + (on ? ' checked' : '') + ' />'; }, base = siteBase(d.siteUrl);
-    var links = [['', 'หน้าครู (หน้าหลัก)', 'fa-chalkboard-user'], ['council.html', 'หน้าสภานักเรียน (ใช้ PIN)', 'fa-people-group'], ['student.html', 'หน้านักเรียน (แจ้งมาสายเอง)', 'fa-user-graduate']];
+    var links = [['', 'หน้าครู (หน้าหลัก)', 'fa-chalkboard-user'], ['council.html', 'หน้าสภานักเรียน (ใช้ PIN)', 'fa-people-group'], ['student.html', 'หน้านักเรียน (แจ้งมาสายเอง)', 'fa-user-graduate'], ['score.html', 'หน้าดูคะแนน (นักเรียน / ผู้ปกครอง)', 'fa-id-card']];
     var tabs = CC_SSUB.map(function (t) { return '<button type="button" data-cc-ssub="' + t[0] + '" class="' + (t[0] === ssub ? 'on' : '') + '">' + ic(t[2]) + ' ' + t[1] + (secDirty(t[0]) ? ' <span class="cc-dot" title="ยังไม่ได้บันทึก"></span>' : '') + '</button>'; }).join('');
     var save = function (k, extra) { return '<div class="cc-actions">' + (secDirty(k) ? '<span class="cc-unsaved">' + ic('fa-circle-exclamation') + ' ยังไม่ได้บันทึก</span>' : '') + '<button type="button" class="btn btn-success" data-cc-save="' + k + '">' + ic('fa-check') + ' บันทึก' + (extra || '') + '</button></div>'; };
     var SEC = {
@@ -516,6 +573,25 @@
       '<p class="hint">ครูกิจการนักเรียน = ผู้ดูแลกิจการนักเรียน (สิทธิ์จัดการ) และเจ้าหน้าที่กลุ่มบริหารงานกิจการนักเรียน · ครูทั่วไปยกเลิกได้เฉพาะรายการที่ตัวเองบันทึกในวันเดียวกัน</p>' +
       '<h3 style="margin-top:14px">' + ic('fa-bell') + ' แจ้งเตือนครูที่ปรึกษา</h3><div class="cc-row">' + sw('ccNotifyOn', d.notifyOn) + '<span>แจ้งผ่านกระดิ่งเมื่อนักเรียนสายครบ</span><input id="ccNotifyN" type="number" min="1" max="31" class="cc-num" value="' + d.notifyN + '" /><span>ครั้ง / เดือน</span></div>' +
       '<p class="hint">แจ้งครั้งเดียวต่อนักเรียนต่อเดือน · ครูที่ปรึกษาต้องผูกบัญชีกับเว็บเช็คชื่อไว้แล้ว</p>') + save('perm', 'สิทธิ์และแจ้งเตือน') + '</div>'; },
+      skip: function () { return (
+      '<div class="card cc-card"><h3>' + ic('fa-person-walking-arrow-right') + ' โดด / ขาดเรียน — หักคะแนนจากเว็บเช็คชื่อ</h3>' +
+      '<label class="cc-row">' + sw('ccSkipOn', d.skipOn) + '<b>เปิดใช้ (แท็บ "โดด / ขาดเรียน" · ดึงข้อมูลเมื่อเปิดแท็บ)</b></label>' +
+      '<div class="cc-row"><span class="cc-lb">โดดเรียน หัก</span><input type="number" id="ccSkipPts" min="0" max="100" value="' + d.skipPts + '" class="cc-num" /> คะแนน / คาบ</div>' +
+      '<label class="cc-row">' + sw('ccSkipPart', d.skipPartial) + '<b>ขาดบางคาบ แต่มาเรียนคาบอื่นวันเดียวกัน = นับเป็นโดด</b></label>' +
+      '<label class="cc-row">' + sw('ccAbsOn', d.absOn) + '<b>ขาดเรียนทั้งวัน หักด้วย</b></label>' +
+      (d.absOn ? '<div class="cc-row"><span class="cc-lb">ขาดเรียนทั้งวัน หัก</span><input type="number" id="ccAbsPts" min="0" max="100" value="' + d.absPts + '" class="cc-num" /> คะแนน / วัน</div>' : '') +
+      '<div class="cc-row"><span class="cc-lb">หักสูงสุดต่อวัน</span><input type="number" id="ccSkipMax" min="0" max="500" value="' + d.skipMax + '" class="cc-num" /> คะแนน <span class="cc-mut">(0 = ไม่จำกัด)</span></div>' +
+      '<p class="hint">ทุกรายการต้องกด "ยืนยันหักคะแนน" ในแท็บ โดด / ขาดเรียน ก่อน · 1 คาบหักได้ครั้งเดียว · ครูแก้สถานะในเว็บเช็คชื่อภายหลัง = ขึ้นในหมวด "ต้องคืนคะแนน" · ข้อมูลตาม "ระยะเวลาการเช็คชื่อ" ของภาคเรียนปัจจุบัน</p>' +
+      save('skip', ' โดด / ขาดเรียน') + '</div>'); },
+      view: function () { var u = base + 'score.html'; return (
+      '<div class="card cc-card"><h3>' + ic('fa-id-card') + ' หน้าดูคะแนน — นักเรียน / ผู้ปกครองดูคะแนนพฤติกรรม</h3>' +
+      '<label class="cc-row">' + sw('ccViewOn', d.viewOn) + '<b>เปิดหน้าดูคะแนน</b></label>' +
+      '<label class="cc-row">' + sw('ccViewId', d.viewId) + '<b>ต้องใส่เลขประจำตัวนักเรียนก่อนดู</b> <span style="color:#15803d;margin-left:6px">แนะนำ</span></label>' +
+      (!d.viewId ? '<div class="cc-warn">' + ic('fa-triangle-exclamation') + ' ปิดอยู่ = ใครก็เลือกชื่อแล้วดูคะแนนของคนอื่นได้</div>' : '') +
+      '<div class="cc-row" style="display:block"><b>แสดงในหน้า</b><div class="cc-vchk"><label><input type="checkbox" checked disabled /> คะแนนคงเหลือ + ระดับ</label><label><input type="checkbox" id="ccViewHist"' + (d.viewHist ? ' checked' : '') + ' /> ประวัติหัก / เพิ่ม</label><label><input type="checkbox" id="ccViewLate"' + (d.viewLate ? ' checked' : '') + ' /> จำนวนครั้งมาสาย</label><label class="cc-mut"><input type="checkbox" disabled /> ชื่อครูผู้บันทึก (ไม่แสดงเสมอ)</label></div></div>' +
+      '<div class="cc-link"><span>' + ic('fa-id-card') + ' <b>ลิงก์หน้าดูคะแนน</b><small>' + esc(u) + '</small></span><button type="button" class="btn btn-secondary btn-sm" data-cc-copy="' + esc(u) + '">' + ic('fa-copy') + ' คัดลอก</button><button type="button" class="btn btn-secondary btn-sm" data-cc-qr="v" data-u="' + esc(u) + '">' + ic('fa-qrcode') + ' QR</button></div><div id="ccQrv" class="cc-qr" hidden></div>' +
+      '<p class="hint">ใส่เลขประจำตัวผิด 5 ครั้ง = ล็อกการดูของนักเรียนคนนั้น 15 นาที · แบนเนอร์ของหน้านี้ตั้งได้ที่ ลิงก์และแบนเนอร์</p>' +
+      save('view', ' หน้าดูคะแนน') + '</div>'); },
       site: function () { return (
       '<div class="card cc-card"><h3>' + ic('fa-link') + ' ลิงก์ BNK Care Center</h3><div class="cc-row"><span class="cc-lb">ที่อยู่เว็บ</span><input id="ccSite" value="' + esc(d.siteUrl) + '" style="flex:1" /></div>' +
       links.map(function (l, i) { var u = base + l[0]; return '<div class="cc-link"><span>' + ic(l[2]) + ' <b>' + l[1] + '</b><small>' + esc(u) + '</small></span><button type="button" class="btn btn-secondary btn-sm" data-cc-copy="' + esc(u) + '">' + ic('fa-copy') + '</button><button type="button" class="btn btn-secondary btn-sm" data-cc-qr="' + i + '" data-u="' + esc(u) + '">' + ic('fa-qrcode') + '</button></div><div id="ccQr' + i + '" class="cc-qr" hidden></div>'; }).join('') +
@@ -548,6 +624,8 @@
     chk('ccNotifyOn', 'notifyOn'); num('ccNotifyN', 'notifyN', 3); num('ccStart', 'startPoints'); num('ccLate', 'latePoints'); num('ccGood', 'good'); num('ccFair', 'fair');
     chk('ccAdvView', 'advisorView'); chk('ccSelfOn', 'selfOn'); if (el('ccSelfFrom') && el('ccSelfFrom').value) d.selfFrom = el('ccSelfFrom').value; if (el('ccSelfTo') && el('ccSelfTo').value) d.selfTo = el('ccSelfTo').value;
     txt('ccSite', 'siteUrl');
+    chk('ccSkipOn', 'skipOn'); num('ccSkipPts', 'skipPts'); chk('ccSkipPart', 'skipPartial'); chk('ccAbsOn', 'absOn'); num('ccAbsPts', 'absPts'); num('ccSkipMax', 'skipMax'); // 2.13.0
+    chk('ccViewOn', 'viewOn'); chk('ccViewId', 'viewId'); chk('ccViewLate', 'viewLate'); chk('ccViewHist', 'viewHist');
     var cy = d.cycle; if (el('ccCycAll')) cy.all = el('ccCycAll').value;
     cy.g = cy.g || {}; for (var i = 1; i <= 6; i++) { if (el('ccCyc' + i)) cy.g['m' + i] = el('ccCyc' + i).value; else cy.g['m' + i] = cy.g['m' + i] || cy.all; }
     document.querySelectorAll('[data-cc-it-l]').forEach(function (e) { d.items[+e.getAttribute('data-cc-it-l')].label = e.value; });
@@ -575,6 +653,11 @@
   // ---------- เหตุการณ์ ----------
   body.addEventListener('click', async function (e) {
     var t;
+    // 2.13.0: โดด / ขาดเรียน
+    if ((t = e.target.closest('[data-cc-skc]'))) { SK.cat = t.getAttribute('data-cc-skc'); SK.sel = {}; paintSkip(); return; }
+    if (e.target.closest('[data-cc-skre]')) { SK.d && (SK.d.at = new Date().toISOString()); var rb = e.target.closest('[data-cc-skre]'); rb.disabled = true; await loadSkip(); return; }
+    if ((t = e.target.closest('[data-cc-skop]'))) { skipDo(t.getAttribute('data-cc-skop')); return; }
+    if (e.target.closest('[data-cc-skall]')) { var L0 = (SK.d.items || []).filter(function (x) { return x.cat === SK.cat; }), allOn = L0.every(function (x) { return SK.sel[x.k]; }); SK.sel = {}; if (!allOn) L0.forEach(function (x) { SK.sel[x.k] = 1; }); paintSkip(); return; }
     if ((t = e.target.closest('[data-cc-pg]'))) { if (t.disabled) return; st.pg = +t.getAttribute('data-cc-pg'); renderScores(); var tb = document.getElementById('ccSc'); if (tb) tb.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
     if ((t = e.target.closest('[data-cc-rg]'))) { st.range = t.getAttribute('data-cc-rg'); show(); return; }
     if ((t = e.target.closest('[data-cc-go]'))) { e.preventDefault(); st.rroom = t.getAttribute('data-r') || ''; goTab(t.getAttribute('data-cc-go')); return; }
@@ -614,12 +697,14 @@
         P = { latePoints: d.latePoints, items: items };
       } else if (k === 'perm') P = { advisorView: d.advisorView, notifyOn: d.notifyOn, notifyN: d.notifyN };
       else if (k === 'site') P = { siteUrl: d.siteUrl };
+      else if (k === 'skip') P = { skipOn: d.skipOn, skipPts: d.skipPts, skipPartial: d.skipPartial, absOn: d.absOn, absPts: d.absPts, skipMax: d.skipMax };
+      else if (k === 'view') P = { viewOn: d.viewOn, viewId: d.viewId, viewLate: d.viewLate, viewHist: d.viewHist };
       var go = async function () {
         var r = await withProgress('กำลังบันทึก', function () { return apiCall('careSettingsSave', P); }, { successLabel: 'บันทึกแล้ว' });
         if (!r.ok) return;
         B.settings = r.data.settings; B.periods = r.data.periods || B.periods; B.siteUrl = r.data.siteUrl;
         var nb = baseDraft(); CC_FIELDS[k].forEach(function (f) { draft[f] = nb[f]; }); // หัวข้ออื่นที่แก้ค้างไว้ยังอยู่
-        C.sc = {}; C.ov = {}; C.rm = {}; C.rd = {}; C.bh = {}; showSettings();
+        C.sc = {}; C.ov = {}; C.rm = {}; C.rd = {}; C.bh = {}; if (k === 'skip') { SK.d = null; SK.n = 0; renderTabs(); if (B.settings.skipOn) loadSkip(true); } showSettings();
       };
       if (k === 'council' && !d.pinOn && B.settings.pinOn) { if (await askConfirm('ปิดแล้ว ใครมีลิงก์หน้าสภานักเรียนก็เปิดเว็บ เห็นรายชื่อนักเรียนทั้งโรงเรียน และบันทึกการมาสายได้ — ยืนยันปิดหรือไม่?', 'ปิดรหัส PIN')) go(); }
       else go();
@@ -636,7 +721,9 @@
   body.addEventListener('change', function () { setTimeout(paintDirty, 0); });
   body.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'ccRNew') { e.preventDefault(); var b = document.querySelector('[data-cc-radd]'); if (b) b.click(); } });
   body.addEventListener('change', function (e) {
-    var id = e.target.id;
+    var id = e.target.id, sk;
+    if ((sk = e.target.getAttribute('data-cc-skk'))) { if (e.target.checked) SK.sel[sk] = 1; else delete SK.sel[sk]; paintSkip(); return; }
+    if ((sk = e.target.getAttribute('data-cc-skday'))) { var on = e.target.checked; (SK.d.items || []).forEach(function (x) { if (x.cat === SK.cat && x.d === sk) { if (on) SK.sel[x.k] = 1; else delete SK.sel[x.k]; } }); paintSkip(); return; }
     if (id === 'ccGrade') { st.grade = e.target.value; show(); }
     else if (id === 'ccFrom' || id === 'ccTo') { var a = document.getElementById('ccFrom').value, b = document.getElementById('ccTo').value; if (a && b && a <= b) { st.from = a; st.to = b; show(); } }
     else if (id === 'ccMin') { st.min = +e.target.value; show(); }
