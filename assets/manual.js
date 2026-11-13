@@ -346,7 +346,7 @@ function manualOpen(topicId) {
     bb.addEventListener('click', function (e) {
       e.stopPropagation(); if (!bm.hidden) { bmClose(); return; }
       var s = getSession(), w = manualBookWho(s), all = manualTopicsFor(s), cur = all.filter(function (t) { return t.id === _manual.cur; })[0];
-      var it = function (m, ic, col, t, d, hi) { return '<button type="button" class="mn-bki' + (hi ? ' hi' : '') + '" data-bk="' + m + '"><span class="mn-bkic" style="background:' + col + '"><i class="fa-solid ' + ic + '" aria-hidden="true"></i></span><span class="mn-bkt"><b>' + t + '</b><small>' + d + '</small></span><i class="fa-solid fa-download" aria-hidden="true"></i></button>'; };
+      var it = function (m, ic, col, t, d, hi) { return '<button type="button" class="mn-bki' + (hi ? ' hi' : '') + '" data-bk="' + m + '"><span class="mn-bkic"><i class="fa-solid ' + ic + '" aria-hidden="true"></i></span><span class="mn-bkt"><b>' + t + '</b><small>' + d + '</small></span><i class="fa-solid fa-download" aria-hidden="true"></i></button>'; };
       bm.innerHTML = it('mine', 'fa-user-check', w.hc, 'คู่มือของฉัน (ตามสิทธิ์บัญชีนี้)', escapeHtml(w.label) + ' · ' + all.length + ' หัวข้อ · เฉพาะเมนูที่คุณเข้าถึงได้', 1) +
         (cur ? it('one', 'fa-book-open', '#64748b', 'เฉพาะหัวข้อที่เปิดอยู่', escapeHtml(cur.title) + ' · 1 หัวข้อ') : '') +
         '<span class="mn-bkn"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ไฟล์ PDF มีปก (ชื่อ + ประเภทบัญชี) · สารบัญ · เลขหน้า · ทั้งเล่มใช้เวลาสร้างประมาณครึ่งนาที</span>';
@@ -473,7 +473,7 @@ MANUAL_TOPICS.push({
     { img: 'search', cap: 'พิมพ์แล้วผลแยกหมวด', steps: ['พิมพ์คำที่ต้องการ — ใช้คำพูดทั่วไปได้ เช่น ลา, รูป, ลืมรหัส', 'เมนู / ทางลัด — กด Enter หรือคลิกเพื่อไปหน้านั้นเลย (ใช้ลูกศร ↑ ↓ เลือก)', 'คู่มือ — ขึ้นวิธีทำสั้นๆ ให้ก่อน กด "เปิดคู่มือเต็ม" เพื่ออ่านทั้งหัวข้อ'] },
     { img: 'search-mobile', cap: 'บนมือถือ', steps: ['แตะแว่นขยายบนแถบด้านบน', 'หรือเปิดเมนู ☰ แล้วแตะช่อง "ค้นหาเมนู..." ด้านบน'] }
   ],
-  tips: ['เปิดมายังไม่พิมพ์ = มีคำที่เคยค้นล่าสุด ปุ่มลองค้นหา และรายการโปรดของคุณ', 'ไม่ค้นข้อมูลนักเรียนรายคน (คะแนนพฤติกรรม / แนะแนว / เช็คชื่อ)', 'ผลคำสั่ง / เกียรติบัตร พาไปหน้าคลังพร้อมใส่คำค้นให้']
+  tips: ['แถบหมวดใต้ช่องค้นหา (ทั้งหมด · เมนู · คู่มือ · ประกาศ ...) — แตะเพื่อดูเฉพาะหมวดนั้น (2.14.2)', 'เปิดมายังไม่พิมพ์ = มีคำที่เคยค้นล่าสุด (กด × เพื่อลบทีละคำ หรือ "ล้างทั้งหมด") ปุ่มลองค้นหา และรายการโปรดของคุณ', 'ไม่ค้นข้อมูลนักเรียนรายคน (คะแนนพฤติกรรม / แนะแนว / เช็คชื่อ)', 'ผลคำสั่ง / เกียรติบัตร พาไปหน้าคลังพร้อมใส่คำค้นให้']
 });
 MANUAL_TOPICS.push({
   id: 'sidenav', group: 'common', title: 'เมนูด้านซ้าย / รายการโปรด', icon: 'fa-star', roles: 'tsea',

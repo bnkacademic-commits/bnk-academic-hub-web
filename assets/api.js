@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.14.1';
-var APP_VERSION = '2.14.1.141126';
+var APP_VERSION = '2.14.2.141126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2190,7 +2190,7 @@ function mountChrome(activePage) {
           '<button class="nav-toggle" id="navToggle" type="button" aria-label="เปิด/ปิดเมนู" aria-expanded="false" aria-controls="app-sidenav"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>' +
           '<button class="brand js-home-btn" type="button"><span class="js-brand-logo"><span class="logo-dot"></span></span> <span class="js-site-name">BNKAcademicHub</span></button>' +
         '</div>' +
-        '<button type="button" class="tb-search" id="tbSearch" data-open-search aria-label="ค้นหา (Ctrl+K)"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span class="tb-search-t">ค้นหาเมนู งาน คู่มือ คำสั่ง...</span><kbd>Ctrl K</kbd></button>' + // 2.14.0
+        '<button type="button" class="tb-search" id="tbSearch" data-open-search aria-label="ค้นหา (Ctrl+K)"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span class="tb-search-t">ค้นหาเมนู งาน คู่มือ คำสั่ง...</span></button>' + // 2.14.0
         '<div class="topbar-right">' +
           '<button class="refresh-btn tb-icon-btn tb-search-m" type="button" data-open-search title="ค้นหา" aria-label="ค้นหา"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>' +
           '<button class="refresh-btn" id="refreshDataBtn" type="button" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล">' +
@@ -3156,10 +3156,11 @@ var SRCH_SLOT_KW = { teach: 'เช็คชื่อ ตารางสอน �
   supervision: 'นิเทศ', summary: 'สรุป ส่งงาน ติดตามงาน', announce: 'ประกาศ แจ้ง ปฏิทินส่งงาน', orders: 'คำสั่ง แต่งตั้ง', certs: 'เกียรติบัตร cert รางวัล', gallery: 'รูป ภาพ อัลบั้ม', directory: 'ครู บุคลากร รายชื่อ เบอร์', memo: 'บันทึกข้อความ หนังสือ', settings: 'ตั้งค่า', home: 'หน้าแรก dashboard' };
 var SRCH_SUGGEST = ['แจ้งลา / ไปราชการ', 'ส่งผลงาน', 'เช็คชื่อย้อนหลัง', 'เกียรติบัตร', 'ลืมรหัสผ่าน', 'ติดตั้งแอปบนมือถือ'];
 var SRCH_G = { menu: 'เมนู', act: 'ทางลัด', man: 'คู่มือ / วิธีใช้', ann: 'ประกาศ', ord: 'คำสั่ง', cert: 'เกียรติบัตร', alb: 'อัลบั้ม', ppl: 'บุคลากร' };
-var SRCH_GI = { ann: ['fa-bullhorn', '#0891b2'], ord: ['fa-file-signature', '#d97706'], cert: ['fa-award', '#ca8a04'], alb: ['fa-images', '#db2777'], ppl: ['fa-user', '#0f766e'], man: ['fa-circle-question', '#2563eb'], act: ['fa-bolt', '#7c3aed'] };
+var SRCH_GI = { ann: ['fa-bullhorn', '#0891b2'], ord: ['fa-file-signature', '#d97706'], cert: ['fa-award', '#ca8a04'], alb: ['fa-images', '#db2777'], ppl: ['fa-user', '#0f766e'], man: ['fa-circle-question', 'var(--primary)'], act: ['fa-bolt', '#7c3aed'] };
 var _srch = null;
 function _srchNorm(t) { return String(t || '').toLowerCase().replace(/[\s​ .\-_/·()]+/g, ''); }
 function _srchRecent() { try { var v = JSON.parse(localStorage.getItem('bnkah_srch') || '[]'); return Array.isArray(v) ? v.slice(0, 6) : []; } catch (e) { return []; } }
+function _srchForget(q) { try { if (q == null) localStorage.removeItem('bnkah_srch'); else localStorage.setItem('bnkah_srch', JSON.stringify(_srchRecent().filter(function (x) { return x !== q; }))); } catch (e) { /* ข้าม */ } }
 function _srchRemember(q) { q = String(q || '').trim(); if (q.length < 2) return; try { var a = _srchRecent().filter(function (x) { return x !== q; }); a.unshift(q); localStorage.setItem('bnkah_srch', JSON.stringify(a.slice(0, 6))); } catch (e) { /* ข้าม */ } }
 function _srchEnsureManual() {
   if (typeof manualOpen === 'function') return Promise.resolve();
@@ -3214,12 +3215,12 @@ function openSearch(initial) {
   if (!_srch) {
     var el = document.createElement('div'); el.className = 'srch-bd'; el.id = 'srchModal'; el.hidden = true;
     el.innerHTML = '<div class="srch-box" role="dialog" aria-modal="true" aria-label="ค้นหา"><div class="srch-in"><button type="button" class="srch-back" data-srch-x aria-label="ปิด"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i></button><i class="fa-solid fa-magnifying-glass srch-mag" aria-hidden="true"></i>' +
-      '<input id="srchQ" type="search" autocomplete="off" enterkeyhint="search" placeholder="พิมพ์สิ่งที่ต้องการ เช่น ลา, เกียรติบัตร, ลืมรหัสผ่าน" aria-label="ค้นหา" /><kbd class="srch-esc">Esc</kbd></div>' +
-      '<div class="srch-body" id="srchBody"></div><div class="srch-ft"><span><kbd>↑</kbd><kbd>↓</kbd> เลือก</span><span><kbd>Enter</kbd> เปิด</span><span><kbd>Esc</kbd> ปิด</span><span class="srch-n" id="srchN"></span></div></div>';
+      '<input id="srchQ" type="search" autocomplete="off" enterkeyhint="search" placeholder="พิมพ์สิ่งที่ต้องการ เช่น ลา, เกียรติบัตร, ลืมรหัสผ่าน" aria-label="ค้นหา" /></div>' +
+      '<div class="srch-body" id="srchBody"></div></div>'; // 2.14.2: ไม่แสดงปุ่มลัด (ยังใช้ ↑ ↓ Enter Esc Ctrl+K ได้)
     document.body.appendChild(el);
     _srch = { el: el, q: '', idx: null, cache: {}, seq: 0, server: null, busy: false, sel: 0, t: 0 };
     var inp = el.querySelector('#srchQ');
-    inp.addEventListener('input', function () { _srch.q = inp.value; _srch.sel = 0; _srchPaint(); _srchServer(); });
+    inp.addEventListener('input', function () { _srch.q = inp.value; _srch.sel = 0; _srch.tab = ''; _srchPaint(); _srchServer(); });
     inp.addEventListener('keydown', function (e) {
       var items = el.querySelectorAll('[data-sr]');
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (!items.length) return; _srch.sel = (_srch.sel + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length; _srchMark(true); }
@@ -3228,7 +3229,11 @@ function openSearch(initial) {
     });
     el.addEventListener('click', function (e) {
       if (e.target === el || e.target.closest('[data-srch-x]')) { closeSearch(); return; }
-      var c = e.target.closest('[data-srch-q]'); if (c) { inp.value = c.getAttribute('data-srch-q'); _srch.q = inp.value; _srch.sel = 0; _srchPaint(); _srchServer(); inp.focus(); return; }
+      // 2.14.2: ลบประวัติค้นหา (ทีละคำ / ทั้งหมด) · แถบหมวดผลค้นหา
+      var dx = e.target.closest('[data-srch-del]'); if (dx) { e.stopPropagation(); _srchForget(dx.getAttribute('data-srch-del')); _srchPaint(); inp.focus(); return; }
+      if (e.target.closest('[data-srch-clr]')) { _srchForget(null); _srchPaint(); inp.focus(); return; }
+      var tb = e.target.closest('[data-srch-tab]'); if (tb) { _srch.tab = tb.getAttribute('data-srch-tab'); _srch.sel = 0; _srchPaint(); inp.focus(); return; }
+      var c = e.target.closest('[data-srch-q]'); if (c) { inp.value = c.getAttribute('data-srch-q'); _srch.q = inp.value; _srch.sel = 0; _srch.tab = ''; _srchPaint(); _srchServer(); inp.focus(); return; }
       var it = e.target.closest('[data-sr]'); if (it) { e.preventDefault(); _srchGo(+it.getAttribute('data-sr')); }
     });
     el.addEventListener('mousemove', function (e) { var it = e.target.closest('[data-sr]'); if (!it) return; var i = Array.prototype.indexOf.call(el.querySelectorAll('[data-sr]'), it); if (i !== _srch.sel && i >= 0) { _srch.sel = i; _srchMark(false); } });
@@ -3236,7 +3241,7 @@ function openSearch(initial) {
   }
   _srch.el.hidden = false; requestAnimationFrame(function () { _srch.el.classList.add('show'); });
   document.body.classList.add('srch-open');
-  var inp2 = _srch.el.querySelector('#srchQ'); inp2.value = initial || ''; _srch.q = inp2.value; _srch.sel = 0;
+  var inp2 = _srch.el.querySelector('#srchQ'); inp2.value = initial || ''; _srch.q = inp2.value; _srch.sel = 0; _srch.tab = '';
   if (!_srch.idx) _srch.idx = _srchIndex();
   _srchPaint(); setTimeout(function () { inp2.focus(); }, 30);
   _srchEnsureManual().then(function () { _srch.idx = _srchIndex(); if (!_srch.el.hidden) _srchPaint(); });
@@ -3266,21 +3271,31 @@ function _srchPaint() {
   };
   if (!q) {
     var rec = _srchRecent(), fav = typeof getNavFav === 'function' ? getNavFav() : [], links = _snLinks || [];
-    if (rec.length) h += '<div class="srch-sec"><div class="srch-sh"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> ค้นล่าสุด</div><div class="srch-chips">' + rec.map(function (r) { return '<button type="button" class="srch-chip g" data-srch-q="' + escapeHtml(r) + '">' + escapeHtml(r) + '</button>'; }).join('') + '</div></div>';
+    if (rec.length) h += '<div class="srch-sec"><div class="srch-sh srch-shx"><span><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> ค้นล่าสุด</span><button type="button" class="srch-clr" data-srch-clr>ล้างทั้งหมด</button></div><div class="srch-chips">' + rec.map(function (r) { return '<span class="srch-chip g srch-rc"><button type="button" data-srch-q="' + escapeHtml(r) + '">' + escapeHtml(r) + '</button><button type="button" class="srch-rx" data-srch-del="' + escapeHtml(r) + '" aria-label="ลบ ' + escapeHtml(r) + ' ออกจากประวัติ"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></span>'; }).join('') + '</div></div>'; // 2.14.2: ลบได้
     h += '<div class="srch-sec"><div class="srch-sh"><i class="fa-solid fa-lightbulb" aria-hidden="true"></i> ลองค้นหา</div><div class="srch-chips">' + SRCH_SUGGEST.map(function (r) { return '<button type="button" class="srch-chip" data-srch-q="' + escapeHtml(r) + '">' + escapeHtml(r) + '</button>'; }).join('') + '</div></div>';
     var fl = fav.map(function (k) { return links.filter(function (l) { return (l.slot || navSlotOf(l.key)) === k; })[0]; }).filter(Boolean);
-    if (fl.length) h += '<div class="srch-sec"><div class="srch-sh"><i class="fa-solid fa-star" style="color:#f59e0b" aria-hidden="true"></i> รายการโปรดของคุณ</div>' + fl.map(function (l) { return row({ t: l.label, u: l.href, g: 'menu' }, '', 'fa-solid', '#2563eb').replace('<i class="fa-solid fa-solid"', '<i class="fa-solid ' + (/^fa-/.test(l.icon) ? l.icon : 'fa-star') + '"'); }).join('') + '</div>';
+    if (fl.length) h += '<div class="srch-sec"><div class="srch-sh"><i class="fa-solid fa-star" style="color:#f59e0b" aria-hidden="true"></i> รายการโปรดของคุณ</div>' + fl.map(function (l) { return row({ t: l.label, u: l.href, g: 'menu' }, '', 'fa-solid', 'var(--primary)').replace('<i class="fa-solid fa-solid"', '<i class="fa-solid ' + (/^fa-/.test(l.icon) ? l.icon : 'fa-star') + '"'); }).join('') + '</div>';
   } else {
-    var loc = _srchLocal(q), menus = loc.filter(function (x) { return x.g === 'menu' || x.g === 'act'; }).slice(0, 6), mans = loc.filter(function (x) { return x.g === 'man'; }).slice(0, 4);
-    if (menus.length) h += '<div class="srch-sec"><div class="srch-sh">เมนู / ทางลัด</div>' + menus.map(function (x) { var gi = SRCH_GI[x.g] || ['fa-arrow-right', '#2563eb']; return row(x, x.d === 'เมนู' ? '' : x.d, x.g === 'menu' ? 'fa-compass' : gi[0], x.g === 'menu' ? '#2563eb' : gi[1]); }).join('') + '</div>';
-    if (mans.length) {
-      var t0 = mans[0].topic, f0 = (t0.figs || [])[0];
-      h += '<div class="srch-sec"><div class="srch-sh">คู่มือ / วิธีใช้</div><div class="srch-ans"><div class="srch-aq"><i class="fa-solid fa-circle-question" aria-hidden="true"></i> ' + _srchHl(t0.title, q) + '</div><p>' + escapeHtml(t0.lead) + '</p>' +
-        (f0 && f0.steps && f0.steps.length ? '<ol>' + f0.steps.slice(0, 4).map(function (st) { return '<li>' + escapeHtml(st) + '</li>'; }).join('') + '</ol>' : '') + row(mans[0], 'เปิดคู่มือเต็ม', 'fa-book-open', '#2563eb').replace('class="srch-it"', 'class="srch-it srch-it-ans"') + '</div>' +
-        mans.slice(1).map(function (x) { return row(x, x.d, 'fa-book-open', '#64748b'); }).join('') + '</div>';
-    }
-    var sv = _srch.server;
-    if (sv && sv.length) ['ann', 'ord', 'cert', 'alb', 'ppl'].forEach(function (g) { var L = sv.filter(function (x) { return x.g === g; }); if (!L.length) return; h += '<div class="srch-sec"><div class="srch-sh">' + SRCH_G[g] + '</div>' + L.map(function (x) { return row(x, x.d, SRCH_GI[g][0], SRCH_GI[g][1], g === 'ppl' ? x.av : ''); }).join('') + '</div>'; });
+    // 2.14.2: แถบหมวด (ทั้งหมด / เมนู / คู่มือ / ประกาศ ...) — กดเพื่อดูเฉพาะหมวด
+    var loc = _srchLocal(q), menus = loc.filter(function (x) { return x.g === 'menu' || x.g === 'act'; }).slice(0, 6), mans = loc.filter(function (x) { return x.g === 'man'; }).slice(0, 4), sv = _srch.server;
+    var groups = [];
+    if (menus.length) groups.push(['menu', 'เมนู', 'เมนู / ทางลัด', menus]);
+    if (mans.length) groups.push(['man', 'คู่มือ', 'คู่มือ / วิธีใช้', mans]);
+    if (sv && sv.length) ['ann', 'ord', 'cert', 'alb', 'ppl'].forEach(function (g) { var L = sv.filter(function (x) { return x.g === g; }); if (L.length) groups.push([g, SRCH_G[g], SRCH_G[g], L]); });
+    var tab = _srch.tab || ''; if (tab && !groups.some(function (g) { return g[0] === tab; })) tab = _srch.tab = '';
+    if (groups.length > 1) { var tot = groups.reduce(function (a, g) { return a + g[3].length; }, 0); h += '<div class="srch-tabs" role="tablist">' + [['', 'ทั้งหมด', '', { length: tot }]].concat(groups).map(function (g) { return '<button type="button" role="tab" data-srch-tab="' + g[0] + '" class="' + (g[0] === tab ? 'on' : '') + '" aria-selected="' + (g[0] === tab) + '">' + g[1] + '<small>' + g[3].length + '</small></button>'; }).join('') + '</div>'; }
+    groups.forEach(function (G) {
+      if (tab && G[0] !== tab) return; var g = G[0], L = G[3];
+      if (g === 'menu') { h += '<div class="srch-sec"><div class="srch-sh">' + G[2] + '</div>' + L.map(function (x) { var gi = SRCH_GI[x.g] || ['fa-arrow-right', 'var(--primary)']; return row(x, x.d === 'เมนู' ? '' : x.d, x.g === 'menu' ? 'fa-compass' : gi[0], x.g === 'menu' ? 'var(--primary)' : gi[1]); }).join('') + '</div>'; return; }
+      if (g === 'man') {
+        var t0 = L[0].topic, f0 = (t0.figs || [])[0];
+        h += '<div class="srch-sec"><div class="srch-sh">' + G[2] + '</div><div class="srch-ans"><div class="srch-aq"><i class="fa-solid fa-circle-question" aria-hidden="true"></i> ' + _srchHl(t0.title, q) + '</div><p>' + escapeHtml(t0.lead) + '</p>' +
+          (f0 && f0.steps && f0.steps.length ? '<ol>' + f0.steps.slice(0, 2).map(function (st) { return '<li>' + escapeHtml(st) + '</li>'; }).join('') + '</ol>' : '') + row(L[0], 'เปิดคู่มือเต็ม', 'fa-book-open', 'var(--primary)').replace('class="srch-it"', 'class="srch-it srch-it-ans"') + '</div>' +
+          L.slice(1).map(function (x) { return row(x, x.d, 'fa-book-open', '#64748b'); }).join('') + '</div>';
+        return;
+      }
+      h += '<div class="srch-sec"><div class="srch-sh">' + G[2] + '</div>' + L.map(function (x) { return row(x, x.d, SRCH_GI[g][0], SRCH_GI[g][1], g === 'ppl' ? x.av : ''); }).join('') + '</div>';
+    });
     if (q.length >= 2 && !sv) h += '<div class="srch-wait"><span class="srch-spin"></span> กำลังค้นประกาศ คำสั่ง เกียรติบัตร อัลบั้ม บุคลากร...</div>';
     if (!flat.length && sv) h += '<div class="srch-empty"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><b>ไม่พบ "' + escapeHtml(q) + '"</b><span>ลองคำอื่น เช่น ชื่อเมนู ชื่อกิจกรรม หรือชื่อครู</span></div>';
     if (!flat.length && !sv && q.length < 2) h += '<div class="srch-empty"><span>พิมพ์อย่างน้อย 2 ตัวอักษร</span></div>';
