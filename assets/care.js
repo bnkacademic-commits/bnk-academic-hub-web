@@ -482,14 +482,14 @@
   function siteBase(u) { u = String(u || '').trim(); u = u.replace(/(index|council|student)\.html.*$/i, ''); return u && !/\/$/.test(u) ? u + '/' : u; }
   // 2.12.2: แบนเนอร์ BNK Care Center — บันทึกทันทีเมื่อเลือกรูป (ไม่ต้องกดบันทึกการตั้งค่า) · ย่อ/ครอปเป็น 1300×433 ในเบราว์เซอร์
   var BN_PAGES = [['t', 'หน้าครู', 'fa-chalkboard-user'], ['c', 'หน้าสภานักเรียน', 'fa-users'], ['s', 'หน้านักเรียน', 'fa-user-graduate'], ['v', 'หน้าดูคะแนน', 'fa-id-card']];
-  function bnOf() { var b = (B.settings && B.settings.banner) || {}; return { mode: b.mode === 'each' ? 'each' : 'all', a: b.a || '', t: b.t || '', c: b.c || '', s: b.s || '' }; }
+  function bnOf() { var b = (B.settings && B.settings.banner) || {}; return { mode: b.mode === 'each' ? 'each' : 'all', a: b.a || '', t: b.t || '', c: b.c || '', s: b.s || '', v: b.v || '' }; } // 2.14.1: + หน้าดูคะแนน (v)
   function bnSrc(slot, ver, base) { return ver ? API_URL.replace(/\/$/, '') + '/care-banner/' + slot + '?v=' + ver : (base ? base + 'assets/banner.jpg' : ''); }
   function bnImg(src) { return src ? '<img class="cc-bn-img" src="' + esc(src) + '" alt="" loading="lazy" />' : '<div class="cc-bn-img cc-bn-def">รูปเดิม (banner.jpg)</div>'; }
   function bannerHtml(base) {
     var b = bnOf(), all = bnSrc('a', b.a, base);
     var h = '<div class="card cc-card"><h3>' + ic('fa-image') + ' แบนเนอร์ BNK Care Center</h3>' +
-      '<div class="cc-seg cc-bn-seg"><button type="button" data-cc-bn-mode="all" class="' + (b.mode === 'all' ? 'on' : '') + '">ใช้รูปเดียวกันทั้ง 3 หน้า</button><button type="button" data-cc-bn-mode="each" class="' + (b.mode === 'each' ? 'on' : '') + '">แยกรายหน้า</button></div>' +
-      '<div class="cc-bn-main">' + bnImg(all) + '<div><div class="hint" style="margin:0 0 6px">' + (b.mode === 'each' ? 'รูปรวม — ใช้กับหน้าที่ยังไม่ได้ตั้งรูปของตัวเอง' : 'ใช้กับหน้าครู · หน้าสภานักเรียน · หน้านักเรียน') + '<br>ขนาดแนะนำ 1300 × 433 (3:1) — ระบบย่อและครอปให้เอง</div>' +
+      '<div class="cc-seg cc-bn-seg"><button type="button" data-cc-bn-mode="all" class="' + (b.mode === 'all' ? 'on' : '') + '">ใช้รูปเดียวกันทั้ง 4 หน้า</button><button type="button" data-cc-bn-mode="each" class="' + (b.mode === 'each' ? 'on' : '') + '">แยกรายหน้า</button></div>' +
+      '<div class="cc-bn-main">' + bnImg(all) + '<div><div class="hint" style="margin:0 0 6px">' + (b.mode === 'each' ? 'รูปรวม — ใช้กับหน้าที่ยังไม่ได้ตั้งรูปของตัวเอง' : 'ใช้กับหน้าครู · หน้าสภานักเรียน · หน้านักเรียน · หน้าดูคะแนน') + '<br>ขนาดแนะนำ 1300 × 433 (3:1) — ระบบย่อและครอปให้เอง</div>' +
       '<button type="button" class="btn btn-primary btn-sm" data-cc-bn-pick="a">' + ic('fa-upload') + ' เลือกรูปใหม่</button> ' + (b.a ? '<button type="button" class="btn btn-secondary btn-sm" data-cc-bn-reset="a">' + ic('fa-rotate-left') + ' ใช้รูปเดิม</button>' : '') + '</div></div>';
     if (b.mode === 'each') h += '<div class="cc-bn-each">' + BN_PAGES.map(function (pg) {
       var own = b[pg[0]], src = own ? bnSrc(pg[0], own, base) : all;
@@ -521,14 +521,15 @@
     try { var d = await bnShrink(f); await bnSave({ slot: bnSlot, image: d }, 'กำลังอัปแบนเนอร์'); } catch (x) { showToast(x.message, true); }
   });
   // 2.12.3: แท็บย่อยในหน้าตั้งค่า — แต่ละหัวข้อกดบันทึกของตัวเอง (ค่าที่แก้ค้างในหัวข้ออื่นยังอยู่ · มีจุดเตือนที่แท็บ)
-  var CC_SSUB = [['council', 'หน้าสภานักเรียน', 'fa-people-group'], ['student', 'หน้านักเรียน', 'fa-user-graduate'], ['score', 'คะแนนพฤติกรรม', 'fa-star'], ['items', 'รายการคะแนน', 'fa-list-check'], ['perm', 'สิทธิ์และแจ้งเตือน', 'fa-user-shield'], ['site', 'ลิงก์และแบนเนอร์', 'fa-link'], ['skip', 'โดด / ขาดเรียน', 'fa-person-walking-arrow-right'], ['view', 'หน้าดูคะแนน', 'fa-id-card']];
-  var CC_FIELDS = { council: ['pinOn', 'pin', 'council'], student: ['selfOn', 'selfFrom', 'selfTo', 'reasons'], score: ['startPoints', 'cycle', 'good', 'fair'], items: ['latePoints', 'items'], perm: ['advisorView', 'notifyOn', 'notifyN'], site: ['siteUrl'], skip: ['skipOn', 'skipPts', 'skipPartial', 'absOn', 'absPts', 'skipMax'], view: ['viewOn', 'viewId', 'viewLate', 'viewHist'] };
+  // 2.14.1: เรียงใหม่ — หน้าเว็บทั้ง 3 หน้าอยู่ติดกัน → กติกาคะแนน → สิทธิ์ → ลิงก์และแบนเนอร์
+  var CC_SSUB = [['council', 'หน้าสภานักเรียน', 'fa-people-group'], ['student', 'หน้านักเรียน', 'fa-user-graduate'], ['view', 'หน้าดูคะแนน', 'fa-id-card'], ['score', 'คะแนนพฤติกรรม', 'fa-star'], ['items', 'รายการคะแนน', 'fa-list-check'], ['skip', 'โดด / ขาดเรียน', 'fa-person-walking-arrow-right'], ['perm', 'สิทธิ์และแจ้งเตือน', 'fa-user-shield'], ['site', 'ลิงก์และแบนเนอร์', 'fa-link']];
+  var CC_FIELDS = { council: ['pinOn', 'pin', 'council'], student: ['selfOn', 'selfFrom', 'selfTo', 'reasons'], score: ['startPoints', 'cycle', 'good', 'fair'], items: ['latePoints', 'items'], perm: ['advisorView', 'notifyOn', 'notifyN'], site: ['siteUrl'], skip: ['skipOn', 'skipPts', 'skipPartial', 'absOn', 'absPts', 'skipMax'], view: ['viewOn', 'viewId', 'viewLate', 'viewHist', 'viewBy', 'viewPhoto'] };
   var ssub = (function () { try { var v = localStorage.getItem('bnkah_cc_ssub'); return CC_FIELDS[v] ? v : 'council'; } catch (e) { return 'council'; } })();
   function baseDraft() { var s = B.settings; return { pinOn: s.pinOn, pin: '', notifyOn: s.notifyOn, notifyN: s.notifyN, startPoints: s.startPoints, latePoints: s.latePoints, good: s.good, fair: s.fair,
       items: (s.items || []).map(function (x) { return { label: x.label, delta: x.delta, t: !!x.t, c: !!x.c }; }), siteUrl: B.siteUrl, cycle: JSON.parse(JSON.stringify(s.cycle || { mode: 'all', all: 'term', g: {} })),
       advisorView: !!s.advisorView, council: (s.council || []).map(function (c) { return { k: c.k, n: c.n, r: c.r }; }), selfOn: s.selfOn !== false, selfFrom: s.selfFrom || '06:00', selfTo: s.selfTo || '17:30', reasons: (s.reasons || []).slice(),
       skipOn: !!s.skipOn, skipPts: s.skipPts == null ? 5 : s.skipPts, skipPartial: s.skipPartial !== false, absOn: !!s.absOn, absPts: s.absPts == null ? 5 : s.absPts, skipMax: s.skipMax == null ? 15 : s.skipMax,
-      viewOn: !!s.viewOn, viewId: s.viewId !== false, viewLate: s.viewLate !== false, viewHist: s.viewHist !== false }; }
+      viewOn: !!s.viewOn, viewId: s.viewId !== false, viewLate: s.viewLate !== false, viewHist: s.viewHist !== false, viewBy: !!s.viewBy, viewPhoto: !!s.viewPhoto }; }
   function cycN(c) { c = c || {}; var g = {}; for (var i = 1; i <= 6; i++) g['m' + i] = (c.g || {})['m' + i] || c.all || 'term'; return { mode: c.mode === 'grade' ? 'grade' : 'all', all: c.all || 'term', g: c.mode === 'grade' ? g : {} }; }
   function secVal(d, k) { return JSON.stringify(CC_FIELDS[k].map(function (f) { var v = d[f]; if (f === 'cycle') return cycN(v); if (f === 'items') return (v || []).map(function (x) { return [String(x.label || '').trim(), Math.trunc(+x.delta || 0), !!x.t, !!x.c]; }); if (f === 'council') return (v || []).map(function (c) { return c.k; }); if (f === 'pin') return ''; if (typeof v === 'number') return +v; return v; })); }
   function secDirty(k) { if (!draft || !B || !B.settings) return false; if (k === 'council' && draft.pin) return true; return secVal(draft, k) !== secVal(baseDraft(), k); }
@@ -588,7 +589,10 @@
       '<label class="cc-row">' + sw('ccViewOn', d.viewOn) + '<b>เปิดหน้าดูคะแนน</b></label>' +
       '<label class="cc-row">' + sw('ccViewId', d.viewId) + '<b>ต้องใส่เลขประจำตัวนักเรียนก่อนดู</b> <span style="color:#15803d;margin-left:6px">แนะนำ</span></label>' +
       (!d.viewId ? '<div class="cc-warn">' + ic('fa-triangle-exclamation') + ' ปิดอยู่ = ใครก็เลือกชื่อแล้วดูคะแนนของคนอื่นได้</div>' : '') +
-      '<div class="cc-row" style="display:block"><b>แสดงในหน้า</b><div class="cc-vchk"><label><input type="checkbox" checked disabled /> คะแนนคงเหลือ + ระดับ</label><label><input type="checkbox" id="ccViewHist"' + (d.viewHist ? ' checked' : '') + ' /> ประวัติหัก / เพิ่ม</label><label><input type="checkbox" id="ccViewLate"' + (d.viewLate ? ' checked' : '') + ' /> จำนวนครั้งมาสาย</label><label class="cc-mut"><input type="checkbox" disabled /> ชื่อครูผู้บันทึก (ไม่แสดงเสมอ)</label></div></div>' +
+      '<div class="cc-row" style="display:block"><b>แสดงในหน้า</b><div class="cc-vchk"><label><input type="checkbox" checked disabled /> คะแนนคงเหลือ + ระดับ</label><label><input type="checkbox" id="ccViewHist"' + (d.viewHist ? ' checked' : '') + ' /> ประวัติหัก / เพิ่ม</label><label><input type="checkbox" id="ccViewLate"' + (d.viewLate ? ' checked' : '') + ' /> จำนวนครั้งมาสาย</label><label' + (d.viewHist ? '' : ' class="cc-mut"') + '><input type="checkbox" id="ccViewBy"' + (d.viewBy && d.viewHist ? ' checked' : '') + (d.viewHist ? '' : ' disabled') + ' /> ชื่อครูผู้บันทึก</label></div></div>' +
+      // 2.14.1: รูปหลักฐาน — ปิดไว้ก่อน · อยู่ในประวัติ จึงต้องเปิดประวัติด้วย · โหลดรูปเมื่อกดดูเท่านั้น
+      '<label class="cc-row">' + sw('ccViewPhoto', d.viewPhoto && d.viewHist, d.viewHist ? '' : ' disabled') + '<b>ดูรูปหลักฐานที่แนบไว้ได้</b>' + (d.viewHist ? '' : ' <span class="cc-mut">(ต้องเปิด "ประวัติหัก / เพิ่ม" ก่อน)</span>') + '</label>' +
+      (d.viewPhoto && d.viewHist ? '<div class="cc-warn">' + ic('fa-triangle-exclamation') + ' รูปอาจมีนักเรียนคนอื่นอยู่ในภาพ · ' + (d.viewId ? 'ใครรู้เลขประจำตัวของนักเรียนก็เห็นรูปได้' : 'เลขประจำตัวปิดอยู่ = ใครก็เปิดดูรูปได้') + ' · รูปโหลดเมื่อกด "ดูรูป" เท่านั้น</div>' : '') +
       '<div class="cc-link"><span>' + ic('fa-id-card') + ' <b>ลิงก์หน้าดูคะแนน</b><small>' + esc(u) + '</small></span><button type="button" class="btn btn-secondary btn-sm" data-cc-copy="' + esc(u) + '">' + ic('fa-copy') + ' คัดลอก</button><button type="button" class="btn btn-secondary btn-sm" data-cc-qr="v" data-u="' + esc(u) + '">' + ic('fa-qrcode') + ' QR</button></div><div id="ccQrv" class="cc-qr" hidden></div>' +
       '<p class="hint">ใส่เลขประจำตัวผิด 5 ครั้ง = ล็อกการดูของนักเรียนคนนั้น 15 นาที · แบนเนอร์ของหน้านี้ตั้งได้ที่ ลิงก์และแบนเนอร์</p>' +
       save('view', ' หน้าดูคะแนน') + '</div>'); },
@@ -625,7 +629,7 @@
     chk('ccAdvView', 'advisorView'); chk('ccSelfOn', 'selfOn'); if (el('ccSelfFrom') && el('ccSelfFrom').value) d.selfFrom = el('ccSelfFrom').value; if (el('ccSelfTo') && el('ccSelfTo').value) d.selfTo = el('ccSelfTo').value;
     txt('ccSite', 'siteUrl');
     chk('ccSkipOn', 'skipOn'); num('ccSkipPts', 'skipPts'); chk('ccSkipPart', 'skipPartial'); chk('ccAbsOn', 'absOn'); num('ccAbsPts', 'absPts'); num('ccSkipMax', 'skipMax'); // 2.13.0
-    chk('ccViewOn', 'viewOn'); chk('ccViewId', 'viewId'); chk('ccViewLate', 'viewLate'); chk('ccViewHist', 'viewHist');
+    chk('ccViewOn', 'viewOn'); chk('ccViewId', 'viewId'); chk('ccViewLate', 'viewLate'); chk('ccViewHist', 'viewHist'); ['ccViewBy', 'ccViewPhoto'].forEach(function (id) { var e = el(id); if (e && !e.disabled) d[id === 'ccViewBy' ? 'viewBy' : 'viewPhoto'] = !!e.checked; }); // 2.14.1: ปิดประวัติชั่วคราว = จำค่าเดิมไว้
     var cy = d.cycle; if (el('ccCycAll')) cy.all = el('ccCycAll').value;
     cy.g = cy.g || {}; for (var i = 1; i <= 6; i++) { if (el('ccCyc' + i)) cy.g['m' + i] = el('ccCyc' + i).value; else cy.g['m' + i] = cy.g['m' + i] || cy.all; }
     document.querySelectorAll('[data-cc-it-l]').forEach(function (e) { d.items[+e.getAttribute('data-cc-it-l')].label = e.value; });
@@ -698,7 +702,7 @@
       } else if (k === 'perm') P = { advisorView: d.advisorView, notifyOn: d.notifyOn, notifyN: d.notifyN };
       else if (k === 'site') P = { siteUrl: d.siteUrl };
       else if (k === 'skip') P = { skipOn: d.skipOn, skipPts: d.skipPts, skipPartial: d.skipPartial, absOn: d.absOn, absPts: d.absPts, skipMax: d.skipMax };
-      else if (k === 'view') P = { viewOn: d.viewOn, viewId: d.viewId, viewLate: d.viewLate, viewHist: d.viewHist };
+      else if (k === 'view') P = { viewOn: d.viewOn, viewId: d.viewId, viewLate: d.viewLate, viewHist: d.viewHist, viewBy: d.viewBy, viewPhoto: d.viewPhoto };
       var go = async function () {
         var r = await withProgress('กำลังบันทึก', function () { return apiCall('careSettingsSave', P); }, { successLabel: 'บันทึกแล้ว' });
         if (!r.ok) return;
@@ -731,7 +735,7 @@
     else if (id === 'ccSort') { st.sort = e.target.value; st.pg = 1; renderScores(); }
     else if (id === 'ccPP') { st.pp = +e.target.value; st.pg = 1; try { localStorage.setItem('bnkah_cc_pp', String(st.pp)); } catch (x) { /* ไม่เป็นไร */ } renderScores(); }
     else if (id === 'ccPinOn' || /^ccCyc/.test(id)) { syncDraft(); showSettings(); }
-    else if (id === 'ccSite') { syncDraft(); showSettings(); }
+    else if (id === 'ccSite' || id === 'ccViewId' || id === 'ccViewHist' || id === 'ccViewPhoto') { syncDraft(); showSettings(); } // 2.14.1: ตัวเลือกที่ขึ้นกับกัน
   });
   body.addEventListener('input', debounce(function (e) { if (e.target.id === 'ccQ') { st.q = e.target.value.trim(); st.pg = 1; renderScores(); } }, 200));
   var modal = document.getElementById('ccModal');
