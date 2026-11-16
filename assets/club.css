@@ -221,3 +221,21 @@ td.tc-wk-e { background: var(--surface); }
 .cb-nc-row > span:first-child { flex: 1; min-width: 0; }
 .cb-nc-row .cb-tag { background: var(--surface-2, #f1f5f9); color: var(--text-muted); }
 @media (max-width: 640px) { .cb-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* 2.19.0: แท็บ "คาบสอนแทน" ในหน้าวิชาที่สอน */
+.tc-badge { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: #d97706; color: #fff; font-size: .72rem; line-height: 18px; text-align: center; font-weight: 700; }
+.tc-skp { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 10px 0 14px; }
+.tc-skp > div { border: 1px solid var(--border); border-top: 4px solid #94a3b8; border-radius: 12px; padding: 10px 12px; background: var(--surface); }
+.tc-skp > div.ok { border-top-color: var(--accent); } .tc-skp > div.wt { border-top-color: #d97706; }
+.tc-skp span { display: block; font-size: .8rem; color: var(--text-muted); } .tc-skp b { font-size: 1.35rem; color: var(--text); }
+.tc-skp > div.ok b { color: var(--accent); } .tc-skp > div.wt b { color: #d97706; }
+.tc-stb tr.tc-wk td { background: var(--bg); color: var(--text-muted); font-weight: 700; font-size: .82rem; padding: 6px 10px; }
+.tc-task { font-size: .8rem; color: #0e7490; margin-top: 3px; } .tc-task a { color: var(--primary); margin-left: 4px; }
+[data-theme="dark"] .tc-task { color: #67e8f9; }
+.tc-today { display: inline-block; font-size: .7rem; background: #d97706; color: #fff; border-radius: 6px; padding: 0 6px; margin-left: 4px; }
+@media (max-width: 640px) {
+  .tc-stb thead { display: none; }
+  .tc-stb tr { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+  .tc-stb tr.tc-wk { display: block; padding: 0; }
+  .tc-stb td { border: 0 !important; padding: 2px 6px !important; }
+  .tc-stb td:nth-child(3) { grid-column: 1 / -1; }
+}
