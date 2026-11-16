@@ -39,7 +39,7 @@
   }
   function tabList() {
     var t = [];
-    if (B.canAsk) t.push(['mine', 'fa-user', 'คำขอของฉัน']);
+    if (B.canAsk) t.push(['mine', 'fa-user', B.isAdmin && !B.enabled ? 'รายการที่ฉันลง' : 'คำขอของฉัน']);
     if (canV()) t.push(['pending', 'fa-hourglass-half', 'รออนุมัติ'], ['all', 'fa-list', 'รายการทั้งหมด']);
     if (B.manage) t.push(['settings', 'fa-sliders', 'ตั้งค่า']);
     return t;
@@ -57,9 +57,9 @@
   async function showMine() {
     if (!D.mine) { loading(); var r = await load('mine', { scope: 'mine' }); if (!r) return; D.mine = r; }
     if (st.tab !== 'mine') return;
-    var h = '<div class="lv-grid" style="margin-bottom:14px"><div class="card cc-card" style="display:flex;flex-direction:column;justify-content:center;gap:10px"><button type="button" class="btn btn-primary lv-big" data-rt-new>' + ic('fa-plus') + ' ขอเวลาเรียนให้นักเรียน</button><p class="hint" style="margin:0">ครูทุกคนขอได้ · ผู้ดูแลอนุมัติ · ระหว่างรออนุมัติยังไม่มีผลกับการเช็คชื่อ</p></div>' +
+    var h = '<div class="lv-grid" style="margin-bottom:14px"><div class="card cc-card" style="display:flex;flex-direction:column;justify-content:center;gap:10px"><button type="button" class="btn btn-primary lv-big" data-rt-new>' + ic('fa-plus') + ' ' + (B.isAdmin ? 'ลงข้อมูลขอเวลาเรียน' : 'ขอเวลาเรียนให้นักเรียน') + '</button><p class="hint" style="margin:0">' + (B.isAdmin ? 'ผู้ดูแลระบบลงเอง = อนุมัติทันที · เว็บเช็คชื่อเลือก "ร่วมกิจกรรม" ให้นักเรียน' : 'ครูทุกคนขอได้ · ผู้ดูแลอนุมัติ · ระหว่างรออนุมัติยังไม่มีผลกับการเช็คชื่อ') + '</p>' + (B.isAdmin && !B.enabled ? '<p class="lv-pill-off" style="margin:0">' + ic('fa-lock') + ' ปิดให้ครูขอเอง — ลงข้อมูลได้เฉพาะผู้ดูแลระบบ (เปิดได้ที่ ตั้งค่าระบบ › จัดการผู้ดูแล)</p>' : '') + '</div>' +
       '<div class="card cc-card"><h3>' + ic('fa-circle-info ui-icon') + ' หลักการ</h3>' + RULE() + '</div></div>';
-    h += '<div class="card cc-card"><h3>' + ic('fa-clock-rotate-left ui-icon') + ' คำขอของฉัน</h3>' + (D.mine.length ? '<div class="lv-list">' + D.mine.map(function (x) { return item(x, 'mine'); }).join('') + '</div>' : '<div class="lv-empty">' + ic('fa-mug-hot') + 'ยังไม่มีคำขอ</div>') + '</div>';
+    h += '<div class="card cc-card"><h3>' + ic('fa-clock-rotate-left ui-icon') + ' ' + (B.isAdmin && !B.enabled ? 'รายการที่ฉันลง' : 'คำขอของฉัน') + '</h3>' + (D.mine.length ? '<div class="lv-list">' + D.mine.map(function (x) { return item(x, 'mine'); }).join('') + '</div>' : '<div class="lv-empty">' + ic('fa-mug-hot') + 'ยังไม่มีคำขอ</div>') + '</div>';
     put(body, h);
   }
   function resultLine(x) {
@@ -72,7 +72,7 @@
   function item(x, mode) {
     var past = x.from < x.filedOn;
     var h = '<div class="lv-it" data-id="' + esc(x.id) + '"' + (mode === 'pending' ? ' style="flex-direction:column"' : '') + '><div class="lv-main" style="width:100%"><div class="lv-hd">' + (mode === 'mine' ? '' : '<b>' + esc(x.byName) + '</b>') + '<span class="lv-k rt-k">ร่วมกิจกรรม</span><b>' + esc(x.title) + '</b></div>' +
-      '<div class="lv-sub"><b style="color:var(--text)">' + thRange(x.from, x.to) + ' · ' + perTxt(x.periods) + '</b> · ' + x.days + ' วัน · นักเรียน ' + x.n + ' คน (' + esc(roomsTxt(x.rooms)) + ') · ยื่นเมื่อ ' + thTime(x.createdAt) + (x.decidedBy ? ' · ' + (x.status === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ') + 'โดย ' + esc(x.decidedBy) : '') + '</div>' +
+      '<div class="lv-sub"><b style="color:var(--text)">' + thRange(x.from, x.to) + ' · ' + perTxt(x.periods) + '</b> · ' + x.days + ' วัน · นักเรียน ' + x.n + ' คน (' + esc(roomsTxt(x.rooms)) + ')' + (x.teacherName ? ' · ครูผู้ควบคุม ' + esc(x.teacherName) : '') + ' · บันทึกเมื่อ ' + thTime(x.createdAt) + (x.decidedBy ? ' · ' + (x.status === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ') + 'โดย ' + esc(x.decidedBy) : '') + '</div>' +
       (x.status === 'rejected' && x.reason ? '<div class="lv-sub" style="color:#b91c1c">เหตุผล: ' + esc(x.reason) + '</div>' : '') +
       '<div class="lv-files">' + (x.doc ? '<a class="lv-file" href="' + esc(x.doc.url) + '" target="_blank" rel="noopener">' + ic(/\.pdf$/i.test(x.doc.name) ? 'fa-file-pdf' : 'fa-image') + ' ' + esc(x.doc.name) + '</a>' : '') + (past ? '<span class="lv-file" style="border-style:dashed">ขอย้อน ' + thRange(x.from, prevDay(x.filedOn)) + ' (ก่อนวันที่ยื่น) · การเช็คชื่อวันนั้นไม่ถูกแก้</span>' : '') + resultLine(x) + '</div>';
     if (mode === 'pending' && x.students) {
@@ -131,6 +131,7 @@
   // ---------- ตั้งค่า ----------
   function showSettings() {
     put(body, '<div class="lv-grid"><div class="card cc-card"><h3>' + ic('fa-sliders ui-icon') + ' การเปลี่ยนสถานะ "ขาด"</h3><div class="cc-row"><span class="cc-lb">ไม่เปลี่ยนให้ ถ้าวันนั้นขาดคาบก่อนหน้า (ที่ไม่ได้ขอ) ตั้งแต่</span><input type="number" class="cc-num" id="rtSkip" min="1" max="9" value="' + B.skipAbsent + '"><span>คาบ</span></div><p class="hint">ใช้ตอนอนุมัติ: นักเรียนที่ถูกเช็คว่า "ขาด" ในคาบที่ขอ จะเปลี่ยนเป็น "ร่วมกิจกรรม" ให้ เว้นแต่วันนั้นขาดคาบอื่นที่อยู่ก่อนหน้าตามจำนวนนี้ (น่าจะไม่ได้มาโรงเรียน) — ครูประจำวิชาตรวจเอง</p><div class="cc-actions"><button type="button" class="btn btn-success" data-rt-save>' + ic('fa-check') + ' บันทึก</button></div></div>' +
+      '<div class="card cc-card"><h3>' + ic('fa-id-badge ui-icon') + ' ป้ายในหน้าเช็คชื่อ</h3><label class="lv-sw"><input type="checkbox" class="sup-ck" id="rtShowT"' + (B.showTeacher ? ' checked' : '') + '><b>แสดงชื่อครูผู้ควบคุม / ครูผู้ขอ</b></label><p class="hint">ปิด = ป้ายใต้ชื่อนักเรียนแสดงเฉพาะชื่อกิจกรรม · มีผลกับรายการที่อนุมัติหลังจากนี้</p></div>' +
       '<div class="card cc-card"><h3>' + ic('fa-user-shield ui-icon') + ' ผู้อนุมัติ</h3><p class="hint" style="margin-top:0">เพิ่ม / ลบผู้ดูแล (ผู้อนุมัติ) ได้ที่ ตั้งค่าระบบ › จัดการผู้ดูแล › ผู้ดูแลการขอเวลาเรียน (เฉพาะผู้ดูแลระบบ)</p>' + RULE() + '</div></div>');
   }
 
@@ -138,8 +139,9 @@
   async function openForm(edit) {
     F = { id: edit ? edit.id : '', title: edit ? edit.title : '', from: edit ? edit.from : B.today, to: edit ? edit.to : B.today, periods: edit ? edit.periods.slice() : [], allDay: edit ? !edit.periods.length : false, sel: {}, order: [], room: '', q: '', doc: edit && edit.doc ? edit.doc : null, keepDoc: !!(edit && edit.doc), busy: false };
     if (edit && edit.students) edit.students.forEach(function (s) { F.sel[s.id] = s; F.order.push(s.id); });
-    document.getElementById('lvModalTitle').innerHTML = ic('fa-person-running') + ' ' + (edit ? 'แก้ไขคำขอเวลาเรียน' : 'ขอเวลาเรียนให้นักเรียน');
-    document.getElementById('lvModalActs').innerHTML = '<button type="button" class="btn btn-ghost" data-rt-close>ยกเลิก</button><button type="button" class="btn btn-success" data-rt-send>' + ic('fa-paper-plane') + ' ' + (edit ? 'บันทึกการแก้ไข' : 'ส่งขออนุมัติ') + '</button>';
+    F.teacherId = edit ? edit.teacherId || '' : '';
+    document.getElementById('lvModalTitle').innerHTML = ic('fa-person-running') + ' ' + (edit ? 'แก้ไขคำขอเวลาเรียน' : B.isAdmin ? 'ลงข้อมูลขอเวลาเรียน' : 'ขอเวลาเรียนให้นักเรียน');
+    document.getElementById('lvModalActs').innerHTML = '<button type="button" class="btn btn-ghost" data-rt-close>ยกเลิก</button><button type="button" class="btn btn-success" data-rt-send>' + ic(B.isAdmin ? 'fa-check' : 'fa-paper-plane') + ' ' + (edit ? 'บันทึกการแก้ไข' : B.isAdmin ? 'บันทึก (อนุมัติทันที)' : 'ส่งขออนุมัติ') + '</button>';
     renderForm(); showModalEl(modal);
     if (!STU) {
       try { STU = (await apiCall('rtStudents', {})).students || []; } catch (e) { STU = null; var pk = document.getElementById('rtPick'); if (pk) pk.innerHTML = err(e.message); return; }
@@ -148,10 +150,11 @@
   }
   function rooms() { var o = {}; (STU || []).forEach(function (s) { o[s.roomId] = s.room; }); return Object.keys(o).sort(function (a, b) { var x = /m(\d+)_(\d+)/.exec(a) || [0, 0, 0], y = /m(\d+)_(\d+)/.exec(b) || [0, 0, 0]; return x[1] - y[1] || x[2] - y[2]; }).map(function (k) { return [k, o[k]]; }); }
   function roomOpts() { return '<option value="">ทุกห้อง</option>' + rooms().map(function (r) { return '<option value="' + esc(r[0]) + '"' + (F.room === r[0] ? ' selected' : '') + '>' + esc(r[1]) + '</option>'; }).join(''); }
-  function formRead() { if (!F) return; var g = function (id) { var e = document.getElementById(id); return e ? e.value : null; }, v; if ((v = g('rtT')) !== null) F.title = v; if ((v = g('rtF')) !== null) F.from = v; if ((v = g('rtTo')) !== null) F.to = v; }
+  function formRead() { if (!F) return; var g = function (id) { var e = document.getElementById(id); return e ? e.value : null; }, v; if ((v = g('rtT')) !== null) F.title = v; if ((v = g('rtF')) !== null) F.from = v; if ((v = g('rtTo')) !== null) F.to = v; if ((v = g('rtTc')) !== null) F.teacherId = v; }
   function renderForm() {
     var ws = B.weekStart;
     var h = '<div class="lv-f"><label class="lb" for="rtT">กิจกรรม / เหตุผล <span class="lv-req">*</span></label><input type="text" id="rtT" maxlength="200" placeholder="เช่น ซ้อมแข่งฟุตซอล รายการกีฬานักเรียน สพม.บึงกาฬ" value="' + esc(F.title) + '">' +
+      (B.isAdmin ? '<label class="lb" for="rtTc">ครูผู้ควบคุม <span class="lv-opt">(ไม่บังคับ' + (B.showTeacher ? ' · แสดงในป้ายหน้าเช็คชื่อ' : ' · ตอนนี้ตั้งไม่แสดงในหน้าเช็คชื่อ') + ')</span></label><select id="rtTc"><option value="">— ไม่ระบุ —</option>' + (B.people || []).map(function (u) { return '<option value="' + esc(u.id) + '"' + (F.teacherId === u.id ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('') + '</select>' : '') +
       '<div class="lv-row"><div><label class="lb" for="rtF">ตั้งแต่วันที่</label><input type="date" id="rtF" min="' + esc(ws) + '" value="' + esc(F.from) + '"></div><div><label class="lb" for="rtTo">ถึงวันที่</label><input type="date" id="rtTo" min="' + esc(ws) + '" value="' + esc(F.to) + '"></div></div>' +
       '<p class="lv-note" id="rtDays" style="margin:6px 0 0"></p>' +
       '<label class="lb">คาบ</label><div class="lv-types sm"><button type="button" data-rt-all' + (F.allDay ? ' class="on"' : '') + '>ทั้งวัน</button>' + B.periods.map(function (p) { return '<button type="button" data-rt-p="' + p + '"' + (!F.allDay && F.periods.indexOf(p) !== -1 ? ' class="on"' : '') + '>' + plabel(p) + '</button>'; }).join('') + '</div><p class="lv-note" style="margin:4px 0 0">A = เข้าแถว · B = โฮมรูม</p>' +
@@ -200,9 +203,10 @@
     if (!F.allDay && !F.periods.length) { showToast('กรุณาเลือกคาบ หรือเลือก "ทั้งวัน"', true); return; }
     var stu = F.order.map(function (id) { return F.sel[id]; }).filter(Boolean);
     if (!stu.length) { showToast('กรุณาเลือกนักเรียนอย่างน้อย 1 คน', true); return; }
-    var p = { id: F.id, title: F.title, from: F.from, to: F.to || F.from, periods: F.allDay ? [] : F.periods, students: stu, doc: F.doc && F.doc.id && !F.keepDoc ? { id: F.doc.id } : null, keepDoc: F.keepDoc };
+    var p = { id: F.id, teacherId: F.teacherId || '', title: F.title, from: F.from, to: F.to || F.from, periods: F.allDay ? [] : F.periods, students: stu, doc: F.doc && F.doc.id && !F.keepDoc ? { id: F.doc.id } : null, keepDoc: F.keepDoc };
     hideModalEl(modal);
-    var r = await withProgress('กำลังส่งคำขอ', function () { return apiCall('rtSave', p); }, { successLabel: F.id ? 'บันทึกการแก้ไขแล้ว' : 'ส่งคำขอแล้ว — รอผู้ดูแลอนุมัติ' });
+    var r = await withProgress(B.isAdmin ? 'กำลังบันทึกและส่งไปเว็บเช็คชื่อ' : 'กำลังส่งคำขอ', function () { return apiCall('rtSave', p); }, { successLabel: F.id ? 'บันทึกการแก้ไขแล้ว' : B.isAdmin ? 'บันทึกแล้ว (อนุมัติแล้ว)' : 'ส่งคำขอแล้ว — รอผู้ดูแลอนุมัติ' });
+    if (!r.ok && B.isAdmin && !F.id && /เว็บเช็คชื่อ/.test((r.error && r.error.message) || '')) { F = null; reload(); return; } // บันทึกแล้วแต่ส่งไปเว็บเช็คชื่อไม่สำเร็จ = อยู่ในรออนุมัติ
     if (!r.ok) { showModalEl(modal); return; }
     F = null; reload();
   }
@@ -279,8 +283,8 @@
     if ((t = e.target.closest('[data-rt-rg]'))) { st.range = t.getAttribute('data-rt-rg'); if (st.range === 'custom' && !st.from) { st.from = B.today.slice(0, 8) + '01'; st.to = B.today; } showAll(); return; }
     if (e.target.closest('[data-rt-xlsx]')) { exportXlsx(); return; }
     if (e.target.closest('[data-rt-save]')) {
-      var rs = await withProgress('กำลังบันทึก', function () { return apiCall('rtCfgSave', { skipAbsent: +document.getElementById('rtSkip').value || 2 }); }, { successLabel: 'บันทึกแล้ว' });
-      if (rs.ok) { B.skipAbsent = rs.data.skipAbsent; body._h = ''; showSettings(); }
+      var rs = await withProgress('กำลังบันทึก', function () { return apiCall('rtCfgSave', { skipAbsent: +document.getElementById('rtSkip').value || 2, showTeacher: document.getElementById('rtShowT').checked }); }, { successLabel: 'บันทึกแล้ว' });
+      if (rs.ok) { B.skipAbsent = rs.data.skipAbsent; B.showTeacher = rs.data.showTeacher; body._h = ''; showSettings(); }
     }
   });
   document.addEventListener('change', function (e) {

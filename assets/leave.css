@@ -48,3 +48,12 @@ a.lv-file:hover { border-color: var(--primary); color: var(--primary); }
 [data-theme="dark"] .lv-btn-no { color: #fca5a5; border-color: rgba(239,68,68,.4); }
 .lv-sec { margin-top: 14px; }
 @media (max-width: 640px) { .lv-it { padding: 10px 12px; } .lv-tt { font-size: .82rem; } }
+
+/* 2.18.0: ลงหลายรายการ (ผู้ดูแล) */
+.lv-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lv-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-size: .82rem; font-weight: 600; }
+.lv-chip button { border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0 5px; }
+.lv-pickl { border: 1px solid var(--border); border-radius: 12px; margin-top: 6px; max-height: 220px; overflow: auto; }
+.lv-pickl > div { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px dashed var(--border); font-size: .9rem; }
+.lv-pickl > div:last-child { border-bottom: 0; } .lv-pickl > div > span { flex: 1; }
+.lv-tt td select, .lv-tt td input { min-width: 0 !important; box-sizing: border-box; }

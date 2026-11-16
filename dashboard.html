@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.17.0.161126" />
+<link rel="stylesheet" href="assets/style.css?v=2.18.0.161126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -56,13 +56,13 @@
         <!-- 1.45.111026: คำอธิบายระบบสั้นๆ 1 บรรทัดใต้ข้อความต้อนรับ -->
         <p class="dash-welcome-sub">ส่งผลงาน ติดตามกำหนดการ และค้นหาคำสั่งของโรงเรียนได้ในที่เดียว</p>
       </div>
-      <div class="dash-welcome-actions has-tt no-lv" id="dashActs">
+      <div class="dash-welcome-actions dash-qas" id="dashActs">
         <!-- ตั้งแต่ V11.7: ผู้ใช้ขอสลับปุ่มเด่น (.btn-cta) กลับมาไว้ที่ปุ่มนี้แทนปุ่ม "ส่งงาน (กำหนดเอง)" ด้านล่าง (ดูคอมเมนต์ตรงนั้น) -->
-        <button class="btn btn-cta dash-portfolio-btn" id="btnShowQr" type="button"><i class="fas fa-link ui-icon" aria-hidden="true"></i> หน้าผลงานของฉัน</button>
+        <button class="btn dash-portfolio-btn dash-qa qa-pf" id="btnShowQr" type="button"><span class="qa-ic" aria-hidden="true"><i class="fa-solid fa-link"></i></span><span class="qa-tx"><b>หน้าผลงานของฉัน</b><small>ลิงก์ / QR ให้ผู้อื่นดูผลงาน</small></span></button>
         <!-- 2.16.0: ปุ่ม "แจ้งลา / ไปราชการ" แทนปุ่มจัดทำบันทึกข้อความ (ผู้ใช้ขอตัดออก — ยังเปิดได้จากเมนู) · แสดงเฉพาะบัญชีที่แจ้งลาได้ (api.js initDashLeaveBtn) -->
-        <a class="btn btn-secondary dash-portfolio-btn dash-lv-btn" id="btnLeave" href="leave.html#new" hidden><i class="fa-solid fa-plane-departure ui-icon" aria-hidden="true"></i> แจ้งลา / ไปราชการ</a>
+        <a class="btn dash-portfolio-btn dash-qa qa-lv" id="btnLeave" href="leave.html#new" hidden><span class="qa-ic" aria-hidden="true"><i class="fa-solid fa-plane-departure"></i></span><span class="qa-tx"><b>แจ้งลา / ไปราชการ</b><small>แนบใบลา · รออนุมัติ</small></span></a>
         <!-- 1.92.2: ตารางสอนของฉัน (ทั้งสัปดาห์ จากเว็บเช็คชื่อ) — แถวที่ 2 กว้างเต็ม ใต้ปุ่มหน้าผลงานของฉัน (ผู้ใช้เลือกแบบ 2) · ป็อปอัปอยู่ใน assets/api.js (initTimetable) -->
-        <button class="btn btn-secondary dash-portfolio-btn dash-tt-btn" id="ttOpenBtn" type="button"><i class="fa-solid fa-table-cells ui-icon" aria-hidden="true"></i> ตารางสอนของฉัน</button>
+        <button class="btn dash-portfolio-btn dash-qa qa-tt" id="ttOpenBtn" type="button"><span class="qa-ic" aria-hidden="true"><i class="fa-solid fa-table-cells"></i></span><span class="qa-tx"><b>ตารางสอนของฉัน</b><small>ทั้งสัปดาห์ จากเว็บเช็คชื่อ</small></span></button>
       </div>
     </div>
 
@@ -263,9 +263,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.17.0.161126"></script>
+  <script src="assets/api.js?v=2.18.0.161126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=2.17.0.161126"></script>
+  <script src="assets/homeroom.js?v=2.18.0.161126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -280,14 +280,15 @@
     // ดึงข้อมูลบัญชีล่าสุด (วันที่เริ่มปฏิบัติงานอาจเพิ่งถูกตั้ง) แล้ววาดเช็คลิสต์/ปฏิทินใหม่ถ้าเปลี่ยน
     if (session) refreshSessionUser().then(function (u) {
       if (u && (u.joinedAt || '') !== (session.joinedAt || '')) { session.joinedAt = u.joinedAt || ''; try { renderCalendar(); renderAssignmentChecklist(); } catch (e) { /* ยังไม่โหลด */ } }
-      if (u) dashLeaveBtn(u.leave || '');
+      if (u) dashLeaveBtn(u);
       if (u && isDeptHeadSession(u) !== isDeptHeadSession(session)) location.reload(); // 1.87.2: เพิ่งได้/เพิ่งเลิกเป็นหัวหน้ากลุ่มบริหารงาน — วาดเมนูใหม่ (แคชอัปเดตแล้ว โหลดซ้ำครั้งเดียว)
     }).catch(function () {});
     if (session) mountChrome('dashboard');
     if (session) document.getElementById('welcomeHeading').textContent = 'ยินดีต้อนรับ, ' + session.name;
     // 2.16.0: ปุ่มแจ้งลา / ไปราชการ — เฉพาะผู้ดูแลการลา (m) และเมื่อเปิดให้ครูแจ้งเอง (s) · ช่วงทดสอบครูอื่นไม่เห็น
-    function dashLeaveBtn(f) { var b = document.getElementById('btnLeave'), w = document.getElementById('dashActs'); if (!b || !w) return; var on = f === 'm' || f === 's'; b.hidden = !on; w.classList.toggle('no-lv', !on); }
-    if (session) dashLeaveBtn(session.leave);
+    // 2.18.0: ปุ่มแจ้งลา — เปิดให้ครูทุกคนแล้ว (s / m) · ช่วงทดสอบ (ยังไม่เปิด) เห็นเฉพาะแอดมินระบบ
+    function dashLeaveBtn(u) { var b = document.getElementById('btnLeave'); if (!b || !u) return; var f = u.leave || ''; b.hidden = !(f === 's' || (f === 'm' && (u.leaveOn || u.isSysAdmin))); }
+    if (session) dashLeaveBtn(session);
     // ปุ่ม "ปริ้นบันทึกข้อความส่งงาน" (ตั้งแต่ 1.25.081026): เดิมจำกัดไว้เฉพาะ role==='teacher' เท่านั้น
     // แก้ตามที่ผู้ใช้แจ้งว่าเจ้าหน้าที่ฝ่ายวิชาการ (role='admin' + hasHub) ก็เป็นครูที่ต้องส่งงานผ่านระบบเหมือนกัน
     // จึงเปิดให้ทุกคนที่เข้าหน้าฮับนี้ได้ (requireHubAccess() ด้านบนกรองให้เหลือแค่ครู/เจ้าหน้าที่ฝ่ายวิชาการอยู่แล้ว)

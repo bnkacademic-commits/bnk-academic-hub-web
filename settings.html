@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.17.0.161126" />
+<link rel="stylesheet" href="assets/style.css?v=2.18.0.161126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -727,6 +727,11 @@
       </div>
       <div class="card mg-card" data-mgk="reqtime">
         <div class="section-title"><span><i class="fa-solid fa-person-running ui-icon" aria-hidden="true"></i> ผู้ดูแลการขอเวลาเรียน (ผู้อนุมัติ)</span></div>
+        <!-- 2.18.0: ปิด = ลงข้อมูลได้เฉพาะผู้ดูแลระบบ / แอดมินระบบ (นักเรียนเดินเอกสารเอง) · เปิด = ครูทุกคนขอเอง รอผู้ดูแลอนุมัติ -->
+        <div class="sup-onrow" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+          <div><b><i class="fa-solid fa-users ui-icon" aria-hidden="true"></i> เปิดหน้าขอเวลาเรียน ให้ครูทุกคน</b><p class="hint" style="margin:2px 0 0">ปิด = ผู้ดูแลระบบ / แอดมินระบบลงข้อมูลเอง (อนุมัติทันที) · ครูอื่นไม่เห็นเมนู · เปิด = ครูทุกคนขอเอง แล้วผู้ดูแลด้านล่างอนุมัติ · รายการที่อนุมัติแล้วมีผลกับหน้าเช็คชื่อตามเดิม</p></div>
+          <label class="sup-switch"><input type="checkbox" id="rtOnSwitch" /><i></i><span id="rtOnLabel">ปิดอยู่</span></label>
+        </div>
         <div class="mg-wrap"><div class="loading">กำลังโหลด</div></div>
         <p class="hint"><b>จัดการ</b> = อนุมัติ / ไม่อนุมัติคำขอเวลาเรียน · ได้กระดิ่งเมื่อมีคำขอใหม่ &nbsp;|&nbsp; <b>ดูผล</b> = ดูรายการอย่างเดียว · ครูทุกคนขอเวลาเรียนได้ · ยังไม่มีรายชื่อ = ผู้ดูแลระบบอนุมัติเอง</p>
         <div style="text-align:right"><button type="button" class="btn btn-success" data-mg-save="reqtime"><i class="fa-solid fa-check" aria-hidden="true"></i> บันทึกผู้ดูแลการขอเวลาเรียน</button></div>
@@ -1436,8 +1441,8 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.17.0.161126"></script>
-  <script src="assets/gallery.js?v=2.17.0.161126"></script>
+  <script src="assets/api.js?v=2.18.0.161126"></script>
+  <script src="assets/gallery.js?v=2.18.0.161126"></script>
   <script>
     // 1.97: หัวข้อสำเร็จรูป (FIELD_PRESETS) ย้ายไป api.js — ใช้ร่วมกันทุกหน้า
     // ตายตัวเหมือนกันทั้งสองฝั่งโดยเจตนา (ไม่ได้ดึงผ่าน API) เพื่อความง่าย เนื่องจากรอบนี้มีงานจำนวนมากอยู่แล้ว
@@ -1548,6 +1553,7 @@
         MG.data.att = (d.att || []).map(function (id) { return { id: id, manage: true, view: true }; }); // 2.11.1
         MG.data.reqtime = (d.reqtime || []).map(function (m) { return { id: m.id, manage: !!m.manage, view: !!m.view || !!m.manage }; }); // 2.17.0
         var lvSw = document.getElementById('lvOnSwitch'); if (lvSw) { lvSw.checked = !!d.leaveOn; lvOnPaint(); } // 2.16.0
+        var rtSw = document.getElementById('rtOnSwitch'); if (rtSw) { rtSw.checked = !!d.rtOn; rtOnPaint(); } // 2.18.0
         MG.dirty = {}; ['club', 'gallery', 'leave', 'care', 'guide', 'att', 'reqtime'].forEach(renderMgr);
       } catch (e) { document.querySelectorAll('.mg-card .mg-wrap').forEach(function (w) { w.innerHTML = '<div class="error-box">' + escapeHtml(e.message) + '</div>'; }); }
     }
@@ -1587,6 +1593,14 @@
       if (r.ok) { MG.dirty[k] = 0; renderMgr(k); if (k === 'care' && r.data && r.data.pushed === false) showToast('บันทึกแล้ว แต่ส่งรายชื่อไปที่ BNK Care Center ไม่สำเร็จ: ' + (r.data.warn || ''), true); }
     });
 
+    // 2.18.0: เปิด/ปิดหน้าขอเวลาเรียน ให้ครูทุกคน
+    function rtOnPaint() { var on = document.getElementById('rtOnSwitch').checked; document.getElementById('rtOnLabel').textContent = on ? 'เปิดให้ครูทุกคน' : 'ปิดอยู่ (แอดมินลงเอง)'; }
+    document.getElementById('rtOnSwitch').addEventListener('change', async function () {
+      var on = this.checked, sw = this;
+      if (!(await askConfirm(on ? 'เปิดหน้าขอเวลาเรียน ให้ครูทุกคน?<br>ครูจะเห็นเมนู "ขอเวลาเรียน" และส่งคำขอให้ผู้ดูแลอนุมัติได้ (ภายใน 1 นาที)' : 'ปิดหน้าขอเวลาเรียน สำหรับครูทั่วไป?<br>ลงข้อมูลได้เฉพาะผู้ดูแลระบบ / แอดมินระบบ · รายการเดิมยังอยู่และยังมีผลกับหน้าเช็คชื่อ', on ? 'เปิดให้ครูทุกคน' : 'ปิดหน้าขอเวลาเรียน'))) { sw.checked = !on; return; }
+      var r = await withProgress('กำลังบันทึก', function () { return apiCall('rtCfgSave', { enabled: on }); }, { successLabel: on ? 'เปิดให้ครูทุกคนแล้ว' : 'ปิดแล้ว' });
+      if (!r.ok) sw.checked = !on; rtOnPaint();
+    });
     // 2.16.0: เปิด/ปิดหน้าแจ้งลา / ไปราชการ ให้ครูทุกคน
     function lvOnPaint() { var on = document.getElementById('lvOnSwitch').checked; document.getElementById('lvOnLabel').textContent = on ? 'เปิดให้ครูทุกคน' : 'ปิดอยู่ (ทดสอบ)'; }
     document.getElementById('lvOnSwitch').addEventListener('change', async function () {
