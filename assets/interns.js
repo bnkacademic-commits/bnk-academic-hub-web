@@ -43,7 +43,7 @@
     put(tabsEl, t.length > 1 ? t.map(function (x) { return '<button type="button" data-ip-tab="' + x[0] + '" class="' + (x[0] === st.tab ? 'on' : '') + '">' + ic(x[1]) + ' ' + x[2] + '</button>'; }).join('') : '');
     if (st.tab === 'tpl') renderTpl(); else if (st.id) openIntern(st.id); else renderList();
   }
-  tabsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-ip-tab]'); if (b) { st.tab = b.getAttribute('data-ip-tab'); st.id = ''; renderTabs(); } });
+  tabsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-ip-tab]'); if (b) leaveOk().then(function (ok) { if (ok) { st.tab = b.getAttribute('data-ip-tab'); st.id = ''; renderTabs(); } }); });
 
   // ---------- ภาพรวม ----------
   function card(x) {
@@ -95,6 +95,7 @@
 
   // ข้อมูล / ตั้งค่า
   function renderInfo() {
+    selInit();
     var I = D.intern, P = canP();
     var co = I.co.map(function (c) { return '<span class="ip-chip">' + esc(c.name) + (P ? '<button type="button" data-ip-corm="' + esc(c.id) + '" aria-label="เอาออก">' + ic('fa-xmark') + '</button>' : '&nbsp;') + '</span>'; }).join('') || '<span class="ip-mut">ไม่มี</span>';
     var taken = [I.mentor.id].concat(I.co.map(function (c) { return c.id; }));
@@ -107,16 +108,68 @@
         '<div><span>ช่วงฝึกสอน</span><span>' + thD(I.from) + ' – ' + thD(I.until) + '</span></div>') +
       '<div><span>ให้นักศึกษาเห็นคะแนนรายด้าน<small>ในบันทึกสังเกต/นิเทศ · ครูพี่เลี้ยงหลักเลือก (ข้อความเห็นเสมอ)</small></span><input type="checkbox" class="ip-sw" id="ipShow"' + (I.showScore ? ' checked' : '') + (P ? '' : ' disabled') + '></div>' +
       perm.map(function (p) { return '<div><span>' + p[1] + '</span><input type="checkbox" class="ip-sw" data-ip-perm="' + p[0] + '"' + (I.perm[p[0]] ? ' checked' : '') + (P ? '' : ' disabled') + '></div>'; }).join('') + '</div></div>';
-    var right = '<div class="card"><h4 style="margin-top:0">' + ic('fa-book-open') + ' วิชา / ชุมนุมที่ให้ช่วยสอน</h4><p class="ip-mut" style="margin-top:0">ครูพี่เลี้ยงแต่ละคนเลือกจากวิชาของตัวเอง · วิชาที่ติ๊ก = นักศึกษาเป็นครูสอนร่วมในเว็บเช็คชื่อ</p>' +
+    put(sb(), '<div class="ip-grid2">' + left + '<div id="ipSubCard">' + subListHtml() + '</div></div><div id="ipTtCard">' + ttHtml() + '</div><div id="ipSaveBar">' + saveBarHtml() + '</div>');
+  }
+  // ---------- 2.18.1: วิชา / ชุมนุมที่ให้ช่วยสอน — ตารางสอนของนักศึกษา + เลือกจากตาราง/รายการ · บันทึกทีเดียว ----------
+  var SEL = null; // { id: internId, subs: {mentorId: {subId:1}}, club: {mentorId: bool}, sub0, club0 }
+  function selInit(force) {
+    if (SEL && SEL.id === D.intern.id && !force) return;
+    var subs = {}, club = {};
+    D.mentors.forEach(function (m) { subs[m.id] = {}; m.subjects.forEach(function (x) { if (x.on) subs[m.id][x.id] = 1; }); club[m.id] = !!(m.club && m.club.on); });
+    SEL = { id: D.intern.id, subs: subs, club: club, sub0: JSON.stringify(subs), club0: JSON.stringify(club) };
+  }
+  function selDirty() { return !!SEL && !!D && SEL.id === (D.intern || {}).id && (JSON.stringify(SEL.subs) !== SEL.sub0 || JSON.stringify(SEL.club) !== SEL.club0); }
+  function onSub(m, sid) { return !!(SEL.subs[m] && SEL.subs[m][sid]); }
+  var DAYS = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์'], PER = [-2, 0, 1, 2, 3, 4, 5, 6, 7, 8];
+  function pl(p) { return p === -2 ? 'A' : p === 0 ? 'B' : String(p); }
+  function subTotals() { var n = 0, k = 0; D.mentors.forEach(function (m) { m.subjects.forEach(function (x) { if (onSub(m.id, x.id)) { n++; k += x.periods; } }); }); return [n, k]; }
+  function subListHtml() {
+    var t = subTotals();
+    return '<div class="card"><h4 style="margin-top:0">' + ic('fa-book-open') + ' วิชา / ชุมนุมที่ให้ช่วยสอน</h4><p class="ip-mut" style="margin-top:0">แตะวิชาเพื่อเลือก / เอาออก (หรือแตะช่องในตารางสอนด้านล่าง) · เลือกครบแล้วกด <b>บันทึก</b> ด้านล่าง · วิชาที่เลือก = นักศึกษาเป็นครูสอนร่วมในเว็บเช็คชื่อ</p>' +
+      '<div class="ip-sumrow">' + tg('เลือกแล้ว ' + t[0] + ' วิชา · ' + t[1] + ' คาบ/สัปดาห์', 'c') + '</div>' +
       D.mentors.map(function (m) {
         var ed = m.editable && canE();
-        return '<div class="ip-mh">' + tg(m.primary ? 'หลัก' : 'ร่วม', m.primary ? 'p' : 'c') + ' ' + esc(m.name) + '</div>' +
+        return '<div class="ip-mh">' + tg(m.primary ? 'หลัก' : 'ร่วม', m.primary ? 'p' : 'c') + ' ' + esc(m.name) + (ed ? '' : ' <span class="ip-mut" style="font-weight:500">(ดูอย่างเดียว)</span>') + '</div>' +
           (m.subjectsError ? '<div class="ip-mut ip-red">' + esc(m.subjectsError) + '</div>' : '') +
-          (m.subjects.map(function (s) { return '<label class="ip-opt"><input type="checkbox" data-ip-subj="' + esc(s.id) + '" data-m="' + esc(m.id) + '"' + (s.on ? ' checked' : '') + (ed ? '' : ' disabled') + '><span>' + esc((s.code ? s.code + ' ' : '') + s.name) + ' · ' + esc(s.room) + '<small>' + s.periods + ' คาบ/สัปดาห์</small></span></label>'; }).join('') || '<div class="ip-mut">ไม่มีวิชาในภาคเรียนนี้</div>') +
-          (m.club ? '<label class="ip-opt"><input type="checkbox" data-ip-club="' + esc(m.id) + '"' + (m.club.on ? ' checked' : '') + (ed ? '' : ' disabled') + '><span>ชุมนุม ' + esc(m.club.name) + '<small>เป็นครูร่วมของชุมนุม</small></span></label>' : '');
+          '<div class="ip-sg">' + (m.subjects.map(function (x) { var on = onSub(m.id, x.id); return '<button type="button" class="ip-sb' + (on ? ' on' : '') + '" data-ip-pick="' + esc(x.id) + '" data-m="' + esc(m.id) + '"' + (ed ? '' : ' disabled') + ' aria-pressed="' + on + '">' + ic(on ? 'fa-square-check' : 'fa-square') + '<span><b>' + esc((x.code ? x.code + ' ' : '') + x.name) + '</b><small>' + esc(x.room) + ' · ' + x.periods + ' คาบ/สัปดาห์</small></span></button>'; }).join('') || '<div class="ip-mut">ไม่มีวิชาในภาคเรียนนี้</div>') + '</div>' +
+          (m.club ? '<button type="button" class="ip-sb club' + (SEL.club[m.id] ? ' on' : '') + '" data-ip-pickclub="' + esc(m.id) + '"' + (ed ? '' : ' disabled') + '>' + ic(SEL.club[m.id] ? 'fa-square-check' : 'fa-square') + '<span><b>ชุมนุม ' + esc(m.club.name) + '</b><small>เป็นครูร่วมของชุมนุม</small></span></button>' : '');
       }).join('') + '</div>';
-    put(sb(), '<div class="ip-grid2">' + left + right + '</div>');
   }
+  function ttHtml() {
+    var cell = {}, any = false;
+    D.mentors.forEach(function (m) { var ed = m.editable && canE(); m.subjects.forEach(function (x) { (x.schedules || []).forEach(function (sc) { var k = sc.day + '|' + sc.period; (cell[k] = cell[k] || []).push({ m: m, x: x, ed: ed }); any = true; }); }); });
+    var h = '<div class="card" style="margin-top:14px"><h4 style="margin-top:0">' + ic('fa-table-cells') + ' ตารางสอนของนักศึกษา <span class="ip-mut" style="font-weight:500">(วิชาที่เลือก = สีม่วง · แตะช่องเพื่อเลือก / เอาออกทั้งวิชา)</span></h4>';
+    if (!any) return h + '<p class="ip-mut">ยังไม่มีตารางสอนของครูพี่เลี้ยงในภาคเรียนนี้</p></div>';
+    h += '<div class="ip-ttw"><table class="ip-tt"><thead><tr><th></th>' + PER.map(function (p) { return '<th>' + pl(p) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      DAYS.map(function (d, i) { return '<tr><th>' + d + '</th>' + PER.map(function (p) { var L = cell[(i + 1) + '|' + p] || []; return '<td>' + L.map(function (c) { var on = onSub(c.m.id, c.x.id); return '<button type="button" class="ip-tc' + (on ? ' on' : '') + '" data-ip-pick="' + esc(c.x.id) + '" data-m="' + esc(c.m.id) + '"' + (c.ed ? '' : ' disabled') + ' title="' + esc((c.x.code ? c.x.code + ' ' : '') + c.x.name + ' · ' + c.x.room + ' · ' + c.m.name) + '"><b>' + esc(c.x.code || c.x.name) + '</b><small>' + esc(c.x.room) + '</small></button>'; }).join('') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+    var mine = []; D.mentors.forEach(function (m) { m.subjects.forEach(function (x) { if (onSub(m.id, x.id)) mine.push(x); }); });
+    return h + '<p class="ip-mut" style="margin-bottom:0">' + (mine.length ? 'สอนร่วม: ' + mine.map(function (x) { return esc((x.code ? x.code + ' ' : '') + x.name + ' ' + x.room); }).join(' · ') : 'ยังไม่ได้เลือกวิชา') + '</p></div>';
+  }
+  function saveBarHtml() {
+    if (!selDirty()) return '';
+    return '<div class="ip-savebar"><span>' + ic('fa-circle-exclamation') + ' ยังไม่ได้บันทึกวิชา / ชุมนุมที่เปลี่ยน</span><button type="button" class="btn btn-ghost" data-ip-selreset>ยกเลิกการเปลี่ยน</button><button type="button" class="btn btn-success" data-ip-selsave>' + ic('fa-check') + ' บันทึก</button></div>';
+  }
+  function repaintSel() { put(document.getElementById('ipSubCard'), subListHtml()); put(document.getElementById('ipTtCard'), ttHtml()); put(document.getElementById('ipSaveBar'), saveBarHtml()); }
+  async function saveSel() {
+    var sub0 = JSON.parse(SEL.sub0), club0 = JSON.parse(SEL.club0), jobs = [];
+    D.mentors.forEach(function (m) {
+      if (JSON.stringify(SEL.subs[m.id] || {}) !== JSON.stringify(sub0[m.id] || {})) jobs.push({ internId: D.intern.id, subs: Object.keys(SEL.subs[m.id] || {}), forMentor: m.id });
+      if (!!SEL.club[m.id] !== !!club0[m.id]) jobs.push({ internId: D.intern.id, club: !!SEL.club[m.id], forMentor: m.id });
+    });
+    if (!jobs.length) return true;
+    var synced = true;
+    var r = await withProgress('กำลังบันทึกและส่งไปเว็บเช็คชื่อ', async function () { for (var i = 0; i < jobs.length; i++) { var o = await apiCall('internConfig', jobs[i]); if (jobs[i].subs && o && o.synced === false) synced = false; } return true; }, { successLabel: 'บันทึกแล้ว' });
+    if (!r.ok) return false;
+    if (!synced) showToast('บันทึกแล้ว แต่ส่งรายชื่อไปเว็บเช็คชื่อไม่สำเร็จ — ระบบจะส่งให้อีกครั้งอัตโนมัติวันละครั้ง (หรือกดบันทึกอีกครั้งภายหลัง)', true);
+    SEL = null; await openIntern(st.id, true); return true;
+  }
+  // ออกจากหน้ารายคน / สลับแท็บ ตอนยังไม่บันทึก = ถาม
+  async function leaveOk() {
+    if (!selDirty()) return true;
+    var ok = await askConfirm('ยังไม่ได้บันทึกวิชา / ชุมนุมที่เปลี่ยน<br>ออกโดยไม่บันทึกใช่ไหม?', 'ยังไม่ได้บันทึก');
+    if (ok) SEL = null; return ok;
+  }
+  if (window.BackNav) BackNav.dirty(function () { return selDirty(); }, 'ยังไม่ได้บันทึกวิชา / ชุมนุมที่เปลี่ยน ออกจากหน้านี้เลยไหม?');
   async function act(action, payload, okMsg) {
     try { await apiCall(action, payload); showToast(okMsg || 'บันทึกแล้ว'); } catch (e) { showToast(e.message, true); }
     await openIntern(st.id, true);
@@ -356,8 +409,12 @@
     var b;
     if (st.tab === 'tpl') { teClick(e); return; }
     if ((b = e.target.closest('[data-ip-open]'))) { openIntern(b.getAttribute('data-ip-open')); return; }
-    if (e.target.closest('[data-ip-back]')) { backToList(); return; }
-    if ((b = e.target.closest('[data-ip-sub]'))) { st.sub = b.getAttribute('data-ip-sub'); renderDetail(); return; }
+    if ((b = e.target.closest('[data-ip-pick]'))) { var mm = b.getAttribute('data-m'), sid = b.getAttribute('data-ip-pick'); SEL.subs[mm] = SEL.subs[mm] || {}; if (SEL.subs[mm][sid]) delete SEL.subs[mm][sid]; else SEL.subs[mm][sid] = 1; repaintSel(); return; }
+    if ((b = e.target.closest('[data-ip-pickclub]'))) { var mc = b.getAttribute('data-ip-pickclub'); SEL.club[mc] = !SEL.club[mc]; repaintSel(); return; }
+    if (e.target.closest('[data-ip-selsave]')) { saveSel(); return; }
+    if (e.target.closest('[data-ip-selreset]')) { SEL = null; selInit(); repaintSel(); return; }
+    if (e.target.closest('[data-ip-back]')) { leaveOk().then(function (ok) { if (ok) backToList(); }); return; }
+    if ((b = e.target.closest('[data-ip-sub]'))) { var nsub = b.getAttribute('data-ip-sub'); leaveOk().then(function (ok) { if (ok) { st.sub = nsub; renderDetail(); } }); return; }
     if (e.target.closest('[data-ip-pdf]')) { pdfReport(); return; }
     if ((b = e.target.closest('[data-ip-corm]'))) { var id = b.getAttribute('data-ip-corm'); act('internSetInfo', { id: D.intern.id, co: D.intern.co.map(function (c) { return c.id; }).filter(function (x) { return x !== id; }) }, 'เอาออกแล้ว'); return; }
     if (e.target.closest('[data-ip-coadd]')) { var v = document.getElementById('ipCoSel').value; if (!v) return; act('internSetInfo', { id: D.intern.id, co: D.intern.co.map(function (c) { return c.id; }).concat([v]) }, 'เพิ่มครูพี่เลี้ยงร่วมแล้ว'); return; }
@@ -375,8 +432,7 @@
     if (!D) return;
     if (t.id === 'ipShow') { act('internConfig', { internId: D.intern.id, showScore: t.checked }, t.checked ? 'นักศึกษาเห็นคะแนนแล้ว' : 'ซ่อนคะแนนจากนักศึกษาแล้ว'); return; }
     if (t.hasAttribute('data-ip-perm')) { var pm = {}; pm[t.getAttribute('data-ip-perm')] = t.checked; act('internConfig', { internId: D.intern.id, perm: pm }); return; }
-    if (t.hasAttribute('data-ip-subj')) { var m = t.getAttribute('data-m'), ids = Array.prototype.map.call(document.querySelectorAll('[data-ip-subj][data-m="' + m + '"]:checked'), function (x) { return x.getAttribute('data-ip-subj'); }); act('internConfig', { internId: D.intern.id, subs: ids, forMentor: m }, t.checked ? 'เพิ่มเป็นครูสอนร่วมแล้ว' : 'ถอดออกจากวิชานี้แล้ว'); return; }
-    if (t.hasAttribute('data-ip-club')) { act('internConfig', { internId: D.intern.id, club: t.checked, forMentor: t.getAttribute('data-ip-club') }); }
+    // 2.18.1: วิชา/ชุมนุม เลือกด้วยปุ่ม (data-ip-pick) แล้วกดบันทึกทีเดียว
   });
   boot();
 })();
