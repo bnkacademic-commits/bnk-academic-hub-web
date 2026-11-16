@@ -303,7 +303,11 @@
     modal((r ? 'แก้ไขการเช็คชื่อ' : 'บันทึกย้อนหลัง') + ' · ' + thD(o.date) + ' คาบ ' + plabel(o.period),
       '<p class="cb-mut" style="margin-top:-4px">' + esc((S.subject.code ? S.subject.code + ' ' : '') + S.subject.name + ' · ' + S.subject.room) + (r ? ' · เช็คครั้งแรกโดย ' + esc(r.substituteTeacher || r.checkedBy || 'เว็บเช็คชื่อ') : '') + '</p>' + hist +
       '<div class="cb-toolbar"><button type="button" class="btn btn-secondary btn-sm" data-allp><i class="fa-solid fa-check-double"></i> มาทั้งหมด</button><span class="cb-mut" id="tcCnt"></span></div><div class="cb-pick tall"><table class="cb-tbl"><tbody id="tcRows">' +
-      (S.students || []).map(function (s) { return '<tr data-sid="' + esc(s.id) + '"><td>' + esc(s.number) + '</td><td>' + esc(s.name) + '</td><td><div class="cb-st">' + list.map(function (x) { return '<button type="button" data-st="' + x + '" class="' + (recs[s.id] === x ? 'on' : '') + '" style="--c:' + SCOLOR[x] + '">' + x + '</button>'; }).join('') + '</div></td></tr>'; }).join('') + '</tbody></table></div>' + recSectionHtml(o, r),
+      (S.students || []).map(function (s) {
+        // 2.17.0: ขอเวลาเรียน (อนุมัติแล้ว) — มีปุ่ม "ร่วมกิจกรรม" + เลือกให้ (ถ้ายังไม่เคยเช็คคาบนี้) · ครูแก้ได้
+        var g = (S.grants || []).filter(function (x) { return x.sid === s.id && x.date === o.date && (!(x.periods || []).length || x.periods.map(Number).indexOf(Number(o.period)) !== -1); })[0];
+        var L = g && list.indexOf('ร่วมกิจกรรม') === -1 ? ['ร่วมกิจกรรม'].concat(list) : list, cur = recs[s.id] || (g && !r ? 'ร่วมกิจกรรม' : '');
+        return '<tr data-sid="' + esc(s.id) + '"><td>' + esc(s.number) + '</td><td>' + esc(s.name) + (g ? '<div class="cb-mut" style="color:#0e7490;font-size:.78rem"><i class="fa-solid fa-person-running"></i> ขอเวลาเรียน: ' + esc(g.title) + ' · ' + esc(g.by) + '</div>' : '') + '</td><td><div class="cb-st">' + L.map(function (x) { return '<button type="button" data-st="' + x + '" class="' + (cur === x ? 'on' : '') + '" style="--c:' + SCOLOR[x] + '">' + x + '</button>'; }).join('') + '</div></td></tr>'; }).join('') + '</tbody></table></div>' + recSectionHtml(o, r),
       '<button type="button" class="btn btn-success" data-tc-save><i class="fa-solid fa-check"></i> บันทึก</button>');
     var mb = document.getElementById('cbModalBody'), held = lg ? lg.held : null;
     tcSig0 = window.BackNav ? BackNav.sig(mb) : null;
@@ -401,6 +405,7 @@
     if (!L) { var t = slowLoading(body, 'กำลังโหลด...'); try { L = await apiCall('leaveBoot', {}); } catch (e) { clearTimeout(t); body.innerHTML = err(e.message); return; } clearTimeout(t); }
     tabsEl.innerHTML = pageTabs();
     if (!leaveOk()) { st.page = 'teach'; try { history.replaceState(null, '', location.pathname + location.search); } catch (x) { /* ข้าม */ } body.innerHTML = ''; boot(); return; }
+    if (L.newPage) { body.innerHTML = '<div class="card cb-empty"><i class="fa-solid fa-plane-departure" style="color:#7c3aed"></i><p><b>การแจ้งลา / ไปราชการ ย้ายไปหน้าใหม่แล้ว</b><br><span class="cb-mut">แจ้งลาพร้อมแนบใบลา / คำสั่ง · ผู้ดูแลอนุมัติ · พิมพ์ใบลา · ข้อความสรุปรายวัน</span></p><a class="btn btn-primary" href="leave.html"><i class="fa-solid fa-arrow-right"></i> ไปหน้าแจ้งลา / ไปราชการ</a></div>'; return; } // 2.16.0
     if (!L.sqlReady) { body.innerHTML = '<div class="card">' + err('ยังใช้ส่วนนี้ไม่ได้ — ผู้ดูแลระบบต้องรัน SQL ชุดที่สามสิบเจ็ดก่อน (ดู README)') + '</div>'; return; }
     if (!L.term) { body.innerHTML = '<div class="card cb-empty"><i class="fa-solid fa-sun"></i><p>ช่วงนี้ไม่ใช่ภาคเรียนปกติ</p></div>'; return; }
     if (!LV.items) { try { LV.items = (await apiCall('leaveList', {})).items || []; } catch (e) { body.innerHTML = err(e.message); return; } }

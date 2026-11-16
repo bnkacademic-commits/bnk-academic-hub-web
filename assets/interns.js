@@ -29,10 +29,12 @@
   function mErr(m) { var e = document.getElementById('ipErr'); if (e) { e.textContent = m; e.hidden = !m; } }
 
   // ---------- โหลด ----------
+  var BOOTED = false;
   async function boot() {
     try { B = await apiCall('internPageBoot', {}); } catch (e) { tabsEl.innerHTML = ''; body.innerHTML = '<div class="card">' + err(e.message) + '</div>'; return; }
-    var q = new URLSearchParams(location.search).get('id') || (/^#i=(.+)$/.exec(location.hash) || [])[1];
-    if (q && B.list.some(function (x) { return x.id === q; })) { st.id = q; st.tab = 'list'; }
+    // 2.17.0: อ่านรหัสนักศึกษาจากลิงก์เฉพาะตอนเปิดหน้าครั้งแรก (เดิมกด "นักศึกษาฝึกสอนทั้งหมด" แล้วโหลดใหม่ อ่านลิงก์เก่าที่ปุ่ม Back คืนมา = เด้งกลับไปหน้านักศึกษาคนเดิม)
+    if (!BOOTED) { BOOTED = true; var q = new URLSearchParams(location.search).get('id') || (/^#i=(.+)$/.exec(location.hash) || [])[1];
+      if (q && B.list.some(function (x) { return x.id === q; })) { st.id = q; st.tab = 'list'; } }
     renderTabs();
   }
   function renderTabs() {
@@ -72,7 +74,7 @@
   // ---------- รายคน ----------
   async function openIntern(id, keepSub) {
     if (st.id !== id || !keepSub) H = null; st.id = id; if (!keepSub) st.sub = 'info';
-    try { history.replaceState(null, '', '#i=' + id); } catch (x) { /* ข้าม */ }
+    try { history.replaceState(history.state, '', '#i=' + id); } catch (x) { /* ข้าม */ }
     if (!D || D.intern.id !== id) body.innerHTML = '<div class="card"><div class="loading">กำลังโหลด...</div></div>';
     try { D = await apiCall('internDetail', { id: id }); } catch (e) { body.innerHTML = '<div class="card"><button type="button" class="ip-back" data-ip-back>' + ic('fa-arrow-left') + ' กลับ</button>' + err(e.message) + '</div>'; return; }
     renderDetail();
@@ -339,6 +341,13 @@
     return r;
   }
 
+  // 2.17.0: กลับรายชื่อทันที (ใช้ข้อมูลเดิม ไม่กระพริบ) แล้วค่อยโหลดตัวเลขล่าสุดเบื้องหลัง
+  function backToList() {
+    st.id = ''; D = null; H = null; try { history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])id=[^&]*&?/, '$1').replace(/[?&]$/, '')); } catch (x) { /* ข้าม */ }
+    if (!B) { boot(); return; }
+    body._h = ''; renderTabs();
+    apiCall('internPageBoot', {}).then(function (b) { B = b; if (!st.id && st.tab === 'list') renderTabs(); }).catch(function () { /* ใช้ข้อมูลเดิม */ });
+  }
   // ---------- เหตุการณ์ ----------
   body.addEventListener('input', teInput);
   // 2.12.1: กด Back ตอนดูรายคน = กลับรายชื่อ
@@ -347,7 +356,7 @@
     var b;
     if (st.tab === 'tpl') { teClick(e); return; }
     if ((b = e.target.closest('[data-ip-open]'))) { openIntern(b.getAttribute('data-ip-open')); return; }
-    if (e.target.closest('[data-ip-back]')) { st.id = ''; D = null; try { history.replaceState(null, '', location.pathname); } catch (x) { /* ข้าม */ } if (B) renderTabs(); boot(); return; }
+    if (e.target.closest('[data-ip-back]')) { backToList(); return; }
     if ((b = e.target.closest('[data-ip-sub]'))) { st.sub = b.getAttribute('data-ip-sub'); renderDetail(); return; }
     if (e.target.closest('[data-ip-pdf]')) { pdfReport(); return; }
     if ((b = e.target.closest('[data-ip-corm]'))) { var id = b.getAttribute('data-ip-corm'); act('internSetInfo', { id: D.intern.id, co: D.intern.co.map(function (c) { return c.id; }).filter(function (x) { return x !== id; }) }, 'เอาออกแล้ว'); return; }

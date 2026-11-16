@@ -227,9 +227,31 @@
     var WN = S.watch.slice(0, st.watchAll ? 300 : 10);
     h += '<div class="card cc-card"><h3>' + ic('fa-triangle-exclamation') + ' นักเรียนที่ต้องติดตาม <span class="cc-m">' + S.watchN + ' คน</span>' + tagP() + '</h3><p class="hint" style="margin-top:-4px">ต่ำกว่าเกณฑ์ "ต้องปรับปรุง" (' + ST.fair + ' คะแนน) · เรียงจากต่ำสุด · กดชื่อดูประวัติ</p>' +
       (WN.length ? sl(WN) : '<p class="hint">ไม่มีนักเรียนที่ต่ำกว่าเกณฑ์ 👍</p>') + (S.watchN > WN.length ? '<p class="hint cc-noexp"><a href="#" data-cc-wall>ดูทั้งหมด ' + Math.min(S.watchN, 300) + ' คน</a>' + (S.watchN > 300 ? ' (Excel ส่งออก 300 คนแรก)' : '') + '</p>' : '') + '</div>';
-    h += '<div class="card cc-card"><h3>' + ic('fa-medal') + ' คะแนนสูงสุด 10 อันดับ <small class="mut" style="font-weight:500">(ชมเชย)</small>' + tagP() + '</h3>' + (S.top.length ? sl(S.top, true) : '<p class="hint">-</p>') + '</div></div>';
+    h += '<div class="card cc-card" id="ccDed">' + dedHtml(S) + '</div></div>';
     return h;
   }
+  // 2.15.0: นักเรียนที่ถูกหักคะแนนในช่วงที่เลือก (แทนคะแนนสูงสุด 10 อันดับ) · ไม่รวมมาสาย · คนเดียวกันรวมแถวเดียว กดกางดูรายการ
+  function dedHtml(S) {
+    var h = '<h3>' + ic('fa-user-minus') + ' นักเรียนที่ถูกหักคะแนน' + (S.ded ? ' <span class="cc-m">' + S.ded.length + ' คน</span>' : '') + tagP('r') + '</h3>';
+    if (!S.ded) return h + '<p class="hint">ต้องอัปเดต Worker ของ BNK Care Center (1.07.0 ขึ้นไป) จึงจะแสดงส่วนนี้</p>';
+    if (!S.ded.length) return h + '<p class="hint">ไม่มีนักเรียนถูกหักคะแนนในช่วงนี้ 👍</p>';
+    var L = S.ded.slice(0, st.dedAll ? 300 : 10), op = st.dedOpen || {};
+    h += '<p class="hint cc-dh">' + esc(rangeTxt()) + ' · ' + S.dedN + ' ครั้ง รวม <b class="cc-m">' + S.dedSum + '</b> คะแนน · ไม่รวมมาสาย · คนเดียวกันรวมเป็นแถวเดียว กดเพื่อดูรายการ</p><div class="cc-dl">' +
+      L.map(function (o) {
+        var many = o.list.length > 1, on = many && op[o.key], one = o.list[0], its = [];
+        o.list.forEach(function (x) { if (its.indexOf(x.item) < 0) its.push(x.item); });
+        var sub = many ? its.slice(0, 3).join(' · ') + (its.length > 3 ? ' …' : '') : DW[dP(one.date).getDay()] + ' ' + thD(one.date) + ' · ' + one.item + (one.note ? ' (' + one.note + ')' : '');
+        return '<div class="cc-dr' + (on ? ' on' : '') + '"><div class="cc-dhd" ' + (many ? 'data-cc-ded="' + esc(o.key) + '" role="button" tabindex="0" aria-expanded="' + (on ? 'true' : 'false') + '"' : 'data-cc-stu="' + esc(o.key) + '" role="button" tabindex="0"') + '>' +
+          ic(many ? (on ? 'fa-chevron-down' : 'fa-chevron-right') : 'fa-minus') + '<span class="cc-dn"><b>' + esc(o.room) + ' เลขที่ ' + esc(o.no) + '</b> · ' + esc(o.name) + '<small>' + esc(sub) + '</small></span>' +
+          (many ? '<span class="cc-dc">' + o.list.length + ' ครั้ง</span>' : '') + '<b class="cc-m cc-ds">' + o.sum + '</b></div>' +
+          (on ? '<div class="cc-dlst">' + o.list.map(function (x) { return '<div><span class="cc-dd">' + DW[dP(x.date).getDay()] + ' ' + thD(x.date) + '</span><span class="cc-di">' + esc(x.item) + (x.note ? ' <small>' + esc(x.note) + '</small>' : '') + (x.by ? '<small class="cc-dby">โดย ' + esc(x.by) + '</small>' : '') + '</span><b class="cc-m">' + x.d + '</b></div>'; }).join('') +
+            '<a href="#" class="cc-dmore" data-cc-stu="' + esc(o.key) + '">' + ic('fa-clock-rotate-left') + ' ดูประวัติทั้งหมดของนักเรียน</a></div>' : '') + '</div>';
+      }).join('') + '</div>' +
+      (S.ded.length > L.length ? '<p class="hint cc-noexp"><a href="#" data-cc-dall>ดูทั้งหมด ' + Math.min(S.ded.length, 300) + ' คน</a>' + (S.ded.length > 300 ? ' (Excel ส่งออกครบทุกรายการ)' : '') + '</p>' : '') +
+      (S.dedCut ? '<p class="hint">' + ic('fa-circle-info') + ' ช่วงนี้มีรายการมาก แสดง ' + S.dedN + ' รายการล่าสุด — เลือกช่วงให้สั้นลงเพื่อดูครบ</p>' : '');
+    return h;
+  }
+  function dedRedraw() { var S = C.bh[rangeOf().join('|') + '|' + st.grade], el = document.getElementById('ccDed'); if (S && el) el.innerHTML = dedHtml(S); }
 
   // ---------- 2.04.0: สรุปรายห้อง ----------
   async function showRooms() {
@@ -447,7 +469,7 @@
       S2.roomsLow.forEach(function (x) { rows.push(['ห้องคะแนนเฉลี่ยต่ำสุด', x.room, x.room, x.n, x.avg, '']); });
       S2.roomsHigh.forEach(function (x) { rows.push(['ห้องคะแนนเฉลี่ยสูงสุด', x.room, x.room, x.n, x.avg, '']); });
       S2.watch.forEach(function (x) { rows.push(['นักเรียนที่ต้องติดตาม', x.name + ' (เลขที่ ' + x.no + ')', x.room, '', x.score, '']); });
-      S2.top.forEach(function (x, i) { rows.push(['คะแนนสูงสุด อันดับ ' + (i + 1), x.name + ' (เลขที่ ' + x.no + ')', x.room, '', x.score, '']); });
+      (S2.ded || []).forEach(function (o) { o.list.forEach(function (x) { rows.push(['ถูกหักคะแนน (ช่วงที่เลือก)', o.name + ' (เลขที่ ' + o.no + ') · ' + thD(x.date, true) + ' · ' + x.item + (x.note ? ' (' + x.note + ')' : '') + (x.by ? ' · โดย ' + x.by : ''), o.room, '', x.d, '']); }); });
       title += 'สรุปรวมคะแนนพฤติกรรม · กิจกรรม ' + rangeTxt() + (st.grade ? ' · ม.' + st.grade.slice(1) : '');
     } else if (st.tab === 'scores') {
       if (!C.sc[st.room || 'all']) return showToast('รอโหลดข้อมูลก่อน', true);
@@ -666,8 +688,10 @@
     if ((t = e.target.closest('[data-cc-rg]'))) { st.range = t.getAttribute('data-cc-rg'); show(); return; }
     if ((t = e.target.closest('[data-cc-go]'))) { e.preventDefault(); st.rroom = t.getAttribute('data-r') || ''; goTab(t.getAttribute('data-cc-go')); return; }
     if (e.target.closest('[data-cc-fmore]')) { st.fqN = (st.fqN || 10) + 20; showOverview(); return; }
+    if ((t = e.target.closest('[data-cc-ded]'))) { var dk = t.getAttribute('data-cc-ded'); st.dedOpen = st.dedOpen || {}; st.dedOpen[dk] = !st.dedOpen[dk]; dedRedraw(); return; }
+    if (e.target.closest('[data-cc-dall]')) { e.preventDefault(); st.dedAll = true; dedRedraw(); return; }
     if (e.target.closest('[data-cc-wall]')) { e.preventDefault(); st.watchAll = true; var bk = rangeOf(); document.getElementById('ccBh').innerHTML = summaryHtml(C.bh[bk[0] + '|' + bk[1] + '|' + st.grade]); return; }
-    if ((t = e.target.closest('[data-cc-stu]'))) { openStudent(t.getAttribute('data-cc-stu')); return; }
+    if ((t = e.target.closest('[data-cc-stu]'))) { if (t.tagName === 'A') e.preventDefault(); openStudent(t.getAttribute('data-cc-stu')); return; }
     if ((t = e.target.closest('[data-cc-room]'))) { st.rroom = t.getAttribute('data-cc-room'); showRooms(); return; }
     if ((t = e.target.closest('[data-cc-ex]'))) { var k = t.getAttribute('data-cc-ex'); if (k === 'pdf') exportPdf(); else if (k === 'img') exportImg(); else exportXls(); return; }
     if ((t = e.target.closest('[data-cc-cm]'))) { syncDraft(); var m = t.getAttribute('data-cc-cm'); if (m === 'grade' && draft.cycle.mode !== 'grade') { for (var i = 1; i <= 6; i++) draft.cycle.g['m' + i] = draft.cycle.all || 'term'; } draft.cycle.mode = m; showSettings(); return; }
@@ -723,7 +747,7 @@
   }
   body.addEventListener('input', function () { paintDirty(); });
   body.addEventListener('change', function () { setTimeout(paintDirty, 0); });
-  body.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.id === 'ccRNew') { e.preventDefault(); var b = document.querySelector('[data-cc-radd]'); if (b) b.click(); } });
+  body.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.cc-dhd')) { e.preventDefault(); e.target.click(); return; } if (e.key === 'Enter' && e.target.id === 'ccRNew') { e.preventDefault(); var b = document.querySelector('[data-cc-radd]'); if (b) b.click(); } });
   body.addEventListener('change', function (e) {
     var id = e.target.id, sk;
     if ((sk = e.target.getAttribute('data-cc-skk'))) { if (e.target.checked) SK.sel[sk] = 1; else delete SK.sel[sk]; paintSkip(); return; }

@@ -251,3 +251,26 @@
 .cc-num { width: 80px; text-align: center; }
 .cc-vchk { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; } .cc-vchk label { display: inline-flex; align-items: center; gap: 6px; }
 @media (max-width: 640px) { .cc-skr { flex-wrap: wrap; } .cc-skb { margin-left: 29px; } .cc-skacts { margin-left: 0; width: 100%; } .cc-skacts .btn { flex: 1; } }
+/* 2.15.0: นักเรียนที่ถูกหักคะแนน (สรุปรวม) */
+.cc-grid2 > .cc-card { min-width: 0; }
+.cc-dh { margin-top: -4px; }
+.cc-dl { display: flex; flex-direction: column; min-width: 0; }
+.cc-dr { border-bottom: 1px dashed var(--border); } .cc-dr:last-child { border-bottom: 0; }
+.cc-dhd { display: flex; align-items: center; gap: 10px; padding: 8px 4px; cursor: pointer; border-radius: 8px; }
+.cc-dhd:hover, .cc-dhd:focus-visible { background: var(--primary-light); outline: none; }
+.cc-dhd > i { width: 14px; color: var(--text-muted); font-size: .75rem; flex-shrink: 0; }
+.cc-dn { flex: 1; min-width: 0; font-size: .9rem; }
+.cc-dn small { display: block; color: var(--text-muted); font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-dc { font-size: .72rem; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #fee2e2; color: #b91c1c; white-space: nowrap; }
+.cc-ds { min-width: 40px; text-align: right; }
+.cc-dr.on { background: var(--surface-2, #f8fafc); border-radius: 10px; border-bottom-color: transparent; margin: 2px 0; }
+.cc-dlst { padding: 0 8px 8px 28px; }
+.cc-dlst > div { display: flex; align-items: baseline; gap: 10px; padding: 5px 0; border-top: 1px solid var(--border); font-size: .85rem; }
+.cc-dd { width: 84px; flex-shrink: 0; color: var(--text-muted); font-size: .78rem; white-space: nowrap; }
+.cc-di { flex: 1; min-width: 0; } .cc-di small { color: var(--text-muted); } .cc-dby { display: block; }
+.cc-dmore { display: inline-block; margin-top: 6px; font-size: .8rem; font-weight: 600; }
+[data-theme="dark"] .cc-dc { background: rgba(239,68,68,.18); color: #fca5a5; }
+[data-theme="dark"] .cc-dr.on { background: rgba(255,255,255,.04); }
+@media (max-width: 480px) { .cc-dlst { padding-left: 8px; } .cc-dd { width: 70px; } }
+@media print { .cc-dmore { display: none !important; } }
+#ccDed h3 .cc-m { white-space: nowrap; }

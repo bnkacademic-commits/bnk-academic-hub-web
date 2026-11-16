@@ -1,0 +1,20 @@
+/* 2.17.0: หน้าขอเวลาเรียน (reqtime.html) — ใช้ leave.css + care.css ร่วมกัน */
+.rt-k { background: #cffafe; color: #0e7490; }
+[data-theme="dark"] .rt-k { background: rgba(6,182,212,.18); color: #67e8f9; }
+.rt-stu { display: flex; flex-wrap: wrap; gap: 6px; }
+.rt-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-size: .82rem; font-weight: 600; }
+.rt-chip button { border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0 5px; font-size: .85rem; }
+.rt-pick { border: 1px solid var(--border); border-radius: 12px; max-height: 220px; overflow: auto; margin-top: 6px; }
+.rt-pick > div { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px dashed var(--border); font-size: .88rem; }
+.rt-pick > div:last-child { border-bottom: 0; }
+.rt-pick > div > span { flex: 1; min-width: 0; } .rt-pick small { color: var(--text-muted); }
+.rt-pick .on { background: rgba(34,197,94,.08); }
+.rt-pick .rt-ok { color: #16a34a; font-size: .8rem; font-weight: 700; }
+.rt-room { font-size: .78rem; font-weight: 800; color: var(--text-muted); margin: 10px 0 4px; display: flex; align-items: center; gap: 8px; }
+.rt-room button { border: 0; background: none; color: #dc2626; font: inherit; font-size: .75rem; cursor: pointer; }
+.rt-tb { width: 100%; border-collapse: collapse; font-size: .86rem; } .rt-tb td, .rt-tb th { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; } .rt-tb th { font-size: .76rem; color: var(--text-muted); }
+.rt-tb tr.off td { opacity: .45; text-decoration: line-through; } .rt-tb tr.off td:first-child { opacity: 1; text-decoration: none; }
+.rt-warn { color: #b45309; font-size: .8rem; } [data-theme="dark"] .rt-warn { color: #fcd34d; }
+.rt-rule { background: var(--surface-2, #f8fafc); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: .84rem; line-height: 1.7; }
+.rt-ok-chip { color: #0e7490; border-color: #a5f3fc; } [data-theme="dark"] .rt-ok-chip { color: #67e8f9; border-color: rgba(6,182,212,.4); }
+.rt-more { text-align: center; padding: 6px; }

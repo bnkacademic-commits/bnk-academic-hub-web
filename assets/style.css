@@ -3968,6 +3968,10 @@ table.tt-grid td.tt-lunch { background: repeating-linear-gradient(45deg, transpa
 .dash-welcome-actions.has-tt { display: grid; grid-template-columns: repeat(2, auto); }
 .dash-welcome-actions.has-tt .dash-tt-btn { grid-column: 1 / -1; justify-content: center; }
 html.memo-off .dash-welcome-actions.has-tt { grid-template-columns: auto; } /* ปิดบันทึกข้อความ = ปุ่มหน้าผลงานแถวเดียว */
+.dash-welcome-actions.has-tt.no-lv { grid-template-columns: auto; } /* 2.16.0: ไม่มีปุ่มแจ้งลา = ปุ่มหน้าผลงานแถวเดียว */
+.dash-welcome-actions .dash-lv-btn { justify-content: center; }
+.dash-welcome-actions.has-tt:not(.no-lv) { grid-template-columns: repeat(2, auto); }
+@media (max-width: 640px) { .dash-welcome-actions.has-tt:not(.no-lv) { grid-template-columns: 1fr 1fr; } .dash-welcome-actions .dash-portfolio-btn { padding-left: 10px; padding-right: 10px; } }
 @media (max-width: 640px) { .dash-welcome-actions.has-tt { grid-template-columns: 1fr; } }
 /* 1.92.4: งานที่ส่งเป็นรอบ — แถวเดียว (แถบความคืบหน้า) + ป็อปอัปเส้นเวลา */
 .up-prog { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-left: 6px; white-space: nowrap; }
