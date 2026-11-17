@@ -85,3 +85,6 @@
 .tt-cf small { color: var(--text-muted); }
 .tt-load tr.tt-fxrow td { background: var(--bg); }
 .tt-c.hr > span small { font-size: .62rem; opacity: .8; }
+/* 2.22.2: ครูสมมติ */
+.tt-dm { display: inline-flex; align-items: center; gap: 3px; font-size: .74rem; font-weight: 600; cursor: pointer; opacity: .9; }
+.tt-dm input { margin: 0; }

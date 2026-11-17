@@ -26,7 +26,7 @@
   function defaults(t) {
     return { v: 2, term: t ? t.term : '1', year: t ? t.year : '', grades: { m1: 4, m2: 4, m3: 4, m4: 3, m5: 3, m6: 3 },
       fixed: [{ k: 'club', n: 'ชุมนุม', d: 2, p: 7, hard: true }, { k: 'dev', n: 'กิจกรรมพัฒนาผู้เรียน', d: 3, p: 7, hard: true }, { k: 'moral', n: 'กิจกรรมคุณธรรมจริยธรรม', d: 4, p: 7, hard: false }, { k: 'social', n: 'กิจกรรมเพื่อสังคม', d: 5, p: 7, hard: false }],
-      hr: { p: 8, allow: [1, 4] }, light: [], courses: [], extra: [], bnames: {}, blocks: [], pmDay: {},
+      hr: { p: 8, allow: [1, 4] }, light: [], courses: [], extra: [], dummy: [], bnames: {}, blocks: [], pmDay: {},
       comp: { n: 2, home: {} }, rules: { noSameDay: true, maxDay: 5, maxRun: 3, noLunch: true, calcAm: true, amCap: 65, amMin: 35, coFree: false }, place: {}, lock: {} };
   }
   function nextTerm(t) { if (!t) return { term: '1', year: '' }; return t.term === '1' ? { term: '2', year: t.year } : { term: '1', year: String(+t.year + 1) }; }
@@ -35,7 +35,7 @@
   function tName(k) { if (!k) return ''; if (k.indexOf('x:') === 0) return k.slice(2); var p = PMAP[k]; return p ? p.name : '(ไม่พบบัญชี)'; }
   function tGroup(k) { var p = PMAP[k]; return p ? p.group || '' : ''; }
   function teachersAll() { var o = B.people.filter(function (p) { return !p.exec; }).map(function (p) { return { k: p.id, n: p.name, g: p.group }; }); D.extra.forEach(function (n) { o.push({ k: 'x:' + n, n: n + ' (ไม่มีบัญชี)', g: '' }); }); return o; }
-  function cGroup(c) { return c.group || tGroup(c.t[0]) || 'ไม่ระบุ'; }
+  function cGroup(c) { return c.group || tGroup(rt(c)[0]) || 'ไม่ระบุ'; }
   function lightKey(c) { return (c.code || '') + '|' + c.name; }
   function isLight(c) { return D.light.indexOf(lightKey(c)) !== -1; }
   // 2.22.0: วิชากิจกรรม (ชุมนุม / พัฒนาผู้เรียน / คุณธรรม / เพื่อสังคม / โฮมรูม) = ตัวคาบพิเศษเอง
@@ -45,6 +45,10 @@
   function fxGuess(name) { for (var i = 0; i < FXK.length; i++) if (FXK[i][1].test(name || '')) return FXK[i][0]; return ''; }
   function lightGuess(name) { return /แนะแนว|ทุจริต/.test(name || ''); }
   function regular() { return D.courses.filter(function (c) { return !c.fx; }); }
+  // 2.22.2: ครูสมมติ (กลุ่ม "ระบบ/อื่นๆ" ในเว็บเช็คชื่อ เช่น ซ่อมเสริมครูที่ปรึกษา) — ไม่ตรวจชนฝั่งครู · ห้องยังตรวจชน · วิชาที่มีแต่ครูสมมติ = วิชาเติมตาราง (จัดหลังสุด)
+  function isDummy(k) { return (D.dummy || []).indexOf(k) !== -1; }
+  function rt(c) { return c.t.filter(function (k) { return !isDummy(k); }); }
+  function isFiller(c) { return c.t.length > 0 && !rt(c).length; }
   // ฉบับร่างเดิม (v1): เชื่อมวิชากิจกรรม · ติ๊กวิชาเบา · คาบ 8 เปลี่ยนความหมายจาก "วันที่ล็อก" เป็น "วันที่ให้ลงวิชาเบาได้"
   function migrate(d) {
     if (!d.hr) d.hr = { p: 8, allow: [1, 4] };
@@ -102,6 +106,7 @@
   function fromImport(j, t) {
     var d = defaults(t), byName = {};
     (j.teachers || []).forEach(function (x) { if (x.hubId && PMAP[x.hubId]) { byName[x.name] = x.hubId; d.bnames[x.hubId] = x.name; } });
+    var sysN = {}; (j.teachers || []).forEach(function (x) { if (x.sys) sysN[x.name] = 1; }); // 2.22.2: เว็บเช็คชื่อบอกกลุ่ม "ระบบ/อื่นๆ" มาให้
     function key(n) { n = String(n || '').trim(); if (!n) return ''; if (byName[n]) return byName[n]; if (d.extra.indexOf(n) === -1) d.extra.push(n); return 'x:' + n; }
     var rc = j.roomCounts || {}; if (Object.keys(rc).length) ['m1', 'm2', 'm3', 'm4', 'm5', 'm6'].forEach(function (g) { d.grades[g] = +rc[g] || 0; });
     (j.subjects || []).forEach(function (s) {
@@ -114,6 +119,7 @@
       d.courses.push(c);
       if (segs.length && (!c.fx || c.fx === 'hr')) d.place[c.id] = segs.map(function (x) { return { d: x.d, p: x.p, len: x.len }; });
     });
+    Object.keys(sysN).forEach(function (n) { var k = byName[n] || 'x:' + n; if (d.courses.some(function (c) { return c.t.indexOf(k) !== -1; }) && d.dummy.indexOf(k) === -1) d.dummy.push(k); });
     return d;
   }
   async function newDraft(kind) {
@@ -175,12 +181,12 @@
           '<td class="c"><input type="checkbox" data-f="calc"' + (c.calc ? ' checked' : '') + ' title="วิชาคำนวณ (ควรอยู่ช่วงเช้า)" /></td><td><select class="sb-in" data-f="fx" title="วิชากิจกรรม = ตัวคาบพิเศษเอง (ไม่จัด · ไม่นับชน)"><option value="">ไม่ใช่</option>' + Object.keys(FXN).map(function (k) { return '<option value="' + k + '"' + (c.fx === k ? ' selected' : '') + '>' + FXN[k] + '</option>'; }).join('') + '</select></td><td><button type="button" class="sb-x" data-tt-rmc="' + c.id + '" aria-label="ลบวิชา">' + ic('fa-trash') + '</button></td></tr>';
       }).join('') + (cs.length ? '' : '<tr><td colspan="10" class="cb-mut">ยังไม่มีวิชาในห้องนี้</td></tr>') + '</tbody></table></div>' +
       '<p class="cb-mut sb-leg">คาบพิเศษ = วิชากิจกรรม (ชุมนุม / พัฒนาผู้เรียน / คุณธรรม / เพื่อสังคม / โฮมรูม) ลงที่คาบพิเศษให้เอง ไม่นับว่าชน · แบ่งคาบ: 2+1 = คาบคู่ 1 ครั้ง + คาบเดี่ยว 1 ครั้ง (ไม่อยู่วันเดียวกัน) · สอนร่วมกับครูต่างชาติแบบแยกคาบ = สร้างวิชาเดิม 2 แถว ครูคนละคน · ครูร่วม = สอนพร้อมกันในคาบเดียวกัน</p></div>' +
-      '<div class="sb-2col" style="margin-top:16px"><div class="card"><h3 style="margin-top:0">' + ic('fa-user-plus ui-icon') + ' ผู้สอนที่ไม่มีบัญชี</h3><p class="cb-mut" style="margin-top:-4px">เช่น ครูต่างชาติ — ใช้ในตารางได้โดยไม่ต้องสร้างบัญชี (สร้างบัญชีแล้วค่อยเปลี่ยนเป็นชื่อบัญชีในแถววิชา)</p><div class="sb-chips">' + (D.extra.map(function (n) { return '<span class="sb-chip gr">' + esc(n) + ' <button type="button" class="sb-x" data-tt-rmx="' + esc(n) + '" aria-label="เอาออก">' + ic('fa-xmark') + '</button></span>'; }).join('') || '<span class="cb-mut">ยังไม่มี</span>') + '<input id="ttXn" class="sb-in" placeholder="ชื่อ เช่น Mr. John Smith" maxlength="80" /><button type="button" class="btn btn-secondary btn-sm" data-tt-addx>' + ic('fa-plus') + ' เพิ่ม</button></div></div>' +
+      '<div class="sb-2col" style="margin-top:16px"><div class="card"><h3 style="margin-top:0">' + ic('fa-user-plus ui-icon') + ' ผู้สอนที่ไม่มีบัญชี</h3><p class="cb-mut" style="margin-top:-4px">เช่น ครูต่างชาติ — ใช้ในตารางได้โดยไม่ต้องสร้างบัญชี (สร้างบัญชีแล้วค่อยเปลี่ยนเป็นชื่อบัญชีในแถววิชา) · ติ๊ก "ครูสมมติ" = ครูกลุ่มระบบ/อื่นๆ ไม่ตรวจชน ใส่หลายห้องพร้อมกันได้ (นำเข้าจากเว็บเช็คชื่อติ๊กให้เอง)</p><div class="sb-chips">' + (D.extra.map(function (n) { var dm = isDummy('x:' + n); return '<span class="sb-chip ' + (dm ? 'wt' : 'gr') + '">' + esc(n) + ' <label class="tt-dm" title="ครูสมมติ = ไม่ตรวจชนฝั่งครู ใส่หลายห้องพร้อมกันได้ (เช่น ซ่อมเสริมครูที่ปรึกษา)"><input type="checkbox" data-tt-dummy="' + esc(n) + '"' + (dm ? ' checked' : '') + ' /> ครูสมมติ</label> <button type="button" class="sb-x" data-tt-rmx="' + esc(n) + '" aria-label="เอาออก">' + ic('fa-xmark') + '</button></span>'; }).join('') || '<span class="cb-mut">ยังไม่มี</span>') + '<input id="ttXn" class="sb-in" placeholder="ชื่อ เช่น Mr. John Smith" maxlength="80" /><button type="button" class="btn btn-secondary btn-sm" data-tt-addx>' + ic('fa-plus') + ' เพิ่ม</button></div></div>' +
       '<div class="card"><h3 style="margin-top:0">' + ic('fa-chart-simple ui-icon') + ' คาบสอนต่อสัปดาห์ (ทุกห้อง)</h3>' + loadSummary() + '</div></div>';
     body.innerHTML = h;
   }
   function loadSummary() {
-    var m = {}; regular().forEach(function (c) { c.t.forEach(function (k) { if (k) m[k] = (m[k] || 0) + (+c.n || 0); }); });
+    var m = {}; regular().forEach(function (c) { rt(c).forEach(function (k) { if (k) m[k] = (m[k] || 0) + (+c.n || 0); }); });
     var L = Object.keys(m).map(function (k) { return { k: k, n: m[k] }; }).sort(function (a, b) { return b.n - a.n; });
     if (!L.length) return '<p class="cb-mut">ยังไม่มีข้อมูล</p>';
     var mx = L[0].n;
@@ -252,13 +258,13 @@
     var cw = compWant(c);
     cells(c, i, d, p).forEach(function (q) {
       var rk = c.room + '|' + d + '|' + q; (S.R[rk] = S.R[rk] || []).push(c.id + '#' + i);
-      c.t.forEach(function (k) { var tk = k + '|' + d + '|' + q; (S.T[tk] = S.T[tk] || []).push(c.id + '#' + i); });
+      rt(c).forEach(function (k) { var tk = k + '|' + d + '|' + q; (S.T[tk] = S.T[tk] || []).push(c.id + '#' + i); });
       if (cw) { var ck = cw + '|' + d + '|' + q; (S.C[ck] = S.C[ck] || []).push(c.id + '#' + i); }
     });
   }
   function take(S, c, i, d, p) {
     var key = c.id + '#' + i, cw = compWant(c), rm = function (m, k) { if (!m[k]) return; m[k] = m[k].filter(function (x) { return x !== key; }); if (!m[k].length) delete m[k]; };
-    cells(c, i, d, p).forEach(function (q) { rm(S.R, c.room + '|' + d + '|' + q); c.t.forEach(function (k) { rm(S.T, k + '|' + d + '|' + q); }); if (cw) rm(S.C, cw + '|' + d + '|' + q); });
+    cells(c, i, d, p).forEach(function (q) { rm(S.R, c.room + '|' + d + '|' + q); rt(c).forEach(function (k) { rm(S.T, k + '|' + d + '|' + q); }); if (cw) rm(S.C, cw + '|' + d + '|' + q); });
   }
   // ตรวจช่อง: ข้อห้ามแข็ง (คืน null = วางไม่ได้) · ไม่สนใจคาบที่ชนกับวิชาอื่น (ส่ง blockers กลับ)
   function hardOk(c, i, d, p) {
@@ -278,7 +284,7 @@
     var out = {}, key = c.id + '#' + i, cw = compWant(c);
     cells(c, i, d, p).forEach(function (q) {
       (S.R[c.room + '|' + d + '|' + q] || []).forEach(function (x) { if (x !== key) out[x] = 1; });
-      c.t.forEach(function (k) { (S.T[k + '|' + d + '|' + q] || []).forEach(function (x) { if (x !== key) out[x] = 1; }); });
+      rt(c).forEach(function (k) { (S.T[k + '|' + d + '|' + q] || []).forEach(function (x) { if (x !== key) out[x] = 1; }); });
       if (cw) (S.C[cw + '|' + d + '|' + q] || []).forEach(function (x) { if (x !== key) out[x] = 1; });
     });
     return Object.keys(out);
@@ -287,7 +293,7 @@
   function softCost(S, c, i, d, p, AM) {
     var len = c.split[i], cost = 0, R = D.rules, ga = AM ? AM[cGroup(c)] : null, full = !!(ga && ga.total && ga.am / ga.total * 100 >= R.amCap); // กลุ่มสาระได้คาบเช้าเต็มเพดานแล้ว = ไม่ดันวิชาคำนวณไปเช้าอีก
     for (var k = 0; k < len; k++) { var q = p + k, f = fixedAt(d, q); if (f) cost += 25; if (hrAt(d, q)) cost -= 3; /* วิชาเบาลงคาบ 8 ก่อน */ if (R.calcAm && c.calc && q >= 5 && !full) cost += 4; if (q === 5) cost += 0.5; }
-    c.t.forEach(function (tk) {
+    rt(c).forEach(function (tk) {
       var ld = dayLoad(S, tk, d); if (ld + len > R.maxDay) cost += 1000;
       // ติดกันเกิน
       var run = len, q = p - 1; while (q >= 1 && S.T[tk + '|' + d + '|' + q]) { run++; q--; } q = p + len; while (q <= 8 && S.T[tk + '|' + d + '|' + q]) { run++; q++; }
@@ -296,15 +302,15 @@
       if (ld) { var near = 9; PER.forEach(function (x) { if (S.T[tk + '|' + d + '|' + x]) near = Math.min(near, Math.abs(x - p), Math.abs(x - (p + len - 1))); }); if (near > 1) cost += (near - 1) * 0.6; }
     });
     if (AM && p <= 4) { var g = cGroup(c), a = AM[g]; if (a && a.total && (a.am + len) / a.total * 100 > R.amCap) cost += 7; }
-    if (R.coFree && c.t.length === 1 && c.t[0].indexOf('x:') === 0) { // ครูต่างชาติสอนคนเดียว → ครูไทยของวิชาเดียวกันห้องเดียวกันควรว่าง
-      D.courses.forEach(function (o) { if (o.id !== c.id && o.room === c.room && o.code === c.code && o.name === c.name) o.t.forEach(function (tk) { for (var k = 0; k < len; k++) if (S.T[tk + '|' + d + '|' + (p + k)]) cost += 5; }); });
+    if (R.coFree && c.t.length === 1 && rt(c).length === 1 && c.t[0].indexOf('x:') === 0) { // ครูต่างชาติสอนคนเดียว → ครูไทยของวิชาเดียวกันห้องเดียวกันควรว่าง
+      D.courses.forEach(function (o) { if (o.id !== c.id && o.room === c.room && o.code === c.code && o.name === c.name) rt(o).forEach(function (tk) { for (var k = 0; k < len; k++) if (S.T[tk + '|' + d + '|' + (p + k)]) cost += 5; }); });
     }
     var pl = D.place[c.id] || []; pl.forEach(function (x, m) { if (m !== i && x && Math.abs(x.d - d) === 1) cost += 0.8; }); // กระจายวัน
     return cost;
   }
   function onSoft(c, i, d, p) { for (var k = 0; k < c.split[i]; k++) { var f = fixedAt(d, p + k); if (f && !f.hard) return f; } return null; }
-  function amInit() { var AM = {}; regular().forEach(function (c) { var g = cGroup(c), a = AM[g] || (AM[g] = { am: 0, total: 0 }); a.total += +c.n || 0; (D.place[c.id] || []).forEach(function (x, i) { if (x) for (var k = 0; k < c.split[i]; k++) if (x.p + k <= 4) a.am++; }); }); return AM; }
-  function amAdd(AM, c, i, p, s) { var a = AM[cGroup(c)]; if (a) for (var k = 0; k < c.split[i]; k++) if (p + k <= 4) a.am += s; }
+  function amInit() { var AM = {}; regular().forEach(function (c) { if (isFiller(c)) return; var g = cGroup(c), a = AM[g] || (AM[g] = { am: 0, total: 0 }); a.total += +c.n || 0; (D.place[c.id] || []).forEach(function (x, i) { if (x) for (var k = 0; k < c.split[i]; k++) if (x.p + k <= 4) a.am++; }); }); return AM; }
+  function amAdd(AM, c, i, p, s) { var a = isFiller(c) ? null : AM[cGroup(c)]; if (a) for (var k = 0; k < c.split[i]; k++) if (p + k <= 4) a.am += s; }
   function solve(mode) {
     pickPmDays();
     var all = []; regular().forEach(function (c) { if (!(D.place[c.id] && D.place[c.id].length === c.split.length)) D.place[c.id] = (D.place[c.id] || []).slice(0, c.split.length); segsOf(c).forEach(function (s) { all.push(s); }); });
@@ -314,8 +320,8 @@
     var S = build(), AM = amInit();
     // ถอดตัวที่ชนกัน (ไม่ล็อก) ออกก่อน
     all.forEach(function (s) { var x = D.place[s.c.id][s.i]; if (x && !D.lock[s.key] && blockersAt(S, s.c, s.i, x.d, x.p).length) { take(S, s.c, s.i, x.d, x.p); amAdd(AM, s.c, s.i, x.p, -1); D.place[s.c.id][s.i] = null; } });
-    var tLoad = {}; regular().forEach(function (c) { c.t.forEach(function (k) { tLoad[k] = (tLoad[k] || 0) + (+c.n || 0); }); });
-    var diff = function (s) { var c = s.c, b = 0; c.t.forEach(function (k) { b += tLoad[k] || 0; if (D.blocks.some(function (x) { return x.who === k; })) b += 10; }); return (s.len === 2 ? 100 : 0) + (c.comp ? 60 : 0) + (isLight(c) ? -20 : 0) + b + Math.random() * 3; };
+    var tLoad = {}; regular().forEach(function (c) { rt(c).forEach(function (k) { tLoad[k] = (tLoad[k] || 0) + (+c.n || 0); }); });
+    var diff = function (s) { var c = s.c, b = isFiller(c) ? -300 : 0; rt(c).forEach(function (k) { b += tLoad[k] || 0; if (D.blocks.some(function (x) { return x.who === k; })) b += 10; }); return (s.len === 2 ? 100 : 0) + (c.comp ? 60 : 0) + (isLight(c) ? -20 : 0) + b + Math.random() * 3; };
     var queue = all.filter(function (s) { return !D.place[s.c.id][s.i]; }).sort(function (a, b) { return diff(b) - diff(a); });
     var slots = []; DAYS.forEach(function (d) { PER.forEach(function (p) { slots.push([d, p]); }); });
     function place(s, d, p) { D.place[s.c.id][s.i] = { d: d, p: p, len: s.len }; put(S, s.c, s.i, d, p); amAdd(AM, s.c, s.i, p, 1); }
@@ -352,9 +358,9 @@
   function evaluate() {
     var S = build(), out = { unplaced: 0, conflicts: 0, fixedUsed: 0, p8: 0, calcPm: 0, runs: 0, gaps: 0, sameDay: 0, dept: {}, tAm: {}, conflictList: [] };
     regular().forEach(function (c) {
-      var pl = D.place[c.id] || [], g = cGroup(c), a = out.dept[g] || (out.dept[g] = { am: 0, total: 0 });
+      var pl = D.place[c.id] || [], g = cGroup(c), a = isFiller(c) ? { am: 0, total: 0 } : out.dept[g] || (out.dept[g] = { am: 0, total: 0 }); // วิชาเติมตาราง (ครูสมมติ) ไม่นับคาบเช้าของกลุ่มสาระ
       c.split.forEach(function (len, i) {
-        var x = pl[i]; a.total += len; c.t.forEach(function (k) { var t = out.tAm[k] || (out.tAm[k] = { am: 0, total: 0 }); t.total += len; if (x) for (var q = 0; q < len; q++) if (x.p + q <= 4) t.am++; });
+        var x = pl[i]; a.total += len; rt(c).forEach(function (k) { var t = out.tAm[k] || (out.tAm[k] = { am: 0, total: 0 }); t.total += len; if (x) for (var q = 0; q < len; q++) if (x.p + q <= 4) t.am++; });
         if (!x) { out.unplaced++; return; }
         for (var q = 0; q < len; q++) { var pp = x.p + q; if (pp <= 4) a.am++; if (fixedAt(x.d, pp)) out.fixedUsed++; if (hrAt(x.d, pp)) out.p8++; if (c.calc && pp >= 5) out.calcPm++; }
         pl.forEach(function (y, m) { if (m > i && y && y.d === x.d) out.sameDay++; });
@@ -362,7 +368,7 @@
       });
     });
     var seen = {}; Object.keys(S.R).concat(Object.keys(S.T), Object.keys(S.C)).forEach(function (k) { var m = S.R[k] || S.T[k] || S.C[k]; if (m && m.length > 1) m.forEach(function (x) { if (!seen[x]) { seen[x] = 1; out.conflicts++; out.conflictList.push(x); } }); });
-    var tks = {}; regular().forEach(function (c) { c.t.forEach(function (k) { tks[k] = 1; }); });
+    var tks = {}; regular().forEach(function (c) { rt(c).forEach(function (k) { tks[k] = 1; }); });
     Object.keys(tks).forEach(function (tk) { DAYS.forEach(function (d) { var ps = PER.filter(function (p) { return S.T[tk + '|' + d + '|' + p]; }); if (ps.length > 1) { for (var i = 1; i < ps.length; i++) { var gap = ps[i] - ps[i - 1] - 1; if (gap > 0 && !(ps[i - 1] <= 4 && ps[i] >= 5 && gap === ps[i] - 5 + 4 - ps[i - 1])) out.gaps += gap; } } var run = 0; PER.forEach(function (p) { if (S.T[tk + '|' + d + '|' + p]) { run++; if (run > D.rules.maxRun) out.runs++; } else run = 0; }); }); });
     var over = 0; Object.keys(out.dept).forEach(function (g) { var x = out.dept[g]; if (x.total && x.am / x.total * 100 > D.rules.amCap) over++; });
     var low = 0; Object.keys(out.tAm).forEach(function (k) { var x = out.tAm[k]; if (x.total >= 4 && x.am / x.total * 100 < D.rules.amMin) low++; });
@@ -375,7 +381,7 @@
   function colorOf(c) { var k = c.code + '|' + c.name; if (!COLORS[k]) COLORS[k] = PAL[Object.keys(COLORS).length % PAL.length]; return COLORS[k]; }
   function showGrid() {
     var R = rooms(); if (R.indexOf(st.room) === -1) st.room = R[0];
-    var ev = evaluate(), tl = teachersAll().filter(function (t) { return regular().some(function (c) { return c.t.indexOf(t.k) !== -1; }); });
+    var ev = evaluate(), tl = teachersAll().filter(function (t) { return regular().some(function (c) { return rt(c).indexOf(t.k) !== -1; }); });
     if (st.view === 'teacher' && !st.teacher && tl.length) st.teacher = tl[0].k;
     var h = '<div class="tt-gwrap"><div class="card tt-gmain"><div class="sb-bar"><span class="cb-mut">ดูตาม:</span>' + [['room', 'ห้อง'], ['teacher', 'ครู'], ['comp', 'ห้องคอม']].map(function (x) { return '<button type="button" class="tt-seg' + (st.view === x[0] ? ' on' : '') + '" data-tt-view="' + x[0] + '">' + x[1] + '</button>'; }).join('') +
       (st.view === 'room' ? '<select id="ttRoom" class="sb-in">' + R.map(function (r) { return '<option value="' + r + '"' + (r === st.room ? ' selected' : '') + '>' + roomName(r) + '</option>'; }).join('') + '</select>' : st.view === 'teacher' ? '<select id="ttTeach" class="sb-in">' + tl.map(function (t) { return '<option value="' + esc(t.k) + '"' + (t.k === st.teacher ? ' selected' : '') + '>' + esc(t.n) + '</option>'; }).join('') + '</select>' : '<select id="ttComp" class="sb-in">' + compRooms().map(function (i) { return '<option value="' + i + '"' + (i === st.comp ? ' selected' : '') + '>ห้องคอม ' + i + '</option>'; }).join('') + '</select>') +
@@ -463,7 +469,7 @@
     var cw = compWant(c);
     cells(c, i, d, x.p).forEach(function (q) {
       (S.R[c.room + '|' + d + '|' + q] || []).forEach(function (k2) { if (k2 !== key) o['ห้องนี้มี ' + segName(k2) + ' คาบ ' + q + ' อยู่แล้ว'] = 1; });
-      c.t.forEach(function (tk) { (S.T[tk + '|' + d + '|' + q] || []).forEach(function (k2) { if (k2 !== key) o[tName(tk) + ' สอน ' + segName(k2) + ' พร้อมกัน (คาบ ' + q + ')'] = 1; }); });
+      rt(c).forEach(function (tk) { (S.T[tk + '|' + d + '|' + q] || []).forEach(function (k2) { if (k2 !== key) o[tName(tk) + ' สอน ' + segName(k2) + ' พร้อมกัน (คาบ ' + q + ')'] = 1; }); });
       if (cw) (S.C[cw + '|' + d + '|' + q] || []).forEach(function (k2) { if (k2 !== key) o['ห้องคอม ' + cw + ' ถูกใช้โดย ' + segName(k2) + ' (คาบ ' + q + ')'] = 1; });
     });
     return Object.keys(o);
@@ -530,7 +536,7 @@
   function printAll(kind) {
     var S = build(), pages = [];
     var list = kind === 'room' ? rooms().map(function (r) { return { title: 'ตารางเรียน ' + roomName(r), key: function (d, p) { return S.R[r + '|' + d + '|' + p]; }, sub: function (c) { return c.t.map(tName).join(' + '); } }; })
-      : teachersAll().filter(function (t) { return regular().some(function (c) { return c.t.indexOf(t.k) !== -1; }); }).map(function (t) { return { title: 'ตารางสอน ' + t.n, key: function (d, p) { return S.T[t.k + '|' + d + '|' + p]; }, sub: function (c) { return roomName(c.room); } }; });
+      : teachersAll().filter(function (t) { return regular().some(function (c) { return rt(c).indexOf(t.k) !== -1; }); }).map(function (t) { return { title: 'ตารางสอน ' + t.n, key: function (d, p) { return S.T[t.k + '|' + d + '|' + p]; }, sub: function (c) { return roomName(c.room); } }; });
     list.forEach(function (L) {
       var h = '<h2>' + esc(L.title) + '</h2><p>ภาคเรียนที่ ' + esc(D.term + '/' + D.year) + '</p><table><thead><tr><th></th>' + PER.map(function (p) { return '<th>' + p + '<br><small>' + TIMES[p] + '</small></th>'; }).join('') + '</tr></thead><tbody>';
       DAYS.forEach(function (d) { h += '<tr><th>' + DN[d] + '</th>' + PER.map(function (p) { var k = (L.key(d, p) || [])[0], f = fixedAt(d, p); if (k) { var c = courseOf(k.split('#')[0]); return '<td><b>' + esc(c.code || '') + '</b><br>' + esc(c.name) + '<br><small>' + esc(L.sub(c)) + '</small></td>'; } return '<td class="g">' + (f ? esc(f.n) : hrAt(d, p) ? 'โฮมรูม' : '') + '</td>'; }).join('') + '</tr>'; });
@@ -628,6 +634,7 @@
     if (t.matches('[data-fx-p]')) { D.fixed[+t.getAttribute('data-fx-p')].p = +t.value; setDirty(true); return; }
     if (t.matches('[data-fx-h]')) { D.fixed[+t.getAttribute('data-fx-h')].hard = t.checked; setDirty(true); return; }
     if (t.matches('[data-hr-allow]')) { var d = +t.getAttribute('data-hr-allow'); D.hr.allow = D.hr.allow.filter(function (x) { return x !== d; }); if (t.checked) D.hr.allow.push(d); setDirty(true); return; }
+    if (t.matches('[data-tt-dummy]')) { var dk = 'x:' + t.getAttribute('data-tt-dummy'); D.dummy = (D.dummy || []).filter(function (x) { return x !== dk; }); if (t.checked) D.dummy.push(dk); setDirty(true); showLoad(); return; }
     if (t.matches('[data-light]')) { var k = t.getAttribute('data-light'); D.light = D.light.filter(function (x) { return x !== k; }); if (t.checked) D.light.push(k); setDirty(true); return; }
     if (t.id === 'ttLoadRoom') { st.loadRoom = t.value; showLoad(); return; }
     if (t.closest('.tt-load')) { onLoadInput(t); return; }
