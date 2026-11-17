@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.20.0.161126" />
+<link rel="stylesheet" href="assets/style.css?v=2.22.0.171126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -263,9 +263,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.20.0.161126"></script>
+  <script src="assets/api.js?v=2.22.0.171126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=2.20.0.161126"></script>
+  <script src="assets/homeroom.js?v=2.22.0.171126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -812,18 +812,33 @@
             '<td class="dt">' + escapeHtml(formatDateTimeThai(s.uploadedAt)) + '</td>' +
             // 1.50.121026: Word/Excel/PowerPoint ไม่พรีวิว (รูปแบบเพี้ยน) — ปุ่มเป็น "ดาวน์โหลด" ตรงๆ แทน
             // 1.51.121026: ทุกไฟล์มีปุ่มดาวน์โหลด (Word/Excel/PowerPoint มีแค่ดาวน์โหลด ไม่มีพรีวิว)
-            '<td class="a">' + (isSurveySub(s) ? '<button type="button" class="icon-btn" data-file-preview="' + escapeHtml(s.id) + '" title="ดูคำตอบ" aria-label="ดูคำตอบ"><i class="fa-solid fa-eye"></i></button><button type="button" class="icon-btn del" data-file-del="' + escapeHtml(s.id) + '" title="ลบ" aria-label="ลบคำตอบ"><i class="fa-solid fa-trash"></i></button></td></tr>' : '') + (isSurveySub(s) ? '' : (false ? '' // 1.72: ทุกชนิดไฟล์พรีวิวได้ (Word/Excel/PowerPoint ผ่านตัวพรีวิวของ Drive)
+            '<td class="a">' + (isSurveySub(s) ? '<button type="button" class="icon-btn" data-file-preview="' + escapeHtml(s.id) + '" title="ดูคำตอบ" aria-label="ดูคำตอบ"><i class="fa-solid fa-eye"></i></button>' + delBtnHtml(s, 'คำตอบ') + '</td></tr>' : '') + (isSurveySub(s) ? '' : (false ? '' // 1.72: ทุกชนิดไฟล์พรีวิวได้ (Word/Excel/PowerPoint ผ่านตัวพรีวิวของ Drive)
               : '<button type="button" class="icon-btn" data-file-preview="' + escapeHtml(s.id) + '" title="พรีวิว" aria-label="พรีวิว ' + escapeHtml(s.title) + '"><i class="fa-solid fa-eye"></i></button>') +
               '<a class="icon-btn" href="' + escapeHtml(driveDownloadUrl(s.fileUrl) || s.fileUrl) + '" target="_blank" rel="noopener" download title="ดาวน์โหลด" aria-label="ดาวน์โหลด ' + escapeHtml(s.title) + '"><i class="fa-solid fa-download"></i></a>' +
-            '<button type="button" class="icon-btn del" data-file-del="' + escapeHtml(s.id) + '" title="ลบ" aria-label="ลบ ' + escapeHtml(s.title) + '"><i class="fa-solid fa-trash"></i></button></td></tr>');
+            delBtnHtml(s, s.title) + '</td></tr>');
         }).join('') + '</tbody></table>' +
         '<div class="sub-group-bar">' +
           (g.items.every(isSurveySub) ? '<button type="button" class="btn btn-primary btn-sm" data-grp-add="' + k + '"><i class="fa-solid fa-pen-to-square"></i> แก้คำตอบ</button>' :
           '<button type="button" class="btn btn-primary btn-sm" data-grp-step="' + k + '"><i class="fa-solid fa-images"></i> พรีวิวทีละไฟล์</button>' +
           '<button type="button" class="btn btn-secondary btn-sm" data-grp-add="' + k + '"><i class="fa-solid fa-plus"></i> เพิ่มไฟล์ในชุดนี้</button>') +
           (catFieldDefs(g.categoryId).length && !g.items.every(isSurveySub) ? '<button type="button" class="btn btn-secondary btn-sm" data-grp-fields="' + k + '"><i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูลที่กรอก</button>' : '') + // 1.97
-          '<button type="button" class="btn btn-danger btn-sm" data-grp-delall="' + k + '"><i class="fa-solid fa-trash"></i> ลบทั้งชุด</button>' +
-        '</div>';
+          (grpLocked(g) ? (g.items.some(function (s) { return s.rv && s.rv.req; }) ? '<button type="button" class="btn btn-secondary btn-sm" disabled><i class="fa-solid fa-hourglass-half"></i> รอพิจารณาคำขอแก้ไข</button>' : '<button type="button" class="btn btn-secondary btn-sm" data-grp-req="' + k + '"><i class="fa-solid fa-pen-to-square"></i> ขอแก้ไข / ลบทั้งชุด</button>')
+            : '<button type="button" class="btn btn-danger btn-sm" data-grp-delall="' + k + '"><i class="fa-solid fa-trash"></i> ลบทั้งชุด</button>') +
+        '</div>' + (grpLocked(g) ? '<p class="hint" style="margin:8px 0 0;"><i class="fa-solid fa-lock" aria-hidden="true"></i> งานที่ตรวจแล้วลบเองไม่ได้ — กด "ขอแก้ไข / ลบไฟล์" เจ้าหน้าที่อนุญาตแล้วจะลบหรือแทนที่ไฟล์ได้ · เพิ่มไฟล์ได้เลยไม่ต้องขอ (สถานะเป็นรอตรวจอีกครั้ง)</p>' : '');
+    }
+    // 2.22.0: ชุดงานที่ตรวจแล้ว = ลบเองไม่ได้ → ขอแก้ไข / ลบไฟล์ (เจ้าหน้าที่อนุญาตก่อน)
+    function isLockedSub(s) { return !!(s.rv && s.rv.st === 'reviewed'); }
+    function grpLocked(g) { return g.items.some(isLockedSub); }
+    function delBtnHtml(s, label) {
+      if (!isLockedSub(s)) return '<button type="button" class="icon-btn del" data-file-del="' + escapeHtml(s.id) + '" title="ลบ" aria-label="ลบ ' + escapeHtml(label) + '"><i class="fa-solid fa-trash"></i></button>';
+      if (s.rv.req) return '<button type="button" class="icon-btn" disabled title="ส่งคำขอแล้ว รอเจ้าหน้าที่พิจารณา" aria-label="รอพิจารณาคำขอ"><i class="fa-solid fa-hourglass-half"></i></button>';
+      return '<button type="button" class="icon-btn" data-file-req="' + escapeHtml(s.id) + '" title="ขอแก้ไข / ลบไฟล์ (ตรวจแล้ว)" aria-label="ขอแก้ไขหรือลบ ' + escapeHtml(label) + '"><i class="fa-solid fa-pen-to-square"></i></button>';
+    }
+    async function sendEditReq(subs, whole, label) {
+      var reason = await askText('งานนี้ตรวจแล้ว — แจ้งเหตุผลให้เจ้าหน้าที่พิจารณา เมื่ออนุญาตแล้วจะลบหรือแทนที่ไฟล์ได้ (สถานะเป็น "แก้ไขเพิ่มเติม")', 'ขอแก้ไข / ลบ' + (whole ? 'ทั้งชุด' : 'ไฟล์') + (label ? ' — ' + label : ''), { placeholder: 'เช่น ส่งไฟล์ผิดภาคเรียน / ต้องการเปลี่ยนเป็นฉบับแก้ไข', okText: 'ส่งคำขอ', required: true, multiline: true });
+      if (reason === null) return;
+      var r = await withProgress('กำลังส่งคำขอ', async function () { for (var i = 0; i < subs.length; i++) await apiCall('teacherEditRequest', { submissionId: subs[i].id, reason: reason.trim(), whole: whole }); return true; }, { successLabel: 'ส่งคำขอแล้ว' });
+      if (r.ok) loadSubmissions();
     }
     function groupRowHtml(g) {
       _groupIndex[g.key] = g;
@@ -833,7 +848,7 @@
         '<div class="ordc-main" data-grp-expand="' + escapeHtml(g.key) + '" role="button" tabindex="0" aria-expanded="' + open + '">' +
           subTermTile(g) +
           '<div class="ordc-body"><div class="ordc-title sub-item-title" title="' + escapeHtml(title) + '">' + (g.categoryId ? categoryDotHtml(categoryColorMap[g.categoryId]) : '') + escapeHtml(title) + '</div>' +
-            '<div class="ordc-chips"><span class="ordc-chip cnt"><i class="fa-solid fa-copy"></i> ' + g.items.length + ' ไฟล์</span>' + groupDeptChip(g) + '</div></div>' +
+            '<div class="ordc-chips"><span class="ordc-chip cnt"><i class="fa-solid fa-copy"></i> ' + g.items.length + ' ไฟล์</span>' + groupDeptChip(g) + (grpLocked(g) ? '<span class="ordc-chip cnt"><i class="fa-solid fa-lock"></i> ตรวจแล้ว</span>' : '') + '</div></div>' +
           '<i class="fa-solid fa-chevron-down ordc-chev" aria-hidden="true"></i>' +
         '</div>' +
         (open ? '<div class="ordc-detail">' + groupDetailHtml(g) + '</div>' : '') +
@@ -898,6 +913,13 @@
         if (r.ok) loadSubmissions();
         return;
       }
+      if (t.hasAttribute('data-file-req')) { var sq = findSub(t.getAttribute('data-file-req')); if (sq) sendEditReq([sq], false, sq.title); return; }
+      if (t.hasAttribute('data-grp-req')) { // ส่ง 1 คำขอต่อชุดงานที่ตรวจแล้ว (ห้อง / รอบ)
+        var gq = groupFromAll(t.getAttribute('data-grp-req')); if (!gq) return;
+        var seen = {}, reps = gq.items.filter(function (s) { var kk = (s.roomId || '') + '|' + (s.eventId || ''); if (!isLockedSub(s) || s.rv.req || seen[kk]) return false; seen[kk] = 1; return true; });
+        if (reps.length) sendEditReq(reps, true, gq.categoryName || '');
+        return;
+      }
       if (t.hasAttribute('data-grp-delall')) {
         var gd = groupFromAll(t.getAttribute('data-grp-delall'));
         if (!gd) return;
@@ -929,7 +951,7 @@
     }
     [document.getElementById('submissionList'), document.getElementById('groupModalBody')].forEach(function (el) {
       el.addEventListener('click', function (e) {
-        var t = e.target.closest('[data-file-preview],[data-file-del],[data-grp-step],[data-grp-add],[data-grp-fields],[data-grp-delall],[data-grp-expand]');
+        var t = e.target.closest('[data-file-preview],[data-file-del],[data-file-req],[data-grp-req],[data-grp-step],[data-grp-add],[data-grp-fields],[data-grp-delall],[data-grp-expand]');
         if (!t || !el.contains(t)) return;
         if (t.hasAttribute('data-grp-expand')) { toggleGroup(t.getAttribute('data-grp-expand')); return; }
         handleSubAction(t);
@@ -1462,7 +1484,7 @@
         return '<div class="cl-msg' + cls + '"><b>ข้อความจาก ' + escapeHtml(v.by || 'เจ้าหน้าที่') + (v.at ? ' · ' + escapeHtml(formatDateThai(v.at)) : '') + '</b>' + escapeHtml(v.comment) + '</div>';
       };
       if (v && v.status === 'reviewed') {
-        return '<div class="cl-review"><span class="badge rvb-ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ตรวจแล้ว</span>' + (v.revised ? '<span class="rv-note" style="margin:0;">แก้ไขเพิ่มเติมแล้ว</span>' : '') + '</div>' + msg('');
+        return '<div class="cl-review"><span class="badge rvb-ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ตรวจแล้ว</span>' + (v.revised ? '<span class="rv-note" style="margin:0;">แก้ไขเพิ่มเติมแล้ว</span>' : '') + (v.req ? '<span class="rv-note" style="margin:0;"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> ส่งคำขอแก้ไขแล้ว รอเจ้าหน้าที่พิจารณา</span>' : '') + '</div>' + msg('');
       }
       if (v && v.status === 'revise') {
         var head = '<div class="cl-review"><span class="badge rvb-fix"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขเพิ่มเติม</span></div>' + msg(' fix');

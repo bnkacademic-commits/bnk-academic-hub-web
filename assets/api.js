@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.20.0';
-var APP_VERSION = '2.20.0.161126';
+var WORKER_MIN_VERSION = '2.22.0';
+var APP_VERSION = '2.22.0.171126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1734,6 +1734,25 @@ function askConfirm(msg, title) {
     closeXBtn.addEventListener('click', onNo);
   });
 }
+// 2.22.0: ป็อปอัปกรอกข้อความของเว็บ (แทน prompt() ของเบราว์เซอร์) — คืนข้อความ หรือ null เมื่อยกเลิก
+//   opts: { value, placeholder, okText, maxLength, required, multiline }
+function askText(msg, title, opts) {
+  opts = opts || {};
+  return new Promise(function (resolve) {
+    var m = document.createElement('div'); m.className = 'modal-backdrop'; m.hidden = true;
+    var ml = opts.maxLength || 300, field = opts.multiline
+      ? '<textarea id="sharedTextIn" rows="3" maxlength="' + ml + '" style="width:100%;box-sizing:border-box" placeholder="' + escapeHtml(opts.placeholder || '') + '">' + escapeHtml(opts.value || '') + '</textarea>'
+      : '<input type="text" id="sharedTextIn" maxlength="' + ml + '" style="width:100%;box-sizing:border-box" placeholder="' + escapeHtml(opts.placeholder || '') + '" value="' + escapeHtml(opts.value || '') + '" />';
+    m.innerHTML = '<div class="modal-box" style="text-align:left;max-width:480px"><button type="button" class="modal-close-x" data-x aria-label="ปิด">✕</button><h3>' + escapeHtml(title || 'กรอกข้อมูล') + '</h3>' + (msg ? '<p style="margin:0 0 10px;color:var(--text-muted)">' + msg + '</p>' : '') + field +
+      '<div class="modal-actions"><button type="button" class="btn btn-ghost" data-x>ยกเลิก</button><button type="button" class="btn btn-success" data-ok><i class="fa-solid fa-check" aria-hidden="true"></i> ' + escapeHtml(opts.okText || 'ตกลง') + '</button></div></div>';
+    document.body.appendChild(m); showModalEl(m);
+    var inp = m.querySelector('#sharedTextIn'); setTimeout(function () { try { inp.focus(); if (inp.select && !opts.multiline) inp.select(); } catch (e) { /* ข้าม */ } }, 60);
+    function done(v) { hideModalEl(m); setTimeout(function () { m.remove(); }, 300); resolve(v); }
+    function ok() { var v = inp.value; if (opts.required && !v.trim()) { showToast('กรุณากรอกข้อมูล', true); inp.focus(); return; } done(v); }
+    m.addEventListener('click', function (e) { if (e.target.closest('[data-x]')) done(null); else if (e.target.closest('[data-ok]')) ok(); });
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !opts.multiline) { e.preventDefault(); ok(); } else if (e.key === 'Escape') done(null); });
+  });
+}
 
 // ---------- ป็อปอัป "กำลังดำเนินการ" (Progress bar) ----------
 // เปิดหลังกดยืนยัน (askConfirm) แสดงระหว่างรอ backend ตอบกลับ แล้วให้ผู้ใช้กด "ตกลง" อีกครั้งเมื่อเสร็จ/error
@@ -2786,7 +2805,7 @@ var NOTIF_KIND = {
   report_new: ['fa-inbox', '#ef4444'], report_reply: ['fa-reply', '#7c3aed'], report_status: ['fa-headset', '#7c3aed'],
   report_done: ['fa-circle-check', '#16a34a'], report_forward: ['fa-share', '#0891b2'],
   // 1.80: ตรวจผลงาน + เตือนกำหนดส่ง
-  review_ok: ['fa-circle-check', '#16a34a'], review_fix: ['fa-pen-to-square', '#ca8a04'], review_resubmit: ['fa-file-arrow-up', '#0369a1'], resp_assigned: ['fa-user-check', '#7c3aed'], // 1.94: ได้รับมอบหมายเป็นผู้รับผิดชอบ
+  review_ok: ['fa-circle-check', '#16a34a'], review_fix: ['fa-pen-to-square', '#ca8a04'], review_resubmit: ['fa-file-arrow-up', '#0369a1'], review_req: ['fa-hand', '#ca8a04'], review_req_no: ['fa-circle-xmark', '#dc2626'], resp_assigned: ['fa-user-check', '#7c3aed'], // 1.94: ได้รับมอบหมายเป็นผู้รับผิดชอบ
   due_soon: ['fa-clock', '#d97706'], due_today: ['fa-calendar-day', '#ea580c'], due_late: ['fa-hourglass-end', '#dc2626'],
   activity_new: ['fa-flag', '#16a34a'], activity_soon: ['fa-flag', '#0d9488'], // 1.81: กิจกรรม
   att_missing: ['fa-clipboard-check', '#7c3aed'], hr_missing: ['fa-book-open', '#0891b2'], // 1.91: เว็บเช็คชื่อ

@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.20.0.161126" />
+<link rel="stylesheet" href="assets/style.css?v=2.22.0.171126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -171,7 +171,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.20.0.161126"></script>
+  <script src="assets/api.js?v=2.22.0.171126"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -622,6 +622,7 @@
     function reviewCellHtml(r) {
       if (r.status === 'missing') return '<span class="hint" style="margin:0;">-</span>';
       var v = r.review || { status: 'none' };
+      if (v.req) return '<span class="badge rvb-fix"><i class="fa-solid fa-hand" aria-hidden="true"></i> ขอแก้ไข</span><div class="rv-note new">รอพิจารณาคำขอ' + (v.req.at ? ' · ' + escapeHtml(formatDateThai(v.req.at)) : '') + '</div>'; // 2.22.0
       if (v.status === 'reviewed') return '<span class="badge rvb-ok"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ตรวจแล้ว</span>' + (v.revised ? '<div class="rv-note">แก้ไขเพิ่มเติมแล้ว</div>' : '');
       if (v.status === 'revise') return '<span class="badge rvb-fix"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> แก้ไขเพิ่มเติม</span><div class="rv-note">รอครูส่งไฟล์แก้ไข</div>';
       if (v.status === 'resubmitted') return '<span class="badge rvb-none">ยังไม่ตรวจ</span><div class="rv-note new">ส่งไฟล์เพิ่มเติมแล้ว' + (v.resubmittedAt ? ' · ' + escapeHtml(formatDateThai(v.resubmittedAt)) : '') + '</div>';
@@ -751,7 +752,7 @@
       try {
         var d = await apiCall('reviewFiles', { teacherId: row.userId, categoryId: a.categoryId, academicYear: a.academicYear, semester: a.semester, eventId: a.seriesId ? a.eventId : '', respEventId: a.respMine ? a.eventId : '' });
         if (!rvCur || rvCur.row !== row) return;
-        rvCur.files = d.files; rvCur.since = d.revisedSince || ''; rvCur.perFile = !!d.perFile;
+        rvCur.files = d.files; rvCur.since = d.revisedSince || ''; rvCur.perFile = !!d.perFile; rvCur.req = (d.review && d.review.req) || null;
         // ไฟล์ใหม่ (ยังไม่เคยตรวจ) = ผ่านไว้ก่อน · ไฟล์ที่เคยให้แก้ไข = ต้องแก้ไข + ข้อความเดิม
         rvCur.st = {}; d.files.forEach(function (f) { rvCur.st[f.id] = { state: f.state === 'fix' ? 'fix' : 'ok', note: f.note || '' }; });
         var rv = d.review || {};
@@ -781,7 +782,7 @@
       var bar = cur.length > 1 ? '<div class="rv-sortbar"><span>เรียงตาม</span>' + [['az', 'ชื่อไฟล์ ก→ฮ / 1→9'], ['za', 'ชื่อไฟล์ ฮ→ก'], ['time', 'เวลาที่ส่ง'], ['type', 'ชนิดไฟล์']].map(function (x) { return '<button type="button" data-rv-sort="' + x[0] + '" class="' + (srt === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') +
         (cur.length > 5 ? '<input type="search" class="rv-fq" id="rvFq" placeholder="ค้นหาชื่อไฟล์" value="' + escapeHtml(rvCur.q || '') + '" />' : '') + '<span class="rv-fcount">' + (qq ? shownCur.length + ' / ' : '') + cur.length + ' ไฟล์</span></div>' : '';
       cur = shownCur;
-      fw.innerHTML = bar + (pf && cur.length > 1 ? '<div class="rv-allok"><button type="button" class="linklike" id="rvAllOk"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ผ่านทุกไฟล์</button></div>' : '') + cur.map(function (f) {
+      fw.innerHTML = rvReqHtml() + bar + (pf && cur.length > 1 ? '<div class="rv-allok"><button type="button" class="linklike" id="rvAllOk"><i class="fa-solid fa-check-double" aria-hidden="true"></i> ผ่านทุกไฟล์</button></div>' : '') + cur.map(function (f) {
         var i = files.indexOf(f), st = rvCur.st[f.id], isNew = rvCur.since && f.uploadedAt > rvCur.since, kind = fileKindOf(f.title || f.fileName, f.mimeType);
         var fid = driveFileId(f.fileUrl);
         var fic = fileTypeIconHtml(f.title || f.fileName, f.mimeType); // 1.85.3
@@ -797,8 +798,26 @@
       }).join('');
       rvSync();
     }
+    // 2.22.0: คำขอแก้ไข / ลบไฟล์จากครู (งานที่ตรวจแล้ว) — อนุญาต = แก้ไขเพิ่มเติม · ไม่อนุญาต = ต้องมีเหตุผล
+    function rvReqHtml() {
+      var q = rvCur && rvCur.req; if (!q) return '';
+      return '<div class="rv-req"><div class="rv-req-h"><i class="fa-solid fa-hand" aria-hidden="true"></i> <b>' + escapeHtml(q.by || 'ครู') + '</b> ขอแก้ไข / ลบ' + (q.file && q.file !== 'ทั้งชุด' ? 'ไฟล์ "' + escapeHtml(q.file) + '"' : 'ทั้งชุด') + (q.at ? ' <small>' + escapeHtml(formatDateTimeThai(q.at)) + '</small>' : '') + '</div>' +
+        '<div class="rv-req-r">' + escapeHtml(q.reason || '') + '</div><div class="rv-req-a"><button type="button" class="btn btn-sm btn-success" data-rv-req="1"><i class="fa-solid fa-check" aria-hidden="true"></i> อนุญาต</button><button type="button" class="btn btn-sm btn-danger" data-rv-req="0"><i class="fa-solid fa-xmark" aria-hidden="true"></i> ไม่อนุญาต</button><span class="hint" style="margin:0;">อนุญาต = สถานะเป็น "แก้ไขเพิ่มเติม" ครูลบ / แทนที่ไฟล์ได้</span></div></div>';
+    }
+    async function rvReqDecide(allow) {
+      var cur = rvCur; if (!cur || !cur.req) return;
+      var note = allow ? await askText('ข้อความถึงครู (ไม่บังคับ)', 'อนุญาตให้แก้ไข / ลบไฟล์', { placeholder: 'เช่น แก้ไขแล้วส่งใหม่ภายในสัปดาห์นี้', okText: 'อนุญาต', multiline: true })
+        : await askText('เหตุผลที่ไม่อนุญาต (ครูจะเห็นข้อความนี้)', 'ไม่อนุญาตให้แก้ไข', { placeholder: 'เช่น ไฟล์ครบถูกต้องแล้ว ไม่ต้องลบ', okText: 'ไม่อนุญาต', required: true, multiline: true });
+      if (note === null) return;
+      var res = await withProgress('กำลังบันทึก', function () { return apiCall('reviewEditDecide', { teacherId: cur.row.userId, categoryId: cur.a.categoryId, academicYear: cur.a.academicYear, semester: cur.a.semester, eventId: cur.a.seriesId ? cur.a.eventId : '', respEventId: cur.a.respMine ? cur.a.eventId : '', allow: allow, reason: note.trim() }); }, { successLabel: allow ? 'อนุญาตแล้ว' : 'แจ้งครูแล้ว' });
+      if (!res.ok) return;
+      var rv = cur.row.review || {}; delete rv.req;
+      if (allow) applyReviewLocal(cur.a, [cur.row.userId], 'revise', 'อนุญาตให้แก้ไข / ลบไฟล์ตามที่ขอ'); else cur.row.review = rv;
+      closeReview(); renderAssignmentSummary();
+    }
     function rvSortMode() { try { return localStorage.getItem('bnkah_rv_sort') || 'az'; } catch (e) { return 'az'; } }
     document.getElementById('rvFiles').addEventListener('click', function (e) {
+      var rq = e.target.closest('[data-rv-req]'); if (rq && rvCur) { rvReqDecide(rq.getAttribute('data-rv-req') === '1'); return; } // 2.22.0
       var sb = e.target.closest('[data-rv-sort]'); if (sb && rvCur) { try { localStorage.setItem('bnkah_rv_sort', sb.getAttribute('data-rv-sort')); } catch (x) { /* ข้าม */ } renderRvFiles(); return; } // 2.01.0
       if (!rvCur || !rvCur.perFile) return;
       if (e.target.closest('#rvAllOk')) { rvCur.files.forEach(function (f) { rvCur.st[f.id].state = 'ok'; }); renderRvFiles(); return; }

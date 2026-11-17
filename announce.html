@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.20.0.161126" />
+<link rel="stylesheet" href="assets/style.css?v=2.22.0.171126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -461,7 +461,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.20.0.161126"></script>
+  <script src="assets/api.js?v=2.22.0.171126"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -605,11 +605,12 @@
       fields: [
         { id: 'evlYear', label: 'ปีการศึกษา', html: '<select id="evlYear"></select>' },
         { id: 'evlSem', label: 'ภาคเรียน', html: '<select id="evlSem"><option value="">ทุกภาคเรียน</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="summer">ภาคฤดูร้อน</option></select>' },
+        { id: 'evlMonth', label: 'เดือน', html: '<select id="evlMonth"><option value="">ทุกเดือน</option></select>' }, // 2.21.0
         { id: 'evlGroup', label: 'กลุ่ม', html: '<select id="evlGroup"><option value="">ทุกกลุ่ม</option></select>' },
         { id: 'evlMine', label: 'ผู้เพิ่ม', html: '<select id="evlMine"><option value="">ทั้งหมด</option><option value="mine">ที่ฉันเพิ่ม</option></select>' }
       ]
     });
-    var evlBar = initFilterBar('evlFlt', { unit: 'รายการ', defaults: function () { return { evlYear: evlTerm ? String(evlTerm.year || '') : '', evlSem: '', evlGroup: '', evlMine: '' }; } });
+    var evlBar = initFilterBar('evlFlt', { unit: 'รายการ', defaults: function () { return { evlYear: evlTerm ? String(evlTerm.year || '') : '', evlSem: '', evlMonth: '', evlGroup: '', evlMine: '' }; } });
     if (!canManage) { var _m = document.getElementById('evlMine'); _m.closest('.flt-f').hidden = true; }
     function evlFillYears() {
       var sel = document.getElementById('evlYear'), cur = sel.value || (evlTerm ? String(evlTerm.year) : '');
@@ -630,7 +631,7 @@
       var q = document.getElementById('evlQ').value.trim().toLowerCase();
       var y = document.getElementById('evlYear').value, sm = document.getElementById('evlSem').value;
       var gv = document.getElementById('evlGroup').value, mine = document.getElementById('evlMine').value === 'mine';
-      var base = lastEvents.filter(function (ev) {
+      var base0 = lastEvents.filter(function (ev) {
         // ทำซ้ำทุกปี = แสดงในทุกปีการศึกษา
         if (y && ev.academicYear !== y && !(ev.kind === 'activity' && ev.repeatYearly)) return false;
         if (sm && ev.semester !== sm) return false;
@@ -640,11 +641,45 @@
         if (q && (ev.title + ' ' + (ev.location || '') + ' ' + (ev.createdByName || '') + ' ' + (ev.message || '')).toLowerCase().indexOf(q) === -1) return false;
         return true;
       });
+      evlFillMonths(evlKind === 'all' ? base0 : base0.filter(function (ev) { return (ev.kind === 'activity' ? 'activity' : 'deadline') === evlKind; }), y, sm);
+      var mo = evlMonthVal();
+      var base = mo ? base0.filter(function (ev) { return evInMonth(ev, mo); }) : base0;
       var counts = { all: base.length, deadline: 0, activity: 0 };
       base.forEach(function (ev) { counts[ev.kind === 'activity' ? 'activity' : 'deadline']++; });
       ['all', 'deadline', 'activity'].forEach(function (k) { document.getElementById('evlN-' + k).textContent = counts[k]; });
       return evlKind === 'all' ? base : base.filter(function (ev) { return (ev.kind === 'activity' ? 'activity' : 'deadline') === evlKind; });
     }
+    // ---------- 2.21.0: กรองตามเดือน (ปีการศึกษา พ.ค.–เม.ย. · กิจกรรมคร่อมเดือน = นับทุกเดือนที่คร่อม · จำเดือนที่เลือกไว้ในเครื่อง) ----------
+    var EVL_MONTH_KEY = 'bnkah_evl_month', TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], evlMonthSaved = '';
+    try { evlMonthSaved = localStorage.getItem(EVL_MONTH_KEY) || ''; } catch (e) { /* ข้าม */ }
+    function thisMonth() { return new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 7); }
+    function evlMonthVal() { var v = document.getElementById('evlMonth').value || ''; return v === 'cur' ? thisMonth() : v; }
+    function evInMonth(ev, ym) {
+      var a = String(ev.date || '').slice(0, 7), b = String(ev.endDate || ev.date || '').slice(0, 7);
+      if (ev.kind === 'activity' && ev.repeatYearly) { // ทำซ้ำทุกปี = เทียบเฉพาะเดือน
+        var m = +ym.slice(5), ma = +a.slice(5), mb = +b.slice(5);
+        return ma <= mb ? m >= ma && m <= mb : (m >= ma || m <= mb);
+      }
+      return a <= ym && b >= ym;
+    }
+    function evlMonthList(y) { // เดือนของปีการศึกษา (พ.ค. ปีนั้น – เม.ย. ปีถัดไป)
+      var ce = (+y || (new Date().getFullYear() + 543)) - 543, out = [];
+      for (var i = 0; i < 12; i++) { var m = (4 + i) % 12, yy = ce + (4 + i >= 12 ? 1 : 0); out.push(yy + '-' + ('0' + (m + 1)).slice(-2)); }
+      return out;
+    }
+    function evlFillMonths(base, y, sm) {
+      var sel = document.getElementById('evlMonth'), cur = sel.value || '', ms;
+      if (y) ms = evlMonthList(y);
+      else { var set = {}; base.forEach(function (ev) { var a = String(ev.date || '').slice(0, 7), b = String(ev.endDate || ev.date || '').slice(0, 7); if (a) set[a] = 1; if (b) set[b] = 1; }); ms = Object.keys(set).sort(); }
+      var cnt = {}; ms.forEach(function (m) { cnt[m] = base.filter(function (ev) { return evInMonth(ev, m); }).length; });
+      if (sm) ms = ms.filter(function (m) { return cnt[m]; }); // เลือกภาคเรียนไว้ = เหลือเฉพาะเดือนที่มีกิจกรรมในภาคเรียนนั้น
+      var tm = thisMonth(), html = '<option value="">ทุกเดือน</option><option value="cur">เดือนนี้ · ' + TH_M[+tm.slice(5) - 1] + ' ' + (+tm.slice(0, 4) + 543) + ' (' + base.filter(function (ev) { return evInMonth(ev, tm); }).length + ')</option>' +
+        ms.map(function (m) { return '<option value="' + m + '">' + TH_M[+m.slice(5) - 1] + ' ' + (+m.slice(0, 4) + 543) + ' (' + cnt[m] + ')</option>'; }).join('');
+      if (sel._h !== html) { sel.innerHTML = html; sel._h = html; }
+      if (!sel._touched && evlMonthSaved) cur = evlMonthSaved; // ใช้เดือนที่จำไว้ จนกว่าผู้ใช้จะเลือกเอง (รายการอาจยังโหลดไม่เสร็จในรอบแรก)
+      sel.value = cur; if (sel.value !== cur) sel.value = '';
+    }
+    document.getElementById('evlMonth').addEventListener('change', function (e) { e.target._touched = 1; evlMonthSaved = e.target.value || ''; try { localStorage.setItem(EVL_MONTH_KEY, e.target.value || ''); } catch (x) { /* ข้าม */ } });
     // 2.01.0: สีตามกลุ่มบริหารงาน (วิชาการ น้ำเงิน · บุคคล เขียว · งบประมาณ ส้ม · ทั่วไป ม่วง) · กลุ่มสาระได้สีแยกของแต่ละกลุ่ม
     var EVG_DEPT = [[/วิชาการ/, '#2563eb'], [/บุคคล/, '#16a34a'], [/งบประมาณ|การเงิน/, '#ea580c'], [/ทั่วไป/, '#9333ea']], EVG_SUB = ['#0d9488', '#db2777', '#ca8a04', '#0891b2', '#65a30d', '#e11d48', '#4f46e5', '#a16207', '#7c3aed', '#0e7490'];
     function evgHash(t) { var h = 0; t = String(t || ''); for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return h; }

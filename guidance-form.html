@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.20.0.161126" />
+<link rel="stylesheet" href="assets/style.css?v=2.22.0.171126" />
 <style>
   /* 2.09.0: หน้านักเรียน (ไม่ต้องล็อกอิน · ไม่มีเมนู) — ธีมสว่างเสมอ */
   body.gf { background: #eef1f8; margin: 0; font-family: Sarabun, 'Noto Sans Thai', sans-serif; color: #0f172a; }
@@ -67,7 +67,7 @@
   <main class="gf-main" id="gfMain"><div class="gf-card gf-center">กำลังโหลด…</div></main>
   <input type="file" id="gfFile" accept="image/*" hidden />
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.20.0.161126"></script>
+  <script src="assets/api.js?v=2.22.0.171126"></script>
   <script>
   try { mountFooter({ compact: true }); } catch (e) { /* ข้าม */ } // 2.12.3: footer แบบย่อ (เหมือนหน้าล็อกอิน)
   /* หน้านักเรียน: เลือกห้อง → ชื่อ (พิมพ์แล้วขึ้นชื่อใกล้เคียง) → (รหัสนักเรียน ถ้าเปิด) → กรอก/แก้ข้อมูลของตัวเอง
@@ -286,7 +286,7 @@
       if (t.closest('#gfCancel')) { setForm(LAST); show(); window.scrollTo(0, 0); return; }
       if (t.closest('#gfAdd')) { sync(); ed = { kind: 'u', university: '', faculty: '', major: '', round: '' }; edI = F.entries.length; paintEnts(); var u = document.querySelector('[data-f="university"]'); if (u) u.focus(); return; }
       if ((x = t.closest('[data-ed]'))) { edI = +x.getAttribute('data-ed'); ed = Object.assign({}, F.entries[edI]); paintEnts(); return; }
-      if ((x = t.closest('[data-del]'))) { if (!confirm('ลบสถาบันนี้?')) return; var di = +x.getAttribute('data-del'); F.entries.splice(di, 1); if (F.choice === di) F.choice = ''; else if (typeof F.choice === 'number' && F.choice > di) F.choice--; paintEnts(); return; }
+      if ((x = t.closest('[data-del]'))) { var di = +x.getAttribute('data-del'); askConfirm('ลบสถาบันนี้ออกจากรายการ?', 'ลบสถาบัน').then(function (ok) { if (!ok) return; F.entries.splice(di, 1); if (F.choice === di) F.choice = ''; else if (typeof F.choice === 'number' && F.choice > di) F.choice--; paintEnts(); }); return; }
       if ((x = t.closest('[data-ch]'))) { var cv = x.getAttribute('data-ch'); F.choice = cv === 'wait' ? 'wait' : +cv; paintChoice(); err(''); return; }
       if ((x = t.closest('[data-kd]'))) { edRead(); var nk = x.getAttribute('data-kd'); if (nk !== ed.kind) { ed.kind = nk; ed.round = ''; } paintEnts(); return; }
       if ((x = t.closest('[data-pk]'))) { var f = x.getAttribute('data-pk'); ed[f] = x.getAttribute('data-v'); var inp = document.querySelector('[data-f="' + f + '"]'); inp.value = ed[f]; x.parentNode.innerHTML = ''; var nx = { university: 'faculty', faculty: 'major' }[f]; if (nx) { var nI = document.querySelector('[data-f="' + nx + '"]'); if (nI) { nI.focus(); paintSg(nx); } } return; }

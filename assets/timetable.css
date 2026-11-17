@@ -72,3 +72,16 @@
 .tt-c.fx > span, .tt-c.hr > span { display: block; font-size: .7rem; line-height: 1.15; padding: 0 2px; }
 .tt-c .tt-in b small { display: inline; font-weight: 500; }
 .tt-code { width: 92px !important; }
+/* 2.22.0: ลงทับคาบที่ชนได้ (เทา) · เหตุผลที่ชน · รายการช่องชน · แถววิชากิจกรรม */
+.tt-c.soft { outline: 2px dashed #94a3b8; outline-offset: -2px; }
+.tt-why { margin-top: 10px; padding: 8px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); font-size: .86rem; }
+.tt-why.bad { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+.tt-why.bad ul { margin: 4px 0 0; padding-left: 20px; }
+[data-theme="dark"] .tt-why.bad { background: rgba(220, 38, 38, .14); border-color: #7f1d1d; color: #fca5a5; }
+.tt-cfl { padding: 14px; }
+.tt-cfl > b { display: block; color: var(--danger); margin-bottom: 8px; }
+.tt-cf { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; border: 1px solid var(--border); border-left: 3px solid #dc2626; border-radius: 8px; background: var(--surface); padding: 6px 10px; margin-bottom: 5px; font: inherit; font-size: .82rem; color: var(--text); cursor: pointer; text-align: left; }
+.tt-cf:hover { background: var(--bg); }
+.tt-cf small { color: var(--text-muted); }
+.tt-load tr.tt-fxrow td { background: var(--bg); }
+.tt-c.hr > span small { font-size: .62rem; opacity: .8; }
