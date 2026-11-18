@@ -34,6 +34,8 @@
   function typeOf(k) { return (B.types || []).filter(function (t) { return t.key === k; })[0] || null; }
   function docName(k) { return k === 'order' ? 'คำสั่งไปราชการ' : 'ใบลา'; }
   function stPill(s) { var x = ST[s] || ST.pending; return '<span class="lv-st ' + x[0] + '">' + ic(x[1]) + ' ' + x[2] + '</span>'; }
+  function wkTag(x) { return x && x.wk ? '<span class="lv-wk" title="ลาคร่อมวันเสาร์-อาทิตย์' + (B.wkCount ? ' (นับเสาร์-อาทิตย์รวมในวันลา)' : ' (ไม่นับเสาร์-อาทิตย์)') + '">' + ic('fa-calendar-week') + ' คร่อมเสาร์-อาทิตย์</span>' : ''; }
+  function moreChips(x) { return (x.docs.more || []).map(function (f, i) { return fileChip(f, 'ไฟล์เพิ่ม ' + (i + 1)); }).join(''); }
   function fileChip(f, label) { if (!f) return ''; var pdf = /\.pdf$/i.test(f.name || ''); return '<a class="lv-file" href="' + esc(f.url) + '" target="_blank" rel="noopener" title="' + esc(f.name) + '">' + ic(pdf ? 'fa-file-pdf' : 'fa-image') + ' ' + esc(label || f.name) + '</a>'; }
   function workdays(a, b) { if (!a || !b || b < a) return 0; var n = 0, d = dP(a), e = dP(b); for (var i = 0; d <= e && i < 400; i++) { if (d.getDay() % 6) n++; d.setDate(d.getDate() + 1); } return n; }
 
@@ -86,7 +88,7 @@
   }
   function roundTxt(rd) { if (!rd) return ''; var y = +rd.from.slice(0, 4) + 543; return rd.half === 1 ? '1 ต.ค. ' + y + ' – 31 มี.ค. ' + (y + 1) : '1 เม.ย. ' + y + ' – 30 ก.ย. ' + y; }
   function docLine(x) {
-    var h = fileChip(x.docs.order, 'คำสั่ง') + fileChip(x.docs.leave, 'ใบลา');
+    var h = fileChip(x.docs.order, 'คำสั่ง') + fileChip(x.docs.leave, 'ใบลา') + moreChips(x);
     if (x.docMissing) {
       var late = x.docDue && x.docDue < B.today;
       h += '<span class="lv-file miss' + (late ? ' late' : '') + '">' + ic('fa-triangle-exclamation') + ' ยังไม่ส่ง' + docName(x.need) + (x.docDue ? (late ? ' · เลยกำหนด ' + thD(x.docDue, false) : ' · ส่งภายใน ' + thD(x.docDue, false)) : '') + '</span>';
@@ -95,7 +97,7 @@
   }
   function itemHtml(x, mode) {
     var who = mode === 'mine' ? '' : '<b>' + esc(x.name) + '</b>';
-    var h = '<div class="lv-it" data-id="' + esc(x.id) + '"><div class="lv-main"><div class="lv-hd">' + who + '<span class="lv-k">' + esc(x.typeLabel) + '</span>' + (mode === 'mine' ? '<b>' + thRange(x.from, x.to) + '</b>' : '') + '<span class="mut">' + (mode === 'mine' ? '' : thRange(x.from, x.to) + ' ') + '· ' + x.days + ' วัน · ' + perTxt(x.periods) + '</span></div>' +
+    var h = '<div class="lv-it" data-id="' + esc(x.id) + '"><div class="lv-main"><div class="lv-hd">' + who + '<span class="lv-k">' + esc(x.typeLabel) + '</span>' + (mode === 'mine' ? '<b>' + thRange(x.from, x.to) + '</b>' : '') + '<span class="mut">' + (mode === 'mine' ? '' : thRange(x.from, x.to) + ' ') + '· ' + x.days + ' วัน · ' + perTxt(x.periods) + '</span>' + wkTag(x) + '</div>' +
       '<div class="lv-sub">' + (x.note ? 'เนื่องจาก ' + esc(x.note) + ' · ' : '') + 'แจ้งเมื่อ ' + thTime(x.createdAt) + (x.byOther ? ' · แจ้งแทนโดย ' + esc(x.byOther) : '') + (x.status !== 'pending' && x.decidedBy && !x.byOther ? ' · ' + (x.status === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ') + 'โดย ' + esc(x.decidedBy) : '') + '</div>' +
       (x.status === 'rejected' && x.reason ? '<div class="lv-sub" style="color:#b91c1c">เหตุผล: ' + esc(x.reason) + '</div>' : '') + docLine(x) + '</div><div class="lv-acts">' + stPill(x.status);
     var mine = x.userId === B.me.id;
@@ -145,8 +147,8 @@
     var list = allFiltered();
     h += '<div class="card cc-card"><p class="hint" style="margin-top:0">' + thRange(r[0], r[1]) + ' · ' + list.length + ' รายการ · ' + list.reduce(function (a, x) { return a + (x.status === 'approved' ? x.days : 0); }, 0) + ' วันลา (อนุมัติแล้ว)</p>' +
       (list.length ? '<div class="cc-tw" style="overflow-x:auto"><table class="cc-t lv-at"><thead><tr><th>วันที่</th><th>ครู</th><th>ประเภท</th><th>วัน</th><th>หลักฐาน</th><th>สถานะ</th><th>ผู้อนุมัติ</th><th></th></tr></thead><tbody>' + list.map(function (x) {
-        var dc = fileChip(x.docs.order, 'คำสั่ง') + fileChip(x.docs.leave, 'ใบลา') + (x.docMissing ? '<span class="lv-file miss' + (x.docDue && x.docDue < B.today ? ' late' : '') + '" title="' + (x.docDue ? 'กำหนดส่ง ' + esc(thD(x.docDue)) : '') + '">' + ic('fa-triangle-exclamation') + ' ยังไม่ส่ง' + (x.docDue ? ' (' + thD(x.docDue, false) + ')' : '') + '</span>' : '');
-        return '<tr><td>' + thRange(x.from, x.to) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.typeLabel) + (x.note ? '<div class="lv-note">' + esc(x.note) + '</div>' : '') + '</td><td>' + x.days + '</td><td>' + (dc ? '<div class="lv-files" style="margin:0">' + dc + '</div>' : '-') + '</td><td>' + stPill(x.status) + '</td><td>' + esc(x.byOther ? 'แจ้งแทน · ' + x.byOther : (x.decidedBy || '-')) + '</td><td>' +
+        var dc = fileChip(x.docs.order, 'คำสั่ง') + fileChip(x.docs.leave, 'ใบลา') + moreChips(x) + (x.docMissing ? '<span class="lv-file miss' + (x.docDue && x.docDue < B.today ? ' late' : '') + '" title="' + (x.docDue ? 'กำหนดส่ง ' + esc(thD(x.docDue)) : '') + '">' + ic('fa-triangle-exclamation') + ' ยังไม่ส่ง' + (x.docDue ? ' (' + thD(x.docDue, false) + ')' : '') + '</span>' : '');
+        return '<tr><td>' + thRange(x.from, x.to) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.typeLabel) + (x.note ? '<div class="lv-note">' + esc(x.note) + '</div>' : '') + '</td><td>' + x.days + (x.wk ? '<div>' + wkTag(x) + '</div>' : '') + '</td><td>' + (dc ? '<div class="lv-files" style="margin:0">' + dc + '</div>' : '-') + '</td><td>' + stPill(x.status) + '</td><td>' + esc(x.byOther ? 'แจ้งแทน · ' + x.byOther : (x.decidedBy || '-')) + '</td><td>' +
           (x.slot !== 'none' && x.status !== 'rejected' ? '<button type="button" class="btn btn-ghost btn-sm" data-lv-print="' + esc(x.id) + '" title="พิมพ์ใบลา">' + ic('fa-print') + '</button>' : '') +
           (canM() ? '<button type="button" class="btn btn-ghost btn-sm" data-lv-cancel="' + esc(x.id) + '" title="ลบรายการ">' + ic('fa-trash-can') + '</button>' : '') + '</td></tr>';
       }).join('') + '</tbody></table></div>' : '<div class="lv-empty">' + ic('fa-mug-hot') + 'ไม่มีรายการในช่วงนี้</div>') + '</div>';
@@ -161,8 +163,8 @@
   }
   function exportXlsx() {
     var r = rangeOf(), list = allFiltered();
-    var rows = list.map(function (x) { return [x.from, x.to, x.name, x.typeLabel, x.days, perTxt(x.periods), x.note, (ST[x.status] || [])[2] || x.status, x.byOther ? 'แจ้งแทนโดย ' + x.byOther : x.decidedBy, x.docs.order ? x.docs.order.url : '', x.docs.leave ? x.docs.leave.url : (x.docMissing ? 'ยังไม่ส่ง' : '')]; });
-    var blob = buildXlsx('การลา', ['ตั้งแต่', 'ถึง', 'ครู', 'ประเภท', 'วันทำการ', 'คาบ', 'เนื่องจาก', 'สถานะ', 'ผู้อนุมัติ', 'คำสั่ง', 'ใบลา'], rows, [12, 12, 28, 16, 9, 12, 28, 12, 24, 30, 30], 'รายการแจ้งลา / ไปราชการ ' + thRange(r[0], r[1]));
+    var rows = list.map(function (x) { return [x.from, x.to, x.name, x.typeLabel, x.days, perTxt(x.periods), x.note, (ST[x.status] || [])[2] || x.status, x.byOther ? 'แจ้งแทนโดย ' + x.byOther : x.decidedBy, x.docs.order ? x.docs.order.url : '', x.docs.leave ? x.docs.leave.url : (x.docMissing ? 'ยังไม่ส่ง' : ''), x.wk ? 'ลาคร่อมเสาร์-อาทิตย์' + (B.wkCount ? ' (นับเสาร์-อาทิตย์)' : '') : '']; });
+    var blob = buildXlsx('การลา', ['ตั้งแต่', 'ถึง', 'ครู', 'ประเภท', 'วันลา', 'คาบ', 'เนื่องจาก', 'สถานะ', 'ผู้อนุมัติ', 'คำสั่ง', 'ใบลา', 'หมายเหตุ'], rows, [12, 12, 28, 16, 9, 12, 28, 12, 24, 30, 30, 26], 'รายการแจ้งลา / ไปราชการ ' + thRange(r[0], r[1]));
     downloadBlob(blob, 'การลา-' + r[0] + '_' + r[1] + '.xlsx');
   }
 
@@ -202,6 +204,8 @@
     var rk = B.round.key;
     var h = '<div class="lv-grid">' +
       '<div class="card cc-card"><h3>' + ic('fa-toggle-on ui-icon') + ' การแจ้งลา</h3><label class="lv-sw">' + sw('id="lvSelf"', B.selfReport) + '<b>ให้ครูแจ้งลาเอง</b> <span class="mut">(ปุ่ม "แจ้งลา / ไปราชการ" ที่หน้าแรก · ผู้ดูแลอนุมัติ)</span></label>' +
+      '<label class="lv-sw">' + sw('id="lvWk"', B.wkCount) + '<b>ลาคร่อมเสาร์-อาทิตย์ นับเสาร์-อาทิตย์</b> <span class="mut">(ปิด = ลา ศ. 13 + จ. 16 นับ 2 วัน · เปิด = นับ 4 วัน · มีหมายเหตุ "ลาคร่อมเสาร์-อาทิตย์" ทั้งสองแบบ)</span></label>' +
+      '<div class="cc-row"><button type="button" class="btn btn-secondary btn-sm" data-lv-merge>' + ic('fa-object-group') + ' รวมรายการลาที่ลงแยกวันไว้</button><span class="hint" style="margin:0">ดูรายการก่อนยืนยัน · รายการใหม่ระบบรวมให้เองตอนบันทึก</span></div>' +
       '<div class="cc-row"><span class="cc-lb">ลาป่วย ส่งใบลาภายใน</span><input type="number" class="cc-num" id="lvSick" min="0" max="30" value="' + esc(B.sickDays) + '"><span>วันทำการ หลังวันลาวันสุดท้าย</span></div><p class="hint">ใช้กับประเภทที่ติ๊ก "ส่งทีหลังได้" · เลยกำหนด = กระดิ่งเตือนครูวันละครั้ง และขึ้นในแท็บรออนุมัติ</p>' +
       '<h3 style="margin-top:14px">' + ic('fa-signature ui-icon') + ' ผู้ลงนามในใบลา</h3>' + [['hr', 'hrTitle', 'ผู้ตรวจสอบสถิติ'], ['deputy', 'deputyTitle', 'ผู้บังคับบัญชา 1'], ['director', 'directorTitle', 'ผู้บังคับบัญชา 2']].map(function (x) {
         return '<div class="lv-row" style="margin-bottom:8px"><div><label class="lv-note">' + x[2] + ' (ชื่อ)</label><input type="text" data-sg="' + x[0] + '" value="' + esc(B.sign[x[0]]) + '"></div><div><label class="lv-note">ตำแหน่ง</label><input type="text" data-sg="' + x[1] + '" value="' + esc(B.sign[x[1]]) + '"></div></div>';
@@ -232,17 +236,38 @@
     body.querySelectorAll('[data-cu]').forEach(function (tr) { var c = SET.carry[tr.getAttribute('data-cu')]; tr.querySelectorAll('[data-ck]').forEach(function (el) { var k = el.getAttribute('data-ck'), s = k.slice(0, -1), j = +k.slice(-1); c[s] = c[s] || [0, 0]; c[s][j] = Math.max(0, +el.value || 0); }); });
     body.querySelectorAll('[data-lu]').forEach(function (tr) { var c = SET.last[tr.getAttribute('data-lu')]; tr.querySelectorAll('[data-lk]').forEach(function (el) { var k = el.getAttribute('data-lk'); c[k] = k === 'days' ? Math.max(0, +el.value || 0) : el.value; }); });
   }
+  async function mergeOld() {
+    var r = await withProgress('กำลังหารายการที่ติดกัน', function () { return apiCall('lvMergeScan', {}); }, { successLabel: 'ตรวจแล้ว' });
+    if (!r.ok) return;
+    var g = r.data.groups || [];
+    if (!g.length) { showToast('ไม่มีรายการที่ต้องรวม'); return; }
+    var m = document.createElement('div'); m.className = 'modal-backdrop'; m.hidden = true;
+    m.innerHTML = '<div class="modal-box" style="text-align:left;max-width:640px"><button type="button" class="modal-close-x" data-x aria-label="ปิด">✕</button><h3>' + ic('fa-object-group') + ' รวมรายการลาที่ติดกัน (' + r.data.total + ' กลุ่ม)</h3>' +
+      '<p class="hint" style="margin-top:0">ครูคนเดียว · ประเภทเดียวกัน · ลาทั้งวัน · ระหว่างกันมีแต่เสาร์-อาทิตย์/วันหยุด → รวมเป็นรายการเดียว (สถิตินับ 1 ครั้ง) · ไฟล์ใบลาเก็บไว้ครบ</p><div class="lv-mg">' +
+      g.map(function (x) { return '<div><b>' + esc(x.name) + '</b> · ' + esc(x.typeLabel) + (x.status === 'pending' ? ' <span class="lv-st p">รออนุมัติ</span>' : '') + '<div class="mut">' + x.parts.map(function (y) { return thRange(y.from, y.to); }).join(' + ') + ' → <b>' + thRange(x.from, x.to) + '</b> (' + x.days + ' วันทำการ)</div></div>'; }).join('') +
+      (r.data.total > g.length ? '<p class="hint">…และอีก ' + (r.data.total - g.length) + ' กลุ่ม</p>' : '') + '</div>' +
+      '<div class="modal-actions"><button type="button" class="btn btn-ghost" data-x>ยกเลิก</button><button type="button" class="btn btn-success" data-ok>' + ic('fa-check') + ' รวม ' + r.data.total + ' กลุ่ม</button></div></div>';
+    document.body.appendChild(m); showModalEl(m);
+    var close = function () { hideModalEl(m); setTimeout(function () { m.remove(); }, 300); };
+    m.addEventListener('click', async function (e) {
+      if (e.target.closest('[data-x]')) { close(); return; }
+      if (!e.target.closest('[data-ok]')) return;
+      close();
+      var ra = await withProgress('กำลังรวมรายการ', async function (pg) { var left = 1, done = 0, guard = 0; while (left > 0 && guard++ < 60) { var x = await apiCall('lvMergeScan', { apply: 1 }); done += x.done || 0; left = x.left || 0; if (pg && pg.setProgress) pg.setProgress(Math.min(99, Math.round(done / (done + left || 1) * 100)), 'รวมแล้ว ' + done + ' กลุ่ม'); if (!x.done) break; } return done; }, { successLabel: 'รวมรายการแล้ว' });
+      if (ra.ok) { D.mine = null; D.all = null; D.pending = null; D.sum = null; showToast('รวมแล้ว ' + ra.data + ' กลุ่ม'); }
+    });
+  }
   async function saveSettings() {
     readSettings();
     if (SET.types.some(function (t) { return !String(t.label).trim(); })) { showToast('กรุณาใส่ชื่อประเภทการลาให้ครบ', true); return; }
     var lastBad = Object.keys(SET.last).filter(function (u) { return !SET.last[u].from; });
     if (lastBad.length) { showToast('การลาครั้งสุดท้าย: กรุณาใส่วันที่ "ตั้งแต่" ให้ครบ', true); return; }
     var sign = {}, tpl = {}; body.querySelectorAll('[data-sg]').forEach(function (el) { sign[el.getAttribute('data-sg')] = el.value; }); body.querySelectorAll('[data-tp]').forEach(function (el) { tpl[el.getAttribute('data-tp')] = el.value; });
-    var p = { selfReport: document.getElementById('lvSelf').checked, sickDays: +document.getElementById('lvSick').value || 0, types: SET.types, sign: sign, tpl: tpl, carry: SET.carry, last: SET.last };
+    var p = { selfReport: document.getElementById('lvSelf').checked, wkCount: document.getElementById('lvWk').checked, sickDays: +document.getElementById('lvSick').value || 0, types: SET.types, sign: sign, tpl: tpl, carry: SET.carry, last: SET.last };
     var r = await withProgress('กำลังบันทึกการตั้งค่า', function () { return apiCall('lvCfgSave', p); }, { successLabel: 'บันทึกการตั้งค่าแล้ว' });
     if (!r.ok) return;
-    var d = r.data; B.selfReport = d.selfReport; B.types = d.types; B.sickDays = d.sickDays; B.sign = d.sign; B.tpl = d.tpl; B.carry = d.carry; B.last = d.last;
-    SET = null; D.sum = null; D.mine = null; body._h = ''; showSettings();
+    var d = r.data; B.selfReport = d.selfReport; B.types = d.types; B.sickDays = d.sickDays; B.sign = d.sign; B.tpl = d.tpl; B.carry = d.carry; B.last = d.last; B.wkCount = d.wkCount;
+    SET = null; D.mine = null; D.all = null; D.pending = null; D.sum = null; D.mine = null; body._h = ''; showSettings();
   }
 
   // ---------- ฟอร์มแจ้งลา ----------
@@ -285,7 +310,7 @@
   }
   function paintDays() {
     var e = document.getElementById('lvFdays'); if (!e) return; var n = workdays(F.from, F.to || F.from);
-    e.innerHTML = F.to && F.to < F.from ? '<span style="color:#b91c1c">วันที่สิ้นสุดต้องไม่ก่อนวันเริ่ม</span>' : ic('fa-calendar-check') + ' ประมาณ <b>' + n + ' วันทำการ</b> (ไม่นับเสาร์-อาทิตย์ · ระบบหักวันหยุดในปฏิทินโรงเรียนให้อีกครั้งตอนบันทึก)';
+    e.innerHTML = F.to && F.to < F.from ? '<span style="color:#b91c1c">วันที่สิ้นสุดต้องไม่ก่อนวันเริ่ม</span>' : ic('fa-calendar-check') + ' ประมาณ <b>' + n + ' วันทำการ</b> (ไม่นับเสาร์-อาทิตย์ · ระบบหักวันหยุดในปฏิทินโรงเรียนให้อีกครั้งตอนบันทึก · ติดกับรายการเดิมประเภทเดียวกัน = รวมเป็นรายการเดียวให้เอง)';
   }
   async function sendForm() {
     formRead(); if (F.busy) { showToast('กรุณารอให้อัปโหลดไฟล์เสร็จก่อน', true); return; }
@@ -301,6 +326,7 @@
     hideModalEl(modal);
     var r = await withProgress('กำลังบันทึก', function () { return apiCall('lvReqSave', p); }, { successLabel: canM() ? 'บันทึกแล้ว (อนุมัติแล้ว)' : 'ส่งคำขอแล้ว — รอผู้ดูแลอนุมัติ' });
     if (!r.ok) { showModalEl(modal); return; }
+    if (r.data && r.data.merged) showToast('รวมกับรายการเดิมแล้ว — ' + thRange(r.data.merged.from, r.data.merged.to));
     F = null; D.mine = null; D.pending = null; D.all = null; D.sum = null; body._h = ''; show();
   }
   // อัปโหลดไฟล์ (ใบลา / คำสั่ง) — ใช้ร่วมกันทั้งในฟอร์มและการส่งทีหลัง
@@ -357,8 +383,8 @@
       '@font-face{font-family:LvSarabun;font-weight:600 700;src:url(' + fu('sarabun-thai-600-normal.woff2') + ') format("woff2");unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC}' +
       '@font-face{font-family:LvSarabun;font-weight:600 700;src:url(' + fu('sarabun-latin-600-normal.woff2') + ') format("woff2")}' +
       '@page{size:A4;margin:0}body{margin:0;background:#e5e7eb;font-family:LvSarabun,"TH Sarabun New",sans-serif;color:#111}' +
-      '.pg{width:210mm;min-height:297mm;margin:10px auto;background:#fff;padding:11mm 12mm 8mm 18mm;box-sizing:border-box;font-size:13.6px;line-height:2.1}' +
-      '.logo{display:block;margin:0 auto 4mm;width:26mm}.r{text-align:right}.ind{padding-left:24mm}' +
+      '.pg{width:210mm;height:297mm;overflow:hidden;margin:10px auto;background:#fff;padding:9mm 12mm 6mm 18mm;box-sizing:border-box;font-size:13.6px;line-height:1.95}' +
+      '.logo{display:block;margin:0 auto 3mm;width:24mm}.r{text-align:right}.ind{padding-left:24mm}' +
       '.f{display:inline-block;border-bottom:1px dotted #555;min-width:11mm;text-align:center;font-weight:600;padding:0 2mm;line-height:1.4}.f.l{text-align:left}' +
       '.ck{display:inline-block;width:6mm;text-align:center;font-weight:700}.kinds{display:grid;grid-template-columns:18mm 1fr}' +
       '.bot{display:grid;grid-template-columns:1fr 78mm;gap:8mm;margin-top:5mm;align-items:start}' +
@@ -367,7 +393,7 @@
       '.bar{position:sticky;top:0;text-align:center;padding:8px;background:#1e293b}.bar button{font:inherit;font-size:16px;padding:6px 18px;border-radius:8px;border:0;cursor:pointer;margin:0 4px}' +
       '@media print{body{background:#fff}.pg{margin:0}.bar{display:none}}</style></head><body>' +
       '<div class="bar"><button onclick="window.print()" style="background:#16a34a;color:#fff">พิมพ์ / บันทึกเป็น PDF</button><button onclick="window.close()" style="background:#dc2626;color:#fff">ปิด</button></div>' +
-      '<div class="pg">' + (logo ? '<img class="logo" src="' + logo + '" alt="">' : '') +
+      '<div class="pg"><div class="in" id="lvIn">' + (logo ? '<img class="logo" src="' + logo + '" alt="">' : '') +
       '<div class="r">เขียนที่ ' + f('โรงเรียนบุ่งคล้านคร', '', 40) + '</div>' +
       '<div class="r">วันที่ ' + f(w[0]) + ' เดือน ' + f(w[1], '', 26) + ' พ.ศ. ' + f(w[2]) + '</div>' +
       '<div>เรื่อง &nbsp;ขอลา' + f(kindTxt, 'l', 50) + '</div><div>เรียน &nbsp;ผู้อำนวยการโรงเรียนบุ่งคล้านคร</div>' +
@@ -377,6 +403,7 @@
       '<div>' + ck(slot === 'sick') + ' ป่วย</div><div>' + ck(slot === 'personal') + ' กิจส่วนตัว &nbsp;&nbsp; เนื่องจาก ' + f(slot === 'personal' ? d.note : '', 'l', 95) + '</div>' +
       '<div>' + ck(slot === 'maternity') + ' คลอดบุตร</div><div>' + ck(slot === 'other') + ' อื่นๆ ' + f(otherTxt ? otherTxt + (d.note ? ' เนื่องจาก ' + d.note : '') : '', 'l', 110) + '</div></div></div>' +
       '<div style="padding-left:5mm">ตั้งแต่วันที่ ' + f(a[0]) + ' เดือน ' + f(a[1], '', 20) + ' พ.ศ. ' + f(a[2]) + ' ถึงวันที่ ' + f(b[0]) + ' เดือน ' + f(b[1], '', 20) + ' พ.ศ. ' + f(b[2]) + '</div>' +
+      (d.wk ? '<div style="padding-left:5mm;font-size:12px;line-height:1.4;margin:-1mm 0 1mm">หมายเหตุ: ลาคร่อมวันเสาร์-อาทิตย์ · ' + (d.wkCount ? 'นับวันเสาร์-อาทิตย์รวมในวันลา' : 'ไม่นับวันเสาร์-อาทิตย์') + '</div>' : '') +
       '<div>มีกำหนด ' + f(d.days) + ' วัน &nbsp;ทั้งนี้ข้าพเจ้าได้ลา ' + ck(lst && lst.slot === 'sick') + ' ป่วย ' + ck(lst && lst.slot === 'personal') + ' กิจส่วนตัว ' + ck(lst && lst.slot === 'maternity') + ' คลอดบุตร ' + ck(lst && lst.slot === 'other') + ' อื่นๆ' + f(lst && lst.slot === 'other' ? String(lst.label || '').replace(/^ลา/, '') : '', '', 12) + ' ครั้งสุดท้าย</div>' +
       '<div>ตั้งแต่วันที่ ' + f(la && la[0]) + ' เดือน ' + f(la && la[1], '', 20) + ' พ.ศ. ' + f(la && la[2]) + ' ถึงวันที่ ' + f(lb && lb[0]) + ' เดือน ' + f(lb && lb[1], '', 20) + ' พ.ศ. ' + f(lb && lb[2]) + ' มี</div>' +
       '<div>กำหนด ' + f(lst ? lst.days : '') + ' วัน &nbsp;ในระหว่างลาจะติดต่อข้าพเจ้าได้ที่ ' + f(d.phone, 'l', 70) + '</div>' +
@@ -387,8 +414,8 @@
       '<table><tr><th>ประเภทการลา</th><th>ลามาแล้ว<br>ครั้ง / วัน</th><th>ลาครั้งนี้<br>ครั้ง / วัน</th><th>รวมเป็น<br>ครั้ง / วัน</th></tr>' + row('sick', 'ป่วย') + row('personal', 'กิจส่วนตัว') + row('maternity', 'คลอดบุตร') + row('other', 'อื่นๆ' + (otherTxt ? ' ' + esc(otherTxt) : '.................')) + '</table>' +
       '<div class="sig" style="margin-top:6mm">ลงชื่อ.............................................</div><div class="sig">(' + esc(S.hr || '') + ')</div><div class="sig">' + esc(S.hrTitle || '') + '</div><div class="sig">วันที่.............../.............../...............</div></div>' +
       '<div class="box"><b>ความเห็นผู้บังคับบัญชา</b><div class="dots"></div><div class="dots"></div><div style="height:12mm"></div>(' + esc(S.deputy || '') + ')<br>' + esc(S.deputyTitle || '') +
-      '<div style="height:5mm"></div><b>ความเห็นผู้บังคับบัญชา</b><div class="dots"></div><div class="dots"></div><div style="height:14mm"></div>(' + esc(S.director || '') + ')<br>' + esc(S.directorTitle || '') + '</div></div></div>' +
-      '<script>window.onload=function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){window.print();},300);});};<\/script></body></html>';
+      '<div style="height:5mm"></div><b>ความเห็นผู้บังคับบัญชา</b><div class="dots"></div><div class="dots"></div><div style="height:14mm"></div>(' + esc(S.director || '') + ')<br>' + esc(S.directorTitle || '') + '</div></div></div></div>' +
+      '<script>function lvFit(){var pg=document.querySelector(".pg"),el=document.getElementById("lvIn");if(!pg||!el)return;el.style.zoom="";var cs=getComputedStyle(pg),av=pg.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom),h=el.scrollHeight;if(h>av)el.style.zoom=String(Math.floor(av/h*1000)/1000);}window.onload=function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){lvFit();setTimeout(function(){window.print();},300);});};<\/script></body></html>';
   }
 
 
@@ -538,6 +565,7 @@
     if ((t = e.target.closest('[data-lv-crm]'))) { readSettings(); delete SET.carry[t.getAttribute('data-lv-crm')]; body._h = ''; showSettings(); return; }
     if ((t = e.target.closest('[data-lv-lrm]'))) { readSettings(); delete SET.last[t.getAttribute('data-lv-lrm')]; body._h = ''; showSettings(); return; }
     if (e.target.closest('[data-lv-save]')) { saveSettings(); return; }
+    if (e.target.closest('[data-lv-merge]')) { mergeOld(); return; } // 2.22.3
   });
   document.addEventListener('change', function (e) {
     var t = e.target;
