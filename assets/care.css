@@ -282,3 +282,12 @@
 @media (max-width: 480px) { .cc-dlst { padding-left: 8px; } .cc-dd { width: 70px; } }
 @media print { .cc-dmore { display: none !important; } }
 #ccDed h3 .cc-m { white-space: nowrap; }
+/* 2.23.1: รายงานพฤติกรรมนักเรียน — แท็กผู้บันทึก (ฟ้า = นักเรียนบันทึกเอง · ม่วง = สภานักเรียน · เขียวอมฟ้า = ครู) */
+.cc-hist > div > span:nth-child(2) { flex: 1; min-width: 0; }
+.cc-hh { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.cc-who { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; border-radius: 99px; padding: 1px 9px; font-size: .74rem; font-weight: 700; white-space: nowrap; line-height: 1.6; }
+.cc-who i { font-size: .7rem; }
+.cc-who.s { background: #e0f2fe; color: #0369a1; } .cc-who.c { background: #ede9fe; color: #6d28d9; } .cc-who.t { background: #ccfbf1; color: #0f766e; }
+[data-theme="dark"] .cc-who.s { background: rgba(14,165,233,.2); color: #7dd3fc; } [data-theme="dark"] .cc-who.c { background: rgba(139,92,246,.22); color: #c4b5fd; } [data-theme="dark"] .cc-who.t { background: rgba(20,184,166,.2); color: #5eead4; }
+.cc-exporting .cc-who.s, .cc-shot .cc-who.s { background: #e0f2fe; color: #0369a1; } .cc-exporting .cc-who.c, .cc-shot .cc-who.c { background: #ede9fe; color: #6d28d9; } .cc-exporting .cc-who.t, .cc-shot .cc-who.t { background: #ccfbf1; color: #0f766e; }
+.cc-nw { white-space: nowrap; }

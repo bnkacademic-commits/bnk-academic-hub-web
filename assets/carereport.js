@@ -27,12 +27,19 @@
     '.crp-inf{display:grid;grid-template-columns:1.2fr 1fr;gap:3px 18px;border:1px solid #94a3b8;border-radius:6px;padding:8px 12px;margin-bottom:10px}' +
     '.crp-sm{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid #94a3b8;border-radius:6px;margin-bottom:10px;text-align:center}.crp-sm div{padding:5px 4px;border-left:1px solid #cbd5e1}.crp-sm div:first-child{border-left:0}.crp-sm small{display:block;color:#475569;font-size:11.5px}.crp-sm b{font-size:17px}' +
     '.crp-tb{width:100%;border-collapse:collapse;font-size:12.5px}.crp-tb th,.crp-tb td{border:1px solid #94a3b8;padding:4px 6px;text-align:left;vertical-align:top}.crp-tb th{background:#eef2f6;font-weight:700}' +
-    '.crp-tb td.n{text-align:center;width:30px}.crp-tb td.d{width:78px;white-space:nowrap}.crp-tb td.p{width:52px;text-align:center;font-weight:700}.crp-tb td.b{width:150px}.crp-rf{font-weight:700;color:#1d4ed8}' +
+    '.crp-tb td.n{text-align:center;width:30px}.crp-tb td.d{width:78px;white-space:nowrap}.crp-tb td.p{width:52px;text-align:center;font-weight:700}.crp-tb td.b{width:150px}.crp-tb td.b small{color:#64748b;font-size:10.5px}.crp-rf{font-weight:700;color:#1d4ed8}' +
     '.crp-sig{display:grid;grid-template-columns:1fr 1fr;gap:26px 30px;margin-top:26px;text-align:center;font-size:13px}.crp-sig span{display:block;margin-bottom:3px}' +
     '.crp-ft{position:absolute;left:' + PAD + 'px;right:' + PAD + 'px;bottom:16px;display:flex;justify-content:space-between;font-size:10.5px;color:#64748b}' +
     '.crp-ev{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;margin-top:10px}.crp-ev .im{height:400px;border:1px solid #cbd5e1;border-radius:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8fafc}.crp-ev img{max-width:100%;max-height:100%;object-fit:contain}.crp-ev small{display:block;margin-top:4px;font-size:12px;color:#1e293b}';
   function css() { if (document.getElementById('crpCss')) return; var st = document.createElement('style'); st.id = 'crpCss'; st.textContent = CSS; document.head.appendChild(st); }
 
+  // 2.23.1 / 1.08.1: ผู้บันทึก = ชื่อ + ประเภท (ครู / สภานักเรียน / นักเรียนบันทึกเอง)
+  function whoCell(by) {
+    by = String(by || ''); var cr = / \(สภานักเรียน\)$/;
+    if (by === 'นักเรียนแจ้งเอง') return '<small>นักเรียนบันทึกเอง</small>';
+    if (cr.test(by)) return esc(by.replace(cr, '')) + '<br><small>สภานักเรียน</small>';
+    return by && by !== '-' ? esc(by) + '<br><small>ครู</small>' : '-';
+  }
   function open(o) {
     css();
     var d = o.data, todayIso = new Date().toISOString().slice(0, 10), dates = d.hist.map(function (h) { return h.date; }).sort();
@@ -93,7 +100,7 @@
     if (!rows.length) tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b">ไม่มีรายการในช่วงที่เลือก</td></tr>';
     rows.forEach(function (h, i) {
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td class="n">' + (i + 1) + '</td><td class="d">' + thD(h.date, true) + (h.kind === 'late' && h.time ? '<br><small>' + esc(h.time) + ' น.</small>' : '') + '</td><td>' + (h.kind === 'late' ? 'มาสาย' + (h.reason ? ' — ' + esc(h.reason) : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + (h._ref ? ' <span class="crp-rf">[ภาคผนวก รูปที่ ' + h._ref + ']</span>' : '') + '</td><td class="p" style="color:' + (h.delta < 0 ? '#b91c1c' : '#1d4ed8') + '">' + sgn(h.delta) + '</td><td class="b">' + esc(h.by || '-') + '</td>';
+      tr.innerHTML = '<td class="n">' + (i + 1) + '</td><td class="d">' + thD(h.date, true) + (h.kind === 'late' && h.time ? '<br><small>' + esc(h.time) + ' น.</small>' : '') + '</td><td>' + (h.kind === 'late' ? 'มาสาย' + (h.reason ? ' — ' + esc(h.reason) : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + (h._ref ? ' <span class="crp-rf">[ภาคผนวก รูปที่ ' + h._ref + ']</span>' : '') + '</td><td class="p" style="color:' + (h.delta < 0 ? '#b91c1c' : '#1d4ed8') + '">' + sgn(h.delta) + '</td><td class="b">' + whoCell(h.by) + '</td>';
       tb.appendChild(tr);
       if (over(c)) { tr.remove(); c = page(); c.innerHTML = '<div style="font-weight:700;margin-bottom:6px">' + esc(st.name) + ' · ' + esc(st.room) + ' เลขที่ ' + esc(st.no) + ' (ต่อ)</div>'; tb = table(c); tb.appendChild(tr); }
     });

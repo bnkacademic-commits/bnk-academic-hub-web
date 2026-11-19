@@ -338,6 +338,15 @@
   function minusOf(x) { return x.minus !== undefined ? x.minus : (Math.min(0, x.adj || 0) - (x.late || 0) * ((B.settings || {}).latePoints || 0)); }
   function plusOf(x) { return x.plus !== undefined ? x.plus : Math.max(0, x.adj || 0); }
   var stuD = null, EVC = {};
+  // 2.23.1: รายงานพฤติกรรมนักเรียน — ผู้บันทึก 3 แบบ (แท็กสี): นักเรียนบันทึกเอง / สภานักเรียน / ครู · ข้อความรูปแบบเดียวกันทุกรายการ
+  function whoOf(by) {
+    by = String(by || ''); var cr = / \(สภานักเรียน\)$/;
+    if (by === 'นักเรียนแจ้งเอง') return { k: 's', t: 'นักเรียนบันทึกเอง', n: '', ic: 'fa-user-graduate' };
+    if (cr.test(by)) return { k: 'c', t: 'สภานักเรียน', n: by.replace(cr, ''), ic: 'fa-people-group' };
+    return { k: 't', t: 'ครู', n: by === '-' ? '' : by, ic: 'fa-chalkboard-user' };
+  }
+  function whoTag(w) { return '<span class="cc-who ' + w.k + '">' + ic(w.ic) + ' ' + w.t + '</span>'; }
+  function histTitle(h) { return h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' <span class="mut">(' + esc(h.reason) + ')</span>' : '') : esc(h.item) + (h.note ? ' <span class="mut">— ' + esc(h.note) + '</span>' : ''); }
   // 2.08.0: รูปหลักฐาน (โหลดเมื่อแตะป้าย 📷 เท่านั้น) · รายงาน PDF รายบุคคล (แนบบันทึกข้อความ / ทัณฑ์บน)
   // 2.23.0 / 1.08.0: จำรูปหลักฐานไว้ในเครื่อง (IndexedDB) — 30 วัน · ไม่เกิน 100 รูป (เก่าสุดออกก่อน) · ล้างเมื่อออกจากระบบ
   //   ใช้เฉพาะรูปของรายการที่ระบบยังส่งมา (รายการที่ยกเลิกแล้วจะไม่ถูกเรียกอีก) · ใช้ไม่ได้ (โหมดส่วนตัว ฯลฯ) = ไม่จำ ไม่มีผลอย่างอื่น
@@ -444,12 +453,12 @@
       getPhoto: evPhoto });
   }
   async function openStudent(key) {
-    document.getElementById('ccModalTitle').innerHTML = ic('fa-user') + ' ประวัตินักเรียน';
+    document.getElementById('ccModalTitle').innerHTML = ic('fa-id-card') + ' รายงานพฤติกรรมนักเรียน';
     var mb = document.getElementById('ccModalBody'); mb.innerHTML = '<div class="loading">กำลังโหลด...</div>'; showModalEl(document.getElementById('ccModal'));
     try {
       var d = await apiCall('careStudent', { key: key }); stuD = d; evPrefetch(d.hist || []);
       mb.innerHTML = '<div class="cc-stu">' + scoreRing(d.score, (B.settings || {}).startPoints) + '<div><b style="font-size:1.1rem">' + esc(d.student.name) + '</b><div class="mut">' + esc(d.student.room) + ' เลขที่ ' + esc(d.student.no) + ' · ' + esc(d.period || ('ภาคเรียนที่ ' + d.term + '/' + d.year)) + '</div><span class="cc-tg ' + lvCls(d.level, d.score) + '">ระดับ ' + lvTxt(d.level) + '</span> <span class="cc-tg n">มาสาย ' + d.late + ' ครั้ง</span></div></div>' +
-        (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { var ph = h.photos || []; return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span>' + (h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' (' + esc(h.reason) + ')' : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + (ph.length ? ' <button type="button" class="cc-phb" data-cc-ev="' + h.id + '" data-p="' + esc(ph.join(',')) + '">' + ic('fa-camera') + ' ' + ph.length + '</button>' : '') + '<small>' + thD(h.date, true) + ' · ' + (h.kind === 'late' ? 'บันทึกโดย ' + esc(h.by || '-') : 'โดย ' + esc(h.by || '-')) + '</small><span class="cc-evs" id="ccEvs' + (h.id || '') + '"></span></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>') +
+        (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { var ph = h.photos || [], w = whoOf(h.by); return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span><span class="cc-hh"><span>' + histTitle(h) + (ph.length ? ' <button type="button" class="cc-phb" data-cc-ev="' + h.id + '" data-p="' + esc(ph.join(',')) + '">' + ic('fa-camera') + ' ' + ph.length + '</button>' : '') + '</span>' + whoTag(w) + '</span><small>' + thD(h.date, true) + (w.n ? ' · บันทึกโดย <span class="cc-nw">' + esc(w.n) + '</span>' : '') + '</small><span class="cc-evs" id="ccEvs' + (h.id || '') + '"></span></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>') +
         '<div class="cc-mf"><label><input type="checkbox" id="ccShotBy" /> แสดงชื่อผู้บันทึก</label><span class="cc-mfb"><button type="button" class="btn btn-sm cc-ex-img" data-cc-shot>' + ic('fa-image') + ' บันทึกเป็นรูป / แชร์</button><button type="button" class="btn btn-sm cc-ex-pdf" data-cc-rpt>' + ic('fa-file-pdf') + ' รายงาน PDF</button></span></div>';
     } catch (e) { mb.innerHTML = err(e.message); }
   }
@@ -464,7 +473,7 @@
     el.innerHTML = '<div class="cc-shh"><b>รายงานคะแนนพฤติกรรมรายบุคคล</b><span>โรงเรียนบุ่งคล้านคร · BNK Care Center · ' + esc(d.period || ('ภาคเรียนที่ ' + d.term + '/' + d.year)) + '</span></div>' +
       '<div class="cc-stu">' + scoreRing(d.score, st0) + '<div><b style="font-size:1.1rem">' + esc(d.student.name) + '</b><div class="mut">' + esc(d.student.room) + ' เลขที่ ' + esc(d.student.no) + '</div><span class="cc-tg ' + lvCls(d.level, d.score) + '">ระดับ ' + lvTxt(d.level) + '</span></div></div>' +
       '<div class="cc-shs"><div>เริ่มต้น<b>' + st0 + '</b></div><div>หัก<b class="cc-m">' + (mn || 0) + '</b></div><div>เพิ่ม<b class="cc-pl">' + (pl ? '+' + pl : 0) + '</b></div><div>มาสาย<b>' + d.late + ' ครั้ง</b></div></div>' +
-      (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span>' + (h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' (' + esc(h.reason) + ')' : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + '<small>' + thD(h.date, true) + (by ? ' · ' + (h.kind === 'late' ? 'บันทึกโดย ' : 'โดย ') + esc(h.by || '-') : '') + '</small></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>') +
+      (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { var w = whoOf(h.by); return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span><span class="cc-hh"><span>' + histTitle(h) + '</span>' + (by ? whoTag(w) : '') + '</span><small>' + thD(h.date, true) + (by && w.n ? ' · บันทึกโดย <span class="cc-nw">' + esc(w.n) + '</span>' : '') + '</small></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>') +
       '<div class="cc-shf">ออกรูปเมื่อ ' + stamp + ' · ข้อมูล ณ เวลาที่ออกรูป</div>';
     var name = 'คะแนนพฤติกรรม_' + String(d.student.room || '').replace('ม.', 'ม').replace('/', '-') + '_' + d.student.no + '_' + String(d.student.name).replace(/\s+/g, '_') + '.png';
     return withProgress('กำลังสร้างรูปภาพ', async function () {
