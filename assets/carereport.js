@@ -34,11 +34,12 @@
   function css() { if (document.getElementById('crpCss')) return; var st = document.createElement('style'); st.id = 'crpCss'; st.textContent = CSS; document.head.appendChild(st); }
 
   // 2.23.1 / 1.08.1: ผู้บันทึก = ชื่อ + ประเภท (ครู / สภานักเรียน / นักเรียนบันทึกเอง)
-  function whoCell(by) {
-    by = String(by || ''); var cr = / \(สภานักเรียน\)$/;
-    if (by === 'นักเรียนแจ้งเอง') return '<small>นักเรียนบันทึกเอง</small>';
-    if (cr.test(by)) return esc(by.replace(cr, '')) + '<br><small>สภานักเรียน</small>';
-    return by && by !== '-' ? esc(by) + '<br><small>ครู</small>' : '-';
+  function whoCell(by, who) { // 2.23.2 / 1.08.2: who มาจาก Care Center (s / c / t) — ไม่มี = เดาจากชื่อ
+    by = String(by || ''); var cr = / \(สภานักเรียน\)$/, n = by.replace(cr, '');
+    var k = who === 's' || who === 'c' || who === 't' ? who : (by === 'นักเรียนแจ้งเอง' ? 's' : cr.test(by) ? 'c' : 't');
+    if (k === 's') return '<small>นักเรียนบันทึกเอง</small>';
+    if (k === 'c') return (n ? esc(n) + '<br>' : '') + '<small>สภานักเรียน</small>';
+    return n && n !== '-' ? esc(n) + '<br><small>ครู</small>' : '-';
   }
   function open(o) {
     css();
@@ -100,7 +101,7 @@
     if (!rows.length) tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b">ไม่มีรายการในช่วงที่เลือก</td></tr>';
     rows.forEach(function (h, i) {
       var tr = document.createElement('tr');
-      tr.innerHTML = '<td class="n">' + (i + 1) + '</td><td class="d">' + thD(h.date, true) + (h.kind === 'late' && h.time ? '<br><small>' + esc(h.time) + ' น.</small>' : '') + '</td><td>' + (h.kind === 'late' ? 'มาสาย' + (h.reason ? ' — ' + esc(h.reason) : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + (h._ref ? ' <span class="crp-rf">[ภาคผนวก รูปที่ ' + h._ref + ']</span>' : '') + '</td><td class="p" style="color:' + (h.delta < 0 ? '#b91c1c' : '#1d4ed8') + '">' + sgn(h.delta) + '</td><td class="b">' + whoCell(h.by) + '</td>';
+      tr.innerHTML = '<td class="n">' + (i + 1) + '</td><td class="d">' + thD(h.date, true) + (h.kind === 'late' && h.time ? '<br><small>' + esc(h.time) + ' น.</small>' : '') + '</td><td>' + (h.kind === 'late' ? 'มาสาย' + (h.reason ? ' — ' + esc(h.reason) : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + (h._ref ? ' <span class="crp-rf">[ภาคผนวก รูปที่ ' + h._ref + ']</span>' : '') + '</td><td class="p" style="color:' + (h.delta < 0 ? '#b91c1c' : '#1d4ed8') + '">' + sgn(h.delta) + '</td><td class="b">' + whoCell(h.by, h.who) + '</td>';
       tb.appendChild(tr);
       if (over(c)) { tr.remove(); c = page(); c.innerHTML = '<div style="font-weight:700;margin-bottom:6px">' + esc(st.name) + ' · ' + esc(st.room) + ' เลขที่ ' + esc(st.no) + ' (ต่อ)</div>'; tb = table(c); tb.appendChild(tr); }
     });
