@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.22.3';
-var APP_VERSION = '2.22.3.181126';
+var WORKER_MIN_VERSION = '2.22.4';
+var APP_VERSION = '2.22.4.191126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2019,6 +2019,7 @@ function navLinksFor(session) {
 // - ค่าเริ่มต้นเมื่อยังไม่เคยเลือก: จอกว้าง ≥ 1280px เปิดค้าง, จอเล็กกว่านั้นย่อ
 var NAV_PIN_KEY = 'bnkah_nav_pinned';
 function _navIsMobile() { return window.matchMedia('(max-width: 767px)').matches; }
+function _navIsCompact() { return window.matchMedia('(min-width: 768px) and (max-width: 1023px)').matches; } // 2.22.5: แท็บเล็ตแนวตั้ง
 function _navGetPinned() {
   try { var v = localStorage.getItem(NAV_PIN_KEY); if (v === '1') return true; if (v === '0') return false; } catch (e) { /* ใช้ค่าเริ่มต้น */ }
   return true; // 1.96: ใช้ครั้งแรก = ขยาย (แบบ Google Keep) · กดปุ่ม 3 ขีดเพื่อย่อ แล้วระบบจำไว้ (1.68 เคยเริ่มแบบย่อ)
@@ -2126,13 +2127,17 @@ function mountSideNav(links, activePage) {
   var pinned = _navGetPinned();
   var hovering = false;
   var mobileOpen = false;
+  // 2.22.5: แท็บเล็ต 768–1023px (iPad / แท็บเล็ตแนวตั้ง) = แถบไอคอนเสมอ · กดปุ่ม 3 ขีดแล้วกางทับเนื้อหาชั่วคราว (ไม่ดันเนื้อหาให้แคบ) · แตะนอกเมนู / Esc = ปิด
+  var tempOpen = false;
   function render() {
-    var mobile = _navIsMobile();
-    var open = mobile ? mobileOpen : (pinned || hovering);
-    document.body.classList.toggle('nav-pinned', !mobile && pinned);
+    var mobile = _navIsMobile(), compact = _navIsCompact();
+    if (!compact) tempOpen = false;
+    var open = mobile ? mobileOpen : compact ? (tempOpen || hovering) : (pinned || hovering);
+    document.body.classList.toggle('nav-pinned', !mobile && !compact && pinned);
     document.body.classList.toggle('nav-mobile-open', mobile && mobileOpen);
+    document.body.classList.toggle('nav-temp-open', compact && tempOpen);
     aside.classList.toggle('is-open', open);
-    toggle.setAttribute('aria-expanded', (mobile ? mobileOpen : pinned) ? 'true' : 'false');
+    toggle.setAttribute('aria-expanded', (mobile ? mobileOpen : compact ? tempOpen : pinned) ? 'true' : 'false');
   }
   function syncTopbarHeight() {
     var tb = document.querySelector('.topbar');
@@ -2140,12 +2145,13 @@ function mountSideNav(links, activePage) {
   }
   toggle.addEventListener('click', function () {
     if (_navIsMobile()) { mobileOpen = !mobileOpen; if (mobileOpen && typeof announceMenuOpen === 'function') announceMenuOpen('nav'); }
+    else if (_navIsCompact()) { tempOpen = !tempOpen; hovering = false; }
     else { pinned = !pinned; hovering = false; try { localStorage.setItem(NAV_PIN_KEY, pinned ? '1' : '0'); } catch (e) { /* ไม่เป็นไร */ } }
     render();
   });
-  backdrop.addEventListener('click', function () { mobileOpen = false; render(); });
+  backdrop.addEventListener('click', function () { mobileOpen = false; tempOpen = false; render(); });
   document.addEventListener('bnkah:menu-open', function (e) { if (e.detail !== 'nav' && mobileOpen) { mobileOpen = false; render(); } }); // 1.79.2: เปิดเมนูอื่น = ปิดเมนูข้าง (มือถือ)
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && mobileOpen) { mobileOpen = false; render(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && (mobileOpen || tempOpen)) { mobileOpen = false; tempOpen = false; render(); } });
   aside.addEventListener('mouseenter', function () { if (!_navIsMobile() && window.matchMedia('(hover: hover)').matches) { hovering = true; render(); } });
   aside.addEventListener('mouseleave', function () { hovering = false; render(); });
   aside.addEventListener('focusin', function () { if (!_navIsMobile()) { hovering = true; render(); } });

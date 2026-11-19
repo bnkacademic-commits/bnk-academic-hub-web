@@ -90,13 +90,13 @@
     document.getElementById('sbModalBody').innerHTML = '<p class="cb-mut" style="margin:0 0 8px">' + thD(j.date) + ' · คาบ ' + plabel(j.period) + ' (' + (TIMES[String(j.period)] || '') + ') · ' + esc((j.code ? j.code + ' ' : '') + j.name) + ' ' + esc(j.room) + ' · แทน ' + esc(j.absent) + '</p><div id="sbPickList"><div class="loading">กำลังหาครูที่ว่าง...</div></div>';
     document.getElementById('sbModalActs').innerHTML = (j.subId ? '<button type="button" class="btn btn-danger" data-sb-clear>' + ic('fa-user-xmark') + ' ล้างครูสอนแทน</button>' : '') + '<button type="button" class="btn btn-ghost" data-sb-close>ปิด</button>';
     showModalEl(modal);
-    try { var r = await apiCall('subCands', { id: id }); PICK.list = r.list; PICK.group = r.group; } catch (e) { document.getElementById('sbPickList').innerHTML = err(e.message); return; }
+    try { var r = await apiCall('subCands', { id: id }); PICK.list = r.list; PICK.group = r.group; PICK.period = r.period; PICK.absent = r.absent; } catch (e) { document.getElementById('sbPickList').innerHTML = err(e.message); return; }
     paintPick();
   }
   function paintPick() {
     var L = PICK.list, ok = L.filter(function (c) { return !c.why; }), no = L.filter(function (c) { return c.why; });
     var T = { 0: 'นักศึกษาฝึกสอนของครูที่ลา', 1: 'กลุ่มสาระ' + (PICK.group || 'เดียวกัน') + ' (ว่างคาบนี้)', 2: 'กลุ่มสาระอื่น (ใช้เมื่อกลุ่มสาระเดียวกันไม่ว่าง)' };
-    var h = '', first = true;
+    var h = PICK.absent && PICK.absent.tt ? '<div class="sb-abs"><b>' + ic('fa-user-clock') + ' ตารางวันนี้ของ ' + esc(PICK.absent.name) + '</b>' + ttStrip(PICK.absent.tt, true) + '</div>' : '', first = true;
     [0, 1, 2].forEach(function (tr) {
       var g = ok.filter(function (c) { return c.tier === tr; }); if (!g.length) return;
       h += '<div class="sb-tier">' + esc(T[tr]) + '</div>' + (first ? '<div class="sb-ch"><span>ครู</span><span>สอนวันนี้</span><span>แทนวันนี้</span><span>แทนภาคเรียนนี้</span><span></span></div>' : '');
@@ -104,12 +104,20 @@
     });
     if (!ok.length) h += '<div class="sb-empty">' + ic('fa-user-slash') + '<p>ไม่มีครูที่ว่างตามเงื่อนไข — เลือกจากรายชื่อด้านล่างได้ (ระบบจะถามยืนยัน)</p></div>';
     if (no.length) h += '<details class="sb-no"' + (ok.length ? '' : ' open') + '><summary>ครูที่ไม่ว่าง / เกินเพดาน (' + no.length + ')</summary>' + no.map(function (c) { return candHtml(c, false); }).join('') + '</details>';
-    h += '<p class="cb-mut sb-leg">เรียง: กลุ่มสาระเดียวกันก่อน → ' + (B.cfg ? B.cfg.order.map(function (k) { return ORDER_LBL[k]; }).join(' → ') : '') + ' · ผู้บริหารและรายชื่อยกเว้นไม่แสดง</p>';
+    h += '<p class="cb-mut sb-leg">เรียง: กลุ่มสาระเดียวกันก่อน → ' + (B.cfg ? B.cfg.order.map(function (k) { return ORDER_LBL[k]; }).join(' → ') : '') + ' · ผู้บริหารและรายชื่อยกเว้นไม่แสดง · "สอนวันนี้" นับเฉพาะคาบสอนปกติ (ไม่นับ A/B ชุมนุม กิจกรรม) · แถบตัวเลข = ตารางวันนี้ กดดูรายละเอียด</p>';
     document.getElementById('sbPickList').innerHTML = h;
+  }
+  // 2.22.4: แถบตารางวันนั้น คาบ 1–8 (เทา = สอนเอง · ม่วงอ่อน = กิจกรรม · ส้ม = สอนแทน · แดง = ต้องหาคนแทน · กรอบ = คาบที่กำลังจัด) — กดเพื่อดูรายละเอียด
+  var TTK = { o: 'สอน', a: 'กิจกรรม', s: 'สอนแทน', n: 'ต้องหาคนแทน' };
+  function ttStrip(tt, open) {
+    if (!tt) return '';
+    var cells = tt.map(function (x, i) { var p = i + 1; return '<i class="k-' + (x ? x[0] : 'f') + (p === PICK.period ? ' now' : '') + '" title="คาบ ' + p + ': ' + esc(x ? TTK[x[0]] + ' · ' + x[1] : 'ว่าง') + '">' + p + '</i>'; }).join('');
+    var det = tt.map(function (x, i) { return x ? '<div class="k-' + x[0] + '"><b>คาบ ' + (i + 1) + '</b> ' + esc(TTK[x[0]]) + ' · ' + esc(x[1]) + '</div>' : ''; }).join('') || '<div>ไม่มีคาบสอนวันนี้</div>';
+    return '<details class="sb-tt"' + (open ? ' open' : '') + '><summary aria-label="ตารางวันนี้">' + cells + '</summary><div class="sb-ttx">' + det + '</div></details>';
   }
   function candHtml(c, best) {
     var cur = PICK.job.subId === c.id;
-    return '<div class="sb-cand' + (best ? ' best' : '') + (c.why ? ' no' : '') + (cur ? ' cur' : '') + '"><div class="n">' + esc(c.name) + (best ? ' <span class="sb-chip vi sm">แนะนำ</span>' : '') + (cur ? ' <span class="sb-chip ok sm">เลือกอยู่</span>' : '') + '<small>' + esc(c.group || 'ไม่ระบุกลุ่มสาระ') + '</small></div>' +
+    return '<div class="sb-cand' + (best ? ' best' : '') + (c.why ? ' no' : '') + (cur ? ' cur' : '') + '"><div class="n">' + esc(c.name) + (best ? ' <span class="sb-chip vi sm">แนะนำ</span>' : '') + (cur ? ' <span class="sb-chip ok sm">เลือกอยู่</span>' : '') + '<small>' + esc(c.group || 'ไม่ระบุกลุ่มสาระ') + '</small>' + ttStrip(c.tt) + '</div>' +
       (c.why ? '<div class="why">' + esc(c.why) + '</div>' : '<div class="v"><b>' + c.day + '</b> คาบ</div><div class="v"><b>' + c.today + '</b></div><div class="v"><b>' + c.term + '</b></div>') +
       '<div class="a">' + (cur ? '' : c.why && /ลา|ครูที่ลาเอง/.test(c.why) ? '' : '<button type="button" class="btn btn-sm ' + (c.why ? 'btn-ghost' : best ? 'btn-success' : 'btn-secondary') + '" data-sb-choose="' + esc(c.id) + '"' + (c.why ? ' data-why="' + esc(c.why) + '"' : '') + '>เลือก</button>') + '</div></div>';
   }

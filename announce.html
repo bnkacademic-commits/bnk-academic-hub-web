@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.22.3.181126" />
+<link rel="stylesheet" href="assets/style.css?v=2.22.4.191126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -52,7 +52,7 @@
       <button class="tab-btn" data-tab="calendar"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> ปฏิทินส่งงาน</button>
       <button class="tab-btn" data-tab="calact"><i class="fa-solid fa-flag" aria-hidden="true"></i> ปฏิทินกิจกรรม</button>
       <!-- 2.02.5: รายการที่จัดเก็บแล้ว (แยกตามปีการศึกษา) -->
-      <button class="tab-btn" data-tab="archive" id="archTabBtn" hidden><i class="fa-solid fa-box-archive" aria-hidden="true"></i> จัดเก็บ<span class="rpm-tabcount arch-tabcount" id="archTabCount" hidden></span></button>
+      <button class="tab-btn" data-tab="archive" id="archTabBtn"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> จัดเก็บ<span class="rpm-tabcount arch-tabcount" id="archTabCount" hidden></span></button>
       <!-- 1.75: เรื่องที่แจ้ง (เจ้าหน้าที่ = กลุ่มตัวเอง · Super Admin = ทุกเรื่อง) — ผู้บริหารไม่เห็นแท็บนี้ -->
       <button class="tab-btn" data-tab="reports" id="reportsTabBtn" hidden><i class="fa-solid fa-comment-dots" aria-hidden="true"></i> เรื่องที่แจ้ง<span class="rpm-tabcount" id="reportsTabCount" hidden></span></button>
     </div>
@@ -60,6 +60,9 @@
     <div class="tab-panel" id="tab-archive">
       <div class="card">
         <div class="section-title"><span><i class="fa-solid fa-box-archive ui-icon" style="font-size:17px" aria-hidden="true"></i> รายการที่จัดเก็บ</span></div>
+        <!-- 2.22.4: แท็บย่อย ปฏิทิน / ประกาศ -->
+        <div class="evl-seg arc-sub" id="arcSub" role="tablist"><button type="button" data-arc-sub="cal" class="on"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i> ปฏิทิน</button><button type="button" data-arc-sub="ann"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ประกาศ <b id="arcNAnn">0</b></button></div>
+        <div id="arcCal">
         <p class="hint" style="margin-top:-6px">จัดเก็บ = ซ่อนจากปฏิทินส่งงาน / ปฏิทินกิจกรรมในหน้านี้เท่านั้น · ครูยังเห็นในปฏิทินโรงเรียนและประวัติการส่งงาน · กำหนดส่งงานที่จัดเก็บแล้วครูยังส่งช้าได้</p>
         <div class="arc-flt">
           <select id="arcYear" aria-label="ปีการศึกษา"></select>
@@ -70,6 +73,17 @@
         <div id="arcSum" class="hint"></div>
         <div id="arcList"><div class="loading">กำลังโหลด</div></div>
         <div class="ph-more-wrap" id="arcMoreWrap"></div>
+        </div>
+        <div id="arcAnn" hidden>
+          <p class="hint" style="margin-top:-6px">ประกาศ (ส่วนบน / ป็อปอัป) ที่หมดเวลาแสดงแล้ว ย้ายมาที่นี่เอง · "แสดงอีกครั้ง" = แก้วันที่แสดงแล้วกลับไปแท็บประกาศ</p>
+          <div class="arc-flt">
+            <select id="arcAYear" aria-label="ปีการศึกษา"></select>
+            <span class="evl-seg"><button type="button" data-arca-kind="" class="on">ทั้งหมด</button><button type="button" data-arca-kind="top"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> ส่วนบน</button><button type="button" data-arca-kind="pop"><i class="fa-solid fa-window-restore" aria-hidden="true"></i> ป็อปอัป</button></span>
+            <input type="search" id="arcAQ" placeholder="ค้นหาประกาศ" aria-label="ค้นหาประกาศ" />
+          </div>
+          <div id="arcASum" class="hint"></div>
+          <div id="arcAList"></div>
+        </div>
       </div>
     </div>
 
@@ -461,7 +475,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.22.3.181126"></script>
+  <script src="assets/api.js?v=2.22.4.191126"></script>
   <script>
     var session = requireViewerAccess();
     if (session) mountChrome('announce');
@@ -503,7 +517,7 @@
       },
       popups: function () { return tabLoaders.announcements(); }, // 1.85.2
       calendar: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadEvents(); }); },
-      archive: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { return loadArchive(false); }); }, // 2.02.5
+      archive: function () { return Promise.all([ensureUsersLoaded(), ensureEventCategoriesLoaded()]).then(function () { if (arcSub === 'ann') return lastAnnLoaded ? renderAnnArchive() : loadAnnouncements(); return loadArchive(false); }); }, // 2.02.5 · 2.22.4 แท็บย่อยประกาศ
       reports: function () { return loadReportsManage(); }
     };
     function loadTabIfNeeded(tabKey) {
@@ -683,9 +697,27 @@
     // 2.01.0: สีตามกลุ่มบริหารงาน (วิชาการ น้ำเงิน · บุคคล เขียว · งบประมาณ ส้ม · ทั่วไป ม่วง) · กลุ่มสาระได้สีแยกของแต่ละกลุ่ม
     var EVG_DEPT = [[/วิชาการ/, '#2563eb'], [/บุคคล/, '#16a34a'], [/งบประมาณ|การเงิน/, '#ea580c'], [/ทั่วไป/, '#9333ea']], EVG_SUB = ['#0d9488', '#db2777', '#ca8a04', '#0891b2', '#65a30d', '#e11d48', '#4f46e5', '#a16207', '#7c3aed', '#0e7490'];
     function evgHash(t) { var h = 0; t = String(t || ''); for (var i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0; return h; }
+    // 2.22.4: กลุ่มบริหารงาน = สีที่ตั้งไว้ในตั้งค่าระบบ (ยังไม่ตั้ง = สีเดิม) · กลุ่มสาระ = ระบบเลือกให้ ไม่ซ้ำกัน และไม่ใกล้สีของกลุ่มบริหารงาน
+    var EVG_SUB_ALL = ['#0d9488', '#db2777', '#ca8a04', '#0891b2', '#65a30d', '#7c3aed', '#c2410c', '#be185d', '#4d7c0f', '#0369a1', '#a16207', '#6d28d9', '#0f766e', '#9d174d', '#4338ca', '#15803d'];
+    function evgHue(hex) {
+      var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '')); if (!m) return -1;
+      var n = parseInt(m[1], 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+      if (!d) return -1; var h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; return h < 0 ? h + 360 : h;
+    }
+    function evgDeptColor(dept) {
+      var c = typeof deptThemeColor === 'function' ? deptThemeColor(dept) : ''; if (c) return c;
+      for (var k = 0; k < EVG_DEPT.length; k++) if (EVG_DEPT[k][0].test(dept)) return EVG_DEPT[k][1];
+      return ['#475569', '#0369a1', '#b45309'][evgHash(dept) % 3];
+    }
+    function evgSubPalette() {
+      var st = (typeof _settingsCache !== 'undefined' && _settingsCache) || {}, deps = st.departments || Object.keys(st.departmentColors || {});
+      var dh = deps.map(evgDeptColor).concat(EVG_DEPT.map(function (x) { return x[1]; })).map(evgHue).filter(function (h) { return h >= 0; });
+      var far = EVG_SUB_ALL.filter(function (c) { var h = evgHue(c); return dh.every(function (x) { var dd = Math.abs(h - x); return Math.min(dd, 360 - dd) > 16; }); });
+      return far.length >= Math.min(8, (SUBJECT_GROUPS || []).length || 8) ? far : EVG_SUB_ALL;
+    }
     function evGroupColor(g) {
-      if (g.subject) { var i = (SUBJECT_GROUPS || []).indexOf(g.subject); return EVG_SUB[(i >= 0 ? i : evgHash(g.subject)) % EVG_SUB.length]; }
-      if (g.dept) { for (var k = 0; k < EVG_DEPT.length; k++) if (EVG_DEPT[k][0].test(g.dept)) return EVG_DEPT[k][1]; return ['#475569', '#0369a1', '#b45309'][evgHash(g.dept) % 3]; }
+      if (g.subject) { var pal = evgSubPalette(), i = (SUBJECT_GROUPS || []).indexOf(g.subject); return pal[(i >= 0 ? i : evgHash(g.subject)) % pal.length]; }
+      if (g.dept) return evgDeptColor(g.dept);
       return '#94a3b8';
     }
     function evGroupKey(g) { return g.subject ? g.subject : g.dept ? 'd:' + g.dept : ''; }
@@ -880,8 +912,55 @@
     function setArchCount(n) {
       n = Number(n) || 0;
       var b = document.getElementById('archTabBtn'), c = document.getElementById('archTabCount');
-      b.hidden = !(archReady && (n > 0 || canManage)); c.hidden = !n; c.textContent = n;
+      b.hidden = false; c.hidden = !n; c.textContent = n; // 2.22.4: แท็บจัดเก็บแสดงตลอด
     }
+    // ---------- 2.22.4: จัดเก็บ › ประกาศ (หมดเวลาแสดงแล้ว) ----------
+    var arcSub = 'cal', lastAnnLoaded = false, arcA = { year: '', kind: '', q: '' };
+    function annAY(a) { var d = new Date(a.showUntil || a.createdAt); var y = d.getFullYear() + 543; return String(d.getMonth() + 1 >= 5 ? y : y - 1); } // ปีการศึกษา (เริ่ม พ.ค.)
+    function annArchived() { return lastAnnouncements.filter(annEnded); }
+    function updAnnArchive() {
+      var n = annArchived().length; document.getElementById('arcNAnn').textContent = n;
+      if (arcSub === 'ann' && document.getElementById('tab-archive').classList.contains('active')) renderAnnArchive();
+    }
+    function renderAnnArchive() {
+      var all = annArchived(), ys = {}; all.forEach(function (a) { ys[annAY(a)] = 1; });
+      var yl = Object.keys(ys).sort().reverse(), sel = document.getElementById('arcAYear');
+      if (arcA.year && !ys[arcA.year]) arcA.year = '';
+      if (!arcA.year && yl.length) arcA.year = yl[0];
+      sel.innerHTML = yl.map(function (y) { return '<option value="' + y + '"' + (y === arcA.year ? ' selected' : '') + '>ปีการศึกษา ' + y + '</option>'; }).join('') || '<option value="">ยังไม่มีประกาศที่หมดเวลา</option>';
+      document.querySelectorAll('[data-arca-kind]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-arca-kind') === arcA.kind); });
+      var q = arcA.q.toLowerCase(), L = all.filter(function (a) { return annAY(a) === arcA.year && (!arcA.kind || (arcA.kind === 'pop') === !!a.popup) && (!q || (String(a.title) + ' ' + String(a.message || '')).toLowerCase().indexOf(q) !== -1); })
+        .sort(function (x, y) { return String(y.showUntil).localeCompare(String(x.showUntil)); });
+      document.getElementById('arcASum').textContent = arcA.year ? 'ปีการศึกษา ' + arcA.year + ' · ' + L.length + ' รายการ' : '';
+      var box = document.getElementById('arcAList');
+      if (!L.length) { box.innerHTML = '<div class="empty-state">' + (all.length ? 'ไม่พบประกาศตามตัวกรอง' : 'ยังไม่มีประกาศที่หมดเวลาแสดง') + '</div>'; return; }
+      box.innerHTML = L.map(function (a) {
+        var gi = annGroupInfo(a.department);
+        return '<div class="event-list-item arc-ann" data-arca="' + escapeHtml(a.id) + '">' +
+          (a.popup ? '<div class="pop-pv' + (a.hasImage ? '' : ' no') + '" data-pop-img="' + escapeHtml(a.id) + '">' + (a.hasImage && _popImgs[a.id] ? '<img src="' + _popImgs[a.id] + '" alt="" />' : '<i class="fa-solid fa-' + (a.hasImage ? 'image' : 'window-restore') + '" aria-hidden="true"></i>') + '</div>' : '') +
+          '<div style="flex:1 1 220px; min-width:200px;"><div class="ann-gchip-row"><span class="ann-gchip"' + (gi.color ? ' style="--g:' + gi.color + '"' : '') + '><i class="fa-solid fa-' + (a.popup ? 'window-restore' : 'bullhorn') + '" aria-hidden="true"></i> ' + escapeHtml(gi.label) + '</span> <span class="pop-st off">' + (a.popup ? 'ป็อปอัป' : 'ส่วนบน') + ' · หมดเวลาแสดง</span></div>' +
+          '<div class="sub-item-title">' + escapeHtml(a.title) + '</div>' + (a.message ? '<div class="sub-item-desc">' + escapeHtml(a.message) + '</div>' : '') +
+          '<div class="sub-item-meta">' + (a.createdByName ? 'โดย ' + escapeHtml(a.createdByName) + ' · ' : '') + formatDateTimeThai(a.createdAt) + ' · สำหรับ: ' + escapeHtml(audienceLabel_(a.audience)) + '</div>' + annScheduleMeta(a) + annAttachMeta(a) + '</div>' +
+          (canManage && a.canEdit ? '<div style="display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap;"><button class="btn btn-secondary btn-sm" data-edit-id="' + a.id + '"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> แสดงอีกครั้ง</button><button class="btn btn-danger btn-sm" data-id="' + a.id + '">ลบ</button></div>' : '') +
+          '</div>';
+      }).join('');
+      L.forEach(function (a) {
+        if (!a.popup || !a.hasImage || _popImgs[a.id]) return;
+        apiCall('adminAnnouncementImage', { id: a.id }).then(function (r) { if (!r.image) return; _popImgs[a.id] = r.image; var el = box.querySelector('[data-pop-img="' + a.id + '"]'); if (el) el.innerHTML = '<img src="' + r.image + '" alt="" />'; }).catch(function () {});
+      });
+      wireAnnButtons(box);
+    }
+    document.getElementById('arcSub').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-arc-sub]'); if (!b) return;
+      arcSub = b.getAttribute('data-arc-sub');
+      document.querySelectorAll('[data-arc-sub]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      document.getElementById('arcCal').hidden = arcSub !== 'cal'; document.getElementById('arcAnn').hidden = arcSub !== 'ann';
+      if (arcSub === 'ann') { if (lastAnnLoaded) renderAnnArchive(); else { document.getElementById('arcAList').innerHTML = '<div class="loading">กำลังโหลด</div>'; loadAnnouncements(); } }
+      else if (!arc.items.length) loadArchive(false);
+    });
+    document.getElementById('arcAYear').addEventListener('change', function () { arcA.year = this.value; renderAnnArchive(); });
+    document.getElementById('arcAQ').addEventListener('input', function () { var v = this.value.trim(); clearTimeout(window.__arcAQT); window.__arcAQT = setTimeout(function () { arcA.q = v; renderAnnArchive(); }, 250); });
+    document.getElementById('arcAnn').addEventListener('click', function (e) { var k = e.target.closest('[data-arca-kind]'); if (k) { arcA.kind = k.getAttribute('data-arca-kind'); renderAnnArchive(); } });
     async function loadArchive(append) {
       var box = document.getElementById('arcList');
       if (!append) { arc.next = 0; box.innerHTML = '<div class="loading">กำลังโหลด</div>'; }
@@ -1559,11 +1638,12 @@
     // 1.85.2: รายการประกาศแบบป็อปอัป — รูป · สถานะ · การแสดง · จำนวนคน
     var _popImgs = {};
     function popActive(a) { var now = new Date().toISOString(); return (!a.showFrom || a.showFrom <= now) && (!a.showUntil || a.showUntil >= now); }
+    function annEnded(a) { return !!a.showUntil && a.showUntil < new Date().toISOString(); } // 2.22.4: หมดเวลาแสดง = ย้ายไปแท็บจัดเก็บ
     function renderPopups(list) {
       var wrap = document.getElementById('popListWrap');
       var act = list.filter(popActive).length, cnt = document.getElementById('popTabCount');
       cnt.textContent = act ? act + ' กำลังแสดง' : ''; cnt.hidden = !act;
-      if (!list.length) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศแบบป็อปอัป</div>'; return; }
+      if (!list.length) { wrap.innerHTML = '<div class="empty-state">ไม่มีป็อปอัปที่กำลังแสดง / รอแสดง' + (lastAnnouncements.some(function (a) { return a.popup && annEnded(a); }) ? ' · ป็อปอัปที่หมดเวลาแล้วดูได้ที่แท็บ "จัดเก็บ"' : '') + '</div>'; return; }
       list = list.slice().sort(function (x, y) { return (popActive(y) - popActive(x)) || String(y.createdAt).localeCompare(String(x.createdAt)); });
       wrap.innerHTML = list.map(function (a) {
         var gi = annGroupInfo(a.department), on = popActive(a), st = a.popupStats;
@@ -1608,11 +1688,12 @@
       var wrap = document.getElementById('annListWrap');
       try {
         var all = await apiCall('adminListAnnouncements', {});
-        lastAnnouncements = all;
-        renderPopups(all.filter(function (a) { return a.popup; }));
-        var rows = all.filter(function (a) { return !a.popup; }); // 1.85.2: ส่วนบนเท่านั้น
+        lastAnnouncements = all; lastAnnLoaded = true;
+        renderPopups(all.filter(function (a) { return a.popup && !annEnded(a); }));
+        var rows = all.filter(function (a) { return !a.popup && !annEnded(a); }); // 1.85.2: ส่วนบนเท่านั้น · 2.22.4: หมดเวลาแล้วอยู่ในแท็บจัดเก็บ
+        updAnnArchive();
         _tabLoaded.popups = _tabLoaded.announcements = true;
-        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ยังไม่มีประกาศส่วนบน</div>'; return; }
+        if (rows.length === 0) { wrap.innerHTML = '<div class="empty-state">ไม่มีประกาศส่วนบนที่กำลังแสดง / รอแสดง' + (all.some(function (a) { return !a.popup && annEnded(a); }) ? ' · ประกาศที่หมดเวลาแล้วดูได้ที่แท็บ "จัดเก็บ"' : '') + '</div>'; return; }
         var html = '';
         rows.forEach(function (a) {
           var gi = annGroupInfo(a.department);

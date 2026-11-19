@@ -5383,3 +5383,26 @@ body.srch-open { overflow: hidden; }
 .rv-req-a { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 [data-theme="dark"] .rv-req { background: rgba(202, 138, 4, .14); border-color: #854d0e; color: #fde68a; }
 [data-theme="dark"] .rv-req-r { background: rgba(0,0,0,.25); color: var(--text); }
+/* 2.22.4: จัดเก็บ — แท็บย่อย ปฏิทิน / ประกาศ */
+.arc-sub { margin: 0 0 12px; }
+.arc-ann { gap: 12px; align-items: flex-start; }
+@media (max-width: 640px) { .arc-ann .pop-pv { width: 100%; height: 120px; } }
+/* ---------- 2.22.5: แท็บเล็ต ----------
+   7 นิ้วแนวตั้ง (481–767): แสดงชื่อเว็บคู่จุดสี (เดิมเหลือจุดเดียว)
+   768–1023 (iPad / แท็บเล็ตแนวตั้ง): แถบบนแถวเดียว (ช่องค้นหาเป็นปุ่มแว่นขยาย) · เมนูซ้ายเป็นแถบไอคอน กดปุ่ม 3 ขีดแล้วกางทับเนื้อหา */
+@media (min-width: 481px) and (max-width: 767px) {
+  body.has-sidenav .topbar .brand .js-site-name { display: inline; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 42vw; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  body.has-sidenav .topbar { flex-wrap: nowrap; gap: 10px; padding: 10px 16px; }
+  body.has-sidenav .topbar-left { flex: 1 1 auto; min-width: 0; }
+  body.has-sidenav .topbar .brand { min-width: 0; }
+  body.has-sidenav .topbar .brand .js-site-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.has-sidenav .topbar-right { flex-shrink: 0; gap: 6px; }
+  .tb-search { display: none; }
+  .tb-search-m { display: inline-flex !important; }
+  .profile-trigger .profile-name { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.has-sidenav, body.has-sidenav.nav-pinned { --nav-w: var(--nav-w-rail); }
+  body.nav-temp-open .sidenav-backdrop { display: block; position: fixed; inset: var(--topbar-h) 0 0 0; background: rgba(15, 23, 42, 0.32); z-index: 44; }
+  body.nav-temp-open .sidenav.is-open { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22); border-right-color: var(--border); }
+}

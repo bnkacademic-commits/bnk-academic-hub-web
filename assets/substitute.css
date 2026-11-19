@@ -116,3 +116,19 @@ input[type="time"].sb-in { width: 150px !important; }
 input[type="search"].sb-in { min-width: 200px; }
 .sb-row .r { white-space: nowrap; }
 .sb-rad input[type="radio"] { width: auto; margin: 0; }
+/* 2.22.4: แถบตารางวันนั้นในป็อปอัปเลือกครู */
+.sb-tt { margin-top: 4px; }
+.sb-tt summary { display: flex; gap: 2px; list-style: none; cursor: pointer; width: max-content; }
+.sb-tt summary::-webkit-details-marker { display: none; }
+.sb-tt summary i { font-style: normal; width: 18px; height: 16px; line-height: 16px; text-align: center; font-size: .62rem; font-weight: 700; border-radius: 3px; border: 1px solid var(--border); color: var(--text-muted); background: var(--surface); }
+.sb-tt summary i.k-o { background: #94a3b8; border-color: #94a3b8; color: #fff; }
+.sb-tt summary i.k-a { background: #ddd6fe; border-color: #c4b5fd; color: #5b21b6; }
+.sb-tt summary i.k-s { background: #fb923c; border-color: #fb923c; color: #fff; }
+.sb-tt summary i.k-n { background: #f87171; border-color: #f87171; color: #fff; }
+.sb-tt summary i.now { outline: 2px solid #2563eb; outline-offset: 1px; }
+.sb-ttx { margin-top: 4px; font-size: .78rem; color: var(--text-muted); display: grid; gap: 1px; }
+.sb-ttx .k-s { color: #c2410c; } .sb-ttx .k-n { color: #dc2626; } .sb-ttx .k-a { color: #6d28d9; }
+.sb-abs { border: 1px dashed var(--border); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; font-size: .86rem; color: var(--text); }
+[data-theme="dark"] .sb-tt summary i.k-o { background: #64748b; border-color: #64748b; }
+[data-theme="dark"] .sb-tt summary i.k-a { background: rgba(139, 92, 246, .3); border-color: #6d28d9; color: #ddd6fe; }
+[data-theme="dark"] .sb-ttx .k-s { color: #fdba74; } [data-theme="dark"] .sb-ttx .k-n { color: #fca5a5; } [data-theme="dark"] .sb-ttx .k-a { color: #c4b5fd; }
