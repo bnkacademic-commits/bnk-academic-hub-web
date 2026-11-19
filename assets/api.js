@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.22.4';
-var APP_VERSION = '2.22.4.191126';
+var WORKER_MIN_VERSION = '2.23.0';
+var APP_VERSION = '2.23.0.191126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -117,6 +117,7 @@ function clearSession() {
     localStorage.removeItem(SESSION_LOGIN_AT_KEY);
     localStorage.removeItem(SESSION_ACTIVE_KEY);
     localStorage.removeItem(NAV_FAV_KEY); // 2.13.0: เมนูโปรดเป็นของบัญชี
+    if (window.indexedDB) indexedDB.deleteDatabase('bnk-care-photos'); // 2.23.0: รูปหลักฐานกิจการนักเรียนที่จำไว้ในเครื่อง
     localStorage.removeItem(THEME_KEY); // 1.41.111026: Dark Mode เป็นของบัญชี — ออกจากระบบแล้วไม่ทิ้งโหมดของคนนี้ไว้ให้คนถัดไปบนเครื่องเดียวกัน
   } catch (e) {}
 }
@@ -2019,7 +2020,7 @@ function navLinksFor(session) {
 // - ค่าเริ่มต้นเมื่อยังไม่เคยเลือก: จอกว้าง ≥ 1280px เปิดค้าง, จอเล็กกว่านั้นย่อ
 var NAV_PIN_KEY = 'bnkah_nav_pinned';
 function _navIsMobile() { return window.matchMedia('(max-width: 767px)').matches; }
-function _navIsCompact() { return window.matchMedia('(min-width: 768px) and (max-width: 1023px)').matches; } // 2.22.5: แท็บเล็ตแนวตั้ง
+function _navIsCompact() { return false; } // 2.23.0: แท็บเล็ตแนวตั้งกลับไปใช้เมนูแบบคอม (ปักหมุด/ย่อ จำไว้) — 2.22.5 เคยเป็นแถบไอคอน + กางทับชั่วคราว
 function _navGetPinned() {
   try { var v = localStorage.getItem(NAV_PIN_KEY); if (v === '1') return true; if (v === '0') return false; } catch (e) { /* ใช้ค่าเริ่มต้น */ }
   return true; // 1.96: ใช้ครั้งแรก = ขยาย (แบบ Google Keep) · กดปุ่ม 3 ขีดเพื่อย่อ แล้วระบบจำไว้ (1.68 เคยเริ่มแบบย่อ)
@@ -2673,6 +2674,31 @@ function _filePreviewBodyHtml(previewUrl, title, openUrl, downloadUrl, kind) {
     setTimeout(function () { box.classList.remove('modal-bump'); }, 520);
   });
 })();
+
+// 2.23.0: ล็อกการเลื่อนหน้าหลังตอนป็อปอัปเปิดอยู่ (เมาส์ / ลากนิ้ว) — iPad/iPhone ใช้วิธีตรึง body แล้วคืนตำแหน่งเดิมตอนปิด
+(function (SEL) {
+  var de = document.documentElement, IOS = /iP(ad|hone|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var locked = false, y = 0, q = 0;
+  function vis(el) {
+    if (el.hidden) return false;
+    var cs = getComputedStyle(el);
+    return cs.position === 'fixed' && cs.display !== 'none' && cs.visibility !== 'hidden' && cs.pointerEvents !== 'none' && el.getClientRects().length > 0;
+  }
+  function lock() {
+    locked = true; y = window.scrollY || de.scrollTop || 0; de.classList.add('scroll-locked');
+    if (IOS) { var b = document.body.style; b.position = 'fixed'; b.top = -y + 'px'; b.left = '0'; b.right = '0'; b.width = '100%'; }
+  }
+  function unlock() {
+    locked = false; de.classList.remove('scroll-locked');
+    if (IOS) { var b = document.body.style; b.position = ''; b.top = ''; b.left = ''; b.right = ''; b.width = ''; window.scrollTo(0, y); }
+  }
+  function check() { q = 0; var open = [].some.call(document.querySelectorAll(SEL), vis); if (open !== locked) { if (open) lock(); else unlock(); } }
+  function start() {
+    new MutationObserver(function () { if (!q) q = requestAnimationFrame(check); }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden', 'style', 'open'] });
+    check();
+  }
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})('.modal-backdrop, .file-preview-overlay, .cc-zoom, .gd-zoom, .imgzv, .crp-m, .tpl-book-lightbox, .srch-bd, .sn-sheet-bd, .flt-backdrop, .sidenav-backdrop');
 
 // เรียกทันทีตอนโหลดสคริปต์เพื่อกันธีมกะพริบ (เผื่อกรณี inline script หัวไฟล์ไม่ทำงาน)
 // ยกเว้นหน้าล็อกอิน (index.html) ที่บังคับใช้ธีมสว่างเท่านั้นเสมอ ไม่ว่าจะเคยตั้งค่าธีมมืดไว้จากหน้าอื่นในเครื่องเดียวกันหรือไม่ก็ตาม

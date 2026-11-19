@@ -206,6 +206,14 @@
 .cc-evs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; } .cc-evs:empty { display: none; }
 .cc-evt { width: 96px; height: 72px; border-radius: 8px; overflow: hidden; background: var(--surface-2, #f1f5f9); display: flex; align-items: center; justify-content: center; font-size: .72rem; cursor: zoom-in; }
 .cc-evt img { width: 100%; height: 100%; object-fit: cover; }
+/* 2.23.0: รูปจาก Drive · กำลังโหลด / โหลดไม่สำเร็จ + ปุ่มโหลดใหม่ */
+.cc-evt { position: relative; }
+.cc-evt .cc-evl { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.cc-evt:not(.ok) img { opacity: 0; }
+.cc-evt.ok .cc-evl { display: none; }
+.cc-evt.bad { flex-direction: column; gap: 3px; padding: 4px; text-align: center; color: #b91c1c; cursor: default; line-height: 1.2; }
+.cc-evre { border: 0; border-radius: 6px; background: #16a34a; color: #fff; font: inherit; font-size: .7rem; padding: 2px 7px; cursor: pointer; }
+[data-theme="dark"] .cc-evt.bad { color: #fca5a5; }
 .cc-zoom { position: fixed; inset: 0; z-index: 99998; background: rgba(0,0,0,.88); display: flex; align-items: center; justify-content: center; padding: 12px; }
 .cc-zoom img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .cc-zoom button { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255,255,255,.18); color: #fff; font-size: 18px; }

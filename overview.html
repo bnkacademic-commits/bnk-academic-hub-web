@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.22.4.191126" />
+<link rel="stylesheet" href="assets/style.css?v=2.23.0.191126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -33,6 +33,9 @@
       <button type="button" class="btn page-refresh-btn" id="ovRefresh" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></button>
     </div>
     <div class="ov-alerts" id="ovAlerts"></div>
+
+    <div class="ov-sec"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> ความพร้อมของระบบ <small id="ovReadyNote">ส่วนที่ยังขาด / ยังไม่ตั้งค่า / ยังไม่มีข้อมูล</small></div>
+    <div class="ov-box ov-ready" id="ovReady"><div class="loading">กำลังตรวจ</div></div>
 
     <div class="ov-sec"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> โควต้า <small id="ovQuotaNote">Cloudflare แผนฟรี รีเซ็ตทุกวัน 07:00 น. (เวลาไทย)</small>
       <span class="ov-view" role="group" aria-label="รูปแบบการแสดงโควต้า"><button type="button" data-qview="cards" title="แบบการ์ด"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i> การ์ด</button><button type="button" data-qview="list" title="แบบรายการ"><i class="fa-solid fa-list" aria-hidden="true"></i> รายการ</button></span></div>
@@ -54,7 +57,7 @@
   </div>
   <div id="app-footer"></div>
 
-<script src="assets/api.js?v=2.22.4.191126"></script>
+<script src="assets/api.js?v=2.23.0.191126"></script>
 <script>
   var session = requireLogin();
   // เฉพาะ Super Admin — บทบาทอื่นไปหน้าแรกของตัวเอง
@@ -182,6 +185,7 @@
     var gr = state.galRoot;
     if (gr && !gr.error && !gr.ok) alerts.push(['warn', 'fa-folder-closed', 'โฟลเดอร์ "' + (gr.name || 'BNKAcademicHub คลังรูปภาพ') + '" ยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์ — ผู้มีสิทธิ์อ่าน" — คนในระบบจะเปิดดูรูปในอัลบั้มไม่ได้ (กดเพื่อเปิดโฟลเดอร์แล้วตั้งค่าแชร์)', gr.url || '']);
     if (wOld) alerts.unshift(['bad', 'fa-triangle-exclamation', 'Worker ยังเป็นรุ่นเก่า (ต้องการ ' + WORKER_MIN_VERSION + ' ขึ้นไป) — อัปโหลดไฟล์ Worker แล้ว Deploy']);
+    renderReady();
     $('ovAlerts').innerHTML = alerts.map(function (a) { var inner = '<i class="fa-solid ' + a[1] + '" aria-hidden="true"></i> ' + escapeHtml(a[2]); return a[3] ? '<a class="ov-alert ' + a[0] + '" href="' + escapeHtml(a[3]) + '"' + (/^https?:/.test(a[3]) ? ' target="_blank" rel="noopener"' : '') + '>' + inner + '</a>' : '<span class="ov-alert ' + a[0] + '">' + inner + '</span>'; }).join('');
   }
   // 1.82: อัปรูป 7 วันล่าสุด — ส่งตรงเข้า Google Drive / ผ่าน relay (วิธีสำรอง) + สาเหตุครั้งล่าสุด
@@ -282,6 +286,96 @@
     if (b.hasAttribute('data-use-open')) { var k = b.getAttribute('data-use-open'); use.open[k] = !use.open[k]; }
     renderUse();
   });
+  // ---------- 2.23.0: ความพร้อมของระบบ — ส่วนที่ยังขาด / ยังไม่ตั้งค่า / ยังไม่มีข้อมูล (ข้อที่ครบแล้วพับไว้ด้านล่าง) ----------
+  var RD_IC = { ok: 'fa-circle-check', warn: 'fa-circle-exclamation', bad: 'fa-circle-xmark', info: 'fa-circle-info', wait: 'fa-hourglass-half' };
+  function rdNames(list, more) {
+    if (!list || !list.length) return '';
+    var n = list.length, show = list.slice(0, 40).map(escapeHtml).join(', ') + (n > 40 ? ' และอีก ' + (n - 40) + ' คน' : '');
+    return '<details class="ov-rd-n"><summary>ดูรายชื่อ ' + n + (more || ' คน') + '</summary><div>' + show + '</div></details>';
+  }
+  function rdItems() {
+    var ov = state.ov || {}, sys = state.sys, cf = state.cf, rd = state.rd, gr = state.galRoot, L = [], wait = !rd && !state.rdErr;
+    var add = function (g, st, label, detail, link, linkText, extra) { L.push({ g: g, st: st, label: label, detail: detail || '', link: link || '', linkText: linkText || 'ไปตั้งค่า', extra: extra || '' }); };
+    var G1 = 'การเชื่อมต่อและบริการ', G2 = 'ข้อมูลพื้นฐาน', G3 = 'ข้อมูลภาคเรียนนี้', G4 = 'ระบบที่ซุ่มทำ (เห็นเฉพาะผู้ดูแลระบบ)', G5 = 'รูปหลักฐานกิจการนักเรียน';
+    // 1–6 (ย้ายจากส่วนสถานะ/แจ้งเตือนเดิม)
+    var relayOk = sys && sys.relay && sys.relay.ok;
+    add(G1, !sys && !state.sysErr ? 'wait' : relayOk ? 'ok' : 'bad', 'Drive relay', relayOk ? 'ติดต่อได้' : !sys && !state.sysErr ? 'กำลังตรวจ…' : 'ติดต่อไม่ได้ — ครูอัปโหลดไฟล์ไม่ได้' + (state.sysErr ? ' (' + escapeHtml(state.sysErr) + ')' : ''), relayOk ? '' : 'settings.html#general');
+    add(G1, cf ? (cf.configured ? 'ok' : 'warn') : 'wait', 'เชื่อม Cloudflare (ดูโควต้ารายวัน)', cf ? (cf.configured ? 'เชื่อมแล้ว' : 'ยังไม่ได้ใส่ CF_ACCOUNT_ID / CF_API_TOKEN ที่ Worker — จะไม่เห็นคำขอ Worker, D1 อ่าน/เขียน และ KV ของวันนี้') : 'กำลังตรวจ…');
+    add(G1, ov.cronLast ? 'ok' : 'warn', 'ล้างข้อมูลเก่าอัตโนมัติ (Cron)', ov.cronLast ? 'รันล่าสุด ' + escapeHtml(formatDateTimeThai(ov.cronLast)) : 'ยังไม่เคยรัน — ตั้ง Cron Trigger ที่ Worker แล้วจะเห็นเวลาหลังรันครั้งแรก (03:00 น.)');
+    var bk = ov.backup, okAt = bk && bk.last && bk.last.lastOkAt ? Date.parse(bk.last.lastOkAt) : 0, bkDays = okAt ? Math.floor((Date.now() - okAt) / 86400000) : -1;
+    add(G1, !bk || !bk.configured ? 'warn' : (bk.last && !bk.last.ok) ? 'bad' : (!okAt || bkDays > (bk.everyDays || 7) + 1) ? 'warn' : 'ok', 'สำรองข้อมูล (Google Drive)',
+      !bk ? 'Worker รุ่นเก่า' : !bk.configured ? 'ยังไม่ได้ตั้งค่า (ดู README)' : (bk.last && !bk.last.ok) ? 'ครั้งล่าสุดไม่สำเร็จ: ' + escapeHtml(bk.last.error || '') : okAt ? 'สำรองล่าสุด ' + (bkDays ? bkDays + ' วันที่แล้ว' : 'วันนี้') : 'ยังไม่เคยสำรอง — กด "สำรองตอนนี้" ในส่วนสถานะระบบ');
+    add(G1, !gr ? 'wait' : gr.error ? 'info' : gr.ok ? 'ok' : 'warn', 'แชร์โฟลเดอร์คลังรูปภาพ', !gr ? 'กำลังตรวจ…' : gr.error ? 'ตรวจไม่ได้ — ' + escapeHtml(gr.error) : gr.ok ? 'ทุกคนที่มีลิงก์ดูได้' : 'ยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์ — ผู้มีสิทธิ์อ่าน" — คนในระบบจะเปิดรูปในอัลบั้มไม่ได้', gr && !gr.ok && gr.url ? gr.url : '', 'เปิดโฟลเดอร์');
+    var wOld = verCmp(ov.workerVersion, WORKER_MIN_VERSION) < 0;
+    add(G1, wOld ? 'bad' : 'ok', 'รุ่น Worker ตรงกับหน้าเว็บ', wOld ? 'Worker ยังเป็นรุ่น ' + escapeHtml(ov.workerVersion || 'เก่า') + ' (ต้องการ ' + WORKER_MIN_VERSION + ' ขึ้นไป) — อัปโหลดไฟล์ Worker แล้ว Deploy' : 'หน้าเว็บ ' + escapeHtml(APP_VERSION.split('.').slice(0, 3).join('.')) + ' / Worker ' + escapeHtml(ov.workerVersion || ''));
+    // 7–9 การเชื่อมเว็บ
+    var at = rd && rd.att, cr = rd && rd.care, ev = cr && cr.ev;
+    add(G1, wait ? 'wait' : !rd ? 'info' : at.ok ? 'ok' : 'bad', 'เชื่อมเว็บเช็คชื่อ', wait ? 'กำลังตรวจ…' : !rd ? escapeHtml(state.rdErr) : at.ok ? 'ติดต่อได้' : 'ติดต่อไม่ได้ — ตารางสอน จัดสอนแทน และเช็คชื่อในเว็บนี้จะดึงข้อมูลไม่ได้ (' + escapeHtml(at.error || '') + ')');
+    add(G1, wait ? 'wait' : !rd ? 'info' : cr.ok && !cr.oldWorker ? 'ok' : cr.oldWorker ? 'warn' : 'bad', 'เชื่อม BNK Care Center', wait ? 'กำลังตรวจ…' : !rd ? '' : cr.oldWorker ? 'ติดต่อได้ แต่ Worker ของ Care Center ยังเป็นรุ่นเก่า — อัปโหลดไฟล์ Worker ของ Care Center รุ่น 1.08.0' : cr.ok ? 'ติดต่อได้' + (cr.version ? ' · รุ่น ' + escapeHtml(cr.version.split('.').slice(0, 3).join('.')) : '') : 'ติดต่อไม่ได้ — หน้ากิจการนักเรียนจะว่าง (' + escapeHtml(cr.error || '') + ')');
+    if (rd && cr.ok && !cr.oldWorker) {
+      var evSt = !ev.on ? 'bad' : ev.oldScript ? 'warn' : !ev.relay ? 'bad' : ev.shared ? 'ok' : 'warn';
+      add(G5, evSt, 'ที่เก็บรูปหลักฐาน (Apps Script ของ Care Center)', !ev.on ? 'ยังไม่ได้ตั้ง EVID_URL / EVID_TOKEN ที่ Worker ของ Care Center — แนบรูปและเปิดดูรูปไม่ได้' : ev.oldScript ? 'Apps Script ยังเป็นรุ่นเก่า — วางโค้ด CareEvidenceRelay.gs รุ่น 1.08.0 แล้ว Deploy เวอร์ชันใหม่' : !ev.relay ? 'ติดต่อไม่ได้ — รูปจะเปิดไม่ขึ้น (' + escapeHtml(ev.error || '') + ')' : ev.shared ? 'ตอบกลับได้ · โฟลเดอร์ "' + escapeHtml(ev.folder) + '" แชร์แบบมีลิงก์แล้ว — หน้ากิจการนักเรียนแสดงรูปจาก Drive โดยตรง (เร็ว)' : 'ตอบกลับได้ แต่โฟลเดอร์ยังไม่ได้แชร์แบบมีลิงก์ — หน้ากิจการนักเรียนจะโหลดรูปผ่านระบบแทน (ช้ากว่า)',
+        '', '', ev.on && ev.relay && !ev.oldScript && !ev.shared ? '<button type="button" class="btn btn-primary btn-sm" id="ovEvShare"' + (state.evSharing ? ' disabled' : '') + '><i class="fa-solid fa-link" aria-hidden="true"></i> ' + (state.evSharing ? 'กำลังตั้งค่า…' : 'ตั้งแชร์ให้') + '</button>' : '');
+      add(G5, ev.cache ? 'ok' : 'info', 'แคชรูปที่ Cloudflare', ev.cache ? 'ใช้งานได้ — รูปที่เคยเปิดแล้วโหลดเร็วขึ้น (ไม่ใช้พื้นที่ D1)' : 'ยังใช้ไม่ได้ (Cloudflare เก็บแคชให้เฉพาะ Worker ที่ผูกโดเมนของตัวเอง) — รูปยังโหลดได้ตามปกติ และเบราว์เซอร์ยังจำรูปไว้ให้');
+    }
+    if (rd) {
+      // 10–15 ข้อมูลพื้นฐาน
+      var t = rd.term || {}, tTxt = t.sem === 'summer' ? 'ภาคฤดูร้อน' : t.sem ? 'ภาคเรียนที่ ' + t.sem + '/' + t.year : '';
+      var mis = at && at.ok && t.sem && t.sem !== 'summer' && at.term && (at.term !== t.sem || at.year !== t.year);
+      add(G2, !tTxt ? 'warn' : mis ? 'warn' : 'ok', 'ภาคเรียนปัจจุบัน', (tTxt ? escapeHtml(tTxt) + ' (' + (t.mode === 'manual' ? 'ตั้งเอง' : 'อัตโนมัติตามวันที่') + ')' : 'ยังไม่ได้ตั้ง') + (mis ? ' — ไม่ตรงกับเว็บเช็คชื่อ (ภาคเรียนที่ ' + escapeHtml(at.term + '/' + at.year) + ')' : ''), 'settings.html#general');
+      add(G2, rd.noGroup.length ? 'warn' : 'ok', 'ครูที่ยังไม่ได้ระบุกลุ่มสาระ', rd.noGroup.length ? rd.noGroup.length + ' คน' : 'ครบทุกคน', rd.noGroup.length ? 'settings.html#accounts' : '', 'จัดการบัญชี', rdNames(rd.noGroup));
+      add(G2, rd.noDept.length ? 'warn' : 'ok', 'เจ้าหน้าที่ที่ยังไม่ได้ระบุกลุ่มบริหารงาน', rd.noDept.length ? rd.noDept.length + ' คน' : 'ครบทุกคน', rd.noDept.length ? 'settings.html#accounts' : '', 'จัดการบัญชี', rdNames(rd.noDept));
+      if (at && at.ok) {
+        var uh = at.unlinkedHub || [], ua = at.unlinkedAtt || [];
+        add(G2, uh.length ? 'warn' : 'ok', 'บัญชีครูที่ยังไม่ได้จับคู่ชื่อในเว็บเช็คชื่อ', uh.length ? uh.length + ' คน — ครูกลุ่มนี้จะไม่เห็นตารางสอน/คาบที่ต้องเช็คชื่อ และจัดสอนแทนไม่ได้' + (ua.length ? ' · ชื่อในเว็บเช็คชื่อที่ยังไม่มีบัญชีคู่ ' + ua.length + ' ชื่อ' : '') : 'ครบทุกคน', '', '', rdNames(uh) + (ua.length ? rdNames(ua, ' ชื่อ (ฝั่งเว็บเช็คชื่อ)') : ''));
+      }
+      add(G2, rd.deptNoColor.length ? (rd.themeMode === 'department' ? 'warn' : 'info') : 'ok', 'สีของกลุ่มบริหารงาน', rd.deptNoColor.length ? 'ยังไม่ได้ตั้งสี ' + rd.deptNoColor.length + ' กลุ่ม: ' + rd.deptNoColor.map(escapeHtml).join(', ') + ' — ใช้สีหลักแทน (ปฏิทินจะแยกสีไม่ออก)' : 'ตั้งครบทุกกลุ่ม', rd.deptNoColor.length ? 'settings.html#website' : '');
+      var MG = [['leave', 'แจ้งลา / ไปราชการ'], ['club', 'ชุมนุม'], ['care', 'กิจการนักเรียน'], ['guide', 'แนะแนว'], ['rt', 'ขอเวลาเรียน'], ['sup', 'นิเทศการสอน']], noMg = MG.filter(function (m) { return rd.mgr[m[0]] === 0; }).map(function (m) { return m[1]; });
+      add(G2, noMg.length ? 'warn' : 'ok', 'ผู้ดูแลของแต่ละระบบ', noMg.length ? 'ยังไม่มีผู้ดูแล (สิทธิ์จัดการ): ' + noMg.join(', ') + ' — ตอนนี้ผู้ดูแลระบบสูงสุดต้องจัดการเอง' : 'มีผู้ดูแลครบทุกระบบ', noMg.length ? 'settings.html#managers' : '', 'จัดการผู้ดูแล');
+      add(G2, rd.internsExpired.length ? 'warn' : 'ok', 'นักศึกษาฝึกสอนที่หมดช่วงฝึกแล้ว', rd.internsExpired.length ? rd.internsExpired.length + ' คน — บัญชียังเปิดอยู่ (เข้าระบบไม่ได้แล้ว) ปิดหรือเก็บบัญชีได้' : 'ไม่มี', rd.internsExpired.length ? 'interns.html' : '', 'ไปหน้านักศึกษาฝึกสอน', rdNames(rd.internsExpired));
+      // 16–18 ภาคเรียนนี้
+      if (rd.termDeadlines !== undefined) {
+        add(G3, rd.termDeadlines ? 'ok' : 'warn', 'งานที่สั่งให้ครูส่ง ภาคเรียนนี้', rd.termDeadlines ? fmtN(rd.termDeadlines) + ' รายการ' : 'ยังไม่มี — หน้าส่งงานของครูจะว่าง', rd.termDeadlines ? '' : 'announce.html', 'ไปหน้าประกาศและปฏิทิน');
+        add(G3, rd.termActivities ? 'ok' : 'warn', 'ปฏิทินกิจกรรม ภาคเรียนนี้', rd.termActivities ? fmtN(rd.termActivities) + ' รายการ' : 'ยังไม่มี', rd.termActivities ? '' : 'announce.html', 'ไปหน้าประกาศและปฏิทิน');
+      }
+      add(G3, rd.annExpired ? 'info' : 'ok', 'ประกาศที่หมดเวลาแสดงแล้ว', rd.annExpired ? fmtN(rd.annExpired) + ' เรื่อง — อยู่ในแท็บจัดเก็บ ลบได้ถ้าไม่ใช้แล้ว' : 'ไม่มี', rd.annExpired ? 'announce.html' : '', 'ไปหน้าประกาศ');
+    }
+    var rp = ov.reports;
+    if (rp) add(G3, rp.systemOpen ? 'warn' : 'ok', 'เรื่องแจ้งปัญหาระบบที่รอรับเรื่อง', rp.systemOpen ? rp.systemOpen + ' เรื่อง' : 'ไม่มี', rp.systemOpen ? 'announce.html#reports' : '', 'ไปดูเรื่องที่แจ้ง');
+    if (rd) {
+      // 19–20 ระบบที่ซุ่มทำ
+      var tt = rd.hidden.tt, sb = rd.hidden.sub;
+      add(G4, tt.drafts ? 'ok' : 'info', 'จัดตารางเรียน', (tt.enabled ? 'เปิดให้ผู้ดูแลใช้' : 'ปิดอยู่') + ' · ฉบับร่างภาคเรียนนี้ ' + tt.drafts + ' ชุด' + (tt.published ? ' · ประกาศแล้ว ' + tt.published + ' ชุด' : ' · ยังไม่ได้ประกาศ'), 'timetable.html', 'ไปหน้าจัดตารางเรียน');
+      add(G4, sb.enabled ? (sb.mgr ? 'ok' : 'warn') : 'info', 'จัดสอนแทน', sb.enabled ? 'เปิดใช้อยู่' + (sb.mgr ? ' · ผู้ดูแล ' + sb.mgr + ' คน' : ' · ยังไม่มีผู้ดูแล') : 'ปิดอยู่ (ครูยังไม่เห็น)', 'substitute.html', 'ไปหน้าจัดสอนแทน');
+    }
+    if (state.rdErr) add(G1, 'bad', 'ตรวจความพร้อมไม่ได้', escapeHtml(state.rdErr) + (/ไม่รู้จักคำสั่ง/.test(state.rdErr) ? ' — Worker ยังเป็นรุ่นก่อน 2.23.0' : ''));
+    return L;
+  }
+  function renderReady() {
+    var el = $('ovReady'); if (!el || !state.ov) return;
+    var L = rdItems(), bad = L.filter(function (x) { return x.st !== 'ok'; }), ok = L.filter(function (x) { return x.st === 'ok'; });
+    var row = function (x) {
+      return '<li class="ov-rd ' + x.st + '"><i class="fa-solid ' + RD_IC[x.st] + '" aria-hidden="true"></i><div class="ov-rd-t"><b>' + escapeHtml(x.label) + '</b><span>' + x.detail + '</span>' + x.extra + '</div>' +
+        (x.link ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(x.link) + '"' + (/^https?:/.test(x.link) ? ' target="_blank" rel="noopener"' : '') + '>' + escapeHtml(x.linkText) + '</a>' : '') + '</li>';
+    };
+    var groups = [], by = {};
+    bad.forEach(function (x) { if (!by[x.g]) { by[x.g] = []; groups.push(x.g); } by[x.g].push(x); });
+    var nBad = bad.filter(function (x) { return x.st === 'bad' || x.st === 'warn'; }).length;
+    $('ovReadyNote').textContent = nBad ? 'ต้องดู ' + nBad + ' ข้อ · ครบแล้ว ' + ok.length + ' ข้อ' : 'ครบแล้ว ' + ok.length + ' ข้อ';
+    el.innerHTML = (groups.length ? groups.map(function (g) { return '<div class="ov-rd-g">' + escapeHtml(g) + '</div><ul class="ov-rd-l">' + by[g].map(row).join('') + '</ul>'; }).join('') : '<p class="ov-mut" style="margin:0">ทุกข้อพร้อมใช้งาน</p>') +
+      (ok.length ? '<details class="ov-rd-ok"' + (state.rdOkOpen ? ' open' : '') + '><summary><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ครบแล้ว ' + ok.length + ' ข้อ</summary><ul class="ov-rd-l">' + ok.map(row).join('') + '</ul></details>' : '');
+  }
+  document.getElementById('ovReady').addEventListener('toggle', function (e) { if (e.target.classList && e.target.classList.contains('ov-rd-ok')) state.rdOkOpen = e.target.open; }, true);
+  document.getElementById('ovReady').addEventListener('click', async function (e) {
+    if (!e.target.closest('#ovEvShare') || state.evSharing) return;
+    state.evSharing = true; renderReady();
+    try {
+      var r = await apiCall('careEvShare', {});
+      if (state.rd && state.rd.care && state.rd.care.ev) { state.rd.care.ev.shared = !!r.shared; state.rd.care.ev.error = r.error || ''; }
+      showToast(r.shared ? 'แชร์โฟลเดอร์รูปหลักฐานแล้ว — หน้ากิจการนักเรียนจะแสดงรูปจาก Drive โดยตรง' : 'ตั้งแชร์ไม่สำเร็จ' + (r.error ? ': ' + r.error : ' — โรงเรียนอาจปิดการแชร์แบบมีลิงก์ ตั้งเองใน Drive ได้'), !r.shared);
+    } catch (err) { showToast(err.message, true); }
+    state.evSharing = false; renderReady();
+  });
   async function load() {
     $('ovSub').textContent = 'หน้าแรกของผู้ดูแลระบบ · ข้อมูล ณ ' + formatDateTimeThai(new Date().toISOString());
     var term = await currentAcademicTerm();
@@ -292,12 +386,13 @@
     render();
     var t0 = Date.now();
     apiCall('adminSystemInfo', {}).then(function (r) { state.sys = r; state.sysMs = Date.now() - t0; render(); }, function (e) { state.sysErr = e.message; render(); });
+    apiCall('adminReadiness', {}).then(function (r) { state.rd = r; state.rdErr = ''; renderReady(); }, function (e) { state.rdErr = e.message; renderReady(); });
     apiCall('adminGalleryRoot', {}).then(function (r) { state.galRoot = r; render(); }, function (e) { state.galRoot = { error: e.message }; render(); });
     loadUse();
     apiCall('adminCloudUsage', {}).then(function (r) { state.cf = r; render(); renderUse(); }, function (e) { state.cf = { configured: true, errors: { workers: e.message, d1: e.message, kv: e.message } }; render(); });
   }
   if (session) {
-    $('ovRefresh').addEventListener('click', async function () { var b = this; b.classList.add('spinning'); state.sys = null; state.cf = null; state.sysErr = ''; state.galRoot = null; try { await load(); } finally { b.classList.remove('spinning'); } });
+    $('ovRefresh').addEventListener('click', async function () { var b = this; b.classList.add('spinning'); state.sys = null; state.cf = null; state.sysErr = ''; state.galRoot = null; state.rd = null; state.rdErr = ''; try { await load(); } finally { b.classList.remove('spinning'); } });
     window.__refreshPageData = load;
     function syncQView() { document.querySelectorAll('[data-qview]').forEach(function (b) { var on = b.getAttribute('data-qview') === state.qView; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); }
     document.querySelector('.ov-view').addEventListener('click', function (e) { var b = e.target.closest('[data-qview]'); if (!b) return; state.qView = b.getAttribute('data-qview'); try { localStorage.setItem('bnkah_ov_qview', state.qView); } catch (er) {} syncQView(); render(); });

@@ -339,15 +339,102 @@
   function plusOf(x) { return x.plus !== undefined ? x.plus : Math.max(0, x.adj || 0); }
   var stuD = null, EVC = {};
   // 2.08.0: รูปหลักฐาน (โหลดเมื่อแตะป้าย 📷 เท่านั้น) · รายงาน PDF รายบุคคล (แนบบันทึกข้อความ / ทัณฑ์บน)
-  async function evPhoto(eventId, pid) { if (!EVC[pid]) { var r = await apiCall('careEvidence', { eventId: eventId, pid: pid }); EVC[pid] = 'data:' + r.mime + ';base64,' + r.base64; } return EVC[pid]; }
-  async function evShow(eventId, pids, box) {
-    box.innerHTML = pids.map(function (p, i) { return '<span class="cc-evt" data-evi="' + i + '">' + (EVC[p] ? '<img src="' + EVC[p] + '" alt="">' : '<span class="mut">กำลังโหลด…</span>') + '</span>'; }).join('');
-    for (var i = 0; i < pids.length; i++) {
-      var sl = box.querySelector('[data-evi="' + i + '"]');
-      try { var src = await evPhoto(eventId, pids[i]); if (sl) sl.innerHTML = '<img src="' + src + '" alt="">'; } catch (e) { if (sl) sl.innerHTML = '<span class="cc-m" style="font-size:.75rem">' + esc(e.message) + '</span>'; }
+  // 2.23.0 / 1.08.0: จำรูปหลักฐานไว้ในเครื่อง (IndexedDB) — 30 วัน · ไม่เกิน 100 รูป (เก่าสุดออกก่อน) · ล้างเมื่อออกจากระบบ
+  //   ใช้เฉพาะรูปของรายการที่ระบบยังส่งมา (รายการที่ยกเลิกแล้วจะไม่ถูกเรียกอีก) · ใช้ไม่ได้ (โหมดส่วนตัว ฯลฯ) = ไม่จำ ไม่มีผลอย่างอื่น
+  var PHC = (function () {
+    var NAME = 'bnk-care-photos', MAX = 100, AGE = 30 * 86400000, dbp = null;
+    function db() {
+      if (!dbp) dbp = new Promise(function (ok, no) {
+        try { var r = indexedDB.open(NAME, 1); r.onupgradeneeded = function () { r.result.createObjectStore('p'); r.result.createObjectStore('m'); }; r.onsuccess = function () { ok(r.result); }; r.onerror = function () { no(r.error); }; } catch (e) { no(e); }
+      });
+      return dbp;
     }
+    function run(mode, fn) { return db().then(function (d) { return new Promise(function (ok, no) { var t = d.transaction(['p', 'm'], mode), res = fn(t.objectStore('p'), t.objectStore('m')); t.oncomplete = function () { ok(res && 'result' in res ? res.result : undefined); }; t.onerror = t.onabort = function () { no(t.error); }; }); }); }
+    function get(k) {
+      return run('readonly', function (p, m) { var a = m.get(k), b = p.get(k); return { get result() { return a.result && b.result && Date.now() - a.result < AGE ? b.result : null; } }; }).catch(function () { return null; });
+    }
+    function put(k, v) {
+      return run('readwrite', function (p, m) { p.put(v, k); m.put(Date.now(), k); }).then(prune).catch(function () {});
+    }
+    function prune() {
+      return run('readwrite', function (p, m) {
+        var list = [], now = Date.now();
+        m.openCursor().onsuccess = function (e) {
+          var c = e.target.result; if (c) { list.push([c.key, c.value]); c.continue(); return; }
+          list.sort(function (a, b) { return a[1] - b[1]; });
+          list.forEach(function (x, i) { if (now - x[1] >= AGE || i < list.length - MAX) { p.delete(x[0]); m.delete(x[0]); } });
+        };
+      });
+    }
+    function del(k) { return run('readwrite', function (p, m) { p.delete(k); m.delete(k); }).catch(function () {}); }
+    function clear() { try { if (dbp) dbp.then(function (d) { d.close(); }).catch(function () {}); dbp = null; indexedDB.deleteDatabase(NAME); } catch (e) { /* ข้าม */ } }
+    if (!window.indexedDB) return { get: function () { return Promise.resolve(null); }, put: function () { return Promise.resolve(); }, del: function () { return Promise.resolve(); }, clear: function () {} };
+    return { get: get, put: put, del: del, clear: clear };
+  })();
+  // 2.23.0: แสดงรูปจาก Google Drive โดยตรง (เร็ว · โฟลเดอร์รูปหลักฐานแชร์แบบมีลิงก์) — ขึ้นไม่ได้ค่อยโหลดผ่าน Care Center (ตรวจสิทธิ์ · จำไว้ในเครื่อง)
+  //   ไม่มีปุ่มเปิดใน Drive / คัดลอกลิงก์ · โหลดทุกรูปพร้อมกัน · ไม่สำเร็จมีปุ่ม "โหลดใหม่"
+  function dUrl(pid, w) { return 'https://lh3.googleusercontent.com/d/' + encodeURIComponent(pid) + '=w' + w; }
+  function dThumb(pid, w) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(pid) + '&sz=w' + w; }
+  async function evPhoto(eventId, pid) { // ผ่านระบบ — ใช้ฝังใน PDF และเป็นทางสำรอง
+    if (EVC[pid]) return EVC[pid];
+    var c = await PHC.get(pid); if (c) return (EVC[pid] = c);
+    var r = await apiCall('careEvidence', { eventId: eventId, pid: pid });
+    EVC[pid] = 'data:' + r.mime + ';base64,' + r.base64; PHC.put(pid, EVC[pid]); return EVC[pid];
   }
-  function zoom(src) { var z = document.createElement('div'); z.className = 'cc-zoom'; z.innerHTML = '<img src="' + src + '" alt=""><button type="button" aria-label="ปิด">✕</button>'; z.addEventListener('click', function () { z.remove(); }); document.body.appendChild(z); }
+  function evLoad(img, eventId, pid, w, fail) {
+    var steps = EVC[pid] ? [] : [dUrl(pid, w), dThumb(pid, w)], i = 0;
+    img.referrerPolicy = 'no-referrer';
+    function next() {
+      if (i < steps.length) { img.src = steps[i++]; return; }
+      img.onerror = function () { fail(new Error('แสดงรูปไม่ได้')); };
+      evPhoto(eventId, pid).then(function (src) { img.src = src; }, fail);
+    }
+    img.onerror = next; next();
+  }
+  function evSlot(sl, eventId, pid) {
+    sl.className = 'cc-evt'; sl.title = ''; sl.innerHTML = '<span class="mut cc-evl">กำลังโหลด…</span><img alt="รูปหลักฐาน" data-cc-ei="' + eventId + '" data-pid="' + esc(pid) + '">';
+    var img = sl.querySelector('img');
+    img.addEventListener('load', function () { sl.classList.add('ok'); });
+    evLoad(img, eventId, pid, 400, function (e) {
+      sl.className = 'cc-evt bad'; sl.title = e && e.message || ''; sl.innerHTML = '<span>โหลดไม่สำเร็จ</span><button type="button" class="cc-evre" data-cc-evre="' + eventId + '" data-pid="' + esc(pid) + '">' + ic('fa-rotate-right') + ' โหลดใหม่</button>';
+    });
+  }
+  function evShow(eventId, pids, box) {
+    box.innerHTML = pids.map(function (p, i) { return '<span class="cc-evt" data-evi="' + i + '"></span>'; }).join('');
+    pids.forEach(function (p, i) { evSlot(box.querySelector('[data-evi="' + i + '"]'), eventId, p); });
+  }
+  // ค: เปิดประวัติแล้วเตรียมรูปไว้ก่อน (Drive · ให้เบราว์เซอร์จำ) — กดดูแล้วขึ้นทันที
+  function evPrefetch(hist) { var n = 0; hist.forEach(function (h) { (h.photos || []).forEach(function (p) { if (n++ < 40) { var im = new Image(); im.referrerPolicy = 'no-referrer'; im.src = dUrl(p, 400); } }); }); }
+  // ดูรูปใหญ่ — ป็อปอัปแบบเดียวกับดูไฟล์ที่ส่งงาน (ไม่มีปุ่มเปิดไฟล์ / ดาวน์โหลด)
+  function evView(eventId, pids, idx) {
+    var old = document.getElementById('filePreviewOverlay'); if (old) { if (old.__dispose) old.__dispose(); old.remove(); }
+    var ov = document.createElement('div'), n = pids.length;
+    ov.id = 'filePreviewOverlay'; ov.className = 'file-preview-overlay show no-anim'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'รูปหลักฐาน');
+    function close() { document.removeEventListener('keydown', onKey); ov.classList.remove('show'); document.body.classList.remove('file-preview-open'); setTimeout(function () { ov.remove(); }, 160); }
+    function show(i) {
+      idx = i;
+      ov.innerHTML = '<div class="file-preview-frame"><div class="file-preview-bar">' +
+        (n > 1 ? '<div class="file-preview-nav"><button type="button" class="icon-btn file-preview-prev" aria-label="รูปก่อนหน้า"' + (i <= 0 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-left"></i></button><span class="file-preview-count">' + (i + 1) + '/' + n + '</span><button type="button" class="icon-btn file-preview-next" aria-label="รูปถัดไป"' + (i >= n - 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-right"></i></button></div>' : '') +
+        '<div class="file-preview-title">รูปหลักฐาน</div><button type="button" class="file-preview-close" aria-label="ปิด">✕</button></div>' +
+        '<div class="file-preview-imgwrap"><img class="file-preview-img" alt="รูปหลักฐาน ' + (i + 1) + '"></div></div>';
+      var img = ov.querySelector('.file-preview-img');
+      img.addEventListener('load', function () { img.classList.add('loaded'); });
+      evLoad(img, eventId, pids[i], 2000, function (e) {
+        var w = ov.querySelector('.file-preview-imgwrap'); if (!w) return;
+        w.outerHTML = '<div class="file-preview-dlpanel"><i class="fa-solid fa-image" aria-hidden="true"></i><div class="fp-dl-h">' + esc(e && e.message || 'โหลดรูปไม่สำเร็จ') + '</div><button type="button" class="btn btn-primary cc-evre-big"><i class="fa-solid fa-rotate-right"></i> โหลดใหม่</button></div>';
+      });
+    }
+    function step(d) { var i = idx + d; if (i >= 0 && i < n) show(i); }
+    function onKey(e) { if (e.key === 'Escape') close(); else if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1); }
+    ov.__dispose = function () { document.removeEventListener('keydown', onKey); };
+    ov.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t === ov || (t.classList && t.classList.contains('file-preview-imgwrap')) || t.closest('.file-preview-close')) { close(); return; }
+      if (t.closest('.file-preview-prev')) step(-1); else if (t.closest('.file-preview-next')) step(1); else if (t.closest('.cc-evre-big')) { delete EVC[pids[idx]]; show(idx); }
+    });
+    document.addEventListener('keydown', onKey);
+    show(idx); document.body.appendChild(ov); document.body.classList.add('file-preview-open');
+  }
   async function report() {
     var d = stuD; if (!d) return;
     await loadScriptOnce('assets/carereport.js?v=' + APP_VERSION);
@@ -360,7 +447,7 @@
     document.getElementById('ccModalTitle').innerHTML = ic('fa-user') + ' ประวัตินักเรียน';
     var mb = document.getElementById('ccModalBody'); mb.innerHTML = '<div class="loading">กำลังโหลด...</div>'; showModalEl(document.getElementById('ccModal'));
     try {
-      var d = await apiCall('careStudent', { key: key }); stuD = d;
+      var d = await apiCall('careStudent', { key: key }); stuD = d; evPrefetch(d.hist || []);
       mb.innerHTML = '<div class="cc-stu">' + scoreRing(d.score, (B.settings || {}).startPoints) + '<div><b style="font-size:1.1rem">' + esc(d.student.name) + '</b><div class="mut">' + esc(d.student.room) + ' เลขที่ ' + esc(d.student.no) + ' · ' + esc(d.period || ('ภาคเรียนที่ ' + d.term + '/' + d.year)) + '</div><span class="cc-tg ' + lvCls(d.level, d.score) + '">ระดับ ' + lvTxt(d.level) + '</span> <span class="cc-tg n">มาสาย ' + d.late + ' ครั้ง</span></div></div>' +
         (d.hist.length ? '<div class="cc-hist">' + d.hist.map(function (h) { var ph = h.photos || []; return '<div><span class="cc-pt ' + (h.delta < 0 ? 'm' : 'p') + '">' + sgn(h.delta) + '</span><span>' + (h.kind === 'late' ? 'มาสาย ' + esc(h.time || '') + (h.reason ? ' (' + esc(h.reason) + ')' : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + (ph.length ? ' <button type="button" class="cc-phb" data-cc-ev="' + h.id + '" data-p="' + esc(ph.join(',')) + '">' + ic('fa-camera') + ' ' + ph.length + '</button>' : '') + '<small>' + thD(h.date, true) + ' · ' + (h.kind === 'late' ? 'บันทึกโดย ' + esc(h.by || '-') : 'โดย ' + esc(h.by || '-')) + '</small><span class="cc-evs" id="ccEvs' + (h.id || '') + '"></span></span></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีประวัติในรอบนี้</p>') +
         '<div class="cc-mf"><label><input type="checkbox" id="ccShotBy" /> แสดงชื่อผู้บันทึก</label><span class="cc-mfb"><button type="button" class="btn btn-sm cc-ex-img" data-cc-shot>' + ic('fa-image') + ' บันทึกเป็นรูป / แชร์</button><button type="button" class="btn btn-sm cc-ex-pdf" data-cc-rpt>' + ic('fa-file-pdf') + ' รายงาน PDF</button></span></div>';
@@ -769,7 +856,8 @@
     if (e.target.closest('[data-cc-shot]')) { studentShot(); return; }
     if (e.target.closest('[data-cc-rpt]')) { report(); return; }
     if ((t = e.target.closest('[data-cc-ev]'))) { var bx = document.getElementById('ccEvs' + t.getAttribute('data-cc-ev')); if (bx) { if (bx.innerHTML) bx.innerHTML = ''; else evShow(+t.getAttribute('data-cc-ev'), t.getAttribute('data-p').split(','), bx); } return; }
-    if ((t = e.target.closest('.cc-evt img'))) { zoom(t.src); return; }
+    if ((t = e.target.closest('[data-cc-evre]'))) { var sl0 = t.closest('.cc-evt'), pd = t.getAttribute('data-pid'); delete EVC[pd]; evSlot(sl0, +t.getAttribute('data-cc-evre'), pd); return; }
+    if ((t = e.target.closest('.cc-evt.ok img'))) { var bx2 = t.closest('.cc-evs'), all = [].slice.call(bx2.querySelectorAll('img[data-pid]')); evView(+t.getAttribute('data-cc-ei'), all.map(function (x) { return x.getAttribute('data-pid'); }), all.indexOf(t)); return; }
     if ((t = e.target.closest('[data-cc-pick]'))) {
       syncDraft(); var k = t.getAttribute('data-cc-pick'), i = draft.council.findIndex(function (c) { return c.k === k; });
       if (i === -1) { if (draft.council.length >= 80) { showToast('สมาชิกสภานักเรียนได้สูงสุด 80 คน', true); return; } draft.council.push({ k: k, n: t.getAttribute('data-n'), r: t.getAttribute('data-r') }); } else draft.council.splice(i, 1);

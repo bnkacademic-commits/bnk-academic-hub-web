@@ -5389,7 +5389,7 @@ body.srch-open { overflow: hidden; }
 @media (max-width: 640px) { .arc-ann .pop-pv { width: 100%; height: 120px; } }
 /* ---------- 2.22.5: แท็บเล็ต ----------
    7 นิ้วแนวตั้ง (481–767): แสดงชื่อเว็บคู่จุดสี (เดิมเหลือจุดเดียว)
-   768–1023 (iPad / แท็บเล็ตแนวตั้ง): แถบบนแถวเดียว (ช่องค้นหาเป็นปุ่มแว่นขยาย) · เมนูซ้ายเป็นแถบไอคอน กดปุ่ม 3 ขีดแล้วกางทับเนื้อหา */
+   768–1023 (iPad / แท็บเล็ตแนวตั้ง): แถบบนแถวเดียว (ช่องค้นหาเป็นปุ่มแว่นขยาย) · 2.23.0: เมนูซ้ายทำงานแบบคอม (ปักหมุด/ย่อ จำไว้) */
 @media (min-width: 481px) and (max-width: 767px) {
   body.has-sidenav .topbar .brand .js-site-name { display: inline; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 42vw; }
 }
@@ -5402,7 +5402,37 @@ body.srch-open { overflow: hidden; }
   .tb-search { display: none; }
   .tb-search-m { display: inline-flex !important; }
   .profile-trigger .profile-name { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  body.has-sidenav, body.has-sidenav.nav-pinned { --nav-w: var(--nav-w-rail); }
-  body.nav-temp-open .sidenav-backdrop { display: block; position: fixed; inset: var(--topbar-h) 0 0 0; background: rgba(15, 23, 42, 0.32); z-index: 44; }
-  body.nav-temp-open .sidenav.is-open { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22); border-right-color: var(--border); }
 }
+/* 2.23.0: แท็บเล็ต/จอสัมผัส — กันภาพซ้อนตอนเลื่อนจอ (Edge บน Android ฯลฯ): แถบบนทึบ (ไม่เบลอ) · เมนูซ้ายแยกเลเยอร์ · ไม่ลากเลื่อนทะลุไปหน้าหลัง · สูงตามจอจริง */
+@media (hover: none) and (pointer: coarse) and (min-width: 600px) {
+  .topbar { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+@media (hover: none) and (pointer: coarse) and (min-width: 768px) {
+  .sidenav { transform: translateZ(0); backface-visibility: hidden; overscroll-behavior: contain; }
+}
+@supports (height: 100dvh) {
+  @media (min-width: 768px) { .sidenav { bottom: auto; height: calc(100dvh - var(--topbar-h)); } }
+}
+/* 2.23.0: ป็อปอัปเปิดอยู่ = หน้าหลังเลื่อนไม่ได้ (คงช่องแถบเลื่อนไว้ หน้าไม่ขยับ) */
+html.scroll-locked { overflow: hidden; scrollbar-gutter: stable; }
+html.scroll-locked body { overscroll-behavior: none; }
+/* 2.23.0: หน้าภาพรวมระบบ — ความพร้อมของระบบ */
+.ov-ready { margin-bottom: 6px; }
+.ov-rd-g { font-size: .8rem; font-weight: 700; color: var(--text-muted); margin: 10px 0 2px; }
+.ov-rd-g:first-child { margin-top: 0; }
+.ov-rd-l { list-style: none; margin: 0; padding: 0; }
+.ov-rd { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--border); }
+.ov-rd:last-child { border-bottom: 0; }
+.ov-rd > i { margin-top: 3px; flex-shrink: 0; width: 16px; text-align: center; }
+.ov-rd.ok > i { color: #16a34a; } .ov-rd.warn > i { color: #ea580c; } .ov-rd.bad > i { color: #dc2626; } .ov-rd.info > i { color: #2563eb; } .ov-rd.wait > i { color: var(--text-muted); }
+.ov-rd-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ov-rd-t > b { font-size: .9rem; }
+.ov-rd-t > span { font-size: .84rem; color: var(--text-muted); overflow-wrap: anywhere; }
+.ov-rd-t .btn { align-self: flex-start; margin-top: 4px; }
+.ov-rd > .btn { flex-shrink: 0; white-space: nowrap; }
+.ov-rd-n summary { cursor: pointer; font-size: .8rem; color: var(--primary); }
+.ov-rd-n div { font-size: .82rem; margin-top: 4px; padding: 8px 10px; background: var(--surface-2); border-radius: 8px; }
+.ov-rd-ok { margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+.ov-rd-ok > summary { cursor: pointer; font-weight: 700; font-size: .86rem; color: #15803d; }
+[data-theme="dark"] .ov-rd-ok > summary { color: #4ade80; }
+@media (max-width: 560px) { .ov-rd { flex-wrap: wrap; } .ov-rd-t { flex-basis: calc(100% - 26px); } .ov-rd > .btn { margin-left: 26px; } }

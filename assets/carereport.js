@@ -73,7 +73,9 @@
     var ev = [], seq = 0;
     if (opt.photos) rows.forEach(function (h, i) { (h.photos || []).forEach(function (pid) { seq++; ev.push({ no: seq, row: i + 1, h: h, pid: pid }); }); h._ref = null; });
     rows.forEach(function (h, i) { var mine = ev.filter(function (x) { return x.row === i + 1; }); h._ref = mine.length ? mine[0].no + (mine.length > 1 ? '–' + mine[mine.length - 1].no : '') : ''; });
-    for (var k = 0; k < ev.length; k++) { prog('กำลังโหลดรูปหลักฐาน ' + (k + 1) + '/' + ev.length + '…'); try { ev[k].src = await o.getPhoto(ev[k].h.id, ev[k].pid); } catch (e) { ev[k].src = ''; ev[k].err = e && e.message || 'โหลดรูปไม่สำเร็จ'; } }
+    var got = 0, nx = 0; // 2.23.0: โหลดพร้อมกันครั้งละ 4 รูป
+    async function worker() { while (nx < ev.length) { var x = ev[nx++]; try { x.src = await o.getPhoto(x.h.id, x.pid); } catch (e) { x.src = ''; x.err = e && e.message || 'โหลดรูปไม่สำเร็จ'; } got++; prog('กำลังโหลดรูปหลักฐาน ' + got + '/' + ev.length + '…'); } }
+    if (ev.length) { prog('กำลังโหลดรูปหลักฐาน 0/' + ev.length + '…'); await Promise.all([worker(), worker(), worker(), worker()]); }
     // หน้า
     var now = new Date(), stamp = 'ออกเอกสารเมื่อ ' + now.getDate() + ' ' + MS[now.getMonth()] + ' ' + (now.getFullYear() + 543) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ' น.';
     var font = getComputedStyle(document.body).fontFamily, pages = [];
