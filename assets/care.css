@@ -299,3 +299,22 @@
 .cc-di .cc-who { margin-left: 4px; vertical-align: 1px; }
 @media (max-width: 480px) { .cc-dseg button { padding: 5px 9px; font-size: .8rem; } .cc-dseg button i { display: none; } }
 .cc-dd small { display: block; font-size: .74rem; }
+/* 2.26.0: สรุปรวม / มาสาย — การ์ด 2 คอลัมน์สูงเท่ากันในแต่ละแถว · ย่อ / ขยายได้ */
+.cc-eq { align-items: stretch; margin-top: 14px; }
+.cc-eq > .cc-card { display: flex; flex-direction: column; min-width: 0; }
+.cc-eq > .cc-card.is-fold { align-self: start; }
+.cc-eq > .cc-full { grid-column: 1 / -1; }
+.cc-eq .cc-bars { flex: 1 1 auto; min-height: 170px; }
+.cc-cbot { margin-top: auto; padding-top: 6px; }
+.cc-fold { margin-left: 6px; flex: none; width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: .78rem; }
+.cc-card h3 .cc-fold i { color: inherit; transition: transform .18s ease; }
+.cc-fold:hover { background: var(--surface-2); color: var(--text); }
+.cc-fc h3 .cc-fold { margin-left: auto; }
+.cc-fc h3 .cc-pp ~ .cc-fold { margin-left: 8px; }
+.cc-fc.is-fold > :not(h3) { display: none !important; }
+.cc-fc.is-fold > h3 { margin-bottom: 0; }
+.cc-fc.is-fold h3 .cc-fold i { transform: rotate(180deg); }
+.cc-rs2 span { width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 600px) { .cc-rs2 span { width: 110px; } }
+@media print { .cc-fold { display: none; } }
+.cc-ft .cc-tg { white-space: nowrap; }

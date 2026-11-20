@@ -149,6 +149,10 @@
   // 2.13.0: โหลดข้อมูลชุดใหม่ = ของเดิมจางค้างไว้ (ไม่ล้างเป็น "กำลังโหลด" ให้กระพริบ) · วาดผลใหม่ทับเมื่อมาถึง
   function keepOf(id) { var o = document.getElementById(id); return o && o.innerHTML && !o.querySelector('.loading, .error-box') ? o.innerHTML : ''; }
   function restore(id, k) { var n = document.getElementById(id); if (n && k) n.innerHTML = '<div class="is-reloading">' + k + '</div>'; }
+  // 2.26.0: การ์ดย่อ / ขยายได้ (จำไว้ในเครื่อง) — ปุ่มลูกศรท้ายหัวการ์ด · ย่อแล้วเหลือหัวการ์ด
+  var FOLD = (function () { try { return JSON.parse(localStorage.getItem('bnkah_cc_fold') || '{}') || {}; } catch (e) { return {}; } })();
+  function foldBtn(id) { return '<button type="button" class="cc-fold" data-cc-fold="' + id + '" aria-expanded="' + (FOLD[id] ? 'false' : 'true') + '" title="' + (FOLD[id] ? 'ขยาย' : 'ย่อ') + '">' + ic('fa-chevron-up') + '</button>'; }
+  function card(id, title, inner, cls) { return '<div class="card cc-card cc-fc' + (FOLD[id] ? ' is-fold' : '') + (cls ? ' ' + cls : '') + '" data-fc="' + id + '"><h3>' + title + foldBtn(id) + '</h3>' + inner + '</div>'; }
   function stat(t, v, c, sub) { return '<div class="cc-st"><span>' + t + '</span><b' + (c ? ' style="color:' + c + '"' : '') + '>' + v + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>'; }
   async function showOverview() {
     var freq = st.tab === 'frequent';
@@ -163,16 +167,20 @@
     var gk = Object.keys(gr).sort(), gmx = Math.max.apply(null, [1].concat(gk.map(function (k) { return gr[k]; })));
     var h = capHead('สรุปการมาสาย') +
       '<div class="cc-sts">' + stat('มาสายวันนี้', O.todayN) + stat('มาสายในช่วงที่เลือก (ครั้ง)', O.total, '', O.selfN ? 'นักเรียนแจ้งเอง ' + O.selfN + ' ครั้ง' : '') + stat('นักเรียนที่สาย (ไม่ซ้ำคน)', O.students) + stat('สาย ≥ ' + O.notifyN + ' ครั้งในเดือนนี้ (คน)', O.monthFreq, O.monthFreq ? '#b91c1c' : '') + '</div>';
-    h += '<div class="cc-grid"><div class="card cc-card"><h3>' + ic('fa-chart-column') + ' จำนวนนักเรียนมาสายรายวัน</h3>' +
-      (O.byDay.length ? '<div class="cc-bars">' + O.byDay.slice(-31).map(function (x) { var d = dP(x.date); return '<div title="' + thD(x.date, true) + ' · ' + x.n + ' คน"><em>' + x.n + '</em><i style="height:' + Math.max(4, Math.round(x.n / mx * 130)) + 'px"></i>' + DW[d.getDay()] + ' ' + d.getDate() + '</div>'; }).join('') + '</div>' : '<p class="hint">ไม่มีการมาสายในช่วงนี้</p>') +
-      '<h3 style="margin-top:16px">' + ic('fa-layer-group') + ' มาสายรายระดับชั้น</h3>' +
+    h += '<div class="cc-grid2 cc-eq">' + card('ld', ic('fa-chart-column') + ' จำนวนนักเรียนมาสายรายวัน',
+      (O.byDay.length ? '<div class="cc-bars">' + O.byDay.slice(-31).map(function (x) { var d = dP(x.date); return '<div title="' + thD(x.date, true) + ' · ' + x.n + ' คน"><em>' + x.n + '</em><i style="height:' + Math.max(4, Math.round(x.n / mx * 130)) + 'px"></i>' + DW[d.getDay()] + ' ' + d.getDate() + '</div>'; }).join('') + '</div>' : '<p class="hint">ไม่มีการมาสายในช่วงนี้</p>'));
+    h += card('lg', ic('fa-layer-group') + ' มาสายรายระดับชั้น',
       (gk.length ? '<div class="cc-rs cc-gb">' + gk.map(function (k) { return '<div><span>' + esc(k) + '</span><i style="width:' + Math.max(3, Math.round(gr[k] / gmx * 100)) + '%;background:#c8102e"></i><b>' + gr[k] + '</b></div>'; }).join('') + '</div>' : '<p class="hint">-</p>') +
-      '<p class="hint cc-noexp"><a href="#" data-cc-go="rooms">' + ic('fa-door-open') + ' ดูสรุปรายห้อง</a></p></div>';
+      '<p class="hint cc-noexp cc-cbot"><a href="#" data-cc-go="rooms">' + ic('fa-door-open') + ' ดูสรุปรายห้อง</a></p>');
     var fN = Math.min(O.frequent.length, st.fqN || 10);
-    h += '<div class="card cc-card"><h3>' + ic('fa-triangle-exclamation') + ' สายบ่อยในช่วงนี้ <small class="mut" style="font-weight:500">· ' + O.frequent.length + ' คน</small></h3>' + freqTable(O.frequent.slice(0, fN)) +
+    h += card('lf', ic('fa-triangle-exclamation') + ' สายบ่อยในช่วงนี้ <small class="mut" style="font-weight:500">· ' + O.frequent.length + ' คน</small>', freqTable(O.frequent.slice(0, fN)) +
       (O.frequent.length > fN ? '<p class="cc-more cc-noexp"><button type="button" class="btn btn-secondary btn-sm" data-cc-fmore>' + ic('fa-chevron-down') + ' แสดงเพิ่ม (' + fN + ' จาก ' + O.frequent.length + ' คน)</button></p>' : '') +
-      '<h3 style="margin-top:16px">' + ic('fa-list') + ' สาเหตุ</h3>' +
-      (O.reasons.length ? '<div class="cc-rs">' + O.reasons.slice().sort(function (a, b) { return (a.reason ? 0 : 1) - (b.reason ? 0 : 1) || b.n - a.n; }).map(function (x, i) { return '<div><span' + (x.reason ? '' : ' class="mut"') + '>' + esc(x.reason || 'ไม่ระบุ') + '</span><i style="width:' + Math.max(3, Math.round(x.n / rmx * 100)) + '%;background:' + (x.reason ? PAL[i % PAL.length] : '#cbd5e1') + '"></i><b>' + x.n + '</b></div>'; }).join('') + '</div>' : '<p class="hint">-</p>') + '</div></div>';
+      '');
+    // สาเหตุ: 10 อันดับแรก (ไม่ระบุอยู่ท้ายเสมอ) · กดแสดงทั้งหมด
+    var RS = O.reasons.slice().sort(function (a, b) { return (a.reason ? 0 : 1) - (b.reason ? 0 : 1) || b.n - a.n; }), rsN = st.rsAll ? RS.length : 10, rsShow = RS.filter(function (x, i) { return i < rsN || !x.reason; });
+    h += card('lr', ic('fa-list') + ' สาเหตุ <small class="mut" style="font-weight:500">· ' + RS.filter(function (x) { return x.reason; }).length + ' แบบ</small>',
+      (RS.length ? '<div class="cc-rs cc-rs2">' + rsShow.map(function (x, i) { return '<div><span' + (x.reason ? '' : ' class="mut"') + ' title="' + esc(x.reason || 'ไม่ระบุ') + '">' + esc(x.reason || 'ไม่ระบุ') + '</span><i style="width:' + Math.max(3, Math.round(x.n / rmx * 100)) + '%;background:' + (x.reason ? PAL[i % PAL.length] : '#cbd5e1') + '"></i><b>' + x.n + '</b></div>'; }).join('') + '</div>' +
+        (RS.length > rsShow.length ? '<p class="cc-more cc-noexp"><button type="button" class="btn btn-secondary btn-sm" data-cc-rsmore>' + ic('fa-chevron-down') + ' แสดงทั้งหมด (' + (RS.length - rsShow.length) + ' แบบที่เหลือ)</button></p>' : '') : '<p class="hint">-</p>')) + '</div>';
     box.innerHTML = h;
   }
   function freqTable(list) {
@@ -209,32 +217,32 @@
       stat('รวมเพิ่ม' + tagP('r'), sgn(A.plus), A.plus ? '#2563eb' : '', A.count + ' ครั้งที่บันทึก') + '</div>';
     // ระดับแยกชั้น
     var gk = Object.keys(S.byGrade).sort(), seg = [['good', '#22c55e', 'ดี'], ['fair', '#facc15', 'พอใช้'], ['low', '#f97316', 'ต้องปรับปรุง'], ['neg', '#dc2626', 'ติดลบ']];
-    h += '<div class="cc-grid2"><div class="card cc-card"><h3>' + ic('fa-layer-group') + ' ระดับพฤติกรรมแยกชั้น' + tagP() + '</h3><div class="cc-lg">' + seg.map(function (x) { return '<span><i style="background:' + x[1] + '"></i>' + x[2] + '</span>'; }).join('') + '</div>' +
-      (gk.length ? '<div class="cc-stk">' + gk.map(function (k) { var x = S.byGrade[k]; return '<div><span>ม.' + k.slice(1) + '</span><div class="cc-stb">' + seg.map(function (z) { return x[z[0]] ? '<i style="width:' + (x[z[0]] / x.n * 100) + '%;background:' + z[1] + '" title="' + z[2] + ' ' + x[z[0]] + ' คน"></i>' : ''; }).join('') + '</div><b>' + x.n + ' คน</b><small>เฉลี่ย ' + x.avg + '</small></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีรายชื่อนักเรียน</p>') + '</div>';
+    h += '<div class="cc-grid2 cc-eq">' + card('lv', ic('fa-layer-group') + ' ระดับพฤติกรรมแยกชั้น' + tagP(), '<div class="cc-lg">' + seg.map(function (x) { return '<span><i style="background:' + x[1] + '"></i>' + x[2] + '</span>'; }).join('') + '</div>' +
+      (gk.length ? '<div class="cc-stk">' + gk.map(function (k) { var x = S.byGrade[k]; return '<div><span>ม.' + k.slice(1) + '</span><div class="cc-stb">' + seg.map(function (z) { return x[z[0]] ? '<i style="width:' + (x[z[0]] / x.n * 100) + '%;background:' + z[1] + '" title="' + z[2] + ' ' + x[z[0]] + ' คน"></i>' : ''; }).join('') + '</div><b>' + x.n + ' คน</b><small>เฉลี่ย ' + x.avg + '</small></div>'; }).join('') + '</div>' : '<p class="hint">ยังไม่มีรายชื่อนักเรียน</p>'));
     // รายการ
     var minusAll = S.items.reduce(function (a, x) { return a + (x.s < 0 ? x.s : 0); }, 0), its = S.items.slice(0, 12);
-    h += '<div class="card cc-card"><h3>' + ic('fa-list-check') + ' รายการที่ถูกหัก / เพิ่มบ่อย' + tagP('r') + '</h3>' +
-      (its.length ? '<div class="cc-il">' + its.map(function (x) { return '<div><span>' + esc(x.item) + (x.late && minusAll ? ' <small class="mut">(' + Math.round(x.s / minusAll * 100) + '% ของคะแนนที่หัก)</small>' : '') + '</span><small>' + x.n + ' ครั้ง</small><b class="' + (x.s < 0 ? 'cc-m' : 'cc-pl') + '">' + sgn(x.s) + '</b></div>'; }).join('') + '</div>' + (S.items.length > its.length ? '<p class="hint">และอีก ' + (S.items.length - its.length) + ' รายการ (ดูครบใน Excel)</p>' : '') : '<p class="hint">ไม่มีการหัก/เพิ่มคะแนนในช่วงนี้</p>') + '</div>';
+    h += card('it', ic('fa-list-check') + ' รายการที่ถูกหัก / เพิ่มบ่อย' + tagP('r'),
+      (its.length ? '<div class="cc-il">' + its.map(function (x) { return '<div><span>' + esc(x.item) + (x.late && minusAll ? ' <small class="mut">(' + Math.round(x.s / minusAll * 100) + '% ของคะแนนที่หัก)</small>' : '') + '</span><small>' + x.n + ' ครั้ง</small><b class="' + (x.s < 0 ? 'cc-m' : 'cc-pl') + '">' + sgn(x.s) + '</b></div>'; }).join('') + '</div>' + (S.items.length > its.length ? '<p class="hint">และอีก ' + (S.items.length - its.length) + ' รายการ (ดูครบใน Excel)</p>' : '') : '<p class="hint">ไม่มีการหัก/เพิ่มคะแนนในช่วงนี้</p>'));
     // รายวัน
     var dmx = Math.max.apply(null, [1].concat(S.byDay.map(function (x) { return Math.max(-x.m, x.p); })));
-    h += '<div class="card cc-card"><h3>' + ic('fa-chart-column') + ' หัก / เพิ่ม รายวัน' + tagP('r') + '</h3><div class="cc-lg"><span><i style="background:#ef4444"></i>หัก</span><span><i style="background:#3b82f6"></i>เพิ่ม</span></div>' +
-      (S.byDay.length ? '<div class="cc-bars cc-bars2">' + S.byDay.slice(-31).map(function (x) { var d = dP(x.date); return '<div title="' + thD(x.date, true) + ' · หัก ' + (-x.m) + ' · เพิ่ม ' + x.p + '"><span class="cc-bp"><i class="m" style="height:' + (x.m ? Math.max(3, Math.round(-x.m / dmx * 120)) : 0) + 'px"></i><i class="p" style="height:' + (x.p ? Math.max(3, Math.round(x.p / dmx * 120)) : 0) + 'px"></i></span>' + DW[d.getDay()] + ' ' + d.getDate() + '</div>'; }).join('') + '</div>' : '<p class="hint">ไม่มีข้อมูลในช่วงนี้</p>') + '</div>';
+    h += card('dy', ic('fa-chart-column') + ' หัก / เพิ่ม รายวัน' + tagP('r'), '<div class="cc-lg"><span><i style="background:#ef4444"></i>หัก</span><span><i style="background:#3b82f6"></i>เพิ่ม</span></div>' +
+      (S.byDay.length ? '<div class="cc-bars cc-bars2">' + S.byDay.slice(-31).map(function (x) { var d = dP(x.date); return '<div title="' + thD(x.date, true) + ' · หัก ' + (-x.m) + ' · เพิ่ม ' + x.p + '"><span class="cc-bp"><i class="m" style="height:' + (x.m ? Math.max(3, Math.round(-x.m / dmx * 120)) : 0) + 'px"></i><i class="p" style="height:' + (x.p ? Math.max(3, Math.round(x.p / dmx * 120)) : 0) + 'px"></i></span>' + DW[d.getDay()] + ' ' + d.getDate() + '</div>'; }).join('') + '</div>' : '<p class="hint">ไม่มีข้อมูลในช่วงนี้</p>'));
     // ห้อง
     var rl = function (L) { return L.length ? L.map(function (x) { return '<div class="cc-click" data-cc-go="rooms" data-r="' + esc(x.roomId) + '"><span>' + esc(x.room) + '</span><b>' + x.avg + '</b></div>'; }).join('') : '<p class="hint">-</p>'; };
-    h += '<div class="card cc-card"><h3>' + ic('fa-door-open') + ' ห้องคะแนนเฉลี่ย' + tagP() + '</h3><div class="cc-2c"><div><h4 class="cc-m">ต่ำสุด ' + S.roomsLow.length + ' ห้อง</h4><div class="cc-il">' + rl(S.roomsLow) + '</div></div><div><h4 class="cc-p">สูงสุด ' + S.roomsHigh.length + ' ห้อง</h4><div class="cc-il">' + rl(S.roomsHigh) + '</div></div></div><p class="hint cc-noexp">' + ic('fa-hand-pointer') + ' กดที่ห้องเพื่อดูรายคน</p></div>';
+    h += card('rm', ic('fa-door-open') + ' ห้องคะแนนเฉลี่ย' + tagP(), '<div class="cc-2c"><div><h4 class="cc-m">ต่ำสุด ' + S.roomsLow.length + ' ห้อง</h4><div class="cc-il">' + rl(S.roomsLow) + '</div></div><div><h4 class="cc-p">สูงสุด ' + S.roomsHigh.length + ' ห้อง</h4><div class="cc-il">' + rl(S.roomsHigh) + '</div></div></div><p class="hint cc-noexp">' + ic('fa-hand-pointer') + ' กดที่ห้องเพื่อดูรายคน</p>');
     // ต้องติดตาม + สูงสุด
     var sl = function (L, medal) { return '<div class="cc-il">' + L.map(function (x, i) { return '<div class="cc-click" data-cc-stu="' + esc(x.key) + '"><span>' + (medal ? (['🥇', '🥈', '🥉'][i] || (i + 1) + '.') + ' ' : '') + esc(x.room) + ' เลขที่ ' + esc(x.no) + ' · ' + esc(x.name) + '</span><b class="' + (x.score < 0 ? 'cc-m' : (x.score > ST.startPoints ? 'cc-pl' : '')) + '">' + x.score + '</b></div>'; }).join('') + '</div>'; };
     var WN = S.watch.slice(0, st.watchAll ? 300 : 10);
-    h += '<div class="card cc-card"><h3>' + ic('fa-triangle-exclamation') + ' นักเรียนที่ต้องติดตาม <span class="cc-m">' + S.watchN + ' คน</span>' + tagP() + '</h3><p class="hint" style="margin-top:-4px">ต่ำกว่าเกณฑ์ "ต้องปรับปรุง" (' + ST.fair + ' คะแนน) · เรียงจากต่ำสุด · กดชื่อดูประวัติ</p>' +
-      (WN.length ? sl(WN) : '<p class="hint">ไม่มีนักเรียนที่ต่ำกว่าเกณฑ์ 👍</p>') + (S.watchN > WN.length ? '<p class="hint cc-noexp"><a href="#" data-cc-wall>ดูทั้งหมด ' + Math.min(S.watchN, 300) + ' คน</a>' + (S.watchN > 300 ? ' (Excel ส่งออก 300 คนแรก)' : '') + '</p>' : '') + '</div>';
-    h += '<div class="card cc-card" id="ccDed">' + dedHtml(S) + '</div></div>';
+    h += card('wt', ic('fa-triangle-exclamation') + ' นักเรียนที่ต้องติดตาม <span class="cc-m">' + S.watchN + ' คน</span>' + tagP(), '<p class="hint" style="margin-top:-4px">ต่ำกว่าเกณฑ์ "ต้องปรับปรุง" (' + ST.fair + ' คะแนน) · เรียงจากต่ำสุด · กดชื่อดูประวัติ</p>' +
+      (WN.length ? sl(WN) : '<p class="hint">ไม่มีนักเรียนที่ต่ำกว่าเกณฑ์ 👍</p>') + (S.watchN > WN.length ? '<p class="hint cc-noexp"><a href="#" data-cc-wall>ดูทั้งหมด ' + Math.min(S.watchN, 300) + ' คน</a>' + (S.watchN > 300 ? ' (Excel ส่งออก 300 คนแรก)' : '') + '</p>' : ''), 'cc-full');
+    h += '<div class="card cc-card cc-fc cc-full' + (FOLD.dd ? ' is-fold' : '') + '" data-fc="dd" id="ccDed">' + dedHtml(S) + '</div></div>';
     return h;
   }
   // 2.24.0: รายชื่อนักเรียนช่วงนี้ — แท็บย่อย ถูกหักคะแนน (รวมมาสาย) / ถูกเพิ่มคะแนน · แสดงครบทุกคน (หน้าละ 50 คน)
   //   คนเดียวกันรวมแถวเดียว กดกางดูรายการ (วันที่ · เวลา · แท็กผู้บันทึก) · Care Center รุ่นก่อน 1.09.0 = เฉพาะถูกหัก ไม่รวมมาสาย
   var DED_PP = 50;
   function dedHtml(S) {
-    var h = '<h3>' + ic('fa-users') + ' รายชื่อนักเรียนช่วงนี้' + tagP('r') + '</h3>';
+    var h = '<h3>' + ic('fa-users') + ' รายชื่อนักเรียนช่วงนี้' + tagP('r') + foldBtn('dd') + '</h3>';
     if (!S.ded) return h + '<p class="hint">ต้องอัปเดต Worker ของ BNK Care Center (1.07.0 ขึ้นไป) จึงจะแสดงส่วนนี้</p>';
     var hasInc = !!S.inc, tab = hasInc && st.dedTab === 'p' ? 'p' : 'm', A = tab === 'p' ? S.inc : S.ded, neg = tab === 'm', op = st.dedOpen || {};
     h += '<div class="evl-seg cc-dseg" role="tablist"><button type="button" role="tab" data-cc-dtab="m" class="' + (tab === 'm' ? 'on' : '') + '" aria-selected="' + (tab === 'm') + '">' + ic('fa-user-minus') + ' ถูกหักคะแนน <b>' + S.ded.length + '</b> คน</button>' +
@@ -914,6 +922,8 @@
     if ((t = e.target.closest('[data-cc-pg]'))) { if (t.disabled) return; st.pg = +t.getAttribute('data-cc-pg'); renderScores(); var tb = document.getElementById('ccSc'); if (tb) tb.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
     if ((t = e.target.closest('[data-cc-rg]'))) { st.range = t.getAttribute('data-cc-rg'); show(); return; }
     if ((t = e.target.closest('[data-cc-go]'))) { e.preventDefault(); st.rroom = t.getAttribute('data-r') || ''; goTab(t.getAttribute('data-cc-go')); return; }
+    if ((t = e.target.closest('[data-cc-fold]'))) { var fid = t.getAttribute('data-cc-fold'), fc = t.closest('.cc-fc'); FOLD[fid] = !FOLD[fid]; if (!FOLD[fid]) delete FOLD[fid]; try { localStorage.setItem('bnkah_cc_fold', JSON.stringify(FOLD)); } catch (x) { /* ข้าม */ } if (fc) fc.classList.toggle('is-fold', !!FOLD[fid]); t.setAttribute('aria-expanded', FOLD[fid] ? 'false' : 'true'); t.title = FOLD[fid] ? 'ขยาย' : 'ย่อ'; return; }
+    if (e.target.closest('[data-cc-rsmore]')) { st.rsAll = true; showOverview(); return; }
     if (e.target.closest('[data-cc-fmore]')) { st.fqN = (st.fqN || 10) + 20; showOverview(); return; }
     if ((t = e.target.closest('[data-cc-ded]'))) { var dk = t.getAttribute('data-cc-ded'); st.dedOpen = st.dedOpen || {}; st.dedOpen[dk] = !st.dedOpen[dk]; dedRedraw(); return; }
     if ((t = e.target.closest('[data-cc-dtab]'))) { st.dedTab = t.getAttribute('data-cc-dtab'); st.dedPg = 1; dedRedraw(); return; }
