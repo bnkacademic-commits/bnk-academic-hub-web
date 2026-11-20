@@ -230,25 +230,35 @@
     h += '<div class="card cc-card" id="ccDed">' + dedHtml(S) + '</div></div>';
     return h;
   }
-  // 2.15.0: นักเรียนที่ถูกหักคะแนนในช่วงที่เลือก (แทนคะแนนสูงสุด 10 อันดับ) · ไม่รวมมาสาย · คนเดียวกันรวมแถวเดียว กดกางดูรายการ
+  // 2.24.0: รายชื่อนักเรียนช่วงนี้ — แท็บย่อย ถูกหักคะแนน (รวมมาสาย) / ถูกเพิ่มคะแนน · แสดงครบทุกคน (หน้าละ 50 คน)
+  //   คนเดียวกันรวมแถวเดียว กดกางดูรายการ (วันที่ · เวลา · แท็กผู้บันทึก) · Care Center รุ่นก่อน 1.09.0 = เฉพาะถูกหัก ไม่รวมมาสาย
+  var DED_PP = 50;
   function dedHtml(S) {
-    var h = '<h3>' + ic('fa-user-minus') + ' นักเรียนที่ถูกหักคะแนน' + (S.ded ? ' <span class="cc-m">' + S.ded.length + ' คน</span>' : '') + tagP('r') + '</h3>';
+    var h = '<h3>' + ic('fa-users') + ' รายชื่อนักเรียนช่วงนี้' + tagP('r') + '</h3>';
     if (!S.ded) return h + '<p class="hint">ต้องอัปเดต Worker ของ BNK Care Center (1.07.0 ขึ้นไป) จึงจะแสดงส่วนนี้</p>';
-    if (!S.ded.length) return h + '<p class="hint">ไม่มีนักเรียนถูกหักคะแนนในช่วงนี้ 👍</p>';
-    var L = S.ded.slice(0, st.dedAll ? 300 : 10), op = st.dedOpen || {};
-    h += '<p class="hint cc-dh">' + esc(rangeTxt()) + ' · ' + S.dedN + ' ครั้ง รวม <b class="cc-m">' + S.dedSum + '</b> คะแนน · ไม่รวมมาสาย · คนเดียวกันรวมเป็นแถวเดียว กดเพื่อดูรายการ</p><div class="cc-dl">' +
+    var hasInc = !!S.inc, tab = hasInc && st.dedTab === 'p' ? 'p' : 'm', A = tab === 'p' ? S.inc : S.ded, neg = tab === 'm', op = st.dedOpen || {};
+    h += '<div class="evl-seg cc-dseg" role="tablist"><button type="button" role="tab" data-cc-dtab="m" class="' + (tab === 'm' ? 'on' : '') + '" aria-selected="' + (tab === 'm') + '">' + ic('fa-user-minus') + ' ถูกหักคะแนน <b>' + S.ded.length + '</b> คน</button>' +
+      (hasInc ? '<button type="button" role="tab" data-cc-dtab="p" class="' + (tab === 'p' ? 'on' : '') + '" aria-selected="' + (tab === 'p') + '">' + ic('fa-user-plus') + ' ถูกเพิ่มคะแนน <b>' + S.inc.length + '</b> คน</button>' : '') + '</div>';
+    if (!A.length) return h + '<p class="hint">' + (neg ? 'ไม่มีนักเรียนถูกหักคะแนนในช่วงนี้' : 'ไม่มีนักเรียนได้เพิ่มคะแนนในช่วงนี้') + '</p>';
+    var n = neg ? S.dedN : S.incN, sum = neg ? S.dedSum : S.incSum, tot = A.length, pages = Math.max(1, Math.ceil(tot / DED_PP)), pg = Math.min(Math.max(1, st.dedPg || 1), pages), from = (pg - 1) * DED_PP, L = A.slice(from, from + DED_PP);
+    var cls = neg ? 'cc-m' : 'cc-pl', sg = function (v) { return (v > 0 ? '+' : '') + v; };
+    var when = function (x) { return DW[dP(x.date).getDay()] + ' ' + thD(x.date) + (x.tm ? ' · ' + x.tm + ' น.' : ''); };
+    var itemOf = function (x) { return x.late ? 'มาสาย' : x.item; };
+    h += '<p class="hint cc-dh">' + esc(rangeTxt()) + ' · ' + n + ' ครั้ง รวม <b class="' + cls + '">' + sg(sum) + '</b> คะแนน' + (neg ? (S.dedLate ? ' · รวมมาสายแล้ว' : ' · ไม่รวมมาสาย (อัปเดต Worker ของ Care Center เพื่อรวมมาสาย)') : '') + ' · คนเดียวกันรวมเป็นแถวเดียว กดเพื่อดูรายการ</p><div class="cc-dl' + (neg ? '' : ' plus') + '">' +
       L.map(function (o) {
-        var many = o.list.length > 1, on = many && op[o.key], one = o.list[0], its = [];
-        o.list.forEach(function (x) { if (its.indexOf(x.item) < 0) its.push(x.item); });
-        var sub = many ? its.slice(0, 3).join(' · ') + (its.length > 3 ? ' …' : '') : DW[dP(one.date).getDay()] + ' ' + thD(one.date) + ' · ' + one.item + (one.note ? ' (' + one.note + ')' : '');
-        return '<div class="cc-dr' + (on ? ' on' : '') + '"><div class="cc-dhd" ' + (many ? 'data-cc-ded="' + esc(o.key) + '" role="button" tabindex="0" aria-expanded="' + (on ? 'true' : 'false') + '"' : 'data-cc-stu="' + esc(o.key) + '" role="button" tabindex="0"') + '>' +
-          ic(many ? (on ? 'fa-chevron-down' : 'fa-chevron-right') : 'fa-minus') + '<span class="cc-dn"><b>' + esc(o.room) + ' เลขที่ ' + esc(o.no) + '</b> · ' + esc(o.name) + '<small>' + esc(sub) + '</small></span>' +
-          (many ? '<span class="cc-dc">' + o.list.length + ' ครั้ง</span>' : '') + '<b class="cc-m cc-ds">' + o.sum + '</b></div>' +
-          (on ? '<div class="cc-dlst">' + o.list.map(function (x) { return '<div><span class="cc-dd">' + DW[dP(x.date).getDay()] + ' ' + thD(x.date) + '</span><span class="cc-di">' + esc(x.item) + (x.note ? ' <small>' + esc(x.note) + '</small>' : '') + (x.by ? '<small class="cc-dby">โดย ' + esc(x.by) + '</small>' : '') + '</span><b class="cc-m">' + x.d + '</b></div>'; }).join('') +
-            '<a href="#" class="cc-dmore" data-cc-stu="' + esc(o.key) + '">' + ic('fa-clock-rotate-left') + ' ดูประวัติทั้งหมดของนักเรียน</a></div>' : '') + '</div>';
+        var key = tab + ':' + o.key, many = o.list.length > 1, on = many && op[key], one = o.list[0], its = [];
+        o.list.forEach(function (x) { var t = itemOf(x); if (its.indexOf(t) < 0) its.push(t); });
+        var sub = many ? its.slice(0, 3).join(' · ') + (its.length > 3 ? ' …' : '') : when(one) + ' · ' + itemOf(one) + (one.note ? ' (' + one.note + ')' : '');
+        return '<div class="cc-dr' + (on ? ' on' : '') + '"><div class="cc-dhd" ' + (many ? 'data-cc-ded="' + esc(key) + '" role="button" tabindex="0" aria-expanded="' + (on ? 'true' : 'false') + '"' : 'data-cc-stu="' + esc(o.key) + '" role="button" tabindex="0"') + '>' +
+          ic(many ? (on ? 'fa-chevron-down' : 'fa-chevron-right') : (neg ? 'fa-minus' : 'fa-plus')) + '<span class="cc-dn"><b>' + esc(o.room) + ' เลขที่ ' + esc(o.no) + '</b> · ' + esc(o.name) + '<small>' + esc(sub) + '</small></span>' +
+          (many ? '<span class="cc-dc">' + o.list.length + ' ครั้ง</span>' : '') + '<b class="' + cls + ' cc-ds">' + sg(o.sum) + '</b></div>' +
+          (on ? '<div class="cc-dlst">' + o.list.map(function (x) { return '<div><span class="cc-dd">' + esc(DW[dP(x.date).getDay()] + ' ' + thD(x.date)) + (x.tm ? '<small>' + esc(x.tm) + ' น.</small>' : '') + '</span><span class="cc-di">' + esc(itemOf(x)) + (x.note ? ' <small>' + esc(x.note) + '</small>' : '') + (x.who || x.by ? ' ' + whoTag(whoOf(x.by, x.who)) : '') + '</span><b class="' + cls + '">' + sg(x.d) + '</b></div>'; }).join('') +
+            '<a href="#" class="cc-dmore" data-cc-stu="' + esc(o.key) + '">' + ic('fa-id-card') + ' ดูรายงานพฤติกรรมนักเรียน</a></div>' : '') + '</div>';
       }).join('') + '</div>' +
-      (S.ded.length > L.length ? '<p class="hint cc-noexp"><a href="#" data-cc-dall>ดูทั้งหมด ' + Math.min(S.ded.length, 300) + ' คน</a>' + (S.ded.length > 300 ? ' (Excel ส่งออกครบทุกรายการ)' : '') + '</p>' : '') +
-      (S.dedCut ? '<p class="hint">' + ic('fa-circle-info') + ' ช่วงนี้มีรายการมาก แสดง ' + S.dedN + ' รายการล่าสุด — เลือกช่วงให้สั้นลงเพื่อดูครบ</p>' : '');
+      (pages > 1 ? '<div class="cc-pg cc-noexp"><span class="mut">แสดง ' + (from + 1) + '–' + (from + L.length) + ' จาก ' + tot + ' คน</span><span class="cc-pgs"><button type="button" data-cc-dpg="' + (pg - 1) + '"' + (pg <= 1 ? ' disabled' : '') + '>‹ ก่อนหน้า</button>' +
+        Array.from({ length: pages }, function (_, i) { return '<button type="button" data-cc-dpg="' + (i + 1) + '" class="' + (i + 1 === pg ? 'on' : '') + '">' + (i + 1) + '</button>'; }).join('') +
+        '<button type="button" data-cc-dpg="' + (pg + 1) + '"' + (pg >= pages ? ' disabled' : '') + '>ถัดไป ›</button></span></div>' : '') +
+      (S.dedCut ? '<p class="hint">' + ic('fa-circle-info') + ' ช่วงนี้มีรายการมาก แสดงเฉพาะรายการล่าสุด — เลือกช่วงให้สั้นลงเพื่อดูครบ</p>' : '');
     return h;
   }
   function dedRedraw() { var S = C.bh[rangeOf().join('|') + '|' + st.grade], el = document.getElementById('ccDed'); if (S && el) el.innerHTML = dedHtml(S); }
@@ -570,7 +580,8 @@
       S2.roomsLow.forEach(function (x) { rows.push(['ห้องคะแนนเฉลี่ยต่ำสุด', x.room, x.room, x.n, x.avg, '']); });
       S2.roomsHigh.forEach(function (x) { rows.push(['ห้องคะแนนเฉลี่ยสูงสุด', x.room, x.room, x.n, x.avg, '']); });
       S2.watch.forEach(function (x) { rows.push(['นักเรียนที่ต้องติดตาม', x.name + ' (เลขที่ ' + x.no + ')', x.room, '', x.score, '']); });
-      (S2.ded || []).forEach(function (o) { o.list.forEach(function (x) { rows.push(['ถูกหักคะแนน (ช่วงที่เลือก)', o.name + ' (เลขที่ ' + o.no + ') · ' + thD(x.date, true) + ' · ' + x.item + (x.note ? ' (' + x.note + ')' : '') + (x.by ? ' · โดย ' + x.by : ''), o.room, '', x.d, '']); }); });
+      var dx = function (lbl, L) { (L || []).forEach(function (o) { o.list.forEach(function (x) { var w = whoOf(x.by, x.who); rows.push([lbl, o.name + ' (เลขที่ ' + o.no + ') · ' + thD(x.date, true) + (x.tm ? ' ' + x.tm + ' น.' : '') + ' · ' + (x.late ? 'มาสาย' : x.item) + (x.note ? ' (' + x.note + ')' : '') + ' · ' + w.t + (w.n ? ' ' + w.n : ''), o.room, '', x.d < 0 ? x.d : '', x.d > 0 ? x.d : '']); }); }); };
+      dx('ถูกหักคะแนน (ช่วงที่เลือก)', S2.ded); dx('ถูกเพิ่มคะแนน (ช่วงที่เลือก)', S2.inc);
       title += 'สรุปรวมคะแนนพฤติกรรม · กิจกรรม ' + rangeTxt() + (st.grade ? ' · ม.' + st.grade.slice(1) : '');
     } else if (st.tab === 'scores') {
       if (!C.sc[st.room || 'all']) return showToast('รอโหลดข้อมูลก่อน', true);
@@ -790,7 +801,8 @@
     if ((t = e.target.closest('[data-cc-go]'))) { e.preventDefault(); st.rroom = t.getAttribute('data-r') || ''; goTab(t.getAttribute('data-cc-go')); return; }
     if (e.target.closest('[data-cc-fmore]')) { st.fqN = (st.fqN || 10) + 20; showOverview(); return; }
     if ((t = e.target.closest('[data-cc-ded]'))) { var dk = t.getAttribute('data-cc-ded'); st.dedOpen = st.dedOpen || {}; st.dedOpen[dk] = !st.dedOpen[dk]; dedRedraw(); return; }
-    if (e.target.closest('[data-cc-dall]')) { e.preventDefault(); st.dedAll = true; dedRedraw(); return; }
+    if ((t = e.target.closest('[data-cc-dtab]'))) { st.dedTab = t.getAttribute('data-cc-dtab'); st.dedPg = 1; dedRedraw(); return; }
+    if ((t = e.target.closest('[data-cc-dpg]'))) { st.dedPg = +t.getAttribute('data-cc-dpg'); dedRedraw(); var dd = document.getElementById('ccDed'); if (dd) dd.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
     if (e.target.closest('[data-cc-wall]')) { e.preventDefault(); st.watchAll = true; var bk = rangeOf(); document.getElementById('ccBh').innerHTML = summaryHtml(C.bh[bk[0] + '|' + bk[1] + '|' + st.grade]); return; }
     if ((t = e.target.closest('[data-cc-stu]'))) { if (t.tagName === 'A') e.preventDefault(); openStudent(t.getAttribute('data-cc-stu')); return; }
     if ((t = e.target.closest('[data-cc-room]'))) { st.rroom = t.getAttribute('data-cc-room'); showRooms(); return; }
