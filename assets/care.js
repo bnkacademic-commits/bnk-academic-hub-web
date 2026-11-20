@@ -512,7 +512,7 @@
     if (st.tab === 'scores') return 'คะแนนพฤติกรรม' + (st.room ? '_' + roomTxt(st.room) : '_ทุกห้อง') + (pgSuffix || '');
     if (st.tab === 'rooms') return (st.rroom ? 'สรุปห้อง_' + roomTxt(st.rroom) : 'สรุปรายห้อง' + g) + '_' + r[0] + '_' + r[1];
     if (st.tab === 'frequent') return 'สายบ่อย' + g + '_' + r[0] + '_' + r[1];
-    return 'สรุปรวม' + g + '_' + r[0] + '_' + r[1];
+    return 'รายงานการมาสาย' + g + '_' + r[0] + '_' + r[1];
   }
   function roomTxt(id) { var m = /m(\d+)_(\d+)/.exec(id || ''); return m ? 'ม' + m[1] + '-' + m[2] : id; }
   async function snap() {
@@ -525,12 +525,127 @@
   }
   var pgSuffix = '';
   async function exportImg() {
+    if (DOCS[st.tab]) return docExport('img');
     pgSuffix = st.tab === 'scores' && st.pp && scoreRows().length > st.pp ? '_หน้า' + st.pg : '';
     var res = await withProgress('กำลังสร้างรูปภาพ', async function () { var c = await snap(); if (!c) throw new Error('ยังไม่มีข้อมูล'); var b = await new Promise(function (ok) { c.toBlob(ok, 'image/png'); }); downloadBlob(b, fileBase() + '.png'); return true; }, { successLabel: 'ดาวน์โหลดรูปภาพแล้ว' });
     pgSuffix = '';
     return res;
   }
+  // ---------- 2.25.0: รายงานเป็นเอกสาร A4 (CCDoc) — หน้าแรกสรุป + กราฟ · หน้าถัดไปรายชื่อ — ใช้ได้บนมือถือ (ไม่ถ่ายภาพหน้าจอยาว ๆ) ----------
+  var DOCS = { overview: lateDoc, summary: sumDoc, rooms: roomsDoc, frequent: freqDoc, scores: scoresDoc };
+  async function docLoad() { await loadScriptOnce('assets/ccdoc.js?v=' + APP_VERSION); await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js'); return { h2c: window.html2canvas, jsPDF: window.jspdf.jsPDF }; }
+  async function docExport(kind) {
+    var lbl = kind === 'pdf' ? 'PDF' : 'รูปภาพ';
+    return withProgress('กำลังสร้าง' + lbl, async function () {
+      var L = await docLoad(), doc = await DOCS[st.tab](), D = window.CCDoc;
+      var r = kind === 'pdf' ? await D.pdf(doc, fileBase() + '.pdf', async function () { return L; }) : await D.png(doc, fileBase(), async function () { return L; });
+      return r;
+    }, { successLabel: kind === 'pdf' ? 'ดาวน์โหลด PDF แล้ว' : 'สร้างรูปแล้ว' });
+  }
+  function grOrder(id) { var m = /^m(\d+)_(\d+)$/.exec(id || ''); return m ? +m[1] * 100 + +m[2] : 9999; }
+  async function lateDoc() {
+    var r = rangeOf(), k = r[0] + '|' + r[1] + '|' + st.grade, O = C.ov[k]; if (!O) throw new Error('รอโหลดข้อมูลก่อน');
+    C.ex = C.ex || {};
+    if (!C.ex[k]) { var d = await apiCall('careExport', { from: r[0], to: r[1] }); C.ex[k] = d.records.filter(function (x) { return !st.grade || String(x.roomId).indexOf(st.grade + '_') === 0; }); }
+    var D = window.CCDoc, e = D.esc, recs = C.ex[k];
+    // หน้าแรก: ตัวเลข · มาสายรายวัน · รายระดับชั้น + ห้องที่สายมากสุด · สาเหตุ
+    var days = O.byDay.slice(-31).map(function (x) { var d = dP(x.date); return [(O.byDay.length > 16 ? '' : DW[d.getDay()] + ' ') + d.getDate(), x.n]; });
+    var gr = {}; O.byRoom.forEach(function (x) { var g = /^m(\d)/.exec(x.roomId); g = g ? 'ม.' + g[1] : '-'; gr[g] = (gr[g] || 0) + x.n; });
+    var rs = O.reasons.slice().sort(function (a, b) { return (a.reason ? 0 : 1) - (b.reason ? 0 : 1) || b.n - a.n; }), named = rs.filter(function (x) { return x.reason; }), none = rs.filter(function (x) { return !x.reason; });
+    var top = named.slice(0, 14), rest = named.slice(14), rl = top.map(function (x, i) { return [x.reason, x.n, PAL[i % PAL.length]]; });
+    if (rest.length) rl.push(['อื่น ๆ (' + rest.length + ' สาเหตุ)', rest.reduce(function (a, x) { return a + x.n; }, 0), '#94a3b8']);
+    none.forEach(function (x) { rl.push(['ไม่ระบุ', x.n, '#cbd5e1', 1]); });
+    var first = D.stats([['มาสายในช่วงนี้ (ครั้ง)', O.total, '#c8102e', O.selfN ? 'นักเรียนแจ้งเอง ' + O.selfN + ' ครั้ง' : ''], ['นักเรียนที่สาย (คน)', O.students], ['เฉลี่ยต่อวันที่มีคนสาย', O.byDay.length ? (Math.round(O.total / O.byDay.length * 10) / 10) : 0, '', O.byDay.length + ' วัน'], ['สาย ≥ ' + O.notifyN + ' ครั้งในเดือนนี้ (คน)', O.monthFreq, O.monthFreq ? '#b91c1c' : '']]) +
+      D.box('จำนวนนักเรียนมาสายรายวัน', D.vbars(days)) +
+      '<div class="ccd-2">' + D.box('มาสายรายระดับชั้น (ครั้ง)', D.hbars(Object.keys(gr).sort().map(function (g) { return [g, gr[g]]; }), true)) +
+      D.box('ห้องที่มาสายมากที่สุด', D.hbars(O.byRoom.slice(0, 6).map(function (x) { return [x.room + ' (' + x.s + ' คน)', x.n, '#f59e0b']; }))) + '</div>' +
+      '<div style="height:10px"></div>' + D.box('สาเหตุการมาสาย', D.hbars(rl)) +
+      (O.frequent.length ? D.box('มาสายบ่อยที่สุด', '<table class="ccd-tb"><colgroup><col style="width:40px"><col><col style="width:110px"><col style="width:60px"><col style="width:70px"></colgroup><thead><tr><th class="c">#</th><th>ชื่อ-นามสกุล</th><th>ห้อง / เลขที่</th><th class="c">ครั้ง</th><th class="c">คะแนน</th></tr></thead><tbody>' +
+        O.frequent.slice(0, 10).map(function (x, i) { return '<tr class="ccd-trim"><td class="c">' + (i + 1) + '</td><td>' + e(x.name) + '</td><td>' + e(x.room) + ' / ' + e(x.no) + '</td><td class="c"><b>' + x.n + '</b></td><td class="c">' + x.score + '</td></tr>'; }).join('') + '</tbody></table>') : '');
+    // หน้าถัดไป: รายชื่อนักเรียนที่มาสาย เรียงตามห้อง / เลขที่
+    var by = {};
+    var rmName = function (id, nm) { if (nm) return nm; var m = /^m(\d+)_(\d+)$/.exec(id || ''); return m ? 'ม.' + m[1] + '/' + m[2] : (id || '-'); };
+    recs.forEach(function (x) { var o = by[x.key] = by[x.key] || { roomId: x.roomId, room: rmName(x.roomId, x.room), no: x.no, name: x.name, list: [] }; o.list.push(x); });
+    var stu = Object.keys(by).map(function (k2) { return by[k2]; }).sort(function (a, b) { return grOrder(a.roomId) - grOrder(b.roomId) || (+a.no || 0) - (+b.no || 0); });
+    var rows = stu.map(function (o) {
+      o.list.sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); });
+      var why = []; o.list.forEach(function (x) { if (x.reason && why.indexOf(x.reason) < 0) why.push(x.reason); });
+      return [e(o.no), e(o.name), '<b>' + o.list.length + '</b>', o.list.map(function (x) { var d = dP(x.date); return DW[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth() + 1) + (x.time ? ' <small>' + e(x.time) + '</small>' : ''); }).join(', '), e(why.join(', ')) || '<small>-</small>'];
+    });
+    return {
+      title: 'รายงานการมาสาย', sub: 'โรงเรียนบุ่งคล้านคร · ช่วงวันที่ ' + rangeTxt() + (st.grade ? ' · ม.' + st.grade.slice(1) : ' · ทุกระดับชั้น'),
+      first: first,
+      table: { title: 'รายชื่อนักเรียนที่มาสาย', note: stu.length + ' คน · ' + recs.length + ' ครั้ง · เรียงตามห้องและเลขที่ · วันที่มาสาย (เวลา)',
+        cols: [{ t: 'เลขที่', w: '58px', al: 'c' }, { t: 'ชื่อ-นามสกุล', w: '190px' }, { t: 'ครั้ง', w: '52px', al: 'c' }, { t: 'วันที่มาสาย (เวลา)' }, { t: 'สาเหตุ', w: '150px' }],
+        rows: rows, group: stu.map(function (o) { return 'ห้อง ' + o.room; }) }
+    };
+  }
+  var LVC = { good: '#15803d', fair: '#a16207', low: '#c2410c', neg: '#b91c1c' };
+  function lvDoc(level, score) { var k = Number(score) < 0 ? 'neg' : level; return '<span style="color:' + LVC[k] + ';font-weight:700">' + (k === 'neg' ? 'ติดลบ' : lvTxt(level)) + '</span>'; }
+  function subOf(extra) { return 'โรงเรียนบุ่งคล้านคร · ' + extra + (st.grade ? ' · ม.' + st.grade.slice(1) : ' · ทุกระดับชั้น'); }
+  function miniTable(cols, rows, trim) { return '<table class="ccd-tb"><colgroup>' + cols.map(function (c) { return '<col' + (c[1] ? ' style="width:' + c[1] + '"' : '') + '>'; }).join('') + '</colgroup><thead><tr>' + cols.map(function (c) { return '<th class="' + (c[2] || '') + '">' + c[0] + '</th>'; }).join('') + '</tr></thead><tbody>' + rows.map(function (r) { return '<tr' + (trim ? ' class="ccd-trim"' : '') + '>' + r.map(function (v, j) { return '<td class="' + (cols[j][2] || '') + '">' + v + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>'; }
+  // สรุปรวม (คะแนนพฤติกรรม): หน้าแรกสรุป + กราฟ · หน้าถัดไปรายชื่อนักเรียนช่วงนี้ (ถูกหัก รวมมาสาย / ถูกเพิ่ม)
+  async function sumDoc() {
+    var r = rangeOf(), S = C.bh[r[0] + '|' + r[1] + '|' + st.grade]; if (!S) throw new Error('รอโหลดข้อมูลก่อน');
+    var D = window.CCDoc, e = D.esc, sc = S.score, A = S.adj, ST = S.settings, pc = function (n) { return sc.n ? Math.round(n / sc.n * 100) + '%' : '-'; };
+    var first = D.stats([['คะแนนเฉลี่ย (รอบปัจจุบัน)', sc.avg, '', sc.n + ' คน · เริ่มต้น ' + ST.startPoints], ['ระดับดี (≥ ' + ST.good + ')', sc.good, LVC.good, pc(sc.good)], ['ระดับพอใช้', sc.fair, LVC.fair, pc(sc.fair)], ['ต้องปรับปรุง · ติดลบ', '<span style="color:' + LVC.low + '">' + sc.low + '</span> · <span style="color:' + LVC.neg + '">' + sc.neg + '</span>', '', 'ต่ำกว่า ' + ST.fair + ' คะแนน'],
+      ['รวมหัก (ช่วงที่เลือก)', A.minus, A.minus ? LVC.neg : '', A.late ? 'จากมาสาย ' + (-A.late) : ''], ['รวมเพิ่ม (ช่วงที่เลือก)', sgn(A.plus), A.plus ? '#2563eb' : '', A.count + ' ครั้งที่บันทึก'], ['นักเรียนถูกหัก (คน)', (S.ded || []).length, '', S.dedLate ? 'รวมมาสาย' : ''], ['นักเรียนถูกเพิ่ม (คน)', (S.inc || []).length]]) +
+      D.box('คะแนนที่ถูกหักรายวัน (รวมมาสาย)', D.vbars(S.byDay.slice(-31).map(function (x) { var d = dP(x.date); return [(S.byDay.length > 16 ? '' : DW[d.getDay()] + ' ') + d.getDate(), -x.m]; }))) +
+      '<div class="ccd-2">' + D.box('ระดับพฤติกรรมแยกชั้น (รอบปัจจุบัน)', miniTable([['ชั้น', '44px'], ['ดี', '', 'c'], ['พอใช้', '', 'c'], ['ปรับปรุง', '', 'c'], ['ติดลบ', '', 'c'], ['เฉลี่ย', '', 'c']], Object.keys(S.byGrade).sort().map(function (k) { var x = S.byGrade[k]; return ['ม.' + k.slice(1), x.good, x.fair, x.low, x.neg, '<b>' + x.avg + '</b>']; }))) +
+      D.box('ห้องคะแนนเฉลี่ย (รอบปัจจุบัน)', miniTable([['ต่ำสุด', ''], ['เฉลี่ย', '52px', 'c'], ['สูงสุด', ''], ['เฉลี่ย', '52px', 'c']], Array.from({ length: Math.max(S.roomsLow.length, S.roomsHigh.length) }, function (_, i) { var a = S.roomsLow[i], b = S.roomsHigh[i]; return [a ? e(a.room) : '', a ? '<b>' + a.avg + '</b>' : '', b ? e(b.room) : '', b ? '<b>' + b.avg + '</b>' : '']; }))) + '</div><div style="height:10px"></div>' +
+      D.box('รายการที่ถูกหัก / เพิ่มบ่อย (ช่วงที่เลือก)', D.hbars(S.items.slice(0, 12).map(function (x) { return [x.item + ' (' + x.n + ' ครั้ง)', Math.abs(x.s), x.s < 0 ? '#ef4444' : '#3b82f6']; }))) +
+      (S.watch.length ? D.box('นักเรียนที่ต้องติดตาม (ต่ำกว่า ' + ST.fair + ' คะแนน · ' + S.watchN + ' คน)', miniTable([['ห้อง / เลขที่', '110px'], ['ชื่อ-นามสกุล', ''], ['คะแนน', '70px', 'c'], ['ระดับ', '100px', 'c']], S.watch.slice(0, 15).map(function (x) { return [e(x.room) + ' / ' + e(x.no), e(x.name), '<b>' + x.score + '</b>', lvDoc(x.level, x.score)]; }), true)) : '');
+    var rows = [], grp = [], line = function (x) { var w = whoOf(x.by, x.who), d = dP(x.date); return DW[d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth() + 1) + (x.tm ? ' ' + e(x.tm) : '') + ' · ' + e(x.late ? 'มาสาย' : x.item) + (x.note ? ' (' + e(x.note) + ')' : '') + ' <small>· ' + w.t + '</small> <b style="color:' + (x.d < 0 ? LVC.neg : '#2563eb') + '">' + sgn(x.d) + '</b>'; };
+    [['ถูกหักคะแนน' + (S.dedLate ? ' (รวมมาสาย)' : ''), S.ded || []], ['ถูกเพิ่มคะแนน', S.inc || []]].forEach(function (G) {
+      G[1].forEach(function (o) { rows.push([e(o.room), e(o.no), e(o.name), o.list.map(line).join('<br>'), '<b style="color:' + (o.sum < 0 ? LVC.neg : '#2563eb') + '">' + sgn(o.sum) + '</b>']); grp.push(G[0] + ' · ' + G[1].length + ' คน'); });
+    });
+    return { title: 'สรุปรวมคะแนนพฤติกรรม', sub: subOf('ช่วงวันที่ ' + rangeTxt() + ' · คะแนน' + periodTxt().replace(/^นับ ?/, ' ')), first: first,
+      table: { title: 'รายชื่อนักเรียนช่วงนี้', note: 'คนเดียวกันรวมเป็นแถวเดียว · เรียงจากคะแนนที่ถูกหัก / เพิ่มมากไปน้อย',
+        cols: [{ t: 'ห้อง', w: '56px' }, { t: 'เลขที่', w: '52px', al: 'c' }, { t: 'ชื่อ-นามสกุล', w: '170px' }, { t: 'รายการ (วันที่ เวลา · รายการ · ผู้บันทึก)' }, { t: 'รวม', w: '52px', al: 'c' }], rows: rows, group: grp } };
+  }
+  // มาสาย › รายห้อง (ทุกห้อง / ห้องเดียว)
+  async function roomsDoc() {
+    var r = rangeOf(), D = window.CCDoc, e = D.esc;
+    if (st.rroom) {
+      var X = C.rd[r[0] + '|' + r[1] + '|' + st.rroom]; if (!X) throw new Error('รอโหลดข้อมูลก่อน');
+      var lv = { good: 0, fair: 0, low: 0, neg: 0 }; X.list.forEach(function (x) { lv[x.score < 0 ? 'neg' : x.level]++; });
+      return { title: 'สรุปห้อง ' + X.room, sub: 'โรงเรียนบุ่งคล้านคร · ครูที่ปรึกษา ' + ((X.advisors || []).join(', ') || '-') + ' · มาสาย/หัก/เพิ่ม ช่วงวันที่ ' + rangeTxt() + ' · คะแนน' + X.period,
+        table: { head: D.stats([['ระดับดี', lv.good, LVC.good], ['ระดับพอใช้', lv.fair, LVC.fair], ['ต้องปรับปรุง', lv.low, LVC.low], ['ติดลบ', lv.neg, LVC.neg]]),
+          cols: [{ t: 'เลขที่', w: '56px', al: 'c' }, { t: 'ชื่อ-นามสกุล' }, { t: 'มาสาย', w: '64px', al: 'c' }, { t: 'หักคะแนน', w: '76px', al: 'c' }, { t: 'เพิ่มคะแนน', w: '80px', al: 'c' }, { t: 'คะแนน', w: '64px', al: 'c' }, { t: 'ระดับ', w: '96px', al: 'c' }],
+          rows: X.list.map(function (x) { return [e(x.no), e(x.name), x.late || '-', x.minus || '-', x.plus ? '+' + x.plus : '-', '<b>' + x.score + '</b>', lvDoc(x.level, x.score)]; }) } };
+    }
+    var RR = C.rm[r[0] + '|' + r[1]]; if (!RR) throw new Error('รอโหลดข้อมูลก่อน');
+    var L = roomsList(RR), T = { total: 0, late: 0, lateStu: 0, minus: 0, plus: 0, sum: 0, lv: { good: 0, fair: 0, low: 0, neg: 0 } };
+    L.forEach(function (x) { T.total += x.total; T.late += x.late; T.lateStu += x.lateStu; T.minus += x.minus; T.plus += x.plus; T.sum += x.avg * x.total; ['good', 'fair', 'low', 'neg'].forEach(function (k) { T.lv[k] += x.levels[k] || 0; }); });
+    var lvs = function (v) { return '<span style="color:' + LVC.good + '">' + v.good + '</span> / <span style="color:' + LVC.fair + '">' + v.fair + '</span> / <span style="color:' + LVC.low + '">' + v.low + '</span> / <span style="color:' + LVC.neg + '">' + (v.neg || 0) + '</span>'; };
+    return { title: 'สรุปรายห้อง', sub: subOf('มาสาย/หัก/เพิ่ม ช่วงวันที่ ' + rangeTxt() + ' · คะแนนเฉลี่ยและระดับ = รอบคะแนนปัจจุบัน'),
+      table: { head: D.stats([['ห้อง', L.length, '', T.total + ' คน'], ['มาสายรวม (ครั้ง)', T.late, '#c8102e', T.lateStu + ' คน'], ['หักคะแนนรวม', T.minus, LVC.neg], ['เพิ่มคะแนนรวม', '+' + T.plus, '#2563eb']]),
+        cols: [{ t: 'ห้อง', w: '54px' }, { t: 'ครูที่ปรึกษา' }, { t: 'นร.', w: '40px', al: 'c' }, { t: 'สาย (ครั้ง)', w: '62px', al: 'c' }, { t: 'สาย (คน)', w: '56px', al: 'c' }, { t: 'หัก', w: '50px', al: 'c' }, { t: 'เพิ่ม', w: '50px', al: 'c' }, { t: 'เฉลี่ย', w: '50px', al: 'c' }, { t: 'ดี / พอใช้ / ปรับปรุง / ติดลบ', w: '150px', al: 'c' }],
+        rows: L.map(function (x) { return ['<b>' + e(x.room) + '</b>', '<small>' + e((x.advisors || []).join(', ') || '-') + '</small>', x.total, x.late || '-', x.lateStu || '-', x.minus || '-', x.plus ? '+' + x.plus : '-', '<b>' + x.avg + '</b>', lvs(x.levels)]; }),
+        foot: ['รวม', '', T.total, T.late, T.lateStu, T.minus, '+' + T.plus, T.total ? Math.round(T.sum / T.total * 10) / 10 : 0, lvs(T.lv)] } };
+  }
+  // มาสาย › สายบ่อย
+  async function freqDoc() {
+    var r = rangeOf(), O = C.ov[r[0] + '|' + r[1] + '|' + st.grade]; if (!O) throw new Error('รอโหลดข้อมูลก่อน');
+    var D = window.CCDoc, e = D.esc, L = freqList(O), n = L.reduce(function (a, x) { return a + x.n; }, 0);
+    return { title: 'นักเรียนที่มาสาย ' + st.min + ' ครั้งขึ้นไป', sub: subOf('ช่วงวันที่ ' + rangeTxt()),
+      table: { head: D.stats([['นักเรียน (คน)', L.length, '#c8102e'], ['มาสายรวม (ครั้ง)', n], ['สาย 5 ครั้งขึ้นไป (คน)', L.filter(function (x) { return x.n >= 5; }).length], ['มาสายทั้งหมดในช่วงนี้', O.total, '', O.students + ' คน']]),
+        cols: [{ t: '#', w: '40px', al: 'c' }, { t: 'ห้อง', w: '64px' }, { t: 'เลขที่', w: '56px', al: 'c' }, { t: 'ชื่อ-นามสกุล' }, { t: 'มาสาย (ครั้ง)', w: '96px', al: 'c' }, { t: 'คะแนน', w: '70px', al: 'c' }],
+        rows: L.map(function (x, i) { return [i + 1, e(x.room), e(x.no), e(x.name), '<b style="color:' + (x.n >= 5 ? LVC.neg : x.n >= 3 ? LVC.low : '#0f172a') + '">' + x.n + '</b>', x.score]; }) } };
+  }
+  // คะแนนพฤติกรรม — ทุกคนตามตัวกรอง
+  async function scoresDoc() {
+    var S = C.sc[st.room || 'all']; if (!S) throw new Error('รอโหลดข้อมูลก่อน');
+    var D = window.CCDoc, e = D.esc, A = scoreRows(), cnt = { good: 0, fair: 0, low: 0, neg: 0 }; S.list.forEach(function (x) { cnt[x.score < 0 ? 'neg' : x.level]++; });
+    var rn = st.room ? ((S.rooms.find(function (q) { return q.id === st.room; }) || {}).name || '') : '';
+    return { title: 'คะแนนพฤติกรรม' + (rn ? ' ห้อง ' + rn : ''), sub: 'โรงเรียนบุ่งคล้านคร · ' + periodTxt() + (st.q ? ' · ค้นหา "' + st.q + '"' : ''),
+      table: { head: D.stats([['ดี (≥ ' + S.settings.good + ')', cnt.good, LVC.good], ['พอใช้', cnt.fair, LVC.fair], ['ต้องปรับปรุง (< ' + S.settings.fair + ')', cnt.low, LVC.low], ['ติดลบ', cnt.neg, LVC.neg, 'ทั้งหมด ' + S.list.length + ' คน']]),
+        note: 'หักคะแนนรวมมาสายแล้ว · ' + A.length + ' คน',
+        cols: [{ t: '#', w: '40px', al: 'c' }].concat(rn ? [] : [{ t: 'ห้อง', w: '60px' }]).concat([{ t: 'เลขที่', w: '52px', al: 'c' }, { t: 'ชื่อ-นามสกุล' }, { t: 'หัก', w: '56px', al: 'c' }, { t: 'เพิ่ม', w: '56px', al: 'c' }, { t: 'คะแนน', w: '64px', al: 'c' }, { t: 'ระดับ', w: '96px', al: 'c' }]),
+        rows: A.map(function (x, i) { var m = minusOf(x), p = plusOf(x); return [i + 1].concat(rn ? [] : [e(x.room)]).concat([e(x.no), e(x.name), m ? '<span style="color:' + LVC.neg + '">' + m + '</span>' : '-', p ? '<span style="color:#2563eb">+' + p + '</span>' : '-', '<b>' + x.score + '</b>', lvDoc(x.level, x.score)]); }) } };
+  }
   async function exportPdf() {
+    if (DOCS[st.tab]) return docExport('pdf');
     return withProgress('กำลังสร้าง PDF', async function () {
       if (st.tab === 'scores') return scoresPdf(); // 2.07.2: PDF = ทุกคนตามตัวกรอง (รูปภาพ = หน้าที่เห็น)
       var c = await snap(); if (!c) throw new Error('ยังไม่มีข้อมูล');
