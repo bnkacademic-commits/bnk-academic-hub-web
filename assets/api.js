@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.23.0';
-var APP_VERSION = '2.26.0.201126';
+var APP_VERSION = '2.27.0.211126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2673,6 +2673,38 @@ function _filePreviewBodyHtml(previewUrl, title, openUrl, downloadUrl, kind) {
     box.classList.add('modal-bump');
     setTimeout(function () { box.classList.remove('modal-bump'); }, 520);
   });
+})();
+
+// 2.27.0: ส่งออก PDF / รูป (html2canvas) — เส้นล่างของแถวสุดท้ายในตารางหาย
+//   สาเหตุ: style.css มีกฎ "tr:last-child td { border-bottom: none }" (ใช้กับตารางบนหน้าเว็บที่มีแค่เส้นคั่นแถว)
+//   ตารางในเอกสารที่ตีเส้นครบทุกช่อง (มีเส้นซ้าย/ขวา) เลยขาดเส้นปิดล่าง · ก่อนจับภาพทุกครั้ง (ในสำเนาของหน้า) ใส่เส้นล่างคืนให้เซลล์แถวล่างสุด
+//   ใช้สีและความหนาเดียวกับเส้นข้างของเซลล์นั้น — หน้าเว็บจริงไม่เปลี่ยน
+function fixTablesForCapture(doc) {
+  var win = doc.defaultView || window, has = function (s, k) { return s['border' + k + 'Style'] !== 'none' && parseFloat(s['border' + k + 'Width']) > 0; };
+  [].forEach.call(doc.querySelectorAll('table'), function (t) {
+    var tr = t.getBoundingClientRect(); if (!tr.height) return;
+    [].forEach.call(t.querySelectorAll('th, td'), function (c) {
+      if (c.closest('table') !== t) return;
+      var r = c.getBoundingClientRect(); if (r.bottom < tr.bottom - 2) return;
+      var s = win.getComputedStyle(c); if (has(s, 'Bottom')) return;
+      var k = has(s, 'Right') ? 'Right' : has(s, 'Left') ? 'Left' : ''; if (!k) return; // ตารางแบบเส้นคั่นแถวอย่างเดียว = คงไว้
+      c.style.borderBottom = s['border' + k + 'Width'] + ' ' + s['border' + k + 'Style'] + ' ' + s['border' + k + 'Color'];
+    });
+  });
+}
+(function () {
+  function wrap(h2c) {
+    if (!h2c || h2c.__bnkFix) return h2c;
+    var f = function (el, opts) {
+      opts = Object.assign({}, opts || {});
+      var prev = opts.onclone;
+      opts.onclone = function (d, cel) { try { fixTablesForCapture(d); } catch (e) { /* จับภาพต่อได้ */ } return prev ? prev(d, cel) : undefined; };
+      return h2c(el, opts);
+    };
+    f.__bnkFix = true; return f;
+  }
+  var cur = wrap(window.html2canvas);
+  try { Object.defineProperty(window, 'html2canvas', { configurable: true, get: function () { return cur; }, set: function (v) { cur = wrap(v); } }); } catch (e) { /* ข้าม */ }
 })();
 
 // 2.23.0: ล็อกการเลื่อนหน้าหลังตอนป็อปอัปเปิดอยู่ (เมาส์ / ลากนิ้ว) — iPad/iPhone ใช้วิธีตรึง body แล้วคืนตำแหน่งเดิมตอนปิด

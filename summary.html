@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.26.0.201126" />
+<link rel="stylesheet" href="assets/style.css?v=2.27.0.211126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -121,9 +121,22 @@
         </div>
         <div class="exp-pick" id="expPick" hidden></div>
       </div>
+      <!-- 2.27.0: งานที่ส่งหลายครั้ง แยกหน้า / รวมตารางเดียว · แสดงวันที่ส่ง -->
+      <div class="exp-sec" id="expSerSec" hidden>
+        <div class="exp-lbl">งานที่ส่งหลายครั้ง</div>
+        <div class="aud-seg" id="expSerMode" role="radiogroup" aria-label="รูปแบบงานที่ส่งหลายครั้ง">
+          <button type="button" role="radio" data-xm="split" class="on"><i class="fa-solid fa-copy" aria-hidden="true"></i> แยกหน้าตามครั้ง</button>
+          <button type="button" role="radio" data-xm="merge"><i class="fa-solid fa-table-columns" aria-hidden="true"></i> รวมตารางเดียว (ช่องละครั้ง)</button>
+        </div>
+      </div>
       <label class="toggle-row switch-row exp-names">
         <input type="checkbox" class="switch" role="switch" id="expShowNames" checked />
         <span>แสดงชื่อครูในรายงาน</span>
+        <span class="switch-state" aria-hidden="true"></span>
+      </label>
+      <label class="toggle-row switch-row exp-names">
+        <input type="checkbox" class="switch" role="switch" id="expShowTime" checked />
+        <span>แสดงวันที่ส่ง (PDF)</span>
         <span class="switch-state" aria-hidden="true"></span>
       </label>
       <div class="export-options" role="group" aria-label="เลือกรูปแบบไฟล์">
@@ -171,7 +184,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.26.0.201126"></script>
+  <script src="assets/api.js?v=2.27.0.211126"></script>
   <script src="assets/html2canvas.min.js"></script>
   <script src="assets/jspdf.umd.min.js"></script>
   <script>
@@ -928,7 +941,7 @@
     document.getElementById('btnExportReport').addEventListener('click', function () {
       if (!filteredAssignments().length) { showToast('ไม่มีข้อมูลให้ออกรายงานในตอนนี้', true); return; }
       expState.scope = 'all'; expState.picked = {};
-      fillExportSummary(); renderExpPick();
+      fillExportSummary(); renderExpPick(); syncSerMode();
       showModalEl(exportReportModal);
     });
     document.getElementById('exportReportCancelBtn').addEventListener('click', function () { hideModalEl(exportReportModal); });
@@ -938,35 +951,66 @@
     // #assignmentSummaryWrap ชั่วคราวแค่ตอน capture แล้วลบออกทันทีหลัง capture เสร็จ ไม่กระทบหน้าจอจริงที่ผู้ใช้เห็น
     function fillExportSummary() {
       var asgSel = document.getElementById('asgFilterAssignment'), yearSel = document.getElementById('asgFilterYear'), semSel = document.getElementById('asgFilterSemester');
-      var cards = filteredAssignments().length;
+      var fl = filteredAssignments(), nu = reportUnits(fl).length, cards = nu + (nu !== fl.length ? ' งาน · ' + fl.length + ' ครั้ง' : ' งาน');
       var items = [
         ['fa-list-check', 'งาน', asgSel.value ? asgSel.options[asgSel.selectedIndex].textContent : 'ทุกงาน'],
         ['fa-calendar', 'ปีการศึกษา', yearSel.value || 'ทุกปีการศึกษา'],
         ['fa-layer-group', 'ภาคเรียน', semSel.value === 'summer' ? 'ภาคฤดูร้อน' : semSel.value ? 'ภาคเรียนที่ ' + semSel.value : 'ทุกภาคเรียน'],
-        ['fa-table-list', 'จำนวน', cards + ' งาน']
+        ['fa-table-list', 'จำนวน', cards]
       ];
       document.getElementById('exportSummary').innerHTML = items.map(function (x) {
         return '<div><dt><i class="fa-solid ' + x[0] + '" aria-hidden="true"></i> ' + x[1] + '</dt><dd>' + escapeHtml(x[2]) + '</dd></div>';
       }).join('');
     }
 
-    var expState = { scope: 'all', picked: {} };
+    var expState = { scope: 'all', picked: {}, merge: false };
+    document.getElementById('expSerMode').addEventListener('click', function (e) { var b = e.target.closest('[data-xm]'); if (!b) return; expState.merge = b.getAttribute('data-xm') === 'merge'; syncSerMode(); });
+    function syncSerMode() {
+      var has = reportUnits(filteredAssignments()).some(function (u) { return u.rounds && u.rounds.length > 1; });
+      document.getElementById('expSerSec').hidden = !has;
+      Array.prototype.forEach.call(document.querySelectorAll('#expSerMode [data-xm]'), function (b) { var on = (b.getAttribute('data-xm') === 'merge') === expState.merge; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    }
+    // 2.27.0: งานแบบส่งหลายครั้ง = รวมเป็นกลุ่ม เลือกได้ทีละครั้ง / ทุกครั้ง · ครั้งเรียงจากครั้งแรก → ครั้งสุดท้าย (ทั้งในรายการเลือกและในรายงาน)
+    function roundSort(x, y) { return (x.roundNo || 0) - (y.roundNo || 0) || (x.endDate || x.date || '').localeCompare(y.endDate || y.date || ''); }
+    function reportUnits(list) { // [{ a } | { sid, name, rounds: [...] }] ตามลำดับที่แสดงบนหน้า
+      var units = [], by = {};
+      list.forEach(function (a) {
+        if (!a.seriesId) { units.push({ a: a }); return; }
+        if (!by[a.seriesId]) { by[a.seriesId] = { sid: a.seriesId, name: a.categoryName || a.title, rounds: [] }; units.push(by[a.seriesId]); }
+        by[a.seriesId].rounds.push(a);
+      });
+      units.forEach(function (u) { if (u.rounds) u.rounds.sort(roundSort); });
+      return units;
+    }
+    function notDue(a) { return todayYmd() <= String(a.endDate || a.date || ''); } // วันนี้ยังไม่เลยวันกำหนดส่ง (วันสุดท้ายยังนับว่าไม่เลย)
+    function roundName(a) { return 'ครั้งที่ ' + (a.roundNo || '?') + (a.roundLabel && !/^\d+$/.test(String(a.roundLabel)) ? ' (' + a.roundLabel + ')' : ''); }
     function renderExpPick() {
-      var list = filteredAssignments();
-      document.getElementById('expAllLbl').textContent = 'ทั้งหมด (' + list.length + ' งาน)';
+      var list = filteredAssignments(), units = reportUnits(list);
+      document.getElementById('expAllLbl').textContent = 'ทั้งหมด (' + units.length + ' งาน' + (units.length !== list.length ? ' · ' + list.length + ' ครั้ง' : '') + ')';
       Array.prototype.forEach.call(document.querySelectorAll('#expScope [data-xs]'), function (b) { var on = b.getAttribute('data-xs') === expState.scope; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
       var box = document.getElementById('expPick');
       box.hidden = expState.scope !== 'pick';
-      box.innerHTML = list.map(function (a) {
-        var sem = a.semester === 'summer' ? 'ฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester;
-        return '<label class="aud-p"><input type="checkbox" data-xp="' + escapeHtml(a.eventId) + '"' + (expState.picked[a.eventId] ? ' checked' : '') + ' /><span>' + escapeHtml(a.title) + '</span><small>' + escapeHtml(sem + ' / ' + a.academicYear) + '</small></label>';
+      var semOf = function (a) { return (a.semester === 'summer' ? 'ฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester) + ' / ' + a.academicYear; };
+      var dueOf = function (a) { return 'กำหนดส่ง ' + (a.endDate && a.endDate !== a.date ? formatDateThai(a.date) + ' – ' + formatDateThai(a.endDate) : formatDateThai(a.date)); };
+      box.innerHTML = units.map(function (u) {
+        if (!u.rounds) { var a = u.a; return '<label class="aud-p"><input type="checkbox" data-xp="' + escapeHtml(a.eventId) + '"' + (expState.picked[a.eventId] ? ' checked' : '') + ' /><span>' + escapeHtml(a.title) + '</span><small>' + escapeHtml(semOf(a)) + '</small></label>'; }
+        var n = u.rounds.filter(function (a) { return expState.picked[a.eventId]; }).length;
+        return '<div class="exp-ser"><label class="aud-p"><input type="checkbox" data-xser="' + escapeHtml(u.sid) + '"' + (n && n === u.rounds.length ? ' checked' : '') + (n && n < u.rounds.length ? ' data-ind="1"' : '') + ' /><span>' + escapeHtml(u.name) + ' <b class="exp-n">ส่ง ' + u.rounds.length + ' ครั้ง</b></span><small>' + (n ? 'เลือก ' + n + '/' + u.rounds.length + ' ครั้ง' : escapeHtml(semOf(u.rounds[0]))) + '</small></label>' +
+          '<div class="exp-rds">' + u.rounds.map(function (a) { return '<label class="exp-rd"><input type="checkbox" data-xp="' + escapeHtml(a.eventId) + '"' + (expState.picked[a.eventId] ? ' checked' : '') + ' /><span>' + escapeHtml(roundName(a)) + (notDue(a) ? ' <em class="exp-nd">ยังไม่ถึงกำหนด</em>' : '') + '</span><small>' + escapeHtml(dueOf(a)) + '</small></label>'; }).join('') + '</div></div>';
       }).join('');
+      Array.prototype.forEach.call(box.querySelectorAll('[data-ind]'), function (c) { c.indeterminate = true; });
     }
     document.getElementById('expScope').addEventListener('click', function (e) { var b = e.target.closest('[data-xs]'); if (!b) return; expState.scope = b.getAttribute('data-xs'); renderExpPick(); });
-    document.getElementById('expPick').addEventListener('change', function (e) { var c = e.target.closest('[data-xp]'); if (!c) return; if (c.checked) expState.picked[c.getAttribute('data-xp')] = true; else delete expState.picked[c.getAttribute('data-xp')]; });
-    function reportAssignments() {
-      var list = filteredAssignments();
-      return expState.scope === 'pick' ? list.filter(function (a) { return expState.picked[a.eventId]; }) : list;
+    document.getElementById('expPick').addEventListener('change', function (e) {
+      var g = e.target.closest('[data-xser]');
+      if (g) { var sid = g.getAttribute('data-xser'), on = g.checked; filteredAssignments().forEach(function (a) { if (a.seriesId === sid) { if (on) expState.picked[a.eventId] = true; else delete expState.picked[a.eventId]; } }); renderExpPick(); return; }
+      var c = e.target.closest('[data-xp]'); if (!c) return; if (c.checked) expState.picked[c.getAttribute('data-xp')] = true; else delete expState.picked[c.getAttribute('data-xp')];
+      if (c.closest('.exp-ser')) renderExpPick();
+    });
+    function reportAssignments() { // ลำดับในรายงาน: ตามหน้าเว็บ · งานหลายครั้งเรียงครั้งแรก → ครั้งสุดท้ายต่อกัน
+      var out = [];
+      reportUnits(filteredAssignments()).forEach(function (u) { (u.rounds || [u.a]).forEach(function (a) { if (expState.scope !== 'pick' || expState.picked[a.eventId]) out.push(a); }); });
+      return out;
     }
     function reportTermLabel() {
       var yearSel = document.getElementById('asgFilterYear'), semSel = document.getElementById('asgFilterSemester');
@@ -1038,10 +1082,72 @@
       return el;
     }
 
+    // 2.27.0: PDF = หน้า A4 ทีละแผ่น (assets/ccdoc.js) — แถวไม่หาย/ไม่ขาดตอนขึ้นหน้าใหม่ · แต่ละงานเริ่มหน้าใหม่ · หัวตารางซ้ำทุกหน้า
+    //   (เดิมจับภาพทั้งรายงานเป็นรูปยาวแล้วตัดเป็นหน้า ๆ — แถวที่อยู่ตรงรอยตัดหายหรือขาดครึ่ง)
+    // opt: { time: แสดงวันที่ส่ง (DD/MM/ปปปป), merge: งานส่งหลายครั้ง = ตารางเดียว ช่องละครั้ง }
+    function reportPdfDoc(list, showNames, opt) {
+      opt = opt || { time: true, merge: false };
+      var asgSel = document.getElementById('asgFilterAssignment'), yearSel = document.getElementById('asgFilterYear'), semSel = document.getElementById('asgFilterSemester');
+      var asgLabel = asgSel && asgSel.value ? asgSel.options[asgSel.selectedIndex].textContent : 'ทุกงาน';
+      if (expState.scope === 'pick') { var pl = list.map(function (x) { return x.seriesId ? (x.categoryName || x.title) + ' ' + roundName(x) : x.title; }); asgLabel = pl.length > 3 ? pl.slice(0, 3).join(', ') + ' และอีก ' + (pl.length - 3) + ' งาน' : pl.join(', '); }
+      var yearLabel = yearSel && yearSel.value ? ('ปีการศึกษา ' + yearSel.value) : 'ทุกปีการศึกษา';
+      var semLabel = semSel && semSel.value === 'summer' ? 'ภาคฤดูร้อน' : semSel && semSel.value ? ('ภาคเรียนที่ ' + semSel.value) : 'ทุกภาคเรียน';
+      // 2.27.0: งาน/ครั้งที่ยังไม่ถึงวันกำหนดส่ง — คนที่ยังไม่ส่งขึ้น "ยังไม่ถึงกำหนด" (สีเทา) แทน "ยังไม่ส่ง" (ผู้ตรวจตัดสินเองว่าเกินกำหนดหรือไม่เมื่อถึงกำหนด)
+      var BD = { onTime: ['g', 'ตามกำหนด'], late: ['y', 'หลังกำหนด'], missing: ['r', 'ยังไม่ส่ง'], notyet: ['n', 'ยังไม่ถึงกำหนด'] };
+      var stOf = function (a, r) { return r.status === 'missing' && notDue(a) ? 'notyet' : r.status; };
+      var bd = function (k, n) { var b = BD[k] || ['', k]; return '<span class="ccd-bd ' + b[0] + '">' + b[1] + (n === undefined ? '' : ' ' + n) + '</span>'; };
+      var dr = function (a) { return a.endDate && a.endDate !== a.date ? formatDateThai(a.date) + ' – ' + formatDateThai(a.endDate) : formatDateThai(a.date); };
+      var sem = function (a) { return (a.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + a.semester) + ' · ปีการศึกษา ' + a.academicYear; };
+      var ttl = function (a) { return a.seriesId ? escapeHtml(a.categoryName || a.title) + ' · ' + escapeHtml(roundName(a)) : escapeHtml(a.title); };
+      var doc = { title: 'รายงานสรุปการส่งงาน', sub: 'งานที่เลือกมารายงาน: ' + asgLabel + ' · ' + yearLabel + ' · ' + semLabel, footer: (_settingsCache && _settingsCache.siteName) || 'BNKAcademicHub' };
+      if (!showNames) { // ไม่แสดงรายชื่อ = ตารางเดียว งานละแถว
+        doc.table = { title: 'สรุปรายงาน ' + list.length + ' งาน', cols: [{ t: 'งาน' }, { t: 'กำหนดส่ง', w: '150px' }, { t: 'ตามกำหนด', w: '74px', al: 'c' }, { t: 'หลังกำหนด', w: '74px', al: 'c' }, { t: 'ยังไม่ส่ง', w: '70px', al: 'c' }, { t: 'ทั้งหมด', w: '60px', al: 'c' }],
+          rows: list.map(function (a) { var nd = notDue(a); return ['<b>' + ttl(a) + '</b><br><small>' + escapeHtml(sem(a)) + '</small>' + (nd ? ' ' + bd('notyet') : ''), escapeHtml(dr(a)), '<b style="color:#15803d">' + cnt(a, 'onTime') + '</b>', '<b style="color:#b45309">' + cnt(a, 'late') + '</b>', nd ? '<small>ยังไม่ถึงกำหนด ' + cnt(a, 'missing') + '</small>' : '<b style="color:#b91c1c">' + cnt(a, 'missing') + '</b>', a.rows.length]; }) };
+        return doc;
+      }
+      var dShort = function (iso) { var d = new Date(iso); if (isNaN(d)) return ''; return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + (d.getFullYear() + 543); };
+      var cell = function (a, r) { return r ? bd(stOf(a, r)) + (opt.time && r.submittedAt ? '<br><small>' + dShort(r.submittedAt) + '</small>' : '') : '<small>-</small>'; };
+      // งานส่งหลายครั้งแบบรวม: ครู × ครั้ง (ตารางละไม่เกิน 6 ครั้ง ถ้ามากกว่านั้นต่อตารางถัดไป)
+      var mergedSections = function (rounds) {
+        var name = escapeHtml(rounds[0].categoryName || rounds[0].title), users = [], byU = {};
+        rounds.forEach(function (a) { a.rows.forEach(function (r) { if (!byU[r.userId]) { byU[r.userId] = { name: r.userName, m: {} }; users.push(byU[r.userId]); } byU[r.userId].m[a.eventId] = r; }); });
+        var out = [], CH = 6;
+        for (var k = 0; k < rounds.length; k += CH) {
+          var part = rounds.slice(k, k + CH), multi = rounds.length > CH;
+          out.push({ title: name + ' · รวม ' + rounds.length + ' ครั้ง' + (multi ? ' <small>(ครั้งที่ ' + part[0].roundNo + '–' + part[part.length - 1].roundNo + ')</small>' : ''),
+            note: escapeHtml(sem(rounds[0])) + ' · ' + users.length + ' คน · ' + bd('onTime') + ' ' + bd('late') + ' ' + bd('missing') + ' ' + bd('notyet'),
+            cols: [{ t: '#', w: '34px', al: 'c' }, { t: 'ชื่อ-สกุล', w: part.length > 4 ? '150px' : '190px' }].concat(part.map(function (a) { var e = String(a.endDate || a.date || ''); return { t: 'ครั้งที่ ' + a.roundNo + '<br><small style="font-weight:600">ส่ง ' + (e ? e.slice(8, 10) + '/' + e.slice(5, 7) : '') + '</small>', al: 'c' }; })),
+            rows: users.map(function (u, i) { return [i + 1, escapeHtml(u.name)].concat(part.map(function (a) { return cell(a, u.m[a.eventId]); })); }),
+            foot: ['', 'ส่งแล้ว'].concat(part.map(function (a) { return (cnt(a, 'onTime') + cnt(a, 'late')) + '/' + a.rows.length + (notDue(a) ? '<br><small>ยังไม่ถึงกำหนด</small>' : ''); })),
+            empty: 'ไม่มีผู้ที่ต้องส่งงานนี้' });
+        }
+        return out;
+      };
+      var secs = [];
+      reportUnits(list).forEach(function (u) {
+        if (u.rounds && opt.merge && u.rounds.length > 1) { secs = secs.concat(mergedSections(u.rounds)); return; }
+        (u.rounds || [u.a]).forEach(function (a) { secs.push(oneSection(a)); });
+      });
+      doc.sections = secs;
+      return doc;
+      function oneSection(a) {
+        var nd = notDue(a);
+        return { title: ttl(a) + (nd ? ' <span class="ccd-bd n">ยังไม่ถึงกำหนดส่ง</span>' : ''), note: escapeHtml(sem(a)) + ' · กำหนดส่ง ' + escapeHtml(dr(a)) + ' · ' + bd('onTime', cnt(a, 'onTime')) + ' ' + bd('late', cnt(a, 'late')) + ' ' + bd(nd ? 'notyet' : 'missing', cnt(a, 'missing')) + ' · ทั้งหมด ' + a.rows.length + ' คน',
+          cols: [{ t: '#', w: '40px', al: 'c' }, { t: 'ชื่อ-สกุล' }, { t: 'สถานะ', w: '120px', al: 'c' }].concat(opt.time ? [{ t: 'วันที่ส่ง (ครั้งแรก)', w: '130px', al: 'c' }] : []),
+          rows: a.rows.map(function (r, i) { return [i + 1, escapeHtml(r.userName), bd(stOf(a, r))].concat(opt.time ? [r.submittedAt ? dShort(r.submittedAt) : '-'] : []); }), empty: 'ไม่มีผู้ที่ต้องส่งงานนี้' };
+      }
+    }
     async function exportReport(kind) {
       var list = reportAssignments(), showNames = document.getElementById('expShowNames').checked;
       if (!list.length) { showToast('กรุณาเลือกงานที่จะรายงานอย่างน้อย 1 งาน', true); return; }
       hideModalEl(exportReportModal);
+      if (kind !== 'image') {
+        return withProgress('กำลังสร้างไฟล์รายงาน', async function () {
+          await loadScriptOnce('assets/ccdoc.js?v=' + APP_VERSION);
+          await window.CCDoc.pdf(reportPdfDoc(list, showNames, { time: document.getElementById('expShowTime').checked, merge: expState.merge }), 'bnk-assignment-report-' + new Date().toISOString().slice(0, 10) + '.pdf', async function () { return { h2c: window.html2canvas, jsPDF: window.jspdf.jsPDF }; });
+          return { ok: true };
+        }, { successLabel: 'สร้างไฟล์รายงานเรียบร้อยแล้ว' });
+      }
       // 1.68: สร้างหน้ารายงานแยก (นอกจอ) ตามงานที่เลือก — PDF = ตาราง A4 · รูปภาพ = Infographic
       var target = document.createElement('div');
       target.className = kind === 'image' ? 'rep-ig' : 'rep-pdf';

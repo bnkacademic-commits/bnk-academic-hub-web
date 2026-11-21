@@ -24,7 +24,8 @@
     '.ccd-hb.n div{grid-template-columns:60px 1fr 40px}' +
     '.ccd-tb{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}.ccd-tb th,.ccd-tb td{border:1px solid #94a3b8;padding:4px 6px;text-align:left;vertical-align:top;overflow-wrap:anywhere}.ccd-tb th{background:#eef2f6;font-weight:700;line-height:1.3;font-size:11.5px;overflow-wrap:normal;padding:4px 4px}' +
     '.ccd-tb td.c,.ccd-tb th.c{text-align:center}.ccd-tb td.r,.ccd-tb th.r{text-align:right}.ccd-tb tr.f td{background:#eef2f6;font-weight:800}.ccd-tb tr.g td{background:#f8fafc;font-weight:800;color:#c8102e}.ccd-tb small{color:#64748b}' +
-    '.ccd-note{font-size:11.5px;color:#475569;margin:0 0 8px}';
+    '.ccd-note{font-size:11.5px;color:#475569;margin:0 0 8px}.ccd-tt{font-weight:800;font-size:14.5px;margin-bottom:4px}.ccd-tt small{font-weight:600;color:#64748b;font-size:12px}' +
+    '.ccd-bd{display:inline-block;border-radius:99px;padding:0 8px;font-size:11px;font-weight:700;line-height:1.7}.ccd-bd.g{background:#dcfce7;color:#15803d}.ccd-bd.y{background:#fef3c7;color:#b45309}.ccd-bd.r{background:#fee2e2;color:#b91c1c}.ccd-bd.n{background:#f1f5f9;color:#475569}';
   function css() { if (document.getElementById('ccdCss')) return; var s = document.createElement('style'); s.id = 'ccdCss'; s.textContent = CSS; document.head.appendChild(s); }
   function stamp() { var d = new Date(); return 'ออกเอกสารเมื่อ ' + d.getDate() + ' ' + MS[d.getMonth()] + ' ' + (d.getFullYear() + 543) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ' น.'; }
 
@@ -57,22 +58,23 @@
       p = page(doc, true, font); p.querySelector('.ccd-in').innerHTML = doc.first; pages.push(p);
       var tr; while (over(p) && (tr = p.querySelector('tr.ccd-trim:last-of-type'))) tr.remove(); // หน้าแรกล้น = ตัดแถวท้ายของตารางที่ตัดได้
     }
-    var T = doc.table;
-    if (T) {
+    // 2.27.0: หลายตาราง (doc.sections) — แต่ละตารางขึ้นหน้าใหม่เสมอ (ตารางแรกอยู่หน้าแรกได้ถ้าไม่มี first) · ตารางเดียวใช้ doc.table ได้เหมือนเดิม
+    var secs = doc.sections || (doc.table ? [doc.table] : []);
+    secs.forEach(function (T) {
       var head = '<colgroup>' + T.cols.map(function (c) { return '<col' + (c.w ? ' style="width:' + c.w + '"' : '') + '>'; }).join('') + '</colgroup><thead><tr>' + T.cols.map(function (c) { return '<th class="' + (c.al || '') + '">' + c.t + '</th>'; }).join('') + '</tr></thead>';
       var newPage = function (firstTable) {
         p = page(doc, !pages.length, font); pages.push(p); inn = p.querySelector('.ccd-in');
-        inn.innerHTML = (firstTable && T.head ? T.head : '') + (firstTable && T.title ? '<div style="font-weight:800;font-size:14.5px;margin-bottom:4px">' + T.title + '</div>' : '') + (firstTable && T.note ? '<p class="ccd-note">' + T.note + '</p>' : '') + '<table class="ccd-tb">' + head + '<tbody></tbody></table>';
+        inn.innerHTML = (firstTable && T.head ? T.head : '') + (T.title ? '<div class="ccd-tt">' + T.title + (firstTable ? '' : ' <small>(ต่อ)</small>') + '</div>' : '') + (firstTable && T.note ? '<p class="ccd-note">' + T.note + '</p>' : '') + '<table class="ccd-tb">' + head + '<tbody></tbody></table>';
         return inn.querySelector('tbody');
       };
-      var tb = newPage(true), lastG = null;
-      if (!T.rows.length) tb.innerHTML = '<tr><td colspan="' + T.cols.length + '" class="c" style="color:#64748b">ไม่มีรายการ</td></tr>';
+      var tb = newPage(true), lastG = null, tr;
+      if (!T.rows.length) tb.innerHTML = '<tr><td colspan="' + T.cols.length + '" class="c" style="color:#64748b">' + (T.empty || 'ไม่มีรายการ') + '</td></tr>';
       T.rows.forEach(function (r, i) {
         var g = T.group ? T.group[i] : null, add = [];
         if (g != null && g !== lastG) { var gr = document.createElement('tr'); gr.className = 'g'; gr.innerHTML = '<td colspan="' + T.cols.length + '">' + esc(g) + '</td>'; add.push(gr); }
-        var tr = document.createElement('tr'); tr.innerHTML = r.map(function (v, j) { return '<td class="' + (T.cols[j].al || '') + '">' + v + '</td>'; }).join(''); add.push(tr);
+        tr = document.createElement('tr'); tr.innerHTML = r.map(function (v, j) { return '<td class="' + (T.cols[j].al || '') + '">' + v + '</td>'; }).join(''); add.push(tr);
         add.forEach(function (x) { tb.appendChild(x); });
-        if (over(p)) {
+        if (over(p)) { // แถวล้นหน้า = ย้ายทั้งแถวไปหน้าใหม่ (ไม่มีแถวหาย / ขาดครึ่ง)
           add.forEach(function (x) { x.remove(); });
           tb = newPage(false);
           if (g != null) { var g2 = document.createElement('tr'); g2.className = 'g'; g2.innerHTML = '<td colspan="' + T.cols.length + '">' + esc(g) + (g === lastG ? ' (ต่อ)' : '') + '</td>'; tb.appendChild(g2); }
@@ -80,11 +82,11 @@
         }
         lastG = g;
       });
-    }
-    if (T && T.foot) { // แถวรวมท้ายตาราง
-      var ft = document.createElement('tr'); ft.className = 'f'; ft.innerHTML = T.foot.map(function (v, j) { return '<td class="' + (T.cols[j].al || '') + '">' + v + '</td>'; }).join(''); tb.appendChild(ft);
-      if (over(p)) { ft.remove(); tb = newPage(false); tb.appendChild(ft); }
-    }
+      if (T.foot) { // แถวรวมท้ายตาราง
+        var ft = document.createElement('tr'); ft.className = 'f'; ft.innerHTML = T.foot.map(function (v, j) { return '<td class="' + (T.cols[j].al || '') + '">' + v + '</td>'; }).join(''); tb.appendChild(ft);
+        if (over(p)) { ft.remove(); tb = newPage(false); tb.appendChild(ft); }
+      }
+    });
     pages.forEach(function (x, i) { x.querySelector('.ccd-pn').textContent = 'หน้า ' + (i + 1) + '/' + pages.length; });
     return pages;
   }

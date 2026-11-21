@@ -385,7 +385,9 @@
         var pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
         for (var i = 0; i < pages.length; i++) {
           var c = await window.html2canvas(pages[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true });
-          var h = Math.min(297, c.height / c.width * 210); if (i) pdf.addPage(); pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, h);
+          // 2.27.0: หน้าที่ยาวเกิน A4 = ย่อทั้งหน้าให้พอดี (คงสัดส่วน) — เดิมบีบเฉพาะความสูง ตัวหนังสือเลยแบน
+          var w = 210, h = c.height / c.width * 210; if (h > 297) { w = 210 * 297 / h; h = 297; }
+          if (i) pdf.addPage(); pdf.addImage(c.toDataURL('image/jpeg', 0.92), 'JPEG', (210 - w) / 2, 0, w, h);
         }
         pdf.save('รายงานนักศึกษาฝึกสอน_' + I.name + '.pdf');
       } finally { pages.forEach(function (p) { p.remove(); }); }

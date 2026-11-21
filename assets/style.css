@@ -5436,3 +5436,17 @@ html.scroll-locked body { overscroll-behavior: none; }
 .ov-rd-ok > summary { cursor: pointer; font-weight: 700; font-size: .86rem; color: #15803d; }
 [data-theme="dark"] .ov-rd-ok > summary { color: #4ade80; }
 @media (max-width: 560px) { .ov-rd { flex-wrap: wrap; } .ov-rd-t { flex-basis: calc(100% - 26px); } .ov-rd > .btn { margin-left: 26px; } }
+/* 2.27.0: ส่งออกรายงาน — งานที่ส่งหลายครั้ง (เลือกทีละครั้ง / ทุกครั้ง) */
+.exp-pick { max-height: 300px; }
+.exp-ser { border: 1px solid var(--border); border-radius: 10px; margin: 4px 0; background: var(--surface-2); }
+.exp-ser > .aud-p { font-weight: 600; }
+.exp-n { font-weight: 700; font-size: .72rem; color: var(--primary); background: var(--primary-light); border-radius: 99px; padding: 1px 8px; margin-left: 4px; white-space: nowrap; }
+.exp-rds { padding: 0 6px 6px 30px; display: flex; flex-direction: column; gap: 1px; }
+.exp-rd { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; font-size: .84rem; cursor: pointer; }
+.exp-rd:hover { background: var(--surface); }
+.exp-rd input { margin: 0; }
+.exp-rd small { margin-left: auto; color: var(--text-muted); font-size: .72rem; white-space: nowrap; }
+@media (max-width: 480px) { .exp-rd { flex-wrap: wrap; } .exp-rd small { margin-left: 22px; width: 100%; } }
+.exp-nd { font-style: normal; font-size: .7rem; font-weight: 700; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: 99px; padding: 0 7px; margin-left: 4px; white-space: nowrap; }
+.exp-rd > span { white-space: nowrap; }
+.exp-rd small { white-space: normal; text-align: right; min-width: 0; }
