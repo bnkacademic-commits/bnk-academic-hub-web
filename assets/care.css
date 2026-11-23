@@ -352,3 +352,18 @@
 .cc-sksec .cc-row > span, .cc-sksec .cc-row > b { min-width: 0; }
 .cc-sksec .cc-row .switch { flex: none; }
 .cc-sksec .cc-num { flex: none; width: 72px; }
+
+/* 2.30.0: โดดเรียน — หักอัตโนมัติ + หน้าสถิติ */
+.cc-sync { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 12px; padding: 8px 12px; margin: 0 0 12px; color: #5b21b6; font-size: .88rem; }
+.cc-sync > span { flex: 1; min-width: 220px; }
+[data-theme="dark"] .cc-sync { background: rgba(139, 92, 246, .14); border-color: rgba(139, 92, 246, .35); color: #ddd6fe; }
+.cc-sksj > div > span { width: 46%; max-width: 320px; white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.35; }
+.cc-sksj > div > span small { display: block; font-size: .74rem; color: var(--text-muted); }
+.cc-skx { padding: 2px 8px !important; font-size: .78rem !important; flex: none; }
+.cc-pt.z { background: var(--surface-2); color: var(--text-muted); }
+.cc-skold { border-color: #fde68a; }
+.cc-skno { margin-top: 8px; font-size: .88rem; } .cc-skno summary { cursor: pointer; color: var(--text-muted); }
+.cc-exporting .cc-sync, .cc-shot .cc-sync { display: none; }
+.cc-skscroll { max-height: 360px; overflow: auto; overscroll-behavior: contain; }
+.cc-skn[hidden] { display: none !important; }
+@media (max-width: 640px) { .cc-skm { flex-basis: calc(100% - 32px); } .cc-skold h3 { flex-wrap: wrap; } }

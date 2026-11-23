@@ -102,8 +102,8 @@
     var tb = table(c);
     if (!rows.length) tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b">ไม่มีรายการในช่วงที่เลือก</td></tr>';
     rows.forEach(function (h, i) {
-      var tr = document.createElement('tr');
-      tr.innerHTML = '<td class="n">' + (i + 1) + '</td><td class="d">' + thD(h.date, true) + (tmOf(h) ? '<br><small>' + esc(tmOf(h)) + ' น.</small>' : '') + '</td><td>' + (h.kind === 'late' ? 'มาสาย' + (h.reason ? ' — ' + esc(h.reason) : '') : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + (h._ref ? ' <span class="crp-rf">[ภาคผนวก รูปที่ ' + h._ref + ']</span>' : '') + '</td><td class="p" style="color:' + (h.delta < 0 ? '#b91c1c' : '#1d4ed8') + '">' + sgn(h.delta) + '</td><td class="b">' + whoCell(h.by, h.who) + '</td>';
+      var tr = document.createElement('tr'), skm = h.byId === 'skip' && /^คาบ (\S+)(?: · (.*))?$/.exec(h.note || ''), skp = skm ? { p: skm[1], s: skm[2] || '' } : null; // 2.30.0 / 1.10.0: โดดเรียน = วิชา (คาบ) · ครูที่เช็คชื่อ
+      tr.innerHTML = '<td class="n">' + (i + 1) + '</td><td class="d">' + thD(h.date, true) + (tmOf(h) ? '<br><small>' + esc(tmOf(h)) + ' น.</small>' : '') + '</td><td>' + (h.kind === 'late' ? 'มาสาย' + (h.reason ? ' — ' + esc(h.reason) : '') : skp ? esc(h.item) + (skp.s ? ' — ' + esc(skp.s) : '') + ' <small>(คาบ ' + esc(skp.p) + ')</small>' : esc(h.item) + (h.note ? ' — ' + esc(h.note) : '')) + (h._ref ? ' <span class="crp-rf">[ภาคผนวก รูปที่ ' + h._ref + ']</span>' : '') + '</td><td class="p" style="color:' + (h.delta < 0 ? '#b91c1c' : '#1d4ed8') + '">' + sgn(h.delta) + '</td><td class="b">' + (h.byId === 'skip' ? (h.tch ? esc(h.tch) + '<br><small>ครูผู้สอน</small>' : '<small>จากเว็บเช็คชื่อ</small>') : whoCell(h.by, h.who)) + '</td>';
       tb.appendChild(tr);
       if (over(c)) { tr.remove(); c = page(); c.innerHTML = '<div style="font-weight:700;margin-bottom:6px">' + esc(st.name) + ' · ' + esc(st.room) + ' เลขที่ ' + esc(st.no) + ' (ต่อ)</div>'; tb = table(c); tb.appendChild(tr); }
     });
