@@ -60,12 +60,12 @@
   function skipName() { return B.settings && B.settings.absOn ? 'โดด / ขาดเรียน' : 'โดดเรียน'; } // 2.29.0
   function skBadge() { var e = document.getElementById('ccSkipN'); if (!e) return; e.textContent = SK.n; e.hidden = !SK.n; }
   async function loadSkip(quiet) {
-    try { var r = await apiCall('careSkipList', {}); SK.d = r; SK.t = Date.now(); SK.n = (r.items || []).filter(function (x) { return x.cat === 'pend'; }).length; skBadge(); if (st.tab === 'skip') paintSkip(); }
+    try { var r = await apiCall('careSkipList', {}); SK.d = r; SK.t = Date.now(); if (st.tab === 'skip') paintSkip(); } // 2.30.1: อ่านจากที่บันทึกไว้ (ไม่ดึงจากเว็บเช็คชื่อ)
     catch (e) { if (!quiet) body.innerHTML = '<div class="card">' + err(e.message) + '</div>'; }
   }
   function showSkip() {
-    if (SK.d) paintSkip(); else body.innerHTML = '<div class="loading">กำลังดึงข้อมูลจากเว็บเช็คชื่อ...</div>';
-    if (!SK.d || Date.now() - (SK.t || 0) > 600000) loadSkip(!!SK.d); // 2.30.0: เปลี่ยนช่วงวันที่ / ระดับชั้น = คำนวณจากข้อมูลเดิม (ดึงใหม่เมื่อเกิน 10 นาที หรือกด "ดึงตอนนี้")
+    if (SK.d) paintSkip(); else body.innerHTML = '<div class="loading">กำลังโหลด...</div>';
+    if (!SK.d || Date.now() - (SK.t || 0) > 60000) loadSkip(!!SK.d); // 2.30.0: เปลี่ยนช่วงวันที่ / ระดับชั้น = คำนวณจากข้อมูลเดิม (ดึงใหม่เมื่อเกิน 10 นาที หรือกด "ดึงตอนนี้")
   }
   function skSubj(x) { var m = /^คาบ (\S+)(?: · (.*))?$/.exec(x.note || ''); return m ? { p: m[1], s: m[2] || '' } : { p: x.p || '', s: '' }; }
   function skKey(x) { return String(x.k || '').split('|')[0]; }
@@ -107,10 +107,10 @@
   function paintSkip() {
     var D = SK.d; if (!D) return;
     if (D.off) { body.innerHTML = '<div class="card">' + err('ยังไม่ได้เปิดใช้ — เปิดได้ที่แท็บ ตั้งค่า › โดด / ขาดเรียน') + '</div>'; return; }
-    var M = skModel(), r = D.rules || {}, at = D.at ? new Date(D.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '-';
+    var M = skModel(), r = D.rules || {}, at = D.at ? thD(new Date(new Date(D.at).getTime() + 252e5).toISOString().slice(0, 10), true) + ' ' + new Date(D.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : 'ยังไม่เคยดึง';
     var ran = D.ran && (D.ran.auto || D.ran.back) ? ' · รอบนี้หักเพิ่ม ' + (D.ran.auto || 0) + ' รายการ' + (D.ran.back ? ' · คืนคะแนน ' + D.ran.back + ' รายการ' : '') : '';
     var h = skSubBar() + filterBar() +
-      '<div class="cc-sync cc-noexp">' + ic('fa-bolt') + ' <span><b>หักคะแนนอัตโนมัติ</b> −' + (r.skipPts || 0) + ' / คาบ' + (r.absOn ? ' · ขาดทั้งวัน −' + r.absPts + ' / วัน' : '') + (r.skipMax ? ' · สูงสุด −' + r.skipMax + ' / วัน' : '') + ' · ดึงจากเว็บเช็คชื่อรอบ ' + esc(D.times || '12:30 และ 18:30 น.') + ' · ดึงล่าสุด ' + esc(at) + esc(ran) + '</span><button type="button" class="btn btn-secondary btn-sm" data-cc-skre>' + ic('fa-rotate') + ' ดึงตอนนี้</button></div>' +
+      '<div class="cc-sync cc-noexp">' + ic('fa-bolt') + ' <span><b>หักคะแนนอัตโนมัติ</b> −' + (r.skipPts || 0) + ' / คาบ' + (r.absOn ? ' · ขาดทั้งวัน −' + r.absPts + ' / วัน' : '') + (r.skipMax ? ' · สูงสุด −' + r.skipMax + ' / วัน' : '') + ' · ดึงจากเว็บเช็คชื่อรอบ ' + esc(D.times || '12:30 และ 18:30 น.') + '<br><small>ดึงล่าสุด ' + esc(at) + esc(ran) + ' · ดึงเองได้ที่ ตั้งค่า › ' + esc(skipName()) + '</small></span></div>' +
       (D.more ? '<div class="cc-warn">' + ic('fa-triangle-exclamation') + ' รายการมากเกิน 5,000 แถว — แสดงเฉพาะส่วนแรก</div>' : '') +
       '<div id="ccSk" class="cc-cap">' + capHead('สรุปการโดดเรียน');
     if (M.pend.length) { // รายการก่อนวันเริ่มหักอัตโนมัติ — ผู้ดูแลกดเอง
@@ -134,21 +134,42 @@
     }
     put(body, h + '</div>');
   }
+  // 2.30.1: ตั้งค่า › โดด / ขาดเรียน — ปุ่ม "ดึงตอนนี้" + รายการรอยืนยัน (ก่อนเริ่มหักอัตโนมัติ)
+  function skRepaint() { if (document.getElementById('ccSkPull')) paintPend(); else paintSkip(); }
+  function pendList() { return SK.pull ? (SK.pull.items || []).filter(function (x) { return x.cat === 'pend'; }).sort(function (a, b) { return a.d.localeCompare(b.d); }) : []; }
+  function paintPend() {
+    var box = document.getElementById('ccSkPull'); if (!box) return;
+    if (!SK.pull) { box.innerHTML = ''; return; }
+    var P = SK.pull, L = pendList(), ran = P.ran || {}, nSel = Object.keys(SK.sel).length, rl = P.rules || {};
+    box.innerHTML = '<div class="cc-info" style="margin-top:8px">' + ic('fa-circle-check') + ' ดึงแล้ว ' + esc(new Date(P.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })) + ' น. · หักเพิ่ม ' + (ran.auto || 0) + ' รายการ' + (ran.back ? ' · คืนคะแนน ' + ran.back + ' รายการ' : '') + (ran.fill ? ' · เติมชื่อครู ' + ran.fill + ' รายการ' : '') + '</div>' +
+      (L.length ? '<div class="card cc-card cc-skold"><h3>' + ic('fa-hourglass-half') + ' รอยืนยัน (ก่อนเริ่มหักอัตโนมัติ' + (rl.autoFrom ? ' ' + esc(thD(rl.autoFrom, true)) : '') + ') <small class="mut" style="font-weight:500">· ' + L.length + ' รายการ</small></h3>' +
+        '<div class="cc-skl"><div class="cc-skscroll">' + L.map(function (x) { return '<label class="cc-skr"><input type="checkbox" data-cc-skk="' + esc(x.k) + '"' + (SK.sel[x.k] ? ' checked' : '') + ' /><span class="cc-skm"><b>' + esc(x.name) + '</b> <span class="cc-mut">· ' + esc(x.room) + (x.no ? ' เลขที่ ' + esc(x.no) : '') + '</span><small>' + esc(thD(x.d, true)) + ' · ' + esc(x.note || '') + (x.by ? ' · ครู ' + esc(x.by) : '') + '</small></span><span class="cc-skb ' + (x.kind === 'skip' ? 'sk' : 'ab') + '">' + esc(x.label) + '</span><b class="cc-skd">' + sgn(Number(x.delta) || 0) + '</b></label>'; }).join('') + '</div>' +
+        '<div class="cc-skbar"><b>เลือก ' + nSel + ' รายการ</b><button type="button" class="btn btn-ghost btn-sm" data-cc-skall>' + (nSel === L.length ? 'ไม่เลือกเลย' : 'เลือกทั้งหมด') + '</button><span class="cc-skacts"><button type="button" class="btn btn-ghost btn-sm" data-cc-skop="no">' + ic('fa-ban') + ' ไม่หัก</button><button type="button" class="btn btn-sm cc-skok" data-cc-skop="ok">' + ic('fa-check') + ' หักคะแนน</button></span></div></div></div>'
+        : '<p class="hint">ไม่มีรายการรอยืนยัน</p>');
+  }
+  async function skipPull(btn) {
+    if (btn) btn.disabled = true;
+    var r = await withProgress('กำลังดึงจากเว็บเช็คชื่อ', function () { return apiCall('careSkipList', { pull: 1 }); }, { successLabel: 'ดึงข้อมูลแล้ว' });
+    if (btn) btn.disabled = false;
+    if (!r.ok || !r.data) return;
+    SK.pull = r.data; SK.sel = {}; SK.d = null; C.sc = {}; C.ov = {}; C.bh = {}; paintPend();
+  }
   async function skipDo(op, keys) {
     keys = keys || Object.keys(SK.sel); if (!keys.length) { showToast('ยังไม่ได้เลือกรายการ', true); return; }
     var x0 = keys.length === 1 ? ((SK.d && SK.d.items) || []).filter(function (x) { return x.k === keys[0]; })[0] : null;
-    var q = op === 'no' ? 'ไม่หักคะแนน ' + keys.length + ' รายการ?' : op === 'cancel' ? 'ยกเลิกการหัก' + (x0 ? ' ' + x0.name + ' (' + thD(x0.d, true) + ')' : '') + ' และคืน ' + (x0 ? Math.abs(Number(x0.delta) || 0) + ' คะแนน' : 'คะแนน') + '?\nรายการนี้จะไม่ถูกหักอีก' : op === 'undo' ? 'หักคะแนนรายการนี้ใหม่? (ระบบหักให้ทันที)' : '';
+    var q = op === 'no' ? 'ไม่หักคะแนน ' + keys.length + ' รายการ?' : op === 'cancel' ? 'ยกเลิกการหัก' + (x0 ? ' ' + x0.name + ' (' + thD(x0.d, true) + ')' : '') + ' และคืน ' + (x0 ? Math.abs(Number(x0.delta) || 0) + ' คะแนน' : 'คะแนน') + '?\nรายการนี้จะไม่ถูกหักอีก' : op === 'redo' ? 'หักคะแนนรายการนี้ใหม่? (หักทันที)' : '';
     if (q && !(await askConfirm(q, op === 'no' ? 'ไม่หัก' : op === 'cancel' ? 'ยกเลิกการหัก' : 'ยืนยัน'))) return;
     var r = await withProgress(op === 'ok' ? 'กำลังหักคะแนน' : 'กำลังบันทึก', async function (ctl) {
-      for (var i = 0; i < keys.length; i += 60) { ctl.setProgress(Math.round(i / keys.length * 100)); await apiCall('careSkipApply', { op: op, keys: keys.slice(i, i + 60) }); }
+      for (var i = 0; i < keys.length; i += 1000) { ctl.setProgress(Math.round(i / keys.length * 100)); await apiCall('careSkipApply', { op: op, keys: keys.slice(i, i + 1000) }); } // 2.30.1: ดึงจากเว็บเช็คชื่อครั้งเดียวต่อการกด
       return true;
     }, { successLabel: op === 'ok' ? 'หักคะแนนแล้ว ' + keys.length + ' รายการ' : op === 'cancel' ? 'ยกเลิกและคืนคะแนนแล้ว' : 'บันทึกแล้ว' });
     if (!r.ok) return;
     SK.sel = {}; C.sc = {}; C.ov = {}; C.bh = {}; C.rm = {}; C.rd = {};
+    if (SK.pull && (op === 'ok' || op === 'no')) { var ks = {}; keys.forEach(function (k) { ks[k] = 1; }); (SK.pull.items || []).forEach(function (x) { if (ks[x.k]) x.cat = op; }); paintPend(); SK.d = null; return; } // ในหน้าตั้งค่า (ไม่ดึงซ้ำ)
     await loadSkip();
   }
   function renderTabs() {
-    var t = [['summary', 'fa-chart-pie', 'สรุปรวม'], ['late', 'fa-clock', 'มาสาย'], ['scores', 'fa-star', 'คะแนนพฤติกรรม']];
+    var t = [['summary', 'fa-chart-pie', 'สรุปรวม'], ['scores', 'fa-star', 'คะแนนพฤติกรรม'], ['late', 'fa-clock', 'มาสาย']]; // 2.30.1: เรียง สรุปรวม · คะแนนพฤติกรรม · มาสาย · โดดเรียน · ตั้งค่า
     if (B.role === 'm' && B.settings && B.settings.skipOn) t.push(['skip', 'fa-person-walking-arrow-right', skipName()]); // 2.13.0 · 2.29.0 ชื่อตามที่เปิด
     if (B.role === 'm') t.push(['settings', 'fa-sliders', 'ตั้งค่า']);
     var cur = isLate() ? 'late' : st.tab;
@@ -910,8 +931,10 @@
       '<div class="cc-sksec' + (d.skipOn && d.absOn ? '' : ' off') + '"><label class="cc-row">' + sw('ccAbsOn', d.absOn, d.skipOn ? '' : ' disabled') + '<b>ขาดเรียนทั้งวัน — หักคะแนน</b></label>' +
       (!d.skipOn ? '<p class="hint" style="margin:0 0 4px">เปิด "โดดเรียน" ก่อนจึงจะใช้ได้</p>' : d.absOn ? '<div class="cc-row"><span>หัก</span><input type="number" id="ccAbsPts" min="0" max="100" value="' + d.absPts + '" class="cc-num" /><span>คะแนน / วัน</span></div>' : '<p class="hint" style="margin:0 0 4px">ปิดอยู่ = ไม่ดึงรายการขาดเรียนทั้งวันมาเลย</p>') + '</div>' +
       (d.skipOn ? '<div class="cc-row"><span class="cc-lb">หักสูงสุดต่อวัน</span><input type="number" id="ccSkipMax" min="0" max="500" value="' + d.skipMax + '" class="cc-num" /> คะแนน <span class="cc-mut">(0 = ไม่จำกัด)</span></div>' : '') +
-      '<p class="hint">' + ic('fa-bolt') + ' หักคะแนนอัตโนมัติ: ดึงจากเว็บเช็คชื่อรอบ 12:30 และ 18:30 น. (และเมื่อกด "ดึงตอนนี้" / เปิดแท็บ ' + (d.absOn ? 'โดด / ขาดเรียน' : 'โดดเรียน') + ') · 1 คาบหักได้ครั้งเดียว · ครูแก้สถานะในเว็บเช็คชื่อภายหลัง = คืนคะแนนให้เอง · กดบันทึกแล้ว เว็บเช็คชื่อจะเตือนครูตอนบันทึกคาบที่มีนักเรียนโดดเรียน (บอกคะแนนที่หัก)</p>' +
-      save('skip', ' โดด / ขาดเรียน') + '</div>'); },
+      '<p class="hint">' + ic('fa-bolt') + ' หักคะแนนอัตโนมัติ: ดึงจากเว็บเช็คชื่อรอบ 12:30 และ 18:30 น. (และเมื่อกด "ดึงตอนนี้" ด้านล่าง · เปิดแท็บ ' + (d.absOn ? 'โดด / ขาดเรียน' : 'โดดเรียน') + ' = ดูข้อมูลรอบล่าสุด ไม่ดึงใหม่) · 1 คาบหักได้ครั้งเดียว · ครูแก้สถานะในเว็บเช็คชื่อภายหลัง = คืนคะแนนให้เอง · กดบันทึกแล้ว เว็บเช็คชื่อจะเตือนครูตอนบันทึกคาบที่มีนักเรียนโดดเรียน (บอกคะแนนที่หัก)</p>' +
+      save('skip', ' โดด / ขาดเรียน') +
+      (B.settings && B.settings.skipOn ? '<div class="cc-skpullw"><h3 style="margin-top:14px">' + ic('fa-rotate') + ' ดึงข้อมูลตอนนี้</h3><p class="hint" style="margin-top:0">ปกติระบบดึงเองรอบ 12:30 และ 18:30 น. · กดเมื่อจำเป็น เช่น ก่อนพิมพ์รายงาน · รายการเก่าที่ค้างรอยืนยันจะขึ้นด้านล่างหลังกด</p>' +
+        '<button type="button" class="btn btn-secondary btn-sm" data-cc-skpull>' + ic('fa-rotate') + ' ดึงตอนนี้</button><div id="ccSkPull"></div></div>' : '') + '</div>'); },
       view: function () { var u = base + 'score.html'; return (
       '<div class="card cc-card"><h3>' + ic('fa-id-card') + ' หน้าดูคะแนน — นักเรียน / ผู้ปกครองดูคะแนนพฤติกรรม</h3>' +
       '<label class="cc-row">' + sw('ccViewOn', d.viewOn) + '<b>เปิดหน้าดูคะแนน</b></label>' +
@@ -989,10 +1012,11 @@
     if ((t = e.target.closest('[data-cc-sksub]'))) { e.preventDefault(); SK.sub = t.getAttribute('data-cc-sksub'); paintSkip(); return; } // 2.30.0
     if ((t = e.target.closest('[data-cc-skmore]'))) { if (t.getAttribute('data-cc-skmore') === 'fq') SK.fqN = (SK.fqN || 10) + 20; else SK.rcN = (SK.rcN || 10) + 20; paintSkip(); return; }
     if ((t = e.target.closest('[data-cc-skcancel]'))) { skipDo('cancel', [t.getAttribute('data-cc-skcancel')]); return; }
-    if ((t = e.target.closest('[data-cc-skredo]'))) { skipDo('undo', [t.getAttribute('data-cc-skredo')]); return; }
+    if ((t = e.target.closest('[data-cc-skredo]'))) { skipDo('redo', [t.getAttribute('data-cc-skredo')]); return; }
     if (e.target.closest('[data-cc-skre]')) { SK.d && (SK.d.at = new Date().toISOString()); var rb = e.target.closest('[data-cc-skre]'); rb.disabled = true; await loadSkip(); return; }
     if ((t = e.target.closest('[data-cc-skop]'))) { skipDo(t.getAttribute('data-cc-skop')); return; }
-    if (e.target.closest('[data-cc-skall]')) { var L0 = skModel().pend, allOn = L0.every(function (x) { return SK.sel[x.k]; }); SK.sel = {}; if (!allOn) L0.forEach(function (x) { SK.sel[x.k] = 1; }); paintSkip(); return; }
+    if ((t = e.target.closest('[data-cc-skpull]'))) { skipPull(t); return; } // 2.30.1
+    if (e.target.closest('[data-cc-skall]')) { var L0 = pendList(), allOn = L0.every(function (x) { return SK.sel[x.k]; }); SK.sel = {}; if (!allOn) L0.forEach(function (x) { SK.sel[x.k] = 1; }); skRepaint(); return; }
     if ((t = e.target.closest('[data-cc-pg]'))) { if (t.disabled) return; st.pg = +t.getAttribute('data-cc-pg'); renderScores(); var tb = document.getElementById('ccSc'); if (tb) tb.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
     if ((t = e.target.closest('[data-cc-rg]'))) { st.range = t.getAttribute('data-cc-rg'); show(); return; }
     if ((t = e.target.closest('[data-cc-go]'))) { e.preventDefault(); st.rroom = t.getAttribute('data-r') || ''; goTab(t.getAttribute('data-cc-go')); return; }
@@ -1045,7 +1069,7 @@
         if (!r.ok) return;
         B.settings = r.data.settings; B.periods = r.data.periods || B.periods; B.siteUrl = r.data.siteUrl;
         var nb = baseDraft(); CC_FIELDS[k].forEach(function (f) { draft[f] = nb[f]; }); // หัวข้ออื่นที่แก้ค้างไว้ยังอยู่
-        C.sc = {}; C.ov = {}; C.rm = {}; C.rd = {}; C.bh = {}; if (k === 'skip') { SK.d = null; SK.n = 0; renderTabs(); if (B.settings.skipOn) loadSkip(true); } showSettings();
+        C.sc = {}; C.ov = {}; C.rm = {}; C.rd = {}; C.bh = {}; if (k === 'skip') { SK.d = null; SK.n = 0; SK.pull = null; renderTabs(); } showSettings();
       };
       if (k === 'council' && !d.pinOn && B.settings.pinOn) { if (await askConfirm('ปิดแล้ว ใครมีลิงก์หน้าสภานักเรียนก็เปิดเว็บ เห็นรายชื่อนักเรียนทั้งโรงเรียน และบันทึกการมาสายได้ — ยืนยันปิดหรือไม่?', 'ปิดรหัส PIN')) go(); }
       else go();
@@ -1063,7 +1087,7 @@
   body.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('.cc-dhd')) { e.preventDefault(); e.target.click(); return; } if (e.key === 'Enter' && e.target.id === 'ccRNew') { e.preventDefault(); var b = document.querySelector('[data-cc-radd]'); if (b) b.click(); } });
   body.addEventListener('change', function (e) {
     var id = e.target.id, sk;
-    if ((sk = e.target.getAttribute('data-cc-skk'))) { if (e.target.checked) SK.sel[sk] = 1; else delete SK.sel[sk]; paintSkip(); return; }
+    if ((sk = e.target.getAttribute('data-cc-skk'))) { if (e.target.checked) SK.sel[sk] = 1; else delete SK.sel[sk]; skRepaint(); return; }
     if ((sk = e.target.getAttribute('data-cc-skday'))) { var on = e.target.checked; (SK.d.items || []).forEach(function (x) { if (x.cat === SK.cat && x.d === sk) { if (on) SK.sel[x.k] = 1; else delete SK.sel[x.k]; } }); paintSkip(); return; }
     if (id === 'ccGrade') { st.grade = e.target.value; show(); }
     else if (id === 'ccFrom' || id === 'ccTo') { var a = document.getElementById('ccFrom').value, b = document.getElementById('ccTo').value; if (a && b && a <= b) { st.from = a; st.to = b; show(); } }
