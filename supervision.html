@@ -16,8 +16,8 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.27.2.231126" />
-<link rel="stylesheet" href="assets/supervision.css?v=2.27.2.231126" />
+<link rel="stylesheet" href="assets/style.css?v=2.29.0.231126" />
+<link rel="stylesheet" href="assets/supervision.css?v=2.29.0.231126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body>
@@ -46,7 +46,7 @@
   </div>
   <input type="file" id="spPlanFile" hidden />
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.27.2.231126"></script>
+  <script src="assets/api.js?v=2.29.0.231126"></script>
   <script>
     var session = requireLogin();
     if (session) { mountChrome('supervision'); if (typeof mountFooter === 'function') mountFooter(); }
@@ -511,7 +511,7 @@
         '<span class="mut">ครู ' + D.teachers.length + ' คน · มีผู้นิเทศแล้ว ' + nSup + ' · เลือกคาบแล้ว ' + nPick + '</span></div>' +
         '<div class="sp-toolbar"><select data-f-group><option value="">ทุกกลุ่มสาระ</option>' + Object.keys(groups).sort(function (a, b) { return a.localeCompare(b, 'th'); }).map(function (g) { return '<option' + (g === st.filterGroup ? ' selected' : '') + '>' + escapeHtml(g) + '</option>'; }).join('') + '</select>' +
         '<input type="search" data-f-q placeholder="ค้นหาชื่อครู" value="' + escapeHtml(st.q) + '" />' +
-        (addable.length ? '<select data-t-add><option value="">+ เพิ่มครูเข้ารอบ…</option>' + addable.map(function (p) { return '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name) + '</option>'; }).join('') + '</select>' : '') + '</div>' +
+        (addable.length ? '<button type="button" class="btn btn-secondary btn-sm" data-t-addbtn><i class="fa-solid fa-user-plus" aria-hidden="true"></i> เพิ่มครูเข้ารอบ</button>' : '') + '</div>' +
         '<div class="sp-tbl-wrap"><table class="sp-tbl sp-cp"><thead><tr><th>ครูผู้รับการนิเทศ</th><th>กลุ่มสาระฯ</th><th>ผู้นิเทศ</th><th>คาบที่เลือก</th><th>สถานะ</th><th style="text-align:right">จัดการ</th></tr></thead><tbody>' +
         list.map(function (t) {
           var s = teacherStatus(t);
@@ -546,7 +546,19 @@
       }
       if (e.target.closest('[data-t-pick]') && t) { openPickModal(t); }
       if (e.target.closest('[data-sv-pick]') && t) openSupPicker(t);
+      if (e.target.closest('[data-t-addbtn]')) openAddTeachers();
     };
+    // 2.28.0: เพิ่มครูเข้ารอบ = ตัวเลือกครูแบบหน้าแจ้งลา (เดิมกล่องเลือกแบบเลื่อนลง)
+    function openAddTeachers() {
+      var inRound = {}; st.D.teachers.forEach(function (t) { inRound[t.id] = 1; });
+      var addable = st.D.people.filter(function (p) { return p.eligible && !inRound[p.id]; }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'th'); });
+      modal('เพิ่มครูเข้ารอบ', '<div id="spAddTp"></div>', '<button type="button" class="btn btn-success" id="spAddOk"><i class="fa-solid fa-check"></i> เพิ่มเข้ารอบ</button>');
+      var tpk = createTeacherPicker(document.getElementById('spAddTp'), { label: 'ครูที่จะเพิ่ม', users: addable.map(function (p) { return { id: p.id, name: p.name, sub: p.subjectGroup || (p.department ? groupLabel(p.department) : ''), find: p.subjectGroup || '' }; }) });
+      document.getElementById('spAddOk').onclick = async function () {
+        var ids = tpk.ids(); if (!ids.length) { showToast('เลือกครูก่อน', true); return; }
+        try { await apiCall('supTeachersEdit', { roundId: st.roundId, add: ids }); closeModal(); showToast('เพิ่มเข้ารอบแล้ว ' + ids.length + ' คน'); st.D = null; await show(); } catch (er) { showToast(er.message, true); }
+      };
+    }
     body.addEventListener('change', async function (e) {
       var x = e.target;
       if (st.tab === 'sup') {
@@ -557,24 +569,12 @@
     });
     body.addEventListener('input', debounce(function (e) { if (st.tab === 'sup' && e.target.matches('[data-f-q]')) { st.q = e.target.value.trim(); var pos = e.target.selectionStart; renderSup(); var n = body.querySelector('[data-f-q]'); n.focus(); try { n.setSelectionRange(pos, pos); } catch (x) { /* ข้าม */ } } }, 220)); // 2.01.0
     // เลือกผู้นิเทศ (ค้นหาชื่อ + ติ๊ก สูงสุด 6 คน)
-    function openSupPicker(t) {
-      var sel = t.supervisors.slice(), q = '';
+    function openSupPicker(t) { // 2.28.0: ตัวเลือกครูแบบหน้าแจ้งลา · สูงสุด 6 คน · ค้นหาด้วยกลุ่มสาระได้
       var ppl = st.D.people.filter(function (p) { return p.id !== t.id; }).sort(function (a, b) { return (b.executive ? 1 : 0) - (a.executive ? 1 : 0) || String(a.name).localeCompare(String(b.name), 'th'); });
-      var draw = function () {
-        var list = ppl.filter(function (p) { return !q || String(p.name).indexOf(q) !== -1 || String(p.subjectGroup).indexOf(q) !== -1; }).slice(0, 80);
-        document.getElementById('spPickList').innerHTML = list.map(function (p) { return '<label class="sp-pp"><input type="checkbox" value="' + escapeHtml(p.id) + '"' + (sel.indexOf(p.id) !== -1 ? ' checked' : '') + ' /> <span><b>' + escapeHtml(p.name) + '</b>' + (p.executive ? ' <span class="sp-st info">ผู้บริหาร</span>' : '') + '<small>' + escapeHtml(p.subjectGroup || (p.department ? groupLabel(p.department) : '')) + '</small></span></label>'; }).join('') || '<p class="mut">ไม่พบ</p>';
-        document.getElementById('spPickSel').textContent = sel.length ? 'เลือกแล้ว ' + sel.length + ' คน: ' + sel.map(nameOf).join(', ') : 'ยังไม่ได้เลือก';
-      };
-      modal('ผู้นิเทศของ ' + escapeHtml(t.name), '<input type="search" id="spPickQ" placeholder="ค้นหาชื่อ / กลุ่มสาระ" style="width:100%;margin-bottom:8px" /><div class="mut" id="spPickSel" style="margin-bottom:6px"></div><div class="sp-pplist" id="spPickList"></div>',
-        '<button type="button" class="btn btn-success" id="spPickSv"><i class="fa-solid fa-check"></i> บันทึก</button>');
-      draw();
-      document.getElementById('spPickQ').oninput = function () { q = this.value.trim(); draw(); };
-      document.getElementById('spPickList').onchange = function (e) {
-        var c = e.target; if (!c.value) return;
-        if (c.checked) { if (sel.length >= 6) { c.checked = false; showToast('ผู้นิเทศได้สูงสุด 6 คน', true); return; } sel.push(c.value); } else sel = sel.filter(function (x) { return x !== c.value; });
-        draw();
-      };
-      document.getElementById('spPickSv').onclick = async function () { closeModal(); await setSupervisors([t.id], sel); };
+      modal('ผู้นิเทศของ ' + escapeHtml(t.name), '<div id="spSupTp"></div>', '<button type="button" class="btn btn-success" id="spPickSv"><i class="fa-solid fa-check"></i> บันทึก</button>');
+      var tpk = createTeacherPicker(document.getElementById('spSupTp'), { label: 'ผู้นิเทศ', max: 6, placeholder: 'พิมพ์ชื่อ หรือกลุ่มสาระ', users: ppl.map(function (p) { var g = p.subjectGroup || (p.department ? groupLabel(p.department) : ''); return { id: p.id, name: p.name, tag: p.executive ? 'ผู้บริหาร' : '', tagCls: 'ex', sub: g, find: g }; }) });
+      tpk.set(t.supervisors.map(function (id) { return { id: id, name: nameOf(id) }; }));
+      document.getElementById('spPickSv').onclick = async function () { closeModal(); await setSupervisors([t.id], tpk.ids()); };
     }
     // เปลี่ยนคาบแทนครู (ผู้จัดการ — ลงวันแล้วก็เปลี่ยนได้ วันที่ของคาบที่เปลี่ยนจะถูกล้างเพื่อลงใหม่)
     async function openPickModal(t) {

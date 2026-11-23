@@ -112,13 +112,11 @@
   function openTeacherPicker() {
     var mineClub = D ? D.club.id : '';
     var list = B.teachers.filter(function (t) { return pickT.ids.indexOf(t.id) === -1; });
-    modal('เพิ่มครูร่วม', '<input type="search" id="cbTq" placeholder="ค้นหาชื่อครู" class="cb-search" /><div class="cb-pick" id="cbTl">' + list.map(function (t) {
-      var busy = t.busy && (!D || t.busy !== D.club.name);
-      return '<label class="cb-prow' + (busy ? ' dis' : '') + '" data-name="' + esc(t.name) + '"><input type="checkbox" value="' + esc(t.id) + '"' + (busy ? ' disabled' : '') + ' /> ' + esc(t.name) + (busy ? ' <span class="cb-tag gr">มีชุมนุม: ' + esc(t.busy) + '</span>' : '') + '</label>';
-    }).join('') + '</div>', '<button type="button" class="btn btn-success" data-t-ok><i class="fa-solid fa-check"></i> เพิ่ม</button>');
-    var mb = document.getElementById('cbModalBody');
-    mb.oninput = function (e) { if (e.target.id === 'cbTq') { var q = e.target.value.trim(); mb.querySelectorAll('.cb-prow').forEach(function (r) { r.hidden = q && r.getAttribute('data-name').indexOf(q) === -1; }); } };
-    document.getElementById('cbModalActions').onclick = function (e) { if (!e.target.closest('[data-t-ok]')) return; mb.querySelectorAll('input[type=checkbox]:checked').forEach(function (x) { if (pickT.ids.indexOf(x.value) === -1) pickT.ids.push(x.value); }); closeModal(); var keep = infoVals(), nmv = document.getElementById('cbName').value; renderInfo(); document.getElementById('cbName').value = nmv; body.querySelectorAll('[data-info]').forEach(function (x) { x.value = keep[x.getAttribute('data-info')] || ''; }); };
+    // 2.28.0: ตัวเลือกครูแบบหน้าแจ้งลา (createTeacherPicker) · ครูที่มีชุมนุมแล้ว = เลือกไม่ได้
+    modal('เพิ่มครูร่วม', '<div id="cbTp"></div>', '<button type="button" class="btn btn-success" data-t-ok><i class="fa-solid fa-check"></i> เพิ่ม</button>');
+    var mb = document.getElementById('cbModalBody'); mb.oninput = null;
+    var tpk = createTeacherPicker(document.getElementById('cbTp'), { label: 'ครูร่วม', hint: 'ครูที่มีชุมนุมแล้วในภาคเรียนนี้จะเลือกไม่ได้', users: list.map(function (t) { var busy = t.busy && (!D || t.busy !== D.club.name); return { id: t.id, name: t.name, sub: busy ? 'มีชุมนุมแล้ว: ' + t.busy : '', disabled: !!busy }; }) });
+    document.getElementById('cbModalActions').onclick = function (e) { if (!e.target.closest('[data-t-ok]')) return; tpk.ids().forEach(function (id) { if (pickT.ids.indexOf(id) === -1) pickT.ids.push(id); }); closeModal(); var keep = infoVals(), nmv = document.getElementById('cbName').value; renderInfo(); document.getElementById('cbName').value = nmv; body.querySelectorAll('[data-info]').forEach(function (x) { x.value = keep[x.getAttribute('data-info')] || ''; }); };
     void mineClub;
   }
 

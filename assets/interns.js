@@ -99,7 +99,7 @@
     var I = D.intern, P = canP();
     var co = I.co.map(function (c) { return '<span class="ip-chip">' + esc(c.name) + (P ? '<button type="button" data-ip-corm="' + esc(c.id) + '" aria-label="เอาออก">' + ic('fa-xmark') + '</button>' : '&nbsp;') + '</span>'; }).join('') || '<span class="ip-mut">ไม่มี</span>';
     var taken = [I.mentor.id].concat(I.co.map(function (c) { return c.id; }));
-    var addCo = P ? '<div style="display:flex;gap:6px;margin-top:6px;width:100%"><select id="ipCoSel" style="flex:1"><option value="">+ เพิ่มครูพี่เลี้ยงร่วม</option>' + D.people.filter(function (p) { return taken.indexOf(p.id) === -1; }).map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + '</option>'; }).join('') + '</select><button type="button" class="btn btn-secondary btn-sm" data-ip-coadd>เพิ่ม</button></div>' : '';
+    var addCo = P ? '<div id="ipCoTp" style="margin-top:6px;width:100%"></div>' : ''; // 2.28.0: ตัวเลือกครูแบบหน้าแจ้งลา (เดิมกล่องเลือก)
     var perm = [['leave', 'แจ้งไปราชการ / ลา'], ['cal', 'ดูปฏิทินโรงเรียน'], ['sup', 'มีการนิเทศนักศึกษาคนนี้ (หน้านิเทศการสอน)']];
     var left = '<div class="card"><h4 style="margin-top:0">' + ic('fa-id-card') + ' ข้อมูล</h4><div class="ip-rows">' +
       '<div><span>ครูพี่เลี้ยงหลัก</span><span>' + esc(I.mentor.name || '-') + '</span></div>' +
@@ -109,6 +109,7 @@
       '<div><span>ให้นักศึกษาเห็นคะแนนรายด้าน<small>ในบันทึกสังเกต/นิเทศ · ครูพี่เลี้ยงหลักเลือก (ข้อความเห็นเสมอ)</small></span><input type="checkbox" class="ip-sw" id="ipShow"' + (I.showScore ? ' checked' : '') + (P ? '' : ' disabled') + '></div>' +
       perm.map(function (p) { return '<div><span>' + p[1] + '</span><input type="checkbox" class="ip-sw" data-ip-perm="' + p[0] + '"' + (I.perm[p[0]] ? ' checked' : '') + (P ? '' : ' disabled') + '></div>'; }).join('') + '</div></div>';
     put(sb(), '<div class="ip-grid2">' + left + '<div id="ipSubCard">' + subListHtml() + '</div></div><div id="ipTtCard">' + ttHtml() + '</div><div id="ipSaveBar">' + saveBarHtml() + '</div>');
+    if (P && document.getElementById('ipCoTp')) createTeacherPicker(document.getElementById('ipCoTp'), { placeholder: 'พิมพ์ชื่อครูเพื่อเพิ่มเป็นครูพี่เลี้ยงร่วม', users: D.people.filter(function (p) { return taken.indexOf(p.id) === -1; }).map(function (p) { return { id: p.id, name: p.name }; }), onAdd: function (u) { act('internSetInfo', { id: D.intern.id, co: D.intern.co.map(function (c) { return c.id; }).concat([u.id]) }, 'เพิ่มครูพี่เลี้ยงร่วมแล้ว'); } });
   }
   // ---------- 2.18.1: วิชา / ชุมนุมที่ให้ช่วยสอน — ตารางสอนของนักศึกษา + เลือกจากตาราง/รายการ · บันทึกทีเดียว ----------
   var SEL = null; // { id: internId, subs: {mentorId: {subId:1}}, club: {mentorId: bool}, sub0, club0 }
@@ -419,7 +420,6 @@
     if ((b = e.target.closest('[data-ip-sub]'))) { var nsub = b.getAttribute('data-ip-sub'); leaveOk().then(function (ok) { if (ok) { st.sub = nsub; renderDetail(); } }); return; }
     if (e.target.closest('[data-ip-pdf]')) { pdfReport(); return; }
     if ((b = e.target.closest('[data-ip-corm]'))) { var id = b.getAttribute('data-ip-corm'); act('internSetInfo', { id: D.intern.id, co: D.intern.co.map(function (c) { return c.id; }).filter(function (x) { return x !== id; }) }, 'เอาออกแล้ว'); return; }
-    if (e.target.closest('[data-ip-coadd]')) { var v = document.getElementById('ipCoSel').value; if (!v) return; act('internSetInfo', { id: D.intern.id, co: D.intern.co.map(function (c) { return c.id; }).concat([v]) }, 'เพิ่มครูพี่เลี้ยงร่วมแล้ว'); return; }
     if (e.target.closest('[data-ip-infosave]')) { act('internSetInfo', { id: D.intern.id, from: document.getElementById('ipFrom').value, until: document.getElementById('ipUntil').value, uni: document.getElementById('ipUni').value, major: document.getElementById('ipMajor').value }); return; }
     if (e.target.closest('[data-ip-tnew]')) { openTaskForm(null); return; }
     if ((b = e.target.closest('[data-ip-task]'))) { openTask(b.getAttribute('data-ip-task')); return; }

@@ -318,3 +318,37 @@
 @media (max-width: 600px) { .cc-rs2 span { width: 110px; } }
 @media print { .cc-fold { display: none; } }
 .cc-ft .cc-tg { white-space: nowrap; }
+
+/* 2.29.0: รายการเพิ่ม / หักคะแนน — ย้ายลำดับได้ · มือถือ 2 บรรทัด */
+.cc-ig { display: grid; grid-template-columns: 64px 78px minmax(0, 1fr) 92px 92px 34px; gap: 8px; align-items: center; padding: 7px 0; border-top: 1px solid var(--border); }
+.cc-igh { font-size: .8rem; color: var(--text-muted); font-weight: 700; border-top: 0; padding-bottom: 2px; }
+.cc-igh span { text-align: center; } .cc-igh span:nth-child(3) { text-align: left; }
+.cc-iglate { background: var(--primary-light, #eef2ff); border-radius: 10px; padding: 7px 4px; border-top: 0; }
+.cc-ig .cc-num, .cc-ig .cc-ign input { width: 100% !important; box-sizing: border-box; text-align: center; padding-left: 4px; padding-right: 4px; }
+.cc-ig .cc-neg { display: flex; align-items: center; gap: 3px; } .cc-ig .cc-neg input { flex: 1 !important; min-width: 0; }
+.cc-igl input { width: 100%; box-sizing: border-box; min-width: 0; }
+.cc-igl.cc-itl { white-space: normal; }
+.cc-igo { display: flex; gap: 4px; justify-content: center; }
+.cc-igo button { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; padding: 0; font-size: .75rem; }
+.cc-igo button:hover:not(:disabled) { color: var(--primary); border-color: var(--primary); }
+.cc-igo button:disabled { opacity: .35; cursor: default; }
+.cc-iglock { color: var(--text-muted); font-size: .8rem; align-items: center; }
+.cc-igt, .cc-igc { display: flex; justify-content: center; align-items: center; gap: 4px; }
+.cc-igt i, .cc-igc i { display: none; font-style: normal; font-size: .76rem; color: var(--text-muted); white-space: nowrap; }
+.cc-igx { justify-self: center; }
+.cc-ig.moved { box-shadow: inset 3px 0 0 #7c3aed; }
+@media (max-width: 640px) {
+  .cc-igh { display: none; }
+  .cc-ig { grid-template-columns: 62px auto auto minmax(0, 1fr); grid-template-areas: "o l l l" "n t c x"; row-gap: 8px; padding: 10px 0; }
+  .cc-ig > .cc-igo { grid-area: o; justify-content: flex-start; } .cc-ig > .cc-ign { grid-area: n; } .cc-ig > .cc-igl { grid-area: l; }
+  .cc-ig > .cc-igt { grid-area: t; } .cc-ig > .cc-igc { grid-area: c; } .cc-ig > .cc-igx { grid-area: x; justify-self: end; }
+  .cc-igt, .cc-igc { justify-content: flex-start; } .cc-igt i, .cc-igc i { display: inline; }
+  .cc-ig .cc-ign { width: 62px; }
+}
+/* 2.29.0: โดดเรียน / ขาดเรียน แยกกล่อง */
+.cc-sksec { border: 1px solid var(--border); border-radius: 12px; padding: 6px 12px; margin: 10px 0; }
+.cc-sksec.off { background: var(--surface-2); }
+.cc-sksec .cc-row { display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
+.cc-sksec .cc-row > span, .cc-sksec .cc-row > b { min-width: 0; }
+.cc-sksec .cc-row .switch { flex: none; }
+.cc-sksec .cc-num { flex: none; width: 72px; }

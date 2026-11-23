@@ -289,7 +289,7 @@
   }
   function renderForm() {
     var t = typeOf(F.typeKey), h = '<div class="lv-f">';
-    if (F.forOther) h += '<label class="lb" for="lvFu">ครู</label><select id="lvFu"><option value="">— เลือกครู —</option>' + (B.people || []).map(function (u) { return '<option value="' + esc(u.id) + '"' + (F.userId === u.id ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('') + '</select>';
+    if (F.forOther) h += '<div id="lvFuTp"></div>'; // 2.28.0: ตัวเลือกครูแบบหน้าแจ้งลา (เดิมกล่องเลือก)
     h += '<label class="lb">ประเภท</label><div class="lv-types">' + B.types.map(function (x) { return '<button type="button" data-ft="' + esc(x.key) + '"' + (F.typeKey === x.key ? ' class="on"' : '') + '>' + esc(x.label) + '</button>'; }).join('') + '</div>';
     if (t && t.custom) h += '<label class="lb" for="lvFo">ชื่อการลา <span class="lv-req">*</span></label><input type="text" id="lvFo" maxlength="40" placeholder="เช่น ลาอุปสมบท · ลาไปช่วยเหลือภริยาคลอดบุตร" value="' + esc(F.otherLabel) + '">';
     h += '<div class="lv-row"><div><label class="lb" for="lvFf">ตั้งแต่วันที่</label><input type="date" id="lvFf" value="' + esc(F.from) + '"></div><div><label class="lb" for="lvFt2">ถึงวันที่</label><input type="date" id="lvFt2" value="' + esc(F.to) + '"></div></div>' +
@@ -307,6 +307,7 @@
     } else h += '<p class="lv-note" style="margin-top:12px">' + ic('fa-hand-pointer') + ' เลือกประเภทก่อน</p>';
     h += '</div>';
     document.getElementById('lvModalBody').innerHTML = h; paintDays();
+    if (F.forOther) { var fu = createTeacherPicker(document.getElementById('lvFuTp'), { label: 'ครู', single: true, users: (B.people || []).map(function (u) { return { id: u.id, name: u.name }; }), onChange: function (Lu) { F.userId = Lu.length ? Lu[0].id : ''; } }); if (F.userId) fu.set([F.userId]); }
   }
   function paintDays() {
     var e = document.getElementById('lvFdays'); if (!e) return; var n = workdays(F.from, F.to || F.from);
@@ -443,13 +444,25 @@
     h += G.tab === 'rows' ? gRowsHtml() : gMultiHtml();
     h += '<p class="lv-note" style="margin-top:10px">' + ic('fa-circle-info') + ' บันทึกแล้วเป็น "อนุมัติแล้ว" ทันที · ไม่ต้องแนบหลักฐาน · แยกเป็นรายการของแต่ละคน (แก้ / ลบทีละคนได้) · หน้าวิชาที่สอนและเว็บเช็คชื่อไม่นับคาบเหล่านั้น</p>';
     document.getElementById('lvModalBody').innerHTML = h; gActs();
+    gPickers(); // 2.28.0
+  }
+  function gPickers() {
+    var P = gPeople().map(function (u) { return { id: u.id, name: u.name }; }), body = document.getElementById('lvModalBody');
+    body.querySelectorAll('[data-rtp]').forEach(function (el) {
+      var i = +el.getAttribute('data-rtp'), r = G.rows[i]; if (!r) return;
+      var hid = el.parentNode.querySelector('[data-gk="userId"]');
+      var tp = createTeacherPicker(el, { single: true, placeholder: 'พิมพ์ชื่อครู', users: P, onChange: function (Lu) { r.userId = Lu.length ? Lu[0].id : ''; if (hid) hid.value = r.userId; } });
+      if (r.userId) tp.set([r.userId]);
+    });
+    var gm = document.getElementById('gmTp');
+    if (gm) { var tpm = createTeacherPicker(gm, { label: 'ครู', users: P, onChange: function (Lu) { G.m.sel = Lu.map(function (u) { return u.id; }); } }); tpm.set(G.m.sel); }
   }
   function gRowsHtml() {
     var P = gPeople(), T = B.types;
     return '<p class="lv-note" style="margin-top:0">แต่ละแถว = ครู 1 คน · คาบ "ระบุเอง" พิมพ์ เช่น 1-4 หรือ A,B,5-6</p><div style="overflow-x:auto"><table class="lv-tt" style="table-layout:fixed;min-width:920px"><colgroup><col style="width:23%"><col style="width:15%"><col style="width:13%"><col style="width:13%"><col style="width:14%"><col style="width:18%"><col style="width:4%"></colgroup><thead><tr><th>ครู</th><th>ประเภท</th><th>ตั้งแต่</th><th>ถึง</th><th>คาบ</th><th>รายละเอียด</th><th></th></tr></thead><tbody>' +
       G.rows.map(function (r, i) {
         var t = typeOf(r.typeKey) || {};
-        return '<tr data-gr="' + i + '"><td><select data-gk="userId" style="width:100%"><option value="">— เลือกครู —</option>' + P.map(function (u) { return '<option value="' + esc(u.id) + '"' + (r.userId === u.id ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('') + '</select>' + (r.err ? '<div class="lv-req" style="margin-top:3px">' + esc(r.err) + '</div>' : '') + '</td>' +
+        return '<tr data-gr="' + i + '"><td><div class="lv-rtp" data-rtp="' + i + '"></div><input type="hidden" data-gk="userId" value="' + esc(r.userId) + '">' + (r.err ? '<div class="lv-req" style="margin-top:3px">' + esc(r.err) + '</div>' : '') + '</td>' +
           '<td><select data-gk="typeKey" style="width:100%">' + T.map(function (x) { return '<option value="' + esc(x.key) + '"' + (r.typeKey === x.key ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</select></td>' +
           '<td><input type="date" data-gk="from" value="' + esc(r.from) + '" style="width:100%"></td><td><input type="date" data-gk="to" value="' + esc(r.to) + '" style="width:100%"></td>' +
           '<td><select data-gk="per" style="width:100%"><option value="all"' + (r.per === 'all' ? ' selected' : '') + '>ทั้งวัน</option><option value="am"' + (r.per === 'am' ? ' selected' : '') + '>เช้า (A–4)</option><option value="pm"' + (r.per === 'pm' ? ' selected' : '') + '>บ่าย (5–8)</option><option value="custom"' + (r.per === 'custom' ? ' selected' : '') + '>ระบุเอง</option></select>' + (r.per === 'custom' ? '<input type="text" data-gk="perTxt" value="' + esc(r.perTxt) + '" placeholder="เช่น 1-4" style="width:100%;margin-top:4px">' : '') + '</td>' +
@@ -460,9 +473,7 @@
   function gMultiHtml() {
     var m = G.m, t = typeOf(m.typeKey) || {}, q = m.q.trim();
     var hits = q ? gPeople().filter(function (u) { return u.name.indexOf(q) !== -1 && m.sel.indexOf(u.id) === -1; }).slice(0, 8) : [];
-    return '<div class="lv-f"><label class="lb" for="gmQ">ครู <span class="mut" style="font-weight:500">(เลือกแล้ว ' + m.sel.length + ' คน)</span></label><input type="search" id="gmQ" placeholder="พิมพ์ชื่อครูเพื่อค้นหา" value="' + esc(m.q) + '" autocomplete="off">' +
-      '<div id="gmHits">' + gHitsHtml(hits, q) + '</div>' +
-      '<div class="lv-chips" id="gmSel">' + gSelHtml() + '</div>' +
+    return '<div class="lv-f"><div id="gmTp"></div>' + // 2.28.0: ตัวเลือกครูกลาง
       '<label class="lb">ประเภท (ใช้กับทุกคนที่เลือก)</label><div class="lv-types">' + B.types.map(function (x) { return '<button type="button" data-gm-t="' + esc(x.key) + '"' + (m.typeKey === x.key ? ' class="on"' : '') + '>' + esc(x.label) + '</button>'; }).join('') + '</div>' +
       (t.custom ? '<label class="lb" for="gmO">ชื่อการลา <span class="lv-req">*</span></label><input type="text" id="gmO" maxlength="40" value="' + esc(m.otherLabel) + '">' : '') +
       '<div class="lv-row"><div><label class="lb" for="gmF">ตั้งแต่วันที่</label><input type="date" id="gmF" value="' + esc(m.from) + '"></div><div><label class="lb" for="gmT">ถึงวันที่</label><input type="date" id="gmT" value="' + esc(m.to) + '"></div></div>' +

@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.23.0';
-var APP_VERSION = '2.27.2.231126';
+var APP_VERSION = '2.29.0.231126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -3884,38 +3884,67 @@ async function openManualCheck(eventId, opts) {
 // createResponsiblePicker(el, { users: fn, placeholder: fn }) → { get(), set(v), refresh() } · v = { text, users:[{id,name}] }
 function createResponsiblePicker(el, opts) {
   opts = opts || {};
-  var state = { text: '', users: [], open: false, q: '' };
+  // 2.28.0: ช่องข้อความ (แสดงในปฏิทิน) + ตัวเลือกครูแบบหน้าแจ้งลา (createTeacherPicker)
+  var state = { text: '' };
   el.classList.add('rsp-pick');
-  el.innerHTML = '<div class="rsp-row"><input type="text" class="rsp-text" maxlength="150" aria-label="ผู้รับผิดชอบ" /><button type="button" class="btn btn-secondary btn-sm rsp-tg"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> เลือกรายชื่อครู</button></div>' +
-    '<div class="rsp-sel"></div><div class="aud-people rsp-box" hidden><input type="search" class="aud-q" placeholder="ค้นหาชื่อ…" aria-label="ค้นหาชื่อ" /><div class="aud-list"></div></div>';
-  var tx = el.querySelector('.rsp-text'), box = el.querySelector('.rsp-box'), sel = el.querySelector('.rsp-sel');
-  function users() { return (typeof opts.users === 'function' ? opts.users() : opts.users) || []; }
-  function render() {
-    tx.placeholder = (typeof opts.placeholder === 'function' ? opts.placeholder() : opts.placeholder) || 'ว่าง = กลุ่มเจ้าของงาน';
-    sel.innerHTML = state.users.map(function (u) { return '<span class="aud-chip">' + escapeHtml(u.name) + '<button type="button" data-rsp-rm="' + escapeHtml(u.id) + '" aria-label="เอาออก">✕</button></span>'; }).join('');
-    box.hidden = !state.open;
-    if (!state.open) return;
-    var on = {}; state.users.forEach(function (u) { on[u.id] = 1; });
-    var nq = state.q.replace(/\s+/g, '').toLowerCase();
-    box.querySelector('.aud-list').innerHTML = users().filter(function (u) { return !nq || String(u.name).replace(/\s+/g, '').toLowerCase().indexOf(nq) !== -1; }).map(function (u) {
-      return '<label class="aud-p"><input type="checkbox" data-rsp="' + escapeHtml(u.id) + '"' + (on[u.id] ? ' checked' : '') + ' /><span>' + escapeHtml(u.name) + '</span>' + (u.department ? '<small>' + escapeHtml(groupLabel(u.department)) + '</small>' : '') + '</label>';
-    }).join('') || '<div class="hint" style="padding:8px">ไม่พบชื่อ</div>';
-  }
+  el.innerHTML = '<label class="tp-l">ข้อความที่แสดงในปฏิทิน</label><input type="text" class="rsp-text" maxlength="150" aria-label="ข้อความผู้รับผิดชอบที่แสดงในปฏิทิน" /><div class="rsp-tp"></div>';
+  var tx = el.querySelector('.rsp-text');
+  var tp = createTeacherPicker(el.querySelector('.rsp-tp'), { label: 'ครูผู้รับผิดชอบ', max: 30, users: function () { return ((typeof opts.users === 'function' ? opts.users() : opts.users) || []).map(function (u) { return { id: u.id, name: u.name }; }); } });
+  function render() { tx.placeholder = (typeof opts.placeholder === 'function' ? opts.placeholder() : opts.placeholder) || 'ว่าง = กลุ่มเจ้าของงาน'; tp.refresh(); }
   tx.addEventListener('input', function () { state.text = tx.value; });
-  el.querySelector('.rsp-tg').addEventListener('click', function () { state.open = !state.open; render(); });
-  box.querySelector('.aud-q').addEventListener('input', function () { state.q = this.value; render(); });
-  box.addEventListener('change', function (e) {
-    var c = e.target.closest('[data-rsp]'); if (!c) return;
-    var id = c.getAttribute('data-rsp');
-    if (c.checked) { var u = users().filter(function (x) { return x.id === id; })[0]; if (u && state.users.length < 30) state.users.push({ id: u.id, name: u.name }); }
-    else state.users = state.users.filter(function (x) { return x.id !== id; });
-    render();
-  });
-  sel.addEventListener('click', function (e) { var b = e.target.closest('[data-rsp-rm]'); if (!b) return; state.users = state.users.filter(function (x) { return x.id !== b.getAttribute('data-rsp-rm'); }); render(); });
   render();
   return {
-    get: function () { return { text: state.text.trim(), users: state.users.slice() }; },
-    set: function (v) { state.text = (v && v.text) || ''; state.users = (v && Array.isArray(v.users) ? v.users : []).slice(); state.open = false; state.q = ''; tx.value = state.text; box.querySelector('.aud-q').value = ''; render(); },
+    get: function () { return { text: state.text.trim(), users: tp.get().map(function (u) { return { id: u.id, name: u.name }; }) }; },
+    set: function (v) { state.text = (v && v.text) || ''; tx.value = state.text; tp.set(v && Array.isArray(v.users) ? v.users : []); render(); },
+    refresh: render
+  };
+}
+// ---------- 2.28.0: ตัวเลือกครูแบบเดียวทั้งเว็บ (แบบหน้าแจ้งลา) — พิมพ์ชื่อ → รายชื่อที่ตรง (ไม่เกิน 8) + ปุ่ม "เพิ่ม" · ที่เลือกแล้ว = ป้าย ✕ ----------
+// createTeacherPicker(el, opts) → { get(), set(list), clear(), refresh() }
+// opts: users (array | fn) [{id, name, sub?, tag?, tagCls?, disabled?, find?}] · max · single · label · placeholder · hint
+//       onAdd(u) = โหมดเพิ่มทันที (ไม่เก็บป้าย) · onChange(list)
+function tpNorm(s) { return String(s == null ? '' : s).replace(/\s+/g, '').toLowerCase(); }
+function createTeacherPicker(el, opts) {
+  opts = opts || {};
+  var st = { sel: [], q: '' }, inst = !!opts.onAdd, max = opts.single ? 1 : (opts.max || 0);
+  el.classList.add('tp');
+  el.innerHTML = (opts.label ? '<label class="tp-l"></label>' : '') + '<input type="search" class="tp-q" autocomplete="off" /><div class="tp-hits"></div><div class="tp-chips"></div>' + (opts.hint ? '<div class="tp-hint"></div>' : '');
+  var lb = el.querySelector('.tp-l'), qi = el.querySelector('.tp-q'), hitsEl = el.querySelector('.tp-hits'), chipsEl = el.querySelector('.tp-chips'), hintEl = el.querySelector('.tp-hint');
+  qi.placeholder = opts.placeholder || 'พิมพ์ชื่อครูเพื่อค้นหา'; qi.setAttribute('aria-label', opts.label || 'ค้นหาชื่อครู');
+  if (hintEl) hintEl.textContent = opts.hint;
+  function users() { return (typeof opts.users === 'function' ? opts.users() : opts.users) || []; }
+  function full() { return max && st.sel.length >= max; }
+  function fire() { if (opts.onChange) opts.onChange(st.sel.slice()); }
+  function drawLabel() { if (lb) lb.innerHTML = escapeHtml(opts.label) + (inst ? '' : ' <span>(' + (opts.single ? 'เลือกได้ 1 คน' : 'เลือกแล้ว ' + st.sel.length + (max ? ' / ' + max : '') + ' คน') + ')</span>'); }
+  function drawHits() {
+    var nq = tpNorm(st.q);
+    if (!nq) { hitsEl.innerHTML = ''; return; }
+    var on = {}; st.sel.forEach(function (u) { on[u.id] = 1; });
+    var L = users().filter(function (u) { return !on[u.id] && (tpNorm(u.name).indexOf(nq) !== -1 || (u.find && tpNorm(u.find).indexOf(nq) !== -1)); }).slice(0, 8);
+    hitsEl.innerHTML = '<div class="tp-list">' + (L.length ? L.map(function (u) {
+      return '<div><span>' + escapeHtml(u.name) + (u.tag ? '<em class="tp-tag ' + escapeHtml(u.tagCls || '') + '">' + escapeHtml(u.tag) + '</em>' : '') + (u.sub ? '<small>' + escapeHtml(u.sub) + '</small>' : '') + '</span>' +
+        (u.disabled ? '<em class="tp-tag">เลือกไม่ได้</em>' : '<button type="button" class="btn btn-secondary btn-sm" data-tp-add="' + escapeHtml(u.id) + '"' + (full() && !opts.single ? ' disabled' : '') + '>' + (opts.single && st.sel.length ? 'เปลี่ยน' : 'เพิ่ม') + '</button>') + '</div>';
+    }).join('') : '<div><span class="tp-none">ไม่พบชื่อ</span></div>') + '</div>' + (full() && !opts.single ? '<div class="tp-hint">เลือกครบ ' + max + ' คนแล้ว</div>' : '');
+  }
+  function drawChips() { chipsEl.innerHTML = st.sel.map(function (u) { return '<span class="tp-chip">' + escapeHtml(u.name) + '<button type="button" data-tp-rm="' + escapeHtml(u.id) + '" aria-label="เอาออก"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></span>'; }).join(''); }
+  function render() { drawLabel(); drawHits(); drawChips(); qi.hidden = !!opts.single && st.sel.length > 0; } // เลือกได้คนเดียว: เลือกแล้วซ่อนช่องค้นหา (กด ✕ เพื่อเปลี่ยนคน)
+  qi.addEventListener('input', function () { st.q = qi.value; drawHits(); });
+  qi.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); var b = hitsEl.querySelector('[data-tp-add]:not([disabled])'); if (b) b.click(); } });
+  hitsEl.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tp-add]'); if (!b) return;
+    var id = b.getAttribute('data-tp-add'), u = users().filter(function (x) { return x.id === id; })[0]; if (!u) return;
+    st.q = ''; qi.value = '';
+    if (inst) { render(); opts.onAdd(u); return; }
+    if (opts.single) st.sel = [u]; else if (!full()) st.sel.push(u);
+    render(); fire(); if (!opts.single) qi.focus();
+  });
+  chipsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-tp-rm]'); if (!b) return; var id = b.getAttribute('data-tp-rm'); st.sel = st.sel.filter(function (x) { return x.id !== id; }); render(); fire(); });
+  render();
+  return {
+    get: function () { return st.sel.slice(); },
+    ids: function () { return st.sel.map(function (u) { return u.id; }); },
+    set: function (list) { var all = users(); st.sel = (list || []).map(function (x) { if (typeof x === 'string') { var u = all.filter(function (y) { return y.id === x; })[0]; return u ? u : null; } return x && x.id ? x : null; }).filter(Boolean); if (max) st.sel = st.sel.slice(0, max); st.q = ''; qi.value = ''; render(); },
+    clear: function () { st.sel = []; st.q = ''; qi.value = ''; render(); },
     refresh: render
   };
 }

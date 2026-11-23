@@ -5450,3 +5450,26 @@ html.scroll-locked body { overscroll-behavior: none; }
 .exp-nd { font-style: normal; font-size: .7rem; font-weight: 700; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: 99px; padding: 0 7px; margin-left: 4px; white-space: nowrap; }
 .exp-rd > span { white-space: nowrap; }
 .exp-rd small { white-space: normal; text-align: right; min-width: 0; }
+
+/* 2.28.0: ตัวเลือกครูแบบเดียวทั้งเว็บ (createTeacherPicker ใน api.js) */
+.tp { text-align: left; }
+.tp-l { display: block; font-weight: 700; font-size: .9rem; margin: 6px 0 4px; }
+.tp-l span { font-weight: 500; color: var(--text-muted); }
+.rsp-pick .rsp-text { width: 100%; box-sizing: border-box; }
+.rsp-pick .rsp-tp { margin-top: 4px; }
+.tp .tp-q { width: 100%; box-sizing: border-box; }
+.tp-list { border: 1px solid var(--border); border-radius: 12px; margin-top: 6px; max-height: 260px; overflow: auto; background: var(--surface); }
+.tp-list > div { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px dashed var(--border); font-size: .9rem; }
+.tp-list > div:last-child { border-bottom: 0; }
+.tp-list > div > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.tp-list small { display: block; color: var(--text-muted); font-size: .76rem; }
+.tp-list .btn { flex: none; }
+.tp-none { color: var(--text-muted); }
+.tp-tag { display: inline-block; font-style: normal; font-size: .72rem; font-weight: 700; border-radius: 99px; padding: 1px 8px; margin-left: 6px; background: var(--surface-2); color: var(--text-muted); white-space: nowrap; }
+.tp-tag.ex { background: #ede9fe; color: #6d28d9; }
+[data-theme="dark"] .tp-tag.ex { background: rgba(139, 92, 246, .2); color: #c4b5fd; }
+.tp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tp-chips:empty { display: none; }
+.tp-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-size: .82rem; font-weight: 600; max-width: 100%; }
+.tp-chip button { border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0 5px; }
+.tp-hint { font-size: .8rem; color: var(--text-muted); margin-top: 6px; }

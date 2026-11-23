@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.27.2.231126" />
+<link rel="stylesheet" href="assets/style.css?v=2.29.0.231126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -146,10 +146,7 @@
             <div class="field"><label for="certFDept">กลุ่มบริหารงาน</label><select id="certFDept"></select></div>
             <div class="field"><label for="certFSubj">กลุ่มสาระการเรียนรู้ (ถ้ามี)</label><select id="certFSubj"></select></div>
           </div>
-          <div class="field"><label for="certRespSearch">ผู้รับผิดชอบ (เลือกได้หลายคน)</label>
-            <div class="resp-chips" id="certRespChips"></div>
-            <input type="search" id="certRespSearch" placeholder="พิมพ์ชื่อเพื่อค้นหา" autocomplete="off" />
-            <div class="resp-list" id="certRespList"></div></div>
+          <div class="field"><div id="certRespPick"></div></div><!-- 2.28.0: ตัวเลือกครูแบบหน้าแจ้งลา -->
         </div>
         <div class="cert-note" id="certModalNote"></div>
         <datalist id="certCompDL"></datalist>
@@ -219,7 +216,7 @@
   <input id="certItemFile" type="file" accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden />
 
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.27.2.231126"></script>
+  <script src="assets/api.js?v=2.29.0.231126"></script>
   <script src="assets/qrcode.min.js"></script>
   <script>
     var session = requireLogin();
@@ -870,7 +867,7 @@
       $('certFSubj').value = c ? (c.subjectGroup || '') : '';
       respSel = c ? (c.responsible || []).map(function (x) { return x.id; }) : (me ? [me.id] : []);
       respNames = {}; (c ? c.responsible || [] : []).forEach(function (x) { respNames[x.id] = x.name; });
-      $('certRespSearch').value = ''; renderCertResp();
+      renderCertResp();
       hasComp = !!c && mType === 'award' && (groups.length > 1 || groups.some(function (g) { return !!g.competition; }));
       renderTypeMode();
       // 1.67: เกียรติบัตรภายใน โรงเรียนเป็นผู้ออก — ไม่มีผู้รับ "โรงเรียน"
@@ -884,11 +881,10 @@
     var respNames = {};
     function renderCertResp() {
       var nm = function (id) { var p = people.filter(function (x) { return x.id === id; })[0]; return p ? p.name : (respNames[id] || 'บัญชีที่ถูกระงับ/ลบ'); };
-      $('certRespChips').innerHTML = respSel.length ? respSel.map(function (id) { return '<span class="resp-chip">' + escapeHtml(nm(id)) + '<button type="button" data-cresp-rm="' + escapeHtml(id) + '" aria-label="เอาออก">✕</button></span>'; }).join('') : '<span class="hint">ยังไม่ได้เลือก</span>';
-      var q = $('certRespSearch').value.replace(/\s+/g, '').toLowerCase();
-      var list = people.filter(function (p) { return !q || String(p.name).replace(/\s+/g, '').toLowerCase().indexOf(q) >= 0; });
-      $('certRespList').innerHTML = list.length ? list.map(function (p) { return '<label class="resp-item"><input type="checkbox" data-cresp="' + escapeHtml(p.id) + '"' + (respSel.indexOf(p.id) >= 0 ? ' checked' : '') + ' /> ' + escapeHtml(p.name) + '</label>'; }).join('') : '<div class="hint" style="padding:8px;">ไม่พบชื่อ</div>';
+      if (!certRespTp) certRespTp = createTeacherPicker($('certRespPick'), { label: 'ผู้รับผิดชอบ', max: 20, users: function () { return people.map(function (p) { return { id: p.id, name: p.name }; }); }, onChange: function (L) { respSel = L.map(function (u) { return u.id; }); } });
+      certRespTp.set(respSel.map(function (id) { return { id: id, name: nm(id) }; }));
     }
+    var certRespTp = null; // 2.28.0
     function syncCertDate() { var v = $('certFDate').value; $('certFDateThai').textContent = v ? '(' + formatDateThai(v) + ')' : ''; }
 
     // ----- ชื่อกิจกรรม: รายการแนะนำ + เตือนชื่อคล้าย -----
@@ -1135,9 +1131,6 @@
       $('certFDate').addEventListener('input', function () { syncCertDate(); if (mScope === 'internal' && numbering.yearMode === 'be') refreshNumbers(); });
       $('certFType').addEventListener('click', function (e) { var b = e.target.closest('[data-type]'); if (b) setType(b.getAttribute('data-type')); });
       // 2.06.0: ผู้รับผิดชอบ
-      $('certRespSearch').addEventListener('input', renderCertResp);
-      $('certRespList').addEventListener('change', function (e) { var id = e.target.getAttribute('data-cresp'); if (!id) return; var i = respSel.indexOf(id); if (e.target.checked && i < 0) { if (respSel.length >= 20) { e.target.checked = false; return showToast('เลือกได้สูงสุด 20 คน', true); } respSel.push(id); } else if (!e.target.checked && i >= 0) respSel.splice(i, 1); renderCertResp(); });
-      $('certRespChips').addEventListener('click', function (e) { var b = e.target.closest('[data-cresp-rm]'); if (!b) return; var id = b.getAttribute('data-cresp-rm'); respSel = respSel.filter(function (x) { return x !== id; }); renderCertResp(); });
       $('certFMode').addEventListener('click', function (e) { var b = e.target.closest('[data-mode]'); if (b) { mMode = b.getAttribute('data-mode'); renderTypeMode(); } });
       $('certCompTg').addEventListener('click', function (e) { var b = e.target.closest('[data-comp]'); if (b) setHasComp(b.getAttribute('data-comp') === '1'); });
       $('certAddGroup').addEventListener('click', function () {
