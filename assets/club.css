@@ -239,3 +239,10 @@ td.tc-wk-e { background: var(--surface); }
   .tc-stb td { border: 0 !important; padding: 2px 6px !important; }
   .tc-stb td:nth-child(3) { grid-column: 1 / -1; }
 }
+
+/* 2.27.1: สถิติการเข้าร่วมรายคน (แท็บสรุปและส่งเล่ม) */
+.cb-sum2 { margin-top: 14px; align-items: start; } .cb-g2 > * { min-width: 0; }
+.cb-sumt td:first-child, .cb-sumt th:first-child { width: 28px; color: var(--text-muted); }
+.cb-sumt td:nth-child(3), .cb-sumt th:nth-child(3) { text-align: left; }
+.cb-sumt th, .cb-sumt td { padding: 6px 6px; } .cb-sumt .tc-bar { width: 120px; max-width: none; } .cb-sumt .tc-pb { flex-wrap: nowrap; white-space: nowrap; }
+.cb-sumt .cb-st { flex-wrap: nowrap; } .cb-sumt .cb-st button { white-space: nowrap; }
