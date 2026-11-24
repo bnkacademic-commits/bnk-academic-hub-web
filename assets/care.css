@@ -370,3 +370,14 @@
 
 /* 2.31.0: ห้องของฉัน / สรุปห้อง — มือถือแถวเดียว (ชื่อ + มาสาย · โดด · หัก · เพิ่ม) */
 @media (max-width: 640px) { .cc-rdt .cc-dk { display: none; } .cc-rdt .cc-mo { display: block; font-size: .78rem; margin-top: 1px; } .cc-rdt td:nth-child(2) { white-space: normal; } }
+
+/* 2.31.3: ป็อปอัปเตือนในเว็บเช็คชื่อ (ตั้งค่า › โดด / ขาดเรียน) */
+.cc-swbox { border-top: 1px dashed var(--border, #e5e7eb); margin-top: 14px; }
+.cc-swst { margin: 4px 0; font-size: .9rem; }
+.cc-swb { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 10px; font-weight: 600; line-height: 1.4; }
+.cc-swb.g { background: #dcfce7; color: #166534; }
+.cc-swb.o { background: #fef3c7; color: #92400e; }
+.cc-swb.r { background: #fee2e2; color: #991b1b; }
+[data-theme="dark"] .cc-swb.g { background: rgba(34,197,94,.16); color: #86efac; }
+[data-theme="dark"] .cc-swb.o { background: rgba(245,158,11,.16); color: #fcd34d; }
+[data-theme="dark"] .cc-swb.r { background: rgba(239,68,68,.16); color: #fca5a5; }

@@ -139,6 +139,23 @@
     put(body, h + '</div>');
   }
   // 2.30.1: ตั้งค่า › โดด / ขาดเรียน — ปุ่ม "ดึงตอนนี้" + รายการรอยืนยัน (ก่อนเริ่มหักอัตโนมัติ)
+  // 2.31.3: สถานะป็อปอัปเตือนในเว็บเช็คชื่อ (อ่านจากเว็บเช็คชื่อตอนเปิดหัวข้อนี้)
+  var SW = { d: null, busy: false, err: '' };
+  function swStHtml() {
+    if (SW.err) return '<span class="cc-swb r">' + ic('fa-circle-exclamation') + ' ' + esc(SW.err) + '</span>';
+    if (!SW.d) return '<span class="cc-mut">' + ic('fa-spinner fa-spin') + ' กำลังตรวจที่เว็บเช็คชื่อ…</span>';
+    var a = SW.d.att || {}, want = SW.d.swOn, okMatch = !!a.on === !!want && (!want || Number(a.pts) === Number((B.settings || {}).skipPts));
+    var t = a.at ? new Date(a.at) : null, when = t ? t.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }) + ' ' + t.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.' : '';
+    return '<span class="cc-swb ' + (okMatch ? 'g' : 'o') + '">' + ic(okMatch ? 'fa-circle-check' : 'fa-triangle-exclamation') + ' เว็บเช็คชื่อตอนนี้: ' + (SW.d.has ? (a.on ? 'เปิดเตือน · หัก ' + (Number(a.pts) || 0) + ' คะแนน / คาบ' : 'ปิดเตือน') + (when ? ' · ส่งล่าสุด ' + esc(when) : '') : 'ยังไม่เคยได้รับค่า') + '</span>' +
+      (okMatch ? '' : '<small class="cc-mut" style="display:block;margin-top:3px">ยังไม่ตรงกับที่ตั้งไว้ — กด "ส่งค่าให้เว็บเช็คชื่อตอนนี้"</small>');
+  }
+  function swPaint() { var b = document.getElementById('ccSwSt'), x = document.getElementById('ccSwOn'); if (b) b.innerHTML = swStHtml(); if (x && SW.d) { x.disabled = SW.busy; x.checked = SW.d.swOn; } }
+  async function swLoad(p) {
+    if (SW.busy) return; SW.busy = true; SW.err = ''; if (!p) SW.d = SW.d || null; swPaint();
+    try { SW.d = await apiCall('careSkipWarn', p || {}); if (p) showToast(p.on !== undefined ? (p.on ? 'เปิดป็อปอัปเตือนแล้ว' : 'ปิดป็อปอัปเตือนแล้ว') : 'ส่งค่าให้เว็บเช็คชื่อแล้ว'); }
+    catch (e) { SW.err = 'ตรวจ / ส่งค่าไม่สำเร็จ: ' + e.message; if (p) showToast(e.message, true); }
+    SW.busy = false; swPaint();
+  }
   function skRepaint() { if (document.getElementById('ccSkPull')) paintPend(); else paintSkip(); }
   function pendList() { return SK.pull ? (SK.pull.items || []).filter(function (x) { return x.cat === 'pend'; }).sort(function (a, b) { return a.d.localeCompare(b.d); }) : []; }
   function paintPend() {
@@ -944,7 +961,13 @@
       '<p class="hint">' + ic('fa-bolt') + ' หักคะแนนอัตโนมัติ: ดึงจากเว็บเช็คชื่อรอบ 12:30 และ 18:30 น. (และเมื่อกด "ดึงตอนนี้" ด้านล่าง · เปิดแท็บ ' + (d.absOn ? 'โดด / ขาดเรียน' : 'โดดเรียน') + ' = ดูข้อมูลรอบล่าสุด ไม่ดึงใหม่) · 1 คาบหักได้ครั้งเดียว · ครูแก้สถานะในเว็บเช็คชื่อภายหลัง = คืนคะแนนให้เอง · กดบันทึกแล้ว เว็บเช็คชื่อจะเตือนครูตอนบันทึกคาบที่มีนักเรียนโดดเรียน (บอกคะแนนที่หัก)</p>' +
       save('skip', ' โดด / ขาดเรียน') +
       (B.settings && B.settings.skipOn ? '<div class="cc-skpullw"><h3 style="margin-top:14px">' + ic('fa-rotate') + ' ดึงข้อมูลตอนนี้</h3><p class="hint" style="margin-top:0">ปกติระบบดึงเองรอบ 12:30 และ 18:30 น. · กดเมื่อจำเป็น เช่น ก่อนพิมพ์รายงาน · รายการเก่าที่ค้างรอยืนยันจะขึ้นด้านล่างหลังกด</p>' +
-        '<button type="button" class="btn btn-secondary btn-sm" data-cc-skpull>' + ic('fa-rotate') + ' ดึงตอนนี้</button><div id="ccSkPull"></div></div>' : '') + '</div>'); },
+        '<button type="button" class="btn btn-secondary btn-sm" data-cc-skpull>' + ic('fa-rotate') + ' ดึงตอนนี้</button><div id="ccSkPull"></div></div>' : '') +
+      // 2.31.3: ป็อปอัปเตือนในเว็บเช็คชื่อ — เปิด/ปิด · สถานะจริงที่เว็บเช็คชื่อ · ส่งค่าอีกครั้ง
+      (B.settings && B.settings.skipOn ? '<div class="cc-swbox"><h3 style="margin-top:14px">' + ic('fa-bell') + ' ป็อปอัปเตือนในเว็บเช็คชื่อ</h3>' +
+        '<label class="cc-row">' + sw('ccSwOn', SW.d ? SW.d.swOn : true, SW.d ? '' : ' disabled') + '<span>แจ้งเตือนครูตอนบันทึกคาบที่มีนักเรียนโดดเรียน (รายชื่อ + คะแนนที่หัก)</span></label>' +
+        '<div id="ccSwSt" class="cc-swst">' + swStHtml() + '</div>' +
+        '<p class="hint" style="margin:6px 0">ปิด = ไม่มีป็อปอัปโดดเรียน แต่ยังหักคะแนนอัตโนมัติ · ป็อปอัป "ยืนยันแก้ไขการเช็คชื่อ" ขึ้นเสมอ · สวิตช์นี้มีผลทันที (ไม่ต้องกดบันทึกด้านบน) · ครูเห็นภายใน 5 นาที (ให้ครูกด Ctrl+F5)</p>' +
+        '<button type="button" class="btn btn-secondary btn-sm" data-cc-swpush>' + ic('fa-paper-plane') + ' ส่งค่าให้เว็บเช็คชื่อตอนนี้</button></div>' : '') + '</div>'); },
       view: function () { var u = base + 'score.html'; return (
       '<div class="card cc-card"><h3>' + ic('fa-id-card') + ' หน้าดูคะแนน — นักเรียน / ผู้ปกครองดูคะแนนพฤติกรรม</h3>' +
       '<label class="cc-row">' + sw('ccViewOn', d.viewOn) + '<b>เปิดหน้าดูคะแนน</b></label>' +
@@ -963,6 +986,7 @@
       '<p class="hint">หน้าสภานักเรียนและหน้านักเรียนไม่มีปุ่มกลับหน้าครู — พิมพ์ QR ติดไว้ได้เลย</p></div>').replace(/<\/div>$/, '') + save('site', 'ลิงก์') + '</div>' + bannerHtml(base); }
     };
     body.innerHTML = '<div class="cc-seg cc-ssub" role="tablist">' + tabs + '</div><div class="cc-secw">' + SEC[ssub]() + '</div>';
+    if (ssub === 'skip' && document.getElementById('ccSwSt')) { var sx = document.getElementById('ccSwOn'); if (sx) sx.addEventListener('change', function () { swLoad({ on: sx.checked }); }); if (!SW.d && !SW.busy) swLoad(); } // 2.31.3
   }
   var CYC = [['term', 'ทุกภาคเรียน'], ['year', 'ทุกปีการศึกษา'], ['stage', 'ทุกช่วงชั้น 3 ปี']];
   function cycOpts(id, v) { return '<select id="' + id + '" class="cc-cyc">' + CYC.map(function (x) { return '<option value="' + x[0] + '"' + (v === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select>'; }
@@ -1026,6 +1050,7 @@
     if (e.target.closest('[data-cc-skre]')) { SK.d && (SK.d.at = new Date().toISOString()); var rb = e.target.closest('[data-cc-skre]'); rb.disabled = true; await loadSkip(); return; }
     if ((t = e.target.closest('[data-cc-skop]'))) { skipDo(t.getAttribute('data-cc-skop')); return; }
     if ((t = e.target.closest('[data-cc-skpull]'))) { skipPull(t); return; } // 2.30.1
+    if (e.target.closest('[data-cc-swpush]')) { swLoad({ push: 1 }); return; } // 2.31.3
     if (e.target.closest('[data-cc-skall]')) { var L0 = pendList(), allOn = L0.every(function (x) { return SK.sel[x.k]; }); SK.sel = {}; if (!allOn) L0.forEach(function (x) { SK.sel[x.k] = 1; }); skRepaint(); return; }
     if ((t = e.target.closest('[data-cc-pg]'))) { if (t.disabled) return; st.pg = +t.getAttribute('data-cc-pg'); renderScores(); var tb = document.getElementById('ccSc'); if (tb) tb.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
     if ((t = e.target.closest('[data-cc-rg]'))) { st.range = t.getAttribute('data-cc-rg'); show(); return; }
