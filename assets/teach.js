@@ -316,6 +316,20 @@
       '<button type="button" class="btn btn-success" data-tc-save><i class="fa-solid fa-check"></i> บันทึก</button>');
     var mb = document.getElementById('cbModalBody'), held = lg ? lg.held : null;
     tcSig0 = window.BackNav ? BackNav.sig(mb) : null;
+    // 2.31.1: ป็อปอัปก่อนบันทึก (เหมือนเว็บเช็คชื่อ) — บันทึกย้อนหลังที่มีโดดเรียน = รายชื่อ + คะแนนที่หัก · แก้คาบที่บันทึกแล้ว = ถามยืนยันแก้ไขเสมอ
+    async function skipAsk(records) {
+      var W = S.skipWarn || {}, on = !!W.on, old = r ? r.records || {} : {}, L = S.students || [];
+      var sk = on ? L.filter(function (s) { return records[s.id] === 'โดดเรียน'; }) : [];
+      var back = r && on ? L.filter(function (s) { return old[s.id] === 'โดดเรียน' && records[s.id] && records[s.id] !== 'โดดเรียน'; }) : [];
+      var chg = r ? L.filter(function (s) { return records[s.id] && old[s.id] !== records[s.id]; }).length : 0;
+      if (!r && !sk.length) return true;
+      var nm = function (A) { return A.map(function (s) { return 'เลขที่ ' + escapeHtml(s.number) + ' · ' + escapeHtml(s.name); }).join('<br>'); };
+      var m = r ? 'คาบนี้บันทึกการเช็คชื่อไว้แล้ว — ต้องการแก้ไขใช่ไหม?<br>' + (chg ? 'เปลี่ยนสถานะ ' + chg + ' คน' : 'ยังไม่ได้เปลี่ยนสถานะของใคร') : '';
+      if (sk.length) m += (m ? '<br><br>' : '') + '<b>โดดเรียน ' + sk.length + ' คน</b><br>' + nm(sk) + '<br><br><b>หักคะแนนพฤติกรรมอัตโนมัติ คนละ ' + (Number(W.pts) || 0) + ' คะแนน (คาบนี้)</b>';
+      if (back.length) m += '<br><br><b>ไม่ได้โดดเรียนแล้ว — คืนคะแนนให้เองในรอบถัดไป</b><br>' + nm(back);
+      if (sk.length || back.length) m += '<br><br>ระบบส่งข้อมูลให้กิจการนักเรียนรอบ ' + escapeHtml(W.times || '12:30 และ 18:30 น.');
+      return askConfirm(m, r ? 'ยืนยันแก้ไขการเช็คชื่อ' : 'มีนักเรียนโดดเรียน ' + sk.length + ' คน');
+    }
     function cnt() { var n = 0, e = 0; mb.querySelectorAll('#tcRows tr').forEach(function (tr) { if (tr.querySelector('button.on')) n++; else e++; }); document.getElementById('tcCnt').textContent = 'เลือกแล้ว ' + n + (e ? ' · ยังไม่เลือก ' + e : ''); }
     cnt();
     mb.onclick = async function (e) {
@@ -359,6 +373,7 @@
       if (!Object.keys(records).length) { showToast('ยังไม่ได้เช็คชื่อนักเรียน', true); return; }
       var re = recErr(); if (re) { showToast(re, true); var sec = mb.querySelector('.tc-rec'); if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
       if (empty && !(await askConfirm('ยังไม่ได้เลือกสถานะ ' + empty + ' คน — บันทึกเท่าที่เลือกไว้?', 'บันทึกการเช็คชื่อ'))) return;
+      if (!(await skipAsk(records))) return; // 2.31.1: ยืนยันแก้ไข / เตือนโดดเรียน (หักคะแนนอัตโนมัติ)
       var pl = Object.assign({ subjectId: S.subject.id, date: o.date, period: o.period, records: records }, st.forUser ? { forUser: st.forUser } : {});
       if (S.recKind === 'homeroom') pl.hr = { held: held, activity: held ? mb.querySelector('[data-hr-act]').value.trim() : '', note: held ? mb.querySelector('[data-hr-note]').value.trim() : '', reason: held ? '' : mb.querySelector('[data-hr-reason]').value.trim(), photo: held && ph.homeroom ? ph.homeroom.split(',')[1] : '' };
       else if (S.recKind === 'zone') pl.hr = { condition: mb.querySelector('[data-zone-cond]').value.trim(), photo: ph.zone ? ph.zone.split(',')[1] : '' };
