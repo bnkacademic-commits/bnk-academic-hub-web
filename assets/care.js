@@ -819,7 +819,7 @@
       rows = freqList(O).map(function (x) { return [x.room, +x.no || x.no, x.name, x.n, x.score]; }); title += 'นักเรียนที่สาย ' + st.min + ' ครั้งขึ้นไป · ' + rangeTxt();
     } else if (st.tab === 'skip') { // 2.30.0
       if (!SK.d || SK.d.off) return showToast('รอโหลดข้อมูลก่อน', true);
-      var MK = skModel(); H = ['วันที่', 'คาบ', 'วิชา', 'ครูที่เช็คชื่อ', 'ห้อง', 'เลขที่', 'ชื่อ-นามสกุล', 'ประเภท', 'หักคะแนน']; W = [12, 6, 34, 24, 10, 8, 30, 16, 10]; sheet = 'โดดเรียน';
+      var MK = skModel(); H = ['วันที่', 'คาบ', 'วิชา', 'ครูผู้สอน', 'ห้อง', 'เลขที่', 'ชื่อ-นามสกุล', 'ประเภท', 'หักคะแนน']; W = [12, 6, 34, 24, 10, 8, 30, 16, 10]; sheet = 'โดดเรียน';
       rows = MK.L.slice().sort(function (a, b) { return a.d.localeCompare(b.d) || grOrder(a.roomId) - grOrder(b.roomId) || (+a.no || 0) - (+b.no || 0); }).map(function (x) { var sj = skSubj(x); return [x.d, sj.p, sj.s, x.by || '', x.room, +x.no || x.no, x.name, x.label, Number(x.delta) || 0]; });
       title += 'รายการโดดเรียน · ' + rangeTxt() + (st.grade ? ' · ม.' + st.grade.slice(1) : '');
     } else { // สรุปรวม = รายการมาสายทั้งหมดในช่วง (ข้อมูลดิบ)

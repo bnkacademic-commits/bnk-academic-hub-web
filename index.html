@@ -14,6 +14,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <!-- หน้าล็อกอินบังคับใช้ธีมสว่างเท่านั้นเสมอ (ไม่ว่าจะเคยตั้งค่าธีมมืดไว้จากหน้าอื่นหรือไม่) จึงไม่มี script คืนค่าธีมมืดจาก localStorage แบบหน้าอื่นๆ ในตัว -->
 <title>เข้าสู่ระบบ — BNKAcademicHub</title>
+<!-- 2.31.1: เว็บย่อตอนส่งลิงก์ (LINE / Facebook) -->
+<meta name="description" content="ระบบงานวิชาการสำหรับครู — วิชาการ · ส่งงาน · คำสั่ง · โรงเรียนบุ่งคล้านคร" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="BNKAcademicHub" />
+<meta property="og:title" content="BNKAcademicHub — โรงเรียนบุ่งคล้านคร" />
+<meta property="og:description" content="ระบบงานวิชาการสำหรับครู — วิชาการ · ส่งงาน · คำสั่ง · โรงเรียนบุ่งคล้านคร" />
+<meta property="og:url" content="https://bnkacademic-commits.github.io/bnk-academic-hub-web/index.html" />
+<meta property="og:image" content="https://bnkacademic-commits.github.io/bnk-academic-hub-web/assets/og.jpg?v=2.31.1" />
+<meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
 <!-- Tailwind CDN ที่เคยฝังไว้ตรงนี้ถูกเอาออกแล้ว (ตั้งแต่ V11.8.3) — สาเหตุที่แท้จริงของปัญหาช่องกรอกข้อมูล "ชิดขอบซ้าย"
      ที่ผู้ใช้แจ้งซ้ำหลายรอบ ยืนยันด้วยเครื่องคอมที่เพิ่งซื้อใหม่ไม่เคยตั้งค่าอะไรก็ยังเป็น + คอนโซล DevTools แสดง
      getComputedStyle(...).paddingLeft = "0px" จริง ทั้งที่ style.css ที่เซิร์ฟเวอร์ส่งออกมาตรงกับซอร์สทุกตัวอักษร:
@@ -28,7 +38,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.31.0.241126" />
+<link rel="stylesheet" href="assets/style.css?v=2.31.1.241126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -83,7 +93,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.31.0.241126"></script>
+  <script src="assets/api.js?v=2.31.1.241126"></script>
   <script>
     mountFooter({ compact: true }); // 1.80: หน้าล็อกอินใช้ footer แบบย่อ
     applyBranding();
