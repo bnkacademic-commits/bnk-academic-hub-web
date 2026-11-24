@@ -51,7 +51,11 @@
   // ---------- โหลด ----------
   async function boot() {
     try { B = await apiCall('careBoot', {}); } catch (e) { tabsEl.innerHTML = ''; body.innerHTML = '<div class="card">' + err(e.message) + '</div>'; return; }
-    document.getElementById('ccIntro').textContent = 'ข้อมูลการมาสายและคะแนนพฤติกรรมจาก BNK Care Center · ภาคเรียนที่ ' + B.term + '/' + B.year;
+    document.getElementById('ccIntro').textContent = (isAdv() ? 'ห้องที่ปรึกษาของคุณ · ดูได้อย่างเดียว' : 'ข้อมูลการมาสายและคะแนนพฤติกรรมจาก BNK Care Center') + ' · ภาคเรียนที่ ' + B.term + '/' + B.year;
+    if (isAdv()) { // 2.31.0: ครูที่ปรึกษา = ห้องของฉันอย่างเดียว
+      if (!(B.rooms || []).length) { tabsEl.innerHTML = ''; body.innerHTML = '<div class="card">' + err('ไม่พบห้องที่ปรึกษาของคุณในภาคเรียนนี้') + '</div>'; return; }
+      st.tab = 'rooms'; if (!B.rooms.some(function (r) { return r.id === st.rroom; })) st.rroom = B.rooms[0].id;
+    }
     renderTabs(); show();
     // 2.30.0: ไม่ดึงโดดเรียนเบื้องหลังตอนเปิดหน้า (หักอัตโนมัติตามรอบแล้ว · ประหยัดโควต้า)
   }
@@ -168,7 +172,9 @@
     if (SK.pull && (op === 'ok' || op === 'no')) { var ks = {}; keys.forEach(function (k) { ks[k] = 1; }); (SK.pull.items || []).forEach(function (x) { if (ks[x.k]) x.cat = op; }); paintPend(); SK.d = null; return; } // ในหน้าตั้งค่า (ไม่ดึงซ้ำ)
     await loadSkip();
   }
+  function isAdv() { return !!B && B.role === 'a'; } // 2.31.0
   function renderTabs() {
+    if (isAdv()) { tabsEl.innerHTML = '<button type="button" class="tab-btn active" data-cc-tab="rooms">' + ic('fa-door-open') + ' ห้องของฉัน</button>'; return; }
     var t = [['summary', 'fa-chart-pie', 'สรุปรวม'], ['scores', 'fa-star', 'คะแนนพฤติกรรม'], ['late', 'fa-clock', 'มาสาย']]; // 2.30.1: เรียง สรุปรวม · คะแนนพฤติกรรม · มาสาย · โดดเรียน · ตั้งค่า
     if (B.role === 'm' && B.settings && B.settings.skipOn) t.push(['skip', 'fa-person-walking-arrow-right', skipName()]); // 2.13.0 · 2.29.0 ชื่อตามที่เปิด
     if (B.role === 'm') t.push(['settings', 'fa-sliders', 'ตั้งค่า']);
@@ -177,10 +183,11 @@
   }
   // 2.07.0: แท็บ "มาสาย" มีแท็บย่อย ภาพรวม · รายห้อง · สายบ่อย (st.tab = แท็บย่อย · st.late = แท็บย่อยล่าสุด)
   function isLate(t) { t = t || st.tab; return t === 'overview' || t === 'rooms' || t === 'frequent'; }
-  function goTab(t) { if (t === 'late') t = st.late || 'overview'; if (isLate(t)) st.late = t; st.tab = t; renderTabs(); show(); }
+  function goTab(t) { if (isAdv()) t = 'rooms'; if (t === 'late') t = st.late || 'overview'; if (isLate(t)) st.late = t; st.tab = t; renderTabs(); show(); }
   tabsEl.addEventListener('click', function (e) { var b = e.target.closest('[data-cc-tab]'); if (!b) return; var t = b.getAttribute('data-cc-tab'); if ((t === st.tab || (t === 'late' && isLate(st.tab))) && body.querySelector('.cc-cap, .card')) return; /* 2.13.0: กดแท็บเดิมซ้ำ = ไม่วาดใหม่ */ goTab(t); });
-  function show() { if (st.tab === 'skip') return showSkip(); if (st.tab === 'summary') return showSummary(); if (st.tab === 'scores') return showScores(); if (st.tab === 'settings') return showSettings(); if (st.tab === 'rooms') return showRooms(); return showOverview(); }
+  function show() { if (isAdv()) return showRooms(); if (st.tab === 'skip') return showSkip(); if (st.tab === 'summary') return showSummary(); if (st.tab === 'scores') return showScores(); if (st.tab === 'settings') return showSettings(); if (st.tab === 'rooms') return showRooms(); return showOverview(); }
   function subBar() {
+    if (isAdv()) return B.rooms.length > 1 ? '<div class="cc-sub cc-noexp" role="tablist">' + B.rooms.map(function (r) { return '<button type="button" class="' + (st.rroom === r.id ? 'on' : '') + '" data-cc-room="' + esc(r.id) + '">' + ic('fa-door-open') + ' ' + esc(r.name) + '</button>'; }).join('') + '</div>' : ''; // 2.31.0: สลับห้อง
     if (!isLate()) return '';
     return '<div class="cc-sub cc-noexp" role="tablist">' + [['overview', 'fa-chart-column', 'ภาพรวม'], ['rooms', 'fa-door-open', 'รายห้อง'], ['frequent', 'fa-user-clock', 'สายบ่อย']].map(function (x) { return '<button type="button" class="' + (st.tab === x[0] ? 'on' : '') + '" data-cc-go="' + x[0] + '">' + ic(x[1]) + ' ' + x[2] + '</button>'; }).join('') + '</div>';
   }
@@ -195,7 +202,7 @@
     var r = rangeOf(), seg = [['today', 'วันนี้'], ['week', 'สัปดาห์นี้'], ['month', 'เดือนนี้'], ['term', 'ภาคเรียนนี้'], ['year', 'ปีการศึกษานี้'], ['custom', 'กำหนดเอง']];
     return subBar() + '<div class="cc-flt">' + (noRange ? '' : '<div class="cc-seg">' + seg.map(function (x) { return '<button type="button" data-cc-rg="' + x[0] + '" class="' + (st.range === x[0] ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
       (st.range === 'custom' ? '<input type="date" id="ccFrom" value="' + r[0] + '" max="' + B.today + '" /> – <input type="date" id="ccTo" value="' + r[1] + '" max="' + B.today + '" />' : '')) +
-      '<select id="ccGrade" aria-label="ระดับชั้น"><option value="">ทุกระดับชั้น</option>' + [1, 2, 3, 4, 5, 6].map(function (g) { return '<option value="m' + g + '"' + (st.grade === 'm' + g ? ' selected' : '') + '>ม.' + g + '</option>'; }).join('') + '</select>' + (extra || '') +
+      (isAdv() || (st.tab === 'rooms' && st.rroom) ? '' : '<select id="ccGrade" aria-label="ระดับชั้น"><option value="">ทุกระดับชั้น</option>' + [1, 2, 3, 4, 5, 6].map(function (g) { return '<option value="m' + g + '"' + (st.grade === 'm' + g ? ' selected' : '') + '>ม.' + g + '</option>'; }).join('') + '</select>') + (extra || '') +
       '<span class="cc-sp"></span>' + (noRange ? '' : '<span class="cc-rtxt">' + rangeTxt() + '</span>') + exportBtns() + '</div>';
   }
   function capHead(title) { // หัวกระดาษ (แสดงเฉพาะตอนส่งออก/พิมพ์)
@@ -357,13 +364,16 @@
       }).join('') + '</tbody><tfoot><tr><td><b>รวม ' + L.length + ' ห้อง</b></td><td></td><td>' + T.total + '</td><td>' + T.late + '</td><td>' + T.lateStu + '</td><td class="cc-m">' + T.minus + '</td><td class="cc-p">+' + T.plus + '</td><td><b>' + (T.total ? Math.round(T.sum / T.total * 10) / 10 : 0) + '</b></td><td>' + lvPills(T.lv) + '</td></tr></tfoot></table></div>' +
       '<p class="hint cc-noexp">' + ic('fa-hand-pointer') + ' กดที่ห้องเพื่อดูรายคน · มาสาย/หัก/เพิ่ม = ในช่วงวันที่ที่เลือก · คะแนนเฉลี่ยและระดับ = รอบคะแนนปัจจุบัน · ระดับ ดี ≥ ' + R.settings.good + ' · พอใช้ ≥ ' + R.settings.fair + '</p></div>';
   }
-  function roomDetailHtml(D) {
-    var lv = { good: 0, fair: 0, low: 0, neg: 0 }; D.list.forEach(function (x) { lv[x.score < 0 ? 'neg' : x.level]++; });
-    return '<div class="cc-noexp" style="margin-bottom:10px"><button type="button" class="btn btn-secondary btn-sm" data-cc-room="">' + ic('fa-chevron-left') + ' ทุกห้อง</button></div>' +
-      capHead('สรุปห้อง ' + D.room) + '<div class="card cc-card"><h3>' + ic('fa-door-open') + ' ห้อง ' + esc(D.room) + ' <small class="mut" style="font-weight:500">· ครูที่ปรึกษา ' + esc((D.advisors || []).join(', ') || '-') + ' · คะแนน' + esc(D.period) + '</small></h3>' +
-      '<div class="cc-tw"><table class="cc-t"><thead><tr><th>เลขที่</th><th>ชื่อ-นามสกุล</th><th>มาสาย</th><th>หักคะแนน</th><th>เพิ่มคะแนน</th><th>คะแนน</th></tr></thead><tbody>' +
-      D.list.map(function (x) { return '<tr class="cc-click" data-cc-stu="' + esc(x.key) + '"><td>' + esc(x.no) + '</td><td>' + esc(x.name) + '</td><td>' + (x.late || '-') + '</td><td class="cc-m">' + (x.minus || '-') + '</td><td class="cc-p">' + (x.plus ? '+' + x.plus : '-') + '</td><td><span class="cc-tg ' + lvCls(x.level, x.score) + '">' + x.score + '</span></td></tr>'; }).join('') +
-      '</tbody></table></div><p class="hint">ดี ' + lv.good + ' คน · พอใช้ ' + lv.fair + ' คน · ต้องปรับปรุง ' + lv.low + ' คน · ติดลบ ' + lv.neg + ' คน</p></div>';
+  function roomDetailHtml(D) { // 2.31.0: + โดดเรียน · ตัวเลขสรุป · มือถือแถวเดียว · ครูที่ปรึกษาไม่มีปุ่ม "ทุกห้อง"
+    var lv = { good: 0, fair: 0, low: 0, neg: 0 }, T = { late: 0, skip: 0 }; D.list.forEach(function (x) { lv[x.score < 0 ? 'neg' : x.level]++; T.late += x.late || 0; T.skip += x.skip || 0; });
+    return (isAdv() ? '' : '<div class="cc-noexp" style="margin-bottom:10px"><button type="button" class="btn btn-secondary btn-sm" data-cc-room="">' + ic('fa-chevron-left') + ' ทุกห้อง</button></div>') +
+      capHead('สรุปห้อง ' + D.room) +
+      '<div class="cc-sts">' + stat('นักเรียน (คน)', D.list.length) + stat('มาสายในช่วงที่เลือก (ครั้ง)', T.late, T.late ? '#c8102e' : '') + stat('โดดเรียนในช่วงที่เลือก (คาบ)', T.skip, T.skip ? '#9333ea' : '') + stat('ต้องปรับปรุง / ติดลบ (คน)', lv.low + ' / ' + lv.neg, lv.low || lv.neg ? '#c2410c' : '') + '</div>' +
+      '<div class="card cc-card"><h3>' + ic('fa-door-open') + ' ห้อง ' + esc(D.room) + ' <small class="mut" style="font-weight:500">· ครูที่ปรึกษา ' + esc((D.advisors || []).join(', ') || '-') + ' · คะแนน' + esc(D.period) + '</small></h3>' +
+      '<div class="cc-tw"><table class="cc-t cc-rdt"><thead><tr><th>เลขที่</th><th>ชื่อ-นามสกุล</th><th class="cc-dk">มาสาย</th><th class="cc-dk">โดดเรียน</th><th class="cc-dk">หักคะแนน</th><th class="cc-dk">เพิ่มคะแนน</th><th>คะแนน</th></tr></thead><tbody>' +
+      D.list.map(function (x) { return '<tr class="cc-click" data-cc-stu="' + esc(x.key) + '"><td>' + esc(x.no) + '</td><td><span class="cc-fn">' + esc(x.name) + '</span><small class="mut cc-mo">' + ([x.late ? 'มาสาย ' + x.late : '', x.skip ? 'โดด ' + x.skip + ' คาบ' : '', x.minus ? 'หัก ' + x.minus : '', x.plus ? 'เพิ่ม +' + x.plus : ''].filter(Boolean).join(' · ') || 'ไม่มีรายการในช่วงนี้') + '</small></td><td class="cc-dk">' + (x.late || '-') + '</td><td class="cc-dk">' + (x.skip ? '<span class="cc-tg ' + (x.skip >= 3 ? 'o' : 'n') + '">' + x.skip + ' คาบ</span>' : '-') + '</td><td class="cc-m cc-dk">' + (x.minus || '-') + '</td><td class="cc-p cc-dk">' + (x.plus ? '+' + x.plus : '-') + '</td><td><span class="cc-tg ' + lvCls(x.level, x.score) + '">' + x.score + '</span></td></tr>'; }).join('') +
+      '</tbody></table></div><p class="hint">ดี ' + lv.good + ' คน · พอใช้ ' + lv.fair + ' คน · ต้องปรับปรุง ' + lv.low + ' คน · ติดลบ ' + lv.neg + ' คน</p>' +
+      '<p class="hint cc-noexp">' + ic('fa-hand-pointer') + ' กดชื่อนักเรียนเพื่อดูรายงานพฤติกรรม' + (isAdv() ? ' · ดูได้อย่างเดียว (บันทึกคะแนนที่หน้าครูของ Care Center)' : '') + '</p></div>';
   }
 
   // ---------- คะแนนพฤติกรรม ----------
@@ -686,8 +696,8 @@
       var lv = { good: 0, fair: 0, low: 0, neg: 0 }; X.list.forEach(function (x) { lv[x.score < 0 ? 'neg' : x.level]++; });
       return { title: 'สรุปห้อง ' + X.room, sub: 'โรงเรียนบุ่งคล้านคร · ครูที่ปรึกษา ' + ((X.advisors || []).join(', ') || '-') + ' · มาสาย/หัก/เพิ่ม ช่วงวันที่ ' + rangeTxt() + ' · คะแนน' + X.period,
         table: { head: D.stats([['ระดับดี', lv.good, LVC.good], ['ระดับพอใช้', lv.fair, LVC.fair], ['ต้องปรับปรุง', lv.low, LVC.low], ['ติดลบ', lv.neg, LVC.neg]]),
-          cols: [{ t: 'เลขที่', w: '56px', al: 'c' }, { t: 'ชื่อ-นามสกุล' }, { t: 'มาสาย', w: '64px', al: 'c' }, { t: 'หักคะแนน', w: '76px', al: 'c' }, { t: 'เพิ่มคะแนน', w: '80px', al: 'c' }, { t: 'คะแนน', w: '64px', al: 'c' }, { t: 'ระดับ', w: '96px', al: 'c' }],
-          rows: X.list.map(function (x) { return [e(x.no), e(x.name), x.late || '-', x.minus || '-', x.plus ? '+' + x.plus : '-', '<b>' + x.score + '</b>', lvDoc(x.level, x.score)]; }) } };
+          cols: [{ t: 'เลขที่', w: '56px', al: 'c' }, { t: 'ชื่อ-นามสกุล' }, { t: 'มาสาย', w: '58px', al: 'c' }, { t: 'โดด (คาบ)', w: '66px', al: 'c' }, { t: 'หักคะแนน', w: '70px', al: 'c' }, { t: 'เพิ่มคะแนน', w: '74px', al: 'c' }, { t: 'คะแนน', w: '58px', al: 'c' }, { t: 'ระดับ', w: '90px', al: 'c' }],
+          rows: X.list.map(function (x) { return [e(x.no), e(x.name), x.late || '-', x.skip || '-', x.minus || '-', x.plus ? '+' + x.plus : '-', '<b>' + x.score + '</b>', lvDoc(x.level, x.score)]; }) } };
     }
     var RR = C.rm[r[0] + '|' + r[1]]; if (!RR) throw new Error('รอโหลดข้อมูลก่อน');
     var L = roomsList(RR), T = { total: 0, late: 0, lateStu: 0, minus: 0, plus: 0, sum: 0, lv: { good: 0, fair: 0, low: 0, neg: 0 } };
@@ -797,8 +807,8 @@
       rows = scoreRows().map(function (x) { return [x.room, +x.no || x.no, x.name, x.late, minusOf(x), plusOf(x), x.score, lvTxt(x.level)]; }); title += 'คะแนนพฤติกรรม (' + periodTxt() + ')';
     } else if (st.tab === 'rooms' && st.rroom) {
       var D = C.rd[r[0] + '|' + r[1] + '|' + st.rroom]; if (!D) return showToast('รอโหลดข้อมูลก่อน', true);
-      H = ['เลขที่', 'ชื่อ-นามสกุล', 'มาสาย (ครั้ง)', 'หักคะแนน', 'เพิ่มคะแนน', 'คะแนน', 'ระดับ']; W = [8, 32, 12, 12, 12, 10, 14]; sheet = 'ห้อง ' + D.room.replace('/', '-');
-      rows = D.list.map(function (x) { return [+x.no || x.no, x.name, x.late, x.minus, x.plus, x.score, lvTxt(x.level)]; }); title += 'สรุปห้อง ' + D.room + ' · ' + rangeTxt();
+      H = ['เลขที่', 'ชื่อ-นามสกุล', 'มาสาย (ครั้ง)', 'โดดเรียน (คาบ)', 'หักคะแนน', 'เพิ่มคะแนน', 'คะแนน', 'ระดับ']; W = [8, 32, 12, 14, 12, 12, 10, 14]; sheet = 'ห้อง ' + D.room.replace('/', '-');
+      rows = D.list.map(function (x) { return [+x.no || x.no, x.name, x.late, x.skip || 0, x.minus, x.plus, x.score, lvTxt(x.level)]; }); title += 'สรุปห้อง ' + D.room + ' · ' + rangeTxt();
     } else if (st.tab === 'rooms') {
       var R = C.rm[r[0] + '|' + r[1]]; if (!R) return showToast('รอโหลดข้อมูลก่อน', true);
       H = ['ห้อง', 'ครูที่ปรึกษา', 'นักเรียน (คน)', 'มาสาย (ครั้ง)', 'มาสาย (คน)', 'หักคะแนน', 'เพิ่มคะแนน', 'คะแนนเฉลี่ย', 'ดี', 'พอใช้', 'ต้องปรับปรุง', 'ติดลบ']; W = [10, 30, 12, 12, 12, 12, 12, 12, 8, 8, 12, 8]; sheet = 'สรุปรายห้อง';
