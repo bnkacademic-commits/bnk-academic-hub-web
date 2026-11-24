@@ -6,8 +6,8 @@
 <!-- 1.80: PWA — ติดตั้งลงหน้าจอหลัก/คอมได้ (manifest + ไอคอน · sw.js ลงทะเบียนใน api.js) -->
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#0b6fcc" />
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2.04.1" />
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2.04.1" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/app-certs-32.png?v=2.32.0" />
+<link rel="apple-touch-icon" href="icons/app-certs-180.png?v=2.32.0" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="BNK Academic Hub" />
@@ -27,10 +27,10 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.31.3.241126" />
+<link rel="stylesheet" href="assets/style.css?v=2.32.0.241126" />
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login')||localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
-<body class="pubc-body">
+<body class="pubc-body bx-page ct-page">
   <!-- 1.60: หน้าสาธารณะ "ค้นหาเกียรติบัตร" (ไม่ต้องล็อกอิน) — เฉพาะเกียรติบัตรนักเรียน
        certificate.html            = ช่องค้นหาเดียว (ชื่อ/นามสกุล อย่างน้อย 3 ตัว หรือเลขที่เกียรติบัตร) ไม่มีรายการทั้งหมดให้ไล่ดู
        certificate.html?a=<กิจกรรม>&y=<ปี> = ทุกคนในกิจกรรมนั้น จัดตามรายการแข่งขัน (ลิงก์ที่ครูแชร์จากหน้าคลังเกียรติบัตร)
@@ -39,10 +39,13 @@
     <button class="brand js-home-btn" type="button" style="cursor:default;"><span class="js-brand-logo"><span class="logo-dot"></span></span> <span class="js-site-name">BNKAcademicHub</span></button>
     <div class="user-info"><span>ค้นหาเกียรติบัตร</span></div>
   </div>
-  <header class="pubc-hero" id="pubcHero">
-    <div class="pubc-logo"><i class="fa-solid fa-award" aria-hidden="true"></i></div>
-    <h1 id="pubcTitle">ค้นหาเกียรติบัตร</h1>
-    <p id="pubcSub">พิมพ์ชื่อของคุณเพื่อดาวน์โหลดเกียรติบัตร</p>
+  <!-- 2.32.0: หัวแบบใบเกียรติบัตร (กรอบทองคู่ + เหรียญ) -->
+  <header class="pubc-hero ctx-hero" id="pubcHero">
+    <div class="ctx-frame">
+      <div class="ctx-seal" aria-hidden="true"><i class="fa-solid fa-award"></i></div>
+      <h1 id="pubcTitle">ค้นหาเกียรติบัตร</h1>
+      <p id="pubcSub">พิมพ์ชื่อของคุณเพื่อดาวน์โหลดเกียรติบัตร</p>
+    </div>
   </header>
   <main class="pubc-main">
     <form class="pubc-search" id="pubcForm" role="search" autocomplete="off">
@@ -51,13 +54,14 @@
         <button type="submit" class="btn btn-primary" id="pubcGo">ค้นหา</button>
       </div>
       <div class="pubc-hint" id="pubcHint"><span><i class="fa-solid fa-circle-info"></i> พิมพ์ชื่อหรือนามสกุลอย่างน้อย 3 ตัวอักษร</span><span><i class="fa-solid fa-hashtag"></i> หรือพิมพ์เลขที่เกียรติบัตร</span></div>
+      <div class="ctx-recent" id="pubcRecent" hidden></div>
       <a class="pubc-back" id="pubcBack" href="certificate.html" hidden><i class="fa-solid fa-arrow-left"></i> ค้นหาเกียรติบัตรทั้งหมด</a>
     </form>
     <div id="pubcRes" aria-live="polite"></div>
   </main>
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.31.3.241126"></script>
+  <script src="assets/api.js?v=2.32.0.241126"></script>
   <script>
     var params = new URLSearchParams(location.search);
     var ACT = params.get('a') || '', YEAR = params.get('y') || '', EMBED = params.get('embed') === '1';
@@ -80,7 +84,7 @@
       if (!it.file) return '<span class="pubc-nofile">ยังไม่เปิดให้ดาวน์โหลด</span>';
       var dl = driveDownloadUrl(it.file.fileUrl) || it.file.fileUrl;
       return '<button type="button" class="btn btn-ghost btn-sm" data-view="' + escapeHtml(it.id) + '"><i class="fa-solid fa-eye"></i> ดู</button>' +
-        '<a class="btn btn-primary btn-sm" href="' + escapeHtml(dl) + '" target="_blank" rel="noopener" download><i class="fa-solid fa-download"></i> ดาวน์โหลด</a>';
+        '<a class="btn btn-success btn-sm" href="' + escapeHtml(dl) + '" target="_blank" rel="noopener" download><i class="fa-solid fa-download"></i> ดาวน์โหลด</a>';
     }
     var shown = [];
     function view(id) {
@@ -101,7 +105,7 @@
         try { history.replaceState(null, '', location.pathname + '?q=' + encodeURIComponent(q) + (EMBED ? '&embed=1' : '')); } catch (e) { /* ไม่เป็นไร */ }
         if (!shown.length) { res.innerHTML = '<div class="pubc-empty"><i class="fa-solid fa-magnifying-glass"></i> ไม่พบเกียรติบัตรที่ตรงกับ "' + escapeHtml(q) + '"<div class="hint">ลองพิมพ์เฉพาะชื่อหรือเฉพาะนามสกุล หรือสอบถามครูผู้รับผิดชอบกิจกรรม</div></div>'; return; }
         res.innerHTML = '<div class="pubc-count">พบ ' + shown.length + ' รายการ</div>' + shown.map(function (it) {
-          return '<div class="pubc-card"><div class="pubc-thumb"><i class="fa-solid fa-award" aria-hidden="true"></i></div><div class="pubc-b">' +
+          return '<div class="pubc-card"><div class="pubc-thumb" aria-hidden="true"><i class="fa-solid fa-award"></i></div><div class="pubc-b">' +
             '<div class="pubc-n">' + mark(it.name, q) + (it.cls ? ' <span class="pubc-cls">' + escapeHtml(it.cls) + '</span>' : '') + '</div>' +
             '<div class="pubc-a">' + escapeHtml(it.activity) + (it.competition ? ' · ' + escapeHtml(it.competition) : '') + '</div>' +
             '<div class="pubc-chips">' + (it.award ? '<span class="ordc-chip cert-award"><i class="fa-solid fa-trophy"></i> ' + escapeHtml(it.award) + '</span>' : '') +
@@ -161,6 +165,12 @@
       loadActivity();
     } else {
       $('pubcForm').addEventListener('submit', function (e) { e.preventDefault(); search($('pubcQ').value); });
+      // 2.32.0: กิจกรรมล่าสุด — กดแล้วเปิดรายชื่อทั้งกิจกรรม
+      apiCall('publicCertRecent', {}).then(function (r) {
+        var L = (r && r.items) || [], box = $('pubcRecent'); if (!L.length) return;
+        box.innerHTML = '<span class="ctx-rl">กิจกรรมล่าสุด:</span>' + L.map(function (x) { return '<a class="bx-chip" href="certificate.html?a=' + encodeURIComponent(x.a) + (x.y ? '&y=' + encodeURIComponent(x.y) : '') + (EMBED ? '&embed=1' : '') + '">' + escapeHtml(x.a) + '</a>'; }).join('');
+        box.hidden = false;
+      }).catch(function () {});
       var q0 = params.get('q');
       if (q0) { $('pubcQ').value = q0; search(q0); } else { $('pubcQ').focus(); }
     }

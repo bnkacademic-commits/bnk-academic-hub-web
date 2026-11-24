@@ -38,7 +38,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.31.3.241126" />
+<link rel="stylesheet" href="assets/style.css?v=2.32.0.241126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -89,14 +89,37 @@
       </form>
       <p class="hint login-contact">ติดต่อกลุ่มบริหารงานวิชาการเพื่อขอสร้างบัญชี</p>
     </div>
+    <!-- 2.32.0: ทางลัด (ไม่ต้องล็อกอิน) — ค่าจาก Worker publicShortcuts (จำไว้ในเครื่อง ขึ้นทันทีรอบถัดไป) -->
+    <nav class="login-sc" id="loginSc" aria-label="ทางลัด ไม่ต้องเข้าสู่ระบบ" hidden></nav>
   </div>
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.31.3.241126"></script>
+  <script src="assets/api.js?v=2.32.0.241126"></script>
   <script>
     mountFooter({ compact: true }); // 1.80: หน้าล็อกอินใช้ footer แบบย่อ
     applyBranding();
+
+    // 2.32.0: ทางลัดใต้กล่องล็อกอิน — เว็บเช็คชื่อ · Care Center · คลังรูปภาพ / ทำเนียบ (เฉพาะที่เปิดสาธารณะ) · ค้นหาเกียรติบัตร
+    (function () {
+      var KEY = 'bnkah_login_sc', box = document.getElementById('loginSc');
+      function paint(v) {
+        if (!v) return;
+        var L = [
+          { u: v.att, t: 'BNK<br>E-Attendance', i: 'icons/sc-att-192.png', ext: 1 },
+          { u: v.care, t: 'BNK<br>Care Center', i: 'icons/sc-care-192.png', ext: 1 },
+          v.gal ? { u: 'photos.html', t: 'คลัง<br>รูปภาพ', i: 'icons/app-gallery-192.png' } : null,
+          v.dir ? { u: 'directory.html', t: 'ทำเนียบ<br>บุคลากร', i: 'icons/app-directory-192.png' } : null,
+          { u: 'certificate.html', t: 'ค้นหา<br>เกียรติบัตร', i: 'icons/app-certs-192.png' }
+        ].filter(function (x) { return x && x.u; });
+        box.innerHTML = '<div class="login-sc-h">ทางลัด · ไม่ต้องเข้าสู่ระบบ</div><div class="login-sc-g" style="--n:' + L.length + '">' + L.map(function (x) {
+          return '<a href="' + escapeHtml(x.u) + '"' + (x.ext ? ' target="_blank" rel="noopener"' : '') + '><img src="' + x.i + '?v=2.32.0" alt="" width="56" height="56" loading="lazy"><span>' + x.t + '</span></a>';
+        }).join('') + '</div>';
+        box.hidden = false;
+      }
+      try { paint(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch (e) { /* ไม่มีค่าที่จำไว้ */ }
+      apiCall('publicShortcuts', {}).then(function (v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) { /* ข้าม */ } paint(v); }).catch(function () {});
+    })();
 
     // ถ้าล็อกอินอยู่แล้ว พาไปหน้าที่เหมาะสมทันที
     (function () {

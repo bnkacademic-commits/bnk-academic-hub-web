@@ -6,8 +6,8 @@
 <!-- 1.80: PWA — ติดตั้งลงหน้าจอหลัก/คอมได้ (manifest + ไอคอน · sw.js ลงทะเบียนใน api.js) -->
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#0b6fcc" />
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=2.04.1" />
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2.04.1" />
+<link rel="icon" type="image/png" sizes="32x32" href="icons/app-directory-32.png?v=2.32.0" />
+<link rel="apple-touch-icon" href="icons/app-directory-180.png?v=2.32.0" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="BNK Academic Hub" />
@@ -38,7 +38,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.31.3.241126" />
+<link rel="stylesheet" href="assets/style.css?v=2.32.0.241126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 <style>
@@ -134,18 +134,20 @@
   .vitem { position: relative; padding-top: 14px; }
 </style>
 </head>
-<body>
+<body class="bx-page dr-page">
   <div id="app-topbar"></div>
   <div class="container">
-    <div class="page-header">
-      <h1>ทำเนียบบุคลากรโรงเรียน</h1>
+    <!-- 2.32.0: หัวแบบทางการ (ตราโรงเรียน + เส้นเหลือง) -->
+    <header class="drx-hero">
+      <img class="drx-logo" src="assets/school-emblem.png?v=2.32.0" alt="" />
+      <h1>ทำเนียบบุคลากร</h1>
       <p id="dirSub">คณะผู้บริหารและครู/บุคลากรของโรงเรียน</p>
-    </div>
+    </header>
     <div class="dir-toolbar"><div class="dir-filters"><span class="dir-label">จัดกลุ่มตาม</span><div class="dir-toggle dir-groupby" role="group" aria-label="เลือกวิธีจัดกลุ่ม"><button type="button" data-group="subject" aria-pressed="true">กลุ่มสาระการเรียนรู้</button><button type="button" data-group="dept" aria-pressed="false">กลุ่มบริหารงาน</button></div><select id="dirFilter" aria-label="กรอง"></select></div><div class="dir-toggle" role="group" aria-label="เลือกมุมมอง"><button type="button" id="dirViewTree" data-view="tree" aria-pressed="false"><i class="fa-solid fa-sitemap"></i> ผังองค์กร</button><button type="button" id="dirViewCards" data-view="cards" aria-pressed="false"><i class="fa-solid fa-th-large"></i> การ์ด</button></div></div>
     <div id="dirRoot"><div class="loading">กำลังโหลด...</div></div>
   </div>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.31.3.241126"></script>
+  <script src="assets/api.js?v=2.32.0.241126"></script>
   <script>
     var SUBJECT_GROUP_ORDER = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ'];
     var POSITION_RANK = ['ครูเชี่ยวชาญพิเศษ', 'ครูเชี่ยวชาญ', 'ครูชำนาญการพิเศษ', 'ครูชำนาญการ', 'ครู', 'ครูผู้ช่วย'];
@@ -198,13 +200,14 @@
     function linkAttrs(p) {
       return ' href="view.html?id=' + encodeURIComponent(p.id) + '" target="_blank" rel="noopener" title="เปิดหน้าแสดงผลงานของ ' + escapeHtml(p.name) + '"';
     }
-    function cardHtml(p, isExec) {
+    function cardHtml(p, isExec, isTop) {
       var sub = subTags(p);
       var inner = '<div class="dir-avatar">' + avatarInnerHtml(p.avatarUrl) + '</div>' +
         '<div class="dir-name">' + escapeHtml(p.name) + '</div>' +
         '<div class="dir-pos">' + escapeHtml(p.position || (isExec ? 'ผู้บริหาร' : '')) + '</div>' +
-        sub.map(function (t) { return '<div class="dir-sub' + (t.muted ? ' muted' : '') + '"' + (t.dept ? deptColorAttr(t.dept) : '') + '>' + escapeHtml(t.text) + '</div>'; }).join('');
-      var cls = 'dir-card' + (isExec ? ' dir-exec' : '');
+        sub.map(function (t) { return '<div class="dir-sub' + (t.muted ? ' muted' : '') + '"' + (t.dept ? deptColorAttr(t.dept) : '') + '>' + escapeHtml(t.text) + '</div>'; }).join('') +
+        (isTop ? '<span class="drx-rk">ผู้อำนวยการ</span>' : '');
+      var cls = 'dir-card' + (isExec ? ' dir-exec' : '') + (isTop ? ' drx-top' : '');
       // คลิกที่ใดก็ได้ในกรอบการ์ด -> เปิดหน้าแสดงผลงานของคนนั้นในแท็บใหม่ (ผู้บริหารไม่มีหน้าผลงาน จึงไม่เป็นลิงก์)
       if (p.hasPage) {
         return '<a class="' + cls + ' dir-link" data-kind="' + p.kind + '"' + linkAttrs(p) + '>' + inner + '</a>';
@@ -213,8 +216,8 @@
     }
     function sectionHtml(title, people, isExec, key) {
       if (!people.length) return '';
-      return '<section class="dir-section" data-group="' + escapeHtml(key) + '"' + deptColorAttr(key) + '><h2 class="dir-section-title">' + escapeHtml(title) +
-        ' <span class="dir-count">' + people.length + ' คน</span></h2><div class="dir-grid">' +
+      return '<section class="dir-section" data-group="' + escapeHtml(key) + '"' + deptColorAttr(key) + '><h2 class="dir-section-title"><span class="bx-band">' + escapeHtml(title) + '</span><span class="bx-ln"></span>' +
+        '<span class="dir-count">' + people.length + ' คน</span></h2><div class="dir-grid">' +
         people.map(function (p) { return cardHtml(p, isExec); }).join('') + '</div></section>';
     }
     // ---- มุมมองผังองค์กร ----
@@ -279,10 +282,17 @@
     }
     function cardsHtml(people) {
       var sp = splitPeople(people), rest = sp.rest;
-      var html = filterVal ? '' : sectionHtml('คณะผู้บริหาร', sp.execs, true, 'executive');
+      var html = filterVal ? '' : execHtml(sp.execs);
       visibleGroups(rest).forEach(function (g) { html += sectionHtml(g.title, g.list, false, g.key); });
       if (sp.interns.length && !filterVal) html += sectionHtml('นักศึกษาฝึกสอน', sp.interns, false, 'intern');
       return html;
+    }
+    // 2.32.0: คณะผู้บริหาร — ผู้อำนวยการการ์ดใหญ่ตรงกลาง รองฯ ขนาบสองข้าง (มือถือ: ผอ. บนสุด รองฯ แถวละ 2)
+    function execHtml(execs) {
+      if (!execs.length) return '';
+      var top = rankIndex(EXEC_RANK, execs[0].position) === 0 ? execs[0] : null, rest = top ? execs.slice(1) : execs.slice(), half = Math.ceil(rest.length / 2);
+      var row = top ? rest.slice(0, half).concat([top]).concat(rest.slice(half)) : rest;
+      return '<section class="dir-section drx-exec" data-group="executive"><h2 class="sr-only">คณะผู้บริหาร</h2><div class="drx-row">' + row.map(function (p) { return cardHtml(p, true, p === top); }).join('') + '</div></section>';
     }
     // ---- เลือกมุมมอง: ค่าเริ่มต้นตามความกว้างจอ (>=768px = ผังองค์กร, มือถือ = การ์ด) ผู้ใช้กดสลับเองได้และจำไว้ในเครื่องนั้น ----
     var VIEW_KEY = 'bnkah_dir_view';
@@ -375,6 +385,10 @@
         if (!deptList.length) (res.people || []).forEach(function (p) { if (p.department && !inDeptList(p.department)) deptList.push(p.department); });
         try { var stD = await getSiteSettings(); if (stD && Array.isArray(stD.teacherPositions) && stD.teacherPositions.length) POSITION_RANK = stD.teacherPositions.slice().reverse(); } catch (e) { /* ไม่มีค่าตั้งค่า = ป้ายกลุ่มใช้สีหลัก */ } // 1.56: สีของแต่ละกลุ่มบริหารงาน · 1.94: ลำดับตำแหน่งจากตั้งค่า (สูงสุดก่อน)
         render(res.people || []);
+        try { // 2.32.0: บรรทัดใต้หัว = โรงเรียน · ปีการศึกษา · จำนวนบุคลากร
+          var st0 = await getSiteSettings(), tm0 = await currentAcademicTerm().catch(function () { return null; }), n0 = (res.people || []).filter(function (p) { return p.kind !== 'intern'; }).length;
+          document.getElementById('dirSub').textContent = [(st0 && st0.schoolName) || '', tm0 && tm0.year ? 'ปีการศึกษา ' + tm0.year : '', n0 ? 'บุคลากร ' + n0 + ' คน' : ''].filter(Boolean).join(' · ');
+        } catch (e) { /* คงข้อความเดิม */ }
       } catch (err) {
         var msg = (err && err.message) || 'โหลดไม่สำเร็จ';
         if (!session) msg = 'ทำเนียบบุคลากรเปิดให้เฉพาะผู้ที่เข้าสู่ระบบ — กรุณาเข้าสู่ระบบก่อน';
