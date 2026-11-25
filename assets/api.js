@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.33.1';
-var APP_VERSION = '2.33.2.251126';
+var APP_VERSION = '2.33.3.251126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1058,7 +1058,27 @@ function activityOwnerBadgeHtml(e) {
   if (!e.ownerGroup) return '';
   return e.ownerType === 'subject' ? '<span class="evl-gb sub">กลุ่มสาระฯ ' + escapeHtml(e.ownerGroup) + '</span>' : '<span class="evl-gb">' + escapeHtml(groupLabel(e.ownerGroup)) + '</span>';
 }
-function activityTimeText(e) { return e.timeStart ? e.timeStart + (e.timeEnd ? '–' + e.timeEnd : '') + ' น.' : ''; }
+// 2.33.3: ไม่ได้ใส่เวลา แต่เลือกคาบไว้ (จัดกิจกรรม / หยุดเรียนบางคาบ ของเว็บเช็คชื่อ) = ใช้เวลาของคาบ เช่น "คาบ 6–8 · 13:50–16:20 น."
+//         กิจกรรมหลายวัน = คาบของวันที่ส่งมา (ymd) → วันนี้ถ้าอยู่ในช่วง → วันแรกที่เลือกคาบไว้ · เวลาคาบชุดเดียวกับเว็บเช็คชื่อ
+var ATT_PERIOD_ORDER = ['A', 'B', '1', '2', '3', '4', '5', '6', '7', '8'];
+var ATT_PERIOD_TIME = { A: ['07:30', '08:00'], B: ['08:00', '08:30'], 1: ['08:30', '09:20'], 2: ['09:20', '10:10'], 3: ['10:20', '11:10'], 4: ['11:10', '12:00'], 5: ['13:00', '13:50'], 6: ['13:50', '14:40'], 7: ['14:40', '15:30'], 8: ['15:30', '16:20'] };
+function activityPeriodsOf(e, ymd) {
+  var days = e && (e.attMode === 'activity' || e.attMode === 'noclass') && e.attPlan && Array.isArray(e.attPlan.days) ? e.attPlan.days : null;
+  if (!days || !days.length) return [];
+  var idx = function (d) { return Math.round((Date.parse(d + 'T00:00:00Z') - Date.parse(e.date + 'T00:00:00Z')) / 864e5); };
+  var pick = function (i) { return i >= 0 && i < days.length && Array.isArray(days[i]) ? days[i] : null; };
+  var d = (ymd && pick(idx(ymd))) || pick(idx(todayYmd())) || days.filter(function (x) { return Array.isArray(x) && x.length; })[0] || [];
+  return ATT_PERIOD_ORDER.filter(function (p) { return d.map(String).indexOf(p) !== -1; });
+}
+function activityTimeText(e, ymd) {
+  if (!e) return '';
+  if (e.timeStart) return e.timeStart + (e.timeEnd ? '–' + e.timeEnd : '') + ' น.';
+  var ps = activityPeriodsOf(e, ymd); if (!ps.length) return '';
+  var runs = [], cur = null;
+  ps.forEach(function (p) { var i = ATT_PERIOD_ORDER.indexOf(p); if (cur && i === cur.e + 1) cur.e = i; else { cur = { s: i, e: i }; runs.push(cur); } });
+  var lbl = runs.map(function (r) { return r.s === r.e ? ATT_PERIOD_ORDER[r.s] : ATT_PERIOD_ORDER[r.s] + '–' + ATT_PERIOD_ORDER[r.e]; }).join(', ');
+  return 'คาบ ' + lbl + ' · ' + ATT_PERIOD_TIME[ps[0]][0] + '–' + ATT_PERIOD_TIME[ps[ps.length - 1]][1] + ' น.';
+}
 // 2.02.5: ช่องวันที่กว้างคงที่ 2 บรรทัด (รายการที่มีช่วงวันไม่ดันชื่อรายการ) — mode 'range' = วันเริ่ม + "ถึง … · N วัน" · 'due' = วันส่ง (วันสุดท้าย) + "เริ่ม …"
 function evDateChipInner(start, end, mode) {
   var multi = !!end && end !== start;

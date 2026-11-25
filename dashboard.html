@@ -38,7 +38,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.33.2.251126" />
+<link rel="stylesheet" href="assets/style.css?v=2.33.3.251126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -226,6 +226,14 @@
     </div>
   </div>
 
+  <!-- 2.33.3: ป็อปอัปรายละเอียดกิจกรรม (กดการ์ด "วันนี้" / แผงกิจกรรมที่จะถึง) -->
+  <div class="modal-backdrop" id="actModal" hidden>
+    <div class="modal-box act-pop-box" role="dialog" aria-modal="true" aria-labelledby="actModalT">
+      <button type="button" class="modal-close-x" data-act-close aria-label="ปิด">✕</button>
+      <div id="actModalBody"></div>
+      <div class="modal-actions"><button type="button" class="btn btn-ghost btn-close" data-act-close>ปิด</button></div>
+    </div>
+  </div>
   <!-- 1.93.1: เช็คลิสต์การส่งงาน (ป็อปอัป — เดิมเป็นคอลัมน์ขวาของปฏิทิน) -->
   <div class="modal-backdrop" id="clModal" hidden>
     <div class="modal-box cl-modal-box">
@@ -274,9 +282,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.33.2.251126"></script>
+  <script src="assets/api.js?v=2.33.3.251126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=2.33.2.251126"></script>
+  <script src="assets/homeroom.js?v=2.33.3.251126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -1678,7 +1686,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       side.classList.toggle('collapsed', casCollapsed());
       document.getElementById('calActList').innerHTML = list.length ? list.map(function (e) {
         var c = isHolidayEv(e) ? '#dc2626' : activityColor(e), dw = DW[new Date(e.date + 'T00:00:00').getDay()];
-        var sub = [dw + (e.endDate && e.endDate !== e.date ? ' ' + eventRangeText(e) : '')]; if (isHolidayEv(e)) sub.push('วันหยุด'); else { if (e.timeStart) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); }
+        var sub = [dw + (e.endDate && e.endDate !== e.date ? ' ' + eventRangeText(e) : '')]; if (isHolidayEv(e)) sub.push('วันหยุด'); else { if (activityTimeText(e)) sub.push(activityTimeText(e)); if (e.location) sub.push(e.location); }
         var tl = String(e.title || ''), fs = tl.length > 44 ? ' style="font-size:.72rem"' : tl.length > 30 ? ' style="font-size:.78rem"' : '';
         return '<button type="button" class="cas-item' + (calSelDate && calSelDate === e.date ? ' on' : '') + '" data-cas="' + escapeHtml(e.id) + '" title="' + escapeHtml(tl) + '"><span class="cas-dt" style="background:' + c + '">' + (+e.date.slice(8)) + '<small>' + TM[+e.date.slice(5, 7) - 1] + '</small></span><span class="cas-t2"' + fs + '>' + escapeHtml(tl) + (isHolidayEv(e) ? ' <span class="cas-hb">หยุด</span>' : '') + '</span></button>'; // 1.96.5: แบบ A + ป้ายหยุด
       }).join('') : '<div class="empty-state" style="padding:12px 4px">' + (calGroup ? 'ไม่มีกิจกรรมของ' + escapeHtml(calGroupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกิจกรรมใน 90 วันข้างหน้า') + '</div>';
@@ -1689,15 +1697,15 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       var box = document.getElementById('calTodayBox'); if (!box) return;
       var T = todayYmd();
       var list = calKind === 'deadline' ? [] : calEvents().filter(function (e) { return isActivityEv(e) && e.date <= T && (e.endDate || e.date) >= T; })
-        .sort(function (a, b) { var x = a.endDate && a.endDate !== a.date ? 1 : 0, y = b.endDate && b.endDate !== b.date ? 1 : 0; return x - y || String(a.timeStart || '99').localeCompare(String(b.timeStart || '99')) || (a.date < b.date ? -1 : 1); });
+        .sort(function (a, b) { var x = a.endDate && a.endDate !== a.date ? 1 : 0, y = b.endDate && b.endDate !== b.date ? 1 : 0; return x - y || String(activityTimeText(a, T) || '99').replace(/^คาบ.*· /, '').localeCompare(String(activityTimeText(b, T) || '99').replace(/^คาบ.*· /, '')) || (a.date < b.date ? -1 : 1); });
       if (!list.length) { box.innerHTML = ''; return; }
       var DW = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
       function fpAttr(f) { return ' data-fp="' + escapeHtml(f.url) + '" data-fp-name="' + escapeHtml(f.name || '') + '" data-fp-mime="' + escapeHtml(f.mime || '') + '"'; }
       function card(e, i) {
         var hol = isHolidayEv(e), c = hol ? '#dc2626' : activityColor(e), multi = e.endDate && e.endDate !== e.date;
-        var tag = hol ? 'วันหยุด' : multi ? 'กำลังดำเนินอยู่' : e.timeStart ? activityTimeText(e) : 'ทั้งวัน';
+        var tt = hol ? '' : activityTimeText(e, T), tag = hol ? 'วันหยุด' : multi ? 'กำลังดำเนินอยู่' : tt || 'ทั้งวัน';
         var m = [];
-        if (multi) m.push('<span><i class="fa-solid fa-calendar-days" aria-hidden="true"></i>' + escapeHtml(eventRangeText(e)) + (e.timeStart ? ' · ' + escapeHtml(activityTimeText(e)) : '') + '</span>');
+        if (multi) m.push('<span><i class="fa-solid fa-calendar-days" aria-hidden="true"></i>' + escapeHtml(eventRangeText(e)) + (tt ? ' · วันนี้ ' + escapeHtml(tt) : '') + '</span>');
         if (e.location) m.push('<span><i class="fa-solid fa-location-dot" aria-hidden="true"></i>' + escapeHtml(e.location) + '</span>');
         var rs = typeof responsibleText === 'function' ? responsibleText(e, '') : '', us = e.responsible && e.responsible.users ? e.responsible.users.map(function (u) { return u.name; }) : [];
         var rr = [rs].concat(us).filter(Boolean).join(', '); if (rr) m.push('<span><i class="fa-solid fa-user" aria-hidden="true"></i>' + escapeHtml(rr) + '</span>');
@@ -1709,11 +1717,36 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
           if (k === 3 && imgs.length > 4) return '<button type="button" class="td-th more"' + fpAttr(f) + ' title="ดูรูปทั้งหมด">+' + (imgs.length - 3) + '</button>';
           return '<button type="button" class="td-th"' + fpAttr(f) + ' title="' + escapeHtml(f.note || f.name || 'รูปภาพ') + '"><img src="https://lh3.googleusercontent.com/d/' + encodeURIComponent(driveFileId(f.url)) + '=w240" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()"><i class="fa-solid fa-image" aria-hidden="true"></i></button>';
         }).join('') + '</div>' : '';
-        return '<div class="td-c" role="button" tabindex="0" data-cas="' + escapeHtml(e.id) + '" style="--cc:' + c + '"' + (i >= 2 && !tdOpen ? ' hidden' : '') + '><div class="td-b"><span class="td-tag">' + escapeHtml(tag) + '</span><div class="td-t">' + escapeHtml(e.title) + '</div>' + (m.length ? '<div class="td-meta">' + m.join('') + '</div>' : '') + '</div>' + th + '</div>';
+        return '<div class="td-c" role="button" tabindex="0" data-td-act="' + escapeHtml(e.id) + '" style="--cc:' + c + '"' + (i >= 2 && !tdOpen ? ' hidden' : '') + '><div class="td-b"><span class="td-tag">' + escapeHtml(tag) + '</span><div class="td-t">' + escapeHtml(e.title) + '</div>' + (m.length ? '<div class="td-meta">' + m.join('') + '</div>' : '') + '</div>' + th + '</div>';
       }
       box.innerHTML = '<div class="td-wrap"><div class="td-h"><span class="td-pill"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> วันนี้</span>วัน' + DW[new Date(T + 'T00:00:00').getDay()] + 'ที่ ' + escapeHtml(formatDateThai(T)) + '<span class="td-n">· ' + list.length + ' กิจกรรม</span></div><div class="td-list">' +
         list.map(card).join('') + (list.length > 2 ? '<button type="button" class="td-more" data-td-more><i class="fa-solid fa-chevron-' + (tdOpen ? 'up' : 'down') + '" aria-hidden="true"></i> ' + (tdOpen ? 'ย่อ' : 'ดูอีก ' + (list.length - 2) + ' กิจกรรม') + '</button>' : '') + '</div></div>';
     }
+    // 2.33.3: ป็อปอัปรายละเอียดกิจกรรม
+    function openActPopup(e) {
+      var m = document.getElementById('actModal'); if (!m || !e) return;
+      var T = todayYmd(), hol = isHolidayEv(e), c = hol ? '#dc2626' : activityColor(e);
+      var dd = Math.round((Date.parse(e.date + 'T00:00:00') - Date.parse(T + 'T00:00:00')) / 864e5), de = Math.round((Date.parse((e.endDate || e.date) + 'T00:00:00') - Date.parse(T + 'T00:00:00')) / 864e5);
+      var cd = dd > 0 ? 'อีก ' + dd + ' วัน' : dd === 0 ? 'วันนี้' : de >= 0 ? 'กำลังดำเนินอยู่' : 'ผ่านมาแล้ว ' + (-de) + ' วัน';
+      var rs = typeof responsibleText === 'function' ? responsibleText(e, '') : '', us = e.responsible && e.responsible.users ? e.responsible.users.map(function (u) { return u.name; }) : [];
+      var rr = [rs].concat(us).filter(Boolean).join(', '), tt = hol ? '' : activityTimeText(e, dd <= 0 && de >= 0 ? T : '');
+      var row = function (ic, html) { return '<div class="act-pop-r"><i class="fa-solid ' + ic + '" aria-hidden="true"></i><div>' + html + '</div></div>'; };
+      document.getElementById('actModalBody').innerHTML = '<div class="act-pop" style="--cc:' + c + '"><div class="act-pop-h"><span class="cas-ddt">' + (+e.date.slice(8)) + '<small>' + ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][+e.date.slice(5, 7) - 1] + '</small></span>' +
+        '<div class="act-pop-tw"><div class="act-pop-t" id="actModalT">' + escapeHtml(e.title) + '</div><span class="cas-cd' + (dd === 0 || (dd < 0 && de >= 0) ? ' now' : '') + '">' + cd + '</span>' + (hol ? ' <span class="cas-hol">วันหยุด</span>' : '') + '</div></div>' +
+        row('fa-calendar-days', escapeHtml(eventRangeText(e)) + (e.repeatYearly ? ' · ทุกปี' : '')) +
+        (tt ? row('fa-clock', escapeHtml(tt)) : '') +
+        (e.location ? row('fa-location-dot', escapeHtml(e.location)) : '') +
+        (rr ? row('fa-user', 'ผู้รับผิดชอบ: ' + escapeHtml(rr)) : '') +
+        (attTagHtml(e) ? '<div class="act-pop-r">' + attTagHtml(e) + '</div>' : '') +
+        (e.message ? '<div class="act-pop-msg">' + escapeHtml(e.message) + '</div>' : '') + eventLinksHtml(evLinksOf(e), false, true) + '</div>';
+      showModalEl(m);
+    }
+    document.addEventListener('click', function (ev) {
+      if (ev.target.closest('[data-act-close]')) { hideModalEl(document.getElementById('actModal')); return; }
+      var b = ev.target.closest('[data-td-act]'); if (!b) return;
+      var e = calState.events.filter(function (x) { return x.id === b.getAttribute('data-td-act'); })[0]; if (e) openActPopup(e);
+    });
+    document.addEventListener('keydown', function (ev) { var m = document.getElementById('actModal'); if (ev.key === 'Escape' && m && !m.hidden && !document.getElementById('filePreviewOverlay')) hideModalEl(m); });
     document.addEventListener('click', function (ev) { if (ev.target.closest('[data-td-more]')) { tdOpen = !tdOpen; renderTodayBox(); } });
     document.addEventListener('keydown', function (ev) { var c = ev.target.closest && ev.target.closest('.td-c'); if (c && ev.target === c && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); c.click(); } });
     var CAS_KEY = 'bnkah_cas_collapsed'; // 1.96.4: ย่อ/ขยายแผง (จำไว้เหมือนเมนูหลัก)
@@ -1733,7 +1766,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       var dd = Math.round((Date.parse(e.date + 'T00:00:00') - Date.parse(todayYmd() + 'T00:00:00')) / 864e5), de = Math.round((Date.parse((e.endDate || e.date) + 'T00:00:00') - Date.parse(todayYmd() + 'T00:00:00')) / 864e5);
       var cdTxt = dd > 0 ? 'อีก ' + dd + ' วัน' : dd === 0 ? 'วันนี้' : de >= 0 ? 'กำลังดำเนินอยู่' : 'ผ่านมาแล้ว ' + (-de) + ' วัน';
       box.innerHTML = '<div class="cas-det"' + (isHolidayEv(e) ? ' style="--cc:#dc2626"' : ' style="--cc:' + activityColor(e) + '"') + '><button type="button" class="cas-x" aria-label="ปิด">✕</button><span class="cas-ddt">' + (+e.date.slice(8)) + '<small>' + ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][+e.date.slice(5, 7) - 1] + '</small></span><div class="cas-dbody"><b>' + escapeHtml(e.title) + ' <span class="cas-cd' + (dd === 0 || (dd < 0 && de >= 0) ? ' now' : '') + '">' + cdTxt + '</span></b>' +
-        '<div>' + escapeHtml(eventRangeText(e)) + (e.timeStart ? ' · ' + escapeHtml(activityTimeText(e)) : '') + '</div>' + (isHolidayEv(e) ? '<div class="cas-hol">วันหยุด</div>' : '') +
+        '<div>' + escapeHtml(eventRangeText(e)) + (activityTimeText(e) ? ' · ' + escapeHtml(activityTimeText(e)) : '') + '</div>' + (isHolidayEv(e) ? '<div class="cas-hol">วันหยุด</div>' : '') +
         (e.location ? '<div><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ' + escapeHtml(e.location) + '</div>' : '') +
         (rs || us.length ? '<div>ผู้รับผิดชอบ: ' + escapeHtml([rs].concat(us).filter(Boolean).join(', ')) + '</div>' : '') +
         (e.message ? '<div class="cas-msg">' + escapeHtml(e.message) + '</div>' : '') + eventLinksHtml(evLinksOf(e), false) + '</div></div>'; // 2.00.1: ไฟล์แนบ/ลิงก์
@@ -1743,7 +1776,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       var b = ev.target.closest('[data-cas]'); if (!b) return;
       var e = calState.events.filter(function (x) { return x.id === b.getAttribute('data-cas'); })[0]; if (!e) return;
       calSelDate = e.date; calState.year = +e.date.slice(0, 4); calState.month = +e.date.slice(5, 7) - 1;
-      renderCalendar(); showActDetail(e);
+      renderCalendar(); showActDetail(null); openActPopup(e); // 2.33.3: เลื่อนปฏิทินไปวันนั้น + ป็อปอัป (ไม่ใช้แถบเหนือปฏิทินแล้ว)
       var cell = document.querySelector('#calGrid [data-date="' + e.date + '"]'); if (cell && cell.scrollIntoView) cell.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     });
     // ---------- 1.92.4: งานที่ส่งเป็นรอบ (สมุดโฮมรูม / บันทึกรายเดือน ฯลฯ) — แถวเดียวในรายการกำหนดส่งงาน ----------

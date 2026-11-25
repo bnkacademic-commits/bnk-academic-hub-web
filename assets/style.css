@@ -5631,3 +5631,14 @@ html.scroll-locked body { overscroll-behavior: none; }
 [data-theme="dark"] .td-th.more { background: #431407; color: #fdba74; }
 [data-theme="dark"] .td-more { color: #c4b5fd; }
 @media (max-width: 600px) { .td-c { flex-direction: column; align-items: stretch; } .td-th { width: 52px; height: 52px; } }
+/* 2.33.3: ป็อปอัปรายละเอียดกิจกรรม */
+.act-pop-box { max-width: 520px; text-align: left; }
+.act-pop-h { display: flex; gap: 12px; align-items: flex-start; padding-right: 28px; margin-bottom: 10px; }
+.act-pop-tw { flex: 1; min-width: 0; }
+.act-pop-t { font-weight: 800; font-size: 1.05rem; line-height: 1.4; color: var(--cc); margin-bottom: 2px; }
+.act-pop .cas-cd { margin-left: 0; }
+.act-pop-r { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--border); font-size: 0.92rem; }
+.act-pop-r > i { width: 16px; text-align: center; color: var(--cc); flex: none; }
+.act-pop-msg { white-space: pre-wrap; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; margin-top: 6px; font-size: 0.9rem; }
+.act-pop .ev-lbtns { margin-top: 10px; }
+[data-theme="dark"] .act-pop-t { filter: brightness(1.35); }
