@@ -99,14 +99,25 @@
     return h + '</tbody></table>';
   }
   function shortPos(p) { return String(p || '').replace(/^รองผู้อำนวยการ/, 'รองฯ '); }
-  function signers(ctx) {
+  // ผู้ลงนามท้ายใบ: ที่ผู้เขียนเปลี่ยน (ctx.signOv) > ที่ตั้งในแม่แบบ (เลือก / พิมพ์) > ข้อมูลกลุ่มบริหารงาน (2.33.1)
+  function signers(ctx, def) {
     var st = ctx.settings || {}, dept = ctx.dept || '', d = (st.departmentSigners && st.departmentSigners[dept]) || {};
     var gl = typeof groupLabel === 'function' ? groupLabel : function (x) { return 'กลุ่มบริหารงาน' + x; };
-    return {
+    var o = {
       headName: d.headName || '', headPos: d.headPosition || (dept ? 'หัวหน้า' + gl(dept) : 'หัวหน้ากลุ่มบริหารงาน'),
       depName: d.deputyName || '', depPos: d.deputyPosition || (dept ? 'รองผู้อำนวยการ' + gl(dept) : 'รองผู้อำนวยการ'),
       dirName: st.memoDirectorName || '', dirPos: st.memoDirectorPosition || ('ผู้อำนวยการ' + (st.schoolName || 'โรงเรียน'))
     };
+    o.headTitle = o.headPos; o.depTitle = o.depPos; // หัวข้อ "ความคิดเห็นของ..." ตามตำแหน่งในกลุ่ม (ไม่เปลี่ยนตามคนที่ลงนาม)
+    var sg = (def && def.signers) || {}, ov = ctx.signOv || {}, K = [['head', 'headName', 'headPos'], ['deputy', 'depName', 'depPos'], ['director', 'dirName', 'dirPos']];
+    K.forEach(function (k) {
+      var c = sg[k[0]] || {}, v = ov[k[0]];
+      // เลือกจากรายชื่อ = เปลี่ยนเฉพาะชื่อ (ตำแหน่งท้ายชื่อตามหน้าที่) · พิมพ์เอง = เปลี่ยนทั้งชื่อและตำแหน่ง (เช่น รักษาการ)
+      if (c.mode === 'pick' && c.name) o[k[1]] = c.name;
+      if (c.mode === 'type') { if (c.name) o[k[1]] = c.name; if (c.pos) o[k[2]] = c.pos; }
+      if (v && v.name) { o[k[1]] = v.name; if (v.typed && v.pos) o[k[2]] = v.pos; }
+    });
+    return o;
   }
   var DL = '.................................................';
   function opBlock(title, name, pos, full) {
@@ -115,7 +126,7 @@
   }
   // วาดกระดาษทั้งใบ
   function render(def, ctx) {
-    var fmap = fmapOf(def), st = ctx.settings || {}, s = signers(ctx), me = ctx.me || {};
+    var fmap = fmapOf(def), st = ctx.settings || {}, s = signers(ctx, def), me = ctx.me || {};
     var school = [st.schoolName, st.schoolDistrict, st.schoolProvince].filter(Boolean).join(' ');
     var h = '<div class="memo-head"><img src="assets/garuda-emblem.png" alt="" /><h1>บันทึกข้อความ</h1></div>';
     h += '<div class="memo-line"><b>ส่วนราชการ</b>&nbsp;&nbsp;' + (school ? esc(school) : dots(300)) + '</div>';
@@ -137,8 +148,8 @@
     h += '<div class="mm-sign"><div>ลงชื่อ' + DL + (def.signAs ? esc(def.signAs) : '') + '</div><div>(' + (ctx.blank || !me.name ? DL : esc(me.name)) + ')</div>' +
       (def.signAs ? '' : '<div>ตำแหน่ง ' + (ctx.blank || !me.position ? DL : esc(me.position)) + '</div>') + '</div>';
     var ch = def.chain || {}, pair = [];
-    if (ch.head) pair.push(opBlock(s.headPos, s.headName, s.headPos));
-    if (ch.deputy) pair.push(opBlock(s.depPos, s.depName, s.depPos));
+    if (ch.head) pair.push(opBlock(s.headTitle, s.headName, s.headPos));
+    if (ch.deputy) pair.push(opBlock(s.depTitle, s.depName, s.depPos));
     if (pair.length === 2) h += '<div class="mm-ops">' + pair.join('') + '</div>';
     else if (pair.length === 1) h += '<div class="mm-ops" style="grid-template-columns:1fr">' + pair[0] + '</div>';
     if (ch.director) h += opBlock('ผู้อำนวยการโรงเรียน', s.dirName, s.dirPos, true);
@@ -146,5 +157,5 @@
   }
   // ข้อความเรื่อง (ไว้ตั้งชื่อฉบับที่บันทึก)
   function subjectText(def, ctx) { var d = document.createElement('div'); d.innerHTML = fillLine(def.subject, Object.assign({}, ctx, { blank: false }), fmapOf(def)); return (d.textContent || '').replace(/\s+/g, ' ').trim(); }
-  window.MT = { fields: fields, render: render, subjectText: subjectText, thD: thD, thRange: thRange, SYS: SYS, esc: esc };
+  window.MT = { fields: fields, render: render, signers: signers, subjectText: subjectText, thD: thD, thRange: thRange, SYS: SYS, esc: esc };
 })();

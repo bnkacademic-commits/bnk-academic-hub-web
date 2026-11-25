@@ -10,7 +10,7 @@
   var B = null, ST = {}, ME = {}, TAB = 'write', BLANK = false;
   var cur = null;           // แม่แบบที่เลือก { id, kind: 'report'|'reqtime'|'custom', name, dept, def }
   var docId = '', docTitle = '';
-  var F = { values: {}, students: [], rows: [], docNo: '', docDate: '', dept: '', periods: [], allDay: true };
+  var F = { values: {}, students: [], rows: [], docNo: '', docDate: '', dept: '', periods: [], allDay: true, signers: {} };
   var STU = null, pickRoom = '', pickQ = '';
   var paper = document.getElementById('memoPaper'), outer = document.getElementById('mmPaperOuter');
   function $(id) { return document.getElementById(id); }
@@ -78,16 +78,16 @@
   $('memoBody').addEventListener('input', function () { RP.bodyTouched = true; renderPaperD(); });
   ['memoTo', 'memoNumber', 'memoDate'].forEach(function (id) { $(id).addEventListener('input', function () { renderPaperD(); }); });
   ['memoYear', 'memoSemester'].forEach(function (id) { $(id).addEventListener('change', function () { if (!RP.subjectTouched) $('memoSubject').value = rpDefault().subject; if (!RP.bodyTouched) $('memoBody').value = rpBodyWithCount(); rpRenderItems(); }); });
-  $('memoSubjectSelect').addEventListener('change', function () { $('memoCustomDeptWrap').hidden = this.value !== CUSTOM_SUBJECT_VALUE; RP.subjectTouched = RP.bodyTouched = false; $('memoSubject').value = rpDefault().subject; $('memoBody').value = rpBodyWithCount(); rpRenderItems(); });
-  $('memoDeptSelect').addEventListener('change', function () { renderPaper(); });
+  $('memoSubjectSelect').addEventListener('change', function () { setTimeout(paintSign, 0); $('memoCustomDeptWrap').hidden = this.value !== CUSTOM_SUBJECT_VALUE; RP.subjectTouched = RP.bodyTouched = false; $('memoSubject').value = rpDefault().subject; $('memoBody').value = rpBodyWithCount(); rpRenderItems(); });
+  $('memoDeptSelect').addEventListener('change', function () { paintSign(); renderPaper(); });
   function rpPaper() {
     var items = rpChecked(), number = $('memoNumber').value.trim(), dateVal = $('memoDate').value;
     var dateThai = dateVal ? MT.thD(dateVal) : MT.thD(todayYmd());
     var subject = $('memoSubject').value.trim(), toWhom = $('memoTo').value.trim(), body = $('memoBody').value.trim();
     var schoolLine = [ST.schoolName, ST.schoolDistrict, ST.schoolProvince].filter(Boolean).join(' ');
     var qrUrl = location.origin + location.pathname.replace(/memo\.html$/, '') + 'view.html?u=' + encodeURIComponent(ME.username || '');
-    var dept = rpDept(), ds = (ST.departmentSigners && ST.departmentSigners[dept]) || {};
-    var headPos = ds.headPosition || (dept ? 'หัวหน้า' + gl(dept) : 'หัวหน้ากลุ่มบริหารงานที่เกี่ยวข้อง'), depPos = ds.deputyPosition || (dept ? 'รองผู้อำนวยการ' + gl(dept) : 'รองผู้อำนวยการกลุ่มบริหารงานที่เกี่ยวข้อง');
+    var dept = rpDept(), sg = MT.signers({ settings: ST, dept: dept, signOv: F.signers }, cur ? cur.def : null); // 2.33.1: ผู้ลงนามตามแม่แบบ / ที่ผู้เขียนเปลี่ยน
+    var ds = { headName: sg.headName, deputyName: sg.depName }, headT = dept ? sg.headTitle : 'หัวหน้ากลุ่มบริหารงานที่เกี่ยวข้อง', depT = dept ? sg.depTitle : 'รองผู้อำนวยการกลุ่มบริหารงานที่เกี่ยวข้อง', headPos = dept || sg.headName ? sg.headPos : headT, depPos = dept || sg.depName ? sg.depPos : depT;
     var DOT = '.................................................', SP = '<span class="memo-dotted">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>';
     var rows = items.map(function (s, i) { return '<tr><td class="memo-no">' + (i + 1) + '</td><td>' + esc(s.title || s.fileName) + '</td><td>' + esc(s.categoryName) + '</td><td>' + formatDateThai(s.uploadedAt) + '</td></tr>'; }).join('');
     var h = '<div class="memo-head"><img src="assets/garuda-emblem.png" alt="" /><h1>บันทึกข้อความ</h1></div>';
@@ -100,22 +100,22 @@
     if (items.length) h += '<div class="memo-qr-box"><div id="memoQrBox"></div><div class="memo-qr-caption">สแกนเพื่อดูผลงานทั้งหมดของ ' + esc(ME.name) + ' ทางออนไลน์</div></div>';
     h += '<div class="memo-sign-block"><div class="memo-sign-line">ลงชื่อ' + DOT + '</div><div class="memo-sign-line">(' + esc(ME.name) + ')</div><div class="memo-sign-line">ตำแหน่ง ' + esc(ME.position || DOT) + '</div></div>';
     function appr(title, line, name, pos) { return '<div class="memo-approval"><div class="memo-approval-title">' + esc(title) + '</div><div class="memo-checkbox-line">' + line + SP + '</div><div class="memo-sign-block"><div class="memo-sign-line">ลงชื่อ' + DOT + '</div><div class="memo-sign-line">(' + esc(name || DOT) + ')</div><div class="memo-sign-line">ตำแหน่ง ' + esc(pos) + '</div></div></div>'; }
-    h += appr('ความคิดเห็นของ' + headPos, '(&nbsp;&nbsp;&nbsp;) เห็นควรรายงานต่อ &nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;) เห็นควรให้แก้ไขเพิ่มเติม เนื่องจาก', ds.headName, headPos);
-    h += appr('ความคิดเห็นของ' + depPos, '(&nbsp;&nbsp;&nbsp;) เห็นควรอนุมัติ &nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;) เห็นควรไม่อนุมัติ เนื่องจาก', ds.deputyName, depPos);
-    h += appr('ความคิดเห็นของผู้อำนวยการโรงเรียน', '(&nbsp;&nbsp;&nbsp;) อนุมัติ &nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;) ไม่อนุมัติ เนื่องจาก', ST.memoDirectorName, ST.memoDirectorPosition || 'ผู้อำนวยการโรงเรียน');
+    h += appr('ความคิดเห็นของ' + headT, '(&nbsp;&nbsp;&nbsp;) เห็นควรรายงานต่อ &nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;) เห็นควรให้แก้ไขเพิ่มเติม เนื่องจาก', ds.headName, headPos);
+    h += appr('ความคิดเห็นของ' + depT, '(&nbsp;&nbsp;&nbsp;) เห็นควรอนุมัติ &nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;) เห็นควรไม่อนุมัติ เนื่องจาก', ds.deputyName, depPos);
+    h += appr('ความคิดเห็นของผู้อำนวยการโรงเรียน', '(&nbsp;&nbsp;&nbsp;) อนุมัติ &nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;&nbsp;) ไม่อนุมัติ เนื่องจาก', sg.dirName, sg.dirPos || 'ผู้อำนวยการโรงเรียน');
     paper.innerHTML = h;
     if (items.length && window.QRCode) { var qb = $('memoQrBox'); if (qb) new QRCode(qb, { text: qrUrl, width: 96, height: 96 }); }
   }
   function rpData() {
     var un = {}; Object.keys(RP.checked).forEach(function (k) { if (RP.checked[k] === false) un[k] = 1; });
-    return { year: $('memoYear').value, semester: $('memoSemester').value, subj: $('memoSubjectSelect').value, dept: $('memoDeptSelect').value, number: $('memoNumber').value, date: $('memoDate').value, subject: $('memoSubject').value, to: $('memoTo').value, body: $('memoBody').value, unchecked: Object.keys(un) };
+    return { year: $('memoYear').value, semester: $('memoSemester').value, subj: $('memoSubjectSelect').value, dept: $('memoDeptSelect').value, number: $('memoNumber').value, date: $('memoDate').value, subject: $('memoSubject').value, to: $('memoTo').value, body: $('memoBody').value, unchecked: Object.keys(un), signers: F.signers };
   }
   function rpLoad(d) {
     $('memoYear').value = d.year || $('memoYear').value; $('memoSemester').value = d.semester || $('memoSemester').value;
     if (d.subj && $('memoSubjectSelect').querySelector('option[value="' + CSS.escape(d.subj) + '"]')) $('memoSubjectSelect').value = d.subj;
     $('memoCustomDeptWrap').hidden = $('memoSubjectSelect').value !== CUSTOM_SUBJECT_VALUE; if (d.dept) $('memoDeptSelect').value = d.dept;
     $('memoNumber').value = d.number || ''; $('memoDate').value = d.date || todayYmd(); $('memoSubject').value = d.subject || ''; $('memoTo').value = d.to || ''; $('memoBody').value = d.body || '';
-    RP.subjectTouched = RP.bodyTouched = true; RP.checked = {}; (d.unchecked || []).forEach(function (k) { RP.checked[k] = false; });
+    F.signers = d.signers || {}; paintSign(); RP.subjectTouched = RP.bodyTouched = true; RP.checked = {}; (d.unchecked || []).forEach(function (k) { RP.checked[k] = false; });
     rpRenderItems();
   }
 
@@ -124,7 +124,7 @@
   // =====================================================================
   function ctxOf(blank) {
     return { me: ME, settings: ST, schoolName: ST.schoolName || '', values: F.values, students: F.students, rows: F.rows, docNo: F.docNo, docDate: F.docDate,
-      dept: cur && cur.def.deptPick ? F.dept : (cur ? cur.dept : ''), today: todayYmd(), blank: !!blank };
+      dept: cur && cur.def.deptPick ? F.dept : (cur ? cur.dept : ''), today: todayYmd(), blank: !!blank, signOv: F.signers };
   }
   function linkOf() { return cur && cur.def && cur.def.link && cur.def.link.type === 'reqtime' ? cur.def.link : null; }
   function fieldInput(f) {
@@ -186,6 +186,36 @@
   }
   function addStu(s) { if (!inSel(s.id)) F.students.push({ id: s.id, name: s.name, room: s.room, roomId: s.roomId, code: s.code || '' }); }
 
+  // ---------- 2.33.1: ผู้ลงนามท้ายใบ ----------
+  var SIGN = null, ROLES = [['head', 'หัวหน้ากลุ่มบริหารงาน'], ['deputy', 'รองผู้อำนวยการ'], ['director', 'ผู้อำนวยการ']];
+  async function loadSigners() { if (SIGN) return SIGN; try { SIGN = (await apiCall('memoSigners', {})).people || []; } catch (e) { SIGN = []; } return SIGN; }
+  function signOpts(selName) { var g = {}, order = []; (SIGN || []).forEach(function (p, i) { if (!g[p.g]) { g[p.g] = []; order.push(p.g); } g[p.g].push('<option value="' + i + '"' + (p.name === selName ? ' selected' : '') + '>' + esc(p.name + (p.pos ? ' — ' + p.pos : '')) + '</option>'); }); return order.map(function (k) { return '<optgroup label="' + esc(k) + '">' + g[k].join('') + '</optgroup>'; }).join(''); }
+  function paintSign() {
+    var w = $('sgWrap'); if (!cur || !cur.def || !cur.def.signEdit || TAB !== 'write') { w.hidden = true; w.innerHTML = ''; return; }
+    if (!SIGN) { loadSigners().then(paintSign); w.hidden = false; w.innerHTML = '<div class="card"><div class="loading">กำลังโหลด</div></div>'; return; }
+    var ch = cur.def.chain || {}, base = MT.signers({ settings: ST, dept: cur.kind === 'report' ? rpDept() : (cur.def.deptPick ? F.dept : cur.dept), signOv: {} }, cur.def);
+    var nm = { head: [base.headName, base.headPos], deputy: [base.depName, base.depPos], director: [base.dirName, base.dirPos] };
+    var rows = ROLES.filter(function (r) { return cur.kind === 'report' || ch[r[0]]; }).map(function (r) {
+      var v = F.signers[r[0]], mode = !v ? '' : (v.typed ? 'type' : 'pick'), pi = -1;
+      if (mode === 'pick') (SIGN || []).forEach(function (p, i) { if (p.name === v.name) pi = i; });
+      return '<div class="field"><label>' + esc(r[1]) + '</label><select data-sg="' + r[0] + '"><option value=""' + (!mode ? ' selected' : '') + '>ตามแม่แบบ: ' + esc((nm[r[0]][0] || '(เว้นว่างไว้เขียน)') + (nm[r[0]][1] ? ' — ' + nm[r[0]][1] : '')) + '</option>' + signOpts(mode === 'pick' ? v.name : '') + '<option value="type"' + (mode === 'type' ? ' selected' : '') + '>พิมพ์เอง...</option></select>' +
+        (mode === 'type' ? '<div class="field-row" style="margin-top:6px"><div class="field"><input data-sgn="' + r[0] + '" placeholder="ชื่อ-สกุล" value="' + esc(v.name || '') + '"></div><div class="field"><input data-sgp="' + r[0] + '" placeholder="ตำแหน่ง เช่น รักษาการในตำแหน่ง..." value="' + esc(v.pos || '') + '"></div></div>' : '') + '</div>';
+    }).join('');
+    w.hidden = false;
+    w.innerHTML = '<div class="card"><div class="section-title">' + ic('fa-signature ui-icon') + ' ผู้ลงนามท้ายใบ</div><p class="hint" style="margin-top:-8px">เปลี่ยนได้เฉพาะฉบับนี้ · เลือกจากรายชื่อ = เปลี่ยนชื่อ (ตำแหน่งตามหน้าที่) · พิมพ์เอง = ใส่ตำแหน่งเองได้ เช่น รักษาการในตำแหน่ง...</p>' + rows + '</div>';
+  }
+  $('sgWrap').addEventListener('change', function (e) {
+    var t = e.target, k = t.getAttribute('data-sg'); if (!k) return;
+    if (!t.value) delete F.signers[k];
+    else if (t.value === 'type') F.signers[k] = { typed: true, name: (F.signers[k] && F.signers[k].typed && F.signers[k].name) || '', pos: (F.signers[k] && F.signers[k].typed && F.signers[k].pos) || '' };
+    else { var p = SIGN[+t.value]; F.signers[k] = { name: p.name, pos: p.pos }; }
+    paintSign(); renderPaper();
+  });
+  $('sgWrap').addEventListener('input', function (e) {
+    var t = e.target, k = t.getAttribute('data-sgn') || t.getAttribute('data-sgp'); if (!k || !F.signers[k]) return;
+    if (t.hasAttribute('data-sgn')) F.signers[k].name = t.value; else F.signers[k].pos = t.value; renderPaperD();
+  });
+
   // ---------- วาดกระดาษ ----------
   function renderPaper() {
     if (TAB === 'tpls' && TE) { paper.innerHTML = MT.render(TE.def, Object.assign(ctxOf(TE.blank), { dept: TE.department, values: TE.blank ? {} : TE.sample, students: TE.blank ? [] : SAMPLE_STU, rows: [] })); fitPaper(); return; }
@@ -196,25 +226,26 @@
   var renderPaperD = debounce(renderPaper, 150);
 
   // ---------- เลือกแม่แบบ ----------
-  function tplList() { var L = []; if (B.hub) L.push({ id: 'report', kind: 'report', name: 'รายงานการส่งงาน (แนบผลงานที่ส่งแล้ว)', dept: '' }); B.tpls.forEach(function (t) { L.push({ id: t.id, kind: t.def.link ? 'reqtime' : 'custom', name: t.name, dept: t.department, def: t.def }); }); return L; }
+  // 2.33.1: "รายงานการส่งงาน" เป็นแม่แบบในกลุ่มบริหารงานวิชาการ (tpl-report) · แม่แบบที่ปิดไว้ = ไม่แสดงให้ผู้เขียน
+  function tplList(all) { var L = []; B.tpls.forEach(function (t) { if (t.def.report && !B.hub) return; if (!all && t.def.off) return; L.push({ id: t.id, kind: t.def.report ? 'report' : t.def.link ? 'reqtime' : 'custom', name: t.name, dept: t.department, def: t.def }); }); return L; }
   function paintTplSelect() {
     var L = tplList(), by = {}, order = [];
-    L.forEach(function (t) { var k = t.kind === 'report' ? '__r' : t.dept || ''; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(t); });
-    $('mmTpl').innerHTML = order.map(function (k) { return '<optgroup label="' + esc(k === '__r' ? 'ส่งงาน' : gl(k)) + '">' + by[k].map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>'; }).join('') + '</optgroup>'; }).join('') || '<option value="">— ยังไม่มีแม่แบบ —</option>';
+    L.forEach(function (t) { var k = t.dept || ''; if (!by[k]) { by[k] = []; order.push(k); } by[k].push(t); });
+    $('mmTpl').innerHTML = order.map(function (k) { return '<optgroup label="' + esc(gl(k)) + '">' + by[k].map(function (t) { return '<option value="' + esc(t.id) + '">' + esc(t.name) + '</option>'; }).join('') + '</optgroup>'; }).join('') || '<option value="">— ยังไม่มีแม่แบบ —</option>';
   }
   async function selectTpl(id, keep) {
     var t = tplList().filter(function (x) { return x.id === id; })[0];
     if (!t) { cur = null; $('rpWrap').hidden = true; $('tfWrap').hidden = true; renderPaper(); return; }
     cur = { id: t.id, kind: t.kind, name: t.name, dept: t.dept, def: t.def ? JSON.parse(JSON.stringify(t.def)) : null };
     $('mmTpl').value = t.id;
-    if (!keep) { docId = ''; docTitle = ''; F = { values: {}, students: [], rows: [], docNo: '', docDate: todayYmd(), dept: t.dept || '', periods: [], allDay: true }; }
+    if (!keep) { docId = ''; docTitle = ''; F = { values: {}, students: [], rows: [], docNo: '', docDate: todayYmd(), dept: t.dept || '', periods: [], allDay: true, signers: {} }; }
     paintEditing();
     $('rpWrap').hidden = t.kind !== 'report'; $('tfWrap').hidden = t.kind === 'report';
     $('mmBlank').disabled = t.kind === 'report';
     $('mmToRt').hidden = !(B.rtAdmin && t.kind === 'reqtime');
     $('mmTplHint').textContent = t.kind === 'report' ? 'ดึงรายการผลงานที่ส่งแล้วมาทำตาราง + QR ไปหน้าผลงาน' : (t.kind === 'reqtime' ? 'ใบนี้ใช้ลงเป็น "ขอเวลาเรียน" ได้ — ผู้ดูแลกดลงจากใบนี้ได้เลย ไม่ต้องพิมพ์รายชื่อซ้ำ' : '');
     if (t.kind === 'report') { await rpInit(); if (!keep) rpRenderItems(); } else renderForm();
-    renderPaper();
+    paintSign(); renderPaper();
   }
   function paintEditing() {
     var e = $('mmEditing'); e.hidden = !docId;
@@ -226,7 +257,7 @@
   function collect() {
     if (!cur) return null;
     if (cur.kind === 'report') { var d = rpData(); return { kind: 'report', title: d.subject || 'รายงานการส่งงาน', data: d }; }
-    var lk = linkOf(), data = { values: F.values, students: F.students, rows: F.rows, docNo: F.docNo, docDate: F.docDate, dept: F.dept, tpl: cur.def, tplDept: cur.dept };
+    var lk = linkOf(), data = { values: F.values, students: F.students, rows: F.rows, docNo: F.docNo, docDate: F.docDate, dept: F.dept, tpl: cur.def, tplDept: cur.dept, signers: F.signers };
     if (lk) { var r = F.values[lk.dateField] || {}; data.rt = { from: r.from || '', to: r.to || r.from || '', periods: F.allDay ? [] : F.periods.slice(), title: String(F.values[lk.titleField] || '').trim() }; data.periods = F.periods; data.allDay = F.allDay; }
     return { kind: cur.kind, title: MT.subjectText(cur.def, ctxOf(false)) || cur.name, data: data };
   }
@@ -260,7 +291,7 @@
     renderPaperD();
   });
   var paintPickD = debounce(paintPick, 180);
-  tf.addEventListener('change', function (e) { var t = e.target; if (t.id === 'mfRoom') { pickRoom = t.value; paintPick(); } else if (t.id === 'mfDept' || t.matches('select[data-f]')) { if (t.id === 'mfDept') F.dept = t.value; else F.values[t.getAttribute('data-f')] = t.value; renderPaper(); } });
+  tf.addEventListener('change', function (e) { var t = e.target; if (t.id === 'mfRoom') { pickRoom = t.value; paintPick(); } else if (t.id === 'mfDept' || t.matches('select[data-f]')) { if (t.id === 'mfDept') { F.dept = t.value; paintSign(); } else F.values[t.getAttribute('data-f')] = t.value; renderPaper(); } });
   tf.addEventListener('click', function (e) {
     var t;
     if ((t = e.target.closest('[data-add]'))) { var s = STU.filter(function (x) { return x.id === t.getAttribute('data-add'); })[0]; if (s) addStu(s); paintPick(); paintSel(); renderPaperD(); return; }
@@ -280,7 +311,7 @@
     TAB = t; paintTabs();
     $('mmWrite').hidden = t !== 'write'; $('mmMine').hidden = t !== 'mine'; $('mmTpls').hidden = t !== 'tpls'; $('mmSet').hidden = t !== 'set';
     outer.hidden = !(t === 'write' || (t === 'tpls' && TE));
-    if (t === 'mine') showMine(); if (t === 'tpls') showTpls(); if (t === 'set') showSet();
+    if (t === 'mine') showMine(); if (t === 'tpls') showTpls(); if (t === 'set') showSet(); paintSign();
     if (!outer.hidden) renderPaper();
   }
   $('mmTabs').addEventListener('click', function (e) { var b = e.target.closest('[data-mm-tab]'); if (b) showTab(b.getAttribute('data-mm-tab')); });
@@ -309,16 +340,16 @@
     var d; try { d = (await apiCall('memoGet', { id: id })).item; } catch (e) { showToast(e.message, true); return; }
     var data = d.data || {};
     showTab('write');
-    if (d.kind === 'report') { if (!B.hub) { showToast('บัญชีนี้ไม่มีแม่แบบรายงานการส่งงาน', true); return; } await selectTpl('report', true); docId = d.id; docTitle = d.title; paintEditing(); rpLoad(data); return; }
+    if (d.kind === 'report') { var rt0 = tplList(true).filter(function (x) { return x.kind === 'report'; })[0]; if (!rt0) { showToast('บัญชีนี้ไม่มีแม่แบบรายงานการส่งงาน', true); return; } await selectTpl(rt0.id, true); docId = d.id; docTitle = d.title; paintEditing(); rpLoad(data); return; }
     var t = tplList().filter(function (x) { return x.id === d.tplId; })[0];
     cur = { id: d.tplId, kind: d.kind, name: d.tplName, dept: data.tplDept || (t ? t.dept : ''), def: data.tpl || (t ? t.def : null) };
     if (!cur.def) { showToast('ไม่พบแม่แบบของฉบับนี้', true); return; }
     if ($('mmTpl').querySelector('option[value="' + CSS.escape(d.tplId) + '"]')) $('mmTpl').value = d.tplId;
-    F = { values: data.values || {}, students: data.students || [], rows: data.rows || [], docNo: data.docNo || '', docDate: data.docDate || todayYmd(), dept: data.dept || '', periods: data.periods || [], allDay: data.allDay !== false };
+    F = { values: data.values || {}, students: data.students || [], rows: data.rows || [], docNo: data.docNo || '', docDate: data.docDate || todayYmd(), dept: data.dept || '', periods: data.periods || [], allDay: data.allDay !== false, signers: data.signers || {} };
     docId = d.id; docTitle = d.title; paintEditing();
     $('rpWrap').hidden = true; $('tfWrap').hidden = false; $('mmBlank').disabled = false; $('mmToRt').hidden = !(B.rtAdmin && cur.kind === 'reqtime');
     $('mmTplHint').textContent = t ? '' : 'แม่แบบนี้ถูกลบไปแล้ว — ใช้แบบที่เก็บไว้ในฉบับนี้';
-    renderForm(); renderPaper();
+    renderForm(); paintSign(); renderPaper();
   }
 
   // ---------- แม่แบบ (ผู้ดูแล) ----------
@@ -333,22 +364,44 @@
     el.innerHTML = '<div class="card"><div class="mm-bar"><div class="section-title" style="margin:0;border:0">' + ic('fa-layer-group ui-icon') + ' แม่แบบบันทึกข้อความ</div><span class="sp"></span><button type="button" class="btn btn-primary" data-te-new>' + ic('fa-plus') + ' สร้างแม่แบบ</button></div>' +
       '<p class="hint">' + (B.allDepts ? 'จัดการได้ทุกกลุ่มบริหารงาน' : 'จัดการได้เฉพาะแม่แบบของ' + esc(gl(B.myDept))) + ' · ฉบับที่ครูบันทึกไว้แล้วไม่เปลี่ยนตามเมื่อแก้แม่แบบ</p>' +
       (order.length ? order.map(function (k) { return '<div class="mm-grp">' + esc(gl(k)) + '</div><div class="mm-list">' + by[k].map(function (t) {
-        var tags = (t.def.link ? '<span class="mm-badge c">' + ic('fa-person-running') + ' ขอเวลาเรียน</span> ' : '') + (t.def.table.type === 'students' ? '<span class="mm-badge g">ตารางรายชื่อนักเรียน</span> ' : t.def.table.type === 'custom' ? '<span class="mm-badge g">ตาราง</span> ' : '');
-        return '<div class="mm-it"><div class="m"><div class="t">' + esc(t.name) + '</div><div class="s">' + esc(t.def.subject) + '</div>' + tags + '</div><div class="a">' +
-          '<button type="button" class="btn btn-ghost btn-sm" data-te-copy="' + esc(t.id) + '">' + ic('fa-copy') + ' คัดลอก</button>' +
-          (canEditTpl(t) ? '<button type="button" class="btn btn-secondary btn-sm" data-te-edit="' + esc(t.id) + '">' + ic('fa-pen') + ' แก้ไข</button><button type="button" class="btn btn-ghost btn-sm" data-te-del="' + esc(t.id) + '">' + ic('fa-trash-can') + ' ลบ</button>' : '') + '</div></div>';
+        var tags = (t.def.off ? '<span class="mm-badge g">' + ic('fa-eye-slash') + ' ปิดอยู่</span> ' : '') + (t.def.report ? '<span class="mm-badge c">' + ic('fa-paperclip') + ' แนบผลงานที่ส่งแล้ว + QR</span> ' : '') + (t.def.signEdit ? '<span class="mm-badge g">ผู้เขียนเปลี่ยนผู้ลงนามได้</span> ' : '') + (t.def.link ? '<span class="mm-badge c">' + ic('fa-person-running') + ' ขอเวลาเรียน</span> ' : '') + (t.def.table.type === 'students' ? '<span class="mm-badge g">ตารางรายชื่อนักเรียน</span> ' : t.def.table.type === 'custom' ? '<span class="mm-badge g">ตาราง</span> ' : '');
+        return '<div class="mm-it"><div class="m"><div class="t">' + esc(t.name) + '</div><div class="s">' + esc(t.def.report ? 'หัวเรื่องย่อยตั้งที่ ตั้งค่าระบบ › ข้อมูลกลุ่มบริหารงาน › หัวเรื่องบันทึกข้อความ' : t.def.subject) + '</div>' + tags + '</div><div class="a">' +
+          (t.def.report ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-te-copy="' + esc(t.id) + '">' + ic('fa-copy') + ' คัดลอก</button>') +
+          (canEditTpl(t) ? '<button type="button" class="btn btn-secondary btn-sm" data-te-edit="' + esc(t.id) + '">' + ic('fa-pen') + ' แก้ไข</button>' + (t.def.report ? '' : '<button type="button" class="btn btn-ghost btn-sm" data-te-del="' + esc(t.id) + '">' + ic('fa-trash-can') + ' ลบ</button>') : '') + '</div></div>';
       }).join('') + '</div>'; }).join('') : '<div class="empty-state">ยังไม่มีแม่แบบ</div>') + '</div>';
   }
-  var BLANK_DEF = { subject: 'ขออนุญาต[เรื่อง]', to: 'ผู้อำนวยการ{โรงเรียน}', body: 'ด้วยข้าพเจ้า {ชื่อ} ตำแหน่ง {ตำแหน่ง} กลุ่มสาระการเรียนรู้{กลุ่มสาระ} มีความประสงค์จะ[รายละเอียด] ในวันที่ [วันที่:วันที่]', table: { type: 'none', rows: 10, cols: [] }, closing: 'จึงเรียนมาเพื่อโปรดทราบและพิจารณาอนุญาต', signAs: '', chain: { head: true, deputy: true, director: true }, deptPick: false, link: null };
+  var BLANK_DEF = { subject: 'ขออนุญาต[เรื่อง]', to: 'ผู้อำนวยการ{โรงเรียน}', body: 'ด้วยข้าพเจ้า {ชื่อ} ตำแหน่ง {ตำแหน่ง} กลุ่มสาระการเรียนรู้{กลุ่มสาระ} มีความประสงค์จะ[รายละเอียด] ในวันที่ [วันที่:วันที่]', table: { type: 'none', rows: 10, cols: [] }, closing: 'จึงเรียนมาเพื่อโปรดทราบและพิจารณาอนุญาต', signAs: '', chain: { head: true, deputy: true, director: true }, deptPick: false, link: null, signers: { head: { mode: 'dept' }, deputy: { mode: 'dept' }, director: { mode: 'dept' } }, signEdit: false, off: false };
   function openEditor(t, copy) {
     TE = { id: t && !copy ? t.id : '', name: t ? (copy ? t.name + ' (สำเนา)' : t.name) : '', department: t ? (copy && !B.allDepts ? B.myDept : t.department) : (B.allDepts ? '' : B.myDept), sort: t ? t.sort : 50, def: JSON.parse(JSON.stringify(t ? t.def : BLANK_DEF)), blank: true, sample: {} };
     if (!TE.def.table.cols) TE.def.table.cols = [];
+    if (!TE.def.signers) TE.def.signers = { head: { mode: 'dept' }, deputy: { mode: 'dept' }, director: { mode: 'dept' } };
     outer.hidden = false; paintEditor(); renderPaper();
+    if (!SIGN) loadSigners().then(function () { if (TE) paintEditor(); });
   }
   function rangeFields(def) { return MT.fields(def).filter(function (f) { return f.type === 'range'; }).map(function (f) { return f.name; }); }
   function textFields(def) { return MT.fields(def).filter(function (f) { return f.type === 'text'; }).map(function (f) { return f.name; }); }
+  // 2.33.1: ผู้ลงนามท้ายใบในแม่แบบ (ดึงจากข้อมูลกลุ่ม / เลือกจากรายชื่อ / พิมพ์เอง) + ให้ผู้เขียนเปลี่ยนได้ + ปิดแม่แบบ
+  function signCfgHtml(d) {
+    var ch = d.chain || {}, sg = d.signers || {};
+    var rows = ROLES.filter(function (r) { return d.report || ch[r[0]]; }).map(function (r) {
+      var c = sg[r[0]] || { mode: 'dept' };
+      return '<div class="field-row" style="align-items:flex-end"><div class="field" style="flex:0 0 200px"><label>' + esc(r[1]) + '</label><select data-tsm="' + r[0] + '"><option value="dept"' + (c.mode === 'dept' ? ' selected' : '') + '>' + (r[0] === 'director' ? 'ดึงจากข้อมูลหัวกระดาษ' : 'ดึงจากข้อมูลกลุ่มบริหารงาน') + '</option><option value="pick"' + (c.mode === 'pick' ? ' selected' : '') + '>เลือกจากรายชื่อในระบบ</option><option value="type"' + (c.mode === 'type' ? ' selected' : '') + '>พิมพ์เอง</option></select></div>' +
+        (c.mode === 'pick' ? '<div class="field"><select data-tsp="' + r[0] + '"><option value="">— เลือก —</option>' + signOpts(c.name) + '</select></div>' : '') +
+        (c.mode === 'type' ? '<div class="field"><input data-tsn="' + r[0] + '" placeholder="ชื่อ-สกุล" value="' + esc(c.name || '') + '"></div><div class="field"><input data-tsq="' + r[0] + '" placeholder="ตำแหน่ง" value="' + esc(c.pos || '') + '"></div>' : '') + '</div>';
+    }).join('');
+    return '<div class="mm-help" style="margin-top:10px"><b>' + ic('fa-signature') + ' ผู้ลงนามท้ายใบ</b>' + rows +
+      '<p class="hint" style="margin:4px 0 0">เลือกจากรายชื่อ = เปลี่ยนชื่อ (ตำแหน่งตามหน้าที่) · พิมพ์เอง = ใส่ชื่อและตำแหน่งเอง</p>' + '<div class="mm-checks" style="margin-top:6px"><label><input type="checkbox" id="teSE"' + (d.signEdit ? ' checked' : '') + '> ให้ผู้เขียนเปลี่ยนผู้ลงนามได้ (เช่น กรณีรักษาการแทน)</label></div></div>' +
+      '<div class="mm-checks" style="margin-top:10px"><label><input type="checkbox" id="teOff"' + (d.off ? ' checked' : '') + '> ปิดแม่แบบนี้ (ซ่อนจากผู้เขียน — ฉบับที่บันทึกไว้แล้วยังเปิดได้)</label></div>';
+  }
   function paintEditor() {
     var d = TE.def, depts = B.allDepts ? [''].concat(ST.departments || []) : [B.myDept];
+    if (d.report) { // แม่แบบรายงานการส่งงาน — ตั้งได้เฉพาะชื่อ / กลุ่ม / ลำดับ / ผู้ลงนาม / เปิด-ปิด
+      $('mmTpls').innerHTML = '<div class="card"><div class="mm-bar"><div class="section-title" style="margin:0;border:0">' + ic('fa-pen-ruler ui-icon') + ' แก้ไขแม่แบบ: รายงานการส่งงาน</div><span class="sp"></span><button type="button" class="btn btn-ghost" data-te-cancel>ยกเลิก</button><button type="button" class="btn btn-success" data-te-save>' + ic('fa-check') + ' บันทึกแม่แบบ</button></div>' +
+        '<p class="hint">แม่แบบนี้ดึงผลงานที่ครูส่งแล้วมาทำตาราง + QR — ข้อความ / หัวเรื่องย่อยตั้งที่ ตั้งค่าระบบ › ข้อมูลกลุ่มบริหารงาน › หัวเรื่องบันทึกข้อความ</p>' +
+        '<div class="field-row"><div class="field"><label for="teName">ชื่อแม่แบบ</label><input id="teName" maxlength="150" value="' + esc(TE.name) + '"></div><div class="field" style="flex:0 0 240px"><label for="teDept">กลุ่มบริหารงาน</label><select id="teDept">' + depts.map(function (x) { return '<option value="' + esc(x) + '"' + (TE.department === x ? ' selected' : '') + '>' + esc(gl(x)) + '</option>'; }).join('') + '</select></div><div class="field" style="flex:0 0 90px"><label for="teSort">ลำดับ</label><input id="teSort" type="number" min="0" max="999" value="' + esc(TE.sort) + '"></div></div>' +
+        signCfgHtml(d) + '</div>';
+      return;
+    }
     var tok = function (x, sys) { return '<code' + (sys ? ' class="s"' : '') + ' data-tok="' + esc(x) + '" title="กดเพื่อใส่ตรงเคอร์เซอร์">' + esc(x) + '</code>'; };
     var rf = rangeFields(d), tx = textFields(d);
     $('mmTpls').innerHTML = '<div class="card"><div class="mm-bar"><div class="section-title" style="margin:0;border:0">' + ic('fa-pen-ruler ui-icon') + ' ' + (TE.id ? 'แก้ไขแม่แบบ' : 'สร้างแม่แบบ') + '</div><span class="sp"></span><button type="button" class="btn btn-ghost" data-te-cancel>ยกเลิก</button><button type="button" class="btn btn-success" data-te-save>' + ic('fa-check') + ' บันทึกแม่แบบ</button></div>' +
@@ -370,6 +423,7 @@
       '<p class="hint" style="margin:4px 0 12px">ชื่อผู้ลงความเห็นดึงจาก ตั้งค่า › ข้อมูลกลุ่มบริหารงาน ของกลุ่ม' + (d.deptPick ? 'ที่ผู้เขียนเลือก' : 'นี้') + ' · ผู้อำนวยการดึงจากข้อมูลหัวกระดาษ</p>' +
       (d.table.type === 'students' ? '<div class="mm-help"><label style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="teLink" style="width:auto"' + (d.link ? ' checked' : '') + '> ' + ic('fa-person-running') + ' ใช้ลงเป็น "ขอเวลาเรียน" ได้</label>' +
         (d.link ? '<div class="field-row" style="margin-top:8px"><div class="field"><label for="teLD">วันที่ขอ (ช่องแบบช่วงวันที่)</label><select id="teLD">' + (rf.length ? rf.map(function (x) { return '<option' + (d.link.dateField === x ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') : '<option value="">— ยังไม่มีช่อง :ช่วงวันที่ —</option>') + '</select></div><div class="field"><label for="teLT">ชื่อกิจกรรม (ช่องข้อความ)</label><select id="teLT"><option value="">— ใช้ "เรื่อง" —</option>' + tx.map(function (x) { return '<option' + (d.link.titleField === x ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select></div></div><p class="hint" style="margin:0">ผู้เขียนเลือกคาบที่ขอเพิ่ม (ไม่พิมพ์ในใบ) · ผู้ดูแลกด "ลงเป็นขอเวลาเรียน" จากใบนั้นได้เลย</p>' : '') + '</div>' : '') +
+      signCfgHtml(d) +
       '<div class="mm-bar" style="margin-top:14px"><span class="hint">ตัวอย่างด้านล่าง:</span><div class="mm-pers"><button type="button" data-te-view="1"' + (TE.blank ? ' class="on"' : '') + '>ใบเปล่า</button><button type="button" data-te-view="0"' + (!TE.blank ? ' class="on"' : '') + '>ใส่ข้อมูลตัวอย่าง</button></div></div></div>';
   }
   var LAST_TE = null;
@@ -381,6 +435,14 @@
     ['teCh1', 'teCh2', 'teCh3'].forEach(function (id, i) { var e = $(id); if (e) d.chain[['head', 'deputy', 'director'][i]] = e.checked; });
     var pk = $('tePick'); if (pk) d.deptPick = pk.checked;
     if (d.link) { if ((v = g('teLD')) !== null) d.link.dateField = v; if ((v = g('teLT')) !== null) d.link.titleField = v; }
+    var se = $('teSE'); if (se) d.signEdit = se.checked; var of = $('teOff'); if (of) d.off = of.checked;
+    d.signers = d.signers || {};
+    ROLES.forEach(function (r) {
+      var k = r[0], m = document.querySelector('[data-tsm="' + k + '"]'); if (!m) return; var c = d.signers[k] = d.signers[k] || {}; c.mode = m.value;
+      var pk = document.querySelector('[data-tsp="' + k + '"]'); if (c.mode === 'pick' && pk) { var p = (SIGN || [])[+pk.value]; if (pk.value !== '' && p) { c.name = p.name; c.pos = p.pos; } }
+      var tn = document.querySelector('[data-tsn="' + k + '"]'), tq = document.querySelector('[data-tsq="' + k + '"]'); if (c.mode === 'type') { if (tn) c.name = tn.value; if (tq) c.pos = tq.value; }
+      if (c.mode === 'dept') { delete c.name; delete c.pos; }
+    });
     TE.sample = sampleValues(d);
   }
   function sampleValues(d) { var o = {}; MT.fields(d).forEach(function (f) { o[f.name] = f.type === 'date' ? todayYmd() : f.type === 'range' ? { from: todayYmd(), to: todayYmd() } : f.type === 'number' ? '1' : f.type === 'time' ? '08.30 น.' : f.type === 'select' ? (f.opts[0] || '') : f.type === 'long' ? 'ข้อความย่อหน้าที่ 1\nข้อความย่อหน้าที่ 2' : f.name; }); return o; }
@@ -391,7 +453,7 @@
     if (!TE) return; var t = e.target; teRead();
     if (t.id === 'teTbl') { TE.def.table.type = t.value; if (t.value !== 'students') TE.def.link = null; if (t.value === 'custom' && !TE.def.table.cols.length) TE.def.table.cols = ['รายการ', 'หมายเหตุ']; paintEditor(); }
     else if (t.id === 'teLink') { TE.def.link = t.checked ? { type: 'reqtime', dateField: rangeFields(TE.def)[0] || '', titleField: '' } : null; paintEditor(); }
-    else if (t.id === 'tePick') paintEditor();
+    else if (t.id === 'tePick' || t.matches('[data-tsm]') || /^teCh/.test(t.id)) { if (t.matches('[data-tsm]')) { var c0 = TE.def.signers[t.getAttribute('data-tsm')]; if (c0 && t.value !== 'pick' && t.value !== 'type') { delete c0.name; delete c0.pos; } } paintEditor(); }
     renderPaper();
   });
   $('mmTpls').addEventListener('click', async function (e) {
@@ -415,7 +477,7 @@
     if (e.target.closest('[data-te-save]')) {
       teRead();
       if (!TE.name.trim()) { showToast('กรุณาตั้งชื่อแม่แบบ', true); return; }
-      if (!TE.def.subject.trim()) { showToast('กรุณาใส่ "เรื่อง"', true); return; }
+      if (!TE.def.report && !TE.def.subject.trim()) { showToast('กรุณาใส่ "เรื่อง"', true); return; }
       if (TE.def.link && !TE.def.link.dateField) { showToast('แม่แบบขอเวลาเรียนต้องมีช่องแบบ [ชื่อช่อง:ช่วงวันที่] สำหรับวันที่ขอ', true); return; }
       var r2 = await withProgress('กำลังบันทึกแม่แบบ', function () { return apiCall('memoTplSave', { id: TE.id, name: TE.name, department: TE.department, sort: TE.sort, def: TE.def }); }, { successLabel: 'บันทึกแม่แบบแล้ว' });
       if (!r2.ok) return;
