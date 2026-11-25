@@ -38,12 +38,15 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.33.3.251126" />
+<link rel="stylesheet" href="assets/style.css?v=2.33.4.251126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css_login');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
 <body class="login-page">
   <div class="login-wrap">
+    <!-- 2.33.4: จอกว้าง (860px ขึ้นไป) = 2 ฝั่ง — ซ้าย: รูปหัว + ชื่อระบบ + ทางลัด · ขวา: ช่องเข้าสู่ระบบ (สคริปต์ด้านล่างย้ายรูปหัว/ทางลัดตามขนาดจอ) · มือถือ = การ์ดเดียวแบบเดิม + ทางลัดใต้การ์ด -->
+    <div class="login-split">
+    <aside class="login-side" id="loginSide"><div class="login-side-mid"><b>ระบบงานวิชาการ</b><span>โรงเรียนบุ่งคล้านคร · ส่งงาน · ปฏิทิน · คำสั่ง</span></div></aside>
     <div class="login-card">
       <div class="login-hero">
         <div class="login-title"><span class="js-brand-logo js-brand-logo-lg"><span class="logo-dot"></span></span></div>
@@ -55,6 +58,7 @@
         (function () { try { var b = JSON.parse(localStorage.getItem('bnkah_brand') || 'null'); if (b && b.loginHeroDataUrl) { var h = document.querySelector('.login-hero'), im = document.createElement('img'); im.className = 'login-hero-img'; im.alt = b.siteName || ''; im.src = b.loginHeroDataUrl; h.appendChild(im); h.classList.add('has-image'); } } catch (e) {} })();
       </script>
 
+      <div class="login-welcome"><b>เข้าสู่ระบบ</b><span>ใช้บัญชีที่ได้รับจากกลุ่มบริหารงานวิชาการ</span></div>
       <div id="errorBox" class="error-box" hidden></div>
 
       <form id="loginForm">
@@ -89,13 +93,28 @@
       </form>
       <p class="hint login-contact">ติดต่อกลุ่มบริหารงานวิชาการเพื่อขอสร้างบัญชี</p>
     </div>
+    </div>
     <!-- 2.32.0: ทางลัด (ไม่ต้องล็อกอิน) — ค่าจาก Worker publicShortcuts (จำไว้ในเครื่อง ขึ้นทันทีรอบถัดไป) -->
     <nav class="login-sc" id="loginSc" aria-label="ทางลัด ไม่ต้องเข้าสู่ระบบ" hidden></nav>
   </div>
+  <script>
+    // 2.33.4: ย้ายรูปหัวการ์ด + ทางลัดไปฝั่งซ้ายเมื่อจอกว้าง (กลับเข้าการ์ด / ใต้การ์ดเมื่อจอแคบ)
+    (function () {
+      var mq = window.matchMedia ? window.matchMedia('(min-width: 860px)') : null;
+      var side = document.getElementById('loginSide'), card = document.querySelector('.login-card'), wrap = document.querySelector('.login-wrap');
+      var hero = document.querySelector('.login-hero'), sc = document.getElementById('loginSc'), mid = side.querySelector('.login-side-mid');
+      function place() {
+        if (mq && mq.matches) { if (hero.parentNode !== side) side.insertBefore(hero, mid); if (sc.parentNode !== side) side.appendChild(sc); }
+        else { if (hero.parentNode !== card) card.insertBefore(hero, card.firstChild); if (sc.parentNode !== wrap) wrap.appendChild(sc); }
+      }
+      place();
+      if (mq) { if (mq.addEventListener) mq.addEventListener('change', place); else if (mq.addListener) mq.addListener(place); }
+    })();
+  </script>
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.33.3.251126"></script>
+  <script src="assets/api.js?v=2.33.4.251126"></script>
   <script>
     mountFooter({ compact: true }); // 1.80: หน้าล็อกอินใช้ footer แบบย่อ
     applyBranding();
@@ -106,8 +125,8 @@
       function paint(v) {
         if (!v) return;
         var L = [
-          { u: v.att, t: 'BNK<br>E-Attendance', i: 'icons/sc-att-192.png', ext: 1 },
-          { u: v.care, t: 'BNK<br>Care Center', i: 'icons/sc-care-192.png', ext: 1 },
+          { u: v.att, t: 'BNK<br>E&#8209;Attendance', i: 'icons/sc-att-192.png', ext: 1 },
+          { u: v.care, t: 'BNK<br>Care&nbsp;Center', i: 'icons/sc-care-192.png', ext: 1 },
           v.gal ? { u: 'photos.html', t: 'คลัง<br>รูปภาพ', i: 'icons/app-gallery-192.png' } : null,
           v.dir ? { u: 'directory.html', t: 'ทำเนียบ<br>บุคลากร', i: 'icons/app-directory-192.png' } : null,
           { u: 'certificate.html', t: 'ค้นหา<br>เกียรติบัตร', i: 'icons/app-certs-192.png' }

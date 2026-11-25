@@ -5642,3 +5642,55 @@ html.scroll-locked body { overscroll-behavior: none; }
 .act-pop-msg { white-space: pre-wrap; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; margin-top: 6px; font-size: 0.9rem; }
 .act-pop .ev-lbtns { margin-top: 10px; }
 [data-theme="dark"] .act-pop-t { filter: brightness(1.35); }
+
+/* 2.33.4: หน้าเข้าสู่ระบบ — จอกว้าง 2 ฝั่ง (ซ้ายพื้นขาว: รูปหัว + ชื่อระบบ + ทางลัด · ขวา: ช่องเข้าสู่ระบบ) อยู่กลางจอ ไม่ต้องเลื่อน
+   มือถือ / จอแคบ = การ์ดเดียวแบบเดิม + ทางลัดใต้การ์ด · ป้ายทางลัดอยู่ในช่องของตัวเอง ไม่ทับกัน */
+body.login-page .login-wrap { justify-content: center; }
+.login-split { display: contents; }
+.login-side, .login-welcome { display: none; }
+.login-sc-g a { white-space: normal; min-width: 0; }
+.login-sc-g { container-type: inline-size; }
+.login-sc-g a span { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: min(1em, 2.85cqw); } /* ชื่อยาว (E-Attendance) ย่อให้พอดีช่อง */
+.login-welcome b { display: block; font-size: 1.05rem; font-weight: 800; color: var(--text); }
+.login-welcome span { display: block; color: var(--text-muted); font-size: 0.78rem; margin: 2px 0 16px; }
+@media (min-width: 860px) {
+  .login-split { display: flex; width: 100%; max-width: 840px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); animation: cardIn 0.35s ease both; }
+  .login-side { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; padding: 26px 24px 22px; border-right: 1px solid var(--border); }
+  .login-side .login-hero { margin: 0; padding: 20px 18px 16px; border-radius: 14px; }
+  .login-side .login-hero.has-image { padding: 0; border-bottom: 0; }
+  .login-side-mid { display: block; margin: auto 0; padding: 18px 0; text-align: center; }
+  .login-side-mid b { display: block; font-size: 1.05rem; font-weight: 800; color: var(--primary); }
+  .login-side-mid span { display: block; font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+  .login-side .login-sc { margin-top: 0; max-width: none; }
+  .login-side .login-sc-g { gap: 2px; }
+  .login-side .login-sc-g a { font-size: 0.62rem; }
+  .login-side .login-sc-g img { width: 50px; height: 50px; }
+  body.login-page .login-split .login-card { flex: 0 0 360px; max-width: 360px; box-shadow: none; border-radius: 0 var(--radius-lg) var(--radius-lg) 0; display: flex; flex-direction: column; justify-content: center; animation: none; }
+  .login-welcome { display: block; }
+}
+/* 2.33.4: จอเตี้ย (โน้ตบุ๊กซูม 125% / มือถือจอเล็ก) — กระชับระยะห่างให้พอดีจอ */
+@media (min-width: 860px) and (max-height: 620px) {
+  body.login-page .login-wrap { padding-top: 10px; padding-bottom: 10px; }
+  .login-split { max-width: 760px; }
+  .login-side { padding: 16px 18px 14px; }
+  .login-side-mid { padding: 6px 0; }
+  .login-side .login-sc-h { margin-bottom: 6px; }
+  .login-side .login-sc-g img { width: 42px; height: 42px; }
+  body.login-page .login-split .login-card { --lc-pad-y: 16px; }
+  .login-card .field { margin-bottom: 8px; }
+  .login-welcome span { margin-bottom: 10px; }
+  .remember-row { flex-direction: row; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 10px; }
+}
+@media (max-width: 859px) and (max-height: 700px) {
+  body.login-page .login-wrap { padding-top: 10px; padding-bottom: 10px; }
+  .login-card { --lc-pad-y: 20px; }
+  .login-hero { margin-bottom: 12px; }
+  .login-card .field { margin-bottom: 8px; }
+  .remember-row { flex-direction: row; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 10px; }
+  .login-sc { margin-top: 10px; }
+  .login-sc-h { margin-bottom: 6px; }
+  .login-sc-g img { width: 42px; height: 42px; }
+  .login-card input:not([type="checkbox"]) { padding-top: 8px; padding-bottom: 8px; }
+  .login-card .hint.login-contact { margin-top: 8px; }
+}
+@media (max-width: 859px) and (max-height: 660px) { .login-sc-h { display: none; } .login-card label { margin-bottom: 2px; } }
