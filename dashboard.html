@@ -38,7 +38,7 @@
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.33.1.251126" />
+<link rel="stylesheet" href="assets/style.css?v=2.33.2.251126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
 <script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
 </head>
@@ -114,6 +114,7 @@
               </div>
             </div>
           </div>
+          <div id="calTodayBox"></div><!-- 2.33.2: กิจกรรมวันนี้ (ขึ้นเองตามวันที่) -->
           <div id="calActDetail"></div><!-- 1.96.5: รายละเอียดกิจกรรมที่เลือกจากแผงขวา -->
           <!-- 1.65: ป้ายกรองตามกลุ่มบริหารงาน (สีของกลุ่ม) — กรองจุดในปฏิทิน คำอธิบายสี ป็อปอัปรายวัน กำหนดส่งงาน และเช็คลิสต์ -->
           <!-- 1.81: กรองชนิด ทั้งหมด / กำหนดส่ง / กิจกรรม -->
@@ -273,9 +274,9 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.33.1.251126"></script>
+  <script src="assets/api.js?v=2.33.2.251126"></script>
   <script src="assets/qrcode.min.js"></script>
-  <script src="assets/homeroom.js?v=2.33.1.251126"></script>
+  <script src="assets/homeroom.js?v=2.33.2.251126"></script>
   <script>
     // 1.97: ข้อมูลที่ต้องกรอก (ตั้งหัวข้อเองได้) — ตัวช่วยอยู่ใน api.js (fieldsFormHtml / readFieldsForm / fieldEntries)
 
@@ -1626,6 +1627,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
 
       // 1.81: "กิจกรรมที่จะถึง" แยกจาก "กำหนดส่งงาน"
       renderActSide(); // 1.96.3: กิจกรรมที่จะถึง = แผงข้างปฏิทิน
+      renderTodayBox(); // 2.33.2
       var actsBox = null;
       if (actsBox) {
         var hasAnyAct = calState.events.some(isActivityEv);
@@ -1681,6 +1683,39 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
         return '<button type="button" class="cas-item' + (calSelDate && calSelDate === e.date ? ' on' : '') + '" data-cas="' + escapeHtml(e.id) + '" title="' + escapeHtml(tl) + '"><span class="cas-dt" style="background:' + c + '">' + (+e.date.slice(8)) + '<small>' + TM[+e.date.slice(5, 7) - 1] + '</small></span><span class="cas-t2"' + fs + '>' + escapeHtml(tl) + (isHolidayEv(e) ? ' <span class="cas-hb">หยุด</span>' : '') + '</span></button>'; // 1.96.5: แบบ A + ป้ายหยุด
       }).join('') : '<div class="empty-state" style="padding:12px 4px">' + (calGroup ? 'ไม่มีกิจกรรมของ' + escapeHtml(calGroupLabel(calGroup)) + 'ในช่วงนี้' : 'ไม่มีกิจกรรมใน 90 วันข้างหน้า') + '</div>';
     }
+    // ---------- 2.33.2: กล่อง "วันนี้" — กิจกรรมที่ตรงกับวันนี้ (รวมกิจกรรมหลายวันที่กำลังดำเนินอยู่) การ์ดเรียงแนวยาว 2 รายการแรก + ปุ่มดูเพิ่ม ----------
+    var tdOpen = false;
+    function renderTodayBox() {
+      var box = document.getElementById('calTodayBox'); if (!box) return;
+      var T = todayYmd();
+      var list = calKind === 'deadline' ? [] : calEvents().filter(function (e) { return isActivityEv(e) && e.date <= T && (e.endDate || e.date) >= T; })
+        .sort(function (a, b) { var x = a.endDate && a.endDate !== a.date ? 1 : 0, y = b.endDate && b.endDate !== b.date ? 1 : 0; return x - y || String(a.timeStart || '99').localeCompare(String(b.timeStart || '99')) || (a.date < b.date ? -1 : 1); });
+      if (!list.length) { box.innerHTML = ''; return; }
+      var DW = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+      function fpAttr(f) { return ' data-fp="' + escapeHtml(f.url) + '" data-fp-name="' + escapeHtml(f.name || '') + '" data-fp-mime="' + escapeHtml(f.mime || '') + '"'; }
+      function card(e, i) {
+        var hol = isHolidayEv(e), c = hol ? '#dc2626' : activityColor(e), multi = e.endDate && e.endDate !== e.date;
+        var tag = hol ? 'วันหยุด' : multi ? 'กำลังดำเนินอยู่' : e.timeStart ? activityTimeText(e) : 'ทั้งวัน';
+        var m = [];
+        if (multi) m.push('<span><i class="fa-solid fa-calendar-days" aria-hidden="true"></i>' + escapeHtml(eventRangeText(e)) + (e.timeStart ? ' · ' + escapeHtml(activityTimeText(e)) : '') + '</span>');
+        if (e.location) m.push('<span><i class="fa-solid fa-location-dot" aria-hidden="true"></i>' + escapeHtml(e.location) + '</span>');
+        var rs = typeof responsibleText === 'function' ? responsibleText(e, '') : '', us = e.responsible && e.responsible.users ? e.responsible.users.map(function (u) { return u.name; }) : [];
+        var rr = [rs].concat(us).filter(Boolean).join(', '); if (rr) m.push('<span><i class="fa-solid fa-user" aria-hidden="true"></i>' + escapeHtml(rr) + '</span>');
+        var sf = (e.sampleFiles || []).filter(function (f) { return f && f.url && driveFileId(f.url); });
+        var imgs = sf.filter(function (f) { return fileKindOf(f.name, f.mime) === 'image'; }), others = sf.length - imgs.length;
+        if (others) m.push('<span><i class="fa-solid fa-paperclip" aria-hidden="true"></i>ไฟล์แนบ ' + others + ' ไฟล์</span>');
+        var th = imgs.length ? '<div class="td-thumbs" data-fp-group>' + imgs.map(function (f, k) {
+          if (k > 3) return '<span hidden' + fpAttr(f) + '></span>';
+          if (k === 3 && imgs.length > 4) return '<button type="button" class="td-th more"' + fpAttr(f) + ' title="ดูรูปทั้งหมด">+' + (imgs.length - 3) + '</button>';
+          return '<button type="button" class="td-th"' + fpAttr(f) + ' title="' + escapeHtml(f.note || f.name || 'รูปภาพ') + '"><img src="https://lh3.googleusercontent.com/d/' + encodeURIComponent(driveFileId(f.url)) + '=w240" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.remove()"><i class="fa-solid fa-image" aria-hidden="true"></i></button>';
+        }).join('') + '</div>' : '';
+        return '<div class="td-c" role="button" tabindex="0" data-cas="' + escapeHtml(e.id) + '" style="--cc:' + c + '"' + (i >= 2 && !tdOpen ? ' hidden' : '') + '><div class="td-b"><span class="td-tag">' + escapeHtml(tag) + '</span><div class="td-t">' + escapeHtml(e.title) + '</div>' + (m.length ? '<div class="td-meta">' + m.join('') + '</div>' : '') + '</div>' + th + '</div>';
+      }
+      box.innerHTML = '<div class="td-wrap"><div class="td-h"><span class="td-pill"><i class="fa-solid fa-bullhorn" aria-hidden="true"></i> วันนี้</span>วัน' + DW[new Date(T + 'T00:00:00').getDay()] + 'ที่ ' + escapeHtml(formatDateThai(T)) + '<span class="td-n">· ' + list.length + ' กิจกรรม</span></div><div class="td-list">' +
+        list.map(card).join('') + (list.length > 2 ? '<button type="button" class="td-more" data-td-more><i class="fa-solid fa-chevron-' + (tdOpen ? 'up' : 'down') + '" aria-hidden="true"></i> ' + (tdOpen ? 'ย่อ' : 'ดูอีก ' + (list.length - 2) + ' กิจกรรม') + '</button>' : '') + '</div></div>';
+    }
+    document.addEventListener('click', function (ev) { if (ev.target.closest('[data-td-more]')) { tdOpen = !tdOpen; renderTodayBox(); } });
+    document.addEventListener('keydown', function (ev) { var c = ev.target.closest && ev.target.closest('.td-c'); if (c && ev.target === c && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); c.click(); } });
     var CAS_KEY = 'bnkah_cas_collapsed'; // 1.96.4: ย่อ/ขยายแผง (จำไว้เหมือนเมนูหลัก)
     function casCollapsed() { try { return localStorage.getItem(CAS_KEY) === '1'; } catch (e) { return false; } }
     function casSet(v) { try { localStorage.setItem(CAS_KEY, v ? '1' : '0'); } catch (e) { /* ข้าม */ } var sd = document.getElementById('calActSide'); if (sd) sd.classList.toggle('collapsed', v); }

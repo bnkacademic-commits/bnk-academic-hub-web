@@ -5608,3 +5608,26 @@ html.scroll-locked body { overscroll-behavior: none; }
 .drx-top .dir-pos { display: none; }
 @media (max-width: 560px) { .drx-hero { padding-bottom: 28px; } }
 @media (max-width: 560px) { .dr-page .dir-groupby button { white-space: nowrap; font-size: 0.76rem; padding: 7px 6px; } }
+
+/* 2.33.2: กล่อง "วันนี้มีกิจกรรม" เหนือปฏิทิน (การ์ดเรียงแนวยาว · 2 รายการแรก + ดูเพิ่ม) + รูปย่อไฟล์แนบ (กด = ป็อปอัปพรีวิว) */
+.td-wrap { margin: 2px 0 12px; }
+.td-h { display: flex; align-items: center; gap: 4px 8px; font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; flex-wrap: wrap; }
+.td-pill { background: #7c3aed; color: #fff; border-radius: 999px; padding: 2px 12px; font-size: 0.82rem; }
+.td-n { color: var(--text-muted); font-weight: 600; font-size: 0.85rem; }
+.td-list { display: flex; flex-direction: column; gap: 8px; }
+.td-c { display: flex; gap: 12px; align-items: center; border: 1.5px solid var(--cc); border-radius: 12px; background: color-mix(in srgb, var(--cc) 8%, var(--surface)); padding: 10px 12px; cursor: pointer; transition: box-shadow .15s; }
+.td-c:hover, .td-c:focus-visible { box-shadow: 0 4px 14px color-mix(in srgb, var(--cc) 25%, transparent); outline: none; }
+.td-c[hidden] { display: none; }
+.td-b { flex: 1; min-width: 0; }
+.td-tag { display: inline-block; background: var(--cc); color: #fff; border-radius: 6px; padding: 0 7px; font-size: 0.72rem; font-weight: 700; margin-bottom: 4px; }
+.td-t { font-weight: 700; font-size: 0.93rem; line-height: 1.4; }
+.td-meta { font-size: 0.82rem; color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 4px; }
+.td-meta i { opacity: .8; margin-right: 4px; }
+.td-thumbs { display: flex; gap: 6px; flex-wrap: wrap; flex: none; }
+.td-th { width: 58px; height: 58px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); padding: 0; cursor: zoom-in; background: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 1.3rem; position: relative; }
+.td-th img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; z-index: 1; }
+.td-th.more { font-weight: 700; color: #c2410c; background: #ffedd5; font-size: 0.8rem; cursor: pointer; }
+.td-more { border: 0; background: none; color: #7c3aed; font-weight: 700; cursor: pointer; padding: 2px 4px; font: inherit; font-size: 0.85rem; align-self: center; }
+[data-theme="dark"] .td-th.more { background: #431407; color: #fdba74; }
+[data-theme="dark"] .td-more { color: #c4b5fd; }
+@media (max-width: 600px) { .td-c { flex-direction: column; align-items: stretch; } .td-th { width: 52px; height: 52px; } }

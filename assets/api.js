@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.33.1';
-var APP_VERSION = '2.33.1.251126';
+var APP_VERSION = '2.33.2.251126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1264,7 +1264,7 @@ function eventLinksHtml(links, withHost, big) {
   }
   return '<div class="ev-lbtns' + (big ? ' big' : '') + '">' + links.map(function (l) {
     if (l.folder) return btn('button', 'fld', 'type="button" data-sfolder="' + escapeHtml(l.folder) + '"', 'fa-folder-open', l.more ? 'ไฟล์แนบทั้งหมด ' + l.n + ' ไฟล์' : 'เปิดโฟลเดอร์ไฟล์แนบ', big ? 'เปิดโฟลเดอร์ใน Google Drive' : ''); // 2.02.4
-    if (l.sample) return btn('a', 'smp', 'href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(l.name || '') + '"', 'fa-file-arrow-down', escapeHtml(l.label), big ? (l.name || 'ไฟล์ตัวอย่าง / แบบฟอร์ม') : ''); // 1.97: ฟอร์ม/ไฟล์ตัวอย่าง
+    if (l.sample) return btn('a', 'smp', 'href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtml(l.name || '') + '"' + (driveFileId(l.url) ? ' data-fp="' + escapeHtml(l.url) + '" data-fp-name="' + escapeHtml(l.name || l.label || '') + '" data-fp-mime="' + escapeHtml(l.mime || '') + '"' : ''),'fa-file-arrow-down', escapeHtml(l.label), big ? (l.name || 'ไฟล์ตัวอย่าง / แบบฟอร์ม') : ''); // 1.97: ฟอร์ม/ไฟล์ตัวอย่าง
     var h = linkHost(l.url);
     return btn('a', '', 'href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer"', 'fa-arrow-up-right-from-square', escapeHtml(l.label || 'เปิดลิงก์'), (withHost || big) && h ? h : '');
   }).join('') + '</div>';
@@ -4101,10 +4101,23 @@ function evLinksOf(e) {
   if (!e) return [];
   var sf = e.sampleFiles || [], tag = (sf.filter(function (f) { return f.tag; })[0] || {}).tag || '';
   var show = sf.length > 4 && tag ? sf.slice(0, 3) : sf;
-  var out = show.map(function (f) { return { url: f.url, label: f.note || f.name, name: f.name, sample: true }; });
+  var out = show.map(function (f) { return { url: f.url, label: f.note || f.name, name: f.name, mime: f.mime || '', sample: true }; });
   if (tag && sf.length >= 2) out.push({ folder: tag, n: sf.length, more: sf.length - show.length });
   return out.concat(e.links || []);
 }
+// 2.33.2: ไฟล์แนบของกิจกรรม/ประกาศ (ปุ่มชื่อไฟล์ หรือรูปย่อ [data-fp]) — กดแล้วเปิดป็อปอัปพรีวิวไฟล์ (รูป = แสดงรูป · PDF = ตัวดูของ Drive)
+//         ไฟล์หลายไฟล์ในกลุ่มเดียวกัน (ปุ่มชุดเดียวกัน / การ์ดเดียวกัน) เลื่อนดูต่อได้ · กดค้าง/คลิกกลาง = เปิดแท็บใหม่ตามเดิม
+document.addEventListener('click', function (ev) {
+  var a = ev.target.closest && ev.target.closest('[data-fp]'); if (!a || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.button) return;
+  ev.preventDefault(); ev.stopPropagation();
+  var grp = a.closest('[data-fp-group]') || a.closest('.ev-lbtns') || a.parentNode, seen = {};
+  var all = [].filter.call(grp.querySelectorAll('[data-fp]'), function (x) { var u = x.getAttribute('data-fp'); if (seen[u]) return false; seen[u] = 1; return true; });
+  var start = Math.max(0, all.map(function (x) { return x.getAttribute('data-fp'); }).indexOf(a.getAttribute('data-fp')));
+  (function show(j) {
+    var x = all[j], u = x.getAttribute('data-fp'), n = x.getAttribute('data-fp-name') || '';
+    openFilePreview(drivePreviewUrl(u), n, u, undefined, all.length > 1 ? { index: j, total: all.length, go: show } : null, fileKindOf(n, x.getAttribute('data-fp-mime')));
+  })(start);
+}, true);
 var _sfUrl = {};
 document.addEventListener('click', async function (ev) {
   var b = ev.target.closest && ev.target.closest('[data-sfolder]'); if (!b) return;
