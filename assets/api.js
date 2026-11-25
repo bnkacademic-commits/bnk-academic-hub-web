@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.32.0';
-var APP_VERSION = '2.32.0.241126';
+var WORKER_MIN_VERSION = '2.33.0';
+var APP_VERSION = '2.33.0.251126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -259,6 +259,7 @@ function syncSessionFlags(u) {
   var s = getSession(); if (!s || s.id !== u.id) return;
   var before = (s.respCount > 0) + '|' + !!s.isSysAdmin;
   s.respCount = u.respCount || 0; s.isSysAdmin = !!u.isSysAdmin; s.care = u.care || ''; s.leave = u.leave || ''; s.leaveOn = !!u.leaveOn; s.rt = u.rt || ''; s.sub = u.sub || ''; s.tt = u.tt || ''; // 2.03.0: กิจการนักเรียน · 2.16.0: แจ้งลา / ไปราชการ
+  s.memo = !!u.memo; // 2.33.0: บันทึกข้อความ (เปิดให้เฉพาะผู้ที่เลือก / ครูทุกคน)
   if (u.role === 'intern' || s.role === 'intern') { s.role = u.role; s.intern = u.intern || null; s.mentorId = u.mentorId || ''; } // 2.02.0: สิทธิ์ที่ครูพี่เลี้ยงเปิด-ปิด
   updateCachedSessionUser(s);
   void before; // เมนูข้างอัปเดตเมื่อเปิดหน้าถัดไป
@@ -1903,7 +1904,7 @@ async function withProgress(title, workFn, opts) {
 // slot = ตำแหน่งในเมนู (หน้าแรกของครู/เจ้าหน้าที่ กับของผู้บริหารเป็น slot เดียวกัน 'home') · who = บัญชีที่มองเห็น (ใช้แสดงป้ายในหน้าตั้งค่า)
 var NAV_SLOTS = [
   { slot: 'home', label: 'หน้าแรก', icon: 'home', who: ['teacher', 'staff', 'exec', 'super'] },
-  { slot: 'memo', label: 'จัดทำบันทึกข้อความ', icon: 'memo', who: ['teacher', 'staff'] },
+  { slot: 'memo', label: 'บันทึกข้อความ', icon: 'memo', who: ['teacher', 'staff', 'exec', 'super'] }, // 2.33.0: เปิดตามที่ตั้งไว้ (เฉพาะผู้ที่เลือก / ครูทุกคน)
   { slot: 'summary', label: 'สรุปการส่งงาน', icon: 'summary', who: ['staff', 'exec', 'super'] },
   { slot: 'announce', label: 'ประกาศและปฏิทิน', icon: 'announce', who: ['staff', 'exec', 'super'] },
   { slot: 'schoolcal', label: 'ปฏิทินโรงเรียน', icon: 'schoolcal', who: ['all'] }, // 1.93
@@ -1967,8 +1968,8 @@ function navLinksFor(session) {
   // หน้าฮับ (ครู และเจ้าหน้าที่ role='admin' + hasHub) — ครูเดิมไม่มีเมนูบนสุดเลย จึงเพิ่ม "หน้าแรก" ให้ด้วยเพื่อให้แถบแท็บสมบูรณ์
   if (session && (session.role === 'teacher' || (isAdmin && session.hasHub))) {
     links.push({ href: 'dashboard.html', label: 'หน้าแรก', key: 'dashboard', icon: 'home' });
-    links.push({ href: 'memo.html', label: 'จัดทำบันทึกข้อความ', key: 'memo', icon: 'memo' });
   }
+  if (session && session.memo && session.role !== 'intern') links.push({ href: 'memo.html', label: 'บันทึกข้อความ', key: 'memo', icon: 'memo' }); // 2.33.0: สิทธิ์รายบัญชี (Worker คิดให้)
   if (isDeptHeadSession(session) || isRespOnlySession(session)) links.push({ href: 'summary.html', label: 'สรุปการส่งงาน', key: 'summary', icon: 'summary' }); // 1.87.2 · 1.94: + ผู้รับผิดชอบกำหนดการ
   // ผู้บริหาร (ตั้งแต่ 1.32.101026): หน้าแรกของตัวเอง = ปฏิทิน + สรุปภาพรวม (executive.html) — ไม่มีหน้าฮับ ไม่ส่งงาน
   if (isExec) links.push({ href: 'executive.html', label: 'หน้าแรก', key: 'executive', icon: 'home' });
@@ -2277,7 +2278,7 @@ function mountChrome(activePage) {
       // 1.48.121026: Super Admin ปิด "จัดทำบันทึกข้อความ" -> ซ่อนเมนู/ปุ่ม/แท็บที่เกี่ยวข้อง และพาออกจากหน้า memo.html
       applyMemoFeatureVisibility(st);
       applySupVisibility(st); // 1.98.1: ปิดระบบนิเทศ = ซ่อนเมนู
-      if (st && st.memoEnabled === false && activePage === 'memo') location.replace(homePageFor(session));
+      if (st && st.memoEnabled === false && activePage === 'memo' && !(getSession() || {}).memo) location.replace(homePageFor(session)); // 2.33.0: Super Admin เข้าได้เสมอ
     });
 
     var trigger = document.getElementById('profileTrigger');
