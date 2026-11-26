@@ -2,6 +2,8 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8" />
+<!-- 2.34.3: CSP — สคริปต์โหลดได้เฉพาะไฟล์ของเว็บเอง (กัน XSS) · ส่งข้อมูลได้เฉพาะ Worker / Google · ถ้าย้าย Worker ไปโดเมนอื่น ต้องเพิ่มใน connect-src -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.workers.dev https://script.google.com https://script.googleusercontent.com https://*.googleapis.com https://drive.google.com https://*.googleusercontent.com; frame-src 'self' blob: https://drive.google.com https://docs.google.com https://*.google.com; media-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <!-- 1.80: PWA — ติดตั้งลงหน้าจอหลัก/คอมได้ (manifest + ไอคอน · sw.js ลงทะเบียนใน api.js) -->
 <link rel="manifest" href="manifest.webmanifest" />
@@ -28,10 +30,9 @@
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.33.4.251126" />
+<link rel="stylesheet" href="assets/style.css?v=2.34.3.261126" />
 <!-- 1.56: ธีมสีจากค่าที่จำไว้ (ใส่หลัง style.css ให้ทับค่าเริ่มต้น) — ดู applyThemeColor ใน api.js -->
-<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
+<script src="assets/pages/common-2ec322a4.js?v=2.34.3.261126"></script>
 <style>
   .privacy-wrap { max-width: 860px; margin: 0 auto; padding: 22px 16px 8px; }
   .privacy-wrap h1 { margin: 0 0 4px; font-size: 1.5rem; }
@@ -174,15 +175,7 @@
 
   <div id="app-footer"></div>
 
-  <script src="assets/api.js?v=2.33.4.251126"></script>
-  <script>
-    mountFooter();
-    applyBranding();
-    // ผู้ใช้ที่ล็อกอินอยู่ → ปุ่ม “กลับ” พาไปหน้าแรกของบทบาทตัวเอง; ถ้ายังไม่ล็อกอิน → หน้าล็อกอิน
-    var _privSession = getSession();
-    var _privHome = _privSession && getToken() ? homePageFor(_privSession) : 'index.html';
-    document.getElementById('privacyBackLink').setAttribute('href', _privHome);
-    document.querySelector('.js-home-btn').addEventListener('click', function () { location.href = _privHome; });
-  </script>
+  <script src="assets/api.js?v=2.34.3.261126"></script>
+  <script src="assets/pages/privacy.js?v=2.34.3.261126"></script>
 </body>
 </html>

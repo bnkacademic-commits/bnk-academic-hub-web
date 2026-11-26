@@ -550,7 +550,7 @@ async function manualBook(mode) {
       function newPage(cls) { var p = document.createElement('div'); p.className = 'pg' + (cls ? ' ' + cls : ''); var b = document.createElement('div'); b.className = 'bd'; p.appendChild(b); host.appendChild(p); pages.push(p); return b; }
       function fits(bd) { return bd.offsetHeight <= H - PAD - 70; }
       // ปก + สารบัญ
-      newPage('cover').innerHTML = '<img src="icons/icon-512.png" alt="" onerror="this.src=\'icons/icon-192.png\'"><h1>คู่มือการใช้งาน ' + E(site) + '</h1><div class="s">' + E(school) + '</div><div class="who"><b>' + E(me.name || '') + '</b><span>' + E(who.label) + ' · ' + (one ? 'หัวข้อ: ' + E(topics[0].title) : topics.length + ' หัวข้อ (ตามสิทธิ์ของบัญชีนี้)') + '</span></div><div class="v">เวอร์ชัน ' + E(ver) + ' · ' + E(today) + '</div>';
+      newPage('cover').innerHTML = '<img src="icons/icon-512.png" alt="" data-err="src:icons/icon-192.png"><h1>คู่มือการใช้งาน ' + E(site) + '</h1><div class="s">' + E(school) + '</div><div class="who"><b>' + E(me.name || '') + '</b><span>' + E(who.label) + ' · ' + (one ? 'หัวข้อ: ' + E(topics[0].title) : topics.length + ' หัวข้อ (ตามสิทธิ์ของบัญชีนี้)') + '</span></div><div class="v">เวอร์ชัน ' + E(ver) + ' · ' + E(today) + '</div>';
       var toc = one ? null : newPage('toc');
       var cur = null, tocRows = [];
       function add(html, keepNew) {

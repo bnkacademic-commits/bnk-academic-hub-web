@@ -2,6 +2,8 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8" />
+<!-- 2.34.3: CSP — สคริปต์โหลดได้เฉพาะไฟล์ของเว็บเอง (กัน XSS) · ส่งข้อมูลได้เฉพาะ Worker / Google · ถ้าย้าย Worker ไปโดเมนอื่น ต้องเพิ่มใน connect-src -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.workers.dev https://script.google.com https://script.googleusercontent.com https://*.googleapis.com https://drive.google.com https://*.googleusercontent.com; frame-src 'self' blob: https://drive.google.com https://docs.google.com https://*.google.com; media-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>อัลบั้มรูปภาพ</title>
 <!-- 2.31.1: เว็บย่อตอนส่งลิงก์ (LINE / Facebook) -->
@@ -17,9 +19,15 @@
 <!-- 1.84.2: หน้าฝังอัลบั้ม (iframe) — embed.html#a=<id> (แบบตารางรูป) · #a=<id>&s=card (แบบการ์ดรูปปก) · เฉพาะอัลบั้มที่แสดงในหน้าสาธารณะ -->
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet" />
 <style>
-  :root { --pri: #0b6fcc; --txt: #0f172a; --mut: #64748b; --bd: #e2e8f0; --bg: #ffffff; --ph: #e8eef7; }
+  /* 2.34.1: ฟอนต์จากไฟล์ของเว็บเอง (เลิกเรียก Google Fonts) */
+  @font-face{font-family:'Noto Sans Thai';font-style:normal;font-display:swap;font-weight:400;src:url('assets/fonts/notosansthai-thai-400-normal.woff2') format('woff2');unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC;}
+  @font-face{font-family:'Noto Sans Thai';font-style:normal;font-display:swap;font-weight:400;src:url('assets/fonts/notosansthai-latin-400-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+  @font-face{font-family:'Noto Sans Thai';font-style:normal;font-display:swap;font-weight:600;src:url('assets/fonts/notosansthai-thai-600-normal.woff2') format('woff2');unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC;}
+  @font-face{font-family:'Noto Sans Thai';font-style:normal;font-display:swap;font-weight:600;src:url('assets/fonts/notosansthai-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+  @font-face{font-family:'Noto Sans Thai';font-style:normal;font-display:swap;font-weight:700;src:url('assets/fonts/notosansthai-thai-700-normal.woff2') format('woff2');unicode-range:U+0E01-0E5B,U+200C-200D,U+25CC;}
+  @font-face{font-family:'Noto Sans Thai';font-style:normal;font-display:swap;font-weight:700;src:url('assets/fonts/notosansthai-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+    :root { --pri: #0b6fcc; --txt: #0f172a; --mut: #64748b; --bd: #e2e8f0; --bg: #ffffff; --ph: #e8eef7; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --txt: #e2e8f0; --mut: #94a3b8; --bd: #334155; --bg: #0f172a; --ph: #1e293b; } }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
@@ -54,48 +62,7 @@
 </head>
 <body>
 <div class="e" id="emb"><div class="msg">กำลังโหลด…</div></div>
-<script src="assets/api.js?v=2.33.4.251126"></script>
-<script>
-(function () {
-  var q = {}; location.hash.replace(/^#/, '').split('&').forEach(function (kv) { var p = kv.split('='); if (p[0]) q[p[0]] = decodeURIComponent(p[1] || ''); });
-  var box = document.getElementById('emb'), card = q.s === 'card';
-  var thumb = function (id, w) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(id) + '&sz=w' + (w || 800); };
-  var ic = '<span class="ph-ic"><i class="fa-solid fa-images" aria-hidden="true"></i></span>';
-  function fail(t) { box.innerHTML = '<div class="msg"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ' + escapeHtml(t) + '</div>'; }
-  if (!q.a) { fail('ไม่ได้ระบุอัลบั้ม'); return; }
-  apiCall('publicAlbumEmbed', { id: q.a }).then(function (d) {
-    var a = d.album, url = a.url, n = a.photoCount || 0;
-    document.title = a.title;
-    var tgt = ' href="' + escapeHtml(url) + '" target="_blank" rel="noopener"';
-    var foot = '<div class="e-f"><small><i class="fa-solid fa-images" aria-hidden="true"></i> คลังรูปภาพ' + (d.schoolName ? ' · ' + escapeHtml(d.schoolName) : '') + '</small><a class="btn"' + tgt + '><i class="fa-solid fa-folder-open" aria-hidden="true"></i> ดูรูปทั้งหมด</a></div>';
-    var meta = '<small><i class="fa-solid fa-calendar-days" aria-hidden="true"></i> ' + escapeHtml(d.dateLabel || '') + (n ? ' · ' + n + ' รูป' : '') + '</small>';
-    var ph = d.photos || [];
-    var img = function (id, i, w) { return id ? '<img src="' + (i === 0 && !id ? '' : thumb(id, w)) + '" alt="" loading="lazy" referrerpolicy="no-referrer" data-i="' + i + '" />' : ''; };
-    if (card || ph.length === 0) {
-      var cv = ph[0] ? img(ph[0], 0, 1000) : (a.coverUrl && !/drive\.google\.com/.test(a.coverUrl) ? '<img src="' + escapeHtml(a.coverUrl) + '" alt="" referrerpolicy="no-referrer" data-i="0" />' : ic);
-      box.className = 'e e-c';
-      box.innerHTML = '<a class="e-c-cv"' + tgt + ' aria-label="ดูรูปทั้งหมด">' + cv + (n ? '<span class="e-c-n"><i class="fa-solid fa-images" aria-hidden="true"></i> ' + n + ' รูป</span>' : '') + '</a>' +
-        '<div class="e-h"><b title="' + escapeHtml(a.title) + '">' + escapeHtml(a.title) + '</b>' + meta + '</div>' + foot;
-    } else {
-      var show = ph.slice(0, 5), k = show.length >= 5 ? 5 : show.length >= 3 ? 3 : show.length;
-      show = show.slice(0, k);
-      var rest = Math.max(0, n - k);
-      box.className = 'e';
-      box.innerHTML = '<div class="e-h"><b title="' + escapeHtml(a.title) + '">' + escapeHtml(a.title) + '</b>' + meta + '</div>' +
-        '<div class="e-g g' + k + '">' + show.map(function (id, i) {
-          var last = i === k - 1 && rest > 0;
-          return '<a' + tgt + (last ? ' class="more" data-more="+' + rest + '"' : '') + ' aria-label="ดูรูปทั้งหมด">' + img(id, i, i === 0 ? 1000 : 500) + '</a>';
-        }).join('') + '</div>' + foot;
-    }
-    // รูปย่อจาก Google Drive โหลดไม่ได้ → รูปแรกใช้รูปปกที่เก็บในระบบ · รูปอื่นเป็นไอคอน
-    Array.prototype.forEach.call(box.querySelectorAll('img'), function (el) {
-      el.addEventListener('error', function () {
-        if (el.getAttribute('data-i') === '0' && d.coverData && el.src.indexOf('data:') !== 0) { el.src = d.coverData; return; }
-        var p = el.parentNode; el.remove(); if (p && !p.querySelector('.ph-ic')) p.insertAdjacentHTML('afterbegin', ic);
-      });
-    });
-  }).catch(function (e) { fail(e && e.message ? e.message : 'โหลดอัลบั้มไม่สำเร็จ'); });
-})();
-</script>
+<script src="assets/api.js?v=2.34.3.261126"></script>
+<script src="assets/pages/embed.js?v=2.34.3.261126"></script>
 </body>
 </html>

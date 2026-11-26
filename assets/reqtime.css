@@ -27,3 +27,10 @@
 [data-theme="dark"] .rt-tag { background: rgba(167,139,250,.18); color: #c4b5fd; }
 [data-theme="dark"] .rt-appr-h { color: #c4b5fd; }
 .rt-appr [hidden] { display: none !important; }
+/* 2.34.0: กันกระพริบ (โหลดอยู่ = เนื้อหาเดิมจางลง) · รายงานเอง · ระงับ · ประวัติ */
+.rt-pick .btn { transition: none; }
+.rt-note { color: var(--text); }
+.rt-susp { margin-top: 6px; padding: 8px 10px; border-radius: 10px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: .84rem; line-height: 1.5; }
+[data-theme="dark"] .rt-susp { background: rgba(220, 38, 38, .14); border-color: rgba(248, 113, 113, .35); color: #fca5a5; }
+.rt-hist > div { padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: .88rem; }
+.rt-hist > div:last-child { border-bottom: 0; }

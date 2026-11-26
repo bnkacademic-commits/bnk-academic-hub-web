@@ -96,3 +96,4 @@
 [data-theme="dark"] .mm-help code { background: rgba(167,139,250,.18); color: #c4b5fd; }
 [data-theme="dark"] .mm-help code.s { background: rgba(45,212,191,.15); color: #5eead4; }
 .memo-controls-wrap [hidden], .memo-paper-outer[hidden] { display: none !important; }
+@media (pointer: coarse) { .mm-pers button { min-height: 40px; } } /* 2.34.2: จอทัช */

@@ -2,6 +2,8 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8" />
+<!-- 2.34.3: CSP — สคริปต์โหลดได้เฉพาะไฟล์ของเว็บเอง (กัน XSS) · ส่งข้อมูลได้เฉพาะ Worker / Google · ถ้าย้าย Worker ไปโดเมนอื่น ต้องเพิ่มใน connect-src -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://*.workers.dev https://script.google.com https://script.googleusercontent.com https://*.googleapis.com https://drive.google.com https://*.googleusercontent.com; frame-src 'self' blob: https://drive.google.com https://docs.google.com https://*.google.com; media-src 'self' blob: https:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <link rel="manifest" href="manifest.webmanifest" />
 <meta name="theme-color" content="#0b6fcc" />
@@ -11,7 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="BNK Academic Hub" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<script>(function(){try{var t=localStorage.getItem('bnkah_theme');if(t==='dark'||t==='sepia')document.documentElement.setAttribute('data-theme',t);document.documentElement.classList.add('nav-noanim');if(localStorage.getItem('bnkah_memo_off')==='1')document.documentElement.classList.add('memo-off');}catch(e){}})();</script>
+<script src="assets/pages/common-ac11be51.js?v=2.34.3.261126"></script>
 <title>วิชาที่สอน — BNKAcademicHub</title>
 <!-- 2.31.1: เว็บย่อตอนส่งลิงก์ (LINE / Facebook) -->
 <meta name="description" content="ระบบงานวิชาการสำหรับครู — วิชาการ · ส่งงาน · คำสั่ง · โรงเรียนบุ่งคล้านคร" />
@@ -25,10 +27,9 @@
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="stylesheet" href="assets/fontawesome/css/fontawesome.min.css" />
 <link rel="stylesheet" href="assets/fontawesome/css/solid.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css?v=2.33.4.251126" />
-<link rel="stylesheet" href="assets/club.css?v=2.33.4.251126" />
-<script>(function(){try{var c=localStorage.getItem('bnkah_theme_css');if(c){var e=document.createElement('style');e.id='bnkahThemeVars';e.textContent=c;document.head.appendChild(e);}}catch(e){}})();</script>
+<link rel="stylesheet" href="assets/style.css?v=2.34.3.261126" />
+<link rel="stylesheet" href="assets/club.css?v=2.34.3.261126" />
+<script src="assets/pages/common-2ec322a4.js?v=2.34.3.261126"></script>
 </head>
 <body>
   <div id="app-topbar"></div>
@@ -54,8 +55,8 @@
     </div>
   </div>
   <div id="app-footer"></div>
-  <script src="assets/api.js?v=2.33.4.251126"></script>
-  <script src="assets/intern.js?v=2.33.4.251126"></script>
-  <script src="assets/teach.js?v=2.33.4.251126"></script>
+  <script src="assets/api.js?v=2.34.3.261126"></script>
+  <script src="assets/intern.js?v=2.34.3.261126"></script>
+  <script src="assets/teach.js?v=2.34.3.261126"></script>
 </body>
 </html>

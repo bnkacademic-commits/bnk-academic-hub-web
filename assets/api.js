@@ -18,8 +18,8 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // ตามที่ผู้ใช้ระบุ — เลขตรงกลางเป็นเลขรันต่อเนื่องทุกครั้งที่ปล่อยเวอร์ชันใหม่ (ไม่สนใจว่าเปลี่ยน D1/Worker หรือแก้แค่หน้าเว็บ)
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
-var WORKER_MIN_VERSION = '2.33.1';
-var APP_VERSION = '2.33.4.251126';
+var WORKER_MIN_VERSION = '2.34.1';
+var APP_VERSION = '2.34.3.261126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -2950,7 +2950,7 @@ function initNotifBell() {
     var ic = '<span class="notif-ic" style="background:' + k[1] + '"><i class="fa-solid ' + k[0] + '" aria-hidden="true"></i></span>';
     if (n.kind === 'album' && n.album) {
       var src = n.album.managed ? (_notifCovers[n.album.id] || '') : (n.album.coverFileId ? 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(n.album.coverFileId) + '&sz=w160' : '');
-      ic = '<span class="notif-th" data-nth="' + escapeHtml(n.album.id) + '">' + (src ? '<img src="' + src + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()" />' : '') + '<i class="fa-solid fa-images" aria-hidden="true"></i></span>';
+      ic = '<span class="notif-th" data-nth="' + escapeHtml(n.album.id) + '">' + (src ? '<img src="' + src + '" alt="" loading="lazy" referrerpolicy="no-referrer" data-err="remove" />' : '') + '<i class="fa-solid fa-images" aria-hidden="true"></i></span>';
     }
     return '<button type="button" class="notif-item' + (n.unread ? ' unread' : '') + (n.pinned ? ' pinned' : '') + (n.kind === 'album' ? ' alb' : '') + '" data-nid="' + escapeHtml(n.id) + '">' + ic +
       '<span class="notif-tx"><span class="notif-t">' + escapeHtml(n.title) + '</span>' + (n.body ? '<span class="notif-b">' + escapeHtml(n.body) + '</span>' : '') +
@@ -3681,16 +3681,22 @@ function ttSheetDoc(mode) {
     '.fit{width:1120px;transform-origin:top left;padding:6px}.tt-sheet{overflow:visible;border-color:#0f172a;animation:none}table.tt-grid{min-width:0}' +
     '.tt-stamp{display:flex;justify-content:space-between;font-size:12px;color:#475569;margin-top:6px;padding:0 4px}' +
     (mode === 'image' ? '.pg{height:auto}' : '') + '</style></head><body><div class="pg" id="pg"><div class="fit" id="fit">' + sh.outerHTML +
-    '<div class="tt-stamp"><span>' + escapeHtml(stamp) + '</span><span>BNKAcademicHub · ข้อมูลจากเว็บเช็คชื่อ</span></div></div></div>' +
-    '<script>' + ttShrink.toString() + 'function ttFit(){ttShrink(document);var f=document.getElementById("fit");f.style.transform="none";' +
-    // พิมพ์: ขยายความสูงแถวให้ตารางเต็มหน้า A4 (ไม่เหลือที่ว่างครึ่งหน้า) แล้วย่อทั้งใบให้พอดี 1 หน้า
-    (mode === 'print' ? 'var sw=' + TT_PAGE_W + '/f.scrollWidth,need=' + TT_PAGE_H + '/Math.min(sw,1)-f.scrollHeight-4;if(need>0){var rows=f.querySelectorAll("table.tt-grid tbody tr");var add=Math.floor(need/rows.length),hs=Array.prototype.map.call(rows,function(r){return r.getBoundingClientRect().height;});Array.prototype.forEach.call(rows,function(r,i){r.style.height=(hs[i]+add)+"px";Array.prototype.forEach.call(r.children,function(td){if(!td.classList.contains("tt-lunch"))td.style.height="auto";});});}' : '') +
-    'var s=Math.min(' + TT_PAGE_W + '/f.scrollWidth,' + TT_PAGE_H + '/f.scrollHeight,1);f.style.transform="scale("+s+")";' +
-    (mode === 'image' ? 'var pg=document.getElementById("pg");pg.style.width=Math.ceil(f.scrollWidth*s)+"px";pg.style.height=Math.ceil(f.scrollHeight*s)+"px";' : '') + 'return s;}<\/script></body></html>';
+    '<div class="tt-stamp"><span>' + escapeHtml(stamp) + '</span><span>BNKAcademicHub · ข้อมูลจากเว็บเช็คชื่อ</span></div></div></div></body></html>';
 }
-function ttReady(win) {
+// 2.34.3: ย่อให้พอดีหน้า — ทำจากหน้าหลัก (เดิมเป็นสคริปต์ในเอกสาร iframe ซึ่ง CSP ไม่อนุญาต)
+function ttFitDoc(doc, mode) {
+  ttShrink(doc); var f = doc.getElementById('fit'); if (!f) return 1; f.style.transform = 'none';
+  if (mode === 'print') { // พิมพ์: ขยายความสูงแถวให้ตารางเต็มหน้า A4 (ไม่เหลือที่ว่างครึ่งหน้า) แล้วย่อทั้งใบให้พอดี 1 หน้า
+    var sw = TT_PAGE_W / f.scrollWidth, need = TT_PAGE_H / Math.min(sw, 1) - f.scrollHeight - 4;
+    if (need > 0) { var rows = f.querySelectorAll('table.tt-grid tbody tr'), add = Math.floor(need / rows.length), hs = Array.prototype.map.call(rows, function (r) { return r.getBoundingClientRect().height; }); Array.prototype.forEach.call(rows, function (r, i) { r.style.height = (hs[i] + add) + 'px'; Array.prototype.forEach.call(r.children, function (td) { if (!td.classList.contains('tt-lunch')) td.style.height = 'auto'; }); }); }
+  }
+  var s = Math.min(TT_PAGE_W / f.scrollWidth, TT_PAGE_H / f.scrollHeight, 1); f.style.transform = 'scale(' + s + ')';
+  if (mode === 'image') { var pg = doc.getElementById('pg'); pg.style.width = Math.ceil(f.scrollWidth * s) + 'px'; pg.style.height = Math.ceil(f.scrollHeight * s) + 'px'; }
+  return s;
+}
+function ttReady(win, mode) {
   return new Promise(function (res) {
-    var go = function () { (win.document.fonts && win.document.fonts.ready ? win.document.fonts.ready : Promise.resolve()).then(function () { setTimeout(function () { try { win.ttFit(); } catch (e) { /* ข้าม */ } res(); }, 150); }); };
+    var go = function () { (win.document.fonts && win.document.fonts.ready ? win.document.fonts.ready : Promise.resolve()).then(function () { setTimeout(function () { try { ttFitDoc(win.document, mode); } catch (e) { /* ข้าม */ } res(); }, 150); }); };
     if (win.document.readyState === 'complete') go(); else win.addEventListener('load', go);
   });
 }
@@ -3704,7 +3710,7 @@ async function ttPrint() {
   document.body.appendChild(fr);
   try {
     var d = fr.contentWindow.document; d.open(); d.write(html); d.close();
-    await ttReady(fr.contentWindow);
+    await ttReady(fr.contentWindow, 'print');
     await loadScriptOnce('assets/html2canvas.min.js'); await loadScriptOnce('assets/jspdf.umd.min.js');
     var canvas = await html2canvas(d.getElementById('pg'), { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: TT_PAGE_W + 40 });
     var pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
@@ -3725,7 +3731,7 @@ async function ttSaveImage() {
   document.body.appendChild(fr);
   try {
     var d = fr.contentWindow.document; d.open(); d.write(html); d.close();
-    await ttReady(fr.contentWindow);
+    await ttReady(fr.contentWindow, 'image');
     await loadScriptOnce('assets/html2canvas.min.js');
     var pg = d.getElementById('pg');
     var canvas = await html2canvas(pg, { scale: 2, backgroundColor: '#ffffff', logging: false, useCORS: true, windowWidth: TT_PAGE_W + 40 });
@@ -4138,6 +4144,12 @@ document.addEventListener('click', function (ev) {
     openFilePreview(drivePreviewUrl(u), n, u, undefined, all.length > 1 ? { index: j, total: all.length, go: show } : null, fileKindOf(n, x.getAttribute('data-fp-mime')));
   })(start);
 }, true);
+// 2.34.3: แทน onerror="..." ในรูป (CSP ไม่อนุญาตโค้ดในแอตทริบิวต์) — data-err="remove" ลบรูป · "fb" แทนด้วย HTML ใน data-fb · "src:URL" เปลี่ยนรูป
+document.addEventListener('error', function (ev) {
+  var t = ev.target; if (!t || t.tagName !== 'IMG') return; var a = t.getAttribute('data-err'); if (!a) return;
+  if (a === 'remove') t.remove(); else if (a === 'fb') t.outerHTML = t.getAttribute('data-fb') || ''; else if (a.indexOf('src:') === 0) { t.removeAttribute('data-err'); t.src = a.slice(4); }
+}, true);
+document.addEventListener('click', function (ev) { if (ev.target.closest && ev.target.closest('[data-reload]')) location.reload(); }); // 2.34.3: ปุ่ม "ลองใหม่"
 var _sfUrl = {};
 document.addEventListener('click', async function (ev) {
   var b = ev.target.closest && ev.target.closest('[data-sfolder]'); if (!b) return;

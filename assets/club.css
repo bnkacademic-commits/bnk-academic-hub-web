@@ -77,7 +77,7 @@
 .tc-subj { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
 .tc-sj { border: 1px solid var(--border); border-left: 6px solid var(--c); border-radius: 14px; padding: 13px 15px; background: var(--surface); }
 .tc-sj .hd { display: flex; align-items: flex-start; gap: 10px; }
-.tc-sj .code { font-family: Inter, sans-serif; font-weight: 700; font-size: .8rem; color: var(--c); background: color-mix(in srgb, var(--c) 12%, var(--surface)); padding: 3px 8px; border-radius: 8px; flex: none; margin-top: 1px; } .tc-sj .code.none { font-family: inherit; }
+.tc-sj .code { font-family: 'Noto Sans Thai', sans-serif; font-weight: 700; font-size: .8rem; color: var(--c); background: color-mix(in srgb, var(--c) 12%, var(--surface)); padding: 3px 8px; border-radius: 8px; flex: none; margin-top: 1px; } .tc-sj .code.none { font-family: inherit; }
 .tc-sj .nm { font-weight: 700; line-height: 1.35; } .tc-sj .meta { font-size: .8rem; color: var(--text-muted); margin: 3px 0 9px; }
 .tc-sj .rooms { display: flex; flex-wrap: wrap; gap: 8px; }
 .tc-rm { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; background: var(--surface-2); font: inherit; font-weight: 700; font-size: .9rem; color: var(--text); cursor: pointer; }

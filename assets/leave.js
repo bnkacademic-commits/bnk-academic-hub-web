@@ -28,7 +28,7 @@
   function plabel(p) { return Number(p) === -2 ? 'A' : Number(p) === 0 ? 'B' : String(p); }
   function perTxt(a) { return a && a.length ? 'คาบ ' + a.map(plabel).join(', ') : 'ทั้งวัน'; }
   function err(m) { return '<div class="error-box">' + esc(m) + '</div>'; }
-  function put(el, html) { if (!el) return; if (el._h === html) return; el.innerHTML = html; el._h = html; }
+  function put(el, html) { if (!el) return; el.classList.remove('rt-busy'); if (el._h === html) return; el.innerHTML = html; el._h = html; }
   function canM() { return B && B.manage; }
   function canV() { return B && (B.manage || B.view); }
   function typeOf(k) { return (B.types || []).filter(function (t) { return t.key === k; })[0] || null; }
@@ -36,7 +36,7 @@
   function stPill(s) { var x = ST[s] || ST.pending; return '<span class="lv-st ' + x[0] + '">' + ic(x[1]) + ' ' + x[2] + '</span>'; }
   function wkTag(x) { return x && x.wk ? '<span class="lv-wk" title="ลาคร่อมวันเสาร์-อาทิตย์' + (B.wkCount ? ' (นับเสาร์-อาทิตย์รวมในวันลา)' : ' (ไม่นับเสาร์-อาทิตย์)') + '">' + ic('fa-calendar-week') + ' คร่อมเสาร์-อาทิตย์</span>' : ''; }
   function moreChips(x) { return (x.docs.more || []).map(function (f, i) { return fileChip(f, 'ไฟล์เพิ่ม ' + (i + 1)); }).join(''); }
-  function fileChip(f, label) { if (!f) return ''; var pdf = /\.pdf$/i.test(f.name || ''); return '<a class="lv-file" href="' + esc(f.url) + '" target="_blank" rel="noopener" title="' + esc(f.name) + '">' + ic(pdf ? 'fa-file-pdf' : 'fa-image') + ' ' + esc(label || f.name) + '</a>'; }
+  function fileChip(f, label) { if (!f) return ''; var pdf = /\.pdf$/i.test(f.name || ''); return '<a class="lv-file" href="' + esc(f.url) + '" target="_blank" rel="noopener" title="' + esc(f.name) + '" data-fp="' + esc(f.url) + '" data-fp-name="' + esc(f.name || '') + '">' + ic(pdf ? 'fa-file-pdf' : 'fa-image') + ' ' + esc(label || f.name) + '</a>'; }
   function workdays(a, b) { if (!a || !b || b < a) return 0; var n = 0, d = dP(a), e = dP(b); for (var i = 0; d <= e && i < 400; i++) { if (d.getDay() % 6) n++; d.setDate(d.getDate() + 1); } return n; }
 
   // ---------- โหลด ----------
@@ -67,11 +67,12 @@
     if (st.tab === 'summary') return showSummary();
     if (st.tab === 'settings') return showSettings();
   }
-  function loading() { if (!body.querySelector('.loading')) { body.innerHTML = '<div class="loading">กำลังโหลด...</div>'; body._h = ''; } }
+  // 2.34.0: กันกระพริบ — มีเนื้อหาอยู่แล้ว = จางลงระหว่างโหลด (ไม่ล้างหน้า / ไม่เด้งขึ้นบน)
+  function loading() { if (body.children.length && !body.querySelector(':scope > .loading')) { body.classList.add('rt-busy'); return; } if (!body.querySelector('.loading')) { body.innerHTML = '<div class="loading">กำลังโหลด...</div>'; body._h = ''; } }
 
   // ---------- การลาของฉัน ----------
   async function showMine() {
-    if (!D.mine) { loading(); try { var r = await apiCall('lvReqList', { scope: 'mine' }); D.mine = r.items || []; D.stats = r.stats || {}; } catch (e) { body.innerHTML = err(e.message); body._h = ''; return; } }
+    if (!D.mine) { loading(); try { var r = await apiCall('lvReqList', { scope: 'mine' }); D.mine = r.items || []; D.stats = r.stats || {}; } catch (e) { body.classList.remove('rt-busy'); body.innerHTML = err(e.message); body._h = ''; return; } }
     if (st.tab !== 'mine') return;
     var rd = B.round, s = D.stats || {}, canAdd = canM() || B.selfReport;
     var rows = [['sick', 'ลาป่วย'], ['personal', 'ลากิจส่วนตัว'], ['maternity', 'ลาคลอดบุตร'], ['other', 'ลาอื่น ๆ'], ['none', 'ไปราชการ']].filter(function (x) { return s[x[0]] && (s[x[0]][0] || s[x[0]][1] || x[0] === 'sick' || x[0] === 'personal'); });
@@ -114,7 +115,7 @@
 
   // ---------- รออนุมัติ ----------
   async function showPending() {
-    if (!D.pending) { loading(); try { D.pending = (await apiCall('lvReqList', { scope: 'pending' })).items || []; } catch (e) { body.innerHTML = err(e.message); body._h = ''; return; } }
+    if (!D.pending) { loading(); try { D.pending = (await apiCall('lvReqList', { scope: 'pending' })).items || []; } catch (e) { body.classList.remove('rt-busy'); body.innerHTML = err(e.message); body._h = ''; return; } }
     if (st.tab !== 'pending') return;
     var p = D.pending.filter(function (x) { return x.status === 'pending'; }), m = D.pending.filter(function (x) { return x.status === 'approved' && x.docMissing; });
     B.pendingN = p.length; renderTabs();
@@ -136,7 +137,7 @@
   }
   async function showAll(force) {
     var r = rangeOf(), key = r.join('|');
-    if (!D.all || D.all.key !== key || force) { loading(); try { D.all = { key: key, items: (await apiCall('lvReqList', { scope: 'all', from: r[0], to: r[1] })).items || [] }; } catch (e) { body.innerHTML = err(e.message); body._h = ''; return; } }
+    if (!D.all || D.all.key !== key || force) { loading(); try { D.all = { key: key, items: (await apiCall('lvReqList', { scope: 'all', from: r[0], to: r[1] })).items || [] }; } catch (e) { body.classList.remove('rt-busy'); body.innerHTML = err(e.message); body._h = ''; return; } }
     if (st.tab !== 'all') return;
     var types = {}; D.all.items.forEach(function (x) { types[x.typeLabel] = 1; });
     var h = '<div class="cc-flt"><div class="cc-seg">' + [['today', 'วันนี้'], ['week', 'สัปดาห์นี้'], ['month', 'เดือนนี้'], ['round', 'รอบครึ่งปีนี้'], ['custom', 'กำหนดเอง']].map(function (x) { return '<button type="button" data-lv-rg="' + x[0] + '"' + (st.range === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
@@ -170,7 +171,7 @@
 
   // ---------- ข้อความสรุป ----------
   async function showSummary(force) {
-    if (!D.sum || D.sum.date !== st.sumDate || force) { loading(); try { D.sum = await apiCall('lvSummary', { date: st.sumDate }); } catch (e) { body.innerHTML = err(e.message); body._h = ''; return; } }
+    if (!D.sum || D.sum.date !== st.sumDate || force) { loading(); try { D.sum = await apiCall('lvSummary', { date: st.sumDate }); } catch (e) { body.classList.remove('rt-busy'); body.innerHTML = err(e.message); body._h = ''; return; } }
     if (st.tab !== 'summary') return;
     var h = '<div class="cc-flt"><input type="date" id="lvSd" value="' + esc(st.sumDate) + '" style="max-width:170px"><div class="cc-seg"><button type="button" data-lv-sd="-1">' + ic('fa-chevron-left') + ' วันก่อน</button><button type="button" data-lv-sd="0">วันนี้</button><button type="button" data-lv-sd="1">วันถัดไป ' + ic('fa-chevron-right') + '</button></div><span class="cc-sp"></span><span class="hint" style="margin:0">นับเฉพาะที่อนุมัติแล้ว · ' + D.sum.items.length + ' ราย</span></div>';
     h += '<div class="lv-grid"><div class="card cc-card"><h3>' + ic('fa-message ui-icon') + ' แบบรวมทั้งหมด</h3><textarea class="lv-out" id="lvSumA">' + esc(sumText(false)) + '</textarea><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-lv-copy="lvSumA">' + ic('fa-copy') + ' คัดลอก</button><span class="hint" style="margin:0;align-self:center">แก้ข้อความก่อนคัดลอกได้</span></div></div>' +
@@ -356,8 +357,19 @@
   async function printForm(payload) {
     var w = window.open('', '_blank'); if (!w) { showToast('เบราว์เซอร์บล็อกหน้าต่างใหม่ — อนุญาตป๊อปอัปแล้วลองอีกครั้ง', true); return; }
     w.document.write('<p style="font-family:sans-serif;padding:20px">กำลังเตรียมใบลา...</p>');
-    try { var d = await apiCall('lvForm', payload), logo = await logoData(); w.location.href = URL.createObjectURL(new Blob([formHtml(d, logo)], { type: 'text/html;charset=utf-8' })); }
+    try { var d = await apiCall('lvForm', payload), logo = await logoData(), u = URL.createObjectURL(new Blob([formHtml(d, logo)], { type: 'text/html;charset=utf-8' })); w.location.href = u; lvPrep(w, u); }
     catch (e) { w.close(); showToast(e.message, true); }
+  }
+  // 2.34.3: รอหน้าต่างใบลาโหลดเสร็จ → ย่อให้พอดี 1 หน้า · ผูกปุ่มพิมพ์ / ปิด · สั่งพิมพ์
+  function lvPrep(w, u) {
+    var tries = 0;
+    (function wait() {
+      var doc = null; try { if (w.location.href === u && w.document.readyState === 'complete') doc = w.document; } catch (e) { doc = null; }
+      if (!doc) { if (++tries < 100 && !w.closed) setTimeout(wait, 100); return; }
+      var fit = function () { var pg = doc.querySelector('.pg'), el = doc.getElementById('lvIn'); if (!pg || !el) return; el.style.zoom = ''; var cs = w.getComputedStyle(pg), av = pg.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom), h = el.scrollHeight; if (h > av) el.style.zoom = String(Math.floor(av / h * 1000) / 1000); };
+      doc.addEventListener('click', function (e) { if (e.target.closest('[data-lv-print]')) w.print(); else if (e.target.closest('[data-lv-close]')) w.close(); });
+      (doc.fonts ? doc.fonts.ready : Promise.resolve()).then(function () { fit(); setTimeout(function () { w.print(); }, 300); });
+    })();
   }
   // โลโก้ฝังในหน้า (หน้าต่างใหม่ที่เขียนด้วยสคริปต์โหลดรูปจากลิงก์ได้ไม่แน่นอน) · ฟอนต์ Sarabun จากเว็บเอง
   var LOGO = null;
@@ -393,7 +405,7 @@
       '.box{border:1.5px solid #222;padding:3mm 4mm;text-align:center;font-size:14px;line-height:1.8}.dots{border-bottom:1px dotted #555;height:6mm;margin:0 4mm}.sig{text-align:center}' +
       '.bar{position:sticky;top:0;text-align:center;padding:8px;background:#1e293b}.bar button{font:inherit;font-size:16px;padding:6px 18px;border-radius:8px;border:0;cursor:pointer;margin:0 4px}' +
       '@media print{body{background:#fff}.pg{margin:0}.bar{display:none}}</style></head><body>' +
-      '<div class="bar"><button onclick="window.print()" style="background:#16a34a;color:#fff">พิมพ์ / บันทึกเป็น PDF</button><button onclick="window.close()" style="background:#dc2626;color:#fff">ปิด</button></div>' +
+      '<div class="bar"><button type="button" data-lv-print style="background:#16a34a;color:#fff">พิมพ์ / บันทึกเป็น PDF</button><button type="button" data-lv-close style="background:#dc2626;color:#fff">ปิด</button></div>' +
       '<div class="pg"><div class="in" id="lvIn">' + (logo ? '<img class="logo" src="' + logo + '" alt="">' : '') +
       '<div class="r">เขียนที่ ' + f('โรงเรียนบุ่งคล้านคร', '', 40) + '</div>' +
       '<div class="r">วันที่ ' + f(w[0]) + ' เดือน ' + f(w[1], '', 26) + ' พ.ศ. ' + f(w[2]) + '</div>' +
@@ -416,7 +428,7 @@
       '<div class="sig" style="margin-top:6mm">ลงชื่อ.............................................</div><div class="sig">(' + esc(S.hr || '') + ')</div><div class="sig">' + esc(S.hrTitle || '') + '</div><div class="sig">วันที่.............../.............../...............</div></div>' +
       '<div class="box"><b>ความเห็นผู้บังคับบัญชา</b><div class="dots"></div><div class="dots"></div><div style="height:12mm"></div>(' + esc(S.deputy || '') + ')<br>' + esc(S.deputyTitle || '') +
       '<div style="height:5mm"></div><b>ความเห็นผู้บังคับบัญชา</b><div class="dots"></div><div class="dots"></div><div style="height:14mm"></div>(' + esc(S.director || '') + ')<br>' + esc(S.directorTitle || '') + '</div></div></div></div>' +
-      '<script>function lvFit(){var pg=document.querySelector(".pg"),el=document.getElementById("lvIn");if(!pg||!el)return;el.style.zoom="";var cs=getComputedStyle(pg),av=pg.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom),h=el.scrollHeight;if(h>av)el.style.zoom=String(Math.floor(av/h*1000)/1000);}window.onload=function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){lvFit();setTimeout(function(){window.print();},300);});};<\/script></body></html>';
+      '</body></html>'; // 2.34.3: ไม่มีสคริปต์ในเอกสาร (CSP) — ย่อให้พอดี / ปุ่ม / สั่งพิมพ์ ทำจากหน้าหลัก (lvPrep)
   }
 
 

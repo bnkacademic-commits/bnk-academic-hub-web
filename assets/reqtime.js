@@ -8,10 +8,10 @@
   mountChrome('reqtime'); if (typeof mountFooter === 'function') mountFooter();
   var body = document.getElementById('lvBody'), tabsEl = document.getElementById('lvTabs');
   var modal = document.getElementById('lvModal'), fileIn = document.getElementById('lvFileIn');
-  var B = null, st = { tab: 'mine', range: 'month', from: '', to: '' }, D = { mine: null, pending: null, all: null };
+  var B = null, st = { tab: 'mine', range: 'month', from: '', to: '' }, D = { mine: null, pending: null, all: null }, CACHE = { all: {}, appr: {} }; // 2.34.0: จำผลแต่ละช่วงเวลา (กดกลับช่วงเดิม = ขึ้นทันที)
   var F = null, STU = null, EXC = {}; // ฟอร์ม · รายชื่อนักเรียนทั้งโรงเรียน · นักเรียนที่เอาออกตอนอนุมัติ {reqId: {sid:1}}
   var MS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'], DW = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
-  var ST = { pending: ['p', 'fa-hourglass-half', 'รออนุมัติ'], approved: ['a', 'fa-check', 'อนุมัติแล้ว'], rejected: ['r', 'fa-xmark', 'ไม่อนุมัติ'] };
+  var ST = { pending: ['p', 'fa-hourglass-half', 'รออนุมัติ'], approved: ['a', 'fa-check', 'อนุมัติแล้ว'], rejected: ['r', 'fa-xmark', 'ไม่อนุมัติ'], suspended: ['r', 'fa-ban', 'ระงับ'], review: ['p', 'fa-magnifying-glass', 'รอผู้ดูแลตรวจ'] }; // 2.34.0
   function esc(s) { return escapeHtml(s == null ? '' : String(s)); }
   function ic(n) { return '<i class="fa-solid ' + n + '" aria-hidden="true"></i>'; }
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -23,16 +23,19 @@
   function plabel(p) { return Number(p) === -2 ? 'A' : Number(p) === 0 ? 'B' : String(p); }
   function perTxt(a) { return a && a.length ? 'คาบ ' + a.map(plabel).join(', ') : 'ทั้งวัน'; }
   function err(m) { return '<div class="error-box">' + esc(m) + '</div>'; }
-  function put(el, html) { if (!el) return; if (el._h === html) return; el.innerHTML = html; el._h = html; }
-  function stPill(s) { var x = ST[s] || ST.pending; return '<span class="lv-st ' + x[0] + '">' + ic(x[1]) + ' ' + x[2] + '</span>'; }
+  function put(el, html) { if (!el) return; el.classList.remove('rt-busy'); if (el._h === html) return; el.innerHTML = html; el._h = html; }
+  function stPill(s, x0) { var x = ST[s] || ST.pending; if (s === 'approved' && x0 && x0.src === 'self') x = ['a', 'fa-check', 'มีผลแล้ว']; return '<span class="lv-st ' + x[0] + '">' + ic(x[1]) + ' ' + x[2] + '</span>'; }
+  function isSelfMode() { return B && B.mode === 'self'; }
+  function docChip(d, icon) { if (!d) return ''; return '<a class="lv-file" href="' + esc(d.url) + '" target="_blank" rel="noopener" data-fp="' + esc(d.url) + '" data-fp-name="' + esc(d.name || '') + '" title="กดเพื่อดูไฟล์">' + ic(icon || (/\.pdf$/i.test(d.name || '') ? 'fa-file-pdf' : 'fa-image')) + ' ' + esc(d.name) + '</a>'; } // 2.34.0: ป็อปอัปพรีวิว
   function canV() { return B && (B.manage || B.view); }
   function roomsTxt(rs) { return (rs || []).map(function (r) { return r.room + ' ' + r.n; }).join(' · '); }
   function workdays(a, b) { if (!a || !b || b < a) return 0; var n = 0, d = dP(a), e = dP(b); for (var i = 0; d <= e && i < 400; i++) { if (d.getDay() % 6) n++; d.setDate(d.getDate() + 1); } return n; }
-  function reload() { D = { mine: null, pending: null, all: null, appr: null, memo: null }; body._h = ''; show(); }
+  function reload() { D = { mine: null, pending: null, all: null, appr: null, memo: null }; CACHE = { all: {}, appr: {} }; body._h = ''; show(); }
 
   async function boot() {
     try { B = await apiCall('rtBoot', {}); } catch (e) { tabsEl.innerHTML = ''; body.innerHTML = '<div class="card">' + err(e.message) + '</div>'; return; }
-    if (!B.canAsk) st.tab = canV() ? 'pending' : 'approved';
+    if (!B.canAsk) st.tab = canV() ? 'pending' : B.seeAll ? 'all' : 'approved';
+    var sh = document.getElementById('rtSubHd'); if (sh && isSelfMode()) sh.textContent = 'ครูรายงานขอเวลาเรียนพร้อมแนบหนังสือที่ผู้บริหารลงนามแล้ว · มีผลทันที · เว็บเช็คชื่อเลือก "ร่วมกิจกรรม" ให้อัตโนมัติ · ผู้ดูแลตรวจ / ระงับได้'; // 2.34.0
     if ((location.hash || '') === '#pending' && canV()) st.tab = 'pending';
     show();
     var hs = location.hash || '', mm;
@@ -42,8 +45,9 @@
   }
   function tabList() {
     var t = [];
-    if (B.canAsk) t.push(['mine', 'fa-user', B.isAdmin && !B.enabled ? 'รายการที่ฉันลง' : 'คำขอของฉัน']);
-    if (canV()) t.push(['pending', 'fa-hourglass-half', 'รออนุมัติ'], ['all', 'fa-list', 'รายการทั้งหมด']);
+    if (B.canAsk) t.push(['mine', 'fa-user', (B.isAdmin && !B.enabled) || B.selfPath ? 'รายการที่ฉันลง' : 'คำขอของฉัน']);
+    if (canV()) t.push(['pending', 'fa-hourglass-half', isSelfMode() ? 'รออนุมัติ / รอตรวจ' : 'รออนุมัติ'], ['all', 'fa-list', 'รายการทั้งหมด']);
+    else if (B.seeAll) t.push(['all', 'fa-list', 'รายการทั้งหมด']); // 2.34.0: โหมดรายงานเอง — ครูทุกคนเห็น
     else if (B.observe) t.push(['approved', 'fa-person-running', 'รายการที่อนุมัติแล้ว']); // 2.33.0: ครูดูอย่างเดียว
     if ((B.isAdmin || B.manage) && B.memoOn) t.push(['memo', 'fa-file-lines', 'ใบจากบันทึกข้อความ']); // 2.33.0
     if (B.manage) t.push(['settings', 'fa-sliders', 'ตั้งค่า']);
@@ -54,17 +58,19 @@
     put(tabsEl, t.map(function (x) { return '<button type="button" class="tab-btn' + (x[0] === st.tab ? ' active' : '') + '" data-rt-tab="' + x[0] + '" role="tab">' + ic(x[1] + ' ui-icon') + ' ' + x[2] + (x[0] === 'pending' && B.pendingN ? '<span class="lv-cnt">' + B.pendingN + '</span>' : '') + '</button>'; }).join(''));
   }
   function show() { renderTabs(); ({ mine: showMine, pending: showPending, all: showAll, approved: showApproved, memo: showMemo, settings: showSettings })[st.tab](); }
-  function loading() { if (!body.querySelector('.loading')) { body.innerHTML = '<div class="loading">กำลังโหลด...</div>'; body._h = ''; } }
-  async function load(k, p) { try { return (await apiCall('rtList', p)).items || []; } catch (e) { body.innerHTML = err(e.message); body._h = ''; return null; } void k; }
-  var RULE = function () { return '<div class="rt-rule">• ขอล่วงหน้าได้ และขอย้อนได้ถึงวันจันทร์ของสัปดาห์ที่ยื่นขอ<br>• อนุมัติแล้ว คาบที่ยังไม่เช็ค = หน้าเช็คชื่อเลือก "ร่วมกิจกรรม" ให้ · ครูประจำวิชาแก้ได้<br>• คาบที่เช็คแล้วว่า "ขาด" ตั้งแต่วันที่ยื่นขอ = เปลี่ยนเป็นร่วมกิจกรรมให้ (ยกเว้นวันนั้นขาดคาบอื่นก่อนหน้าตั้งแต่ ' + B.skipAbsent + ' คาบ)<br>• วันก่อนวันที่ยื่นขอ = ไม่แก้การเช็คชื่อที่ทำไปแล้ว</div>'; };
+  // 2.34.0: กันกระพริบ — มีเนื้อหาอยู่แล้ว = คงไว้แค่จางลง (ไม่ล้างหน้า ไม่เด้งขึ้นบน) · หน้าว่างจริงจึงขึ้น "กำลังโหลด"
+  function loading() { if (body.children.length && !body.querySelector(':scope > .loading')) { body.classList.add('rt-busy'); return; } if (!body.querySelector('.loading')) { body.innerHTML = '<div class="loading">กำลังโหลด...</div>'; body._h = ''; } }
+  async function load(k, p) { try { return (await apiCall('rtList', p)).items || []; } catch (e) { body.classList.remove('rt-busy'); body.innerHTML = err(e.message); body._h = ''; return null; } void k; }
+  var RULE = function () { if (isSelfMode() && !B.isAdmin) return '<div class="rt-rule">• พิมพ์ใบขอเวลาเรียน ให้ผู้บริหารลงนามให้ครบก่อน แล้วถ่ายรูป / สแกนแนบมา (บังคับ)<br>• บันทึกแล้วมีผลทันที: หน้าเช็คชื่อเลือก "ร่วมกิจกรรม" ให้ · ครูประจำวิชาแก้ได้<br>• คาบที่เช็คแล้วว่า "ขาด" ตั้งแต่วันที่ลงข้อมูล = เปลี่ยนเป็นร่วมกิจกรรมให้ (ยกเว้นวันนั้นขาดคาบอื่นก่อนหน้าตั้งแต่ ' + B.skipAbsent + ' คาบ)<br>• ลงย้อนได้ถึงวันจันทร์ของสัปดาห์ที่ลง · แก้ไข / ลบได้เฉพาะของตัวเอง<br>• ผู้ดูแลได้รับแจ้งทุกรายการ และระงับได้พร้อมเหตุผล</div>';
+    return '<div class="rt-rule">• ขอล่วงหน้าได้ และขอย้อนได้ถึงวันจันทร์ของสัปดาห์ที่ยื่นขอ<br>• อนุมัติแล้ว คาบที่ยังไม่เช็ค = หน้าเช็คชื่อเลือก "ร่วมกิจกรรม" ให้ · ครูประจำวิชาแก้ได้<br>• คาบที่เช็คแล้วว่า "ขาด" ตั้งแต่วันที่ยื่นขอ = เปลี่ยนเป็นร่วมกิจกรรมให้ (ยกเว้นวันนั้นขาดคาบอื่นก่อนหน้าตั้งแต่ ' + B.skipAbsent + ' คาบ)<br>• วันก่อนวันที่ยื่นขอ = ไม่แก้การเช็คชื่อที่ทำไปแล้ว</div>'; };
 
   // ---------- คำขอของฉัน ----------
   async function showMine() {
     if (!D.mine) { loading(); var r = await load('mine', { scope: 'mine' }); if (!r) return; D.mine = r; }
     if (st.tab !== 'mine') return;
-    var h = '<div class="lv-grid" style="margin-bottom:14px"><div class="card cc-card" style="display:flex;flex-direction:column;justify-content:center;gap:10px"><button type="button" class="btn btn-primary lv-big" data-rt-new>' + ic('fa-plus') + ' ' + (B.isAdmin ? 'ลงข้อมูลขอเวลาเรียน' : 'ขอเวลาเรียนให้นักเรียน') + '</button><p class="hint" style="margin:0">' + (B.isAdmin ? 'ผู้ดูแลระบบลงเอง = อนุมัติทันที · เว็บเช็คชื่อเลือก "ร่วมกิจกรรม" ให้นักเรียน' : 'ครูทุกคนขอได้ · ผู้ดูแลอนุมัติ · ระหว่างรออนุมัติยังไม่มีผลกับการเช็คชื่อ') + '</p>' + (B.isAdmin && !B.enabled ? '<p class="lv-pill-off" style="margin:0">' + ic('fa-lock') + ' ปิดให้ครูขอเอง — ลงข้อมูลได้เฉพาะผู้ดูแลระบบ (เปิดได้ที่ ตั้งค่าระบบ › จัดการผู้ดูแล)</p>' : '') + '</div>' +
+    var h = '<div class="lv-grid" style="margin-bottom:14px"><div class="card cc-card" style="display:flex;flex-direction:column;justify-content:center;gap:10px"><button type="button" class="btn btn-primary lv-big" data-rt-new>' + ic('fa-plus') + ' ' + (B.isAdmin ? 'ลงข้อมูลขอเวลาเรียน' : B.selfPath ? 'รายงานขอเวลาเรียน (แนบหนังสือ)' : 'ขอเวลาเรียนให้นักเรียน') + '</button><p class="hint" style="margin:0">' + (B.isAdmin ? 'ผู้ดูแลระบบลงเอง = อนุมัติทันที · เว็บเช็คชื่อเลือก "ร่วมกิจกรรม" ให้นักเรียน' : B.selfPath ? 'ใช้เมื่อผู้บริหารลงนามในหนังสือขอเวลาเรียนแล้ว · บันทึกแล้วมีผลกับการเช็คชื่อทันที' : 'ครูทุกคนขอได้ · ผู้ดูแลอนุมัติ · ระหว่างรออนุมัติยังไม่มีผลกับการเช็คชื่อ') + '</p>' + (B.isAdmin && !B.enabled ? '<p class="lv-pill-off" style="margin:0">' + ic('fa-lock') + ' ปิดให้ครูขอเอง — ลงข้อมูลได้เฉพาะผู้ดูแลระบบ (เปิดได้ที่ ตั้งค่าระบบ › จัดการผู้ดูแล)</p>' : '') + '</div>' +
       '<div class="card cc-card"><h3>' + ic('fa-circle-info ui-icon') + ' หลักการ</h3>' + RULE() + '</div></div>';
-    h += '<div class="card cc-card"><h3>' + ic('fa-clock-rotate-left ui-icon') + ' ' + (B.isAdmin && !B.enabled ? 'รายการที่ฉันลง' : 'คำขอของฉัน') + '</h3>' + (D.mine.length ? '<div class="lv-list">' + D.mine.map(function (x) { return item(x, 'mine'); }).join('') + '</div>' : '<div class="lv-empty">' + ic('fa-mug-hot') + 'ยังไม่มีคำขอ</div>') + '</div>';
+    h += '<div class="card cc-card"><h3>' + ic('fa-clock-rotate-left ui-icon') + ' ' + ((B.isAdmin && !B.enabled) || B.selfPath ? 'รายการที่ฉันลง' : 'คำขอของฉัน') + '</h3>' + (D.mine.length ? '<div class="lv-list">' + D.mine.map(function (x) { return item(x, 'mine'); }).join('') + '</div>' : '<div class="lv-empty">' + ic('fa-mug-hot') + 'ยังไม่มีคำขอ</div>') + '</div>';
     put(body, h);
   }
   function resultLine(x) {
@@ -76,23 +82,28 @@
   }
   function item(x, mode) {
     var past = x.from < x.filedOn;
-    var h = '<div class="lv-it" data-id="' + esc(x.id) + '"' + (mode === 'pending' ? ' style="flex-direction:column"' : '') + '><div class="lv-main" style="width:100%"><div class="lv-hd">' + (mode === 'mine' ? '' : '<b>' + esc(x.byName) + '</b>') + '<span class="lv-k rt-k">ร่วมกิจกรรม</span><b>' + esc(x.title) + '</b></div>' +
+    var h = '<div class="lv-it" data-id="' + esc(x.id) + '"' + (mode === 'pending' ? ' style="flex-direction:column"' : '') + '><div class="lv-main" style="width:100%"><div class="lv-hd">' + (mode === 'mine' ? '' : '<b>' + esc(x.byName) + '</b>') + '<span class="lv-k rt-k">ร่วมกิจกรรม</span>' + (x.src === 'self' ? '<span class="rt-tag">รายงานเอง</span>' : '') + '<b>' + esc(x.title) + '</b></div>' +
       '<div class="lv-sub"><b style="color:var(--text)">' + thRange(x.from, x.to) + ' · ' + perTxt(x.periods) + '</b> · ' + x.days + ' วัน · นักเรียน ' + x.n + ' คน (' + esc(roomsTxt(x.rooms)) + ')' + (x.teacherName ? ' · ครูผู้ควบคุม ' + esc(x.teacherName) : '') + (x.apprName ? '' : ' · บันทึกเมื่อ ' + thTime(x.createdAt) + (x.decidedBy ? ' · ' + (x.status === 'approved' ? (x.byName === x.decidedBy ? 'บันทึก' : 'อนุมัติ') : 'ไม่อนุมัติ') + 'โดย ' + esc(x.decidedBy) : '')) + apprLine(x) + '</div>' +
+      (x.note ? '<div class="lv-sub rt-note">' + ic('fa-align-left') + ' ' + esc(x.note) + '</div>' : '') + // 2.34.0
       (x.status === 'rejected' && x.reason ? '<div class="lv-sub" style="color:#b91c1c">เหตุผล: ' + esc(x.reason) + '</div>' : '') +
-      '<div class="lv-files">' + (x.doc ? '<a class="lv-file" href="' + esc(x.doc.url) + '" target="_blank" rel="noopener">' + ic(/\.pdf$/i.test(x.doc.name) ? 'fa-file-pdf' : 'fa-image') + ' ' + esc(x.doc.name) + '</a>' : '') + (past ? '<span class="lv-file" style="border-style:dashed">ขอย้อน ' + thRange(x.from, prevDay(x.filedOn)) + ' (ก่อนวันที่ยื่น) · การเช็คชื่อวันนั้นไม่ถูกแก้</span>' : '') + resultLine(x) + '</div>';
-    if (mode === 'pending' && x.students) {
+      ((x.status === 'suspended' || x.status === 'review') && x.suspReason ? '<div class="rt-susp">' + ic('fa-ban') + ' <b>ระงับ' + (x.suspBy ? 'โดย ' + esc(x.suspBy) : '') + (x.suspAt ? ' · ' + thTime(x.suspAt) : '') + '</b><br>เหตุผล: ' + esc(x.suspReason) + (x.status === 'review' ? '<br><i>แก้ไขแล้ว — รอผู้ดูแลตรวจ</i>' : x.by === B.me.id ? '<br><i>แก้ไขรายการแล้วกดบันทึก ผู้ดูแลจะตรวจอีกครั้ง</i>' : '') + '</div>' : '') +
+      '<div class="lv-files">' + docChip(x.doc) + (past ? '<span class="lv-file" style="border-style:dashed">ขอย้อน ' + thRange(x.from, prevDay(x.filedOn)) + ' (ก่อนวันที่ยื่น) · การเช็คชื่อวันนั้นไม่ถูกแก้</span>' : '') + resultLine(x) + '</div>';
+    if (mode === 'pending' && x.students && x.status === 'pending') {
       var ex = EXC[x.id] || {}, rows = x.students.map(function (s) { return '<tr' + (ex[s.id] ? ' class="off"' : '') + '><td style="width:32px"><input type="checkbox" data-rt-ex="' + esc(x.id) + '" data-sid="' + esc(s.id) + '"' + (ex[s.id] ? '' : ' checked') + ' aria-label="อนุมัติ ' + esc(s.name) + '"></td><td>' + esc(s.name) + '</td><td>' + esc(s.room) + '</td><td>' + esc(s.code || '') + '</td></tr>'; });
       var open = !!(EXC[x.id] && EXC[x.id].__open), lim = open ? rows.length : 8;
       h += '<div style="overflow-x:auto;margin-top:10px"><table class="rt-tb"><thead><tr><th></th><th>นักเรียน</th><th>ห้อง</th><th>เลขประจำตัว</th></tr></thead><tbody>' + rows.slice(0, lim).join('') + (rows.length > lim ? '<tr><td colspan="4" class="rt-more"><button type="button" class="btn btn-ghost btn-sm" data-rt-more="' + esc(x.id) + '">แสดงทั้งหมด ' + rows.length + ' คน</button></td></tr>' : '') + '</tbody></table></div>';
     }
-    h += '</div><div class="lv-acts"' + (mode === 'pending' ? ' style="justify-content:flex-end"' : '') + '>' + stPill(x.status);
-    var mine = x.by === B.me.id;
+    h += '</div><div class="lv-acts"' + (mode === 'pending' ? ' style="justify-content:flex-end"' : '') + '>' + stPill(x.status, x);
+    var mine = x.by === B.me.id, selfMine = mine && x.src === 'self' && x.status !== 'rejected' && x.status !== 'pending'; // 2.34.0
     if (mode === 'pending' && x.status === 'pending' && B.manage) { var n = x.n - Object.keys(EXC[x.id] || {}).filter(function (k) { return k !== '__open'; }).length; h += '<button type="button" class="btn btn-success btn-sm" data-rt-ok="' + esc(x.id) + '">' + ic('fa-check') + ' อนุมัติ ' + n + ' คน</button><button type="button" class="btn btn-sm lv-btn-no" data-rt-no="' + esc(x.id) + '">' + ic('fa-xmark') + ' ไม่อนุมัติ</button>'; }
-    if (mode !== 'pending') h += '<button type="button" class="btn btn-ghost btn-sm" data-rt-view="' + esc(x.id) + '">' + ic('fa-users') + ' ดูรายชื่อ</button>';
+    if (B.manage && x.src === 'self' && (x.status === 'approved' || x.status === 'review')) h += '<button type="button" class="btn btn-sm lv-btn-no" data-rt-susp="' + esc(x.id) + '">' + ic('fa-ban') + ' ระงับ</button>'; // 2.34.0
+    if (B.manage && (x.status === 'suspended' || x.status === 'review')) h += '<button type="button" class="btn btn-success btn-sm" data-rt-unsusp="' + esc(x.id) + '">' + ic('fa-rotate-left') + ' ยกเลิกการระงับ</button>';
+    if (mode !== 'pending' || x.status !== 'pending') h += '<button type="button" class="btn btn-ghost btn-sm" data-rt-view="' + esc(x.id) + '">' + ic('fa-users') + ' ดูรายชื่อ</button>';
+    if (x.hist && x.hist.length) h += '<button type="button" class="btn btn-ghost btn-sm" data-rt-hist="' + esc(x.id) + '">' + ic('fa-clock-rotate-left') + ' ประวัติ</button>';
     if (mode !== 'view' && (B.isAdmin || B.manage)) h += '<button type="button" class="btn btn-ghost btn-sm" data-rt-meta="' + esc(x.id) + '">' + ic('fa-signature') + ' ข้อมูลตามหนังสือ</button>'; // 2.33.0
     if (mode === 'view') return h + '</div></div>';
-    if (mine && x.status === 'pending') h += '<button type="button" class="btn btn-ghost btn-sm" data-rt-edit="' + esc(x.id) + '">' + ic('fa-pen') + ' แก้ไข</button>';
-    if ((mine && x.status === 'pending') || (B.manage && mode !== 'pending')) h += '<button type="button" class="btn btn-ghost btn-sm" data-rt-cancel="' + esc(x.id) + '">' + ic('fa-trash-can') + ' ' + (mine && x.status === 'pending' ? 'ยกเลิกคำขอ' : 'ลบรายการ') + '</button>';
+    if ((mine && x.status === 'pending') || (selfMine && isSelfMode())) h += '<button type="button" class="btn btn-ghost btn-sm" data-rt-edit="' + esc(x.id) + '">' + ic('fa-pen') + ' แก้ไข</button>';
+    if ((mine && x.status === 'pending') || selfMine || (B.manage && mode !== 'pending')) h += '<button type="button" class="btn btn-ghost btn-sm" data-rt-cancel="' + esc(x.id) + '">' + ic('fa-trash-can') + ' ' + (mine && x.status === 'pending' ? 'ยกเลิกคำขอ' : 'ลบรายการ') + '</button>';
     return h + '</div></div>';
   }
   // 2.33.0: ผู้อนุมัติตามหนังสือ · เลขที่ / ลงวันที่ · ผู้บันทึก
@@ -108,7 +119,7 @@
     if (!D.pending) { loading(); var r = await load('pending', { scope: 'pending' }); if (!r) return; D.pending = r; }
     if (st.tab !== 'pending') return;
     B.pendingN = D.pending.length; renderTabs();
-    put(body, '<div class="card cc-card"><h3>' + ic('fa-hourglass-half ui-icon') + ' รออนุมัติ <span class="lv-st p">' + D.pending.length + ' รายการ</span></h3><p class="hint" style="margin-top:-4px">' + (B.manage ? 'เอาติ๊กออก = ไม่อนุมัติเฉพาะคนนั้น · อนุมัติแล้วส่งไปเว็บเช็คชื่อทันที และครูผู้ขอได้กระดิ่ง' : 'คุณมีสิทธิ์ดูผลอย่างเดียว') + '</p>' +
+    put(body, '<div class="card cc-card"><h3>' + ic('fa-hourglass-half ui-icon') + ' ' + (isSelfMode() ? 'รออนุมัติ / รอตรวจ' : 'รออนุมัติ') + ' <span class="lv-st p">' + D.pending.length + ' รายการ</span></h3><p class="hint" style="margin-top:-4px">' + (B.manage ? 'เอาติ๊กออก = ไม่อนุมัติเฉพาะคนนั้น · อนุมัติแล้วส่งไปเว็บเช็คชื่อทันที และครูผู้ขอได้กระดิ่ง' + (isSelfMode() ? ' · "รอผู้ดูแลตรวจ" = รายการที่ถูกระงับแล้วครูแก้ไขมา — ตรวจหลักฐานแล้วกด "ยกเลิกการระงับ" หรือ "ระงับ" ต่อ' : '') : 'คุณมีสิทธิ์ดูผลอย่างเดียว') + '</p>' +
       (D.pending.length ? '<div class="lv-list">' + D.pending.map(function (x) { return item(x, 'pending'); }).join('') + '</div>' : '<div class="lv-empty">' + ic('fa-circle-check') + 'ไม่มีคำขอรออนุมัติ</div>') + '</div>');
   }
 
@@ -122,20 +133,23 @@
   }
   async function showAll() {
     var r = rangeOf(), key = r.join('|');
-    if (!D.all || D.all.key !== key) { loading(); var it = await load('all', { scope: 'all', from: r[0], to: r[1] }); if (!it) return; D.all = { key: key, items: it }; }
-    if (st.tab !== 'all') return;
+    if ((!D.all || D.all.key !== key) && CACHE.all[key]) D.all = { key: key, items: CACHE.all[key] };
+    if (!D.all || D.all.key !== key) { loading(); var it = await load('all', { scope: 'all', from: r[0], to: r[1] }); if (!it) return; CACHE.all[key] = it; D.all = { key: key, items: it }; }
+    if (st.tab !== 'all' || D.all.key !== rangeOf().join('|')) return;
     var L = D.all.items;
     var h = '<div class="cc-flt"><div class="cc-seg">' + [['week', 'สัปดาห์นี้'], ['month', 'เดือนนี้'], ['all', 'ทั้งหมด'], ['custom', 'กำหนดเอง']].map(function (x) { return '<button type="button" data-rt-rg="' + x[0] + '"' + (st.range === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
       (st.range === 'custom' ? '<input type="date" id="rtAf" value="' + esc(r[0]) + '" style="max-width:160px"><span>ถึง</span><input type="date" id="rtAt" value="' + esc(r[1]) + '" style="max-width:160px">' : '') +
-      '<span class="cc-sp"></span><button type="button" class="btn btn-secondary btn-sm" data-rt-xlsx>' + ic('fa-file-excel') + ' Excel</button></div>';
-    h += '<div class="card cc-card">' + (L.length ? '<div class="lv-list">' + L.map(function (x) { return item(x, 'all'); }).join('') + '</div>' : '<div class="lv-empty">' + ic('fa-mug-hot') + 'ไม่มีรายการในช่วงนี้</div>') + '</div>';
+      '<span class="cc-sp"></span>' + (canV() ? '<button type="button" class="btn btn-secondary btn-sm" data-rt-xlsx>' + ic('fa-file-excel') + ' Excel</button>' : '') + '</div>';
+    if (!canV()) h = '<p class="hint" style="margin:0 0 10px">' + ic('fa-eye') + ' รายการขอเวลาเรียนทั้งโรงเรียน — ดูหลักฐาน / ตรวจสอบได้ · แก้ไขได้เฉพาะของตัวเอง</p>' + h;
+    h += '<div class="card cc-card">' + (L.length ? '<div class="lv-list">' + L.map(function (x) { return item(x, canV() ? 'all' : x.by === B.me.id ? 'mine' : 'view'); }).join('') + '</div>' : '<div class="lv-empty">' + ic('fa-mug-hot') + 'ไม่มีรายการในช่วงนี้</div>') + '</div>';
     put(body, h);
   }
   // ---------- 2.33.0: รายการที่อนุมัติแล้ว (ครูดูอย่างเดียว) ----------
   async function showApproved() {
     var r = rangeOf(), key = r.join('|') + '|' + (st.q || '');
-    if (!D.appr || D.appr.key !== key) { loading(); var it = await load('approved', { scope: 'approved', from: r[0], to: r[1], q: st.q || '' }); if (!it) return; D.appr = { key: key, items: it }; }
-    if (st.tab !== 'approved') return;
+    if ((!D.appr || D.appr.key !== key) && CACHE.appr[key]) D.appr = { key: key, items: CACHE.appr[key] };
+    if (!D.appr || D.appr.key !== key) { loading(); var it = await load('approved', { scope: 'approved', from: r[0], to: r[1], q: st.q || '' }); if (!it) return; CACHE.appr[key] = it; D.appr = { key: key, items: it }; }
+    if (st.tab !== 'approved' || D.appr.key !== rangeOf().join('|') + '|' + (st.q || '')) return;
     var L = D.appr.items;
     var h = '<p class="hint" style="margin:0 0 10px">' + ic('fa-eye') + ' ดูอย่างเดียว — คำขอเวลาเรียนที่อนุมัติแล้วทั้งโรงเรียน ใช้ตรวจสอบหลักฐาน / ตอนสอนแทน</p>' +
       '<div class="cc-flt"><div class="cc-seg">' + [['week', 'สัปดาห์นี้'], ['month', 'เดือนนี้'], ['all', 'ทั้งหมด'], ['custom', 'กำหนดเอง']].map(function (x) { return '<button type="button" data-rt-rg="' + x[0] + '"' + (st.range === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') + '</div>' +
@@ -219,8 +233,12 @@
     F.teacherId = edit ? edit.teacherId || '' : '';
     F.memoId = edit && edit.memoId && edit.fromMemo ? edit.memoId : ''; F.ownerName = edit ? edit.ownerName || '' : ''; F.editPending = !!(edit && edit.id); // 2.33.0
     F.appr = { apprName: '', apprPos: '', docNo: edit && edit.fromMemo ? edit.docNo || '' : '', docDate: edit && edit.fromMemo ? edit.docDate || '' : '' };
-    document.getElementById('lvModalTitle').innerHTML = ic('fa-person-running') + ' ' + (edit && edit.id ? 'แก้ไขคำขอเวลาเรียน' : B.isAdmin ? 'ลงข้อมูลขอเวลาเรียน' : 'ขอเวลาเรียนให้นักเรียน');
-    document.getElementById('lvModalActs').innerHTML = '<button type="button" class="btn btn-ghost" data-rt-close>ยกเลิก</button><button type="button" class="btn btn-success" data-rt-send>' + ic(B.isAdmin ? 'fa-check' : 'fa-paper-plane') + ' ' + (edit && edit.id ? 'บันทึกการแก้ไข' : B.isAdmin ? 'บันทึก (อนุมัติทันที)' : 'ส่งขออนุมัติ') + '</button>';
+    F.note = edit ? edit.note || '' : ''; // 2.34.0
+    F.self = edit && edit.id ? edit.src === 'self' : !!B.selfPath; F.status = edit && edit.id ? edit.status : '';
+    if (F.self && edit && edit.id) F.appr = { apprName: edit.apprName || '', apprPos: edit.apprPos || '', docNo: edit.docNo || '', docDate: edit.docDate || '' };
+    document.getElementById('lvModalTitle').innerHTML = ic('fa-person-running') + ' ' + (edit && edit.id ? (F.self ? 'แก้ไขรายงานขอเวลาเรียน' : 'แก้ไขคำขอเวลาเรียน') : B.isAdmin ? 'ลงข้อมูลขอเวลาเรียน' : F.self ? 'รายงานขอเวลาเรียน (แนบหนังสือที่ลงนามแล้ว)' : 'ขอเวลาเรียนให้นักเรียน');
+    var sendTxt = edit && edit.id ? (F.self && (F.status === 'suspended' || F.status === 'review') ? 'บันทึกการแก้ไข (ส่งให้ผู้ดูแลตรวจ)' : 'บันทึกการแก้ไข') : B.isAdmin ? 'บันทึก (อนุมัติทันที)' : F.self ? 'บันทึก (มีผลทันที)' : 'ส่งขออนุมัติ';
+    document.getElementById('lvModalActs').innerHTML = '<button type="button" class="btn btn-ghost" data-rt-close>ยกเลิก</button><button type="button" class="btn btn-success" data-rt-send>' + ic(B.isAdmin || F.self ? 'fa-check' : 'fa-paper-plane') + ' ' + sendTxt + '</button>';
     renderForm(); showModalEl(modal);
     if (!STU) {
       try { STU = (await apiCall('rtStudents', {})).students || []; } catch (e) { STU = null; var pk = document.getElementById('rtPick'); if (pk) pk.innerHTML = err(e.message); return; }
@@ -229,12 +247,14 @@
   }
   function rooms() { var o = {}; (STU || []).forEach(function (s) { o[s.roomId] = s.room; }); return Object.keys(o).sort(function (a, b) { var x = /m(\d+)_(\d+)/.exec(a) || [0, 0, 0], y = /m(\d+)_(\d+)/.exec(b) || [0, 0, 0]; return x[1] - y[1] || x[2] - y[2]; }).map(function (k) { return [k, o[k]]; }); }
   function roomOpts() { return '<option value="">ทุกห้อง</option>' + rooms().map(function (r) { return '<option value="' + esc(r[0]) + '"' + (F.room === r[0] ? ' selected' : '') + '>' + esc(r[1]) + '</option>'; }).join(''); }
-  function formRead() { if (!F) return; var ap = apprRead(modal); if (ap) F.appr = ap; var g = function (id) { var e = document.getElementById(id); return e ? e.value : null; }, v; if ((v = g('rtT')) !== null) F.title = v; if ((v = g('rtF')) !== null) F.from = v; if ((v = g('rtTo')) !== null) F.to = v; if ((v = g('rtTc')) !== null) F.teacherId = v; }
+  function formRead() { if (!F) return; var ap = apprRead(modal); if (ap) F.appr = ap; var g = function (id) { var e = document.getElementById(id); return e ? e.value : null; }, v; if ((v = g('rtT')) !== null) F.title = v; if ((v = g('rtF')) !== null) F.from = v; if ((v = g('rtTo')) !== null) F.to = v; if ((v = g('rtTc')) !== null) F.teacherId = v; if ((v = g('rtNt')) !== null) F.note = v; }
   function renderForm() {
     var ws = B.weekStart;
     var h = '<div class="lv-f"><label class="lb" for="rtT">กิจกรรม / เหตุผล <span class="lv-req">*</span></label><input type="text" id="rtT" maxlength="200" placeholder="เช่น ซ้อมแข่งฟุตซอล รายการกีฬานักเรียน สพม.บึงกาฬ" value="' + esc(F.title) + '">' +
       (B.isAdmin ? '<label class="lb" for="rtTc">ครูผู้ควบคุม <span class="lv-opt">(ไม่บังคับ' + (B.showTeacher ? ' · แสดงในป้ายหน้าเช็คชื่อ' : ' · ตอนนี้ตั้งไม่แสดงในหน้าเช็คชื่อ') + ')</span></label><select id="rtTc"><option value="">— ไม่ระบุ —</option>' + (B.people || []).map(function (u) { return '<option value="' + esc(u.id) + '"' + (F.teacherId === u.id ? ' selected' : '') + '>' + esc(u.name) + '</option>'; }).join('') + '</select>' : '') +
-      ((B.isAdmin || B.manage) && !F.editPending ? apprPickHtml(F.appr) : '') +
+      '<label class="lb" for="rtNt">รายละเอียด ' + (F.self ? '<span class="lv-req">*</span>' : '<span class="lv-opt">(ไม่บังคับ)</span>') + '</label><textarea id="rtNt" rows="2" maxlength="500" placeholder="เช่น ซ้อมวอลเลย์บอลหญิง เพื่อแข่งกีฬานักเรียน สพม.บึงกาฬ ที่โรงเรียนบึงกาฬ">' + esc(F.note || '') + '</textarea>' + // 2.34.0
+      (F.self || ((B.isAdmin || B.manage) && !F.editPending) ? apprPickHtml(F.appr) : '') +
+      (F.self && (F.status === 'suspended' || F.status === 'review') ? '<p class="lv-note" style="margin:8px 0 0;color:#b45309">' + ic('fa-ban') + ' รายการนี้ถูกระงับ — บันทึกการแก้ไขแล้วจะขึ้นเป็น "รอผู้ดูแลตรวจ" และยังไม่มีผลจนกว่าผู้ดูแลจะยกเลิกการระงับ</p>' : '') +
       (F.memoId ? '<p class="lv-note" style="margin:8px 0 0">' + ic('fa-file-lines') + ' จากใบบันทึกข้อความของ ' + esc(F.ownerName || '') + ' — ตรวจรายชื่อ / วัน / คาบ ให้ตรงกับที่ผู้บริหารอนุมัติ</p>' : '') +
       '<div class="lv-row"><div><label class="lb" for="rtF">ตั้งแต่วันที่</label><input type="date" id="rtF" min="' + esc(ws) + '" value="' + esc(F.from) + '"></div><div><label class="lb" for="rtTo">ถึงวันที่</label><input type="date" id="rtTo" min="' + esc(ws) + '" value="' + esc(F.to) + '"></div></div>' +
       '<p class="lv-note" id="rtDays" style="margin:6px 0 0"></p>' +
@@ -242,7 +262,7 @@
       '<label class="lb">นักเรียน <span class="mut" style="font-weight:500" id="rtCnt"></span></label>' +
       '<div class="lv-row"><div style="flex:0 0 150px;min-width:130px"><select id="rtRoom" aria-label="ห้อง">' + roomOpts() + '</select></div><div><input type="search" id="rtQ" placeholder="พิมพ์ชื่อ หรือเลขประจำตัว" value="' + esc(F.q) + '" autocomplete="off"></div></div>' +
       '<div class="rt-pick" id="rtPick"></div><div id="rtSel"></div>' +
-      '<label class="lb">หนังสือเชิญ / คำสั่ง <span class="lv-opt">(ถ้ามี)</span></label><div id="rtDoc"></div></div>';
+      (F.self ? '<label class="lb">หนังสือขอเวลาเรียนที่ผู้บริหารลงนามแล้ว <span class="lv-req">*</span></label>' : '<label class="lb">หนังสือเชิญ / คำสั่ง <span class="lv-opt">(ถ้ามี)</span></label>') + '<div id="rtDoc"></div></div>';
     document.getElementById('lvModalBody').innerHTML = h; paintDays(); paintPick(); paintSel(); paintDoc();
   }
   function paintDays() {
@@ -257,11 +277,18 @@
     if (!F.room && !q) { el.innerHTML = '<div><span class="mut">เลือกห้อง หรือพิมพ์ชื่อ / เลขประจำตัวเพื่อค้นหา</span></div>'; return; }
     var L = STU.filter(function (s) { return (!F.room || s.roomId === F.room) && (!q || (s.name + ' ' + s.code).toLowerCase().indexOf(q) !== -1); });
     var h = '';
-    if (F.room && !q) { var left = L.filter(function (s) { return !F.sel[s.id]; }).length; h += '<div><i class="fa-solid fa-users" style="color:var(--primary)"></i><span>ทั้งห้อง ' + esc((L[0] || {}).room || '') + ' (' + L.length + ' คน)</span>' + (left ? '<button type="button" class="btn btn-secondary btn-sm" data-rt-addroom>เพิ่มทั้งห้อง</button>' : '<span class="rt-ok">เลือกครบแล้ว</span>') + '</div>'; }
-    h += L.slice(0, 60).map(function (s) { var on = !!F.sel[s.id]; return '<div' + (on ? ' class="on"' : '') + '>' + ic(on ? 'fa-circle-check' : 'fa-user') + '<span>' + esc(s.name) + ' <small>' + esc(s.room) + (s.code ? ' · ' + esc(s.code) : '') + '</small></span>' + (on ? '<button type="button" class="btn btn-ghost btn-sm" data-rt-rm="' + esc(s.id) + '">เอาออก</button>' : '<button type="button" class="btn btn-secondary btn-sm" data-rt-add="' + esc(s.id) + '">เพิ่ม</button>') + '</div>'; }).join('');
+    if (F.room && !q) { var left = L.filter(function (s) { return !F.sel[s.id]; }).length; h += '<div data-rt-hdr><i class="fa-solid fa-users" style="color:var(--primary)"></i><span>ทั้งห้อง ' + esc((L[0] || {}).room || '') + ' (' + L.length + ' คน)</span>' + (left ? '<button type="button" class="btn btn-secondary btn-sm" data-rt-addroom>เพิ่มทั้งห้อง</button>' : '<span class="rt-ok">เลือกครบแล้ว</span>') + '</div>'; }
+    h += L.slice(0, 60).map(pickRow).join('');
     if (L.length > 60) h += '<div><span class="mut">แสดง 60 จาก ' + L.length + ' คน — พิมพ์เพิ่มเพื่อค้นให้แคบลง</span></div>';
     if (!L.length) h += '<div><span class="mut">ไม่พบนักเรียน</span></div>';
     el.innerHTML = h;
+  }
+  function pickRow(s) { var on = !!F.sel[s.id]; return '<div data-psid="' + esc(s.id) + '"' + (on ? ' class="on"' : '') + '>' + ic(on ? 'fa-circle-check' : 'fa-user') + '<span>' + esc(s.name) + ' <small>' + esc(s.room) + (s.code ? ' · ' + esc(s.code) : '') + '</small></span>' + (on ? '<button type="button" class="btn btn-ghost btn-sm" data-rt-rm="' + esc(s.id) + '">เอาออก</button>' : '<button type="button" class="btn btn-secondary btn-sm" data-rt-add="' + esc(s.id) + '">เพิ่ม</button>') + '</div>'; }
+  // 2.34.0: เพิ่ม / เอาออกทีละคน = เปลี่ยนเฉพาะแถวนั้น (ไม่วาดทั้งรายการ — กันกระพริบ / เลื่อนหาย)
+  function patchPick(ids) {
+    var el = document.getElementById('rtPick'); if (!el || !STU) return;
+    var hd = el.querySelector('[data-rt-hdr]'); if (hd) { paintPick(); return; } // ทั้งห้อง: ตัวนับ "เพิ่มทั้งห้อง" ต้องคำนวณใหม่ — วาดทั้งรายการ (scroll ยังอยู่)
+    ids.forEach(function (id) { var row = el.querySelector('[data-psid="' + id + '"]'), s = STU.filter(function (x) { return x.id === id; })[0]; if (row && s) row.outerHTML = pickRow(s); });
   }
   function paintSel() {
     var el = document.getElementById('rtSel'); if (!el) return;
@@ -272,7 +299,7 @@
   }
   function paintDoc() {
     var el = document.getElementById('rtDoc'); if (!el) return; var f = F.doc;
-    el.innerHTML = '<div class="lv-drop' + (f ? ' ok' : '') + '">' + ic(f ? 'fa-circle-check' : 'fa-file-arrow-up') + '<div class="lv-dt">' + (f ? '<b>' + esc(f.name) + '</b><div class="lv-note">อัปโหลดแล้ว</div>' : 'รูปหรือ PDF (ไม่บังคับ)') + '</div><button type="button" class="btn btn-secondary btn-sm" data-rt-doc>' + ic('fa-upload') + ' ' + (f ? 'เปลี่ยนไฟล์' : 'เลือกไฟล์') + '</button>' + (f ? '<button type="button" class="btn btn-ghost btn-sm" data-rt-docrm>เอาออก</button>' : '') + '</div>';
+    el.innerHTML = '<div class="lv-drop' + (f ? ' ok' : '') + '">' + ic(f ? 'fa-circle-check' : 'fa-file-arrow-up') + '<div class="lv-dt">' + (f ? '<b>' + esc(f.name) + '</b><div class="lv-note">อัปโหลดแล้ว</div>' : F.self ? 'ถ่ายรูป หรือสแกนเป็น PDF (บังคับ)' : 'รูปหรือ PDF (ไม่บังคับ)') + '</div><button type="button" class="btn btn-secondary btn-sm" data-rt-doc>' + ic('fa-upload') + ' ' + (f ? 'เปลี่ยนไฟล์' : 'เลือกไฟล์') + '</button>' + (f ? '<button type="button" class="btn btn-ghost btn-sm" data-rt-docrm>เอาออก</button>' : '') + '</div>';
   }
   function addStu(s) { if (!F.sel[s.id]) { F.sel[s.id] = { id: s.id, name: s.name, roomId: s.roomId, room: s.room, code: s.code }; F.order.push(s.id); } }
   function rmStu(id) { delete F.sel[id]; F.order = F.order.filter(function (x) { return x !== id; }); }
@@ -284,11 +311,13 @@
     if (!F.allDay && !F.periods.length) { showToast('กรุณาเลือกคาบ หรือเลือก "ทั้งวัน"', true); return; }
     var stu = F.order.map(function (id) { return F.sel[id]; }).filter(Boolean);
     if (!stu.length) { showToast('กรุณาเลือกนักเรียนอย่างน้อย 1 คน', true); return; }
-    if ((B.isAdmin || B.manage) && !F.id && !(F.appr && F.appr.apprName)) { showToast('กรุณาเลือกผู้อนุมัติ (ตามหนังสือ)', true); return; }
-    var p = { id: F.id, memoId: F.memoId || '', apprName: F.appr ? F.appr.apprName : '', apprPos: F.appr ? F.appr.apprPos : '', docNo: F.appr ? F.appr.docNo : '', docDate: F.appr ? F.appr.docDate : '', teacherId: F.teacherId || '', title: F.title, from: F.from, to: F.to || F.from, periods: F.allDay ? [] : F.periods, students: stu, doc: F.doc && F.doc.id && !F.keepDoc ? { id: F.doc.id } : null, keepDoc: F.keepDoc };
+    if ((F.self || ((B.isAdmin || B.manage) && !F.id)) && !(F.appr && F.appr.apprName)) { showToast('กรุณาเลือกผู้อนุมัติ (ตามหนังสือ)', true); return; }
+    if (F.self && !(F.note || '').trim()) { showToast('กรุณาใส่รายละเอียด (ซ้อมอะไร / แข่งรายการอะไร)', true); return; } // 2.34.0
+    if (F.self && !F.doc) { showToast('กรุณาแนบหนังสือที่ผู้บริหารลงนามแล้ว (รูปถ่าย / สแกน PDF)', true); return; }
+    var p = { id: F.id, note: F.note || '', memoId: F.memoId || '', apprName: F.appr ? F.appr.apprName : '', apprPos: F.appr ? F.appr.apprPos : '', docNo: F.appr ? F.appr.docNo : '', docDate: F.appr ? F.appr.docDate : '', teacherId: F.teacherId || '', title: F.title, from: F.from, to: F.to || F.from, periods: F.allDay ? [] : F.periods, students: stu, doc: F.doc && F.doc.id && !F.keepDoc ? { id: F.doc.id } : null, keepDoc: F.keepDoc };
     hideModalEl(modal);
-    var r = await withProgress(B.isAdmin ? 'กำลังบันทึกและส่งไปเว็บเช็คชื่อ' : 'กำลังส่งคำขอ', function () { return apiCall('rtSave', p); }, { successLabel: F.id ? 'บันทึกการแก้ไขแล้ว' : B.isAdmin ? 'บันทึกแล้ว (อนุมัติแล้ว)' : 'ส่งคำขอแล้ว — รอผู้ดูแลอนุมัติ' });
-    if (!r.ok && B.isAdmin && !F.id && /เว็บเช็คชื่อ/.test((r.error && r.error.message) || '')) { F = null; reload(); return; } // บันทึกแล้วแต่ส่งไปเว็บเช็คชื่อไม่สำเร็จ = อยู่ในรออนุมัติ
+    var r = await withProgress(B.isAdmin || F.self ? 'กำลังบันทึกและส่งไปเว็บเช็คชื่อ' : 'กำลังส่งคำขอ', function () { return apiCall('rtSave', p); }, { successLabel: F.id ? (F.self && (F.status === 'suspended' || F.status === 'review') ? 'บันทึกแล้ว — รอผู้ดูแลตรวจ' : 'บันทึกการแก้ไขแล้ว') : B.isAdmin ? 'บันทึกแล้ว (อนุมัติแล้ว)' : F.self ? 'บันทึกแล้ว — มีผลกับหน้าเช็คชื่อแล้ว' : 'ส่งคำขอแล้ว — รอผู้ดูแลอนุมัติ' });
+    if (!r.ok && (B.isAdmin || F.self) && !F.id && /เว็บเช็คชื่อ/.test((r.error && r.error.message) || '')) { F = null; reload(); return; } // บันทึกแล้วแต่ส่งไปเว็บเช็คชื่อไม่สำเร็จ = อยู่ในรออนุมัติ
     if (!r.ok) { showModalEl(modal); return; }
     F = null; reload();
   }
@@ -303,11 +332,31 @@
     }, { upload: true, successLabel: 'อัปโหลดแล้ว' });
     F.busy = false; if (r.ok) { F.doc = r.data; F.keepDoc = false; } renderForm(); showModalEl(modal);
   });
-  function find(id) { return [].concat(D.mine || [], D.pending || [], D.all ? D.all.items : []).filter(function (x) { return x.id === id; })[0] || null; }
+  function find(id) { return [].concat(D.mine || [], D.pending || [], D.all ? D.all.items : [], D.appr ? D.appr.items : []).filter(function (x) { return x.id === id; })[0] || null; }
   async function viewList(id) {
     var d; try { d = (await apiCall('rtDetail', { id: id })).item; } catch (e) { showToast(e.message, true); return; }
     var m = document.createElement('div'); m.className = 'modal-backdrop'; m.hidden = true;
-    m.innerHTML = '<div class="modal-box" style="text-align:left;max-width:560px"><button type="button" class="modal-close-x" data-x aria-label="ปิด">✕</button><h3>' + ic('fa-users') + ' ' + esc(d.title) + '</h3><p class="lv-note">' + thRange(d.from, d.to) + ' · ' + perTxt(d.periods) + ' · ' + d.n + ' คน' + (d.teacherName ? ' · ครูผู้ควบคุม ' + esc(d.teacherName) : '') + '</p>' + (d.apprName ? '<p class="lv-note" style="margin-top:-6px">' + ic('fa-signature') + ' อนุมัติโดย ' + esc(d.apprName) + (d.apprPos ? ' ' + esc(d.apprPos) : '') + ' (ตามหนังสือ)' + (d.docNo ? ' · หนังสือที่ ' + esc(d.docNo) : '') + '</p>' : '') + (d.doc ? '<p style="margin:0 0 8px"><a class="lv-file" href="' + esc(d.doc.url) + '" target="_blank" rel="noopener">' + ic('fa-file-lines') + ' ' + esc(d.doc.name) + '</a></p>' : '') + '<div style="max-height:55vh;overflow:auto"><table class="rt-tb"><thead><tr><th>#</th><th>นักเรียน</th><th>ห้อง</th></tr></thead><tbody>' + (d.students || []).map(function (s, i) { return '<tr><td>' + (i + 1) + '</td><td>' + esc(s.name) + '</td><td>' + esc(s.room) + '</td></tr>'; }).join('') + '</tbody></table></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-x>ปิด</button></div></div>';
+    m.innerHTML = '<div class="modal-box" style="text-align:left;max-width:560px"><button type="button" class="modal-close-x" data-x aria-label="ปิด">✕</button><h3>' + ic('fa-users') + ' ' + esc(d.title) + '</h3><p class="lv-note">' + thRange(d.from, d.to) + ' · ' + perTxt(d.periods) + ' · ' + d.n + ' คน' + (d.teacherName ? ' · ครูผู้ควบคุม ' + esc(d.teacherName) : '') + '</p>' + (d.apprName ? '<p class="lv-note" style="margin-top:-6px">' + ic('fa-signature') + ' อนุมัติโดย ' + esc(d.apprName) + (d.apprPos ? ' ' + esc(d.apprPos) : '') + ' (ตามหนังสือ)' + (d.docNo ? ' · หนังสือที่ ' + esc(d.docNo) : '') + '</p>' : '') + (d.note ? '<p class="lv-note" style="margin-top:-6px">' + ic('fa-align-left') + ' ' + esc(d.note) + '</p>' : '') + (d.doc ? '<p style="margin:0 0 8px">' + docChip(d.doc, 'fa-file-lines') + '</p>' : '') + '<div style="max-height:55vh;overflow:auto"><table class="rt-tb"><thead><tr><th>#</th><th>นักเรียน</th><th>ห้อง</th></tr></thead><tbody>' + (d.students || []).map(function (s, i) { return '<tr><td>' + (i + 1) + '</td><td>' + esc(s.name) + '</td><td>' + esc(s.room) + '</td></tr>'; }).join('') + '</tbody></table></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-x>ปิด</button></div></div>';
+    document.body.appendChild(m); showModalEl(m);
+    m.addEventListener('click', function (e) { if (e.target.closest('[data-x]')) { hideModalEl(m); setTimeout(function () { m.remove(); }, 300); } });
+  }
+  // 2.34.0: ระงับ (ใส่เหตุผล) · ประวัติรายการ
+  function suspendAsk(x) {
+    var m = document.createElement('div'); m.className = 'modal-backdrop'; m.hidden = true;
+    m.innerHTML = '<div class="modal-box" style="text-align:left"><button type="button" class="modal-close-x" data-x aria-label="ปิด">✕</button><h3>' + ic('fa-ban') + ' ระงับรายการ</h3><p>' + esc(x.byName) + ' · ' + esc(x.title) + '</p><p class="lv-note">สิทธิ์ "ร่วมกิจกรรม" ในหน้าเช็คชื่อหยุดทันที · คาบที่ระบบเปลี่ยนจาก "ขาด" เป็นร่วมกิจกรรมให้ จะกลับเป็น "ขาด" (คาบที่ครูประจำวิชาบันทึกเองไม่เปลี่ยน) · ครูได้กระดิ่งพร้อมเหตุผล</p><label class="lv-note" for="rtSr">เหตุผล (ครูเจ้าของรายการจะเห็น)</label><input type="text" id="rtSr" maxlength="300" style="width:100%;box-sizing:border-box"><div class="modal-actions"><button type="button" class="btn btn-ghost" data-x>ยกเลิก</button><button type="button" class="btn btn-danger" data-ok>' + ic('fa-ban') + ' ระงับ</button></div></div>';
+    document.body.appendChild(m); showModalEl(m); setTimeout(function () { var i = document.getElementById('rtSr'); if (i) i.focus(); }, 50);
+    m.addEventListener('click', async function (e) {
+      if (e.target.closest('[data-x]')) { hideModalEl(m); setTimeout(function () { m.remove(); }, 300); return; }
+      if (!e.target.closest('[data-ok]')) return;
+      var why = document.getElementById('rtSr').value.trim(); if (!why) { showToast('กรุณาใส่เหตุผล', true); return; }
+      hideModalEl(m); setTimeout(function () { m.remove(); }, 300);
+      var r = await withProgress('กำลังระงับ', function () { return apiCall('rtSuspend', { id: x.id, reason: why }); }, { successLabel: 'ระงับแล้ว (แจ้งครูทางกระดิ่ง)' });
+      if (r.ok) reload();
+    });
+  }
+  function histShow(x) {
+    var m = document.createElement('div'); m.className = 'modal-backdrop'; m.hidden = true; var H = { create: 'ลงข้อมูล', edit: 'แก้ไข', suspend: 'ระงับ', unsuspend: 'ยกเลิกการระงับ', review: 'แก้ไขหลังถูกระงับ (รอตรวจ)' };
+    m.innerHTML = '<div class="modal-box" style="text-align:left;max-width:520px"><button type="button" class="modal-close-x" data-x aria-label="ปิด">✕</button><h3>' + ic('fa-clock-rotate-left') + ' ประวัติรายการ</h3><p class="lv-note">' + esc(x.title) + '</p><div class="rt-hist">' + (x.hist || []).slice().reverse().map(function (h) { return '<div><b>' + esc(H[h.a] || h.a) + '</b> · ' + esc(h.by || '-') + ' · ' + thTime(h.at) + (h.t ? '<div class="lv-note">' + esc(h.t) + '</div>' : '') + '</div>'; }).join('') + '</div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-x>ปิด</button></div></div>';
     document.body.appendChild(m); showModalEl(m);
     m.addEventListener('click', function (e) { if (e.target.closest('[data-x]')) { hideModalEl(m); setTimeout(function () { m.remove(); }, 300); } });
   }
@@ -334,9 +383,9 @@
     if (F && modal.contains(e.target)) {
       if (e.target.closest('[data-rt-all]')) { F.allDay = !F.allDay; if (F.allDay) F.periods = []; modal.querySelectorAll('[data-rt-p]').forEach(function (b) { b.classList.remove('on'); }); e.target.closest('[data-rt-all]').classList.toggle('on', F.allDay); return; }
       if ((t = e.target.closest('[data-rt-p]'))) { var p = +t.getAttribute('data-rt-p'), i = F.periods.indexOf(p); if (i === -1) F.periods.push(p); else F.periods.splice(i, 1); F.periods.sort(function (a, b) { return a - b; }); F.allDay = false; t.classList.toggle('on', i === -1); var ab = modal.querySelector('[data-rt-all]'); if (ab) ab.classList.remove('on'); return; }
-      if ((t = e.target.closest('[data-rt-add]'))) { var s = STU.filter(function (x) { return x.id === t.getAttribute('data-rt-add'); })[0]; if (s) addStu(s); paintPick(); paintSel(); return; }
+      if ((t = e.target.closest('[data-rt-add]'))) { var s = STU.filter(function (x) { return x.id === t.getAttribute('data-rt-add'); })[0]; if (s) addStu(s); patchPick([t.getAttribute('data-rt-add')]); paintSel(); return; }
       if (e.target.closest('[data-rt-addroom]')) { STU.filter(function (x) { return x.roomId === F.room; }).forEach(addStu); paintPick(); paintSel(); return; }
-      if ((t = e.target.closest('[data-rt-rm]'))) { rmStu(t.getAttribute('data-rt-rm')); paintPick(); paintSel(); return; }
+      if ((t = e.target.closest('[data-rt-rm]'))) { rmStu(t.getAttribute('data-rt-rm')); patchPick([t.getAttribute('data-rt-rm')]); paintSel(); return; }
       if ((t = e.target.closest('[data-rt-rmroom]'))) { var rn = t.getAttribute('data-rt-rmroom'); F.order.slice().forEach(function (id) { if (F.sel[id] && F.sel[id].room === rn) rmStu(id); }); paintPick(); paintSel(); return; }
       if (e.target.closest('[data-rt-doc]')) { fileIn.click(); return; }
       if (e.target.closest('[data-rt-docrm]')) { F.doc = null; F.keepDoc = false; paintDoc(); return; }
@@ -358,8 +407,16 @@
       return;
     }
     if ((t = e.target.closest('[data-rt-no]'))) { var y = find(t.getAttribute('data-rt-no')); if (y) rejectAsk(y); return; }
+    if ((t = e.target.closest('[data-rt-susp]'))) { var ys = find(t.getAttribute('data-rt-susp')); if (ys) suspendAsk(ys); return; } // 2.34.0
+    if ((t = e.target.closest('[data-rt-hist]'))) { var yh = find(t.getAttribute('data-rt-hist')); if (yh) histShow(yh); return; }
+    if ((t = e.target.closest('[data-rt-unsusp]'))) {
+      var yu = find(t.getAttribute('data-rt-unsusp')); if (!yu) return;
+      if (!(await askConfirm('ยกเลิกการระงับ <b>' + esc(yu.title) + '</b>?<br>รายการกลับมามีผล — หน้าเช็คชื่อเลือก "ร่วมกิจกรรม" ให้อีกครั้ง · ครูได้กระดิ่ง', 'ยกเลิกการระงับ'))) return;
+      var ru = await withProgress('กำลังบันทึกและส่งไปเว็บเช็คชื่อ', function () { return apiCall('rtUnsuspend', { id: yu.id }); }, { successLabel: 'ยกเลิกการระงับแล้ว' });
+      if (ru.ok) reload(); return;
+    }
     if ((t = e.target.closest('[data-rt-cancel]'))) {
-      var z = find(t.getAttribute('data-rt-cancel')); if (!z) return; var mineP = z.by === B.me.id && z.status === 'pending';
+      var z = find(t.getAttribute('data-rt-cancel')); if (!z) return; var mineP = z.by === B.me.id && z.status === 'pending' && z.src !== 'self';
       if (!(await askConfirm((mineP ? 'ยกเลิกคำขอ' : 'ลบรายการ') + ' <b>' + esc(z.title) + '</b>' + (z.status === 'approved' ? '<br>คาบที่ระบบเปลี่ยนเป็น "ร่วมกิจกรรม" ให้ จะกลับเป็น "ขาด" (เฉพาะที่ครูยังไม่ได้แก้)' : ''), mineP ? 'ยกเลิกคำขอ' : 'ลบรายการ'))) return;
       var rc = await withProgress('กำลังลบ', function () { return apiCall('rtCancel', { id: z.id }); }, { successLabel: 'ลบแล้ว' });
       if (rc.ok) reload();

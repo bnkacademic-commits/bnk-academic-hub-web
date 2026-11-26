@@ -2147,7 +2147,7 @@ table.sum-files td.a { width: 1%; }
 .cert-alert > div { flex: 1; min-width: 0; }
 .cert-alert-btn { background: var(--surface); color: #92400e; border: 1px solid #fcd34d; white-space: nowrap; }
 :root[data-theme="dark"] .cert-alert, :root[data-theme="dark"] .cert-alert-btn { color: var(--warn); border-color: var(--border); }
-.ordc-chip.cert-nochip { background: var(--primary-light); color: var(--primary-dark); border-color: transparent; font-family: Inter, 'Noto Sans Thai', sans-serif; }
+.ordc-chip.cert-nochip { background: var(--primary-light); color: var(--primary-dark); border-color: transparent; font-family: 'Noto Sans Thai', sans-serif; }
 .ordc-chip.cert-miss { background: var(--warn-light); color: #b45309; border-color: #fcd34d; }
 .ordc-chip.cert-cancel { background: var(--danger-light); color: var(--danger); border-color: transparent; }
 :root[data-theme="dark"] .ordc-chip.cert-miss { color: var(--warn); border-color: var(--border); background: var(--surface-2); }
@@ -2165,7 +2165,7 @@ table.cert-items tr.off td { color: var(--text-muted); }
 table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-decoration: line-through; }
 .cert-it-name { font-weight: 700; }
 .cert-it-file { margin-left: 4px; font-size: 0.85rem; }
-.cert-no { display: inline-block; font-family: Inter, 'Noto Sans Thai', sans-serif; font-weight: 700; font-size: 0.8rem; color: var(--primary-dark); background: var(--primary-light); border-radius: 8px; padding: 4px 8px; white-space: nowrap; text-align: center; }
+.cert-no { display: inline-block; font-family: 'Noto Sans Thai', sans-serif; font-weight: 700; font-size: 0.8rem; color: var(--primary-dark); background: var(--primary-light); border-radius: 8px; padding: 4px 8px; white-space: nowrap; text-align: center; }
 .cert-no.preview { background: transparent; border: 1px dashed var(--primary); }
 .cert-no.empty { background: transparent; color: var(--text-muted); }
 /* ป็อปอัป: รายการแข่งขัน + ผู้ได้รับ */
@@ -2220,7 +2220,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .cert-share-lb { display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
 .cert-share-link { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
 .cert-share-link > i { color: var(--primary); }
-.cert-share-link span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: Inter, sans-serif; font-size: 0.84rem; }
+.cert-share-link span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'Noto Sans Thai', sans-serif; font-size: 0.84rem; }
 .cert-share-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .cert-share-qr { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .cert-share-qr #certShareQr { padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: 12px; }
@@ -2275,7 +2275,7 @@ table.cert-items tr.off .cert-no, table.cert-items tr.off .cert-it-name { text-d
 .certno-toks { display: flex; gap: 8px; flex-wrap: wrap; margin-top: -4px; }
 .certno-toks button { display: inline-flex; gap: 6px; align-items: center; border: 1px dashed var(--primary); background: var(--surface); color: var(--primary-dark); border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
 .certno-prev { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px; border-radius: 14px; background: var(--primary-light); }
-.certno-prev b { font-family: Inter, 'Noto Sans Thai', sans-serif; font-size: 1.5rem; color: var(--primary-dark); letter-spacing: 0.5px; }
+.certno-prev b { font-family: 'Noto Sans Thai', sans-serif; font-size: 1.5rem; color: var(--primary-dark); letter-spacing: 0.5px; }
 .pubc-embed .pubc-topbar, .pubc-embed #app-footer { display: none !important; }
 .modal-box.modal-box-wide.cert-modal { max-width: 860px; }
 .modal-box.modal-box-wide.cert-share-box { max-width: 720px; }
@@ -2990,7 +2990,7 @@ button.alb-pub:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 3
 .mn-img { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 2px 10px rgba(15, 23, 42, .08); cursor: zoom-in; background: #fff; }
 .mn-steps { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
 .mn-steps li { display: flex; align-items: flex-start; gap: 10px; line-height: 1.55; font-size: .9rem; }
-.mn-n { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #e11d48; color: #fff; font: 700 .75rem/22px Inter, sans-serif; text-align: center; margin-top: 1px; }
+.mn-n { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #e11d48; color: #fff; font: 700 .75rem/22px 'Noto Sans Thai', sans-serif; text-align: center; margin-top: 1px; }
 .mn-tips { background: color-mix(in srgb, #f59e0b 10%, var(--surface)); border: 1px solid color-mix(in srgb, #f59e0b 35%, var(--border)); border-radius: 12px; padding: 10px 14px; margin: 4px 0 16px; }
 .mn-tips-h { font-weight: 800; font-size: .86rem; color: #b45309; margin-bottom: 4px; }
 .mn-tips ul { margin: 0; padding-left: 20px; font-size: .88rem; line-height: 1.6; }
@@ -3740,7 +3740,7 @@ body.cert-reg-on .cert-toolbar, body.cert-reg-on #certFlt, body.cert-reg-on #cer
 .rg-tbl th { text-align: left; font-size: 0.76rem; color: var(--text-muted); padding: 9px 10px; border-bottom: 2px solid var(--border); white-space: nowrap; background: var(--surface-2); position: sticky; top: 0; }
 .rg-tbl td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .rg-tbl tr:last-child td { border-bottom: 0; }
-.rg-tbl td.no { font-family: Inter, 'Noto Sans Thai', sans-serif; font-weight: 700; color: var(--primary-dark); white-space: nowrap; }
+.rg-tbl td.no { font-family: 'Noto Sans Thai', sans-serif; font-weight: 700; color: var(--primary-dark); white-space: nowrap; }
 .rg-tbl td.cl, .rg-tbl td.dt { white-space: nowrap; }
 .rg-tbl td.kd { font-size: 0.8rem; color: var(--text-muted); }
 .rg-tbl tr.off td { opacity: 0.55; }
@@ -5694,3 +5694,22 @@ body.login-page .login-wrap { justify-content: center; }
   .login-card .hint.login-contact { margin-top: 8px; }
 }
 @media (max-width: 859px) and (max-height: 660px) { .login-sc-h { display: none; } .login-card label { margin-bottom: 2px; } }
+/* 2.34.0: ป้ายเตือนขอเวลาเรียน (วันนั้นมีลา / ขาดคาบอื่น) ในหน้าแก้เช็คชื่อ */
+.tc-gw { color: #b45309; font-size: .78rem; font-weight: 700; }
+[data-theme="dark"] .tc-gw { color: #fbbf24; }
+/* 2.34.1: ช่อง "ดูวิชาของ" (วิชาที่สอน) ไม่ล้นจอมือถือ */
+#tcFor { max-width: 100%; box-sizing: border-box; }
+@media (max-width: 600px) { #tcFor { width: min(240px, 62vw); min-width: 0; } .cb-tabs .cb-tools { min-width: 0; } }
+/* 2.34.2: จอทัช (มือถือ / แท็บเล็ต — นิ้วกด) — ปุ่มเล็กให้พื้นที่กดอย่างน้อย ~40px · จอคอม (เมาส์) ขนาดเดิม */
+@media (pointer: coarse) {
+  .tb-icon-btn, .topbar-right .refresh-btn { min-width: 40px; min-height: 40px; }
+  .nav-mv { width: 40px; height: 40px; }
+  .theme-sw { width: 40px; height: 40px; }
+  .dd-theme { min-height: 40px; }
+  .hm-chip button { min-width: 34px; min-height: 36px; }
+  .ov-ut { min-height: 36px; padding: 6px 2px; }
+  .ver-btn { min-height: 36px; padding: 8px 4px; }
+  .aw-yr .btn, .sb-nav { min-width: 40px; min-height: 40px; }
+  .btn-sm { min-height: 38px; }
+  .tab-btn, .cl-open-btn, .cal-rb, .cal-today-btn { min-height: 40px; }
+}

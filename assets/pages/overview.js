@@ -1,0 +1,342 @@
+/* ย้ายมาจากสคริปต์ในหน้า overview.html — 2.34.3 (ให้เบราว์เซอร์แคชได้ · รองรับ CSP) */
+  var session = requireLogin();
+  // เฉพาะ Super Admin — บทบาทอื่นไปหน้าแรกของตัวเอง
+  if (session && !(session.role === 'admin' && !session.hasHub)) { location.href = homePageFor(session); session = null; }
+  if (session) mountChrome('overview');
+  var $ = function (id) { return document.getElementById(id); };
+  function fmtBytes(b) {
+    if (b == null || !isFinite(b)) return '—';
+    var u = ['B', 'KB', 'MB', 'GB', 'TB'], i = 0; b = Number(b);
+    while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+    return (b >= 100 || i === 0 ? Math.round(b) : b.toFixed(1)) + ' ' + u[i];
+  }
+  function fmtN(n) {
+    if (n == null) return '—';
+    if (n >= 1e6) return (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + ' ล้าน';
+    return Number(n).toLocaleString('th-TH');
+  }
+  function verCmp(a, b) { var x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (var i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); } return 0; }
+  // การ์ดโควต้า: แถบสี เขียว < 60% · เหลือง 60–79% · แดง ≥ 80% (มีไอคอน + ตัวเลข % กำกับเสมอ ไม่ใช้สีอย่างเดียว)
+  function pctText(o) { var p = o.used / o.limit * 100; return p > 0 && p < 1 ? '<1%' : Math.min(100, Math.round(p)) + '%'; }
+  function quotaRow(o) {
+    var pct = o.limit ? Math.min(100, o.used / o.limit * 100) : null;
+    var lvl = pct == null ? '' : (pct >= 80 ? 'bad' : (pct >= 60 ? 'warn' : 'ok'));
+    return '<div class="ov-qr ' + lvl + '"><span class="ov-q-ic" style="background:' + o.color + '"><i class="fa-solid ' + o.icon + '" aria-hidden="true"></i></span>' +
+      '<div class="ov-qr-t"><b>' + escapeHtml(o.title) + '</b>' + (o.note ? '<small>' + escapeHtml(o.note) + '</small>' : '') + '</div>' +
+      (pct == null ? '<div></div>' : '<div class="ov-q-bar" role="progressbar" aria-valuenow="' + Math.round(pct) + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + escapeHtml(o.title) + '"><i style="width:' + Math.max(pct, 1) + '%"></i></div>') +
+      '<div class="ov-qr-u"><b>' + escapeHtml(o.usedText) + '</b>' + (o.limitText ? ' / ' + escapeHtml(o.limitText) : '') + '</div>' +
+      '<div class="ov-qr-p">' + (pct == null ? '' : pctText(o)) + '</div></div>';
+  }
+  function quotaCard(o) {
+    var pct = o.limit ? Math.min(100, Math.round(o.used / o.limit * 100)) : null;
+    var lvl = pct == null ? '' : (pct >= 80 ? 'bad' : (pct >= 60 ? 'warn' : 'ok'));
+    var stIcon = lvl === 'bad' ? 'fa-triangle-exclamation' : (lvl === 'warn' ? 'fa-circle-exclamation' : 'fa-circle-check');
+    return '<div class="ov-q ' + lvl + '"><div class="ov-q-h"><span class="ov-q-ic" style="background:' + o.color + '"><i class="fa-solid ' + o.icon + '" aria-hidden="true"></i></span><b>' + escapeHtml(o.title) + '</b>' +
+      (pct == null ? '' : '<span class="ov-q-p"><i class="fa-solid ' + stIcon + '" aria-hidden="true"></i> ' + pctText(o) + '</span>') + '</div>' +
+      '<div class="ov-q-v"><b>' + escapeHtml(o.usedText) + '</b>' + (o.limitText ? ' / ' + escapeHtml(o.limitText) : '') + '</div>' +
+      (pct == null ? '' : '<div class="ov-q-bar" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + escapeHtml(o.title) + '"><i style="width:' + Math.max(pct, 1) + '%"></i></div>') +
+      ((o.cardNote || o.note) ? '<div class="ov-q-n">' + escapeHtml(o.cardNote || o.note) + '</div>' : '') + '</div>';
+  }
+  var state = { qView: (function () { try { return localStorage.getItem('bnkah_ov_qview') === 'list' ? 'list' : 'cards'; } catch (e) { return 'cards'; } })(), ov: null, sys: null, sysMs: null, sysErr: '', cf: null, cfErr: '' };
+  function render() {
+    var ov = state.ov, sys = state.sys, cf = state.cf, alerts = [];
+    if (!ov) return;
+    var L = ov.limits || {};
+    // 1.79.1: โควต้า 2 กลุ่ม — พื้นที่จัดเก็บ (g:'s') / ใช้ไปวันนี้ (g:'d') · แสดงได้ 2 แบบ: การ์ด (A) / รายการ (B) กดสลับได้ จำไว้ในเครื่อง
+    var cards = [];
+    var st = (typeof _settingsCache !== 'undefined' && _settingsCache) || {};
+    if (sys && sys.relay && sys.relay.ok) {
+      var used = sys.relay.driveUsedBytes, lim = Number(st.driveQuotaBytes || 0) || sys.relay.driveLimitBytes;
+      cards.push({ g: 's', title: 'Google Drive', icon: 'fa-hard-drive', color: '#16a34a', used: used || 0, limit: lim || 0, usedText: fmtBytes(used), limitText: lim ? fmtBytes(lim) : '', note: (sys.relay.folders || []).length + ' โฟลเดอร์บัญชี · ไฟล์หลง ' + (sys.relay.looseFiles || 0) });
+    } else if (sys || state.sysErr) {
+      cards.push({ g: 's', title: 'Google Drive', icon: 'fa-hard-drive', color: '#16a34a', used: 0, limit: 0, usedText: 'ติดต่อ relay ไม่ได้', note: (sys && sys.relay && sys.relay.error) || state.sysErr || '' });
+    } else cards.push({ g: 's', title: 'Google Drive', icon: 'fa-hard-drive', color: '#16a34a', used: 0, limit: 0, usedText: 'กำลังตรวจ…' });
+    cards.push({ g: 's', title: 'ฐานข้อมูล D1', icon: 'fa-database', color: '#0ea5e9', used: ov.d1.sizeBytes || 0, limit: L.d1DbBytes, usedText: fmtBytes(ov.d1.sizeBytes), limitText: fmtBytes(L.d1DbBytes), note: (ov.d1.tables || 0) + ' ตาราง · เพดานแผนฟรี' });
+    if (cf && cf.configured) {
+      var bad = function (t, ic, col, err) { return { g: 'd', title: t, icon: ic, color: col, used: 0, limit: 0, usedText: 'ดึงข้อมูลไม่ได้', note: err || '' }; };
+      cards.push(cf.workers ? { g: 'd', title: 'คำขอ Worker', icon: 'fa-bolt', color: '#f59e0b', used: cf.workers.requests, limit: L.workerRequests, usedText: fmtN(cf.workers.requests), limitText: fmtN(L.workerRequests), note: cf.workers.errors ? 'ผิดพลาด ' + fmtN(cf.workers.errors) + ' ครั้ง' : '' } : bad('คำขอ Worker', 'fa-bolt', '#f59e0b', cf.errors.workers));
+      if (cf.d1) {
+        cards.push({ g: 'd', title: 'D1 อ่าน (แถว)', icon: 'fa-magnifying-glass', color: '#8b5cf6', used: cf.d1.rowsRead, limit: L.d1RowsRead, usedText: fmtN(cf.d1.rowsRead), limitText: fmtN(L.d1RowsRead) });
+        cards.push({ g: 'd', title: 'D1 เขียน (แถว)', icon: 'fa-pen', color: '#ec4899', used: cf.d1.rowsWritten, limit: L.d1RowsWritten, usedText: fmtN(cf.d1.rowsWritten), limitText: fmtN(L.d1RowsWritten) });
+      } else cards.push(bad('D1 อ่าน/เขียน', 'fa-magnifying-glass', '#8b5cf6', cf.errors.d1));
+      if (cf.kv) {
+        cards.push({ g: 'd', title: 'KV อ่าน', icon: 'fa-key', color: '#64748b', used: cf.kv.read, limit: L.kvReads, usedText: fmtN(cf.kv.read), limitText: fmtN(L.kvReads), cardNote: 'KV เขียน ' + fmtN(cf.kv.write) + ' / ' + fmtN(L.kvWrites) });
+        cards.push({ g: 'd', title: 'KV เขียน', icon: 'fa-key', color: '#475569', used: cf.kv.write, limit: L.kvWrites, usedText: fmtN(cf.kv.write), limitText: fmtN(L.kvWrites), listOnly: true });
+      } else cards.push(bad('KV อ่าน/เขียน', 'fa-key', '#64748b', cf.errors.kv));
+    }
+    var setupHtml = (cf && !cf.configured) ? '<div class="ov-q ov-q-setup"><div class="ov-q-h"><span class="ov-q-ic" style="background:#f59e0b"><i class="fa-solid fa-plug" aria-hidden="true"></i></span><b>โควต้า Cloudflare วันนี้</b></div>' +
+      '<div class="ov-q-n" style="font-size:.84rem">ยังไม่ได้เชื่อม — ใส่ Worker secret <code>CF_ACCOUNT_ID</code> และ <code>CF_API_TOKEN</code> (สิทธิ์ Account Analytics: Read) แล้วจะเห็นคำขอ Worker, D1 อ่าน/เขียน และ KV ของวันนี้ (ขั้นตอนใน README หัวข้อ "หน้าภาพรวมระบบ")</div></div>' : '';
+    var hasDaily = cards.some(function (c) { return c.g === 'd'; });
+    var subS = '<div class="ov-qsub"><i class="fa-solid fa-box-archive" aria-hidden="true"></i> พื้นที่จัดเก็บ</div>';
+    var subD = '<div class="ov-qsub"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i> ใช้ไปวันนี้ · รีเซ็ต 07:00 น.</div>';
+    var qh;
+    if (state.qView === 'list') {
+      qh = '<div class="ov-ql">' + subS + cards.filter(function (c) { return c.g === 's'; }).map(quotaRow).join('') +
+        (hasDaily ? subD + cards.filter(function (c) { return c.g === 'd'; }).map(quotaRow).join('') : '') + '</div>' + (setupHtml ? '<div class="ov-qa-d" style="margin-top:12px">' + setupHtml + '</div>' : '');
+    } else {
+      qh = subS + '<div class="ov-qa-s">' + cards.filter(function (c) { return c.g === 's'; }).map(quotaCard).join('') + '</div>' +
+        (hasDaily || setupHtml ? subD + '<div class="ov-qa-d">' + cards.filter(function (c) { return c.g === 'd' && !c.listOnly; }).map(quotaCard).join('') + setupHtml + '</div>' : '');
+    }
+    $('ovQuota').innerHTML = qh;
+    cards.forEach(function (c) { if (c.limit && c.used / c.limit >= 0.8) alerts.push(['bad', 'fa-triangle-exclamation', c.title + (c.g === 'd' ? ' วันนี้' : '') + ' ใช้ไปแล้ว ' + Math.round(c.used / c.limit * 100) + '%']); });
+    // ข้อมูลในระบบ
+    var R = ov.users.roles, lg = ov.users.logins, rp = ov.reports || { system: 0, dept: 0, systemOpen: 0 };
+    var tiles = [
+      [fmtN(ov.users.total), 'บัญชีผู้ใช้', 'ครู ' + R.teacher + ' · เจ้าหน้าที่ ' + R.staff + ' · ผู้บริหาร ' + R.exec],
+      [lg ? fmtN(lg.week) : '—', 'เข้าใช้ 7 วันล่าสุด', lg ? 'วันนี้ ' + fmtN(lg.today) + ' คน' : 'ต้องรัน SQL ชุดที่สิบเก้า'],
+      [ov.submissions.term == null ? '—' : fmtN(ov.submissions.term), 'ไฟล์ผลงานภาคเรียนนี้', 'ทั้งหมด ' + fmtN(ov.submissions.total) + ' ไฟล์'],
+      [fmtN(ov.certs), 'เกียรติบัตร', 'คำสั่ง ' + fmtN(ov.orders) + (ov.albums == null ? '' : ' · อัลบั้ม ' + fmtN(ov.albums))],
+      [fmtN(rp.system + rp.dept), 'เรื่องที่แจ้งค้าง', 'ระบบ ' + rp.system + ' · กลุ่มต่างๆ ' + rp.dept]
+    ];
+    $('ovStats').innerHTML = tiles.map(function (t) { return '<div class="ov-st"><div class="v">' + escapeHtml(t[0]) + '</div><div class="l">' + escapeHtml(t[1]) + '</div><div class="d">' + escapeHtml(t[2]) + '</div></div>'; }).join('');
+    if (rp.systemOpen) alerts.push(['warn', 'fa-inbox', 'แจ้งปัญหาระบบรอรับเรื่อง ' + rp.systemOpen + ' เรื่อง', 'announce.html#reports']);
+    // กราฟ 7 วัน (ชุดเดียว — ชื่อกราฟบอกความหมาย ไม่ต้องมีคำอธิบายสี · ชี้ที่แท่งเห็นตัวเลข)
+    var days = ov.submissions.days || [], mx = Math.max.apply(null, days.map(function (d) { return d.count; }).concat([1]));
+    var dow = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'], tot = 0, best = null;
+    days.forEach(function (d) { tot += d.count; if (!best || d.count > best.count) best = d; });
+    var aria = 'จำนวนไฟล์ผลงานที่ส่งรายวัน 7 วันล่าสุด: ' + days.map(function (d) { return formatDateThai(d.date) + ' ' + d.count + ' ไฟล์'; }).join(', ');
+    $('ovChart').innerHTML = '<div class="ov-bars" role="img" aria-label="' + escapeHtml(aria) + '">' + days.map(function (d) {
+      var dt = new Date(d.date + 'T00:00:00'), lab = dow[dt.getDay()];
+      return '<div class="ov-bar" title="' + escapeHtml(formatDateThai(d.date)) + ': ' + d.count + ' ไฟล์"><div class="ov-bar-col"><span class="ov-bar-v">' + (d.count || '') + '</span><i style="height:' + Math.max(1.5, d.count / mx * 88) + '%"></i></div><span class="ov-bar-l">' + lab + '</span></div>';
+    }).join('') + '</div><div class="ov-bar-foot"><span>รวม ' + fmtN(tot) + ' ไฟล์</span>' + (best && best.count ? '<span>มากสุด ' + escapeHtml(formatDateThai(best.date)) + ' · ' + fmtN(best.count) + ' ไฟล์</span>' : '') + '</div>';
+    // สถานะระบบ
+    var relayOk = sys && sys.relay && sys.relay.ok;
+    var wOld = verCmp(ov.workerVersion, WORKER_MIN_VERSION) < 0;
+    var cronTxt = ov.cronLast ? formatDateTimeThai(ov.cronLast) : 'ยังไม่เคยรัน — ถ้าตั้ง Cron Trigger แล้ว จะเห็นเวลาหลังรันครั้งแรก (03:00 น.)';
+    var stl = [
+      ['Drive relay', !sys && !state.sysErr ? '<span>กำลังตรวจ…</span>' : relayOk ? '<span class="ok"><i class="fa-solid fa-circle-check"></i> ตอบกลับ ' + (state.sysMs / 1000).toFixed(1) + ' วินาที</span>' : '<span class="bad"><i class="fa-solid fa-circle-xmark"></i> ติดต่อไม่ได้</span>'],
+      ['รุ่นหน้าเว็บ / Worker', '<span class="' + (wOld ? 'bad' : 'ok') + '">' + (wOld ? '<i class="fa-solid fa-triangle-exclamation"></i> ' : '') + escapeHtml(APP_VERSION.split('.').slice(0, 2).join('.')) + ' / ' + escapeHtml(ov.workerVersion || 'เก่ากว่า 1.79') + '</span>'],
+      ['ล้างข้อมูลเก่าอัตโนมัติ (Cron)', '<span class="' + (ov.cronLast ? 'ok' : 'muted') + '">' + escapeHtml(cronTxt) + '</span>'],
+      ['สำรองข้อมูล (Google Drive)', backupCell(ov.backup)],
+      ['อัปรูปคลังรูปภาพ 7 วัน', galleryUpCell(ov.galleryUploads)],
+      ['ส่งไฟล์ (ส่งงาน/คำสั่ง/เกียรติบัตร) 7 วัน', fileUpCell(ov.fileFallback)],
+      ['สิทธิ์โฟลเดอร์คลังรูปภาพ', galleryRootCell(state.galRoot)],
+      ['ไฟล์หลงในโฟลเดอร์หลักของ Drive', relayOk ? '<span class="' + (sys.relay.looseFiles ? 'warn' : 'ok') + '">' + fmtN(sys.relay.looseFiles || 0) + ' ไฟล์</span>' : '<span class="muted">—</span>'],
+      ['ภาคเรียนปัจจุบัน', '<span>' + escapeHtml(state.termText || '—') + '</span>']
+    ];
+    $('ovStatus').innerHTML = stl.map(function (x) { return '<li><span>' + escapeHtml(x[0]) + '</span>' + x[1] + '</li>'; }).join('');
+    if (sys && !relayOk) alerts.unshift(['bad', 'fa-plug-circle-xmark', 'ติดต่อ Drive relay ไม่ได้ — ครูอัปโหลดไฟล์ไม่ได้', 'settings.html']);
+    var bk = ov.backup;
+    if (bk && bk.configured) {
+      var okAt = bk.last && bk.last.lastOkAt ? Date.parse(bk.last.lastOkAt) : 0;
+      if (bk.last && !bk.last.ok) alerts.push(['bad', 'fa-database', 'สำรองข้อมูลล่าสุดไม่สำเร็จ: ' + bk.last.error]);
+      else if (!okAt || Date.now() - okAt > (bk.everyDays || 7) * 86400000 + 86400000) alerts.push(['warn', 'fa-database', okAt ? 'ไม่ได้สำรองข้อมูลมาแล้ว ' + Math.floor((Date.now() - okAt) / 86400000) + ' วัน — กด "สำรองตอนนี้" ในส่วนสถานะระบบ' : 'ยังไม่เคยสำรองข้อมูล — กด "สำรองตอนนี้" ในส่วนสถานะระบบ']);
+    }
+    var gr = state.galRoot;
+    if (gr && !gr.error && !gr.ok) alerts.push(['warn', 'fa-folder-closed', 'โฟลเดอร์ "' + (gr.name || 'BNKAcademicHub คลังรูปภาพ') + '" ยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์ — ผู้มีสิทธิ์อ่าน" — คนในระบบจะเปิดดูรูปในอัลบั้มไม่ได้ (กดเพื่อเปิดโฟลเดอร์แล้วตั้งค่าแชร์)', gr.url || '']);
+    if (wOld) alerts.unshift(['bad', 'fa-triangle-exclamation', 'Worker ยังเป็นรุ่นเก่า (ต้องการ ' + WORKER_MIN_VERSION + ' ขึ้นไป) — อัปโหลดไฟล์ Worker แล้ว Deploy']);
+    renderReady();
+    $('ovAlerts').innerHTML = alerts.map(function (a) { var inner = '<i class="fa-solid ' + a[1] + '" aria-hidden="true"></i> ' + escapeHtml(a[2]); return a[3] ? '<a class="ov-alert ' + a[0] + '" href="' + escapeHtml(a[3]) + '"' + (/^https?:/.test(a[3]) ? ' target="_blank" rel="noopener"' : '') + '>' + inner + '</a>' : '<span class="ov-alert ' + a[0] + '">' + inner + '</span>'; }).join('');
+  }
+  // 1.82: อัปรูป 7 วันล่าสุด — ส่งตรงเข้า Google Drive / ผ่าน relay (วิธีสำรอง) + สาเหตุครั้งล่าสุด
+  // 1.86: ส่งงาน/คำสั่ง/เกียรติบัตร — นับเฉพาะครั้งที่ส่งตรงไม่ได้แล้วใช้วิธีสำรอง (relay) + สาเหตุล่าสุด
+  var UP_KIND = { submission: 'ส่งงาน', order: 'คำสั่ง', cert: 'เกียรติบัตร' };
+  function fileUpCell(f) {
+    var st = _settingsCache || {}, m = st.fileUploadMode === 'direct' ? 'ส่งตรงเท่านั้น' : st.fileUploadMode === 'relay' ? 'ผ่าน relay เท่านั้น' : 'อัตโนมัติ';
+    if (!f) return '<span class="muted">— (Worker รุ่นเก่า)</span>';
+    var h = '<span class="' + (f.count7 ? 'warn' : 'ok') + '">' + (f.count7 ? 'ใช้วิธีสำรอง (relay) ' + fmtN(f.count7) + ' ครั้ง' : 'ส่งตรงทั้งหมด ไม่ต้องใช้วิธีสำรอง') + ' · ตั้งค่า: ' + m + '</span>';
+    if (f.count7 && f.last) h += '<span class="muted" style="display:block;font-size:.8em;">ล่าสุด ' + escapeHtml(formatDateTimeThai(f.last.at)) + ' (' + escapeHtml(UP_KIND[f.last.kind] || '') + ')' + (f.last.reason ? ' — ' + escapeHtml(f.last.reason) : '') + '</span>';
+    return '<span>' + h + '</span>';
+  }
+  function galleryUpCell(g) {
+    if (!g) return '<span class="muted">— (ยังไม่ได้รัน SQL ชุดที่ยี่สิบสอง)</span>';
+    var h = '<span class="' + (g.relay ? 'warn' : 'ok') + '">ส่งตรง ' + fmtN(g.direct) + ' · ผ่าน relay ' + fmtN(g.relay) + ' ไฟล์</span>';
+    if (g.relay && g.lastFallback) h += '<span class="muted" style="display:block;font-size:.8em;">ใช้วิธีสำรองล่าสุด ' + escapeHtml(formatDateTimeThai(g.lastFallback.at)) + (g.lastFallback.reason ? ' — ' + escapeHtml(g.lastFallback.reason) : '') + '</span>';
+    return '<span>' + h + '</span>';
+  }
+  // 1.84: อัลบั้มรับสิทธิ์จากโฟลเดอร์หลัก — ต้องแชร์ "ทุกคนที่มีลิงก์ — ผู้มีสิทธิ์อ่าน" ครั้งเดียว
+  function galleryRootCell(g) {
+    if (!g) return '<span>กำลังตรวจ…</span>';
+    if (g.error) return '<span class="muted">ตรวจไม่ได้ — ' + escapeHtml(g.error) + '</span>';
+    var link = g.url ? '<a href="' + escapeHtml(g.url) + '" target="_blank" rel="noopener" class="ov-bk-link">เปิดโฟลเดอร์</a>' : '';
+    return '<span class="ov-bk">' + (g.ok ? '<span class="ok"><i class="fa-solid fa-circle-check"></i> ทุกคนที่มีลิงก์ดูได้</span>' : '<span class="warn"><i class="fa-solid fa-triangle-exclamation"></i> ยังไม่ได้แชร์ — ตั้งเป็น "ทุกคนที่มีลิงก์ — ผู้มีสิทธิ์อ่าน"</span>') + link + '</span>';
+  }
+  // 1.80: สำรองข้อมูล — วันที่สำรองสำเร็จล่าสุด + ปุ่มสำรองตอนนี้ + ลิงก์โฟลเดอร์ใน Drive
+  function backupCell(bk) {
+    if (!bk) return '<span class="muted">Worker รุ่นเก่า</span>';
+    if (!bk.configured) return '<span class="muted">ยังไม่ได้ตั้งค่า (ดู README)</span>';
+    var l = bk.last, h = '';
+    if (state.backingUp) h = '<span><span class="loading">กำลังสำรอง</span></span>';
+    else if (l && l.lastOkAt) {
+      var d = Math.floor((Date.now() - Date.parse(l.lastOkAt)) / 86400000);
+      h = '<span class="' + (l.ok && d <= (bk.everyDays || 7) ? 'ok' : 'warn') + '">' + escapeHtml(formatDateThai(l.lastOkAt)) + ' (' + (d ? d + ' วันที่แล้ว' : 'วันนี้') + ')' + (l.ok && l.size ? ' · ' + fmtBytes(l.size) : '') + '</span>';
+    } else h = '<span class="muted">ยังไม่เคยสำรอง</span>';
+    var link = l && l.folderUrl ? '<a href="' + escapeHtml(l.folderUrl) + '" target="_blank" rel="noopener" class="ov-bk-link">เปิดโฟลเดอร์</a>' : '';
+    return '<span class="ov-bk">' + h + link + '<button type="button" class="btn btn-secondary btn-sm ov-bk-btn" id="ovBackupBtn"' + (state.backingUp ? ' disabled' : '') + '><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i> สำรองตอนนี้</button></span>';
+  }
+  document.getElementById('ovStatus').addEventListener('click', async function (e) {
+    if (!e.target.closest('#ovBackupBtn') || state.backingUp) return;
+    state.backingUp = true; render();
+    try {
+      var r = await apiCall('adminBackupNow', {});
+      state.ov.backup.last = r; showToast('สำรองข้อมูลเรียบร้อย — ' + r.name);
+    } catch (err) {
+      showToast(err.message, true);
+      try { state.ov = await apiCall('adminOverview', {}); } catch (e2) { /* ข้าม */ }
+    }
+    state.backingUp = false; render();
+  });
+  // ---------- 2.11.1: ใช้โควต้าที่ไหน (มาตรวัดรายฟังก์ชันของเว็บส่งงาน + แยกตาม Worker / ฐานข้อมูลจาก Cloudflare) ----------
+  var UG = [[/^(login|logout|checkSession|mySessions|sessionRevoke|changePassword|setMyTheme|welcomeSeen|bootstrapAdmin)$/, 'เข้าระบบ / ตรวจสถานะ (ทุกครั้งที่เปิดหน้า)'], [/^notif/, 'การแจ้งเตือน'], [/^(hubAnnouncement|adminAnnouncement|adminCreateAnnouncement|adminUpdateAnnouncement|adminDeleteAnnouncement|hubListAnnouncements|adminListAnnouncement)/, 'ประกาศ'],
+    [/^(teacherListCalendar|schoolCalendar|calendarList|adminListEvents|adminCreateEvent|adminUpdateEvent|adminDeleteEvent|adminAddEventRound|adminDeleteEventSeries|adminArchiveEvents|adminListArchived|linkHolidays)/, 'ปฏิทิน / กำหนดการ'], [/^(teacher(Upload|ListMine|Delete|UpdateFields)|sample|review|manualCheck|teacherManualReport|adminGetAssignmentSummary|adminListAllSubmissions)/, 'ส่งงาน / ตรวจงาน'],
+    [/^(teach|hr|attRoomList|ttMine)/, 'วิชาที่สอน / เช็คชื่อ / โฮมรูม'], [/^execWeekly$|^attViewers/, 'สรุปการเช็คชื่อประจำสัปดาห์'], [/^club|^linkClub/, 'ชุมนุม'], [/^sup|^teacherSurvey/, 'นิเทศการสอน'], [/^care/, 'กิจการนักเรียน (Care)'], [/^leave|^linkLeaves/, 'แจ้งลา / ไปราชการ'],
+    [/^intern|^adminIntern/, 'นักศึกษาฝึกสอน'], [/^(publicGuide|guide)/, 'แนะแนว'], [/^(album|publicAlbum|gallery|adminGalleryRoot)/, 'คลังรูปภาพ'], [/^cert|^publicCert/, 'เกียรติบัตร'], [/^order/, 'คลังคำสั่ง'], [/^report/, 'แจ้งเรื่อง / รายงาน'], [/^(hubListMemo|adminCreateMemo|adminUpdateMemo|adminDeleteMemo|adminListMemo)/, 'บันทึกข้อความ'],
+    [/^(publicGet|hubListDirectory|hubListExternal|hubListWorkCategories)/, 'ข้อมูลพื้นฐานของหน้าเว็บ'], [/^link/, 'เว็บเช็คชื่อเรียกมา'], [/^admin|^managers/, 'งานผู้ดูแลระบบ']];
+  function ugOf(a) { for (var i = 0; i < UG.length; i++) if (UG[i][0].test(a)) return UG[i][1]; return 'อื่นๆ'; }
+  var use = { days: 1, by: 'rr', grp: true, open: {}, d: null, err: '' };
+  async function loadUse() { use.d = null; renderUse(); try { use.d = await apiCall('adminUsageStats', { days: use.days }); use.err = ''; } catch (e) { use.err = e.message; } renderUse(); }
+  function wkName(n) { return /academic-hub|hub-api/i.test(n) ? 'เว็บส่งงาน' : /care/i.test(n) ? 'BNK Care Center' : /att|bnksa|check/i.test(n) ? 'เว็บเช็คชื่อ' : n; }
+  function renderUse() {
+    var el = $('ovUse'); if (!el) return;
+    var cf = state.cf, L = (state.ov && state.ov.limits) || {}, sys = '';
+    if (cf && cf.workers && (cf.workers.byScript || []).length) sys += '<div class="ov-ub"><b>คำขอ Worker วันนี้ แยกตามระบบ</b>' + cf.workers.byScript.map(function (x) { var p = L.workerRequests ? x.requests / L.workerRequests * 100 : 0; return '<div class="ov-ur"><span>' + escapeHtml(wkName(x.key)) + ' <small>' + escapeHtml(x.key) + '</small></span><i class="ov-ubar"><i style="width:' + Math.min(100, Math.max(p, .5)) + '%"></i></i><b>' + fmtN(x.requests) + '</b><em>' + (p < 1 && p > 0 ? '<1' : Math.round(p)) + '%</em></div>'; }).join('') + '</div>';
+    if (cf && cf.d1 && (cf.d1.byDb || []).length) sys += '<div class="ov-ub"><b>D1 อ่าน (แถว) วันนี้ แยกตามฐานข้อมูล</b>' + cf.d1.byDb.map(function (x) { var p = L.d1RowsRead ? x.rowsRead / L.d1RowsRead * 100 : 0; return '<div class="ov-ur"><span>' + (x.mine ? 'เว็บส่งงาน' : 'ฐานข้อมูลอื่น') + ' <small>' + escapeHtml(x.key.slice(0, 8)) + '… · เขียน ' + fmtN(x.rowsWritten) + '</small></span><i class="ov-ubar"><i style="width:' + Math.min(100, Math.max(p, .5)) + '%"></i></i><b>' + fmtN(x.rowsRead) + '</b><em>' + (p < 1 && p > 0 ? '<1' : Math.round(p)) + '%</em></div>'; }).join('') + '<small class="ov-mut">ฐานข้อมูลอื่น = เว็บเช็คชื่อ / Care Center (ใช้บัญชี Cloudflare เดียวกัน)</small></div>';
+    var seg = function (k, opts) { return '<span class="ov-seg">' + opts.map(function (o) { return '<button type="button" data-use-' + k + '="' + o[0] + '" class="' + (String(use[k]) === String(o[0]) ? 'on' : '') + '">' + o[1] + '</button>'; }).join('') + '</span>'; };
+    var bar = '<div class="ov-utool">' + seg('days', [[1, 'วันนี้'], [7, '7 วัน'], [30, '30 วัน']]) + seg('by', [['rr', 'D1 อ่าน'], ['rw', 'D1 เขียน'], ['n', 'จำนวนครั้ง'], ['att', 'เรียกเว็บเช็คชื่อ'], ['kr', 'KV']]) + seg('grp', [[true, 'ตามระบบย่อย'], [false, 'ตามคำสั่ง']]) + '</div>';
+    var body;
+    if (use.err) body = '<div class="error-box">' + escapeHtml(use.err) + '</div>';
+    else if (!use.d) body = '<div class="loading">กำลังโหลด</div>';
+    else if (!use.d.ready) body = '<div class="ov-mut" style="padding:8px 0">ยังไม่เริ่มวัด — รัน <b>SQL ชุดที่สี่สิบสี่</b> (ตาราง usage_stats) แล้วระบบจะเริ่มนับเอง</div>';
+    else {
+      var rows = use.d.rows, tot = { n: 0, rr: 0, rw: 0, kr: 0, kw: 0, att: 0, care: 0, ms: 0 }; rows.forEach(function (r) { Object.keys(tot).forEach(function (f) { tot[f] += r[f]; }); });
+      var key = use.by, val = function (r) { return key === 'kr' ? r.kr + r.kw : r[key]; }, totV = key === 'kr' ? tot.kr + tot.kw : tot[key];
+      var list;
+      if (use.grp) { var g = {}; rows.forEach(function (r) { var k = ugOf(r.action), o = g[k] = g[k] || { action: k, n: 0, rr: 0, rw: 0, kr: 0, kw: 0, att: 0, care: 0, ms: 0, sub: [] }; Object.keys(tot).forEach(function (f) { o[f] += r[f]; }); o.sub.push(r); }); list = Object.keys(g).map(function (k) { return g[k]; }); }
+      else list = rows.slice();
+      list.sort(function (a, b) { return val(b) - val(a); });
+      var mx = Math.max.apply(null, list.map(val).concat([1]));
+      var row = function (r, child) {
+        var per = r.n ? Math.round(r.rr / r.n) : 0, v = val(r), pc = totV ? v / totV * 100 : 0, hot = !child && pc >= 25;
+        var tip = per >= 2000 ? 'อ่านเยอะต่อครั้ง' : r.n >= 2000 && use.days === 1 ? 'เรียกบ่อย' : '';
+        return '<tr class="' + (child ? 'ch' : '') + (hot ? ' hot' : '') + '">' + '<td>' + (use.grp && !child ? '<button type="button" class="ov-ut" data-use-open="' + escapeHtml(r.action) + '"><i class="fa-solid fa-chevron-' + (use.open[r.action] ? 'down' : 'right') + '"></i> ' + escapeHtml(r.action) + '</button>' : '<code>' + escapeHtml(r.action) + '</code>') + (tip ? ' <span class="ov-tip">' + tip + '</span>' : '') + '</td>' +
+          '<td class="b"><i class="ov-ubar"><i style="width:' + Math.max(1, v / mx * 100) + '%"></i></i><span>' + (pc < 1 && pc > 0 ? '<1' : Math.round(pc)) + '%</span></td>' +
+          '<td class="n">' + fmtN(r.n) + '</td><td class="n">' + fmtN(r.rr) + '</td><td class="n">' + fmtN(per) + '</td><td class="n">' + fmtN(r.rw) + '</td><td class="n">' + fmtN(r.kr) + ' / ' + fmtN(r.kw) + '</td><td class="n">' + fmtN(r.att) + '</td><td class="n">' + fmtN(r.n ? Math.round(r.ms / r.n) : 0) + '</td></tr>' +
+          (use.grp && !child && use.open[r.action] ? r.sub.sort(function (a, b) { return val(b) - val(a); }).map(function (s) { return row(s, true); }).join('') : '');
+      };
+      body = '<div class="ov-mut" style="margin-bottom:6px">เฉพาะเว็บส่งงาน · ค่าประมาณ (นับทุกคำขอ แล้วบันทึกทุก 10 นาที) · เริ่มวัด ' + escapeHtml(use.d.since ? formatDateThai(use.d.since) : 'วันนี้') + ' · รวม ' + fmtN(tot.n) + ' ครั้ง · D1 อ่าน ' + fmtN(tot.rr) + ' แถว · เขียน ' + fmtN(tot.rw) + ' แถว · เรียกเว็บเช็คชื่อ ' + fmtN(tot.att) + ' ครั้ง</div>' +
+        '<div class="ov-utw"><table class="ov-ut-t"><thead><tr><th>' + (use.grp ? 'ระบบย่อย' : 'คำสั่ง') + '</th><th>สัดส่วน</th><th>ครั้ง</th><th>D1 อ่าน</th><th>อ่าน/ครั้ง</th><th>D1 เขียน</th><th>KV อ่าน/เขียน</th><th>เรียกเว็บเช็คชื่อ</th><th>ms/ครั้ง</th></tr></thead><tbody>' + list.map(function (r) { return row(r, false); }).join('') + '</tbody></table></div>';
+    }
+    el.innerHTML = (sys ? '<div class="ov-ubs">' + sys + '</div>' : '') + bar + body;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('#ovUse [data-use-days],#ovUse [data-use-by],#ovUse [data-use-grp],#ovUse [data-use-open]'); if (!b) return;
+    if (b.hasAttribute('data-use-days')) { use.days = Number(b.getAttribute('data-use-days')); loadUse(); return; }
+    if (b.hasAttribute('data-use-by')) use.by = b.getAttribute('data-use-by');
+    if (b.hasAttribute('data-use-grp')) { use.grp = b.getAttribute('data-use-grp') === 'true'; use.open = {}; }
+    if (b.hasAttribute('data-use-open')) { var k = b.getAttribute('data-use-open'); use.open[k] = !use.open[k]; }
+    renderUse();
+  });
+  // ---------- 2.23.0: ความพร้อมของระบบ — ส่วนที่ยังขาด / ยังไม่ตั้งค่า / ยังไม่มีข้อมูล (ข้อที่ครบแล้วพับไว้ด้านล่าง) ----------
+  var RD_IC = { ok: 'fa-circle-check', warn: 'fa-circle-exclamation', bad: 'fa-circle-xmark', info: 'fa-circle-info', wait: 'fa-hourglass-half' };
+  function rdNames(list, more) {
+    if (!list || !list.length) return '';
+    var n = list.length, show = list.slice(0, 40).map(escapeHtml).join(', ') + (n > 40 ? ' และอีก ' + (n - 40) + ' คน' : '');
+    return '<details class="ov-rd-n"><summary>ดูรายชื่อ ' + n + (more || ' คน') + '</summary><div>' + show + '</div></details>';
+  }
+  function rdItems() {
+    var ov = state.ov || {}, sys = state.sys, cf = state.cf, rd = state.rd, gr = state.galRoot, L = [], wait = !rd && !state.rdErr;
+    var add = function (g, st, label, detail, link, linkText, extra) { L.push({ g: g, st: st, label: label, detail: detail || '', link: link || '', linkText: linkText || 'ไปตั้งค่า', extra: extra || '' }); };
+    var G1 = 'การเชื่อมต่อและบริการ', G2 = 'ข้อมูลพื้นฐาน', G3 = 'ข้อมูลภาคเรียนนี้', G4 = 'ระบบที่ซุ่มทำ (เห็นเฉพาะผู้ดูแลระบบ)', G5 = 'รูปหลักฐานกิจการนักเรียน';
+    // 1–6 (ย้ายจากส่วนสถานะ/แจ้งเตือนเดิม)
+    var relayOk = sys && sys.relay && sys.relay.ok;
+    add(G1, !sys && !state.sysErr ? 'wait' : relayOk ? 'ok' : 'bad', 'Drive relay', relayOk ? 'ติดต่อได้' : !sys && !state.sysErr ? 'กำลังตรวจ…' : 'ติดต่อไม่ได้ — ครูอัปโหลดไฟล์ไม่ได้' + (state.sysErr ? ' (' + escapeHtml(state.sysErr) + ')' : ''), relayOk ? '' : 'settings.html#general');
+    add(G1, cf ? (cf.configured ? 'ok' : 'warn') : 'wait', 'เชื่อม Cloudflare (ดูโควต้ารายวัน)', cf ? (cf.configured ? 'เชื่อมแล้ว' : 'ยังไม่ได้ใส่ CF_ACCOUNT_ID / CF_API_TOKEN ที่ Worker — จะไม่เห็นคำขอ Worker, D1 อ่าน/เขียน และ KV ของวันนี้') : 'กำลังตรวจ…');
+    add(G1, ov.cronLast ? 'ok' : 'warn', 'ล้างข้อมูลเก่าอัตโนมัติ (Cron)', ov.cronLast ? 'รันล่าสุด ' + escapeHtml(formatDateTimeThai(ov.cronLast)) : 'ยังไม่เคยรัน — ตั้ง Cron Trigger ที่ Worker แล้วจะเห็นเวลาหลังรันครั้งแรก (03:00 น.)');
+    var bk = ov.backup, okAt = bk && bk.last && bk.last.lastOkAt ? Date.parse(bk.last.lastOkAt) : 0, bkDays = okAt ? Math.floor((Date.now() - okAt) / 86400000) : -1;
+    add(G1, !bk || !bk.configured ? 'warn' : (bk.last && !bk.last.ok) ? 'bad' : (!okAt || bkDays > (bk.everyDays || 7) + 1) ? 'warn' : 'ok', 'สำรองข้อมูล (Google Drive)',
+      !bk ? 'Worker รุ่นเก่า' : !bk.configured ? 'ยังไม่ได้ตั้งค่า (ดู README)' : (bk.last && !bk.last.ok) ? 'ครั้งล่าสุดไม่สำเร็จ: ' + escapeHtml(bk.last.error || '') : okAt ? 'สำรองล่าสุด ' + (bkDays ? bkDays + ' วันที่แล้ว' : 'วันนี้') : 'ยังไม่เคยสำรอง — กด "สำรองตอนนี้" ในส่วนสถานะระบบ');
+    add(G1, !gr ? 'wait' : gr.error ? 'info' : gr.ok ? 'ok' : 'warn', 'แชร์โฟลเดอร์คลังรูปภาพ', !gr ? 'กำลังตรวจ…' : gr.error ? 'ตรวจไม่ได้ — ' + escapeHtml(gr.error) : gr.ok ? 'ทุกคนที่มีลิงก์ดูได้' : 'ยังไม่ได้แชร์แบบ "ทุกคนที่มีลิงก์ — ผู้มีสิทธิ์อ่าน" — คนในระบบจะเปิดรูปในอัลบั้มไม่ได้', gr && !gr.ok && gr.url ? gr.url : '', 'เปิดโฟลเดอร์');
+    var wOld = verCmp(ov.workerVersion, WORKER_MIN_VERSION) < 0;
+    add(G1, wOld ? 'bad' : 'ok', 'รุ่น Worker ตรงกับหน้าเว็บ', wOld ? 'Worker ยังเป็นรุ่น ' + escapeHtml(ov.workerVersion || 'เก่า') + ' (ต้องการ ' + WORKER_MIN_VERSION + ' ขึ้นไป) — อัปโหลดไฟล์ Worker แล้ว Deploy' : 'หน้าเว็บ ' + escapeHtml(APP_VERSION.split('.').slice(0, 3).join('.')) + ' / Worker ' + escapeHtml(ov.workerVersion || ''));
+    // 7–9 การเชื่อมเว็บ
+    var at = rd && rd.att, cr = rd && rd.care, ev = cr && cr.ev;
+    add(G1, wait ? 'wait' : !rd ? 'info' : at.ok ? 'ok' : 'bad', 'เชื่อมเว็บเช็คชื่อ', wait ? 'กำลังตรวจ…' : !rd ? escapeHtml(state.rdErr) : at.ok ? 'ติดต่อได้' : 'ติดต่อไม่ได้ — ตารางสอน จัดสอนแทน และเช็คชื่อในเว็บนี้จะดึงข้อมูลไม่ได้ (' + escapeHtml(at.error || '') + ')');
+    add(G1, wait ? 'wait' : !rd ? 'info' : cr.ok && !cr.oldWorker ? 'ok' : cr.oldWorker ? 'warn' : 'bad', 'เชื่อม BNK Care Center', wait ? 'กำลังตรวจ…' : !rd ? '' : cr.oldWorker ? 'ติดต่อได้ แต่ Worker ของ Care Center ยังเป็นรุ่นเก่า — อัปโหลดไฟล์ Worker ของ Care Center รุ่น 1.08.0' : cr.ok ? 'ติดต่อได้' + (cr.version ? ' · รุ่น ' + escapeHtml(cr.version.split('.').slice(0, 3).join('.')) : '') : 'ติดต่อไม่ได้ — หน้ากิจการนักเรียนจะว่าง (' + escapeHtml(cr.error || '') + ')');
+    if (rd && cr.ok && !cr.oldWorker) {
+      var evSt = !ev.on ? 'bad' : ev.oldScript ? 'warn' : !ev.relay ? 'bad' : ev.shared ? 'ok' : 'warn';
+      add(G5, evSt, 'ที่เก็บรูปหลักฐาน (Apps Script ของ Care Center)', !ev.on ? 'ยังไม่ได้ตั้ง EVID_URL / EVID_TOKEN ที่ Worker ของ Care Center — แนบรูปและเปิดดูรูปไม่ได้' : ev.oldScript ? 'Apps Script ยังเป็นรุ่นเก่า — วางโค้ด CareEvidenceRelay.gs รุ่น 1.08.0 แล้ว Deploy เวอร์ชันใหม่' : !ev.relay ? 'ติดต่อไม่ได้ — รูปจะเปิดไม่ขึ้น (' + escapeHtml(ev.error || '') + ')' : ev.shared ? 'ตอบกลับได้ · โฟลเดอร์ "' + escapeHtml(ev.folder) + '" แชร์แบบมีลิงก์แล้ว — หน้ากิจการนักเรียนแสดงรูปจาก Drive โดยตรง (เร็ว)' : 'ตอบกลับได้ แต่โฟลเดอร์ยังไม่ได้แชร์แบบมีลิงก์ — หน้ากิจการนักเรียนจะโหลดรูปผ่านระบบแทน (ช้ากว่า)',
+        '', '', ev.on && ev.relay && !ev.oldScript && !ev.shared ? '<button type="button" class="btn btn-primary btn-sm" id="ovEvShare"' + (state.evSharing ? ' disabled' : '') + '><i class="fa-solid fa-link" aria-hidden="true"></i> ' + (state.evSharing ? 'กำลังตั้งค่า…' : 'ตั้งแชร์ให้') + '</button>' : '');
+      add(G5, ev.cache ? 'ok' : 'info', 'แคชรูปที่ Cloudflare', ev.cache ? 'ใช้งานได้ — รูปที่เคยเปิดแล้วโหลดเร็วขึ้น (ไม่ใช้พื้นที่ D1)' : 'ยังใช้ไม่ได้ (Cloudflare เก็บแคชให้เฉพาะ Worker ที่ผูกโดเมนของตัวเอง) — รูปยังโหลดได้ตามปกติ และเบราว์เซอร์ยังจำรูปไว้ให้');
+    }
+    if (rd) {
+      // 10–15 ข้อมูลพื้นฐาน
+      var t = rd.term || {}, tTxt = t.sem === 'summer' ? 'ภาคฤดูร้อน' : t.sem ? 'ภาคเรียนที่ ' + t.sem + '/' + t.year : '';
+      var mis = at && at.ok && t.sem && t.sem !== 'summer' && at.term && (at.term !== t.sem || at.year !== t.year);
+      add(G2, !tTxt ? 'warn' : mis ? 'warn' : 'ok', 'ภาคเรียนปัจจุบัน', (tTxt ? escapeHtml(tTxt) + ' (' + (t.mode === 'manual' ? 'ตั้งเอง' : 'อัตโนมัติตามวันที่') + ')' : 'ยังไม่ได้ตั้ง') + (mis ? ' — ไม่ตรงกับเว็บเช็คชื่อ (ภาคเรียนที่ ' + escapeHtml(at.term + '/' + at.year) + ')' : ''), 'settings.html#general');
+      add(G2, rd.noGroup.length ? 'warn' : 'ok', 'ครูที่ยังไม่ได้ระบุกลุ่มสาระ', rd.noGroup.length ? rd.noGroup.length + ' คน' : 'ครบทุกคน', rd.noGroup.length ? 'settings.html#accounts' : '', 'จัดการบัญชี', rdNames(rd.noGroup));
+      add(G2, rd.noDept.length ? 'warn' : 'ok', 'เจ้าหน้าที่ที่ยังไม่ได้ระบุกลุ่มบริหารงาน', rd.noDept.length ? rd.noDept.length + ' คน' : 'ครบทุกคน', rd.noDept.length ? 'settings.html#accounts' : '', 'จัดการบัญชี', rdNames(rd.noDept));
+      if (at && at.ok) {
+        var uh = at.unlinkedHub || [], ua = at.unlinkedAtt || [];
+        add(G2, uh.length ? 'warn' : 'ok', 'บัญชีครูที่ยังไม่ได้จับคู่ชื่อในเว็บเช็คชื่อ', uh.length ? uh.length + ' คน — ครูกลุ่มนี้จะไม่เห็นตารางสอน/คาบที่ต้องเช็คชื่อ และจัดสอนแทนไม่ได้' + (ua.length ? ' · ชื่อในเว็บเช็คชื่อที่ยังไม่มีบัญชีคู่ ' + ua.length + ' ชื่อ' : '') : 'ครบทุกคน', '', '', rdNames(uh) + (ua.length ? rdNames(ua, ' ชื่อ (ฝั่งเว็บเช็คชื่อ)') : ''));
+      }
+      add(G2, rd.deptNoColor.length ? (rd.themeMode === 'department' ? 'warn' : 'info') : 'ok', 'สีของกลุ่มบริหารงาน', rd.deptNoColor.length ? 'ยังไม่ได้ตั้งสี ' + rd.deptNoColor.length + ' กลุ่ม: ' + rd.deptNoColor.map(escapeHtml).join(', ') + ' — ใช้สีหลักแทน (ปฏิทินจะแยกสีไม่ออก)' : 'ตั้งครบทุกกลุ่ม', rd.deptNoColor.length ? 'settings.html#website' : '');
+      var MG = [['leave', 'แจ้งลา / ไปราชการ'], ['club', 'ชุมนุม'], ['care', 'กิจการนักเรียน'], ['guide', 'แนะแนว'], ['rt', 'ขอเวลาเรียน'], ['sup', 'นิเทศการสอน']], noMg = MG.filter(function (m) { return rd.mgr[m[0]] === 0; }).map(function (m) { return m[1]; });
+      add(G2, noMg.length ? 'warn' : 'ok', 'ผู้ดูแลของแต่ละระบบ', noMg.length ? 'ยังไม่มีผู้ดูแล (สิทธิ์จัดการ): ' + noMg.join(', ') + ' — ตอนนี้ผู้ดูแลระบบสูงสุดต้องจัดการเอง' : 'มีผู้ดูแลครบทุกระบบ', noMg.length ? 'settings.html#managers' : '', 'จัดการผู้ดูแล');
+      add(G2, rd.internsExpired.length ? 'warn' : 'ok', 'นักศึกษาฝึกสอนที่หมดช่วงฝึกแล้ว', rd.internsExpired.length ? rd.internsExpired.length + ' คน — บัญชียังเปิดอยู่ (เข้าระบบไม่ได้แล้ว) ปิดหรือเก็บบัญชีได้' : 'ไม่มี', rd.internsExpired.length ? 'interns.html' : '', 'ไปหน้านักศึกษาฝึกสอน', rdNames(rd.internsExpired));
+      // 16–18 ภาคเรียนนี้
+      if (rd.termDeadlines !== undefined) {
+        add(G3, rd.termDeadlines ? 'ok' : 'warn', 'งานที่สั่งให้ครูส่ง ภาคเรียนนี้', rd.termDeadlines ? fmtN(rd.termDeadlines) + ' รายการ' : 'ยังไม่มี — หน้าส่งงานของครูจะว่าง', rd.termDeadlines ? '' : 'announce.html', 'ไปหน้าประกาศและปฏิทิน');
+        add(G3, rd.termActivities ? 'ok' : 'warn', 'ปฏิทินกิจกรรม ภาคเรียนนี้', rd.termActivities ? fmtN(rd.termActivities) + ' รายการ' : 'ยังไม่มี', rd.termActivities ? '' : 'announce.html', 'ไปหน้าประกาศและปฏิทิน');
+      }
+      add(G3, rd.annExpired ? 'info' : 'ok', 'ประกาศที่หมดเวลาแสดงแล้ว', rd.annExpired ? fmtN(rd.annExpired) + ' เรื่อง — อยู่ในแท็บจัดเก็บ ลบได้ถ้าไม่ใช้แล้ว' : 'ไม่มี', rd.annExpired ? 'announce.html' : '', 'ไปหน้าประกาศ');
+    }
+    var rp = ov.reports;
+    if (rp) add(G3, rp.systemOpen ? 'warn' : 'ok', 'เรื่องแจ้งปัญหาระบบที่รอรับเรื่อง', rp.systemOpen ? rp.systemOpen + ' เรื่อง' : 'ไม่มี', rp.systemOpen ? 'announce.html#reports' : '', 'ไปดูเรื่องที่แจ้ง');
+    if (rd) {
+      // 19–20 ระบบที่ซุ่มทำ
+      var tt = rd.hidden.tt, sb = rd.hidden.sub;
+      add(G4, tt.drafts ? 'ok' : 'info', 'จัดตารางเรียน', (tt.enabled ? 'เปิดให้ผู้ดูแลใช้' : 'ปิดอยู่') + ' · ฉบับร่างภาคเรียนนี้ ' + tt.drafts + ' ชุด' + (tt.published ? ' · ประกาศแล้ว ' + tt.published + ' ชุด' : ' · ยังไม่ได้ประกาศ'), 'timetable.html', 'ไปหน้าจัดตารางเรียน');
+      add(G4, sb.enabled ? (sb.mgr ? 'ok' : 'warn') : 'info', 'จัดสอนแทน', sb.enabled ? 'เปิดใช้อยู่' + (sb.mgr ? ' · ผู้ดูแล ' + sb.mgr + ' คน' : ' · ยังไม่มีผู้ดูแล') : 'ปิดอยู่ (ครูยังไม่เห็น)', 'substitute.html', 'ไปหน้าจัดสอนแทน');
+    }
+    if (state.rdErr) add(G1, 'bad', 'ตรวจความพร้อมไม่ได้', escapeHtml(state.rdErr) + (/ไม่รู้จักคำสั่ง/.test(state.rdErr) ? ' — Worker ยังเป็นรุ่นก่อน 2.23.0' : ''));
+    return L;
+  }
+  function renderReady() {
+    var el = $('ovReady'); if (!el || !state.ov) return;
+    var L = rdItems(), bad = L.filter(function (x) { return x.st !== 'ok'; }), ok = L.filter(function (x) { return x.st === 'ok'; });
+    var row = function (x) {
+      return '<li class="ov-rd ' + x.st + '"><i class="fa-solid ' + RD_IC[x.st] + '" aria-hidden="true"></i><div class="ov-rd-t"><b>' + escapeHtml(x.label) + '</b><span>' + x.detail + '</span>' + x.extra + '</div>' +
+        (x.link ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(x.link) + '"' + (/^https?:/.test(x.link) ? ' target="_blank" rel="noopener"' : '') + '>' + escapeHtml(x.linkText) + '</a>' : '') + '</li>';
+    };
+    var groups = [], by = {};
+    bad.forEach(function (x) { if (!by[x.g]) { by[x.g] = []; groups.push(x.g); } by[x.g].push(x); });
+    var nBad = bad.filter(function (x) { return x.st === 'bad' || x.st === 'warn'; }).length;
+    $('ovReadyNote').textContent = nBad ? 'ต้องดู ' + nBad + ' ข้อ · ครบแล้ว ' + ok.length + ' ข้อ' : 'ครบแล้ว ' + ok.length + ' ข้อ';
+    el.innerHTML = (groups.length ? groups.map(function (g) { return '<div class="ov-rd-g">' + escapeHtml(g) + '</div><ul class="ov-rd-l">' + by[g].map(row).join('') + '</ul>'; }).join('') : '<p class="ov-mut" style="margin:0">ทุกข้อพร้อมใช้งาน</p>') +
+      (ok.length ? '<details class="ov-rd-ok"' + (state.rdOkOpen ? ' open' : '') + '><summary><i class="fa-solid fa-circle-check" aria-hidden="true"></i> ครบแล้ว ' + ok.length + ' ข้อ</summary><ul class="ov-rd-l">' + ok.map(row).join('') + '</ul></details>' : '');
+  }
+  document.getElementById('ovReady').addEventListener('toggle', function (e) { if (e.target.classList && e.target.classList.contains('ov-rd-ok')) state.rdOkOpen = e.target.open; }, true);
+  document.getElementById('ovReady').addEventListener('click', async function (e) {
+    if (!e.target.closest('#ovEvShare') || state.evSharing) return;
+    state.evSharing = true; renderReady();
+    try {
+      var r = await apiCall('careEvShare', {});
+      if (state.rd && state.rd.care && state.rd.care.ev) { state.rd.care.ev.shared = !!r.shared; state.rd.care.ev.error = r.error || ''; }
+      showToast(r.shared ? 'แชร์โฟลเดอร์รูปหลักฐานแล้ว — หน้ากิจการนักเรียนจะแสดงรูปจาก Drive โดยตรง' : 'ตั้งแชร์ไม่สำเร็จ' + (r.error ? ': ' + r.error : ' — โรงเรียนอาจปิดการแชร์แบบมีลิงก์ ตั้งเองใน Drive ได้'), !r.shared);
+    } catch (err) { showToast(err.message, true); }
+    state.evSharing = false; renderReady();
+  });
+  async function load(fresh) { // 2.34.1: fresh = กดรีเฟรช (ไม่ใช้ค่าที่จำไว้ 5–10 นาที)
+    var FR = { fresh: fresh === true ? 1 : 0 };
+    $('ovSub').textContent = 'หน้าแรกของผู้ดูแลระบบ · ข้อมูล ณ ' + formatDateTimeThai(new Date().toISOString());
+    var term = await currentAcademicTerm();
+    state.termText = (term.semester === 'summer' ? 'ภาคฤดูร้อน' : 'ภาคเรียนที่ ' + term.semester) + ' ปีการศึกษา ' + term.year;
+    $('ovTermNote').textContent = state.termText;
+    try { state.ov = await apiCall('adminOverview', { year: term.year, semester: term.semester }); }
+    catch (e) { $('ovQuota').innerHTML = $('ovStats').innerHTML = '<div class="error-box">' + escapeHtml(e.message) + (/ไม่รู้จักคำสั่ง/.test(e.message) ? ' — Worker ยังเป็นรุ่นก่อน 1.79' : '') + '</div>'; return; }
+    render();
+    var t0 = Date.now();
+    apiCall('adminSystemInfo', FR).then(function (r) { state.sys = r; state.sysMs = Date.now() - t0; render(); }, function (e) { state.sysErr = e.message; render(); });
+    apiCall('adminReadiness', FR).then(function (r) { state.rd = r; state.rdErr = ''; renderReady(); }, function (e) { state.rdErr = e.message; renderReady(); });
+    apiCall('adminGalleryRoot', {}).then(function (r) { state.galRoot = r; render(); }, function (e) { state.galRoot = { error: e.message }; render(); });
+    loadUse();
+    apiCall('adminCloudUsage', FR).then(function (r) { state.cf = r; render(); renderUse(); }, function (e) { state.cf = { configured: true, errors: { workers: e.message, d1: e.message, kv: e.message } }; render(); });
+  }
+  if (session) {
+    $('ovRefresh').addEventListener('click', async function () { var b = this; b.classList.add('spinning'); state.sys = null; state.cf = null; state.sysErr = ''; state.galRoot = null; state.rd = null; state.rdErr = ''; try { await load(true); } finally { b.classList.remove('spinning'); } });
+    window.__refreshPageData = load;
+    function syncQView() { document.querySelectorAll('[data-qview]').forEach(function (b) { var on = b.getAttribute('data-qview') === state.qView; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }); }
+    document.querySelector('.ov-view').addEventListener('click', function (e) { var b = e.target.closest('[data-qview]'); if (!b) return; state.qView = b.getAttribute('data-qview'); try { localStorage.setItem('bnkah_ov_qview', state.qView); } catch (er) {} syncQView(); render(); });
+    syncQView();
+    load();
+  }

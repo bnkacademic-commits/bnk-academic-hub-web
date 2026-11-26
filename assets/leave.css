@@ -63,3 +63,6 @@ a.lv-file:hover { border-color: var(--primary); color: var(--primary); }
 .lv-mg { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 .lv-mg > div { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: .9rem; color: var(--text); }
 .lv-mg .mut { font-size: .84rem; margin-top: 2px; }
+/* 2.34.0: กันกระพริบ (ใช้ร่วมกับหน้าขอเวลาเรียน) — โหลดอยู่ = เนื้อหาเดิมจางลง + ไอคอนหมุนมุมจอ */
+#lvBody.rt-busy { opacity: .55; pointer-events: none; transition: opacity .15s; }
+#lvBody.rt-busy::before { content: ''; position: fixed; top: 76px; right: 18px; width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--primary); animation: spin .8s linear infinite; z-index: 30; }

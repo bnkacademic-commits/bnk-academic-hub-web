@@ -315,7 +315,15 @@
         // 2.17.0: ขอเวลาเรียน (อนุมัติแล้ว) — มีปุ่ม "ร่วมกิจกรรม" + เลือกให้ (ถ้ายังไม่เคยเช็คคาบนี้) · ครูแก้ได้
         var g = (S.grants || []).filter(function (x) { return x.sid === s.id && x.date === o.date && (!(x.periods || []).length || x.periods.map(Number).indexOf(Number(o.period)) !== -1); })[0];
         var L = g && list.indexOf('ร่วมกิจกรรม') === -1 ? ['ร่วมกิจกรรม'].concat(list) : list, cur = recs[s.id] || (g && !r ? 'ร่วมกิจกรรม' : '');
-        return '<tr data-sid="' + esc(s.id) + '"><td>' + esc(s.number) + '</td><td>' + esc(s.name) + (g ? grantLine(g) : '') + '</td><td><div class="cb-st">' + L.map(function (x) { return '<button type="button" data-st="' + x + '" class="' + (cur === x ? 'on' : '') + '" style="--c:' + SCOLOR[x] + '">' + x + '</button>'; }).join('') + '</div></td></tr>'; }).join('') + '</tbody></table></div>' + recSectionHtml(o, r),
+        // 2.34.0: ป้ายเตือนสีส้ม — วันนั้นนักเรียนมีลา (คาบใดก็ได้) หรือขาดคาบอื่นที่ไม่ได้ขอตั้งแต่ 2 คาบ · ยังเลือกร่วมกิจกรรมให้ตามเดิม
+        function grantWarn(g) {
+          var L = ((S.gday || {})[s.id + '|' + o.date] || []).filter(function (x) { return Number(x[0]) !== Number(o.period); }), inReq = function (p) { return !(g.periods || []).length || g.periods.map(Number).indexOf(Number(p)) !== -1; };
+          var lv = L.filter(function (x) { return x[1] === 'ลาป่วย' || x[1] === 'ลากิจ'; }), ab = L.filter(function (x) { return (x[1] === 'ขาด' || x[1] === 'โดดเรียน') && !inReq(x[0]); });
+          if (!lv.length && ab.length < 2) return '';
+          var by = {}; lv.concat(ab.length ? ab.map(function (x) { return [x[0], 'ขาด']; }) : []).forEach(function (x) { (by[x[1]] = by[x[1]] || []).push(plabel(x[0])); });
+          return '<div class="cb-mut tc-gw"><i class="fa-solid fa-triangle-exclamation"></i> วันนั้น' + Object.keys(by).map(function (k) { return k + ' คาบ ' + by[k].join(', '); }).join(' · ') + ' — ตรวจว่าไปร่วมกิจกรรมจริงไหม</div>';
+        }
+        return '<tr data-sid="' + esc(s.id) + '"><td>' + esc(s.number) + '</td><td>' + esc(s.name) + (g ? grantLine(g) + grantWarn(g) : '') + '</td><td><div class="cb-st">' + L.map(function (x) { return '<button type="button" data-st="' + x + '" class="' + (cur === x ? 'on' : '') + '" style="--c:' + SCOLOR[x] + '">' + x + '</button>'; }).join('') + '</div></td></tr>'; }).join('') + '</tbody></table></div>' + recSectionHtml(o, r),
       '<button type="button" class="btn btn-success" data-tc-save><i class="fa-solid fa-check"></i> บันทึก</button>');
     var mb = document.getElementById('cbModalBody'), held = lg ? lg.held : null;
     tcSig0 = window.BackNav ? BackNav.sig(mb) : null;
