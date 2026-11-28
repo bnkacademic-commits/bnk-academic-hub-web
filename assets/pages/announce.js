@@ -663,7 +663,7 @@
         var set = evAtt.days[d] || [], wk = [0, 6].indexOf(new Date(d + 'T12:00:00').getDay()) !== -1;
         return '<div class="att-day" data-day="' + d + '"><span class="att-dlabel' + (wk ? ' wknd' : '') + '">' + attDayLabel(d) + '</span><div class="att-chips">' +
           ATT_P.map(function (p) { return '<button type="button" class="att-chip' + (set.indexOf(p) !== -1 ? ' on' : '') + '" data-ap="' + p + '" aria-pressed="' + (set.indexOf(p) !== -1) + '">' + p + '</button>'; }).join('') +
-          '</div><span class="att-tools"><button type="button" data-aday="all">ทั้งวัน</button><button type="button" data-aday="none">ล้าง</button>' + (i === 0 && ds.length > 1 ? '<button type="button" data-aday="copy">ใช้กับทุกวัน</button>' : '') + '</span></div>';
+          '</div><span class="att-tools"><button type="button" data-aday="all">ทั้งวัน</button><button type="button" data-aday="none">ล้าง</button>' + (i === 0 && ds.length > 1 ? '<button type="button" data-aday="copy" title="ข้ามเสาร์-อาทิตย์และวันหยุด">ใช้กับทุกวันเรียน</button>' : '') + '</span></div>';
       }).join('');
     }
     async function renderAttPick() {
@@ -726,7 +726,7 @@
       var a = t.getAttribute('data-aday');
       if (a === 'all') evAtt.days[d] = ATT_P.slice();
       else if (a === 'none') evAtt.days[d] = [];
-      else if (a === 'copy') attRangeDates().forEach(function (x) { evAtt.days[x] = set.slice(); });
+      else if (a === 'copy') attRangeDates().forEach(function (x) { evAtt.days[x] = x !== d && isNoClassDay(x) ? [] : set.slice(); }); // 2.34.6: ข้ามเสาร์-อาทิตย์ / วันหยุด
       renderAttDays();
     });
     ['evActDate', 'evActEndDate'].forEach(function (id) { document.getElementById(id).addEventListener('change', function () { if (evAtt.mode === 'noclass' || evAtt.mode === 'activity') renderAttDays(); }); });

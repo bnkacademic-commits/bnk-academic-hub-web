@@ -1442,7 +1442,7 @@ cell.innerHTML = cc.num + (isToday ? '<span class="cal-today-label">วันน
       var dd = Math.round((Date.parse(e.date + 'T00:00:00') - Date.parse(T + 'T00:00:00')) / 864e5), de = Math.round((Date.parse((e.endDate || e.date) + 'T00:00:00') - Date.parse(T + 'T00:00:00')) / 864e5);
       var cd = dd > 0 ? 'อีก ' + dd + ' วัน' : dd === 0 ? 'วันนี้' : de >= 0 ? 'กำลังดำเนินอยู่' : 'ผ่านมาแล้ว ' + (-de) + ' วัน';
       var rs = typeof responsibleText === 'function' ? responsibleText(e, '') : '', us = e.responsible && e.responsible.users ? e.responsible.users.map(function (u) { return u.name; }) : [];
-      var rr = [rs].concat(us).filter(Boolean).join(', '), tt = hol ? '' : activityTimeText(e, dd <= 0 && de >= 0 ? T : '');
+      var rr = [rs].concat(us).filter(Boolean).join(', '), tt = hol ? '' : activityTimeText(e, dd <= 0 && de >= 0 && !isNoClassDay(T) ? T : ''); // 2.34.6: วันหยุด = แสดงคาบของวันเรียน
       var row = function (ic, html) { return '<div class="act-pop-r"><i class="fa-solid ' + ic + '" aria-hidden="true"></i><div>' + html + '</div></div>'; };
       document.getElementById('actModalBody').innerHTML = '<div class="act-pop" style="--cc:' + c + '"><div class="act-pop-h"><span class="cas-ddt">' + (+e.date.slice(8)) + '<small>' + ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'][+e.date.slice(5, 7) - 1] + '</small></span>' +
         '<div class="act-pop-tw"><div class="act-pop-t" id="actModalT">' + escapeHtml(e.title) + '</div><span class="cas-cd' + (dd === 0 || (dd < 0 && de >= 0) ? ' now' : '') + '">' + cd + '</span>' + (hol ? ' <span class="cas-hol">วันหยุด</span>' : '') + '</div></div>' +

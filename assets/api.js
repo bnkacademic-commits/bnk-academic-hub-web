@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.34.1';
-var APP_VERSION = '2.34.5.281126';
+var APP_VERSION = '2.34.6.281126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -1062,12 +1062,19 @@ function activityOwnerBadgeHtml(e) {
 //         กิจกรรมหลายวัน = คาบของวันที่ส่งมา (ymd) → วันนี้ถ้าอยู่ในช่วง → วันแรกที่เลือกคาบไว้ · เวลาคาบชุดเดียวกับเว็บเช็คชื่อ
 var ATT_PERIOD_ORDER = ['A', 'B', '1', '2', '3', '4', '5', '6', '7', '8'];
 var ATT_PERIOD_TIME = { A: ['07:30', '08:00'], B: ['08:00', '08:30'], 1: ['08:30', '09:20'], 2: ['09:20', '10:10'], 3: ['10:20', '11:10'], 4: ['11:10', '12:00'], 5: ['13:00', '13:50'], 6: ['13:50', '14:40'], 7: ['14:40', '15:30'], 8: ['15:30', '16:20'] };
+// 2.34.6: วันที่ไม่มีเรียน — เสาร์ / อาทิตย์ หรือวันหยุดในปฏิทินที่โหลดอยู่ในหน้า (calState)
+function isNoClassDay(ymd) {
+  var dw = new Date(ymd + 'T00:00:00Z').getUTCDay(); if (dw === 0 || dw === 6) return true;
+  try { if (typeof calState !== 'undefined' && calState && Array.isArray(calState.events)) return calState.events.some(function (e) { return isHolidayEv(e) && e.date <= ymd && (e.endDate || e.date) >= ymd; }); } catch (x) { /* ไม่เป็นไร */ }
+  return false;
+}
 function activityPeriodsOf(e, ymd) {
   var days = e && (e.attMode === 'activity' || e.attMode === 'noclass') && e.attPlan && Array.isArray(e.attPlan.days) ? e.attPlan.days : null;
   if (!days || !days.length) return [];
+  if (ymd && isNoClassDay(ymd)) return []; // 2.34.6: เสาร์-อาทิตย์ / วันหยุด = ไม่มีคาบเรียน
   var idx = function (d) { return Math.round((Date.parse(d + 'T00:00:00Z') - Date.parse(e.date + 'T00:00:00Z')) / 864e5); };
   var pick = function (i) { return i >= 0 && i < days.length && Array.isArray(days[i]) ? days[i] : null; };
-  var d = (ymd && pick(idx(ymd))) || pick(idx(todayYmd())) || days.filter(function (x) { return Array.isArray(x) && x.length; })[0] || [];
+  var d = (ymd && pick(idx(ymd))) || (isNoClassDay(todayYmd()) ? null : pick(idx(todayYmd()))) || days.filter(function (x) { return Array.isArray(x) && x.length; })[0] || [];
   return ATT_PERIOD_ORDER.filter(function (p) { return d.map(String).indexOf(p) !== -1; });
 }
 function activityTimeText(e, ymd) {
