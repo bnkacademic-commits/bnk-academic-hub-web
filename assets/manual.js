@@ -7,22 +7,25 @@ var MANUAL_TOPICS = [
     id: 'start', group: 'common', title: 'เริ่มต้นใช้งาน', icon: 'fa-door-open', roles: 'tsea',
     lead: 'เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านที่ได้รับจากโรงเรียน แล้วรู้จักปุ่มหลักที่อยู่ด้านบนของทุกหน้า',
     figs: [
-      { img: 'start-login', cap: 'หน้าเข้าสู่ระบบ', steps: ['กรอกชื่อผู้ใช้ (Username)', 'กรอกรหัสผ่าน — กดรูปตาเพื่อดูสิ่งที่พิมพ์', '"จำชื่อผู้ใช้" — ครั้งหน้ากรอกชื่อผู้ใช้ไว้ให้ พิมพ์แค่รหัสผ่าน (ระบบไม่เก็บรหัสผ่านไว้ในเครื่อง)', '"เข้าสู่ระบบอัตโนมัติ" — ไม่ต้องเข้าสู่ระบบใหม่ทุกครั้ง ถ้าไม่ได้ใช้งานเกิน 7 วันจึงต้องเข้าใหม่ (นับใหม่ทุกครั้งที่เปิดใช้) ติ๊กเฉพาะเครื่องส่วนตัว', 'กด "เข้าสู่ระบบ"'] },
+      { img: 'start-login', cap: 'หน้าเข้าสู่ระบบ (2.34)', steps: ['กรอกชื่อผู้ใช้ (Username)', 'กรอกรหัสผ่าน — กดรูปตาเพื่อดูสิ่งที่พิมพ์', '"จำชื่อผู้ใช้" — ครั้งหน้ากรอกชื่อผู้ใช้ไว้ให้ พิมพ์แค่รหัสผ่าน (ระบบไม่เก็บรหัสผ่านไว้ในเครื่อง)', '"เข้าสู่ระบบอัตโนมัติ" — ไม่ต้องเข้าสู่ระบบใหม่ทุกครั้ง ถ้าไม่ได้ใช้งานเกิน 7 วันจึงต้องเข้าใหม่ (นับใหม่ทุกครั้งที่เปิดใช้) ติ๊กเฉพาะเครื่องส่วนตัว', 'กด "เข้าสู่ระบบ"', 'ทางลัด ไม่ต้องเข้าสู่ระบบ — เว็บเช็คชื่อ (BNK E-Attendance) · BNK Care Center · คลังรูปภาพ · ทำเนียบบุคลากร · ค้นหาเกียรติบัตร'] },
+      { img: 'start-login-m', m: 1, cap: 'หน้าเข้าสู่ระบบบนมือถือ', steps: ['ชื่อผู้ใช้', 'รหัสผ่าน', 'จำชื่อผู้ใช้', 'เข้าสู่ระบบอัตโนมัติ', 'เข้าสู่ระบบ', 'ทางลัดอยู่ใต้ช่องเข้าสู่ระบบ'] },
       { img: 'start-topbar', cap: 'แถบด้านบนและเมนูด้านข้าง', steps: ['ปุ่ม ☰ — กาง/ย่อเมนูด้านซ้าย', 'ช่องค้นหา — หาเมนู คู่มือ คำสั่ง เกียรติบัตร ฯลฯ (กด Ctrl+K ได้)', 'รีเฟรชข้อมูลล่าสุดโดยไม่ต้องโหลดหน้าใหม่', 'กระดิ่งแจ้งเตือน — ตัวเลขสีแดงคือเรื่องใหม่', 'เมนูบัญชี: คู่มือการใช้งาน ธีมสี เปลี่ยนรูปโปรไฟล์ เปลี่ยนรหัสผ่าน แจ้งปัญหา และออกจากระบบ', 'เมนูด้านซ้าย — แบ่งเป็นกลุ่ม · ชี้เมนูแล้วกดดาวเพื่อปักหมุดเป็นรายการโปรด'] }
     ],
-    tips: ['ดาวน์โหลดคู่มือเป็นเล่ม (PDF): ปุ่มมุมขวาบนของหน้าต่างคู่มือ — "คู่มือของฉัน" ได้เฉพาะหัวข้อของเมนูที่บัญชีคุณเข้าถึงได้ หรือเลือกเฉพาะหัวข้อที่เปิดอยู่ (2.14.0)', 'ป็อปอัปต้อนรับ (คำแนะนำครั้งแรก) แสดงครั้งเดียว — ผู้ดูแลระบบสั่งให้แสดงอีกครั้งได้ที่ ตั้งค่าระบบ → จัดการบัญชี (รายคน หรือทุกคน)', 'ไม่ติ๊ก "เข้าสู่ระบบอัตโนมัติ" = ไม่ได้ใช้งาน 60 นาทีระบบจะออกให้เอง (เหมาะกับเครื่องที่ใช้ร่วมกัน)', 'ติ๊ก "เข้าสู่ระบบอัตโนมัติ" = อยู่ในระบบต่อได้ จนกว่าจะไม่ได้เปิดใช้งานเกิน 7 วัน หรือกด "ออกจากระบบ" เอง', 'เข้าสู่ระบบได้ทีละเครื่อง — เมื่อเข้าจากเครื่องใหม่ เครื่องเดิมจะออกจากระบบให้อัตโนมัติ', 'ลืมรหัสผ่าน ติดต่อผู้ดูแลระบบให้ตั้งรหัสผ่านใหม่']
+    tips: ['คู่มือมี 3 เล่ม (2.34.4): เว็บส่งงาน · เว็บเช็คชื่อ · BNK Care Center — สลับเล่มที่แท็บด้านบนของหน้าต่างคู่มือ', 'ดาวน์โหลดคู่มือเป็นเล่ม (PDF): ปุ่มมุมขวาบนของหน้าต่างคู่มือ — "คู่มือของฉัน" ได้เฉพาะหัวข้อของเมนูที่บัญชีคุณเข้าถึงได้ หรือเลือกเฉพาะหัวข้อที่เปิดอยู่ (2.14.0)', 'ป็อปอัปต้อนรับ (คำแนะนำครั้งแรก) แสดงครั้งเดียว — ผู้ดูแลระบบสั่งให้แสดงอีกครั้งได้ที่ ตั้งค่าระบบ → จัดการบัญชี (รายคน หรือทุกคน)', 'ไม่ติ๊ก "เข้าสู่ระบบอัตโนมัติ" = ไม่ได้ใช้งาน 60 นาทีระบบจะออกให้เอง (เหมาะกับเครื่องที่ใช้ร่วมกัน)', 'ติ๊ก "เข้าสู่ระบบอัตโนมัติ" = อยู่ในระบบต่อได้ จนกว่าจะไม่ได้เปิดใช้งานเกิน 7 วัน หรือกด "ออกจากระบบ" เอง', 'เข้าสู่ระบบได้ทีละเครื่อง — เมื่อเข้าจากเครื่องใหม่ เครื่องเดิมจะออกจากระบบให้อัตโนมัติ', 'ลืมรหัสผ่าน ติดต่อผู้ดูแลระบบให้ตั้งรหัสผ่านใหม่']
   },
   {
     id: 'home', group: 'common', title: 'หน้าแรก', icon: 'fa-house', roles: 'ts',
     lead: 'หน้าแรกรวมทุกอย่างที่ต้องรู้: ประกาศ ปฏิทินกำหนดส่งงานและกิจกรรม และเช็คลิสต์ว่าส่งงานอะไรไปแล้วบ้าง',
     figs: [
       { img: 'home-1', cap: 'ประกาศ ปฏิทิน และเช็คลิสต์', steps: ['ประกาศจากกลุ่มบริหารงานต่างๆ — กดลูกศรมุมขวาเพื่อย่อ/ขยาย', 'ปฏิทิน — จุดสีคือวันกำหนดส่งงาน แถบสีคือกิจกรรม กดวันที่เพื่อดูรายละเอียด · เลือกกลุ่มบริหารงานได้จากปุ่มด้านบน', 'เช็คลิสต์การส่งงาน — เลือกปีการศึกษาและภาคเรียน ตัวเลขสีแดงคือจำนวนงานที่ยังไม่ส่ง'] },
+      { img: 'home-today', cap: 'กิจกรรมวันนี้ (2.33.3) — เหนือปฏิทิน', steps: ['การ์ดกิจกรรมของวันนี้ขึ้นเอง — เวลา (ถ้าใช้คาบเรียนจะบอก "คาบ 6–8 · 13:50–16:20 น.") สถานที่ ผู้รับผิดชอบ · กดการ์ดเพื่อเปิดรายละเอียด', 'รูปย่อไฟล์แนบ — กดเพื่อดูรูปเป็นป็อปอัป', 'มีหลายกิจกรรม กด "ดูอีก N กิจกรรม"'] },
+      { img: 'home-actpop', cap: 'ป็อปอัปรายละเอียดกิจกรรม', steps: ['ไฟล์แนบ / ไฟล์ตัวอย่าง — กดแล้วเปิดดูในป็อปอัป (ไม่เด้งออกไป Google Drive) · ปุ่มสีส้มเปิดโฟลเดอร์ไฟล์แนบ'] },
+      { img: 'home-filepop', cap: 'ดูไฟล์ในป็อปอัป', steps: ['ลำดับไฟล์ (เช่น 1/3)', 'ไฟล์ก่อนหน้า / ถัดไป (กดลูกศรบนคีย์บอร์ดก็ได้)', 'ปิด (หรือกด Esc) · ปุ่ม "เปิดไฟล์" / "ดาวน์โหลด" อยู่มุมขวาบน'] },
       { img: 'home-menu', cap: 'เมนูทั้งหมด (2.12.2) — ใต้การ์ดเว็บไซต์โรงเรียน', steps: ['แท็บกลุ่มเมนู — กดเพื่อสลับกลุ่ม (จำกลุ่มที่เปิดล่าสุดไว้)', 'ปุ่มเมนู — กดเพื่อไปหน้านั้น · เห็นเฉพาะเมนูที่บัญชีนี้ใช้ได้ (เหมือนเมนูข้าง)'] },
       { img: 'home-popup', cap: 'ประกาศแบบป็อปอัป (2.11.1)', steps: ['รูปประกอบ — กด "กดเพื่อขยาย" ดูเต็มจอ · บนคอม โปสเตอร์แนวตั้งอยู่ซ้าย ข้อความอยู่ขวา · บนมือถือ รูปอยู่บน ข้อความอยู่ล่าง', 'ปุ่มลิงก์ — แสดงชื่อเว็บใต้ปุ่ม กดแล้วเปิดแท็บใหม่ (ฟ้าม่วง = ลิงก์เว็บ · ส้ม = โฟลเดอร์ไฟล์แนบ · เขียว = ไฟล์ตัวอย่าง/แบบฟอร์ม)', 'ติ๊ก "ไม่ต้องแสดงประกาศนี้อีก" ถ้าไม่ต้องการเห็นอีก (ไม่ติ๊ก = ครั้งหน้าที่เข้าระบบขึ้นอีก)', 'รับทราบ — ปิดแล้วไปประกาศถัดไป (มีหลายประกาศจะขึ้นทีละอัน)'] },
       { img: 'home-popup-zoom', cap: 'ดูรูปประกาศเต็มจอ', steps: ['ซูม — สลับ พอดีจอ ↔ ขนาดจริง (คลิกที่รูปก็ได้) แล้วเลื่อนอ่านตัวเล็ก/สแกน QR', 'ดาวน์โหลดรูป', 'ปิด (หรือกด Esc / คลิกพื้นที่ว่าง) — กลับไปที่ป็อปอัปเดิม'] },
       { img: 'home-activity', cap: 'กิจกรรมในปฏิทิน', steps: ['เลือกดู ทั้งหมด / กำหนดส่ง / กิจกรรม', 'แถบสีคือกิจกรรม (สีตามกลุ่มเจ้าของ) — กำหนดส่งงานยังเป็นจุดสีเหมือนเดิม'] },
-      { img: 'home-activity-day', cap: 'รายละเอียดกิจกรรม (กดที่วันที่)', steps: ['ชื่อกิจกรรม วันที่ เวลา สถานที่ กลุ่มเจ้าของ และรายละเอียด'] },
-      { img: 'home-activity-list', cap: 'กิจกรรมที่จะถึง (ใต้ปฏิทิน)', steps: ['กิจกรรมภายใน 60 วันข้างหน้า แยกจากรายการ "กำหนดส่งงาน" — กิจกรรมไม่ต้องส่งงาน'] },
+      { img: 'home-activity-list', cap: 'กิจกรรมที่จะถึง', steps: ['กิจกรรมภายใน 60 วันข้างหน้า แยกจากรายการ "กำหนดส่งงาน" — กดรายการ ปฏิทินเลื่อนไปวันนั้นและเปิดป็อปอัปรายละเอียด'] },
       { img: 'home-mobile', cap: 'กำหนดส่งงานบนมือถือ (2.02.6)', steps: ['ปุ่มตัวกรอง — เลือกกลุ่มบริหารงาน ประเภท และการเรียง (มีตัวเลขบอกเมื่อกรองอยู่)', 'ปุ่มสถานะ ทั้งหมด / ยังไม่ส่ง / เกินกำหนด / ส่งแล้ว พร้อมจำนวน', 'ช่องวันครบกำหนด — แดง = ใกล้ครบหรือเกินกำหนด · ม่วง = ปกติ · เทา = ส่งแล้ว · รายการแบ่งหัวข้อ เกินกำหนด / ภายใน 7 วัน / ภายใน 1 เดือน / ถัดไป'] },
       { img: 'home-review', cap: 'ผลการตรวจผลงานในเช็คลิสต์', steps: ['"แก้ไขเพิ่มเติม" — เจ้าหน้าที่ขอให้เพิ่มเติมบางอย่าง (งานที่ส่งแล้วแต่ยังไม่ได้ตรวจ แสดง "ส่งแล้ว" ตามปกติ)', 'ข้อความจากเจ้าหน้าที่กลุ่มบริหารงานที่เป็นเจ้าของงาน', 'ไฟล์ที่ต้องแก้ พร้อมสิ่งที่ต้องแก้ — กด "อัปโหลดทับ" เลือกไฟล์ที่แก้แล้ว (ไฟล์เดิมเก็บไว้จนเจ้าหน้าที่ตรวจว่าไฟล์ใหม่ผ่าน)', 'ขอไฟล์เพิ่ม — กด "เพิ่มไฟล์" เพื่อส่งไฟล์ที่ขาด', 'ไฟล์ที่ผ่านแล้ว · แก้ครบทุกไฟล์และส่งไฟล์ที่ขอแล้ว สถานะกลับเป็น "ส่งแล้ว" และเจ้าหน้าที่ได้รับแจ้งเตือน'] }
     ],
@@ -232,7 +235,7 @@ MANUAL_TOPICS.push({
     { img: 'teach-week', cap: 'ตารางสอนรายสัปดาห์ (คอมพิวเตอร์)', steps: ['เลื่อนสัปดาห์ + ร้อยละที่เช็คแล้ว', 'กดช่องคาบเพื่อเปิดเช็คชื่อ/แก้ไขของวันนั้น — สีบอกสถานะ (เช็คแล้ว · ยังไม่เช็ค · หยุดเรียน · กิจกรรม · ไปราชการ/ลา)'] },
     { img: 'teach-week-m', cap: 'ตารางสอนรายสัปดาห์ (มือถือ)', steps: ['เลือกวัน — ใต้วันบอกจำนวนคาบ', 'คาบของวันนั้นเรียงลงมา กดเพื่อเช็คชื่อ/แก้ไข'] }
   ],
-  tips: ['เช็คย้อนหลังได้เฉพาะใน "ระยะเวลาการเช็คชื่อ" (ช่วงที่นักเรียนมาเรียน) ที่ผู้ดูแลระบบตั้งที่ ตั้งค่าระบบ › ทั่วไป (ยังไม่ตั้ง = ตั้งแต่วันเริ่มภาคเรียน) · วันนอกช่วงไม่นับในสรุป/รายงาน ไม่เตือนในกระดิ่ง และเว็บเช็คชื่อเช็คไม่ได้', 'วิชาที่ไม่ขึ้น: บัญชียังไม่ได้ผูกกับรายชื่อครูในเว็บเช็คชื่อ — ติดต่อผู้ดูแลเว็บเช็คชื่อ', 'วิชาที่มีนักศึกษาฝึกสอนช่วยสอนมีป้ายชื่อนักศึกษา — นักศึกษาเช็คชื่อวิชานั้นได้ด้วย', 'แท็บแจ้งไปราชการ / ลา: ปุ่ม "รายงาน PDF" — เลือกเดือนนี้ / เดือนที่แล้ว / ภาคเรียนนี้ / กำหนดเอง · หน้าสรุปรายคน (ทั้งวันนับเป็นวันแยกประเภท · เฉพาะบางคาบแยกนับครั้ง/คาบ) + รายการทั้งหมด + ช่องลงชื่อผู้รายงาน (ไม่บังคับ)']
+  tips: ['เช็คย้อนหลังได้เฉพาะใน "ระยะเวลาการเช็คชื่อ" (ช่วงที่นักเรียนมาเรียน) ที่ผู้ดูแลระบบตั้งที่ ตั้งค่าระบบ › ทั่วไป (ยังไม่ตั้ง = ตั้งแต่วันเริ่มภาคเรียน) · วันนอกช่วงไม่นับในสรุป/รายงาน ไม่เตือนในกระดิ่ง และเว็บเช็คชื่อเช็คไม่ได้', 'วิชาที่ไม่ขึ้น: บัญชียังไม่ได้ผูกกับรายชื่อครูในเว็บเช็คชื่อ — ติดต่อผู้ดูแลเว็บเช็คชื่อ', 'หน้าแก้เช็คชื่อ: นักเรียนที่ขอเวลาเรียนแต่วันนั้นมีลา หรือขาดคาบอื่นตั้งแต่ 2 คาบ มีป้ายสีส้มเตือน (2.34)', 'วิธีเช็คชื่อที่เว็บเช็คชื่อเอง ดูได้ที่คู่มือเล่ม "เว็บเช็คชื่อ" (แท็บด้านบนของหน้าต่างคู่มือ)', 'วิชาที่มีนักศึกษาฝึกสอนช่วยสอนมีป้ายชื่อนักศึกษา — นักศึกษาเช็คชื่อวิชานั้นได้ด้วย', 'แท็บแจ้งไปราชการ / ลา: ปุ่ม "รายงาน PDF" — เลือกเดือนนี้ / เดือนที่แล้ว / ภาคเรียนนี้ / กำหนดเอง · หน้าสรุปรายคน (ทั้งวันนับเป็นวันแยกประเภท · เฉพาะบางคาบแยกนับครั้ง/คาบ) + รายการทั้งหมด + ช่องลงชื่อผู้รายงาน (ไม่บังคับ)']
 });
 MANUAL_TOPICS.push({
   id: 'leave', group: 'common', title: 'แจ้งลา / ไปราชการ', icon: 'fa-plane-departure', roles: 'tsea', need: function (s) { return !!(s && s.leave); },
@@ -243,18 +246,21 @@ MANUAL_TOPICS.push({
     { img: 'leave-pending', cap: 'รออนุมัติ (ผู้ดูแล)', steps: ['กดชื่อไฟล์เพื่อดูหลักฐาน · อนุมัติ / ไม่อนุมัติ (ต้องใส่เหตุผล) — ครูได้รับแจ้งทางกระดิ่ง', 'รายการที่อนุมัติแล้วแต่ยังไม่ส่งใบลา · กด "เตือน" ได้'] },
     { img: 'leave-summary', cap: 'ข้อความสรุปรายวัน (ผู้ดูแล)', steps: ['เลือกวัน · แบบรวมทั้งหมด หรือแยกประเภท', 'แก้ข้อความได้ก่อนกด "คัดลอก" ไปวางในกลุ่มไลน์ · รูปแบบข้อความตั้งได้ที่แท็บ ตั้งค่า'] }
   ],
-  tips: ['ระหว่างรออนุมัติ คาบสอนยังนับตามปกติ · อนุมัติแล้วคาบวันนั้นเป็น "ลา / ไปราชการ (ไม่นับ)" ทันที', 'ผู้ดูแลลงการลาให้ครูได้ที่ปุ่ม "ลงการลา / ไปราชการ" (อนุมัติทันที · ไม่ต้องแนบหลักฐาน) — แท็บ "หลายแถว" ลงคนละประเภทในครั้งเดียว · แท็บ "เลือกหลายคน" ลงหลายคนประเภทเดียวกัน (สะดวกบนมือถือ)', 'ประวัติที่เคยแจ้งจากแท็บเดิมในหน้าวิชาที่สอน ย้ายมาแสดงในหน้านี้ให้อัตโนมัติ (สถานะอนุมัติแล้ว)', 'ตั้งค่า (ผู้ดูแลสิทธิ์จัดการ): ให้ครูแจ้งเอง · ประเภทการลา · กำหนดส่งใบลา · ผู้ลงนาม · รูปแบบข้อความสรุป · ยอดยกมา · การลาครั้งสุดท้าย (กรณีเพิ่งเริ่มใช้ระบบ)', 'ผู้ดูแลระบบเปิดหน้านี้ให้ครูทุกคนได้ที่ ตั้งค่าระบบ › จัดการผู้ดูแล (ปิด = ช่วงทดสอบ)']
+  tips: ['ระหว่างรออนุมัติ คาบสอนยังนับตามปกติ · อนุมัติแล้วคาบวันนั้นเป็น "ลา / ไปราชการ (ไม่นับ)" ทันที', 'ผู้ดูแลลงการลาให้ครูได้ที่ปุ่ม "ลงการลา / ไปราชการ" (อนุมัติทันที · ไม่ต้องแนบหลักฐาน) — แท็บ "หลายแถว" ลงคนละประเภทในครั้งเดียว · แท็บ "เลือกหลายคน" ลงหลายคนประเภทเดียวกัน (สะดวกบนมือถือ)', 'ประวัติที่เคยแจ้งจากแท็บเดิมในหน้าวิชาที่สอน ย้ายมาแสดงในหน้านี้ให้อัตโนมัติ (สถานะอนุมัติแล้ว)', 'ตั้งค่า (ผู้ดูแลสิทธิ์จัดการ): ให้ครูแจ้งเอง · ประเภทการลา · กำหนดส่งใบลา · ผู้ลงนาม · รูปแบบข้อความสรุป · ยอดยกมา · การลาครั้งสุดท้าย (กรณีเพิ่งเริ่มใช้ระบบ)', 'ผู้ดูแลระบบเปิดหน้านี้ให้ครูทุกคนได้ที่ ตั้งค่าระบบ › จัดการผู้ดูแล (ปิด = ช่วงทดสอบ)', 'กดชื่อไฟล์ใบลา / คำสั่ง = เปิดดูในป็อปอัป (2.34) · Ctrl+คลิก = เปิดแท็บใหม่']
 });
 MANUAL_TOPICS.push({
   id: 'reqtime', group: 'common', title: 'ขอเวลาเรียน', icon: 'fa-person-running', roles: 'tsea', need: function (s) { return !!(s && s.rt); },
-  lead: 'เมนู "ขอเวลาเรียน" (2.17.0) — ครูขอเวลาเรียนให้นักเรียนไปร่วมกิจกรรม เช่น ซ้อมแข่ง · ผู้ดูแล (รอง ผอ.) อนุมัติ แล้วหน้าเช็คชื่อของเว็บเช็คชื่อและหน้าวิชาที่สอนเลือก "ร่วมกิจกรรม" ให้นักเรียนเหล่านั้นเอง',
+  lead: 'เมนู "ขอเวลาเรียน" — ขอเวลาเรียนให้นักเรียนไปร่วมกิจกรรม เช่น ซ้อมแข่ง แล้วหน้าเช็คชื่อของเว็บเช็คชื่อและหน้าวิชาที่สอนเลือก "ร่วมกิจกรรม" ให้เอง · มี 3 โหมด (2.34): ปิด (แอดมินลงเอง) · เปิดระบบแบบอนุมัติ (ครูส่งคำขอ ผู้ดูแลอนุมัติ) · เปิดระบบแบบรายงานเอง (ครูให้ผู้บริหารเซ็นหนังสือก่อน แล้วลงข้อมูลเอง มีผลทันที)',
   figs: [
+    { img: 'reqtime-mode', cap: 'เลือกโหมด (Super Admin) — ตั้งค่าระบบ › จัดการผู้ดูแล › ผู้ดูแลการขอเวลาเรียน', steps: ['โหมดหน้าขอเวลาเรียน: ปิด / เปิดระบบแบบอนุมัติ / เปิดระบบแบบรายงานเอง', 'คำอธิบายของโหมดที่เลือก — เปลี่ยนโหมดแล้วรายการเดิมยังอยู่และมีผลตามเดิม'] },
+    { img: 'reqtime-self', cap: 'โหมดรายงานเอง — ลงข้อมูล', steps: ['กิจกรรม / เหตุผล', 'รายละเอียด (บังคับ) — ซ้อมอะไร / แข่งรายการอะไร', 'ผู้อนุมัติตามหนังสือ · เลขที่หนังสือ / ลงวันที่ (ไม่บังคับ)', 'แนบหนังสือที่ผู้บริหารลงนามแล้ว (บังคับ · รูปถ่ายหรือสแกน PDF)', 'วันที่ คาบ แล้วเลือกห้อง / ค้นชื่อนักเรียน', 'บันทึก — มีผลทันที ผู้ดูแลได้กระดิ่ง'] },
+    { img: 'reqtime-susp', cap: 'ระงับ (ผู้ดูแลสิทธิ์จัดการ)', steps: ['สถานะ "ระงับ" พร้อมเหตุผล ผู้ระงับ และเวลา — สิทธิ์ในเว็บเช็คชื่อหยุดทันที (คาบที่ระบบเคยเปลี่ยนขาด → ร่วมกิจกรรม กลับเป็นขาด)', 'ยกเลิกการระงับ — เมื่อครูแก้ไขแล้ว (รายการขึ้น "รอผู้ดูแลตรวจ")', 'ประวัติ — ลงข้อมูล / แก้ไข / ระงับ / ยกเลิกการระงับ (ใคร เมื่อไร เหตุผล)', 'กดชื่อไฟล์ = เปิดดูในป็อปอัป (Ctrl+คลิก = แท็บใหม่)'] },
     { img: 'reqtime-form', cap: 'ขอเวลาเรียน', steps: ['ใส่กิจกรรม / เหตุผล · ช่วงวันที่ (ขอย้อนได้ถึงวันจันทร์ของสัปดาห์นี้) · คาบ หรือทั้งวัน', 'เลือกห้องแล้วกด "เพิ่มทั้งห้อง" หรือพิมพ์ชื่อ / เลขประจำตัวเพื่อค้นนักเรียนทั้งโรงเรียน กด "เพิ่ม" ทีละคน', 'รายชื่อที่เลือกแยกตามห้อง กด ✕ เอาออกได้ · แนบหนังสือเชิญ / คำสั่งได้ (ไม่บังคับ)'] },
     { img: 'reqtime-pending', cap: 'รออนุมัติ (ผู้ดูแล)', steps: ['เอาติ๊กออก = ไม่อนุมัติเฉพาะคนนั้น', 'อนุมัติ = ส่งไปเว็บเช็คชื่อทันที · ไม่อนุมัติต้องใส่เหตุผล · ครูผู้ขอได้กระดิ่ง'] },
     { img: 'reqtime-check', cap: 'หน้าเช็คชื่อ (เว็บเช็คชื่อ) หลังอนุมัติ', steps: ['แถบสีฟ้าบอกจำนวนนักเรียนที่ได้รับอนุมัติในคาบนั้น', 'ยังไม่เคยเช็คคาบนั้น = เลือก "ร่วมกิจกรรม" ให้ · ป้ายใต้ชื่อบอกกิจกรรมและครูผู้ขอ · ครูประจำวิชาแก้ได้ตามปกติ'] },
     { img: 'reqtime-list', cap: 'รายการทั้งหมด', steps: ['ดูตามสัปดาห์ / เดือน / ทั้งหมด · Excel (รายชื่อนักเรียนทุกคำขอ)', 'คำขอที่อนุมัติแล้วบอกว่าเปลี่ยน "ขาด" เป็นร่วมกิจกรรมกี่คาบ และคาบที่ไม่เปลี่ยน'] }
   ],
-  tips: ['คาบที่เช็คไปแล้วว่า "ขาด" ตั้งแต่วันที่ยื่นขอ = เปลี่ยนเป็นร่วมกิจกรรมให้ตอนอนุมัติ ยกเว้นวันนั้นนักเรียนขาดคาบก่อนหน้า (ที่ไม่ได้ขอ) ตั้งแต่ 2 คาบ (ผู้ดูแลตั้งจำนวนได้)', 'วันก่อนวันที่ยื่นขอ = ไม่แก้การเช็คชื่อที่ทำไปแล้ว', 'ลบคำขอที่อนุมัติแล้ว = คาบที่ระบบเปลี่ยนให้กลับเป็น "ขาด" (เฉพาะที่ครูยังไม่ได้แก้)', 'ผู้ดูแลระบบเพิ่มผู้อนุมัติได้หลายคนที่ ตั้งค่าระบบ › จัดการผู้ดูแล › ผู้ดูแลการขอเวลาเรียน', 'ปิดหน้าให้ครู (ค่าเริ่มต้น) = ผู้ดูแลระบบ / แอดมินระบบลงข้อมูลเอง (นักเรียนเดินเอกสารเอง) อนุมัติทันที · เลือก "ครูผู้ควบคุม" ได้ — แสดง/ไม่แสดงชื่อในป้ายตั้งได้ที่แท็บ ตั้งค่า']
+  tips: ['คาบที่เช็คไปแล้วว่า "ขาด" ตั้งแต่วันที่ยื่นขอ = เปลี่ยนเป็นร่วมกิจกรรมให้ตอนอนุมัติ ยกเว้นวันนั้นนักเรียนขาดคาบก่อนหน้า (ที่ไม่ได้ขอ) ตั้งแต่ 2 คาบ (ผู้ดูแลตั้งจำนวนได้)', 'วันก่อนวันที่ยื่นขอ = ไม่แก้การเช็คชื่อที่ทำไปแล้ว', 'ลบคำขอที่อนุมัติแล้ว = คาบที่ระบบเปลี่ยนให้กลับเป็น "ขาด" (เฉพาะที่ครูยังไม่ได้แก้)', 'ผู้ดูแลระบบเพิ่มผู้อนุมัติได้หลายคนที่ ตั้งค่าระบบ › จัดการผู้ดูแล › ผู้ดูแลการขอเวลาเรียน', 'โหมดรายงานเอง: ครูแก้ไข / ลบได้เฉพาะของตัวเอง · ครูทุกคนเห็นแท็บ "รายการทั้งหมด" (ดูอย่างเดียว ดูหลักฐานได้) · ครูแก้รายการที่ถูกระงับ → "รอผู้ดูแลตรวจ" → ผู้ดูแลกด ยกเลิกการระงับ หรือระงับต่อ', 'เว็บเช็คชื่อมีป้ายสีส้มเตือน เมื่อนักเรียนที่ขอเวลาเรียนมีลาในวันนั้น หรือขาดคาบอื่นตั้งแต่ 2 คาบ — ระบบยังเลือก "ร่วมกิจกรรม" ให้ ครูประจำวิชาตัดสินใจเอง', 'โหมดปิด = ผู้ดูแลระบบ / แอดมินระบบลงข้อมูลเอง (นักเรียนเดินเอกสารเอง) อนุมัติทันที · เลือก "ครูผู้ควบคุม" ได้ — แสดง/ไม่แสดงชื่อในป้ายตั้งได้ที่แท็บ ตั้งค่า']
 });
 MANUAL_TOPICS.push({
   id: 'mentor', group: 'common', title: 'นักศึกษาฝึกสอน', icon: 'fa-user-graduate', roles: 'tsea', need: function (s) { return !!(s && s.interns); },
@@ -307,11 +313,8 @@ MANUAL_TOPICS.push({
     { img: 'care-skip', cap: 'แท็บ โดด / ขาดเรียน (2.14.0 · ผู้ดูแลที่มีสิทธิ์จัดการ)', steps: ['ดึงข้อมูลจากเว็บเช็คชื่อตามระยะเวลาการเช็คชื่อ · กด "ดึงใหม่" ได้', 'สรุป: รอยืนยัน · ยืนยันแล้ว · ต้องคืนคะแนน (ครูแก้สถานะภายหลัง) · กฎที่ใช้', 'แท็บย่อย รอยืนยัน / ยืนยันแล้ว / ไม่หัก / ต้องคืนคะแนน', 'ติ๊กทั้งวันหรือรายคน แล้วกด "ยืนยันหักคะแนน" หรือ "ไม่หัก" — 1 คาบหักได้ครั้งเดียว'] },
     { img: 'care-hub-overview', cap: 'เว็บส่งงาน › กิจการนักเรียน › ภาพรวมการมาสาย', steps: ['แท็บ ภาพรวม · นักเรียนที่สายบ่อย · คะแนนพฤติกรรม · ตั้งค่า (สิทธิ์จัดการ)', 'เลือกช่วง วันนี้ / สัปดาห์ / เดือน / ภาคเรียน / กำหนดเอง และกรองระดับชั้น', 'พิมพ์ / PDF และดาวน์โหลด Excel (CSV) ของช่วงที่เลือก', 'ตัวเลขสรุป — สาย ≥ N ครั้งในเดือนนี้ ใช้ N เดียวกับการแจ้งเตือนครูที่ปรึกษา', 'สายบ่อย + สาเหตุ — แตะชื่อนักเรียนเพื่อดูประวัติและคะแนน'] },
     { img: 'care-hub-settings', cap: 'ตั้งค่า (สิทธิ์จัดการ) — แท็บย่อยแยกหัวข้อ (2.12.3)', steps: ['แท็บย่อย: หน้าสภานักเรียน (PIN + สมาชิกสภา) · หน้านักเรียน (แจ้งมาสายเอง) · หน้าดูคะแนน · คะแนนพฤติกรรม (คะแนนเริ่มต้น · รอบนับใหม่ · เกณฑ์ระดับ) · รายการคะแนน (มาสาย + รายการเพิ่ม/หัก) · โดด / ขาดเรียน · สิทธิ์และแจ้งเตือน · ลิงก์และแบนเนอร์ (แบนเนอร์ใช้รูปเดียวทั้ง 4 หน้า หรือแยกรายหน้า) — แท็บที่แก้แล้วยังไม่บันทึกมีจุดสีส้ม', 'ใช้รหัส PIN — ปิดได้ แต่ใครมีลิงก์ก็บันทึกได้และเห็นรายชื่อนักเรียนทั้งโรงเรียน', 'ตั้ง/เปลี่ยนรหัส PIN 4–6 หลัก (แนะนำ 6) — เปลี่ยนแล้วทุกเครื่องต้องใส่ใหม่', 'ปุ่มบันทึกของแต่ละหัวข้อ — บันทึกเฉพาะหัวข้อนั้น (ค่าที่แก้ค้างไว้ในหัวข้ออื่นยังอยู่ · ออกจากหน้าก่อนบันทึกระบบจะถาม)'] },
-    { img: 'care-site-pin', cap: 'BNK Care Center — ใส่รหัส PIN', steps: ['ใส่ครั้งเดียว เครื่องจำไว้ประมาณ 1 ภาคเรียน · ใส่ผิดหลายครั้ง ระบบพัก 15 นาที'] },
-    { img: 'care-site-rec', cap: 'BNK Care Center — บันทึกการมาสาย (สภานักเรียน)', steps: ['เลือกห้องและวันที่ · กรอกชื่อผู้บันทึกครั้งเดียว · แตะชื่อนักเรียน = มาสาย แตะอีกครั้ง = ยกเลิก · เลือกสาเหตุได้'] },
-    { img: 'care-site-score', cap: 'BNK Care Center — แท็บคะแนน (ครูผู้ดูแล)', steps: ['เข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านของเว็บส่งงาน (เฉพาะผู้ดูแลสิทธิ์จัดการ · ไม่นับเป็นเครื่องที่เข้าสู่ระบบ) · เลือกห้อง แตะชื่อนักเรียน → หักคะแนน / เพิ่มคะแนน · ประวัติแยกมาสาย (อัตโนมัติ) กับรายการที่ครูบันทึก (ลบได้)'] }
   ],
-  tips: ['สรุปรวม › นักเรียนที่ถูกหักคะแนน (2.15.0): เลือกช่วง วันนี้ / สัปดาห์ / เดือน ฯลฯ เพื่อดูว่าใครถูกหักคะแนนบ้าง (ไม่รวมมาสาย · โดด/ขาดที่ยังรอยืนยันยังไม่นับ) — คนที่ถูกหักหลายครั้งรวมเป็นแถวเดียว กดเพื่อกางดูรายการ วันที่ เรื่อง และผู้บันทึก', 'โดด / ขาดเรียน (2.14.0): เปิดใช้ที่ ตั้งค่า › โดด / ขาดเรียน — ตั้งคะแนนต่อคาบ · ขาดบางคาบนับเป็นโดด · ขาดทั้งวัน (ปิด/เปิด) · หักสูงสุดต่อวัน · ทุกรายการต้องกดยืนยันก่อนหัก', 'หน้าดูคะแนน (2.14.0): นักเรียน / ผู้ปกครองดูคะแนนพฤติกรรมของตัวเองที่ BNK Care Center › score.html (มีปุ่ม "ดูคะแนน" ที่หน้าครูด้วย) — เปิด/ปิด และบังคับใส่เลขประจำตัวได้ที่ ตั้งค่า › หน้าดูคะแนน · เลือกได้ว่าจะแสดงชื่อครูผู้บันทึก และให้ดูรูปหลักฐานหรือไม่ (ปิดไว้เป็นค่าเริ่มต้นทั้งคู่ · รูปโหลดเมื่อกดดูเท่านั้น) · ใส่เลขผิด 5 ครั้งล็อก 15 นาที', 'คะแนน = คะแนนเริ่มต้น − (ครั้งที่มาสาย × คะแนนต่อครั้ง) + รายการที่ครูเพิ่ม/หัก · เริ่มใหม่ตามรอบที่ตั้งไว้ (เปลี่ยนรอบได้ทุกเมื่อ ข้อมูลเดิมไม่หาย)', 'แบบช่วงชั้น 3 ปี: ม.1–3 นับตั้งแต่ขึ้น ม.1 · ม.4–6 นับตั้งแต่ขึ้น ม.4 — ต่อคะแนนข้ามปีด้วยรหัสนักเรียนในเว็บเช็คชื่อ', 'เอาครูออกจากผู้ดูแล = เข้าแท็บคะแนนใน Care Center ไม่ได้ทันที', 'ดูผล = ดูรายงานในเว็บส่งงานอย่างเดียว · จัดการ = ตั้งค่า + เพิ่ม/หักคะแนน', 'แท็บคะแนนพฤติกรรม: เลือกเรียง "คะแนนน้อย → มาก" หรือ "คะแนนมาก → น้อย" ได้ (ดูห้องเดียวเลือก "เรียงตามเลขที่" ได้) · ส่งออกไฟล์เรียงตามที่เลือก', 'แบนเนอร์ BNK Care Center: ตั้งค่า › แบนเนอร์ — เลือกรูปเดียวใช้ทั้ง 3 หน้า หรือ "แยกรายหน้า" (หน้าครู · สภานักเรียน · นักเรียน) · ระบบย่อ/ครอปเป็น 3:1 ให้เอง · "ใช้รูปเดิม" กลับไปแบนเนอร์เดิม']
+  tips: ['วิธีใช้หน้าเว็บ BNK Care Center (หน้าครู · สภานักเรียน · นักเรียนแจ้งมาสาย · ดูคะแนน) อยู่ในคู่มือเล่ม "Care Center" — แท็บด้านบนของหน้าต่างคู่มือ (2.34.4)', 'สรุปรวม › นักเรียนที่ถูกหักคะแนน (2.15.0): เลือกช่วง วันนี้ / สัปดาห์ / เดือน ฯลฯ เพื่อดูว่าใครถูกหักคะแนนบ้าง (ไม่รวมมาสาย · โดด/ขาดที่ยังรอยืนยันยังไม่นับ) — คนที่ถูกหักหลายครั้งรวมเป็นแถวเดียว กดเพื่อกางดูรายการ วันที่ เรื่อง และผู้บันทึก', 'โดด / ขาดเรียน (2.14.0): เปิดใช้ที่ ตั้งค่า › โดด / ขาดเรียน — ตั้งคะแนนต่อคาบ · ขาดบางคาบนับเป็นโดด · ขาดทั้งวัน (ปิด/เปิด) · หักสูงสุดต่อวัน · ทุกรายการต้องกดยืนยันก่อนหัก', 'หน้าดูคะแนน (2.14.0): นักเรียน / ผู้ปกครองดูคะแนนพฤติกรรมของตัวเองที่ BNK Care Center › score.html (มีปุ่ม "ดูคะแนน" ที่หน้าครูด้วย) — เปิด/ปิด และบังคับใส่เลขประจำตัวได้ที่ ตั้งค่า › หน้าดูคะแนน · เลือกได้ว่าจะแสดงชื่อครูผู้บันทึก และให้ดูรูปหลักฐานหรือไม่ (ปิดไว้เป็นค่าเริ่มต้นทั้งคู่ · รูปโหลดเมื่อกดดูเท่านั้น) · ใส่เลขผิด 5 ครั้งล็อก 15 นาที', 'คะแนน = คะแนนเริ่มต้น − (ครั้งที่มาสาย × คะแนนต่อครั้ง) + รายการที่ครูเพิ่ม/หัก · เริ่มใหม่ตามรอบที่ตั้งไว้ (เปลี่ยนรอบได้ทุกเมื่อ ข้อมูลเดิมไม่หาย)', 'แบบช่วงชั้น 3 ปี: ม.1–3 นับตั้งแต่ขึ้น ม.1 · ม.4–6 นับตั้งแต่ขึ้น ม.4 — ต่อคะแนนข้ามปีด้วยรหัสนักเรียนในเว็บเช็คชื่อ', 'เอาครูออกจากผู้ดูแล = เข้าแท็บคะแนนใน Care Center ไม่ได้ทันที', 'ดูผล = ดูรายงานในเว็บส่งงานอย่างเดียว · จัดการ = ตั้งค่า + เพิ่ม/หักคะแนน', 'แท็บคะแนนพฤติกรรม: เลือกเรียง "คะแนนน้อย → มาก" หรือ "คะแนนมาก → น้อย" ได้ (ดูห้องเดียวเลือก "เรียงตามเลขที่" ได้) · ส่งออกไฟล์เรียงตามที่เลือก', 'แบนเนอร์ BNK Care Center: ตั้งค่า › แบนเนอร์ — เลือกรูปเดียวใช้ทั้ง 3 หน้า หรือ "แยกรายหน้า" (หน้าครู · สภานักเรียน · นักเรียน) · ระบบย่อ/ครอปเป็น 3:1 ให้เอง · "ใช้รูปเดิม" กลับไปแบนเนอร์เดิม']
 });
 MANUAL_TOPICS.push({
   id: 'supervision', group: 'common', title: 'นิเทศการสอน', icon: 'fa-user-check', roles: 'tsei',
@@ -331,13 +334,24 @@ MANUAL_TOPICS.push({
 });
 var MANUAL_SLOT = { homemenu: 'settings', attweekly: 'teach', guidance: 'guide', quota: 'home', care: 'care', managers: 'settings', start: '_first', sidenav: '_first', search: '_first', internhome: '_first', mobile: '_first', teach: 'teach', mentor: 'interns', club: 'club', supervision: 'supervision', internadmin: 'settings', devices: '_last', home: 'home', submit: 'home', manualcheck: 'home', schoolcal: 'schoolcal', portfolio: 'home', exec: 'home', memo: 'memo', summary: 'summary', announce: 'announce', reports: 'announce',
   directory: 'directory', orders: 'orders', certs: 'certs', gallery: 'gallery', bell: '_last', report: '_last', tips: '_last' };
-function manualTopicsFor(s) {
+// 2.34.4: คู่มือ 3 เล่ม — เว็บส่งงาน (hub) · เว็บเช็คชื่อ (att) · BNK Care Center (care) · หัวข้อที่ไม่มี book = เว็บส่งงาน
+var MANUAL_BOOKS = [
+  { id: 'hub', label: 'เว็บส่งงาน', short: 'เว็บส่งงาน', icon: 'fa-laptop-file', title: '' },
+  { id: 'att', label: 'เว็บเช็คชื่อ (BNK E-Attendance)', short: 'เว็บเช็คชื่อ', icon: 'fa-clipboard-check', title: 'เว็บเช็คชื่อ BNK E-Attendance' },
+  { id: 'care', label: 'BNK Care Center', short: 'Care Center', icon: 'fa-user-clock', title: 'BNK Care Center' }
+];
+function manualBookOf(t) { return (t && t.book) || 'hub'; }
+function manualBookInfo(id) { return MANUAL_BOOKS.filter(function (b) { return b.id === id; })[0] || MANUAL_BOOKS[0]; }
+// book: 'hub' | 'att' | 'care' · ไม่ส่ง = ทุกเล่ม (ใช้ในช่องค้นหา)
+function manualTopicsFor(s, book) {
+  if (!book) return manualTopicsFor(s, 'hub').concat(manualTopicsFor(s, 'att'), manualTopicsFor(s, 'care'));
+  if (book !== 'hub') { var rr = manualRoleOf(s); return MANUAL_TOPICS.filter(function (t) { return manualBookOf(t) === book && t.roles.indexOf(rr) !== -1 && (!t.need || rr === 'a' || t.need(s || {})); }); }
   var r = manualRoleOf(s);
   var st = (typeof _settingsCache !== 'undefined' && _settingsCache) ? _settingsCache : (typeof cachedBrand === 'function' ? cachedBrand() : null);
   var memoOn = typeof isMemoEnabled === 'function' ? isMemoEnabled(st) : true;
   var dirOn = !(st && st.directoryMode === 'off');
   var head = typeof isDeptHeadSession === 'function' && isDeptHeadSession(s); // 1.87.2: หัวหน้ากลุ่มบริหารงานเห็นหัวข้อสรุปการส่งงานด้วย
-  var list = MANUAL_TOPICS.filter(function (t) { return (t.roles.indexOf(r) !== -1 || (head && t.id === 'summary')) && (!t.needMemo || memoOn) && (!t.needDirectory || dirOn) && (!t.need || r === 'a' || t.need(s || {})); }); // 2.11.1: need = เงื่อนไขเพิ่ม (สิทธิ์เฉพาะคน)
+  var list = MANUAL_TOPICS.filter(function (t) { return manualBookOf(t) === 'hub' && (t.roles.indexOf(r) !== -1 || (head && t.id === 'summary')) && (!t.needMemo || memoOn) && (!t.needDirectory || dirOn) && (!t.need || r === 'a' || t.need(s || {})); }); // 2.11.1: need = เงื่อนไขเพิ่ม (สิทธิ์เฉพาะคน)
   if (r === 'i') { var ip = (s && s.intern) || {}, pm = ip.perm || {}; list = list.filter(function (t) { return !((t.id === 'schoolcal' && !pm.cal) || (t.id === 'supervision' && !pm.sup) || (t.id === 'club' && !ip.club)); }); } // 2.02.1: ตามสิทธิ์ที่ครูพี่เลี้ยงเปิดให้
   var nav = typeof currentNavOrder === 'function' ? currentNavOrder() : [];
   var rank = function (t) { var sl = MANUAL_SLOT[t.id] || '_last'; if (sl === '_first') return -1; if (sl === '_last') return 1000; var i = nav.indexOf(sl); return i === -1 ? 999 : i; };
@@ -347,15 +361,21 @@ var _manual = null;
 var MANUAL_KEY = 'bnkah_manual_topic';
 function manualImg(name) { return 'assets/manual/' + name + '.jpg?v=' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : ''); }
 
+var MANUAL_BOOK_KEY = 'bnkah_manual_book';
 function manualOpen(topicId) {
   var s = typeof getSession === 'function' ? getSession() : null;
-  var topics = manualTopicsFor(s);
+  var book = '';
+  if (topicId) { var hit = MANUAL_TOPICS.filter(function (t) { return t.id === topicId; })[0]; if (hit) book = manualBookOf(hit); }
+  if (!book) { try { book = localStorage.getItem(MANUAL_BOOK_KEY) || ''; } catch (e) { /* ไม่เป็นไร */ } }
+  if (!manualTopicsFor(s, book || 'x').length) book = 'hub';
+  var topics = manualTopicsFor(s, book);
   if (!_manual) {
     var el = document.createElement('div');
     el.className = 'modal-backdrop'; el.id = 'manualModal'; el.hidden = true;
     el.innerHTML = '<div class="modal-box mn-box" role="dialog" aria-modal="true" aria-labelledby="manualTitle">' +
       '<button type="button" class="modal-close-x" id="manualCloseX" aria-label="ปิด">✕</button>' +
       '<h3 id="manualTitle"><i class="fa-solid fa-book-open" aria-hidden="true"></i> คู่มือการใช้งาน <span class="mn-bookw"><button type="button" class="btn btn-secondary btn-sm mn-book" id="manualBook" aria-haspopup="true" aria-expanded="false" title="ดาวน์โหลดคู่มือเป็นเล่ม (PDF)"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> <span class="bk-t">ดาวน์โหลดเป็นเล่ม </span><i class="fa-solid fa-caret-down" aria-hidden="true"></i></button><span class="mn-bookm" id="manualBookMenu" hidden></span></span></h3>' +
+      '<div class="mn-books" id="manualBooks" role="tablist" aria-label="เลือกคู่มือ"></div>' +
       '<select id="manualSelect" class="mn-select" aria-label="เลือกหัวข้อ"></select>' +
       '<div class="mn-wrap"><nav class="mn-toc" id="manualToc" aria-label="หัวข้อคู่มือ"></nav><div class="mn-main" id="manualMain" tabindex="-1"></div></div>' +
       '<div class="mn-zoom" id="manualZoom" hidden><img alt="" /><button type="button" class="modal-close-x" aria-label="ปิดภาพ">✕</button></div>' +
@@ -367,15 +387,20 @@ function manualOpen(topicId) {
     var bmClose = function () { bm.hidden = true; bb.setAttribute('aria-expanded', 'false'); };
     bb.addEventListener('click', function (e) {
       e.stopPropagation(); if (!bm.hidden) { bmClose(); return; }
-      var s = getSession(), w = manualBookWho(s), all = manualTopicsFor(s), cur = all.filter(function (t) { return t.id === _manual.cur; })[0];
+      var s = getSession(), w = manualBookWho(s), bk = _manual.book || 'hub', bi = manualBookInfo(bk), all = manualTopicsFor(s, bk), cur = all.filter(function (t) { return t.id === _manual.cur; })[0];
       var it = function (m, ic, col, t, d, hi) { return '<button type="button" class="mn-bki' + (hi ? ' hi' : '') + '" data-bk="' + m + '"><span class="mn-bkic"><i class="fa-solid ' + ic + '" aria-hidden="true"></i></span><span class="mn-bkt"><b>' + t + '</b><small>' + d + '</small></span><i class="fa-solid fa-download" aria-hidden="true"></i></button>'; };
-      bm.innerHTML = it('mine', 'fa-user-check', w.hc, 'คู่มือของฉัน (ตามสิทธิ์บัญชีนี้)', escapeHtml(w.label) + ' · ' + all.length + ' หัวข้อ · เฉพาะเมนูที่คุณเข้าถึงได้', 1) +
+      bm.innerHTML = (bk === 'hub' ? it('mine', 'fa-user-check', w.hc, 'คู่มือของฉัน (ตามสิทธิ์บัญชีนี้)', escapeHtml(w.label) + ' · ' + all.length + ' หัวข้อ · เฉพาะเมนูที่คุณเข้าถึงได้', 1)
+        : it('mine', bi.icon, w.hc, 'คู่มือ ' + escapeHtml(bi.short) + ' ทั้งเล่ม', all.length + ' หัวข้อ', 1)) +
         (cur ? it('one', 'fa-book-open', '#64748b', 'เฉพาะหัวข้อที่เปิดอยู่', escapeHtml(cur.title) + ' · 1 หัวข้อ') : '') +
         '<span class="mn-bkn"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> ไฟล์ PDF มีปก (ชื่อ + ประเภทบัญชี) · สารบัญ · เลขหน้า · ทั้งเล่มใช้เวลาสร้างประมาณครึ่งนาที</span>';
       bm.hidden = false; bb.setAttribute('aria-expanded', 'true');
     });
     bm.addEventListener('click', function (e) { var b = e.target.closest('[data-bk]'); if (!b) return; bmClose(); manualBook(b.getAttribute('data-bk')); });
     el.addEventListener('click', function (e) { if (!e.target.closest('.mn-bookw')) bmClose(); });
+    el.querySelector('#manualBooks').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-mbk]'); if (!b || b.getAttribute('data-mbk') === _manual.book) return;
+      bmClose(); manualRender(b.getAttribute('data-mbk')); var t0 = _manual.topics[0]; if (t0) manualShow(t0.id);
+    });
     el.querySelector('#manualToc').addEventListener('click', function (e) { var b = e.target.closest('[data-mn]'); if (b) manualShow(b.getAttribute('data-mn')); });
     el.querySelector('#manualSelect').addEventListener('change', function (e) { manualShow(e.target.value); });
     el.querySelector('#manualMain').addEventListener('click', function (e) {
@@ -390,13 +415,7 @@ function manualOpen(topicId) {
       manualClose();
     });
   }
-  _manual.topics = topics;
-  // 1.79: รายการเดียว ไม่แบ่งกลุ่ม — ลำดับตามเมนูจริง
-  _manual.el.querySelector('#manualToc').innerHTML = topics.map(function (t) {
-    return '<button type="button" class="mn-link" data-mn="' + t.id + '"><i class="fa-solid ' + t.icon + '" aria-hidden="true"></i><span>' + escapeHtml(t.title) + '</span></button>';
-  }).join('');
-  _manual.el.querySelector('#manualSelect').innerHTML = topics.map(function (t) { return '<option value="' + t.id + '">' + escapeHtml(t.title) + '</option>'; }).join('');
-  _manual.topics = topics;
+  manualRender(book);
   topics = _manual.topics;
   var last = '';
   try { last = localStorage.getItem(MANUAL_KEY) || ''; } catch (e) { /* ไม่เป็นไร */ }
@@ -405,6 +424,21 @@ function manualOpen(topicId) {
   _manual.el.querySelector('#manualZoom').hidden = true;
   showModalEl(_manual.el);
   manualShow(want);
+}
+// 2.34.4: แท็บเล่ม + สารบัญของเล่มที่เลือก (เล่มที่บัญชีนี้ไม่มีหัวข้อเลยจะไม่แสดง)
+function manualRender(book) {
+  var s = typeof getSession === 'function' ? getSession() : null, topics = manualTopicsFor(s, book), el = _manual.el;
+  _manual.book = book; _manual.topics = topics;
+  try { localStorage.setItem(MANUAL_BOOK_KEY, book); } catch (e) { /* ไม่เป็นไร */ }
+  var bks = MANUAL_BOOKS.filter(function (b) { return manualTopicsFor(s, b.id).length; });
+  var bar = el.querySelector('#manualBooks');
+  bar.hidden = bks.length < 2;
+  bar.innerHTML = bks.map(function (b) { var on = b.id === book; return '<button type="button" role="tab" class="mn-bk' + (on ? ' on' : '') + '" data-mbk="' + b.id + '" aria-selected="' + on + '"><i class="fa-solid ' + b.icon + '" aria-hidden="true"></i><span>' + escapeHtml(b.short) + '</span></button>'; }).join('');
+  // 1.79: รายการเดียว ไม่แบ่งกลุ่ม — ลำดับตามเมนูจริง
+  el.querySelector('#manualToc').innerHTML = topics.map(function (t) {
+    return '<button type="button" class="mn-link" data-mn="' + t.id + '"><i class="fa-solid ' + t.icon + '" aria-hidden="true"></i><span>' + escapeHtml(t.title) + '</span></button>';
+  }).join('');
+  el.querySelector('#manualSelect').innerHTML = topics.map(function (t) { return '<option value="' + t.id + '">' + escapeHtml(t.title) + '</option>'; }).join('');
 }
 function manualClose() { if (_manual) hideModalEl(_manual.el); }
 function manualZoom(src, alt) {
@@ -425,7 +459,7 @@ function manualShow(id) {
     '<p class="mn-lead">' + escapeHtml(t.lead) + '</p>' +
     t.figs.map(function (f) {
       return '<figure class="mn-fig"><figcaption>' + escapeHtml(f.cap) + '</figcaption>' +
-        '<img class="mn-img" src="' + manualImg(f.img) + '" alt="' + escapeHtml(f.cap) + '" loading="lazy" title="กดเพื่อขยาย" />' +
+        '<img class="mn-img' + (f.m ? ' mn-img-m' : '') + '" src="' + manualImg(f.img) + '" alt="' + escapeHtml(f.cap) + '" loading="lazy" title="กดเพื่อขยาย" />' +
         (f.steps.length ? '<ol class="mn-steps">' + f.steps.map(function (x, k) { return '<li><span class="mn-n">' + (k + 1) + '</span><span>' + escapeHtml(x) + '</span></li>'; }).join('') + '</ol>' : '') +
         '</figure>';
     }).join('') +
@@ -510,7 +544,7 @@ MANUAL_TOPICS.push({
 // ---------- 2.13.0: ดาวน์โหลดคู่มือเป็นเล่ม (PDF) — เน้นครูทั่วไป: หัวข้อของครูทั้งหมด (หัวข้อที่ใช้เฉพาะบางคนมีหมายเหตุ) ----------
 // 2.14.1: เล่มตามสิทธิ์ของบัญชีที่กด (mode 'mine' = ทุกหัวข้อที่บัญชีนี้เห็นในคู่มือ · 'one' = เฉพาะหัวข้อที่เปิดอยู่)
 function manualBookTopics(mode) {
-  var s = getSession(), list = manualTopicsFor(s);
+  var s = getSession(), list = manualTopicsFor(s, (_manual && _manual.book) || 'hub');
   if (mode === 'one') { var cur = _manual && _manual.cur; return list.filter(function (t) { return t.id === cur; }); }
   return list;
 }
@@ -524,6 +558,7 @@ async function manualBook(mode) {
   var topics = manualBookTopics(mode), site = '', school = '', me = getSession() || {}, who = manualBookWho(me), one = mode === 'one';
   if (!topics.length) { showToast('ไม่มีหัวข้อให้ดาวน์โหลด', true); return; }
   try { var s0 = (typeof _settingsCache !== 'undefined' && _settingsCache) || cachedBrand() || {}; site = s0.siteName || 'BNKAcademicHub'; school = s0.schoolName || 'โรงเรียนบุ่งคล้านคร'; } catch (e) { site = 'BNKAcademicHub'; school = 'โรงเรียนบุ่งคล้านคร'; }
+  var bki = manualBookInfo((_manual && _manual.book) || 'hub'); if (bki.title) site = bki.title; // 2.34.4: เล่มเว็บเช็คชื่อ / Care Center
   var ver = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '', d = new Date(), MS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
   var today = d.getDate() + ' ' + MS[d.getMonth()] + ' ' + (d.getFullYear() + 543);
   var E = function (x) { return escapeHtml(x == null ? '' : String(x)); };
@@ -538,7 +573,7 @@ async function manualBook(mode) {
       '.mb-host .pg *{color:inherit}.mb-host .ft{position:absolute;left:' + PAD + 'px;right:' + PAD + 'px;bottom:28px;display:flex;justify-content:space-between;font-size:11.5px;color:#64748b;border-top:1px solid #e2e8f0;padding-top:8px}' +
       '.mb-host h2{font-size:22px;margin:0 0 8px;display:flex;align-items:center;gap:10px;color:' + who.hc + '}.mb-host h2 .n{display:inline-flex;width:34px;height:34px;border-radius:10px;background:' + who.hc + ';color:#fff;align-items:center;justify-content:center;font-size:16px}' +
       '.mb-host .lead{color:#334155;margin:0 0 14px;font-size:14.5px}.mb-host .who{display:inline-block;background:#fef3c7;color:#92400e;border-radius:99px;padding:1px 10px;font-size:12px;font-weight:700;margin:0 0 10px}' +
-      '.mb-host .cap{font-weight:800;font-size:15px;margin:6px 0 6px;color:#0f172a}.mb-host .im{display:block;max-width:100%;max-height:470px;margin:0 auto 8px;border:1px solid #e2e8f0;border-radius:8px}' +
+      '.mb-host .cap{font-weight:800;font-size:15px;margin:6px 0 6px;color:#0f172a}.mb-host .im.imm{max-height:560px}.mb-host .im{display:block;max-width:100%;max-height:470px;margin:0 auto 8px;border:1px solid #e2e8f0;border-radius:8px}' +
       '.mb-host ol{margin:0 0 14px;padding:0;list-style:none}.mb-host ol li{display:flex;gap:8px;margin:0 0 5px}.mb-host ol li b{flex:none;width:22px;height:22px;border-radius:50%;background:#e11d48;color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center;margin-top:1px}' +
       '.mb-host .tips{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin:4px 0 14px}.mb-host .tips h4{margin:0 0 4px;color:#92400e;font-size:14px}.mb-host .tips ul{margin:0;padding-left:20px}' +
       '.mb-host .cover{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(160deg,' + who.grad + ')}.mb-host .cover .who{margin-top:34px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.45);border-radius:16px;padding:14px 30px}.mb-host .cover .who b{display:block;font-size:22px}.mb-host .cover .who span{font-size:15px}.mb-host .cover *{color:#fff}.mb-host .cover img{width:150px;height:150px;border-radius:32px;background:#fff;padding:10px;margin-bottom:26px}' +
@@ -550,7 +585,7 @@ async function manualBook(mode) {
       function newPage(cls) { var p = document.createElement('div'); p.className = 'pg' + (cls ? ' ' + cls : ''); var b = document.createElement('div'); b.className = 'bd'; p.appendChild(b); host.appendChild(p); pages.push(p); return b; }
       function fits(bd) { return bd.offsetHeight <= H - PAD - 70; }
       // ปก + สารบัญ
-      newPage('cover').innerHTML = '<img src="icons/icon-512.png" alt="" data-err="src:icons/icon-192.png"><h1>คู่มือการใช้งาน ' + E(site) + '</h1><div class="s">' + E(school) + '</div><div class="who"><b>' + E(me.name || '') + '</b><span>' + E(who.label) + ' · ' + (one ? 'หัวข้อ: ' + E(topics[0].title) : topics.length + ' หัวข้อ (ตามสิทธิ์ของบัญชีนี้)') + '</span></div><div class="v">เวอร์ชัน ' + E(ver) + ' · ' + E(today) + '</div>';
+      newPage('cover').innerHTML = '<img src="icons/icon-512.png" alt="" data-err="src:icons/icon-192.png"><h1>คู่มือการใช้งาน ' + E(site) + '</h1><div class="s">' + E(school) + '</div><div class="who"><b>' + E(me.name || '') + '</b><span>' + E(who.label) + ' · ' + (one ? 'หัวข้อ: ' + E(topics[0].title) : topics.length + ' หัวข้อ' + (bki.title ? '' : ' (ตามสิทธิ์ของบัญชีนี้)')) + '</span></div><div class="v">เวอร์ชัน ' + E(ver) + ' · ' + E(today) + '</div>';
       var toc = one ? null : newPage('toc');
       var cur = null, tocRows = [];
       function add(html, keepNew) {
@@ -589,3 +624,97 @@ async function manualBook(mode) {
     } finally { host.remove(); }
   }, { successLabel: 'ดาวน์โหลดคู่มือแล้ว' });
 }
+
+// ===================== 2.34.4: คู่มือเล่ม "เว็บเช็คชื่อ" (BNK E-Attendance) =====================
+// ภาพ sa-*.jpg ถ่ายจากเว็บเช็คชื่อจริงด้วยข้อมูลตัวอย่าง (tools/manual/shots-bnksa.js)
+MANUAL_TOPICS.push({
+  book: 'att', id: 'sa-start', title: 'เริ่มต้น: เลือกห้องเรียน', icon: 'fa-door-open', roles: 'tseai',
+  lead: 'เว็บเช็คชื่อ (BNK E-Attendance) ครูเช็คชื่อได้ทันทีโดยไม่ต้องเข้าสู่ระบบ — เปิดจากปุ่มทางลัดหน้าเข้าสู่ระบบของเว็บส่งงาน หรือติดตั้งเป็นแอปบนมือถือ',
+  figs: [
+    { img: 'sa-home', cap: 'หน้าแรก', steps: ['ภาคเรียน — ปกติใช้ภาคเรียนปัจจุบัน (ป้ายเขียว "พร้อมใช้งาน")', 'ห้องเรียน — แยกตามระดับชั้น กด "เข้าสู่ห้องเรียน" เพื่อดูตารางเรียนและเช็คชื่อ', 'สลับโหมดสว่าง / มืด · ปุ่มข้างๆ: รีเฟรชข้อมูล · ติดตั้งแอป', 'ผู้ดูแลระบบ — เฉพาะผู้ดูแลเว็บเช็คชื่อ (ครูไม่ต้องใช้)'] },
+    { img: 'sa-home-2', cap: 'ส่วนล่างของหน้าแรก', steps: ['รวมทุกห้อง — ภาพรวมจำนวนนักเรียนและสถิติการมาเรียนทั้งโรงเรียน', 'ตารางสอน (สำหรับคุณครูผู้สอน) — เลือกกลุ่มสาระ', 'กดชื่อตัวเอง — ดูตารางสอนรายสัปดาห์และวิชาที่สอน'] }
+  ],
+  tips: ['ใช้บนมือถือสะดวกที่สุด — ติดตั้งเป็นแอป (ปุ่มลูกศรลงบนแถบด้านบน) จะเปิดได้จากหน้าจอโฮม', 'ไม่ต้องเข้าสู่ระบบ — แต่ทุกการบันทึกมีประวัติ (วันเวลา) ให้ผู้ดูแลตรวจย้อนหลังได้', 'ภาพรวมการเช็คชื่อของตัวเอง (คาบค้าง / แก้ย้อนหลัง) ดูที่เว็บส่งงาน › วิชาที่สอน']
+});
+MANUAL_TOPICS.push({
+  book: 'att', id: 'sa-check', title: 'เช็คชื่อรายคาบ', icon: 'fa-clipboard-check', roles: 'tseai',
+  lead: 'เข้าห้องเรียน → เลือกวัน → กด "เริ่มเช็คชื่อ" ในคาบที่สอน · ระบบเลือก "มา" ให้ทุกคนไว้ก่อน แตะเปลี่ยนเฉพาะคนที่ไม่มา แล้วกดบันทึก',
+  figs: [
+    { img: 'sa-class', cap: 'ห้องเรียน (คอมพิวเตอร์)', steps: ['วันในสัปดาห์นี้ — วันนี้เป็นสีเขียว กดวันอื่นเพื่อดู / เช็คย้อนหลังในสัปดาห์', 'เริ่มเช็คชื่อ — คาบที่เช็คแล้วแถวเป็นสีเขียว ปุ่มเป็น "เช็คแล้ว · แตะเพื่อแก้ไข" · "ล็อคแล้ว" = เลยช่วงที่เช็คได้', 'ภาพรวมห้อง — สรุปรายเดือน / รายวันของห้องนี้'] },
+    { img: 'sa-class-m', m: 1, cap: 'ห้องเรียน (มือถือ)', steps: ['เลือกวัน', 'กด "เริ่มเช็คชื่อ" ในแถวคาบของวิชาที่สอน'] },
+    { img: 'sa-check-m', m: 1, cap: 'หน้าเช็คชื่อ — ส่วนบน', steps: ['วันที่', 'คาบ', 'ครูประจำวิชาเช็คเอง หรือ "มีการสอนแทน" (เลือกชื่อครูที่สอนแทน — ระบบนับคาบให้ครูที่สอนแทน)'] },
+    { img: 'sa-check-m2', m: 1, cap: 'เลือกสถานะรายคน', steps: ['การ์ดนักเรียน — จุดใต้ชื่อคือสถานะคาบอื่นของวันนี้ (วงแหวน = คาบที่กำลังเช็ค)', '"มา" ถูกเลือกไว้แล้ว — คนที่ไม่มาแตะ ขาด / สาย / ร่วมกิจกรรม / ลาป่วย / ลากิจ / โดดเรียน'] },
+    { img: 'sa-check-m3', m: 1, cap: 'บันทึก', steps: ['กด "บันทึกข้อมูลเช็คชื่อ" ท้ายหน้า — มีข้อความยืนยันเมื่อบันทึกสำเร็จ'] },
+    { img: 'reqtime-check', cap: 'นักเรียนที่ขอเวลาเรียน (ร่วมกิจกรรม)', steps: ['แถบสีฟ้าบอกจำนวนนักเรียนที่ได้รับอนุญาตในคาบนี้ · กดเพื่อดูรายละเอียดและ "เปิดหนังสือขออนุญาต" (เปิดในป็อปอัป)', 'ระบบเลือก "ร่วมกิจกรรม" ให้ — ป้ายใต้ชื่อบอกกิจกรรม · ป้ายสีส้ม = วันนั้นมีลาหรือขาดคาบอื่น ครูตัดสินใจเอง'] }
+  ],
+  tips: ['ร่วมกิจกรรม = ไปกิจกรรมของโรงเรียน (ไม่นับขาด) · โดดเรียน = มาโรงเรียนแต่ไม่เข้าคาบนี้', 'บันทึกแล้วแก้ได้ — เข้าคาบเดิมแล้วแก้สถานะ กดบันทึกอีกครั้ง', 'ปุ่ม ปกติ / ย่อ เหนือรายชื่อ — "ย่อ" แสดงรายชื่อแบบกะทัดรัด', 'วันหยุด / กิจกรรมที่งดการเรียน มีแถบแจ้งด้านบนของหน้า', 'เช็คย้อนหลังข้ามสัปดาห์ / คาบที่ลืมเช็ค ทำที่เว็บส่งงาน › วิชาที่สอน › "บันทึกย้อนหลัง" (ภายในระยะเวลาการเช็คชื่อที่โรงเรียนกำหนด)']
+});
+MANUAL_TOPICS.push({
+  book: 'att', id: 'sa-teacher', title: 'ตารางสอนของฉัน', icon: 'fa-chalkboard-user', roles: 'tseai',
+  lead: 'หน้าแรก › ตารางสอน › เลือกกลุ่มสาระ › กดชื่อตัวเอง — เห็นตารางสอนทั้งสัปดาห์และทุกวิชาที่สอน',
+  figs: [
+    { img: 'sa-teacher', cap: 'หน้าครู', steps: ['ตารางสอนรายสัปดาห์ — แถวสีคือวัน คอลัมน์คือคาบ', 'ค้นหาวิชา / รหัสวิชา', 'ดูแบบ การ์ด หรือ ลิสต์', 'การ์ดวิชา — ห้อง รหัสวิชา · ปุ่มเช็คชื่อ และสรุปของวิชานั้น'] }
+  ],
+  tips: ['วิชาไม่ครบ / ชื่อไม่ขึ้น แจ้งผู้ดูแลเว็บเช็คชื่อ (ข้อมูลวิชาและตารางสอนผู้ดูแลเป็นคนใส่)']
+});
+MANUAL_TOPICS.push({
+  book: 'att', id: 'sa-summary', title: 'สรุปและรายงาน', icon: 'fa-chart-column', roles: 'tseai',
+  lead: 'ดูสรุปได้ 4 แบบ: รายวิชา · รายห้อง · รายบุคคล · ทั้งโรงเรียน — ดาวน์โหลด PDF / Excel / รูปภาพได้',
+  figs: [
+    { img: 'sa-subject', cap: 'สรุปรายวิชา (กดชื่อวิชา)', steps: ['แก้ไขเช็คชื่อ — เปิดหน้าเช็คชื่อของวิชานี้', 'PDF', 'Excel', 'บันทึกเวลาเรียน — ทุกครั้งที่สอน สัญลักษณ์สีตามสถานะ (มี "สัญลักษณ์" อธิบายใต้ตาราง) · ด้านล่างมีกราฟสรุปของวิชา'] },
+    { img: 'sa-room', cap: 'รายงานห้อง (ภาพรวมห้อง)', steps: ['สรุปรายเดือน / สรุปรายวัน', 'เลือกวันที่ หรือกดวันในสัปดาห์', 'เช็คชื่อรวมรายวิชา — ทุกคาบของวันนั้น · PDF / Excel มุมขวา'] },
+    { img: 'sa-student', cap: 'รายบุคคล (กด "รายบุคคล" ที่ชื่อนักเรียน)', steps: ['ชนิดเอกสาร PDF (สรุปรายเดือน ฯลฯ) แล้วกดโหลด PDF / Excel', 'เลือกเดือน — สถิติประจำเดือน สรุปรายสัปดาห์ และประวัติรายวัน'] },
+    { img: 'sa-school', cap: 'รวมทุกห้อง (ภาพรวมทั้งโรงเรียน)', steps: ['เลือกเดือน — จำนวนนักเรียน และสถิติการมาเรียนทั้งโรงเรียน · ดาวน์โหลด PDF / รูปภาพ'] }
+  ],
+  tips: ['ครูที่ปรึกษาดูห้องตัวเองที่ "ภาพรวมห้อง" — ใช้ติดตามนักเรียนขาด / สายบ่อย', 'ผู้บริหาร / ผู้ที่ได้รับสิทธิ์ ดูสรุปครูที่ไม่เช็คและเช็คย้อนหลังได้ที่เว็บส่งงาน (สรุปการเช็คชื่อประจำสัปดาห์)']
+});
+MANUAL_TOPICS.push({
+  book: 'att', id: 'sa-admin', title: 'ผู้ดูแลเว็บเช็คชื่อ', icon: 'fa-user-gear', roles: 'a',
+  lead: 'ปุ่ม "ผู้ดูแลระบบ" มุมขวาบน — เข้าสู่ระบบด้วยบัญชีผู้ดูแลของเว็บเช็คชื่อ (แยกจากบัญชีเว็บส่งงาน) เพื่อจัดการข้อมูลครู วิชา นักเรียน และตั้งค่า',
+  figs: [
+    { img: 'sa-admin', cap: 'หน้าจัดการระบบ', steps: ['ภาคเรียน / ปีการศึกษาที่กำลังจัดการ (ปีเก่าดูได้ที่ "ปีเก่า")', 'แท็บ: ตั้งค่าทั่วไป · ตั้งค่าภาคเรียน · สถานะข้อมูลระบบ · วันหยุดและประกาศ · สำรองข้อมูล · ผู้ใช้งาน · Log และแถวล่าง: ความพร้อมของข้อมูล · ติดตามนักเรียน · ติดตามครู · รายงาน · ครู · ครูที่ปรึกษา · วิชา · นักเรียน', 'ออกจากระบบ (ใช้เครื่องส่วนกลางให้ออกทุกครั้ง)'] }
+  ],
+  tips: ['แถบแจ้งเตือนสีเหลืองด้านบน — ข้อมูลที่ยังไม่ครบ (เช่น ห้องที่ยังไม่มีครูที่ปรึกษา) กดเพื่อดูรายการ', 'ปิดสถานะออนไลน์ (Super Admin) = แจ้งว่าเว็บกำลังปรับปรุง ใช้ตอนปรับข้อมูลครั้งใหญ่', 'ผูกครูในเว็บเช็คชื่อกับบัญชีเว็บส่งงาน ครูจึงเห็นวิชาในหน้า "วิชาที่สอน"']
+});
+
+// ===================== 2.34.4: คู่มือเล่ม "BNK Care Center" =====================
+// ภาพ cc-*.jpg ถ่ายจาก BNK Care Center จริง (มือถือ) ด้วยข้อมูลตัวอย่าง (tools/manual/shots-care.js)
+MANUAL_TOPICS.push({
+  book: 'care', id: 'cc-teacher', title: 'หน้าครู: หัก / เพิ่มคะแนน', icon: 'fa-user-pen', roles: 'tsea',
+  lead: 'BNK Care Center › หน้าครู — บันทึกคะแนนพฤติกรรมนักเรียน (เช่น แต่งกายผิดระเบียบ จิตอาสา) ทีละหลายคน พร้อมรูปหลักฐาน',
+  figs: [
+    { img: 'cc-login', m: 1, cap: 'เข้าสู่ระบบ (หน้าครู)', steps: ['สภานักเรียน — หน้าบันทึกมาสายของสภานักเรียน (ใช้ PIN)', 'นักเรียน — นักเรียนแจ้งมาสายด้วยตัวเอง', 'ดูคะแนน — นักเรียน / ผู้ปกครองดูคะแนนรายคน', 'ชื่อผู้ใช้ของเว็บส่งงาน', 'รหัสผ่านของเว็บส่งงาน แล้วกด "เข้าสู่ระบบ"'] },
+    { img: 'cc-teacher', m: 1, cap: 'เลือกนักเรียน', steps: ['แท็บ หัก / เพิ่มคะแนน · ดูคะแนน', 'เลือกห้อง', 'หรือพิมพ์ชื่อ — ค้นจากทุกห้อง', 'กด "+ เพิ่ม" — เลือกได้หลายคน (ข้ามห้องได้)'] },
+    { img: 'cc-teacher-2', m: 1, cap: 'เลือกรายการแล้วบันทึก', steps: ['รายชื่อที่เลือก — กด ✕ เอาออก · "ล้าง" เอาออกทั้งหมด', 'หักคะแนน / เพิ่มคะแนน', 'เลือกรายการ (ตั้งได้ที่เว็บส่งงาน) หรือ "อื่นๆ (พิมพ์เอง)"', 'หมายเหตุ (ไม่บังคับ)', 'รูปหลักฐาน ไม่เกิน 5 รูป — ย่อรูปให้อัตโนมัติ เห็นเฉพาะครูกิจการนักเรียน ผู้บันทึก และผู้ดูแล', 'บันทึก — ปุ่มบอกคะแนนและจำนวนคน (เช่น "บันทึก -5 ให้ 2 คน")'] },
+    { img: 'cc-view', m: 1, cap: 'แท็บดูคะแนน', steps: ['แท็บ "ดูคะแนน"', 'เลือกห้อง หรือค้นชื่อ — คะแนนปัจจุบันของแต่ละคน (สีบอกระดับ) และจำนวนครั้งที่สาย'] }
+  ],
+  tips: ['ใต้ปุ่มบันทึกมี "ที่ฉันบันทึกวันนี้" — ตรวจสิ่งที่บันทึกไปแล้วได้', 'มาสาย −1 ในหน้าครู ใช้บันทึกสายแทนสภานักเรียนได้', 'รายการคะแนน คะแนนเริ่มต้น และรอบนับใหม่ ตั้งที่เว็บส่งงาน › กิจการนักเรียน › ตั้งค่า (ผู้ดูแลสิทธิ์จัดการ)', 'เปิดใช้บนเครื่องส่วนตัว — กด "ออก" เมื่อใช้เครื่องส่วนกลาง']
+});
+MANUAL_TOPICS.push({
+  book: 'care', id: 'cc-council', title: 'สภานักเรียน: บันทึกมาสาย', icon: 'fa-users', roles: 'tsea',
+  lead: 'หน้าสภานักเรียน — สมาชิกสภาบันทึกนักเรียนที่มาสายตอนเช้า ใช้รหัส PIN จากครูกิจการนักเรียน ไม่ต้องมีบัญชี',
+  figs: [
+    { img: 'cc-council-pin', m: 1, cap: 'ใส่รหัส PIN', steps: ['กดตัวเลข PIN (ครูกิจการนักเรียนเป็นคนแจ้ง) — ใส่ครั้งเดียว เครื่องจำไว้ประมาณ 1 ภาคเรียน · ใส่ผิดหลายครั้งระบบพัก 15 นาที'] },
+    { img: 'cc-council-who', m: 1, cap: 'ใครเป็นผู้บันทึก?', steps: ['พิมพ์ชื่อสมาชิกสภานักเรียน', 'กด "เลือก" ที่ชื่อตัวเอง — ชื่อนี้จะติดไปกับทุกรายการที่บันทึก'] },
+    { img: 'cc-council', m: 1, cap: 'เลือกนักเรียนที่มาสาย', steps: ['ผู้บันทึก — กด "เปลี่ยน" เมื่อเปลี่ยนคนใช้เครื่อง', 'เลือกห้อง', 'หรือพิมพ์ชื่อค้นทุกห้อง แล้วกด "+ เพิ่ม"'] },
+    { img: 'cc-council-2', m: 1, cap: 'บันทึก', steps: ['รายชื่อที่เลือก (กด ✕ เอาออก)', 'รายการ: มาสาย (ค่าเริ่มต้น) หรือรายการอื่นที่ครูเปิดให้สภาบันทึก', 'บันทึก — ปุ่มบอกจำนวนคน'] }
+  ],
+  tips: ['รายชื่อสมาชิกสภา และ PIN ตั้งที่เว็บส่งงาน › กิจการนักเรียน › ตั้งค่า › หน้าสภานักเรียน', 'ลบได้เฉพาะรายการที่สภาบันทึกวันนี้ — ดูที่ "บันทึกวันนี้" ท้ายหน้า']
+});
+MANUAL_TOPICS.push({
+  book: 'care', id: 'cc-student', title: 'นักเรียน: แจ้งมาสายเอง', icon: 'fa-person-walking-arrow-right', roles: 'tsea',
+  lead: 'หน้านักเรียน — นักเรียนที่มาสายกรอกเองจากมือถือ (ไม่ต้องมีบัญชี) เปิดตามช่วงเวลาที่ครูตั้ง กรอกได้วันละ 1 ครั้ง',
+  figs: [
+    { img: 'cc-student', m: 1, cap: 'แจ้งมาสาย', steps: ['เลือกห้อง', 'พิมพ์ชื่อตัวเองแล้วแตะชื่อที่ขึ้นมา (กด "เปลี่ยน" ถ้าเลือกผิด)', 'เหตุผลที่มาสาย — ตื่นสาย / รถติด / ฝนตก / ไม่สบาย / ธุระครอบครัว / อื่นๆ (พิมพ์เอง)', 'ส่งข้อมูลมาสาย'] }
+  ],
+  tips: ['แถบด้านบนบอกช่วงเวลาที่เปิด (เช่น 06:00–17:30 น.) — นอกเวลาจะขึ้น "ยังไม่อยู่ในช่วงเวลาที่เปิดให้กรอก"', 'เปิด / ปิด ช่วงเวลา และรายการเหตุผล ตั้งที่เว็บส่งงาน › กิจการนักเรียน › ตั้งค่า › หน้านักเรียน', 'ลิงก์ / QR Code ของทุกหน้า อยู่ที่เว็บส่งงาน › กิจการนักเรียน › ตั้งค่า']
+});
+MANUAL_TOPICS.push({
+  book: 'care', id: 'cc-score', title: 'ดูคะแนน (นักเรียน / ผู้ปกครอง)', icon: 'fa-star-half-stroke', roles: 'tsea',
+  lead: 'หน้าดูคะแนน — นักเรียนหรือผู้ปกครองดูคะแนนพฤติกรรมของตัวเอง ใช้ชื่อ + เลขประจำตัวนักเรียนยืนยัน',
+  figs: [
+    { img: 'cc-score', m: 1, cap: 'ค้นหาคะแนน', steps: ['เลือกห้อง', 'พิมพ์ชื่อตัวเอง (ไม่ต้องใส่คำนำหน้า) แล้วแตะชื่อ', 'เลขประจำตัวนักเรียน — ใช้ยืนยันว่าเป็นเจ้าของข้อมูล', 'ดูคะแนนของฉัน'] },
+    { img: 'cc-score-2', m: 1, cap: 'ผลคะแนน', steps: ['คะแนนปัจจุบันจากคะแนนเริ่มต้น พร้อมระดับตามเกณฑ์ของโรงเรียน · ถูกหัก · ได้เพิ่ม · มาสาย (ครั้ง) และรายการแต่ละครั้ง · กด "ออก / ดูคนอื่น" เมื่อดูเสร็จ'] }
+  ],
+  tips: ['เปิด / ปิดหน้านี้ บังคับเลขประจำตัว แสดงชื่อครูผู้บันทึก และให้ดูรูปหลักฐาน ตั้งที่เว็บส่งงาน › กิจการนักเรียน › ตั้งค่า › หน้าดูคะแนน', 'ใส่เลขประจำตัวผิด 5 ครั้ง ล็อก 15 นาที', 'สงสัยรายการไหน ติดต่อครูที่ปรึกษา / ฝ่ายกิจการนักเรียน']
+});

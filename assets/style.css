@@ -2972,6 +2972,15 @@ button.alb-pub:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 3
 .mn-box > h3 { margin: 0 40px 12px 0; display: flex; align-items: center; gap: 8px; }
 .mn-box > h3 i { color: var(--primary); }
 .mn-select { display: none; width: 100%; margin-bottom: 10px; }
+/* 2.34.4: แท็บเล่มคู่มือ (เว็บส่งงาน · เว็บเช็คชื่อ · Care Center) */
+.mn-books { display: flex; gap: 6px; padding: 4px; margin: 0 0 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; }
+.mn-books[hidden] { display: none; }
+.mn-bk { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: none; font: inherit; font-size: .88rem; font-weight: 700; color: var(--text-muted); padding: 8px 10px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+.mn-bk span { overflow: hidden; text-overflow: ellipsis; }
+.mn-bk:hover { color: var(--text); }
+.mn-bk.on { background: var(--surface); color: var(--primary-dark); box-shadow: 0 1px 4px rgba(15, 23, 42, .12); }
+.mn-bk.on i { color: var(--primary); }
+.mn-img.mn-img-m { max-width: min(100%, 360px); }
 .mn-wrap { flex: 1; min-height: 0; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 18px; }
 .mn-toc { overflow-y: auto; border-right: 1px solid var(--border); padding-right: 10px; scrollbar-width: thin; }
 .mn-group { font-size: .72rem; font-weight: 800; color: var(--text-muted); text-transform: none; letter-spacing: .02em; margin: 12px 8px 4px; }
@@ -3001,6 +3010,8 @@ button.alb-pub:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 3
 @media (max-width: 760px) {
   .mn-box { height: calc(100vh - 24px); padding: 16px 14px 12px; }
   .mn-select { display: block; }
+  .mn-bk { flex-direction: column; gap: 2px; font-size: .74rem; padding: 6px 4px; }
+  .mn-img.mn-img-m { max-width: 100%; }
   .mn-wrap { grid-template-columns: minmax(0, 1fr); }
   .mn-toc { display: none; }
   .mn-pager .btn { font-size: .78rem; }

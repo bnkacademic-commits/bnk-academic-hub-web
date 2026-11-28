@@ -19,7 +19,7 @@ var API_URL = 'https://bnk-academic-hub-api.bnkschool.workers.dev';
 // วันที่ท้ายคือวันที่ปล่อยเวอร์ชันนั้นจริง (ไม่ใช่วันที่เริ่มพัฒนา) ถ้าเลขรันไล่ไปถึง 99 แล้วจะล้นเป็น 100 ผู้ใช้ขอให้มาอนุมัติเองก่อนเปลี่ยนเป็น major ถัดไป (2.00)
 // 1.79: รุ่น Worker ขั้นต่ำที่หน้าเว็บรุ่นนี้ต้องการ (เปลี่ยนเฉพาะรุ่นที่แก้ไฟล์ Worker) — หน้าภาพรวมระบบเตือนเมื่อ Worker เก่ากว่า
 var WORKER_MIN_VERSION = '2.34.1';
-var APP_VERSION = '2.34.3.261126';
+var APP_VERSION = '2.34.4.281126';
 
 var SESSION_TOKEN_KEY = 'bnkah_token';
 var SESSION_USER_KEY = 'bnkah_user';
@@ -3299,7 +3299,7 @@ function _srchIndex() {
     ['', 'ดาวน์โหลดคู่มือเป็นเล่ม (PDF)', 'คู่มือของฉัน (ตามสิทธิ์บัญชีนี้)', '@book', 'คู่มือ pdf ดาวน์โหลด พิมพ์']];
   A.forEach(function (a) { if (a[0] && !has[a[0]]) return; out.push({ g: 'act', t: a[1], d: a[2], u: a[3], kw: a[4] }); });
   if (typeof manualTopicsFor === 'function') manualTopicsFor(session).forEach(function (t) {
-    out.push({ g: 'man', t: t.title, d: t.lead, topic: t, kw: [t.lead].concat((t.figs || []).map(function (f) { return f.cap + ' ' + (f.steps || []).join(' '); }), t.tips || []).join(' ') });
+    out.push({ g: 'man', t: t.title, d: (t.book && typeof manualBookInfo === 'function' ? 'คู่มือ ' + manualBookInfo(t.book).short + ' · ' : '') + t.lead, topic: t, kw: [t.lead].concat((t.figs || []).map(function (f) { return f.cap + ' ' + (f.steps || []).join(' '); }), t.tips || []).join(' ') });
   });
   out.forEach(function (x) { x._t = _srchNorm(x.t); x._k = _srchNorm(x.kw + ' ' + x.d); });
   return out;
