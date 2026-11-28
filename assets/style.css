@@ -2981,6 +2981,7 @@ button.alb-pub:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 3
 .mn-bk.on { background: var(--surface); color: var(--primary-dark); box-shadow: 0 1px 4px rgba(15, 23, 42, .12); }
 .mn-bk.on i { color: var(--primary); }
 .mn-img.mn-img-m { max-width: min(100%, 360px); }
+@media (max-width: 380px) { .mn-books { gap: 3px; padding: 3px; } .mn-bk { font-size: .64rem !important; padding: 6px 2px !important; } }
 .mn-wrap { flex: 1; min-height: 0; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 18px; }
 .mn-toc { overflow-y: auto; border-right: 1px solid var(--border); padding-right: 10px; scrollbar-width: thin; }
 .mn-group { font-size: .72rem; font-weight: 800; color: var(--text-muted); text-transform: none; letter-spacing: .02em; margin: 12px 8px 4px; }
@@ -3010,7 +3011,8 @@ button.alb-pub:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 3
 @media (max-width: 760px) {
   .mn-box { height: calc(100vh - 24px); padding: 16px 14px 12px; }
   .mn-select { display: block; }
-  .mn-bk { flex-direction: column; gap: 2px; font-size: .74rem; padding: 6px 4px; }
+  .mn-bk { flex-direction: column; gap: 2px; font-size: .7rem; padding: 6px 3px; white-space: normal; line-height: 1.25; }
+  .mn-bk span { max-width: 100%; text-align: center; overflow-wrap: normal; word-break: normal; }
   .mn-img.mn-img-m { max-width: 100%; }
   .mn-wrap { grid-template-columns: minmax(0, 1fr); }
   .mn-toc { display: none; }
